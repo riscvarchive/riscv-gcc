@@ -1,6 +1,12 @@
 dnl Process this with autoconf to create configure
 AC_INIT(java/lang/System.java)
 
+# This works around the fact that libtool configuration may change LD
+# for this particular configuration, but some shells, instead of
+# keeping the changes in LD private, export them just because LD is
+# exported.
+ORIGINAL_LD_FOR_MULTILIBS=$LD
+
 AC_PROG_LN_S
 
 dnl We use these options to decide which functions to include.
@@ -42,13 +48,6 @@ AC_SUBST(COMPPATH)
 dnl The -no-testsuite modules omit the test subdir.
 AM_CONDITIONAL(TESTSUBDIR, test -d $srcdir/testsuite)
 
-dnl See whether the user prefers size or speed for Character.
-dnl The default is size.
-AC_ARG_ENABLE(fast-character,
-[  --enable-fast-character prefer speed over size for Character],
-# Nothing
-, AC_DEFINE(COMPACT_CHARACTER))
-
 dnl Should the runtime set system properties by examining the 
 dnl environment variable GCJ_PROPERTIES?
 AC_ARG_ENABLE(getenv-properties,
@@ -81,6 +80,12 @@ AC_ARG_ENABLE(hash-synchronization,
 
 if test -z "$enable_hash_synchronization"; then
    enable_hash_synchronization=$enable_hash_synchronization_default
+fi
+
+dnl configure.host sets slow_pthread_self if the synchronization code should 
+dnl try to avoid pthread_self calls by caching thread IDs in a hashtable.
+if test "${slow_pthread_self}" = "yes"; then
+  AC_DEFINE(SLOW_PTHREAD_SELF)
 fi
 
 
@@ -154,6 +159,14 @@ fi
 AC_LANG_RESTORE
 AC_MSG_RESULT($ac_exception_model_name)
 
+# If we are non using SJLJ exceptions, and this host does not have support 
+# for unwinding from a signal handler, enable checked dereferences and divides.
+if test $can_unwind_signal = no && test $enable_sjlj_exceptions = no; then
+  CHECKREFSPEC=-fcheck-references
+  DIVIDESPEC=-fuse-divide-subroutine
+  EXCEPTIONSPEC=
+fi
+
 dnl See if the user wants to disable java.net.  This is the mildly
 dnl ugly way that we admit that target-side configuration sucks.
 AC_ARG_ENABLE(java-net,
@@ -177,7 +190,7 @@ LIBFFI=
 LIBFFIINCS=
 if test "$with_libffi" != no; then
    AC_DEFINE(USE_LIBFFI)
-   LIBFFI=../libffi/libfficonvenience.la
+   LIBFFI=../libffi/libffi_convenience.la
    LIBFFIINCS='-I$(top_srcdir)/../libffi/include -I$(MULTIBUILDTOP)../libffi/include'
 fi
 AC_SUBST(LIBFFI)
@@ -242,8 +255,8 @@ dnl to create the link will fail.
 test -d java || mkdir java
 test -d java/io || mkdir java/io
 test -d gnu || mkdir gnu
-AC_LINK_FILES(java/io/natFile${PLATFORM}.cc, java/io/natFile.cc)
-AC_LINK_FILES(java/io/natFileDescriptor${PLATFORM}.cc, java/io/natFileDescriptor.cc)
+AC_LINK_FILES(java/io/natFile${FILE-${PLATFORM}}.cc, java/io/natFile.cc)
+AC_LINK_FILES(java/io/natFileDescriptor${FILE-${PLATFORM}}.cc, java/io/natFileDescriptor.cc)
 
 dnl Likewise for ConcreteProcess.java and natConcreteProcess.cc.
 test -d java/lang || mkdir java/lang
@@ -291,14 +304,11 @@ GCTESTSPEC=
 case "$GC" in
  boehm)
     AC_MSG_RESULT(boehm)
-    GCDEPS='$(top_builddir)/../boehm-gc/libgcjgc.la'
-    # We include the path to the boehm-gc build directory.
-    # See Makefile.am to understand why.
-    GCLIBS="$GCDEPS -L\$(here)/../boehm-gc/$libsubdir"
+    GCLIBS=../boehm-gc/libgcjgc_convenience.la
     GCINCS='-I$(top_srcdir)/../boehm-gc/include'
-    GCSPEC='-lgcjgc'
     JC1GCSPEC='-fuse-boehm-gc'
     GCTESTSPEC="-L`pwd`/../boehm-gc/.libs -rpath `pwd`/../boehm-gc/.libs"
+
     dnl We also want to pick up some cpp flags required when including
     dnl boehm-config.h.  Yuck.
     GCINCS="$GCINCS `cat ../boehm-gc/boehm-cflags`"
@@ -352,6 +362,7 @@ case "$THREADS" in
     ;;
 esac
 
+THREADLDFLAGS=
 THREADLIBS=
 THREADINCS=
 THREADDEPS=
@@ -370,7 +381,7 @@ changequote([,])
 	# Before FreeBSD 5, it didn't have -lpthread (or any library which
 	# merely adds pthread_* functions) but it does have a -pthread switch
 	# which is required at link-time to select -lc_r *instead* of -lc.
-	THREADLIBS=-pthread
+	THREADLDFLAGS=-pthread
 	# Don't set THREADSPEC here as might be expected since -pthread is
 	# not processed when found within a spec file, it must come from
 	# the command line.  For now, the user must provide the -pthread
@@ -382,7 +393,7 @@ changequote([,])
 	# FreeBSD 5 implements a model much closer to other modern UNIX
 	# which support threads.  However, it still does not support
 	# -lpthread.
-	THREADLIBS=-pthread
+	THREADLDFLAGS=-pthread
 	THREADSPEC=-lc_r
 	;;
      *)
@@ -421,6 +432,10 @@ AC_SUBST(THREADINCS)
 AC_SUBST(THREADDEPS)
 AC_SUBST(THREADOBJS)
 AC_SUBST(THREADSPEC)
+AC_SUBST(THREADLDFLAGS)
+
+if test -d sysdep; then true; else mkdir sysdep; fi
+AC_LINK_FILES(sysdep/$sysdeps_dir/locks.h, sysdep/locks.h)
 
 HASH_SYNC_SPEC=
 # Hash synchronization is only useful with posix threads right now.
@@ -440,6 +455,16 @@ NATIVE=yes
 # We're in the tree with gcc, and need to include some of its headers.
 GCC_UNWIND_INCLUDE='-I$(libgcj_basedir)/../gcc'
 
+# Figure out where generated headers like libgcj-config.h get installed.
+changequote(,)dnl
+gcc_version_trigger=${libgcj_basedir}/../gcc/version.c
+gcc_version_full=`grep version_string ${gcc_version_trigger} | sed -e 's/.*\"\([^\"]*\)\".*/\1/'`
+gcc_version=`echo ${gcc_version_full} | sed -e 's/\([^ ]*\) .*/\1/'`
+tool_include_dir='$(libdir)/gcc-lib/$(target_alias)/'${gcc_version}/include
+changequote([,])dnl
+AC_SUBST(tool_include_dir)
+AC_SUBST(gcc_version)
+
 if test -n "${with_cross_host}"; then
    # We are being configured with a cross compiler.  AC_REPLACE_FUNCS
    # may not work correctly, because the compiler may not be able to
@@ -450,6 +475,7 @@ if test -n "${with_cross_host}"; then
    AC_DEFINE(HAVE_MEMMOVE)
    AC_DEFINE(HAVE_MEMCPY)
    AC_DEFINE(HAVE_STRERROR)
+   AC_DEFINE(HAVE_TIME)
    AC_DEFINE(HAVE_GMTIME_R)
    AC_DEFINE(HAVE_LOCALTIME_R)
    dnl This is only for POSIX threads.
@@ -459,9 +485,6 @@ if test -n "${with_cross_host}"; then
 
    dnl Assume we do not have getuid and friends.
    AC_DEFINE(NO_GETUID)
-
-   ZLIBSPEC=-lzgcj
-   ZLIBTESTSPEC="-L`pwd`/../zlib/.libs -rpath `pwd`/../zlib/.libs"
 
    # If Canadian cross, then don't pick up tools from the build
    # directory.
@@ -478,8 +501,19 @@ else
    AC_CHECK_FUNCS(nl_langinfo setlocale)
    AC_CHECK_FUNCS(inet_aton inet_addr, break)
    AC_CHECK_FUNCS(inet_pton uname inet_ntoa)
-   AC_CHECK_FUNCS(backtrace fork execvp pipe sigaction)
+   AC_CHECK_FUNCS(fork execvp pipe sigaction)
    AC_CHECK_HEADERS(execinfo.h unistd.h dlfcn.h) 
+   AC_CHECK_FUNC(backtrace, [
+     case "$host" in
+       ia64-*-linux*)
+	 # Has broken backtrace()
+	 ;;
+       *)
+         AC_DEFINE(HAVE_BACKTRACE)
+	 ;;
+     esac
+   ])
+
    AC_CHECK_LIB(dl, dladdr, [
      AC_DEFINE(HAVE_DLADDR)])
    AC_CHECK_FILES(/proc/self/exe, [
@@ -659,10 +693,7 @@ else
    SYSTEMSPEC="$SYSTEMSPEC $gcj_cv_lib_sockets"
 
    if test "$with_system_zlib" = yes; then
-      AC_CHECK_LIB(z, deflate, ZLIBSPEC=-lz, ZLIBSPEC=-lzgcj)
-   else
-      ZLIBSPEC=-lzgcj
-      ZLIBTESTSPEC="-L`pwd`/../zlib/.libs -rpath `pwd`/../zlib/.libs"
+      AC_CHECK_LIB(z, deflate, ZLIBSPEC=-lz, ZLIBSPEC=)
    fi
 
    # On Solaris, and maybe other architectures, the Boehm collector
@@ -719,21 +750,22 @@ CPPFLAGS=$GCJ_SAVE_CPPFLAGS
 AC_COMPILE_CHECK_SIZEOF(void *)
 
 ZLIBS=
-ZDEPS=
+SYS_ZLIBS=
 ZINCS=
-if test "x$ZLIBSPEC" = "x-lzgcj"; then
-   # We include the path to the zlib build directory.
-   # See Makefile.am to understand why.
-   ZDEPS='$(top_builddir)/../zlib/libzgcj.la'
-   ZLIBS="$ZDEPS -L\$(here)/../zlib/$libsubdir"
+
+if test -z "$ZLIBSPEC"; then
+   # Use zlib from the GCC tree.
    ZINCS='-I$(top_srcdir)/../zlib'
+   ZLIBS=../zlib/libzgcj_convenience.la
 else
-   ZLIBS="$ZLIBSPEC"
+   # System's zlib.
+   SYS_ZLIBS="$ZLIBSPEC"
 fi
 AC_SUBST(ZLIBS)
-AC_SUBST(ZDEPS)
+AC_SUBST(SYS_ZLIBS)
 AC_SUBST(ZINCS)
 AC_SUBST(DIVIDESPEC)
+AC_SUBST(CHECKREFSPEC)
 AC_SUBST(EXCEPTIONSPEC)
 
 AM_CONDITIONAL(CANADIAN, test "$CANADIAN" = yes)
@@ -743,14 +775,15 @@ AM_CONDITIONAL(USE_LIBDIR, test -z "$with_cross_host")
 AM_CONDITIONAL(NEEDS_DATA_START, test "$NEEDS_DATA_START" = yes && test "$NATIVE" = yes)
 AC_SUBST(GCC_UNWIND_INCLUDE)
 
+AC_SUBST(AM_RUNTESTFLAGS)
+
 # Determine gcj version number.
 changequote(<<,>>)
-gcjvers="`$GCJ -v 2>&1 | sed -n 's/^.*version \([^ ]*\).*$/\1/p'`"
+gcjversion=`$GCJ -v 2>&1 | sed -n 's/^.*version \([^ ]*\).*$/\1/p'`
 changequote([,])
-AC_DEFINE_UNQUOTED(GCJVERSION, "$gcjvers")
+GCJVERSION=$gcjversion
 AC_SUBST(GCJVERSION)
-
-AC_SUBST(AM_RUNTESTFLAGS)
+AC_DEFINE_UNQUOTED(GCJVERSION, "$GCJVERSION", [Short GCJ version])
 
 dnl Work around a g++ bug.  Reported to gcc-bugs@gcc.gnu.org on Jan 22, 2000.
 AC_MSG_CHECKING([for g++ -ffloat-store bug])
@@ -840,17 +873,23 @@ case "${host}" in
  i?86-*-linux*)
     SIGNAL_HANDLER=include/i386-signal.h
     ;;
- sparc-sun-solaris*)
+ sparc*-sun-solaris*)
     SIGNAL_HANDLER=include/sparc-signal.h
     ;;
 # ia64-*)
 #    SYSDEP_SOURCES=sysdep/ia64.c
 #    test -d sysdep || mkdir sysdep
 #    ;;
+ ia64-*-linux*)
+    SIGNAL_HANDLER=include/dwarf2-signal.h
+    ;;
  powerpc-*-linux*)
     SIGNAL_HANDLER=include/dwarf2-signal.h
     ;;
  alpha*-*-linux*)
+    SIGNAL_HANDLER=include/dwarf2-signal.h
+    ;;
+ sparc*-*-linux*)
     SIGNAL_HANDLER=include/dwarf2-signal.h
     ;;
  *mingw*)
@@ -924,6 +963,7 @@ AC_OUTPUT(Makefile libgcj.spec libgcj-test.spec gnu/classpath/Configuration.java
 [# Only add multilib support code if we just rebuilt top-level Makefile.
 case " $CONFIG_FILES " in
  *" Makefile "*)
+   LD="${ORIGINAL_LD_FOR_MULTILIBS}"
    ac_file=Makefile . ${libgcj_basedir}/../config-ml.in
    ;;
 esac

@@ -31,11 +31,27 @@ Boston, MA 02111-1307, USA.  */
 /* CPP defines used for 64 bit code.  */
 #undef CPP_SUBTARGET_SPEC64
 #define CPP_SUBTARGET_SPEC64 \
-  "-D__sparc64__ -D__arch64__ -D__sparc_v9__ %{posix:-D_POSIX_SOURCE}"
+  "-D__sparc64__ -D__sparc_v9__ -D_LP64 %{posix:-D_POSIX_SOURCE}"
 
 /* CPP defines used for 32 bit code.  */
 #undef CPP_SUBTARGET_SPEC32
 #define CPP_SUBTARGET_SPEC32 "-D__sparc %{posix:-D_POSIX_SOURCE}"
+
+/* CPP_ARCH32_SPEC and CPP_ARCH64_SPEC are wrong from sparc/sparc.h; we
+   always want the non-SPARC_BI_ARCH versions, since the SPARC_BI_ARCH
+   versions define __SIZE_TYPE__ and __PTRDIFF_TYPE__ incorrectly for
+   NetBSD.  */
+#undef CPP_ARCH32_SPEC
+#define CPP_ARCH32_SPEC "-D__GCC_NEW_VARARGS__ -Acpu=sparc -Amachine=sparc"
+
+#undef CPP_ARCH64_SPEC
+#define CPP_ARCH64_SPEC "-D__arch64__ -Acpu=sparc64 -Amachine=sparc64"
+
+/* sparc/sparc.h defines NO_BUILTIN_SIZE_TYPE and NO_BUILTIN_PTRDIFF_TYPE
+   if SPARC_BI_ARCH is defined.  This is wrong for NetBSD; size_t and
+   ptrdiff_t do not change for 32-bit vs. 64-bit.  */
+#undef NO_BUILTIN_PTRDIFF_TYPE
+#undef NO_BUILTIN_SIZE_TYPE
 
 /* SIZE_TYPE and PTRDIFF_TYPE are wrong from sparc/sparc.h.  */
 #undef SIZE_TYPE
@@ -55,6 +71,9 @@ Boston, MA 02111-1307, USA.  */
 #undef DBX_REGISTER_NUMBER
 #define DBX_REGISTER_NUMBER(REGNO) \
   (TARGET_FLAT && REGNO == HARD_FRAME_POINTER_REGNUM ? 31 : REGNO)
+
+#undef  LOCAL_LABEL_PREFIX
+#define LOCAL_LABEL_PREFIX  "."
 
 /* This is how to output a definition of an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
@@ -96,9 +115,6 @@ Boston, MA 02111-1307, USA.  */
  * Clean up afterwards generic SPARC ELF configuration.
  */
 
-#undef TRANSFER_FROM_TRAMPOLINE
-#define TRANSFER_FROM_TRAMPOLINE
-
 /* FIXME: Aren't these supposed to be available for SPARC ELF?  */
 #undef MULDI3_LIBCALL
 #undef DIVDI3_LIBCALL
@@ -134,8 +150,7 @@ Boston, MA 02111-1307, USA.  */
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT \
   (MASK_V9 + MASK_PTR64 + MASK_64BIT /* + MASK_HARD_QUAD */ \
- + MASK_STACK_BIAS + MASK_APP_REGS + MASK_EPILOGUE + MASK_FPU \
- + MASK_LONG_DOUBLE_128)
+   + MASK_STACK_BIAS + MASK_APP_REGS + MASK_FPU + MASK_LONG_DOUBLE_128)
 
 #undef SPARC_DEFAULT_CMODEL
 #define SPARC_DEFAULT_CMODEL CM_MEDANY
@@ -148,6 +163,7 @@ Boston, MA 02111-1307, USA.  */
   %{mcypress:-mcpu=cypress} \
   %{msparclite:-mcpu=sparclite} %{mf930:-mcpu=f930} %{mf934:-mcpu=f934} \
   %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
+  %{m32:%{m64:%emay not use both -m32 and -m64}} \
   %{m64: \
     -mptr64 -mstack-bias -mno-v8plus -mlong-double-128 \
     %{!mcpu*: \
@@ -166,6 +182,7 @@ Boston, MA 02111-1307, USA.  */
   %{mcypress:-mcpu=cypress} \
   %{msparclite:-mcpu=sparclite} %{mf930:-mcpu=f930} %{mf934:-mcpu=f934} \
   %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
+  %{m32:%{m64:%emay not use both -m32 and -m64}} \
   %{m32: \
     -mptr32 -mno-stack-bias \
     %{!mlong-double-128:-mlong-double-64} \
@@ -334,3 +351,7 @@ Boston, MA 02111-1307, USA.  */
 	|| TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc */
 
 #endif	/* SPARC_BI_ARCH */
+
+/* We use GNU ld so undefine this so that attribute((init_priority)) works.  */
+#undef CTORS_SECTION_ASM_OP
+#undef DTORS_SECTION_ASM_OP

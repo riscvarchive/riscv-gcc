@@ -459,7 +459,8 @@ dump_type (t, flags)
       break;
     }
     case TYPENAME_TYPE:
-      output_add_string (scratch_buffer, "typename ");
+      if (IMPLICIT_TYPENAME_P (t))
+        output_add_string (scratch_buffer, "typename ");
       dump_typename (t, flags);
       break;
 
@@ -473,7 +474,7 @@ dump_type (t, flags)
     case TYPEOF_TYPE:
       output_add_string (scratch_buffer, "__typeof (");
       dump_expr (TYPE_FIELDS (t), flags & ~TFF_EXPR_IN_PARENS);
-      print_left_paren (scratch_buffer);
+      print_right_paren (scratch_buffer);
       break;
 
     default:
@@ -1734,7 +1735,7 @@ dump_expr (t, flags)
       break;
 
     case CONVERT_EXPR:
-      if (VOID_TYPE_P (TREE_TYPE (t)))
+      if (TREE_TYPE (t) && VOID_TYPE_P (TREE_TYPE (t)))
 	{
 	  print_left_paren (scratch_buffer);
 	  dump_type (TREE_TYPE (t), flags);

@@ -1,3 +1,136 @@
+2002-07-25  Release Manager
+
+	* GCC 3.1.1 Released.
+
+2002-06-28  Hans Boehm <Hans_Boehm@hp.com> 
+	    Jonathan Clark 
+
+        * win32_threads.c (GC_push_all_stacks): Tolerate bad sp. 
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-08  Alexandre Oliva  <aoliva@redhat.com>
+
+	* configure.in (ORIGINAL_LD_FOR_MULTILIBS): Preserve LD at
+	script entry, and set LD to it when configuring multilibs.
+	* configure: Rebuilt.
+
+2002-04-22  Jeff Sturm  <jsturm@one-point.com>
+
+	* Makefile.am (toolexeclib_LTLIBRARIES): Remove.
+	(noinst_LTLIBRARIES): Add libgcjgc.la.
+
+	* Makefile.in: Rebuild.
+
+2002-04-22  David S. Miller  <davem@redhat.com>
+
+	* include/private/gcconfig.h: Hard-code STACKBOTTOM on
+	64-bit SPARC Linux, the __libc_stack_end technique does
+	not work in this case.
+
+2002-04-22  Jeff Sturm  <jsturm@one-point.com>
+
+	* gcconfig.h: Enable DYNAMIC_LOADING for all sparc-solaris ABIs.
+
+2002-04-17  Hans Boehm  <Hans_Boehm@hp.com>
+
+	* include/private/gcconfig.h: Use LINUX_STACKBOTTOM for
+	SPARC Linux.
+
+2002-04-09  Loren J. Rittle  <ljrittle@acm.org>
+	    Richard Henderson  <rth@redhat.com>
+
+	* include/private/gcconfig.h (DATAEND): Update comment example
+	to match reality.  Clarify comment.
+	Change all likely references to linker script synthesized
+	symbols to use this idiom: extern int etext[]; etext
+	* os_dep.c (GC_init_linux_data_start): Fix references to
+	__data_start and _end.
+
+2002-04-08  Hans Boehm  <Hans_Boehm@hp.com>
+	
+	* include/private/gc_priv.h (WARN macro): Add "GC warning:" prefix.
+	(GC_large_alloc_warn_interval, GC_large_alloc_warn_suppressed):
+	declare.
+	* allchblk.c (GC_allchblk_nth): Change text and support reduced
+	frequency for blacklist warning message.
+	* misc.c (GC_large_alloc_warn_interval,
+	GC_large_alloc_warn_suppressed): define.
+	(GC_init_inner): Check GC_NO_BLACKLIST_WARNING and 
+	GC_LARGE_ALLOC_WARN_INTERVAL environment variables.
+	* doc/README.environment (GC_NO_BLACKLIST_WARNING): Deprecate.
+	(GC_LARGE_ALLOC_WARN_INTERVAL): Add documentation.
+
+	* dyn_load.c (_DYNAMIC): Move declaration to file scope.
+
+2002-04-04  Loren J. Rittle  <ljrittle@acm.org>
+
+	* include/private/gcconfig.h: Add support for an unmapped
+	memory hole between the end of the initialized data segment
+	and the start of the BSS on FreeBSD/i386.
+
+2002-04-01  Loren J. Rittle  <ljrittle@acm.org>
+
+	* include/private/gcconfig.h: Add unified test for FreeBSD.
+	Support FreeBSD/alpha.
+	* os_dep.c: Do not include <machine/trap.h> unless available.
+	(GC_freebsd_stack_base): Fix types.
+
+2002-03-30  Krister Walfridsson  <cato@df.lth.se>
+
+	* include/private/gcconfig.h: define DYNAMIC_LOADING for ELF
+        NetBSD/i386.
+
+2002-03-29  Hans Boehm  <Hans_Boehm@hp.com>
+
+	* linux_threads.c (return_free_lists): Clear fl[i] unconditionally.
+	(GC_local_gcj_malloc): Add assertion.
+	(start_mark_threads): Fix abort message.
+	* mark.c (GC_mark_from): Generalize assertion.
+	* reclaim.c (GC_clear_fl_links): New function.
+	(GC_start_reclaim): Must clear some freelist links.
+	* include/private/specific.h, specific.c: Add assertions.
+	Safer definition for INVALID_QTID, quick_thread_id.  Fix/add comments.
+	Rearrange tse fields.
+
+2002-03-24  Jeff Sturm  <jsturm@one-point.com>
+
+	* linux_threads.c (GC_get_nprocs): Close file descriptor.
+
+2002-03-15  Anthony Green  <green@redhat.com>
+
+	* misc.c (GC_init_inner): Initialize GC_write_cs before use.
+	* configure.in: Disable use of getenv for win32 targets (some of
+	which have broken implementations).
+	* configure: Rebuilt.
+
+2002-03-12  Adam Megacz  <adam@xwt.org>
+
+        * dyn_load.c: Renamed GC_win32s to GC_no_win32_dlls.
+        * misc.c: Renamed GC_is_win32s() to GC_no_win32_dlls
+        * os_dep.c: Renamed GC_win32s to GC_no_win32_dlls and
+        statically initialized it to TRUE if compiling with GCC.
+        * win32_threads.c (thread_start): We no longer use SEH if
+        compiling with GCC.
+        * mark.c (GC_mark_some): We no longer use SEH if
+        compiling with GCC.
+	
+2002-03-09  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* include/gc_priv.h: Define ALIGN_DOUBLE on 32 bit targets if GCJ 
+	support is enabled, for hash synchronization.
+
+2002-03-17  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* Makefile.am: Make a convenience library.
+	* Makefile.in: Rebuilt.
+
 2002-02-24  Adam Megacz  <adam@xwt.org>
 
 	* Makefile.am: Added win32_threads.c to sources list.

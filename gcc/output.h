@@ -231,6 +231,8 @@ extern void mergeable_constant_section	PARAMS ((enum machine_mode,
 
 /* Declare DECL to be a weak symbol.  */
 extern void declare_weak		PARAMS ((tree));
+/* Merge weak status.  */
+extern void merge_weak			PARAMS ((tree, tree));
 #endif /* TREE_CODE */
 
 /* Emit any pending weak declarations.  */
@@ -484,9 +486,6 @@ extern const char *user_label_prefix;
 #define STRIP_NAME_ENCODING(VAR,SYMBOL_NAME) \
   (VAR) = ((SYMBOL_NAME) + ((SYMBOL_NAME)[0] == '*'))
 #endif
-/* Assign unique numbers to labels generated for profiling.  */
-
-extern int profile_label_no;
 
 /* Default target function prologue and epilogue assembler output.  */
 extern void default_function_pro_epilogue PARAMS ((FILE *, HOST_WIDE_INT));

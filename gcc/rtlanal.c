@@ -1542,17 +1542,12 @@ note_stores (x, fun, data)
 	dest = XEXP (dest, 0);
 
       /* If we have a PARALLEL, SET_DEST is a list of EXPR_LIST expressions,
-	 each of whose first operand is a register.  We can't know what
-	 precisely is being set in these cases, so make up a CLOBBER to pass
-	 to the function.  */
+	 each of whose first operand is a register.  */
       if (GET_CODE (dest) == PARALLEL)
 	{
 	  for (i = XVECLEN (dest, 0) - 1; i >= 0; i--)
 	    if (XEXP (XVECEXP (dest, 0, i), 0) != 0)
-	      (*fun) (XEXP (XVECEXP (dest, 0, i), 0),
-		      gen_rtx_CLOBBER (VOIDmode,
-				       XEXP (XVECEXP (dest, 0, i), 0)),
-		      data);
+	      (*fun) (XEXP (XVECEXP (dest, 0, i), 0), x, data);
 	}
       else
 	(*fun) (dest, x, data);
@@ -1926,6 +1921,31 @@ find_regno_fusage (insn, code, regno)
 	  && GET_CODE (reg = XEXP (op, 0)) == REG
 	  && (regnote = REGNO (reg)) <= regno
 	  && regnote + HARD_REGNO_NREGS (regnote, GET_MODE (reg)) > regno)
+	return 1;
+    }
+
+  return 0;
+}
+
+/* Return true if INSN is a call to a pure function.  */
+
+int
+pure_call_p (insn)
+     rtx insn;
+{
+  rtx link;
+
+  if (GET_CODE (insn) != CALL_INSN || ! CONST_OR_PURE_CALL_P (insn))
+    return 0;
+
+  /* Look for the note that differentiates const and pure functions.  */
+  for (link = CALL_INSN_FUNCTION_USAGE (insn); link; link = XEXP (link, 1))
+    {
+      rtx u, m;
+
+      if (GET_CODE (u = XEXP (link, 0)) == USE
+	  && GET_CODE (m = XEXP (u, 0)) == MEM && GET_MODE (m) == BLKmode
+	  && GET_CODE (XEXP (m, 0)) == SCRATCH)
 	return 1;
     }
 

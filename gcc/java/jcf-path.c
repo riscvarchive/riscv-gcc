@@ -1,6 +1,6 @@
 /* Handle CLASSPATH, -classpath, and path searching.
 
-   Copyright (C) 1998, 1999, 2000, 2001  Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2001, 2002  Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@ The Free Software Foundation is independent of Sun Microsystems, Inc.  */
 
 #include "config.h"
 #include "system.h"
+
+#include <dirent.h>
 
 #include "jcf.h"
 
@@ -72,7 +74,9 @@ static void add_path PARAMS ((struct entry **, const char *, int));
    built-in system directory (only libgcj.jar)
    CLASSPATH environment variable
    -classpath option overrides $CLASSPATH
-   -CLASSPATH option overrides $CLASSPATH, -classpath, and built-in
+   -CLASSPATH option is a synonym for -classpath (for compatibility)
+   -bootclasspath overrides built-in
+   -extdirs sets the extensions directory path (overrides built-in)
    -I prepends path to list
 
    We implement this by keeping several path lists, and then simply
@@ -85,14 +89,14 @@ static struct entry *include_dirs;
 static struct entry *classpath_env;
 
 /* This holds the -classpath command-line option.  */
-static struct entry *classpath_u;
-
-/* This holds the -CLASSPATH command-line option.  */
-static struct entry *classpath_l;
+static struct entry *classpath_user;
 
 /* This holds the default directories.  Some of these will have the
    "system" flag set.  */
 static struct entry *sys_dirs;
+
+/* This holds the extensions path entries.  */
+static struct entry *extensions;
 
 /* This is the sealed list.  It is just a combination of other lists.  */
 static struct entry *sealed;
@@ -222,6 +226,8 @@ add_path (entp, cp, is_system)
     }
 }
 
+static int init_done = 0;
+
 /* Initialize the path module.  */
 void
 jcf_path_init ()
@@ -231,7 +237,9 @@ jcf_path_init ()
   struct stat stat_b;
   int found = 0, len;
 
-  add_entry (&sys_dirs, ".", 0);
+  if (init_done)
+    return;
+  init_done = 1;
 
   sep[0] = DIR_SEPARATOR;
   sep[1] = '\0';
@@ -242,7 +250,7 @@ jcf_path_init ()
       try = alloca (strlen (cp) + 50);
       /* The exec prefix can be something like
 	 /usr/local/bin/../lib/gcc-lib/.  We want to change this
-	 into a pointer to the share directory.  We support two
+	 into a pointer to the share/java directory.  We support two
 	 configurations: one where prefix and exec-prefix are the
 	 same, and one where exec-prefix is `prefix/SOMETHING'.  */
       strcpy (try, cp);
@@ -254,11 +262,20 @@ jcf_path_init ()
 
       strcpy (try + len, "share");
       strcat (try, sep);
-      strcat (try, "libgcj.jar");
+      strcat (try, "java");
+      strcat (try, sep);
+      strcat (try, "libgcj-" DEFAULT_TARGET_VERSION ".jar");
       if (! stat (try, &stat_b))
 	{
 	  add_entry (&sys_dirs, try, 1);
 	  found = 1;
+	  strcpy (&try[strlen (try)
+		      - strlen ("libgcj-" DEFAULT_TARGET_VERSION ".jar")],
+		  sep);
+	  strcat (try, "ext");
+	  strcat (try, sep);
+	  if (! stat (try, &stat_b))
+	    jcf_path_extdirs_arg (try);
 	}
       else
 	{
@@ -266,34 +283,40 @@ jcf_path_init ()
 	  strcat (try, sep);
 	  strcat (try, "share");
 	  strcat (try, sep);
-	  strcat (try, "libgcj.jar");
+	  strcat (try, "java");
+	  strcat (try, sep);
+	  strcat (try, "libgcj-" DEFAULT_TARGET_VERSION ".jar");
 	  if (! stat (try, &stat_b))
 	    {
 	      add_entry (&sys_dirs, try, 1);
 	      found = 1;
+	      strcpy (&try[strlen (try)
+			  - strlen ("libgcj-" DEFAULT_TARGET_VERSION ".jar")],
+		      sep);
+	      strcat (try, "ext");
+	      strcat (try, sep);
+	      if (! stat (try, &stat_b))
+		jcf_path_extdirs_arg (try);
 	    }
 	}
     }
   if (! found)
     {
       /* Desperation: use the installed one.  */
+      char *extdirs;
       add_entry (&sys_dirs, LIBGCJ_ZIP_FILE, 1);
+      extdirs = (char *) alloca (strlen (LIBGCJ_ZIP_FILE) + 1);
+      strcpy (extdirs, LIBGCJ_ZIP_FILE);
+      strcpy (&extdirs[strlen (LIBGCJ_ZIP_FILE)
+		      - strlen ("libgcj-" DEFAULT_TARGET_VERSION ".jar")],
+	      "ext");
+      strcat (extdirs, sep);
+      if (! stat (extdirs, &stat_b))
+	jcf_path_extdirs_arg (extdirs);
     }
 
   GET_ENV_PATH_LIST (cp, "CLASSPATH");
   add_path (&classpath_env, cp, 0);
-}
-
-/* Call this when -CLASSPATH is seen on the command line.
-   This is the override-all switch, even the built in classes
-   are overridden.
- */
-void
-jcf_path_CLASSPATH_arg (path)
-     const char *path;
-{
-  free_entry (&classpath_l);
-  add_path (&classpath_l, path, 0);
 }
 
 /* Call this when -classpath is seen on the command line.
@@ -303,8 +326,85 @@ void
 jcf_path_classpath_arg (path)
      const char *path;
 {
-  free_entry (&classpath_u);
-  add_path (&classpath_u, path, 0);
+  free_entry (&classpath_user);
+  add_path (&classpath_user, path, 0);
+}
+
+/* Call this when -bootclasspath is seen on the command line.
+ */
+void
+jcf_path_bootclasspath_arg (path)
+     const char *path;
+{
+  free_entry (&sys_dirs);
+  add_path (&sys_dirs, path, 1);
+}
+
+/* Call this when -extdirs is seen on the command line.
+ */
+void
+jcf_path_extdirs_arg (cp)
+     const char *cp;
+{
+  const char *startp, *endp;
+
+  free_entry (&extensions);
+
+  if (cp)
+    {
+      char *buf = (char *) alloca (strlen (cp) + 3);
+      startp = endp = cp;
+      while (1)
+	{
+	  if (! *endp || *endp == PATH_SEPARATOR)
+	    {
+	      if (endp == startp)
+		return;
+
+	      strncpy (buf, startp, endp - startp);
+	      buf[endp - startp] = '\0';
+
+	      {  
+		DIR *dirp = NULL;
+		int dirname_length = strlen (buf);
+		
+		dirp = opendir (buf);
+		if (dirp == NULL)
+		  return;
+		
+		for (;;)
+		  {
+		    struct dirent *direntp = readdir (dirp);
+		    
+		    if (!direntp)
+		      break;
+		    
+		    if (direntp->d_name[0] != '.')
+		      {
+			char *name = 
+			  (char *) alloca (dirname_length
+					   + strlen (direntp->d_name) + 2);
+			strcpy (name, buf);
+			if (name[dirname_length-1] != DIR_SEPARATOR)
+			  {
+			    name[dirname_length] = DIR_SEPARATOR;
+			    name[dirname_length+1] = 0;
+			  }
+			strcat (name, direntp->d_name);
+			add_entry (&extensions, name, 0);
+		      }
+		  }
+	      }
+
+	      if (! *endp)
+		break;
+	      ++endp;
+	      startp = endp;
+	    }
+	  else
+	    ++endp;
+	}
+    }
 }
 
 /* Call this when -I is seen on the command line.  */
@@ -322,42 +422,34 @@ void
 jcf_path_seal (print)
      int print;
 {
-  int do_system = 1;
   struct entry *secondary;
 
   sealed = include_dirs;
   include_dirs = NULL;
 
-  if (classpath_l)
+  if (classpath_user)
     {
-      secondary = classpath_l;
-      classpath_l = NULL;
-      do_system = 0;
-    }
-  else if (classpath_u)
-    {
-      secondary = classpath_u;
-      classpath_u = NULL;
+      secondary = classpath_user;
+      classpath_user = NULL;
     }
   else
     {
+      if (! classpath_env)
+	add_entry (&classpath_env, ".", 0);
+
       secondary = classpath_env;
       classpath_env = NULL;
     }
 
-  free_entry (&classpath_l);
-  free_entry (&classpath_u);
+
+  free_entry (&classpath_user);
   free_entry (&classpath_env);
 
   append_entry (&sealed, secondary);
-
-  if (do_system)
-    {
-      append_entry (&sealed, sys_dirs);
-      sys_dirs = NULL;
-    }
-  else
-    free_entry (&sys_dirs);
+  append_entry (&sealed, sys_dirs);
+  append_entry (&sealed, extensions);
+  sys_dirs = NULL;
+  extensions = NULL;
 
   if (print)
     {

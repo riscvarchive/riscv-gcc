@@ -1,3 +1,801 @@
+2002-07-25  Release Manager
+
+	* GCC 3.1.1 Released.
+
+2002-07-12  Jesse Rosenstock  <jmr@fulcrummicro.com>
+
+	For PR libgcj/7292:
+	* java/lang/Character.java (toString(char)): Now static.
+
+2002-06-23  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.in: Rebuilt.
+	* Makefile.am ($(srcdir)/java/lang/Object.h,
+	$(srcdir)/java/lang/Class.h): Added dummy targets.
+
+2002-06-10  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* configure.host: Disable hash synchronization and slow_pthread_self
+	for cygwin.
+
+2002-06-06  Adam Megacz <adam@xwt.org>
+
+        * java/io/natFileDescriptorWin32.cc (open): Disable Win32 file
+        locking, just like the Sun JVM does.
+	
+2002-06-03  Mark Mitchell  <mark@codesourcery.com>
+	
+	2002-05-23  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+	* Makefile.am (all-recursive): Depend on $all_java_class_files so that
+	they build first.
+	* Makefile.in: Rebuilt.
+
+	2002-05-08  Mark Mitchell  <mark@codesourcery.com>
+	* Makefile.am (all_java_source_files): New variable.
+	(all_java_class_files): Likewise.
+	.java.class: New rule.
+	(CLEANFILES): Remove tmp-list.
+	* Makefile.in: Regenerated.
+	
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-09  Jakub Jelinek  <jakub@redhat.com>
+
+	* testsuite/lib/libjava.exp (libjava_arguments): Append all
+	multilib dirs containing libgcc_s*.so.1 below gcc object dir to
+	LD_LIBRARY_PATH.
+
+2002-05-08  Alexandre Oliva  <aoliva@redhat.com>
+
+	* configure.in (ORIGINAL_LD_FOR_MULTILIBS): Preserve LD at
+	script entry, and set LD to it when configuring multilibs.
+	* configure: Rebuilt.
+
+2002-05-03  Alexandre Oliva  <aoliva@redhat.com>
+
+	Suggested by Rainer Orth <ro@TechFak.Uni-Bielefeld.DE>
+	* Makefile.am (jv_convert_LDADD): Bring -L.libs to the front.
+	(gij_LDADD, rmic_LDADD, rmiregistry_LDADD): Likewise.
+	* Makefile.in: Rebuilt.
+
+2002-05-02  Hans Boehm <Hans_Boehm@hp.com>
+
+	* include/dwarf2-signal.h (INIT_SEGV, INIT_FPE for ia64):
+	use sigaction instead of __libc_sigaction.
+
+2002-05-02  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+
+	* testsuite/lib/libjava.exp (libjava_find_spec): New function.
+	(libjava_init): Use it to find libgcj.spec.
+	(libjava_arguments): Likewise.
+
+2002-05-02  David S. Miller  <davem@redhat.com>
+
+	PR bootstrap/6525
+	* include/dwarf2-signal.h (INIT_SEGV, INIT_FPE): Don't use
+	__libc_sigaction on Sparc.
+
+2002-04-25  David S. Miller  <davem@redhat.com>
+
+	PR target/6422
+	* include/dwarf2-signal.h (MAKE_THROW_FRAME for sparc*): Set
+	program counter to next program counter minus 8.  Update
+	comments in this macro to explain why.
+
+2002-04-22  Tom Tromey  <tromey@redhat.com>
+
+	* gnu/gcj/natCore.cc (create): Use __builtin_alloca, and compute
+	correct length of UTF-8 encoded name.  Strip leading `/'.
+	(_Jv_RegisterResource): Use _Jv_Malloc.
+
+2002-04-23  Adam Megacz <adam@xwt.org>
+
+	* win32.cc, include/win32.cc (backtrace): Added this function
+	because Win32 does not supply it.
+
+2002-04-21  David S. Miller  <davem@redhat.com>
+
+	* include/dwarf2-signal.h (MAKE_THROW_FRAME, sparc32): Document
+	magic instruction reading sequence.
+
+2002-04-21  Mark Wielaard  <mark@klomp.org>
+
+	* mauve-libgcj: Don't run java.lang.ref tests since they are buggy.
+
+2002-04-19  David S. Miller  <davem@redhat.com>
+
+	* include/dwarf2-signal.h (SIGNAL_HANDLER): Name siginfo_t pointer
+	arg.
+	(MAKE_THROW_FRAME): Define for 32-bit and 64-bit sparc.
+	(INIT_SEGV, INIT_FPE): Use direct __libc_sigaction installation
+	on Sparc too.
+	* include/sparc-signal.h (FLUSH_REGISTER_WINDOWS): Define properly
+	for 64-bit sparc.
+	(MAKE_THROW_FRAME): Use long for sp/retaddr so 64-bit works.
+	* sysdeps/sparc/locks.h: New file.
+	* configure.in (SIGNAL_HANDLER): Set to include/sparc-signal.h
+	on all sparc Solaris configurations.  Set to
+	include/dwarf2-signal.h on sparc Linux.
+	* configure: Regenerate
+	* configure.host (can_unwind_signal): sparc*-linux* can do it now.
+
+2002-04-19  Hans Boehm <Hans_Boehm@hp.com>
+
+	* configure: Rebuilt.
+	* configure.in (backtrace): Function doesn't work on IA-64.
+
+2002-04-17  Adam King <aking@dreammechanics.com>
+
+	* java/io/File.java (normalizePath): Add Win32 support for auto 
+	conversion of a '/' path separator to Win32's '\' separator.
+
+2002-04-16  DJ Delorie  <dj@redhat.com>
+
+	* configure.in: Allow building in $srcdir.
+	* configure: Regenerated.
+
+2002-04-16  Tom Tromey  <tromey@redhat.com>
+
+	Fix for PR libgcj/6081:
+	* Makefile.in: Rebuilt.
+	* Makefile.am (install-data-local): Use GNU make trick to avoid
+	shell limit.
+
+2002-04-16  Adam King <aking@dreammechanics.com>
+	    Tom Tromey  <tromey@redhat.com>
+
+	* java/io/natFileWin32.cc (performList): Return the correct array
+	type.  Don't duplicate the creation of a File since it's already
+	done earlier in the method and the existing code would cause a
+	ArrayStoreException.  Don't use fixed-size array.
+	(_access, _stat, attr, getCanonicalPath, performMkdir,
+	performRenameTo): Don't use fixed-size array.
+	(getCanonicalPath): Use throw, not _Jv_Throw.
+	
+2002-04-15  Mark Wielaard <mark@klomp.org>
+
+	* java/lang/Integer.java (getInteger(String,Integer): Return def when
+	nm is null or the empty String.
+
+2002-04-14  Mark Wielaard <mark@klomp.org>
+
+	* java/net/natPlainDatagramSocketImpl.cc (close): Set timeout to 0.
+	* java/net/natSocketImpl.cc (close): Likewise.
+
+2002-04-14  Mark Wielaard <mark@klomp.org>
+
+	* gnu/gcj/protocol/http/Connection.java (usingProxy): return false.
+
+2002-04-13  Adam King <aking@dreammechanics.com>
+
+	* java/lang/natDouble.cc (parseDouble): Allow a number to end with 
+	the f/F/d/D modifiers.
+
+2002-04-11  Tom Tromey  <tromey@redhat.com>
+
+	* win32.cc (_Jv_platform_initProperties): Fix spelling of _Jv_Free.
+
+2002-04-11  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* configure.host: Set can_unwind_signal on hosts which support it.
+	Don't set CHECKREFSPEC and DIVIDESPEC for FreeBSD.
+	* configure.in: Set CHECKREFSPEC and DIVIDESPEC if not using SJLJ
+	exceptions and can_unwind_signal isn't set.
+	* configure: Rebuilt.
+	
+2002-04-11  Adam King <aking@dreammechanics.com>
+	    Tom Tromey  <tromey@redhat.com>
+
+	* include/jvm.h (_Jv_ThrowBadArrayIndex,
+	_Jv_ThrowNullPointerException): Mark as noreturn.
+	* win32.cc (_Jv_platform_initProperties): Use _Jv_MallocUnchecked
+	and _Jv_free.  Correctly invoke GetTempPath().  Indentation
+	fixes.
+
+2002-04-09  Anthony Green  <green@redhat.com>
+
+	* Makefile.am (jardir, jar_DATA): Define (for libgcj.jar).
+	Create libgcj-@gcc_version@.jar instead of libgcj.jar.
+	* Makefile.in: Rebuilt.
+	* configure.in: Substitute gcc_version.
+	* configure: Rebuilt.
+
+2002-04-09  Tom Tromey  <tromey@redhat.com>
+
+	* win32.cc (_Jv_platform_initProperties): Use GetTempPath.
+
+2002-04-05  Adam Megacz <adam@xwt.org>
+
+        * exception.cc (abort): added static modifier
+
+2002-04-08  Alberto Biancardi  <alberto.biancardi@unipv.it>
+
+	Fix for PR libgcj/6187:
+	* java/awt/geom/Point2D.java (distance): Call distanceSq, not
+	distance.
+
+2002-04-07  Mark Wielaard <mark@klomp.org>
+
+	* java/util/AbstractMap.java (putAll): Use entrySet size.
+	(toString): Explicitly use getKey() and getValue().
+
+2002-04-07  Mark Wielaard <mark@klomp.org>
+
+	* java/util/Hashtable.java (contains): Remove NullPointer check.
+	(containsValue): Add NullPointer check.
+	(remove): Always throw NullPointerException when key is null.
+
+2002-04-07  Adam King <aking@dreammechanics.com>
+
+	* java/lang/natSystem.cc (init_properties): Call new function
+	_Jv_platform_initProperties.
+	* win32.cc (_Jv_platform_initProperties): New function that adds Win32 
+	support for the System properties os.name, os.arch, os.version, 
+	user.name, user.home, and user.dir.
+	* include/posix.h, include/win32.h, posix.cc: New function
+	_Jv_platform_initProperties.
+
+2002-04-06  Mark Wielaard <mark@klomp.org>
+
+	* java/lang/Character,java (isDefined): getType() != UNASSIGNED.
+
+2002-04-06  Mark Wielaard <mark@klomp.org>
+
+	* java/util/ArrayList.java (addAll(int,Collection)): System.arraycopy
+	all of the remaining elements.
+	* java/util/Vector.java (addAll(int,Collection)): Likewise.
+	(removeRange): If toIndex == fromIndex do
+	nothing, if toIndex < fromIndex throw IndexOutIfBoundsException.
+	(removeAll): Always throw NullPointerException when collection is
+	null.
+	(retrainAll): Likewise.
+
+2002-04-05  Mark Wielaard <mark@klomp.org>
+
+	* java/util/ArrayList.java (removeRange): If toIndex == fromIndex do
+	nothing, if toIndex < fromIndex throw IndexOutIfBoundsException.
+
+2002-04-04  Adam Megacz <adam@xwt.org>
+
+	* include/win32.h (_Jv_platform_close_on_exec): added inline
+	modifier.
+
+2002-04-04  Loren J. Rittle  <ljrittle@acm.org>
+
+        * configure.host: Add case statement to support generic port
+        properties.  Add *-*-freebsd* section.
+
+2002-04-04  Mark Wielaard  <mark@klomp.org>
+
+	* mauve-libgcj: Add JLS1.0 and JLS1.1 tags, ignore Character.unicode
+	test.
+	* testsuite/libjava.mauve/xfails: Remove working tests DoubleTest,
+	FloatTest and ObjectStreamClass. Add FAIL for Introspector.jdk11 tests
+	that depend on awt code and BufferedByteOutputStream.interrupt.
+
+2002-04-04  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* java/util/Arrays.java (qsort): Fix off-by-one errors and use of
+	incorrect "hi" value when count > 40.
+
+2002-04-03  Mark Wielaard  <mark@klomp.org>
+
+	* java/lang/reflect/Modifier.java (toString(int,StringBuffer)): Fix
+	ordering.
+
+2002-04-02  Mark Wielaard  <mark@klomp.org>
+
+	* java/lang/Long.java (getLong(String,Long)): Actually decode property
+	value, not key.
+
+2002-04-02  Tom Tromey  <tromey@redhat.com>
+
+	* java/lang/natClassLoader.cc (findClass): Compare against `3',
+	not `0'.
+
+2002-04-02  Mark Wielaard  <mark@klomp.org>
+
+        * mauve-libgcj: add java.net.DatagramSocket.DatagramSocketTest2 to
+	list of testsuite crashers.
+
+2002-04-02  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* java/util/IdentityHashMap.java (put): Set new threshold correctly
+	when resizing table.
+
+2002-04-01  Loren J. Rittle  <ljrittle@acm.org>
+
+	* include/posix-threads.h: Support <.../pal.h> on FreeBSD/alpha.
+
+2002-04-01  Mark Wielaard  <mark@klomp.org>
+
+        * java/util/BitSet.java (BitSet(int)): if nbits < 0 throw
+        NegativeArraySizeException
+        (clear(int)): Use sign extended shift.
+        (flip(int)): Likewise.
+        (get(int)): Likewise.
+        (nextClearBit(int)): Likewise.
+        (nextSetBit(int)): Likewise.
+        (set(int)): Likewise.
+
+2002-04-01  Mark Wielaard  <mark@klomp.org>
+
+	* java/lang/Integer.java (decode): Throw NullPointerException when
+	argument is null. A minus sign can precede other leading characters.
+
+2002-04-01  Mark Wielaard  <mark@klomp.org>
+
+	* mauve-libgcj: Add JDK1.3, JDK1.4, JLS1.2 tests, remove ignored tests
+	that can be compiled now and add testsuite crashers to ignore list.
+
+2002-03-31  Alexandre Oliva  <aoliva@redhat.com>
+
+	* libgcj.spec.in, libgcj-test.spec.in: Revert for now.
+
+	* libgcj.spec.in: Override libgcc, not lib.
+	* libgcj-test.spec.in: Likewise.
+
+2002-03-29  Tom Tromey  <tromey@redhat.com>
+
+	* java/net/natPlainDatagramSocketImpl.cc (close): New function.
+	* java/net/natPlainSocketImpl.cc (close): Indentation fix.
+
+2002-03-27  Jeff Sturm  <jsturm@one-point.com>
+
+	* java/net/PlainDatagramSocketImpl.java
+	(close): Use native implementation.
+	(finalize): New method.
+
+	* java/net/PlainSocketImpl.java (finalize): New method.
+
+	* java/net/natPlainDatagramSocketImpl.cc
+	(java/io/FileDescriptor.h): Don't include.
+	(close): Implement method here.
+	(create): Don't assign fd.
+
+	* java/net/natPlainSocketImpl.cc
+	(java/io/FileDescriptor.h): Don't include.
+	(create): Don't assign fd.
+	(accept): Likewise.
+	(close): Synchronize.
+
+2002-03-25  Andrew Haley <aph@cambridge.redhat.com>, Hans Boehm <Hans_Boehm@hp.com>
+
+	* include/dwarf2-signal.h (MAKE_THROW_FRAME): Add for IA-64.
+	(INIT_SEGV, INIT_FPE): Add versions that use __libc_sigaction
+	instead of syscall on IA-64.
+	Add FIXME comment.
+	
+2002-03-27  Anthony Green  <green@redhat.com>
+
+	* libgcj.spec.in: Add CHECKREFSPEC.
+	* configure.in: Ditto.
+	* configure.host: Ditto.  Check references for xscale-elf.
+	* configure: Rebuilt.
+
+2002-03-25  Hans Boehm <Hans_Boehm@hp.com>
+
+	* include/dwarf2-signal.h: Temporarily back out last change.
+
+2002-03-25  Andrew Haley <aph@cambridge.redhat.com>, Hans Boehm <Hans_Boehm@hp.com>
+
+	* configure.in, configure: enable dwarf2-exception-style
+	exception handling on IA-64.
+	* include/dwarf2-signal.h (MAKE_THROW_FRAME): Add for IA-64.
+	(INIT_SEGV, INIT_FPE): Use __libc_sigaction instead of syscall.
+	Add FIXME comment.
+	
+2002-03-25  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.am (libgcj_la_LDFLAGS): Use THREADLDFLAGS.
+	(jv_convert_LDFLAGS): Likewise.
+	(gij_LDFLAGS): Likewise.
+	(rmic_LDFLAGS): Likewise.
+	(rmiregistry_LDFLAGS): Likewise.
+	* configure.in (THREADLDFLAGS): New subst; set correctly for
+	*BSD.
+
+2002-03-25  Tom Tromey  <tromey@redhat.com>
+
+	For PR libgcj/5303:
+	* gnu/java/rmi/registry/RegistryImpl.java (main): Recognize --help
+	and --version.
+	(help): New method.
+	(version): Likewise.
+	* gnu/gcj/convert/Convert.java (version): Removed extraneous
+	"GNU".
+	* gnu/java/rmi/rmic/RMIC.java (parseOptions): Removed extraneous
+	"GNU".
+
+2002-03-24  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* java/io/PushbackReader.java: Reformat.
+
+	* java/io/FileInputStream.java (skip): Call fd.getFilePointer() and
+	calculate correct number of bytes skipped.
+
+	Based on patch from Intel's ORP team:
+	* java/io/PushbackInputStream.java (available): Calculate correct 
+	number of bytes in buffer.
+	(read): Remove redundant bound check. Return bytes from both the
+	buffer and the stream.
+
+2002-03-24  Eric Blake  <ebb9@email.byu.edu>
+
+	* java/beans/IntrospectionException.java: Update to 1.4.
+	* java/beans/PropertyVetoException.java: Ditto.
+
+2002-03-24  Eric Blake  <ebb9@email.byu.edu>
+
+	* gnu/java/beans/BeanInfoEmbryo.java (hasMethod): Use
+	Arrays.equals instead of ArrayHelper.equalsArray.
+
+2002-03-24  C. Brian Jones <cbj@gnu.org>
+
+	* java/beans/Introspector.java: added new static final fields
+	introduced in 1.2, lots of other updates remain to be done
+
+2002-03-24  C. Brian Jones <cbj@gnu.org>
+
+	* java/beans/Introspector.java: reformatting
+
+2002-03-24  C. Brian Jones <cbj@gnu.org>
+
+	* java/beans/Introspector.java: default beanInfoSearchPath will
+	not include sun.beans.infos given we provide no such package and
+	the API doesn't really require it; gnu.java.beans.info is the
+	default.
+
+2002-03-24  Mark Wielaard  <mark@klomp.org>
+
+	Thanks to Orp developers
+	* gnu/java/beans/editors/NativeBooleanEditor.java (setAsText(String)):
+	switch TRUE and FALSE return values.
+
+2002-03-23  Tom Tromey  <tromey@redhat.com>
+
+	* include/name-finder.h (_Jv_name_finder::myclose): New method.
+	* name-finder.cc (_Jv_name_finder): Initialize file descriptors.
+
+2002-03-23  Michael Smith  <msmith@spinnakernet.com>
+
+	* java/util/GregorianCalendar.java (minimums, maximums): Correct
+	MONTH entry.  Fixes PR libgcj/6045.
+
+2002-03-23  Jeff Sturm  <jsturm@one-point.com>
+
+	* java/nat/natPlainSocketImpl.cc (write): Abort loop on error.
+
+2002-03-20  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* posix-threads.cc (_Jv_ThreadSelf_out_of_line): Use write_barrier,
+	not release_set.
+	* sysdep/powerpc/locks.h (write_barrier): New function.
+	* sysdep/i386/locks.h (write_barrier): New function.
+
+2002-03-19  Martin Kahlert  <martin.kahlert@infineon.com>
+
+	* include/jni.h Use correct C comments 
+
+2002-03-18  Tom Tromey  <tromey@redhat.com>
+
+	* include/jni.h (JNIIMPORT): New macro.
+	(JNIEXPORT): Likewise.
+	(JNICALL): Likewise.
+
+2002-03-18  Andrew Haley  <aph@cambridge.redhat.com>
+
+	* include/i386-signal.h (old_i386_kernel_sigaction): New.
+	INIT_SEGV: Use old_i386_kernel_sigaction.
+	INIT_FP: Likewise.
+
+2002-03-18  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* java/lang/natSystem.cc (init_properties): Update VM version
+	properties.
+	* configure.in: Set GCJVERSION.
+	* acconfig.h: Add GCJVERSION.
+	* configure: Rebuilt.
+	* include/config.h.in: Rebuilt.
+
+2002-03-17  Anthony Green  <green@redhat.com>
+
+	* java/lang/ieeefp.h: Add ARM thumb support (copied from newlib).
+
+2002-03-17  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	Build a single libgcj.so, without separate gc and zlib libraries.
+	* configure.in: Use convenience libraries for boehm-gc and zlib. Set
+	SYS_ZLIBS if system zlib is used.
+	* configure: Rebuilt.
+	* Makefile.am: Use boehm-gc and zlib convenience libraries.
+	* Makefile.in: Rebuilt.
+	* libtool-version: Increment .so version number.
+
+2002-03-16  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* Makefile.am: Use empty -classpath flag in addition to -bootclasspath.
+	* Makefile.in: Rebuilt.
+
+2002-03-15  Anthony Green  <green@redhat.com>
+
+	* configure.host (FILE): New macro for specifing File
+	implementation.
+	* configure: Rebuilt.
+	* configure.in: Use FILE.  Define HAVE_TIME for newlib targets.
+
+2002-03-15  Alexandre Oliva  <aoliva@redhat.com>
+
+	* Makefile.am (jv_convert_LDADD): Don't list libraries that are
+	already implicitly brought in from libgcj.la.
+	(gij_LDADD, rmic_LDADD, rmiregistry_LDADD): Likewise.
+	* Makefile.in: Rebuilt.
+
+2002-03-15  Eric Blake  <ebb9@email.byu.edu>
+
+	* THANKS: Fix punctuation, alphabetization.
+
+2002-03-15  Tom Tromey  <tromey@redhat.com>
+	    Rainer Orth <ro@TechFak.Uni-Bielefeld.DE>
+
+	Fix for PR libgcj/5944.
+	* gnu/gcj/io/shs.h: Define uint8_t and uint32_t.
+
+2002-03-15  Anthony Green  <green@redhat.com>
+
+	* configure.in (tool_include_dir): Define.
+	* configure: Rebuilt.
+	* gcj/Makefile.am: Install libgcj-config.h relative to
+	tool_include_dir.
+	* gcj/Makefile: Rebuilt.
+	* gcj/libgcj-config.h: Add warning comment.
+
+	* Makefile.am: Escape quotes in echo.
+	* Makefile.in: Rebuilt.
+
+2002-03-12  Andreas Tobler  <a.tobler@schweiz.ch>
+
+	* configure.host (powerpc*-darwin*): Enable interpreter.
+
+2002-03-10  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* include/posix.h: Add multiple include header protection.
+
+2002-03-10  Adam Megacz <adam@xwt.org>
+
+	* java/net/natPlainSocketImpl.cc: Removed #include "posix.h".
+
+2002-03-10  Adam Megacz <adam@xwt.org>
+
+	* java/net/natPlainSocketImpl.cc: Added #include <platform.h>.
+
+2002-03-10  Tom Tromey  <tromey@redhat.com>
+
+	* java/lang/Win32Process.java: Added comment.
+	* include/posix.h (_Jv_platform_close_on_exec): New function.
+	Include fcntl.h.
+	* include/win32.h (_Jv_platform_close_on_exec): New function.
+	* java/net/natPlainSocketImpl.cc (create): Set close-on-exec
+	flag.
+	(accept): Likewise.
+	* java/net/natPlainDatagramSocketImpl.cc (create): Set
+	close-on-exec flag.
+	* java/io/natFileDescriptorPosix.cc (open): Set close-on-exec
+	flag.
+
+2002-03-09  Tom Tromey  <tromey@redhat.com>
+
+	* verify.cc (state::NO_STACK): New constant.
+	(state::is_unmerged_ret_state): Handle case where stacktop is
+	NO_STACK.
+	(state::merge): Handle NO_STACK merges.
+	(handle_jsr_insn): Invalidate PC, and use special NO_STACK state
+	for instruction following jsr.
+	(stacktop, stackdepth): Removed unused variables.
+	(pop_jump): Ignore case where all remaining states are skipped.
+
+2002-03-09  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* java/awt/ImageMediaEntry: Removed.
+	* java/awt/MediaEntry: Removed.
+
+2002-03-09  Adam Megacz  <adam@xwt.org>
+
+        * java/io/natFileDescriptorWin32.cc (read): Return -1 if zero
+	bytes read and no failure code returned.
+
+2002-03-09  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	Hashtable synchronization for PowerPC.
+	* configure.in: Define SLOW_PTHREAD_SELF if configure.host set
+	slow_pthread_self. Set up symlink for sysdeps directory.
+	* configure: Rebuild.
+	* configure.host: Document more shell variables. Set sysdeps_dir
+	for most platforms. Set slow_pthread_self for i686. Set 
+	enable_hash_synchronization_default and slow_pthread_self for PowerPC. 
+	* posix-threads.cc (_Jv_ThreadSelf_out_of_line): Use release_set so
+	that memory barrier is emitted where required.
+	* prims.cc: 64-bit align static primitive class instances.
+	* include/posix-threads.h (_Jv_ThreadSelf for SLOW_PTHREAD_SELF): Add
+	read_barrier() to enforce ordering of reads.
+	* sysdep/powerpc/locks.h: New file. Implementation of synchronization
+	primitives for PowerPC.
+	* sysdep/i386/locks.h: New file. Synchronization primitives for i386 
+	moved from natObject.cc.
+	* sysdep/alpha/locks.h: Likewise.
+	* sysdep/ia64/locks.h: Likewise.
+	* sysdep/generic/locks.h: Likewise.
+	* java/lang/natObject.cc: Move thread synchronization primitives to
+	system-dependent headers.
+
+2002-03-09  Adam Megacz  <adam@xwt.org>
+
+        * win32.cc (_CRT_MT, __mingwthr_key_dtor) Added fake
+        definitions to simulate -mthreads.
+
+2002-03-09  Adam Megacz  <adam@xwt.org>
+
+        * win32.cc (_Jv_platform_gettimeofday) Cast 1000 to long long to
+        avoid precision loss.
+
+2002-03-09  Per Bothner  <per@bothner.com>
+
+	* gnu/gcj/xlib/WindowAttributes.java  Assign null to RawData, not 0.
+	* gnu/gcj/xlib/XImage.java:  Likewise.
+	* gnu/gcj/xlib/XColor.java:  Likewise.
+
+2002-03-09  Adam Megacz  <adam@xwt.org>
+
+	* java/lang/Win32Process.java (ConcreteProcess): Now throws an
+	IOException so that Throwable.printStackTrace fails correctly.
+
+2002-03-08  Adam Megacz  <adam@xwt.org>
+
+	* java/net/natPlainSocketImpl.cc (read, write, close): Formatting
+	fixed.
+	
+2002-03-09  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* posix.cc (_Jv_platform_gettimeofday): Make sure result doesn't get
+	truncated to int.
+
+2002-03-08  Tom Tromey  <tromey@redhat.com>
+
+	* include/jni.h: Include stdio.h.
+
+2002-03-08  Tom Tromey  <tromey@redhat.com>
+
+	* posix.cc (internal_gettimeofday): New function.
+	(_Jv_select): Use it.
+
+2002-03-07  Adam Megacz  <adam@xwt.org>
+
+	* java/lang/natSystem.cc (currentTimeMillis): Now uses updated
+       _Jv_platform_gettimeofday signature.
+	
+2002-03-07  Adam Megacz  <adam@xwt.org>
+
+       * win32.cc (_Jv_platform_gettimeofday): Now takes no args,
+       returns jlong. Added implementation
+       * posix.cc (_Jv_platform_gettimeofday): Now takes no args,
+       returns jlong.
+       * win32.h (_Jv_platform_gettimeofday): Now takes no args,
+       returns jlong.
+       * posix.h (_Jv_platform_gettimeofday): Now takes no args,
+       returns jlong.
+       * java/lang/natSystem.cc (currentTimeMillis): Now uses updated
+       _Jv_platform_gettimeofday signature.
+
+2002-03-07  Adam Megacz  <adam@xwt.org>
+
+        * java/net/natPlainSocketImpl.cc: Changed USE_WINSOCK to
+        WIN32, and added thunks for read(), write(), and close().
+        * java/net/natPlainSocketImpl.cc (accept, read, read):
+        Disabled timeouts on WIN32 pending discussion.
+
+2002-03-07  Adam Megacz  <adam@xwt.org>
+
+        * java/io/FileDescriptor.java: Initialize in/out/err in init().
+        * java/io/natFileDescriptorWin32.cc (init()): Added function.
+        * java/io/natFileDescriptorPosix.cc (init()): Added function.
+        * java/io/natFileDescriptorEcos.cc (init()): Added function.
+
+2002-03-07  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* java/net/natPlainSocketImpl.cc (_Jv_recv): Removed.
+	(read): Call recv() directly, not _Jv_recv().
+
+2002-03-06  Tom Tromey  <tromey@redhat.com>
+
+	* include/config.h.in: Rebuilt.
+	* configure: Rebuilt.
+	* Makefile.in: Rebuilt.
+
+2002-03-06  Eric Blake  <ebb9@email.byu.edu>
+
+	* scripts/unicode-decomp.pl: Move from chartables.pl, and remove
+	the code for generating include/java-chartables.h.
+	* scripts/unicode-blocks.pl: Move from scripts/blocks.pl, and
+	merge with Classpath.
+	* scripts/unicode-muncher.pl: Copy from Classpath.
+	* scritps/MakeCharTables.java: New file.
+	* gnu/gcj/convert/Blocks-3.txt: New file.
+	* gnu/gcj/convert/UnicodeData-3.0.0.txt: New file.
+	* gnu/gcj/convert/UnicodeCharacterDatabase-3.0.0.html: New file.
+	* gnu/java/lang/CharData.java: Copy from Classpath.
+	* Makefile.am (ordinary_java_source_files): Add
+	gnu/java/lang/CharData.java.
+	* configure.in: Remove --enable-fast-character option.
+	* java/lang/Character.java: Merge algorithms and Javadoc with
+	Classpath.
+	* java/lang/natCharacter.cc: Implement Unicode lookup table more
+	efficiently.
+	* include/java-chardecomp.h: Regenerate.
+	* include/java-chartables.h: Regenerate.
+
+2002-03-06  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* java/awt/MediaTracker.java: Implemented.
+	* Makefile.am: Add MediaTracker.
+	* Makefile.in: Rebuilt.
+
+2002-03-05  Tom Tromey  <tromey@redhat.com>
+
+	* java/lang/natPosixProcess.cc (fail): Removed.
+	(startProcess): Simplified error-handling.  Preserve
+	LD_LIBRARY_PATH across exec.
+
+2002-03-05  Tom Tromey  <tromey@redhat.com>
+
+	* jni.cc (_Jv_LookupJNIMethod): Throw UnsatisfiedLinkError, not
+	AbstractMethodError.
+
+2002-03-04  Adam Megacz <adam@xwt.org>
+
+	* java/net/natInetAddress.cc: Changed USE_WINSOCK to WIN32, added
+	'#undef STRICT'.
+
+2002-03-03  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
+
+	* Makefile.am: Use -bootclasspath, not -CLASSPATH.
+	* Makefile.in: Rebuilt.
+
+2002-03-03 Mark Wielaard <mark@klomp.org>
+
+	* java/util/Timer (TaskQueue.stop): set elements to zero.
+
+2002-02-28  Anthony Green  <green@redhat.com>
+
+	* java/lang/reflect/natMethod.cc (result): Add void* element.
+	(_Jv_CallAnyMethodA): Handle FFI_TYPE_POINTER arguments.  Move
+	constructor test.
+
+2002-02-26  Tom Tromey  <tromey@redhat.com>
+
+	* java/lang/natSystem.cc (init_properties): Use __VERSION__.
+	* gij.cc (version): Use __VERSION__.
+	* include/config.h.in: Rebuilt.
+	* acconfig.h (GCJVERSION): Removed.
+	* configure: Rebuilt.
+	* configure.in (GCJVERSION): Removed.
+
+2002-02-26  Andreas Schwab  <schwab@suse.de>
+
+	* acinclude.m4 (LIB_AC_PROG_CXX): Use glibjava_CXX instead of
+	glibcpp_CXX, since libjava uses even another CXX.
+	* aclocal.m4, configure: Regenerated.
+
+2002-02-26  Tom Tromey  <tromey@redhat.com>
+
+	* java/lang/natPosixProcess.cc (startProcess): Use FD_CLOEXEC, not
+	`1'.
+
 2002-02-25  Bryce McKinlay  <bryce@waitaki.otago.ac.nz>
 
 	* Makefile.am (GCJCOMPILE): Use -fCLASSPATH not -fclasspath. Fixes

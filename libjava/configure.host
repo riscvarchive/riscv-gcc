@@ -18,6 +18,16 @@
 #   libgcj_cflags	Special CFLAGS to use when building
 #   libgcj_cxxflags	Special CXXFLAGS to use when building
 #   libgcj_javaflags	Special JAVAFLAGS to use when building
+#   libgcj_interpreter  If the bytecode interpreter supports this platform.
+#   enable_java_net_default  If java.net native code should be enabled by
+#                            default.
+#   enable_hash_synchronization_default  If hash synchronization should be
+#                                        enabled by default.
+#   sysdeps_dir		Directory containing system-dependent headers
+#   slow_pthread_self   The synchronization code should try to avoid 
+#			pthread_self calls by caching thread IDs in a hashtable
+#   can_unwind_signal   Set to "yes" if the EH unwinder supports throwing
+#			from a signal handler.
 
 libgcj_flags=
 libgcj_cflags=
@@ -26,6 +36,9 @@ libgcj_javaflags=
 libgcj_interpreter=
 enable_java_net_default=yes
 enable_hash_synchronization_default=no
+sysdeps_dir=generic
+slow_pthread_self=
+can_unwind_signal=no
 
 case "${target_optspace}:${host}" in
   yes:*)
@@ -48,7 +61,9 @@ echo "$target"
 
 DIVIDESPEC=-fuse-divide-subroutine
 EXCEPTIONSPEC=-fnon-call-exceptions
+CHECKREFSPEC=
 
+# This case statement supports per-CPU defaults.
 case "${host}" in
   mips-tx39-*|mipstx39-unknown-*)
 	libgcj_flags="${libgcj_flags} -G 0"
@@ -56,31 +71,36 @@ case "${host}" in
 	AM_RUNTESTFLAGS="--target_board=jmr3904-sim"	
 	# Use "Ecos" processes since they are a no-op.
 	PROCESS=Ecos
+	FILE=Posix
  	enable_java_net_default=no
  	enable_getenv_properties_default=no
 	;;
   i686-*|i586-*|i486-*|i386-*)
+	sysdeps_dir=i386
 	libgcj_flags="${libgcj_flags} -ffloat-store"
 	libgcj_interpreter=yes
 	libgcj_cxxflags="-D__NO_MATH_INLINES"
 	libgcj_cflags="-D__NO_MATH_INLINES"
 	DIVIDESPEC=-fno-use-divide-subroutine
 	enable_hash_synchronization_default=yes
+	slow_pthread_self=yes
 	;;
   alpha*-*)
+	sysdeps_dir=alpha
 	libgcj_flags="${libgcj_flags} -mieee"
 	libgcj_interpreter=yes
 	enable_hash_synchronization_default=yes
 	;;
-  powerpc*-linux*)
+  powerpc*-*)
+	sysdeps_dir=powerpc
 	libgcj_interpreter=yes
-	;;
-  powerpc-apple-*)
-        libgcj_interpreter=no
+	enable_hash_synchronization_default=yes
+	slow_pthread_self=yes
 	;;
   sparc-*)
         ;;
   ia64-*)
+	sysdeps_dir=ia64
         libgcj_flags="${libgcj_flags} -funwind-tables"
 	libgcj_interpreter=yes
 	enable_hash_synchronization_default=yes
@@ -88,9 +108,39 @@ case "${host}" in
   xscale*-elf)
 	with_libffi_default=no
 	PROCESS=Ecos
+	FILE=Posix
+	CHECKREFSPEC=-fcheck-references
+	EXCEPTIONSPEC=
 	enable_java_net_default=no
 	enable_getenv_properties_default=no
 	enable_main_args_default=no
+	;;
+esac
+
+# This case statement supports generic port properties and may refine
+# the above per-CPU defaults.  Note: If your OS implements
+# MD_FALLBACK_FRAME_STATE_FOR, then you want to set can_unwind_signal
+# here.
+case "${host}" in
+  i[34567]86*-linux* | \
+  powerpc*-linux* | \
+  alpha*-linux* | \
+  sparc*-linux* | \
+  ia64-*)
+  	can_unwind_signal=yes
+	;;
+  *-*-darwin*)
+	enable_hash_synchronization_default=no
+	slow_pthread_self=
+	;;
+  *-*-freebsd*)
+	slow_pthread_self=
+	;;
+  *-cygwin*)
+  	# The cygwin linker doesn't do 8-byte alignment by default, so
+	# disable hash synchronization for now.
+	enable_hash_synchronization_default=no
+	slow_pthread_self=
 	;;
 esac
 

@@ -38,38 +38,66 @@ struct MyNP : std::numpunct<char>
   char   do_thousands_sep() const;
 };
 
-std::string MyNP::do_grouping() const { static std::string s("\3"); return s; }
+std::string MyNP::do_grouping() const { std::string s("\3"); return s; }
 char   MyNP::do_thousands_sep() const { return ' '; }
 
 int
 test01()
 {
   bool test = true;
-  const char lit[] = "-0 123 456\n:-01 234 567:\n:-0 123 456 :"
-                     "\n:   -012 345:\n:-    01 234:\n0x000012 345 678";
+
+  const char lit[] = "0123 456\n: 01 234 567:\n:0123 456   :\n"
+                     ":    012 345:\n:     01 234:\n:0726 746 425:\n"
+                     ":04 553 207 :\n:   0361 100:\n:       0173:\n"
+                     "0x12 345 678\n|0x000012 345 678|\n|0x12 345 6780000|\n"
+                     "|00000x12 345 678|\n|0x000012 345 678|\n";
+
   std::ostringstream oss;
   oss.imbue(std::locale(std::locale(), new MyNP));
+
+  // Octals
   oss << std::oct << std::showbase;
-  oss << -0123456l << std::endl;
+  oss << 0123456l << std::endl;
 
   oss << ":" << std::setw(11);
-  oss << -01234567l << ":" << std::endl;
+  oss << 01234567l << ":" << std::endl;
 
   oss << ":" << std::setw(11) << std::left;
-  oss << -0123456l << ":" << std::endl;
+  oss << 0123456l << ":" << std::endl;
 
   oss << ":" << std::setw(11) << std::right;
-  oss << -012345l << ":" << std::endl;
+  oss << 012345l << ":" << std::endl;
 
   oss << ":" << std::setw(11) << std::internal;
-  oss << -01234l << ":" << std::endl;
+  oss << 01234l << ":" << std::endl;
 
-  oss << std::hex;
-  oss << std::setfill('0');
-  oss << std::internal;
-  oss << std::showbase;
-  oss << std::setw(16);
+  oss << ":" << std::setw(11);
+  oss << 123456789l << ":" << std::endl;
+
+  oss << ":" << std::setw(11) << std::left;
+  oss << 1234567l << ":" << std::endl;
+
+  oss << ":" << std::setw(11) << std::right;
+  oss << 123456l << ":" << std::endl;
+
+  oss << ":" << std::setw(11) << std::internal;
+  oss << 123l << ":" << std::endl;
+
+  // Hexadecimals
+  oss << std::hex << std::setfill('0');
   oss << 0x12345678l << std::endl;
+
+  oss << "|" << std::setw(16);
+  oss << 0x12345678l << "|" << std::endl;
+
+  oss << "|" << std::setw(16) << std::left;
+  oss << 0x12345678l << "|" << std::endl;
+
+  oss << "|" << std::setw(16) << std::right;
+  oss << 0x12345678l << "|" << std::endl;
+
+  oss << "|" << std::setw(16) << std::internal;
+  oss << 0x12345678l << "|" << std::endl;
 
   VERIFY( oss.good() );
   VERIFY( oss.str() == lit );
@@ -112,11 +140,18 @@ main()
 
 // Projected output:
 /*
--0 123 456
-:-01 234 567:
-:-0 123 456 :
-:   -012 345:
-:-    01 234:
-0x000012 345 678
+0123 456
+: 01 234 567:
+:0123 456   :
+:    012 345:
+:     01 234:
+:0726 746 425:
+:04 553 207 :
+:   0361 100:
+:       0173:
+0x12 345 678
+|0x000012 345 678|
+|0x12 345 6780000|
+|00000x12 345 678|
+|0x000012 345 678|
 */
-

@@ -1,3 +1,29 @@
+2002-07-25  Release Manager
+
+	* GCC 3.1.1 Released.
+
+2002-07-22  Gerald Pfeifer  <pfeifer@dbai.tuwien.ac.at>
+
+	* gennews (files): Add proper files for the GCC 3.1 release series.
+	Simplify and reformat introductory wording.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-04-03  Zack Weinberg  <zack@codesourcery.com>
+
+	* texi2pod.pl: Handle @end ftable and @end vtable.
+
+2002-03-12  Zack Weinberg  <zack@codesourcery.com>
+
+	* texi2pod.pl: Handle @include, @ftable, @vtable.
+	Reformat some code for clarity.
+
 2002-02-24  Christian Jönsson  <c.christian.joensson@telia.com>
 
 	* test_summary: Additional to XPASS and FAIL, add UNRESOLVED,

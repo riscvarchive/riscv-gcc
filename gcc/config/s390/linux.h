@@ -54,7 +54,7 @@ Boston, MA 02111-1307, USA.  */
 #define NO_BUILTIN_PTRDIFF_TYPE
 
 #define CPP_PREDEFINES \
-  "-Dunix -Asystem(unix) -Dlinux -Asystem(linux) -D__ELF__ \
+  "-Dunix -Asystem(unix) -D__gnu_linux__ -Dlinux -Asystem(linux) -D__ELF__ \
    -Acpu(s390) -Amachine(s390) -D__s390__"
 
 #define CPP_ARCH31_SPEC \
@@ -141,6 +141,8 @@ Boston, MA 02111-1307, USA.  */
 
 #define ASM_DOUBLE "\t.double"
 
+/* The LOCAL_LABEL_PREFIX variable is used by dbxelf.h.  */
+#define LOCAL_LABEL_PREFIX "."
 
 /* Prefix for internally generated assembler labels.  */
 #define LPREFIX ".L"

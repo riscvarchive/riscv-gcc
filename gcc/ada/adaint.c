@@ -4,7 +4,7 @@
  *                                                                          *
  *                               A D A I N T                                *
  *                                                                          *
- *                            $Revision: 1.6 $
+ *                            $Revision: 1.7.2.1 $
  *                                                                          *
  *                          C Implementation File                           *
  *                                                                          *
@@ -28,7 +28,7 @@
  * file might be covered by the  GNU Public License.                        *
  *                                                                          *
  * GNAT was originally developed  by the GNAT team at  New York University. *
- * It is now maintained by Ada Core Technologies Inc (http://www.gnat.com). *
+ * Extensive contributions were provided by Ada Core Technologies Inc.      *
  *                                                                          *
  ****************************************************************************/
 
@@ -713,7 +713,7 @@ __gnat_tmp_name (tmp_filename)
   if (tmpdir == NULL)
     strcpy (tmp_filename, "/tmp/gnat-XXXXXX");
   else
-    sprintf (tmp_filename, "%s/gnat-XXXXXX", tmpdir);
+    sprintf (tmp_filename, "%200s/gnat-XXXXXX", tmpdir);
 
   close (mkstemp(tmp_filename));
 #else

@@ -17,7 +17,6 @@ details.  */
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/param.h>
-#include <fcntl.h>
 
 #ifdef HAVE_SYS_IOCTL_H
 #define BSD_COMP /* Get FIONREAD on Solaris2. */
@@ -44,6 +43,14 @@ details.  */
 #include <java/io/FileNotFoundException.h>
 
 #define NO_FSYNC_MESSAGE "sync unsupported"
+
+void
+java::io::FileDescriptor::init(void)
+{
+  in = new java::io::FileDescriptor(0);
+  out = new java::io::FileDescriptor(1);
+  err = new java::io::FileDescriptor(2);
+}
 
 jboolean
 java::io::FileDescriptor::valid (void)
@@ -114,6 +121,9 @@ java::io::FileDescriptor::open (jstring path, jint jflags)
       sprintf (msg, "%s (%s)", buf, strerror (errno));
       throw new FileNotFoundException (JvNewStringLatin1 (msg));
     }
+
+  _Jv_platform_close_on_exec (fd);
+
   return fd;
 }
 

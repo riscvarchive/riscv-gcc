@@ -145,7 +145,7 @@ c_cannot_inline_tree_fn (fnp)
   tree fn = *fnp;
   tree t;
 
-  if (optimize == 0
+  if (flag_really_no_inline
       && lookup_attribute ("always_inline", DECL_ATTRIBUTES (fn)) == NULL)
     return 1;
 
@@ -324,7 +324,7 @@ finish_cdtor (body)
 
   RECHAIN_STMTS (body, COMPOUND_BODY (body));
 
-  finish_function (0);
+  finish_function (0, 0);
 }
 
 /* Called at end of parsing, but before end-of-file processing.  */

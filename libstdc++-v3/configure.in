@@ -1,32 +1,38 @@
 # Process this file with autoconf to produce a configure script, like so:
-# aclocal, autoconf, autoheader, automake
+# aclocal && autoconf && autoheader && automake
 
 AC_PREREQ(2.13)
 AC_INIT(src/ios.cc)
 
+# This works around the fact that libtool configuration may change LD
+# for this particular configuration, but some shells, instead of
+# keeping the changes in LD private, export them just because LD is
+# exported.
+ORIGINAL_LD_FOR_MULTILIBS=$LD
+
 PACKAGE=libstdc++
 AC_SUBST(PACKAGE)
-# For typical GNU versioning info, format is MAJOR.MINOR.MICRO
-release_VERSION=3.1.0
-AC_SUBST(release_VERSION)
 # For libtool versioning info, format is CURRENT:REVISION:AGE
-libtool_VERSION=4:0:0
+libtool_VERSION=4:1:0
 AC_SUBST(libtool_VERSION)
 
+GLIBCPP_TOPREL_CONFIGURE
+
 # Gets build, host, target, *_vendor, *_cpu, *_os, etc.
-# AC 2.50 sets target_alias iff the user specified --target, but we use it
-# everywhere, so we set it here just to be sure.
+# AC 2.5x sets target_alias iff the user specified --target, but we use it
+# everywhere, so we set it here just to be sure.  In AC 2.13
+# AC_CANONICAL_TARGET was known as AC_CANONICAL_SYSTEM.
 AC_CANONICAL_SYSTEM
 target_alias=${target_alias-$target}
 AC_SUBST(target_alias)
 
-AM_INIT_AUTOMAKE($PACKAGE, $release_VERSION)
-AM_CONFIG_HEADER(config.h)
-
 # Runs configure.host and configure.target, as well as finds CC, CXX
-# and assorted other critical bits. Have to run this before the
+# and assorted other critical bits.  Have to run this before the
 # GLIBCPP_ENABLE_* macros below.
 GLIBCPP_CONFIGURE(.)
+
+AM_INIT_AUTOMAKE($PACKAGE, $gcc_version)
+AM_CONFIG_HEADER(config.h)
 
 AC_LIBTOOL_DLOPEN
 AM_PROG_LIBTOOL
@@ -44,12 +50,15 @@ GLIBCPP_ENABLE_CLOCALE
 GLIBCPP_ENABLE_C_MBCHAR([yes])
 GLIBCPP_ENABLE_C99([yes])
 GLIBCPP_ENABLE_LONG_LONG([yes])
-GLIBCPP_ENABLE_CHEADERS([c_std])
+GLIBCPP_ENABLE_CHEADERS([$c_model])
 GLIBCPP_ENABLE_THREADS
 GLIBCPP_ENABLE_CXX_FLAGS([none])
 GLIBCPP_ENABLE_SJLJ_EXCEPTIONS
+GLIBCPP_ENABLE_LIBUNWIND_EXCEPTIONS
 GLIBCPP_ENABLE_CONCEPT_CHECKS
 
+# Check for headers necessary for libsupc++ using dyn-string.c/cxa_demangle.c
+AC_CHECK_HEADERS(string.h stdlib.h)
 
 if test -n "$with_cross_host" || test x"$build" != x"$host"; then
 
@@ -141,48 +150,83 @@ if test -n "$with_cross_host" || test x"$build" != x"$host"; then
       AC_DEFINE(HAVE_FREXPF)
       AC_DEFINE(HAVE_HYPOTF)
       ;;
+    *-mingw32*)
+      AC_CHECK_HEADERS([sys/types.h locale.h float.h])
+      GLIBCPP_CHECK_LINKER_FEATURES
+      GLIBCPP_CHECK_COMPLEX_MATH_SUPPORT
+      GLIBCPP_CHECK_WCHAR_T_SUPPORT
+      os_include_dir="config/os/mingw32"
+      ;;
+changequote(,)dnl
+    *-qnx6.[12]*)
+changequote([,])dnl
+      SECTION_FLAGS='-ffunction-sections -fdata-sections'
+      AC_SUBST(SECTION_FLAGS) 
+      GLIBCPP_CHECK_LINKER_FEATURES
+      GLIBCPP_CHECK_COMPLEX_MATH_SUPPORT
+      GLIBCPP_CHECK_WCHAR_T_SUPPORT
+      os_include_dir="config/os/qnx/qnx6.1"
+      AC_DEFINE(HAVE_COSF)
+      AC_DEFINE(HAVE_COSL)
+      AC_DEFINE(HAVE_COSHF)
+      AC_DEFINE(HAVE_COSHL)
+      AC_DEFINE(HAVE_LOGF)
+      AC_DEFINE(HAVE_LOGL)
+      AC_DEFINE(HAVE_LOG10F)
+      AC_DEFINE(HAVE_LOG10L)
+      AC_DEFINE(HAVE_SINF)
+      AC_DEFINE(HAVE_SINL)
+      AC_DEFINE(HAVE_SINHF)
+      AC_DEFINE(HAVE_SINHL)
+      ;;
     *)
       os_include_dir="config/os/newlib"
       AC_DEFINE(HAVE_HYPOT)
       ;;
   esac
 
-  # GLIBCPP_CHECK_STDLIB_SUPPORT
-  AC_DEFINE(HAVE_STRTOF)        
-  AC_DEFINE(HAVE_STRTOLD)        
-  # AC_FUNC_MMAP
-  AC_DEFINE(HAVE_MMAP)
+  case "$target_alias" in
+    *-mingw32*)
+      ;;
+    *)
+      # GLIBCPP_CHECK_STDLIB_SUPPORT
+      AC_DEFINE(HAVE_STRTOF)        
+      AC_DEFINE(HAVE_STRTOLD)        
+      # AC_FUNC_MMAP
+      AC_DEFINE(HAVE_MMAP)
 
-  AC_DEFINE(HAVE_ACOSF)
-  AC_DEFINE(HAVE_ASINF)
-  AC_DEFINE(HAVE_ATAN2F)
-  AC_DEFINE(HAVE_ATANF)
-  AC_DEFINE(HAVE_CEILF)
-  AC_DEFINE(HAVE_COPYSIGN)
-  AC_DEFINE(HAVE_COPYSIGNF)
-  AC_DEFINE(HAVE_COSF)
-  AC_DEFINE(HAVE_COSHF)
-  AC_DEFINE(HAVE_EXPF)
-  AC_DEFINE(HAVE_FABSF)
-  AC_DEFINE(HAVE_FINITE)
-  AC_DEFINE(HAVE_FINITEF)
-  AC_DEFINE(HAVE_FLOORF)
-  AC_DEFINE(HAVE_FMODF)
-  AC_DEFINE(HAVE_FREXPF)
-  AC_DEFINE(HAVE_ISINF)
-  AC_DEFINE(HAVE_ISINFF)
-  AC_DEFINE(HAVE_ISNAN)
-  AC_DEFINE(HAVE_ISNANF)
-  AC_DEFINE(HAVE_LDEXPF)
-  AC_DEFINE(HAVE_LOG10F)
-  AC_DEFINE(HAVE_LOGF)
-  AC_DEFINE(HAVE_MODFF)
-  AC_DEFINE(HAVE_POWF)
-  AC_DEFINE(HAVE_SINF)
-  AC_DEFINE(HAVE_SINHF)
-  AC_DEFINE(HAVE_SQRTF)
-  AC_DEFINE(HAVE_TANF)
-  AC_DEFINE(HAVE_TANHF)
+      AC_DEFINE(HAVE_ACOSF)
+      AC_DEFINE(HAVE_ASINF)
+      AC_DEFINE(HAVE_ATAN2F)
+      AC_DEFINE(HAVE_ATANF)
+      AC_DEFINE(HAVE_CEILF)
+      AC_DEFINE(HAVE_COPYSIGN)
+      AC_DEFINE(HAVE_COPYSIGNF)
+      AC_DEFINE(HAVE_COSF)
+      AC_DEFINE(HAVE_COSHF)
+      AC_DEFINE(HAVE_EXPF)
+      AC_DEFINE(HAVE_FABSF)
+      AC_DEFINE(HAVE_FINITE)
+      AC_DEFINE(HAVE_FINITEF)
+      AC_DEFINE(HAVE_FLOORF)
+      AC_DEFINE(HAVE_FMODF)
+      AC_DEFINE(HAVE_FREXPF)
+      AC_DEFINE(HAVE_ISINF)
+      AC_DEFINE(HAVE_ISINFF)
+      AC_DEFINE(HAVE_ISNAN)
+      AC_DEFINE(HAVE_ISNANF)
+      AC_DEFINE(HAVE_LDEXPF)
+      AC_DEFINE(HAVE_LOG10F)
+      AC_DEFINE(HAVE_LOGF)
+      AC_DEFINE(HAVE_MODFF)
+      AC_DEFINE(HAVE_POWF)
+      AC_DEFINE(HAVE_SINF)
+      AC_DEFINE(HAVE_SINHF)
+      AC_DEFINE(HAVE_SQRTF)
+      AC_DEFINE(HAVE_TANF)
+      AC_DEFINE(HAVE_TANHF)
+      ;;
+  esac
 
   # At some point, we should differentiate between architectures
   # like x86, which have long double versions, and alpha/powerpc/etc.,
@@ -226,7 +270,7 @@ else
 
   # Check for available headers.
   AC_CHECK_HEADERS([nan.h ieeefp.h endian.h sys/isa_defs.h machine/endian.h \
-  machine/param.h sys/machine.h fp.h locale.h float.h inttypes.h gconv.h])
+  machine/param.h sys/machine.h fp.h locale.h float.h inttypes.h gconv.h sys/types.h])
 
   GLIBCPP_CHECK_COMPILER_FEATURES
   GLIBCPP_CHECK_LINKER_FEATURES
@@ -272,9 +316,6 @@ else
   multilib_arg=
 fi
 
-# Needed so that g++ can find the correct include subdir automatically.
-INTERFACE=v3
-
 # Export all the install information
 GLIBCPP_EXPORT_INSTALL_INFO
 
@@ -301,6 +342,7 @@ AC_OUTPUT(Makefile \
     libmath/Makefile libio/Makefile libsupc++/Makefile \
     po/Makefile testsuite/Makefile mkcheck testsuite_flags,
 [if test -n "$CONFIG_FILES"; then
+  LD="${ORIGINAL_LD_FOR_MULTILIBS}"
   ac_file=Makefile . ${glibcpp_basedir}/../config-ml.in
   grep '^MULTISUBDIR =' Makefile >> src/Makefile
   grep '^MULTISUBDIR =' Makefile >> libsupc++/Makefile
@@ -318,6 +360,31 @@ glibcpp_basedir=${glibcpp_basedir}
 CC="${CC}"
 CXX="${CXX}"
 )
+dnl  In autoconf 2.5x, AC_OUTPUT is replaced by three AC_ macros:
+dnl  AC_CONFIG_FILES(Makefile \
+dnl      include/Makefile src/Makefile \
+dnl      libmath/Makefile libio/Makefile libsupc++/Makefile \
+dnl      po/Makefile testsuite/Makefile mkcheck testsuite_flags)
+dnl  AC_CONFIG_COMMANDS([default],
+dnl  [if test -n "$CONFIG_FILES"; then
+dnl    ac_file=Makefile . ${glibcpp_basedir}/../config-ml.in
+dnl    grep '^MULTISUBDIR =' Makefile >> src/Makefile
+dnl    grep '^MULTISUBDIR =' Makefile >> libsupc++/Makefile
+dnl  fi
+dnl  chmod +x mkcheck
+dnl  chmod +x testsuite_flags
+dnl  ],
+dnl  srcdir=${srcdir}
+dnl  host=${host}
+dnl  target=${target}
+dnl  with_multisubdir=${with_multisubdir}
+dnl  ac_configure_args="${multilib_arg} ${ac_configure_args}"
+dnl  CONFIG_SHELL=${CONFIG_SHELL-/bin/sh}
+dnl  glibcpp_basedir=${glibcpp_basedir}
+dnl  CC="${CC}"
+dnl  CXX="${CXX}"
+dnl  )
+dnl  AC_OUTPUT
 
 
 # Sanity checking & User-visible messages.
@@ -332,11 +399,11 @@ if test ! -f stamp-sanity-warned; then
   touch stamp-sanity-warned
   echo ""
   echo "Please make certain that you read the installation information here:"
-  echo "  faster => ${srcdir}/docs/install.html"
+  echo "  faster => ${srcdir}/docs/html/install.html"
   echo "  slower => <URL:http://gcc.gnu.org/onlinedocs/libstdc++/install.html>"
   echo ""
   echo "and the configuration information here:"
-  echo "  faster => ${srcdir}/docs/configopts.html"
+  echo "  faster => ${srcdir}/docs/html/configopts.html"
   echo "  slower => <URL:http://gcc.gnu.org/onlinedocs/libstdc++/configopts.html>"
   echo ""
   echo "before proceeding with ${_cv_gnu_make_command}."

@@ -52,14 +52,14 @@ Boston, MA 02111-1307, USA.  */
     {									\
       int regno;							\
       for (regno = FP_REG_FIRST + 20; regno < FP_REG_FIRST + 24; regno++) \
-	call_used_regs[regno] = 1;					\
+	call_really_used_regs[regno] = call_used_regs[regno] = 1;	\
     }									\
   /* odd registers from fp21 to fp31 are now caller saved.  */		\
   if (mips_abi == ABI_N32 || mips_abi == ABI_MEABI)  			\
     {									\
       int regno;							\
       for (regno = FP_REG_FIRST + 21; regno <= FP_REG_FIRST + 31; regno+=2) \
-	call_used_regs[regno] = 1;					\
+	call_really_used_regs[regno] = call_used_regs[regno] = 1;	\
     }									\
 }
 
@@ -86,6 +86,19 @@ Boston, MA 02111-1307, USA.  */
 	      || GET_MODE_CLASS (MODE) == MODE_INT)))			\
       ? downward : upward))
 
+/* Modified version of the macro in expr.h.  */
+#define MUST_PASS_IN_STACK(MODE,TYPE)			\
+  ((TYPE) != 0						\
+   && (TREE_CODE (TYPE_SIZE (TYPE)) != INTEGER_CST	\
+       || TREE_ADDRESSABLE (TYPE)			\
+       || ((MODE) == BLKmode 				\
+	   && mips_abi != ABI_32 && mips_abi != ABI_O64 \
+	   && ! ((TYPE) != 0 && TREE_CODE (TYPE_SIZE (TYPE)) == INTEGER_CST \
+		 && 0 == (int_size_in_bytes (TYPE)	\
+			  % (PARM_BOUNDARY / BITS_PER_UNIT))) \
+	   && (FUNCTION_ARG_PADDING (MODE, TYPE)	\
+	       == (BYTES_BIG_ENDIAN ? upward : downward)))))
+
 /* Under the old (i.e., 32 and O64 ABIs) all BLKmode objects are
    returned in memory.  Under the new (N32 and 64-bit MIPS ABIs) small
    structures are returned in a register.  Objects with varying size
@@ -97,9 +110,6 @@ Boston, MA 02111-1307, USA.  */
    : ((int_size_in_bytes (TYPE)						 \
        > (2 * UNITS_PER_WORD)) 						 \
       || (int_size_in_bytes (TYPE) == -1)))
-
-#undef FUNCTION_VALUE
-#define FUNCTION_VALUE(VALTYPE, FUNC)	mips_function_value (VALTYPE, FUNC)
 
 /* For varargs, we must save the current argument, because it is the fake
    argument va_alist, and will need to be converted to the real argument.

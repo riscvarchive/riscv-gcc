@@ -2829,11 +2829,6 @@ struct foo @{ int x[2] __attribute__ ((aligned (8))); @};
 This is an alternative to creating a union with a @code{double} member
 that forces the union to be double-word aligned.
 
-It is not possible to specify the alignment of functions; the alignment
-of functions is determined by the machine's requirements and cannot be
-changed.  You cannot specify alignment for a typedef name because such a
-name is just an alias, not a distinct type.
-
 As in the preceding examples, you can explicitly specify the alignment
 (in bytes) that you wish the compiler to use for a given variable or
 structure field.  Alternatively, you can leave out the alignment factor
@@ -5966,6 +5961,8 @@ for further explanation.
 @menu
 * ARM Pragmas::
 * Darwin Pragmas::
+* Solaris Pragmas::
+* Tru64 Pragmas::
 @end menu
 
 @node ARM Pragmas
@@ -6028,6 +6025,44 @@ This pragma declares variables to be possibly unused.  GCC will not
 produce warnings for the listed variables.  The effect is similar to
 that of the @code{unused} attribute, except that this pragma may appear
 anywhere within the variables' scopes.
+@end table
+
+@node Solaris Pragmas
+@subsection Solaris Pragmas
+
+For compatibility with the SunPRO compiler, the following pragma
+is supported.
+
+@table @code
+@item redefine_extname @var{oldname} @var{newname}
+@cindex pragma, redefine_extname
+
+This pragma gives the C function @var{oldname} the assembler label
+@var{newname}.  The pragma must appear before the function declaration.
+This pragma is equivalent to the asm labels extension (@pxref{Asm
+Labels}).  The preprocessor defines @code{__PRAGMA_REDEFINE_EXTNAME}
+if the pragma is available.
+@end table
+
+@node Tru64 Pragmas
+@subsection Tru64 Pragmas
+
+For compatibility with the Compaq C compiler, the following pragma
+is supported.
+
+@table @code
+@item extern_prefix @var{string}
+@cindex pragma, extern_prefix
+
+This pragma renames all subsequent function and variable declarations
+such that @var{string} is prepended to the name.  This effect may be
+terminated by using another @code{extern_prefix} pragma with the 
+empty string.
+
+This pragma is similar in intent to to the asm labels extension
+(@pxref{Asm Labels}) in that the system programmer wants to change
+the assembly-level ABI without changing the source-level API.  The
+preprocessor defines @code{__EXTERN_PREFIX} if the pragma is available.
 @end table
 
 @node Unnamed Fields

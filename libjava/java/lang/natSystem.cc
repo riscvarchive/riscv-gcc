@@ -158,9 +158,7 @@ java::lang::System::arraycopy (jobject src, jint src_offset,
 jlong
 java::lang::System::currentTimeMillis (void)
 {
-  struct timeval tv;
-  _Jv_platform_gettimeofday (&tv);
-  return (jlong) tv.tv_sec * 1000 + tv.tv_usec / 1000;
+  return _Jv_platform_gettimeofday ();
 }
 
 jint
@@ -303,19 +301,29 @@ java::lang::System::init_properties (void)
 
   // A mixture of the Java Product Versioning Specification
   // (introduced in 1.2), and earlier versioning properties.
-  SET ("java.version", VERSION);
+  SET ("java.version", GCJVERSION);
   SET ("java.vendor", "Free Software Foundation, Inc.");
   SET ("java.vendor.url", "http://gcc.gnu.org/java/");
-  SET ("java.class.version", GCJVERSION);
-  SET ("java.vm.specification.version", "1.1");
+  SET ("java.class.version", "46.0");
+  SET ("java.vm.specification.version", "1.0");
   SET ("java.vm.specification.name", "Java(tm) Virtual Machine Specification");
   SET ("java.vm.specification.vendor", "Sun Microsystems Inc.");
-  SET ("java.vm.version", GCJVERSION);
+  SET ("java.vm.version", __VERSION__);
   SET ("java.vm.vendor", "Free Software Foundation, Inc.");
-  SET ("java.vm.name", "libgcj");
-  SET ("java.specification.version", "1.1");
-  SET ("java.specification.name", "Java(tm) Language Specification");
+  SET ("java.vm.name", "GNU libgcj");
+  SET ("java.specification.version", "1.3");
+  SET ("java.specification.name", "Java(tm) Platform API Specification");
   SET ("java.specification.vendor", "Sun Microsystems Inc.");
+
+  char value[100];
+#define NAME "GNU libgcj "
+  strcpy (value, NAME);
+  strncpy (value + sizeof (NAME) - 1, __VERSION__,
+	   sizeof(value) - sizeof(NAME));
+  value[sizeof (value) - 1] = '\0';
+  jstring version = JvNewStringLatin1 (value);
+  newprops->put (JvNewStringLatin1 ("java.fullversion"), version);
+  newprops->put (JvNewStringLatin1 ("java.vm.info"), version);
 
   // This definition is rather arbitrary: we choose $(prefix).  In
   // part we do this because most people specify only --prefix and
@@ -324,22 +332,6 @@ java::lang::System::init_properties (void)
   SET ("java.home", PREFIX);
   
   SET ("file.encoding", default_file_encoding);
-
-#ifdef WIN32
-  SET ("file.separator", "\\");
-  SET ("path.separator", ";");
-  SET ("line.separator", "\r\n");
-  SET ("java.io.tmpdir", "C:\\temp");
-#else
-  // Unix.
-  SET ("file.separator", "/");
-  SET ("path.separator", ":");
-  SET ("line.separator", "\n");
-  char *tmpdir = ::getenv("TMPDIR");
-  if (! tmpdir)
-    tmpdir = "/tmp";
-  SET ("java.io.tmpdir", tmpdir);
-#endif
 
 #ifdef HAVE_UNAME
   struct utsname u;
@@ -507,6 +499,10 @@ java::lang::System::init_properties (void)
       newprops->put(JvNewStringLatin1 ("java.class.path"),
 		      sb->toString ());
     }
+
+  // Allow platform specific settings and overrides.
+  _Jv_platform_initProperties (newprops);
+
   // Finally, set the field. This ensures that concurrent getProperty() 
   // calls will return initialized values without requiring them to be 
   // synchronized in the common case.

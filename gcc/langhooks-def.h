@@ -22,6 +22,8 @@ Boston, MA 02111-1307, USA.  */
 #ifndef GCC_LANG_HOOKS_DEF_H
 #define GCC_LANG_HOOKS_DEF_H
 
+#include "hooks.h"
+
 /* Provide a hook routine for alias sets that always returns 1.  This is
    used by languages that haven't deal with alias sets yet.  */
 extern HOST_WIDE_INT hook_get_alias_set_0	PARAMS ((tree));
@@ -62,6 +64,7 @@ tree lhd_tree_inlining_copy_res_decl_for_inlining PARAMS ((tree, tree,
 int lhd_tree_inlining_anon_aggr_type_p		PARAMS ((tree));
 int lhd_tree_inlining_start_inlining		PARAMS ((tree));
 void lhd_tree_inlining_end_inlining		PARAMS ((tree));
+tree lhd_tree_inlining_convert_parm_for_inlining PARAMS ((tree, tree, tree));
 
 #define LANG_HOOKS_NAME			"GNU unknown"
 #define LANG_HOOKS_IDENTIFIER_SIZE	sizeof (struct lang_identifier)
@@ -70,7 +73,7 @@ void lhd_tree_inlining_end_inlining		PARAMS ((tree));
 #define LANG_HOOKS_CLEAR_BINDING_STACK	lhd_clear_binding_stack
 #define LANG_HOOKS_INIT_OPTIONS		lhd_do_nothing
 #define LANG_HOOKS_DECODE_OPTION	lhd_decode_option
-#define LANG_HOOKS_POST_OPTIONS		lhd_do_nothing
+#define LANG_HOOKS_POST_OPTIONS		hook_void_void
 #define LANG_HOOKS_GET_ALIAS_SET	lhd_get_alias_set
 #define LANG_HOOKS_EXPAND_CONSTANT	lhd_return_tree
 #define LANG_HOOKS_SAFE_FROM_P		lhd_safe_from_p
@@ -103,6 +106,8 @@ void lhd_tree_inlining_end_inlining		PARAMS ((tree));
   lhd_tree_inlining_start_inlining
 #define LANG_HOOKS_TREE_INLINING_END_INLINING \
   lhd_tree_inlining_end_inlining
+#define LANG_HOOKS_TREE_INLINING_CONVERT_PARM_FOR_INLINING \
+  lhd_tree_inlining_convert_parm_for_inlining
 
 #define LANG_HOOKS_TREE_INLINING_INITIALIZER { \
   LANG_HOOKS_TREE_INLINING_WALK_SUBTREES, \
@@ -114,7 +119,8 @@ void lhd_tree_inlining_end_inlining		PARAMS ((tree));
   LANG_HOOKS_TREE_INLINING_COPY_RES_DECL_FOR_INLINING, \
   LANG_HOOKS_TREE_INLINING_ANON_AGGR_TYPE_P, \
   LANG_HOOKS_TREE_INLINING_START_INLINING, \
-  LANG_HOOKS_TREE_INLINING_END_INLINING \
+  LANG_HOOKS_TREE_INLINING_END_INLINING, \
+  LANG_HOOKS_TREE_INLINING_CONVERT_PARM_FOR_INLINING \
 } \
 
 /* Tree dump hooks.  */

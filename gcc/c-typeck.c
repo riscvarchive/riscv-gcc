@@ -4280,6 +4280,30 @@ convert_for_assignment (type, rhs, errtype, fundecl, funname, parmnum)
   return error_mark_node;
 }
 
+/* Convert VALUE for assignment into inlined parameter PARM.  */
+
+tree
+c_convert_parm_for_inlining (parm, value, fn)
+     tree parm, value, fn;
+{
+  tree ret, type;
+
+  /* If FN was prototyped, the value has been converted already
+     in convert_arguments.  */
+  if (! value || TYPE_ARG_TYPES (TREE_TYPE (fn)))
+    return value;
+
+  type = TREE_TYPE (parm);
+  ret = convert_for_assignment (type, value, 
+				(char *) 0 /* arg passing  */, fn,
+				DECL_NAME (fn), 0);
+  if (PROMOTE_PROTOTYPES
+      && INTEGRAL_TYPE_P (type)
+      && (TYPE_PRECISION (type) < TYPE_PRECISION (integer_type_node)))
+    ret = default_conversion (ret);
+  return ret;
+}
+
 /* Print a warning using MSGID.
    It gets OPNAME as its one parameter.
    If OPNAME is null, it is replaced by "passing arg ARGNUM of `FUNCTION'".
@@ -6574,6 +6598,16 @@ process_init_element (value)
 	  if (fieldtype != error_mark_node)
 	    fieldtype = TYPE_MAIN_VARIANT (fieldtype);
 	  fieldcode = TREE_CODE (fieldtype);
+
+	  /* Error for non-static initialization of a flexible array member.  */
+	  if (fieldcode == ARRAY_TYPE
+	      && !require_constant_value
+	      && TYPE_SIZE (fieldtype) == NULL_TREE
+	      && TREE_CHAIN (constructor_fields) == NULL_TREE)
+	    {
+	      error_init ("non-static initialization of a flexible array member");
+	      break;
+	    }
 
 	  /* Accept a string constant to initialize a subarray.  */
 	  if (value != 0

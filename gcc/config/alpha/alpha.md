@@ -39,6 +39,7 @@
    (UNSPEC_LITERAL	11)
    (UNSPEC_LITUSE	12)
    (UNSPEC_SIBCALL	13)
+   (UNSPEC_SYMBOL	14)
   ])
 
 ;; UNSPEC_VOLATILE:
@@ -1597,23 +1598,20 @@ fadd,fmul,fcpys,fdiv,fsqrt,misc,mvi,ftoi,itof,multi"
 }
   [(set_attr "type" "iadd,shift")])
 
-;; ??? The following pattern is made by combine, but earlier phases
-;; (specifically flow) can't handle it.  This occurs in jump.c.  Deal
-;; with this in a better way at some point.
-;;(define_insn ""
-;;  [(set (match_operand:DI 0 "register_operand" "=r")
-;;	(sign_extend:DI
-;;	 (subreg:SI (ashift:DI (match_operand:DI 1 "reg_or_0_operand" "rJ")
-;;			       (match_operand:DI 2 "const_int_operand" "P"))
-;;		    0)))]
-;;  "INTVAL (operands[2]) >= 1 && INTVAL (operands[2]) <= 3"
-;;{
-;;  if (operands[2] == const1_rtx)
-;;    return "addl %r1,%r1,%0";
-;;  else
-;;    return "s%P2addl %r1,0,%0";
-;;}
-;;  [(set_attr "type" "iadd")])
+(define_insn "*ashldi_se"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(sign_extend:DI
+	 (subreg:SI (ashift:DI (match_operand:DI 1 "reg_or_0_operand" "rJ")
+			       (match_operand:DI 2 "const_int_operand" "P"))
+		    0)))]
+  "INTVAL (operands[2]) >= 1 && INTVAL (operands[2]) <= 3"
+{
+  if (operands[2] == const1_rtx)
+    return "addl %r1,%r1,%0";
+  else
+    return "s%P2addl %r1,0,%0";
+}
+  [(set_attr "type" "iadd")])
 
 (define_insn "lshrdi3"
   [(set (match_operand:DI 0 "register_operand" "=r")
@@ -5098,6 +5096,16 @@ fadd,fmul,fcpys,fdiv,fsqrt,misc,mvi,ftoi,itof,multi"
   ""
   "call_pal 0x86"
   [(set_attr "type" "ibr")])
+
+;; BUGCHK is documented common to OSF/1 and VMS PALcode.
+;; NT does not document anything at 0x81 -- presumably it would generate
+;; the equivalent of SIGILL, but this isn't that important.
+;; ??? Presuming unicosmk uses either OSF/1 or VMS PALcode.
+(define_insn "trap"
+  [(trap_if (const_int 1) (const_int 0))]
+  "!TARGET_ABI_WINDOWS_NT"
+  "call_pal 0x81"
+  [(set_attr "type" "ibr")])
 
 ;; Finally, we have the basic data motion insns.  The byte and word insns
 ;; are done via define_expand.  Start with the floating-point insns, since
@@ -5539,6 +5547,41 @@ fadd,fmul,fcpys,fdiv,fsqrt,misc,mvi,ftoi,itof,multi"
 		    (match_dup 1)
 		    (const_int 0)] UNSPEC_LITERAL))]
   "operands[2] = pic_offset_table_rtx;")
+
+;; With RTL inlining, at -O3, rtl is generated, stored, then actually
+;; compiled at the end of compilation.  In the meantime, someone can
+;; re-encode-section-info on some symbol changing it e.g. from global
+;; to local-not-small.  If this happens, we'd have emitted a plain
+;; load rather than a high+losum load and not recognize the insn.
+;;
+;; So if rtl inlining is in effect, we delay the global/not-global
+;; decision until rest_of_compilation by wrapping it in an UNSPEC_SYMBOL.
+
+(define_insn_and_split "movdi_er_maybe_g"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(unspec:DI [(match_operand:DI 1 "symbolic_operand" "")]
+		   UNSPEC_SYMBOL))]
+  "TARGET_EXPLICIT_RELOCS && flag_inline_functions"
+  "#"
+  ""
+  [(set (match_dup 0) (match_dup 1))]
+{
+  if (local_symbolic_operand (operands[1], Pmode)
+      && !small_symbolic_operand (operands[1], Pmode))
+    {
+      rtx subtarget = no_new_pseudos ? operands[0] : gen_reg_rtx (Pmode);
+      rtx tmp;
+
+      tmp = gen_rtx_HIGH (Pmode, operands[1]);
+      if (reload_completed)
+	tmp = gen_rtx_PLUS (Pmode, pic_offset_table_rtx, tmp);
+      emit_insn (gen_rtx_SET (VOIDmode, subtarget, tmp));
+
+      tmp = gen_rtx_LO_SUM (Pmode, subtarget, operands[1]);
+      emit_insn (gen_rtx_SET (VOIDmode, operands[0], tmp));
+      DONE;
+    }
+})
 
 (define_insn "*movdi_er_nofix"
   [(set (match_operand:DI 0 "nonimmediate_operand" "=r,r,r,r,r,r,m,*f,*f,Q")
@@ -6709,13 +6752,10 @@ fadd,fmul,fcpys,fdiv,fsqrt,misc,mvi,ftoi,itof,multi"
    (set_attr "type" "multi")])
 
 (define_insn "*exception_receiver_2"
-  [(unspec_volatile [(match_operand:DI 0 "nonimmediate_operand" "r,m")]
-		    UNSPECV_EHR)]
+  [(unspec_volatile [(match_operand:DI 0 "memory_operand" "m")] UNSPECV_EHR)]
   "TARGET_LD_BUGGY_LDGP"
-  "@
-   bis $31,%0,$29
-   ldq $29,%0"
-  [(set_attr "type" "ilog,ild")])
+  "ldq $29,%0"
+  [(set_attr "type" "ild")])
 
 (define_expand "nonlocal_goto_receiver"
   [(unspec_volatile [(const_int 0)] UNSPECV_BLOCKAGE)

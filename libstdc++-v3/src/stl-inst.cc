@@ -33,27 +33,15 @@
 
 #include <bits/c++config.h>
 #include <memory>
-#include <vector>
-#include <ostream>
-#include <map>
 
 namespace std
 {
-  const int __stl_threshold = 16;
-  const int __stl_chunk_size = 7;
-  const int __WORD_BIT = int(CHAR_BIT*sizeof(unsigned int));
-  const _Rb_tree_Color_type _S_rb_tree_red = false;
-  const _Rb_tree_Color_type _S_rb_tree_black = true;
+  template class allocator<char>;
+  template class allocator<wchar_t>;
 
+#ifdef __USE_MALLOC
   template class __malloc_alloc_template<0>;
-
-#ifndef __USE_MALLOC
+#else
   template class __default_alloc_template<true, 0>;
 #endif
-
-  template
-    void
-    vector<unsigned int>::
-    _M_insert_aux(vector<unsigned int>::iterator, unsigned int const &);
-
 } // namespace std

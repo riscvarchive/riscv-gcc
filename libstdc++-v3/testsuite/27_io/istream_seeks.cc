@@ -1,6 +1,6 @@
 // 2000-06-29 bkoz
 
-// Copyright (C) 2000, 2001 Free Software Foundation
+// Copyright (C) 2000, 2001, 2002 Free Software Foundation
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -108,7 +108,7 @@ void test02()
   std::fstream ofstrm;
   ofstrm.open("istream_seeks-3.txt", std::ios::out);
   if (!ofstrm)
-    abort();
+    std::abort();
   write_rewind(ofstrm);
   ofstrm.close();
 
@@ -229,7 +229,14 @@ void test04(void)
   VERIFY( pos05 == pos06 + off_type(10) );
   VERIFY( state01 == state02 );
   pos06 = is03.tellg(); 
-  VERIFY( pos05 == pos06 ); 
+  VERIFY( pos05 == pos06 );
+
+  // libstdc++/6414
+  if01.seekg(0, std::ios_base::beg);
+  pos01 = if01.tellg();
+  if01.peek();
+  pos02 = if01.tellg();
+  VERIFY( pos02 == pos01 );
 
 #ifdef DEBUG_ASSERT
   assert(test);

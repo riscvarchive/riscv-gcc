@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p: -L/lib/libp/ -lc}%{pg: -L/lib/libp/ -lc}"
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dhppa -DPWB -Acpu=hppa -Amachine=hppa"
+#define CPP_PREDEFINES "-Dhppa -DPWB -Acpu=hppa -D__pro__ -Amachine=hppa"
 
 /* hpux8 and later have C++ compatible include files, so do not
    pretend they are `extern "C"'.  */
@@ -40,3 +40,26 @@ Boston, MA 02111-1307, USA.  */
    linker script to pull it in.  */
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC ""
+
+/* The following two macros are identical to the ones in pa.h.  We need
+   to override the macros in elfos.h on the rtems and pro ports.  */
+
+/* This says how to output an assembler line to define a global common symbol
+   with size SIZE (in bytes) and alignment ALIGN (in bits).  */
+
+#undef ASM_OUTPUT_ALIGNED_COMMON
+#define ASM_OUTPUT_ALIGNED_COMMON(FILE, NAME, SIZE, ALIGNED)		\
+{ bss_section ();							\
+  assemble_name ((FILE), (NAME));					\
+  fputs ("\t.comm ", (FILE));						\
+  fprintf ((FILE), "%d\n", MAX ((SIZE), ((ALIGNED) / BITS_PER_UNIT)));}
+
+/* This says how to output an assembler line to define a local common symbol
+   with size SIZE (in bytes) and alignment ALIGN (in bits).  */
+
+#undef ASM_OUTPUT_ALIGNED_LOCAL
+#define ASM_OUTPUT_ALIGNED_LOCAL(FILE, NAME, SIZE, ALIGNED)		\
+{ bss_section ();							\
+  fprintf ((FILE), "\t.align %d\n", ((ALIGNED) / BITS_PER_UNIT));	\
+  assemble_name ((FILE), (NAME));					\
+  fprintf ((FILE), "\n\t.block %d\n", (SIZE));}

@@ -18,6 +18,10 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+/* Wide characters are signed.  */
+#undef WCHAR_UNSIGNED
+#define WCHAR_UNSIGNED 0
+
 /* Use DWARF2 debugging info and unwind.  */
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
@@ -25,10 +29,13 @@ Boston, MA 02111-1307, USA.  */
 #define DWARF2_UNWIND_INFO 1
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__ELF__ -Dunix -D__hppa__ -Dlinux -Asystem=unix -Asystem=posix -Acpu=hppa -Amachine=hppa -Amachine=bigendian"
+#define CPP_PREDEFINES "-D__ELF__ -Dunix -D__hppa__ -D__gnu_linux__ -Dlinux -Asystem=unix -Asystem=posix -Acpu=hppa -Amachine=hppa -Amachine=bigendian"
 
 #undef	LIB_SPEC
-#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+#define LIB_SPEC \
+  "%{shared: -lgcc -lc} \
+   %{!shared: %{mieee-fp:-lieee} %{pthread:-lpthread} \
+	%{shared-libgcc: -lgcc} %{profile:-lc_p} %{!profile: -lc}}"
 
 #undef ASM_SPEC
 #define ASM_SPEC \
@@ -115,6 +122,10 @@ Boston, MA 02111-1307, USA.  */
       fprintf (FILE, "\n");					\
     }								\
   while (0)
+
+/* We want local labels to start with period if made with asm_fprintf.  */
+#undef LOCAL_LABEL_PREFIX
+#define LOCAL_LABEL_PREFIX "."
 
 /* Define these to generate the Linux/ELF/SysV style of internal
    labels all the time - i.e. to be compatible with

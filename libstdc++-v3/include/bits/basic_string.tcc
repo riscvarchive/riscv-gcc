@@ -139,6 +139,10 @@ namespace std
       {
 	size_type __dnew = static_cast<size_type>(distance(__beg, __end));
 
+	// NB: Not required, but considered best practice.
+	if (__builtin_expect(__beg == _InIter(), 0))
+	  __throw_logic_error("attempt to create string with null pointer");
+	
 	if (__beg == __end && __a == _Alloc())
 	  return _S_empty_rep()._M_refcopy();
 
@@ -219,7 +223,8 @@ namespace std
   template<typename _CharT, typename _Traits, typename _Alloc>
     basic_string<_CharT, _Traits, _Alloc>::
     basic_string(const _CharT* __s, const _Alloc& __a)
-    : _M_dataplus(_S_construct(__s, __s + traits_type::length(__s), __a), __a)
+    : _M_dataplus(_S_construct(__s, __s ? __s + traits_type::length(__s) : 0, 
+			       __a), __a)
     { }
 
   template<typename _CharT, typename _Traits, typename _Alloc>
@@ -438,7 +443,7 @@ namespace std
       void* __place = _Raw_bytes_alloc(__alloc).allocate(__size);
       _Rep *__p = new (__place) _Rep;
       __p->_M_capacity = __capacity;
-      __p->_M_set_sharable();  // one reference
+      __p->_M_set_sharable();  // One reference.
       __p->_M_length = 0;
       return __p;
     }
@@ -493,13 +498,10 @@ namespace std
       // else nothing (in particular, avoid calling _M_mutate() unnecessarily.)
     }
   
-  // This is the general replace helper, which gets instantiated both
-  // for input-iterators and forward-iterators. It buffers internally and
-  // then calls _M_replace_safe. For input-iterators this is almost the
-  // best we can do, but for forward-iterators many optimizations could be
-  // conceived: f.i., when source and destination ranges do not overlap
-  // buffering is not really needed. In order to easily implement them, it
-  // could become useful to add an _M_replace(forward_iterator_tag)
+
+  // This is the general replace helper, which currently gets instantiated both
+  // for input iterators and reverse iterators. It buffers internally and then
+  // calls _M_replace_safe.
   template<typename _CharT, typename _Traits, typename _Alloc>
     template<typename _InputIter>
       basic_string<_CharT, _Traits, _Alloc>&
@@ -513,10 +515,8 @@ namespace std
       }
 
   // This is a special replace helper, which does not buffer internally
-  // and can be used in the "safe" situations involving forward-iterators,
+  // and can be used in "safe" situations involving forward iterators,
   // i.e., when source and destination ranges are known to not overlap.
-  // Presently, is called by _M_replace, by the various append and by
-  // the assigns.
   template<typename _CharT, typename _Traits, typename _Alloc>
     template<typename _ForwardIter>
       basic_string<_CharT, _Traits, _Alloc>&
@@ -945,7 +945,7 @@ namespace std
   // which are defined via explicit instantiations elsewhere.  
   // NB: This syntax is a GNU extension.
   extern template class basic_string<char>;
-   extern template 
+  extern template 
     basic_istream<char>& 
     operator>>(basic_istream<char>&, string&);
   extern template 

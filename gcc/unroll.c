@@ -727,8 +727,7 @@ unroll_loop (loop, insn_count, strength_reduce_p)
 
   if (max_labelno > 0)
     {
-      map->label_map = (rtx *) xmalloc (max_labelno * sizeof (rtx));
-
+      map->label_map = (rtx *) xcalloc (max_labelno, sizeof (rtx));
       local_label = (char *) xcalloc (max_labelno, sizeof (char));
     }
 
@@ -2222,6 +2221,7 @@ copy_loop_body (loop, copy_start, copy_end, map, exit_label, last_iteration,
 	  pattern = copy_rtx_and_substitute (PATTERN (insn), map, 0);
 	  copy = emit_call_insn (pattern);
 	  REG_NOTES (copy) = initial_reg_note_copy (REG_NOTES (insn), map);
+	  SIBLING_CALL_P (copy) = SIBLING_CALL_P (insn);
 
 	  /* Because the USAGE information potentially contains objects other
 	     than hard registers, we need to copy it.  */
@@ -3305,7 +3305,8 @@ final_giv_value (loop, v)
 
   /* Try to calculate the final value as a function of the biv it depends
      upon.  The only exit from the loop must be the fall through at the bottom
-     (otherwise it may not have its final value when the loop exits).  */
+     and the insn that sets the giv must be executed on every iteration
+     (otherwise the giv may not have its final value when the loop exits).  */
 
   /* ??? Can calculate the final giv value by subtracting off the
      extra biv increments times the giv's mult_val.  The loop must have
@@ -3313,7 +3314,8 @@ final_giv_value (loop, v)
      to be known.  */
 
   if (n_iterations != 0
-      && ! loop->exit_count)
+      && ! loop->exit_count
+      && v->always_executed)
     {
       /* ?? It is tempting to use the biv's value here since these insns will
 	 be put after the loop, and hence the biv will have its final value
@@ -3744,7 +3746,18 @@ loop_iterations (loop)
 	  for (biv_inc = bl->biv; biv_inc; biv_inc = biv_inc->next_iv)
 	    {
 	      if (loop_insn_first_p (v->insn, biv_inc->insn))
-		offset -= INTVAL (biv_inc->add_val);
+		{
+		  if (REG_P (biv_inc->add_val))
+		    {
+		      if (loop_dump_stream)
+			fprintf (loop_dump_stream,
+				 "Loop iterations: Basic induction var add_val is REG %d.\n",
+				 REGNO (biv_inc->add_val));
+			return 0;
+		    }
+
+		  offset -= INTVAL (biv_inc->add_val);
+		}
 	    }
 	}
       if (loop_dump_stream)

@@ -67,6 +67,7 @@ Boston, MA 02111-1307, USA.  */
 #define CRIS_PLT_GOTOFFSET_SUFFIX ":PLTG"
 #define CRIS_PLT_PCOFFSET_SUFFIX ":PLT"
 
+/* If you tweak this, don't forget to check cris_expand_builtin_va_arg.  */
 #define CRIS_FUNCTION_ARG_SIZE(MODE, TYPE)	\
   ((MODE) != BLKmode ? GET_MODE_SIZE (MODE)	\
    : (unsigned) int_size_in_bytes (TYPE))
@@ -440,7 +441,7 @@ extern int target_flags;
    gcc-cris they are using.  Please use some flavor of "R<number>" for
    the version (no need for major.minor versions, I believe).  */
 #define TARGET_VERSION \
- fprintf (stderr, " [Axis CRIS release R36a%s]", CRIS_SUBTARGET_VERSION)
+ fprintf (stderr, " [Axis CRIS%s]", CRIS_SUBTARGET_VERSION)
 
 /* For the cris-*-elf subtarget.  */
 #define CRIS_SUBTARGET_VERSION " - generic ELF"
@@ -942,7 +943,8 @@ enum reg_class {NO_REGS, ALL_REGS, LIM_REG_CLASSES};
   ? 1 : 0)
 
 /* Structs may be passed by value, but they must not be more than 8
-   bytes long.  */
+   bytes long.  If you tweak this, don't forget to adjust
+   cris_expand_builtin_va_arg.  */
 #define FUNCTION_ARG_PASS_BY_REFERENCE(CUM, MODE, TYPE, NAMED)		\
  (MUST_PASS_IN_STACK (MODE, TYPE)					\
   || CRIS_FUNCTION_ARG_SIZE (MODE, TYPE) > 8)				\
@@ -1295,13 +1297,13 @@ struct cum_args {int regs;};
 	      something_reloaded = 1;					\
 	    }								\
 									\
-	  if (REG_P (XEXP (XEXP (X, 0), 0))				\
-	      && (REGNO (XEXP (XEXP (X, 0), 0))				\
+	  if (REG_P (XEXP (XEXP (XEXP (X, 0), 0), 0))			\
+	      && (REGNO (XEXP (XEXP (XEXP (X, 0), 0), 0))		\
 		  >= FIRST_PSEUDO_REGISTER))				\
 	    {								\
 	      /* First one is a pseudo - reload that.  */		\
-	      push_reload (XEXP (XEXP (X, 0), 0), NULL_RTX,		\
-			   &XEXP (XEXP (X, 0), 0), NULL, 		\
+	      push_reload (XEXP (XEXP (XEXP (X, 0), 0), 0), NULL_RTX,	\
+			   &XEXP (XEXP (XEXP (X, 0), 0), 0), NULL, 	\
 			   GENERAL_REGS,				\
 			   GET_MODE (X), VOIDmode, 0, 0, OPNUM, TYPE);	\
 	      something_reloaded = 1;					\
@@ -1474,7 +1476,7 @@ call_ ## FUNC (void)						\
 
 /* Node: PIC */
 
-#define PIC_OFFSET_TABLE_REGNUM 0
+#define PIC_OFFSET_TABLE_REGNUM (flag_pic ? 0 : INVALID_REGNUM)
 
 #define LEGITIMATE_PIC_OPERAND_P(X) cris_legitimate_pic_operand (X)
 

@@ -19,12 +19,10 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Run-time Target Specification.  */
+#undef TARGET_VERSION
 #define TARGET_VERSION  fputs (" (ARM/ELF RTEMS)", stderr);
 
 #define HAS_INIT_SECTION
 
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__rtems__ -D__ELF__ -Asystem=rtems"
-
-#undef INVOKE_main
-

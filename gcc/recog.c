@@ -950,11 +950,13 @@ general_operand (op, mode)
 
   if (code == SUBREG)
     {
+      rtx sub = SUBREG_REG (op);
+
 #ifdef INSN_SCHEDULING
       /* On machines that have insn scheduling, we want all memory
 	 reference to be explicit, so outlaw paradoxical SUBREGs.  */
-      if (GET_CODE (SUBREG_REG (op)) == MEM
-	  && GET_MODE_SIZE (mode) > GET_MODE_SIZE (GET_MODE (SUBREG_REG (op))))
+      if (GET_CODE (sub) == MEM
+	  && GET_MODE_SIZE (mode) > GET_MODE_SIZE (GET_MODE (sub)))
 	return 0;
 #endif
       /* Avoid memories with nonzero SUBREG_BYTE, as offsetting the memory
@@ -964,10 +966,16 @@ general_operand (op, mode)
 
 	 ??? This is a kludge.  */
       if (!reload_completed && SUBREG_BYTE (op) != 0
-	  && GET_CODE (SUBREG_REG (op)) == MEM)
+	  && GET_CODE (sub) == MEM)
         return 0;
 
-      op = SUBREG_REG (op);
+      /* FLOAT_MODE subregs can't be paradoxical.  Combine will occasionally
+	 create such rtl, and we must reject it.  */
+      if (GET_MODE_CLASS (GET_MODE (op)) == MODE_FLOAT
+	  && GET_MODE_SIZE (GET_MODE (op)) > GET_MODE_SIZE (GET_MODE (sub)))
+	return 0;
+
+      op = sub;
       code = GET_CODE (op);
     }
 
@@ -1040,28 +1048,36 @@ register_operand (op, mode)
 
   if (GET_CODE (op) == SUBREG)
     {
+      rtx sub = SUBREG_REG (op);
+
       /* Before reload, we can allow (SUBREG (MEM...)) as a register operand
 	 because it is guaranteed to be reloaded into one.
 	 Just make sure the MEM is valid in itself.
 	 (Ideally, (SUBREG (MEM)...) should not exist after reload,
 	 but currently it does result from (SUBREG (REG)...) where the
 	 reg went on the stack.)  */
-      if (! reload_completed && GET_CODE (SUBREG_REG (op)) == MEM)
+      if (! reload_completed && GET_CODE (sub) == MEM)
 	return general_operand (op, mode);
 
 #ifdef CLASS_CANNOT_CHANGE_MODE
-      if (GET_CODE (SUBREG_REG (op)) == REG
-	  && REGNO (SUBREG_REG (op)) < FIRST_PSEUDO_REGISTER
+      if (GET_CODE (sub) == REG
+	  && REGNO (sub) < FIRST_PSEUDO_REGISTER
 	  && (TEST_HARD_REG_BIT
 	      (reg_class_contents[(int) CLASS_CANNOT_CHANGE_MODE],
-	       REGNO (SUBREG_REG (op))))
-	  && CLASS_CANNOT_CHANGE_MODE_P (mode, GET_MODE (SUBREG_REG (op)))
-	  && GET_MODE_CLASS (GET_MODE (SUBREG_REG (op))) != MODE_COMPLEX_INT
-	  && GET_MODE_CLASS (GET_MODE (SUBREG_REG (op))) != MODE_COMPLEX_FLOAT)
+	       REGNO (sub)))
+	  && CLASS_CANNOT_CHANGE_MODE_P (mode, GET_MODE (sub))
+	  && GET_MODE_CLASS (GET_MODE (sub)) != MODE_COMPLEX_INT
+	  && GET_MODE_CLASS (GET_MODE (sub)) != MODE_COMPLEX_FLOAT)
 	return 0;
 #endif
 
-      op = SUBREG_REG (op);
+      /* FLOAT_MODE subregs can't be paradoxical.  Combine will occasionally
+	 create such rtl, and we must reject it.  */
+      if (GET_MODE_CLASS (GET_MODE (op)) == MODE_FLOAT
+	  && GET_MODE_SIZE (GET_MODE (op)) > GET_MODE_SIZE (GET_MODE (sub)))
+	return 0;
+
+      op = sub;
     }
 
   /* If we have an ADDRESSOF, consider it valid since it will be
@@ -1968,7 +1984,9 @@ offsettable_address_p (strictp, mode, y)
      of the specified mode.  We assume that if Y and Y+c are
      valid addresses then so is Y+d for all 0<d<c.  adjust_address will
      go inside a LO_SUM here, so we do so as well.  */
-  if (GET_CODE (y) == LO_SUM)
+  if (GET_CODE (y) == LO_SUM
+      && mode != BLKmode
+      && mode_sz <= GET_MODE_ALIGNMENT (mode) / BITS_PER_UNIT)
     z = gen_rtx_LO_SUM (GET_MODE (y), XEXP (y, 0),
 			plus_constant (XEXP (y, 1), mode_sz - 1));
   else
@@ -3019,8 +3037,10 @@ peephole2_optimize (dump_file)
   int i, b;
 #ifdef HAVE_conditional_execution
   sbitmap blocks;
-  int changed;
+  bool changed;
 #endif
+  bool do_cleanup_cfg = false;
+  bool do_rebuild_jump_labels = false;
 
   /* Initialize the regsets we're going to use.  */
   for (i = 0; i < MAX_INSNS_PER_PEEP2 + 1; ++i)
@@ -3030,7 +3050,7 @@ peephole2_optimize (dump_file)
 #ifdef HAVE_conditional_execution
   blocks = sbitmap_alloc (n_basic_blocks);
   sbitmap_zero (blocks);
-  changed = 0;
+  changed = false;
 #else
   count_or_remove_death_notes (NULL, 1);
 #endif
@@ -3063,8 +3083,9 @@ peephole2_optimize (dump_file)
 	  prev = PREV_INSN (insn);
 	  if (INSN_P (insn))
 	    {
-	      rtx try;
+	      rtx try, before_try, x;
 	      int match_len;
+	      rtx note;
 
 	      /* Record this insn.  */
 	      if (--peep2_current < 0)
@@ -3116,7 +3137,6 @@ peephole2_optimize (dump_file)
 			   note = XEXP (note, 1))
 			switch (REG_NOTE_KIND (note))
 			  {
-			  case REG_EH_REGION:
 			  case REG_NORETURN:
 			  case REG_SETJMP:
 			  case REG_ALWAYS_RETURN:
@@ -3146,9 +3166,65 @@ peephole2_optimize (dump_file)
 		  if (i >= MAX_INSNS_PER_PEEP2 + 1)
 		    i -= MAX_INSNS_PER_PEEP2 + 1;
 
+		  note = find_reg_note (peep2_insn_data[i].insn, 
+					REG_EH_REGION, NULL_RTX);
+
 		  /* Replace the old sequence with the new.  */
 		  try = emit_insn_after (try, peep2_insn_data[i].insn);
+		  before_try = PREV_INSN (insn);
 		  delete_insn_chain (insn, peep2_insn_data[i].insn);
+
+		  /* Re-insert the EH_REGION notes.  */
+		  if (note)
+		    {
+		      edge eh_edge;
+
+		      for (eh_edge = bb->succ; eh_edge
+			   ; eh_edge = eh_edge->succ_next)
+			if (eh_edge->flags & EDGE_EH)
+			  break;
+
+		      for (x = try ; x != before_try ; x = PREV_INSN (x))
+			if (GET_CODE (x) == CALL_INSN
+			    || (flag_non_call_exceptions
+				&& may_trap_p (PATTERN (x))
+				&& !find_reg_note (x, REG_EH_REGION, NULL)))
+			  {
+			    REG_NOTES (x)
+			      = gen_rtx_EXPR_LIST (REG_EH_REGION,
+						   XEXP (note, 0),
+						   REG_NOTES (x));
+
+			    if (x != bb->end && eh_edge)
+			      {
+				edge nfte, nehe;
+				int flags;
+
+				nfte = split_block (bb, x);
+				flags = EDGE_EH | EDGE_ABNORMAL;
+				if (GET_CODE (x) == CALL_INSN)
+				  flags |= EDGE_ABNORMAL_CALL;
+				nehe = make_edge (nfte->src, eh_edge->dest,
+						  flags);
+
+				nehe->probability = eh_edge->probability;
+				nfte->probability
+				  = REG_BR_PROB_BASE - nehe->probability;
+
+			        do_cleanup_cfg |= purge_dead_edges (nfte->dest);
+#ifdef HAVE_conditional_execution
+				SET_BIT (blocks, nfte->dest->index);
+				changed = true;
+#endif
+				bb = nfte->src;
+				eh_edge = nehe;
+			      }
+			  }
+
+		      /* Converting possibly trapping insn to non-trapping is
+			 possible.  Zap dummy outgoing edges.  */
+		      do_cleanup_cfg |= purge_dead_edges (bb);
+		    }
 
 #ifdef HAVE_conditional_execution
 		  /* With conditional execution, we cannot back up the
@@ -3157,7 +3233,7 @@ peephole2_optimize (dump_file)
 		     So record that we've made a modification to this
 		     block and update life information at the end.  */
 		  SET_BIT (blocks, b);
-		  changed = 1;
+		  changed = true;
 
 		  for (i = 0; i < MAX_INSNS_PER_PEEP2 + 1; ++i)
 		    peep2_insn_data[i].insn = NULL_RTX;
@@ -3170,25 +3246,35 @@ peephole2_optimize (dump_file)
 		  COPY_REG_SET (live, peep2_insn_data[i].live_before);
 
 		  /* Update life information for the new sequence.  */
+		  x = try;
 		  do
 		    {
-		      if (INSN_P (try))
+		      if (INSN_P (x))
 			{
 			  if (--i < 0)
 			    i = MAX_INSNS_PER_PEEP2;
-			  peep2_insn_data[i].insn = try;
-			  propagate_one_insn (pbi, try);
+			  peep2_insn_data[i].insn = x;
+			  propagate_one_insn (pbi, x);
 			  COPY_REG_SET (peep2_insn_data[i].live_before, live);
 			}
-		      try = PREV_INSN (try);
+		      x = PREV_INSN (x);
 		    }
-		  while (try != prev);
+		  while (x != prev);
 
 		  /* ??? Should verify that LIVE now matches what we
 		     had before the new sequence.  */
 
 		  peep2_current = i;
 #endif
+
+		  /* If we generated a jump instruction, it won't have
+		     JUMP_LABEL set.  Recompute after we're done.  */
+		  for (x = try; x != before_try; x = PREV_INSN (x))
+		    if (GET_CODE (x) == JUMP_INSN)
+		      {
+		        do_rebuild_jump_labels = true;
+			break;
+		      }
 		}
 	    }
 
@@ -3203,9 +3289,23 @@ peephole2_optimize (dump_file)
     FREE_REG_SET (peep2_insn_data[i].live_before);
   FREE_REG_SET (live);
 
+  if (do_rebuild_jump_labels)
+    rebuild_jump_labels (get_insns ());
+
+  /* If we eliminated EH edges, we may be able to merge blocks.  Further,
+     we've changed global life since exception handlers are no longer
+     reachable.  */
+  if (do_cleanup_cfg)
+    {
+      cleanup_cfg (0);
+      update_life_info (0, UPDATE_LIFE_GLOBAL_RM_NOTES, PROP_DEATH_NOTES);
+    }
 #ifdef HAVE_conditional_execution
-  count_or_remove_death_notes (blocks, 1);
-  update_life_info (blocks, UPDATE_LIFE_LOCAL, PROP_DEATH_NOTES);
+  else
+    {
+      count_or_remove_death_notes (blocks, 1);
+      update_life_info (blocks, UPDATE_LIFE_LOCAL, PROP_DEATH_NOTES);
+    }
   sbitmap_free (blocks);
 #endif
 }

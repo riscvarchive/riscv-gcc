@@ -75,23 +75,30 @@ struct args_size
 
 /* Add the value of the tree INC to the `struct args_size' TO.  */
 
-#define ADD_PARM_SIZE(TO, INC)	\
-{ tree inc = (INC);				\
-  if (host_integerp (inc, 0))			\
-    (TO).constant += tree_low_cst (inc, 0);	\
-  else if ((TO).var == 0)			\
-    (TO).var = inc;				\
-  else						\
-    (TO).var = size_binop (PLUS_EXPR, (TO).var, inc); }
+#define ADD_PARM_SIZE(TO, INC)				\
+do {							\
+  tree inc = (INC);					\
+  if (host_integerp (inc, 0))				\
+    (TO).constant += tree_low_cst (inc, 0);		\
+  else if ((TO).var == 0)				\
+    (TO).var = convert (ssizetype, inc);		\
+  else							\
+    (TO).var = size_binop (PLUS_EXPR, (TO).var,		\
+			   convert (ssizetype, inc));	\
+} while (0)
 
-#define SUB_PARM_SIZE(TO, DEC)	\
-{ tree dec = (DEC);				\
-  if (host_integerp (dec, 0))			\
-    (TO).constant -= tree_low_cst (dec, 0);	\
-  else if ((TO).var == 0)			\
-    (TO).var = size_binop (MINUS_EXPR, ssize_int (0), dec); \
-  else						\
-    (TO).var = size_binop (MINUS_EXPR, (TO).var, dec); }
+#define SUB_PARM_SIZE(TO, DEC)				\
+do {							\
+  tree dec = (DEC);					\
+  if (host_integerp (dec, 0))				\
+    (TO).constant -= tree_low_cst (dec, 0);		\
+  else if ((TO).var == 0)				\
+    (TO).var = size_binop (MINUS_EXPR, ssize_int (0),	\
+			   convert (ssizetype, dec));	\
+  else							\
+    (TO).var = size_binop (MINUS_EXPR, (TO).var,	\
+			   convert (ssizetype, dec));	\
+} while (0)
 
 /* Convert the implicit sum in a `struct args_size' into a tree
    of type ssizetype.  */
@@ -333,7 +340,6 @@ extern rtx get_condition PARAMS ((rtx, rtx *));
 extern rtx gen_cond_trap PARAMS ((enum rtx_code, rtx, rtx, rtx));
 
 /* Functions from builtins.c:  */
-#ifdef TREE_CODE
 extern rtx expand_builtin PARAMS ((tree, rtx, rtx, enum machine_mode, int));
 extern void std_expand_builtin_va_start PARAMS ((int, tree, rtx));
 extern rtx std_expand_builtin_va_arg PARAMS ((tree, tree));
@@ -341,12 +347,11 @@ extern rtx expand_builtin_va_arg PARAMS ((tree, tree));
 extern void default_init_builtins PARAMS ((void));
 extern rtx default_expand_builtin PARAMS ((tree, rtx, rtx,
 					   enum machine_mode, int));
-#endif
-
 extern void expand_builtin_setjmp_setup PARAMS ((rtx, rtx));
 extern void expand_builtin_setjmp_receiver PARAMS ((rtx));
 extern void expand_builtin_longjmp PARAMS ((rtx, rtx));
 extern rtx expand_builtin_saveregs PARAMS ((void));
+extern void expand_builtin_trap PARAMS ((void));
 extern HOST_WIDE_INT get_varargs_alias_set PARAMS ((void));
 extern HOST_WIDE_INT get_frame_alias_set PARAMS ((void));
 extern void record_base_value		PARAMS ((unsigned int, rtx, int));

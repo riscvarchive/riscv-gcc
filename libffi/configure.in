@@ -2,6 +2,12 @@ dnl Process this with autoconf to create configure
 AC_INIT(fficonfig.h.in)
 AM_CONFIG_HEADER(fficonfig.h)
 
+# This works around the fact that libtool configuration may change LD
+# for this particular configuration, but some shells, instead of
+# keeping the changes in LD private, export them just because LD is
+# exported.
+ORIGINAL_LD_FOR_MULTILIBS=$LD
+
 dnl Default to --enable-multilib
 AC_ARG_ENABLE(multilib,
 [  --enable-multilib       build many library versions (default)],
@@ -44,6 +50,7 @@ i*86-*-linux*) TARGET=X86; TARGETDIR=x86;;
 i*86-*-solaris*) TARGET=X86; TARGETDIR=x86;;
 i*86-*-beos*) TARGET=X86; TARGETDIR=x86;;
 i*86-*-freebsd*) TARGET=X86; TARGETDIR=x86;;
+i*86-*-netbsdelf*) TARGET=X86; TARGETDIR=x86;;
 i*86-*-win32*) TARGET=X86_WIN32; TARGETDIR=x86;;
 i*86-*-cygwin*) TARGET=X86_WIN32; TARGETDIR=x86;;
 i*86-*-mingw*) TARGET=X86_WIN32; TARGETDIR=x86;;
@@ -51,7 +58,7 @@ sparc-sun-4*) TARGET=SPARC; TARGETDIR=sparc;;
 sparc*-sun-*) TARGET=SPARC; TARGETDIR=sparc;;
 sparc-*-linux*) TARGET=SPARC; TARGETDIR=sparc;;
 sparc64-*-linux*) TARGET=SPARC; TARGETDIR=sparc;;
-alpha*-*-linux* | alpha*-*-osf*) TARGET=ALPHA; TARGETDIR=alpha;;
+alpha*-*-linux* | alpha*-*-osf* | alpha*-*-freebsd*) TARGET=ALPHA; TARGETDIR=alpha;;
 ia64*-*-*) TARGET=IA64; TARGETDIR=ia64;;
 m68k-*-linux*) TARGET=M68K; TARGETDIR=m68k;;
 powerpc-*-linux* | powerpc-*-sysv*) TARGET=POWERPC; TARGETDIR=powerpc;;
@@ -95,6 +102,24 @@ AC_COMPILE_CHECK_SIZEOF(long double)
 AC_COMPILE_CHECK_SIZEOF(void *)
 AC_C_BIGENDIAN_CROSS
 
+if test x$TARGET = xSPARC; then
+    AC_CACHE_CHECK([assembler and linker support unaligned pc related relocs],
+	libffi_cv_as_sparc_ua_pcrel, [
+	save_CFLAGS="$CFLAGS"
+	save_LDFLAGS="$LDFLAGS"
+	CFLAGS="$CFLAGS -fpic"
+	LDFLAGS="$LDFLAGS -shared"
+	AC_TRY_LINK([asm (".text; foo: nop; .data; .align 4; .byte 0; .uaword %r_disp32(foo); .text");],,
+		    [libffi_cv_as_sparc_ua_pcrel=yes],
+		    [libffi_cv_as_sparc_ua_pcrel=no])
+	CFLAGS="$save_CFLAGS"
+	LDFLAGS="$save_LDFLAGS"])
+    if test "x$libffi_cv_as_sparc_ua_pcrel" = xyes; then
+	AC_DEFINE(HAVE_AS_SPARC_UA_PCREL, 1,
+		  [Define if your assembler and linker support unaligned PC relative relocs.])
+    fi
+fi
+
 AC_SUBST(TARGET)
 AC_SUBST(TARGETDIR)
 
@@ -135,6 +160,7 @@ fi
 AC_OUTPUT(include/Makefile include/ffi.h Makefile,
 [
 if test -n "$CONFIG_FILES"; then
+   LD="${ORIGINAL_LD_FOR_MULTILIBS}"
    ac_file=Makefile . ${libffi_basedir}/../config-ml.in
 fi
 ],

@@ -325,7 +325,12 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, total_size)
   value = protect_from_queue (value, 0);
 
   if (flag_force_mem)
-    value = force_not_mem (value);
+    {
+      int old_generating_concat_p = generating_concat_p;
+      generating_concat_p = 0;
+      value = force_not_mem (value);
+      generating_concat_p = old_generating_concat_p;
+    }
 
   /* If the target is a register, overwriting the entire object, or storing
      a full-word or multi-word field can be done with just a SUBREG.
@@ -386,6 +391,15 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, total_size)
 	  abort ();
       }
   }
+
+  /* We may be accessing data outside the field, which means
+     we can alias adjacent data.  */
+  if (GET_CODE (op0) == MEM)
+    {
+      op0 = shallow_copy_rtx (op0);
+      set_mem_alias_set (op0, 0);
+      set_mem_expr (op0, 0);
+    }
 
   /* If OP0 is a register, BITPOS must count within a word.
      But as we have it, it counts within whatever size OP0 now has.
@@ -519,12 +533,9 @@ store_bit_field (str_rtx, bitsize, bitnum, fieldmode, value, total_size)
      corresponding size.  This can occur on a machine with 64 bit registers
      that uses SFmode for float.  This can also occur for unaligned float
      structure fields.  */
-  if (GET_MODE_CLASS (GET_MODE (value)) == MODE_FLOAT)
-    {
-      if (GET_CODE (value) != REG)
-	value = copy_to_reg (value);
-      value = gen_rtx_SUBREG (word_mode, value, 0);
-    }
+  if (GET_MODE_CLASS (GET_MODE (value)) != MODE_INT
+      && GET_MODE_CLASS (GET_MODE (value)) != MODE_PARTIAL_INT)
+    value = gen_lowpart (word_mode, value);
 
   /* Now OFFSET is nonzero only if OP0 is memory
      and is therefore always measured in bytes.  */
@@ -1067,6 +1078,15 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
       }
   }
 
+  /* We may be accessing data outside the field, which means
+     we can alias adjacent data.  */
+  if (GET_CODE (op0) == MEM)
+    {
+      op0 = shallow_copy_rtx (op0);
+      set_mem_alias_set (op0, 0);
+      set_mem_expr (op0, 0);
+    }
+
   /* ??? We currently assume TARGET is at least as big as BITSIZE.
      If that's wrong, the solution is to test for it and set TARGET to 0
      if needed.  */
@@ -1516,14 +1536,13 @@ extract_bit_field (str_rtx, bitsize, bitnum, unsignedp,
       /* If the target mode is floating-point, first convert to the
 	 integer mode of that size and then access it as a floating-point
 	 value via a SUBREG.  */
-      if (GET_MODE_CLASS (tmode) == MODE_FLOAT)
+      if (GET_MODE_CLASS (tmode) != MODE_INT
+	  && GET_MODE_CLASS (tmode) != MODE_PARTIAL_INT)
 	{
 	  target = convert_to_mode (mode_for_size (GET_MODE_BITSIZE (tmode),
 						   MODE_INT, 0),
 				    target, unsignedp);
-	  if (GET_CODE (target) != REG)
-	    target = copy_to_reg (target);
-	  return gen_rtx_SUBREG (tmode, target, 0);
+	  return gen_lowpart (tmode, target);
 	}
       else
 	return convert_to_mode (tmode, target, unsignedp);
@@ -3030,9 +3049,12 @@ expand_divmod (rem_flag, code, mode, op0, op1, target, unsignedp)
      not straightforward to generalize this.  Maybe we should make an array
      of possible modes in init_expmed?  Save this for GCC 2.7.  */
 
-  optab1 = (op1_is_pow2 ? (unsignedp ? lshr_optab : ashr_optab)
+  optab1 = ((op1_is_pow2 && op1 != const0_rtx)
+	    ? (unsignedp ? lshr_optab : ashr_optab)
 	    : (unsignedp ? udiv_optab : sdiv_optab));
-  optab2 = (op1_is_pow2 ? optab1 : (unsignedp ? udivmod_optab : sdivmod_optab));
+  optab2 = ((op1_is_pow2 && op1 != const0_rtx)
+	    ? optab1
+	    : (unsignedp ? udivmod_optab : sdivmod_optab));
 
   for (compute_mode = mode; compute_mode != VOIDmode;
        compute_mode = GET_MODE_WIDER_MODE (compute_mode))
@@ -4117,6 +4139,12 @@ make_tree (type, x)
 			    build (TRUNC_DIV_EXPR, t,
 				   make_tree (t, XEXP (x, 0)),
 				   make_tree (t, XEXP (x, 1)))));
+
+    case SIGN_EXTEND:
+    case ZERO_EXTEND:
+      t = type_for_mode (GET_MODE (XEXP (x, 0)), GET_CODE (x) == ZERO_EXTEND);
+      return fold (convert (type, make_tree (t, XEXP (x, 0))));
+
    default:
       t = make_node (RTL_EXPR);
       TREE_TYPE (t) = type;
@@ -4277,7 +4305,8 @@ emit_store_flag (target, code, op0, op1, mode, unsignedp, normalizep)
      the comparison into one involving a single word.  */
   if (GET_MODE_BITSIZE (mode) == BITS_PER_WORD * 2
       && GET_MODE_CLASS (mode) == MODE_INT
-      && op1 == const0_rtx)
+      && op1 == const0_rtx
+      && (GET_CODE (op0) != MEM || ! MEM_VOLATILE_P (op0)))
     {
       if (code == EQ || code == NE)
 	{

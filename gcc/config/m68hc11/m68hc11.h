@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler.
    Motorola 68HC11 and 68HC12.
    Copyright (C) 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
-   Contributed by Stephane Carrez (stcarrez@worldnet.fr)
+   Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
 This file is part of GNU CC.
 
@@ -118,12 +118,15 @@ extern short *reg_renumber;	/* def in local_alloc.c */
 #define MASK_AUTO_INC_DEC       0004
 #define MASK_M6811              0010
 #define MASK_M6812              0020
+#define MASK_NO_DIRECT_MODE     0040
 
 #define TARGET_OP_TIME		(optimize && optimize_size == 0)
 #define TARGET_SHORT            (target_flags & MASK_SHORT)
 #define TARGET_M6811            (target_flags & MASK_M6811)
 #define TARGET_M6812            (target_flags & MASK_M6812)
 #define TARGET_AUTO_INC_DEC     (target_flags & MASK_AUTO_INC_DEC)
+#define TARGET_NO_DIRECT_MODE   (target_flags & MASK_NO_DIRECT_MODE)
+#define TARGET_RELAX            (TARGET_NO_DIRECT_MODE)
 
 /* Default target_flags if no switches specified.  */
 #ifndef TARGET_DEFAULT
@@ -156,6 +159,8 @@ extern short *reg_renumber;	/* def in local_alloc.c */
     N_("Auto pre/post decrement increment allowed")},		\
   { "noauto-incdec", - MASK_AUTO_INC_DEC,			\
     N_("Auto pre/post decrement increment not allowed")},	\
+  { "relax", MASK_NO_DIRECT_MODE,                               \
+    N_("Do not use direct addressing mode for soft registers")},\
   { "68hc11", MASK_M6811,					\
     N_("Compile for a 68HC11")},				\
   { "68hc12", MASK_M6812,					\
@@ -208,6 +213,10 @@ extern const char *m68hc11_soft_reg_count;
    `-O'.  That is what `OPTIMIZATION_OPTIONS' is for.  */
 
 #define OVERRIDE_OPTIONS	m68hc11_override_options ();
+
+/* Define this to change the optimizations performed by default.  */
+#define OPTIMIZATION_OPTIONS(LEVEL, SIZE) \
+m68hc11_optimization_options(LEVEL, SIZE)
 
 
 /* Define cost parameters for a given processor variant.  */
@@ -499,11 +508,12 @@ SOFT_REG_FIRST+28, SOFT_REG_FIRST+29,SOFT_REG_FIRST+30,SOFT_REG_FIRST+31
 /* Value is 1 if it is a good idea to tie two pseudo registers when one has
    mode MODE1 and one has mode MODE2.  If HARD_REGNO_MODE_OK could produce
    different values for MODE1 and MODE2, for any hard reg, then this must be
-   0 for correct output.  */
+   0 for correct output.
+
+   All modes are tieable except QImode.  */
 #define MODES_TIEABLE_P(MODE1, MODE2)                   \
      (((MODE1) == (MODE2))                              \
-      || ((MODE1) == SImode && (MODE2) == HImode)	\
-      || ((MODE1) == HImode && (MODE2) == SImode))
+      || ((MODE1) != QImode && (MODE2) != QImode))
 
 
 /* Define the classes of registers for register constraints in the
@@ -654,8 +664,8 @@ enum reg_class
 /* SP_REGS */		 { 0x00000008, 0x00000000 }, /* SP */           \
 /* DA_REGS */		 { 0x00000020, 0x00000000 }, /* A */            \
 /* DB_REGS */		 { 0x00000040, 0x00000000 }, /* B */            \
-/* D8_REGS */		 { 0x00000060, 0x00000000 }, /* A B */          \
 /* Z_REGS  */		 { 0x00000100, 0x00000000 }, /* Z */            \
+/* D8_REGS */		 { 0x00000060, 0x00000000 }, /* A B */          \
 /* Q_REGS  */		 { 0x00000062, 0x00000000 }, /* A B D */        \
 /* D_OR_X_REGS */        { 0x00000003, 0x00000000 }, /* D X */          \
 /* D_OR_Y_REGS */        { 0x00000006, 0x00000000 }, /* D Y */          \
@@ -824,30 +834,38 @@ extern enum reg_class m68hc11_tmp_regs_class;
    C is the letter, and VALUE is a constant value.
    Return 1 if VALUE is in the range specified by C.
 
+   `K' is for 0.
    `L' is for range -65536 to 65536
    `M' is for values whose 16-bit low part is 0
    'N' is for +1 or -1.
    'O' is for 16 (for rotate using swap).
    'P' is for range -8 to 2 (used by addhi_sp)
 
-   'I', 'J', 'K' are not used.  */
+   'I', 'J' are not used.  */
 
 #define CONST_OK_FOR_LETTER_P(VALUE, C) \
-  ((C) == 'L' ? (VALUE) >= -65536 && (VALUE) <= 65535 : \
+  ((C) == 'K' ? (VALUE) == 0 : \
+   (C) == 'L' ? ((VALUE) >= -65536 && (VALUE) <= 65535) : \
    (C) == 'M' ? ((VALUE) & 0x0ffffL) == 0 : \
-   (C) == 'N' ? ((VALUE) == 1 || (VALUE) == -1): \
+   (C) == 'N' ? ((VALUE) == 1 || (VALUE) == -1) : \
    (C) == 'O' ? (VALUE) == 16 : \
-   (C) == 'P' ? (VALUE) <= 2 && (VALUE) >= -8 : 0)
+   (C) == 'P' ? ((VALUE) <= 2 && (VALUE) >= -8) : 0)
 
 /* Similar, but for floating constants, and defining letters G and H.
-   No floating-point constants are valid on 68HC11.  */
-#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)  0
+
+   `G' is for 0.0.  */
+#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C) \
+  ((C) == 'G' ? (GET_MODE_CLASS (GET_MODE (VALUE)) == MODE_FLOAT \
+		 && VALUE == CONST0_RTX (GET_MODE (VALUE))) : 0) 
 
 /* 'U' represents certain kind of memory indexed operand for 68HC12.
    and any memory operand for 68HC11.  */
 #define EXTRA_CONSTRAINT(OP, C)                         \
-((C) == 'U' ? m68hc11_small_indexed_indirect_p (OP, GET_MODE (OP)) : 0)
-
+((C) == 'U' ? m68hc11_small_indexed_indirect_p (OP, GET_MODE (OP)) \
+ : (C) == 'Q' ? m68hc11_symbolic_p (OP, GET_MODE (OP)) \
+ : (C) == 'R' ? m68hc11_indirect_p (OP, GET_MODE (OP)) \
+ : (C) == 'S' ? (memory_operand (OP, GET_MODE (OP)) \
+		 && non_push_operand (OP, GET_MODE (OP))) : 0)
 
 
 /* Stack layout; function entry, exit and calling.  */
@@ -1294,10 +1312,14 @@ extern unsigned char m68hc11_reg_valid_for_index[FIRST_PSEUDO_REGISTER];
    a mode offset to access the lowest part of the data.
    (For example, for an SImode, the last valid offset is 252.) */
 #define VALID_CONSTANT_OFFSET_P(X,MODE)		\
-((GET_CODE (X) == CONST_INT) &&			\
- ((INTVAL (X) >= VALID_MIN_OFFSET)		\
-    && ((INTVAL (X) <= VALID_MAX_OFFSET		\
-		- (HOST_WIDE_INT) (GET_MODE_SIZE (MODE) + 1)))))
+(((GET_CODE (X) == CONST_INT) &&			\
+  ((INTVAL (X) >= VALID_MIN_OFFSET)		\
+     && ((INTVAL (X) <= VALID_MAX_OFFSET		\
+		- (HOST_WIDE_INT) (GET_MODE_SIZE (MODE) + 1))))) \
+|| (TARGET_M6812 \
+    && ((GET_CODE (X) == SYMBOL_REF) \
+        || GET_CODE (X) == LABEL_REF \
+        || GET_CODE (X) == CONST)))
 
 /* This is included to allow stack push/pop operations. Special hacks in the
    md and m6811.c files exist to support this.  */
@@ -1442,7 +1464,7 @@ extern unsigned char m68hc11_reg_valid_for_index[FIRST_PSEUDO_REGISTER];
 
 /* Move costs between classes of registers */
 #define REGISTER_MOVE_COST(MODE, CLASS1, CLASS2)	\
-    (m68hc11_register_move_cost (CLASS1, CLASS2))
+    (m68hc11_register_move_cost (MODE, CLASS1, CLASS2))
 
 /* Move cost between register and memory.
     - Move to a 16-bit register is reasonable,

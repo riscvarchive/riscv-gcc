@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 B o d y                                  --
 --                                                                          --
---                            $Revision$
+--                            $Revision: 1.2.10.1 $
 --                                                                          --
 --          Copyright (C) 1992-2001 Free Software Foundation, Inc.          --
 --                                                                          --
@@ -22,7 +22,7 @@
 -- MA 02111-1307, USA.                                                      --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
--- It is now maintained by Ada Core Technologies Inc (http://www.gnat.com). --
+-- Extensive contributions were provided by Ada Core Technologies Inc.      --
 --                                                                          --
 ------------------------------------------------------------------------------
 
@@ -49,11 +49,11 @@ begin
    Write_Str ("Usage: ");
    Osint.Write_Program_Name;
    Write_Str ("  opts  name  ");
-   Write_Str ("{[-cargs opts] [-bargs opts] [-largs opts]}");
+   Write_Str ("{[-cargs opts] [-bargs opts] [-largs opts] [-margs opts]}");
    Write_Eol;
    Write_Eol;
-   Write_Str ("  name  is a file name from which you can omit the");
-   Write_Str (" .adb or .ads suffix");
+   Write_Str ("  name is one or more file name from which you");
+   Write_Str (" can omit the .adb or .ads suffix");
    Write_Eol;
    Write_Eol;
 
@@ -280,6 +280,12 @@ begin
 
    Write_Switch_Char;
    Write_Str ("largs opts   opts are passed to the linker");
+   Write_Eol;
+
+   --  Line for -largs
+
+   Write_Switch_Char;
+   Write_Str ("margs opts   opts are passed to gnatmake");
    Write_Eol;
 
    --  Add usage information for gcc

@@ -264,7 +264,7 @@ static void alloc_mark_stack();
 GC_bool GC_mark_some(cold_gc_frame)
 ptr_t cold_gc_frame;
 {
-#ifdef MSWIN32
+#if defined(MSWIN32) && !defined(__GNUC__)
   /* Windows 98 appears to asynchronously create and remove writable	*/
   /* memory mappings, for reasons we haven't yet understood.  Since	*/
   /* we look for writable regions to determine the root set, we may	*/
@@ -274,7 +274,7 @@ ptr_t cold_gc_frame;
   /* Note that this code should never generate an incremental GC write	*/
   /* fault.								*/
   __try {
-#endif
+#endif /* defined(MSWIN32) && !defined(__GNUC__) */
     switch(GC_mark_state) {
     	case MS_NONE:
     	    return(FALSE);
@@ -395,7 +395,7 @@ ptr_t cold_gc_frame;
     	    ABORT("GC_mark_some: bad state");
     	    return(FALSE);
     }
-#ifdef MSWIN32
+#if defined(MSWIN32) && !defined(__GNUC__)
   } __except (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ?
 	    EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
 #   ifdef CONDPRINT
@@ -410,7 +410,7 @@ ptr_t cold_gc_frame;
     scan_ptr = 0;
     return FALSE;
   }
-#endif /* MSWIN32 */
+#endif /* defined(MSWIN32) && !defined(__GNUC__) */
 }
 
 
@@ -546,13 +546,13 @@ mse * mark_stack_limit;
           /* Large length.					        */
           /* Process part of the range to avoid pushing too much on the	*/
           /* stack.							*/
+	  GC_ASSERT(descr < GC_greatest_plausible_heap_addr
+			    - GC_least_plausible_heap_addr);
 #	  ifdef PARALLEL_MARK
 #	    define SHARE_BYTES 2048
 	    if (descr > SHARE_BYTES && GC_parallel
 		&& mark_stack_top < mark_stack_limit - 1) {
 	      int new_size = (descr/2) & ~(sizeof(word)-1);
-	      GC_ASSERT(descr < GC_greatest_plausible_heap_addr
-			        - GC_least_plausible_heap_addr);
 	      mark_stack_top -> mse_start = current_p;
 	      mark_stack_top -> mse_descr = new_size + sizeof(word);
 					/* makes sure we handle 	*/

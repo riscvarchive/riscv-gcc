@@ -227,7 +227,7 @@ if (INTEGRAL_MODE_P (MODE) &&	        	    	\
 {  1, 2, 3, 4, 5, 0, 14, 13, 12, 11, 10, 9, 8, 7, 6,            \
    16, 17, 18, 19, 20, 21, 22, 23,                              \
    24, 25, 26, 27, 28, 29, 30, 31,                              \
-   15, 32, 33 }
+   15, 32, 33, 34 }
 
 /* Standard register usage.  */
  
@@ -264,7 +264,7 @@ if (INTEGRAL_MODE_P (MODE) &&	        	    	\
    GPR 14: Return registers holds the return address
    GPR 15: Stack pointer */
 
-#define PIC_OFFSET_TABLE_REGNUM 12
+#define PIC_OFFSET_TABLE_REGNUM (flag_pic ? 12 : INVALID_REGNUM)
 #define BASE_REGISTER 13
 #define RETURN_REGNUM 14
 #define STACK_POINTER_REGNUM 15
@@ -879,7 +879,7 @@ CUMULATIVE_ARGS;
 #define FUNCTION_PROFILER(FILE, LABELNO) 			\
 	s390_function_profiler ((FILE), ((LABELNO)))
 
-/* #define PROFILE_BEFORE_PROLOGUE */
+#define PROFILE_BEFORE_PROLOGUE 1
 
 /* Define EXIT_IGNORE_STACK if, when returning from a function, the stack
    pointer does not matter (provided there is a frame pointer).  */
@@ -1285,6 +1285,10 @@ extern struct rtx_def *s390_compare_op0, *s390_compare_op1;
 
 #define TARGET_MEM_FUNCTIONS
 
+/* Either simplify a location expression, or return the original.  */
+
+#define ASM_SIMPLIFY_DWARF_ADDR(X) \
+  s390_simplify_dwarf_addr (X)
 
 /* Print operand X (an rtx) in assembler syntax to file FILE.
    CODE is a letter or dot (`z' in `%z0') or 0 if no letter was specified.
@@ -1305,6 +1309,8 @@ extern struct rtx_def *s390_compare_op0, *s390_compare_op1;
   {"load_multiple_operation", {PARALLEL}},			        \
   {"store_multiple_operation", {PARALLEL}},			        \
   {"const0_operand",  { CONST_INT, CONST_DOUBLE }},			\
+  {"consttable_operand", { SYMBOL_REF, LABEL_REF, CONST, 		\
+			   CONST_INT, CONST_DOUBLE }},			\
   {"s390_plus_operand", { PLUS }},
 
 
@@ -1323,20 +1329,12 @@ extern struct rtx_def *s390_compare_op0, *s390_compare_op1;
 /* Constant Pool for all symbols operands which are changed with
    force_const_mem during insn generation (expand_insn).  */
 
-extern struct rtx_def *s390_pool_start_insn;
 extern int s390_pool_count;
 extern int s390_nr_constants;
-
-/* Function is splitted in chunk, if literal pool could overflow
-   Value need to be lowered, if problems with displacement overflow.  */
-
-#define S390_CHUNK_MAX 0xe00
-#define S390_CHUNK_OV 0x1000
-#define S390_POOL_MAX 0xe00
+extern int s390_pool_overflow;
 
 #define ASM_OUTPUT_POOL_PROLOGUE(FILE, FUNNAME, fndecl, size)  	        \
 {								       	\
-  register rtx insn;						       	\
   struct pool_constant *pool;					       	\
 								        \
     if (s390_pool_count == -1)                                        	\
@@ -1346,53 +1344,11 @@ extern int s390_nr_constants;
 	 if (pool->mark) s390_nr_constants++;		                \
        return;                                      	                \
      }                                                                  \
-    if (first_pool == 0) {                                              \
-      s390_asm_output_pool_prologue (FILE, FUNNAME, fndecl, size);    	\
-      return;							      	\
-    }								       	\
-    for (pool = first_pool; pool; pool = pool->next)		       	\
-      pool->mark = 0;						       	\
-  								       	\
-    insn = s390_pool_start_insn;				       	\
-  								       	\
-    if (insn==NULL_RTX)	 					       	\
-      insn = get_insns ();		 		                \
-    else		       			                        \
-      insn = NEXT_INSN (insn);		                                \
-    for (; insn; insn = NEXT_INSN (insn)) {    		                \
-      if (GET_RTX_CLASS (GET_CODE (insn)) == 'i') {		       	\
-        if (s390_stop_dump_lit_p (insn)) { 	       		       	\
-	  mark_constants (PATTERN (insn));			       	\
-	  break;						       	\
-        } else							       	\
-	  mark_constants (PATTERN (insn));			       	\
-      }								       	\
-    }								       	\
-								       	\
-    /* Mark entries referenced by other entries */			\
-    for (pool = first_pool; pool; pool = pool->next)		       	\
-      if (pool->mark)							\
-        mark_constants (pool->constant);				\
-								       	\
-    s390_asm_output_pool_prologue (FILE, FUNNAME, fndecl, size);     	\
 }
-
-/* We need to return, because otherwise the pool is deleted of the 
-   constant pool after the first output.  */
-
-#define ASM_OUTPUT_POOL_EPILOGUE(FILE, FUNNAME, fndecl, size) return;
 
 #define ASM_OUTPUT_SPECIAL_POOL_ENTRY(FILE, EXP, MODE, ALIGN, LABELNO, WIN) \
 {									    \
-  if ((s390_pool_count == 0) || (s390_pool_count > 0 && LABELNO >= 0))	    \
-    {									    \
-      fprintf (FILE, ".LC%d:\n", LABELNO);				    \
-      LABELNO = ~LABELNO;						    \
-    }									    \
-  if (s390_pool_count > 0)						    \
-    {									    \
-      fprintf (FILE, ".LC%d_%X:\n", ~LABELNO, s390_pool_count);		    \
-    }									    \
+  fprintf (FILE, ".LC%d:\n", LABELNO);					    \
 									    \
   /* Output the value of the constant itself.  */			    \
   switch (GET_MODE_CLASS (MODE))					    \

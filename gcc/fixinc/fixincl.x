@@ -5,7 +5,7 @@
  * files which are fixed to work correctly with ANSI C and placed in a
  * directory that GNU C will search.
  *
- * This file contains 138 fixup descriptions.
+ * This file contains 142 fixup descriptions.
  *
  * See README for more information.
  *
@@ -293,6 +293,38 @@ extern char *memset();\n\
 #endif /* __STDC__ */\n\n\
 extern int memcmp();\n\n\
 #endif /* __memory_h__ */\n",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Aab_Solaris_Sys_Varargs_H fix
+ */
+tSCC zAab_Solaris_Sys_Varargs_HName[] =
+     "AAB_solaris_sys_varargs_h";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zAab_Solaris_Sys_Varargs_HList[] =
+  "|sys/varargs.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzAab_Solaris_Sys_Varargs_HMachs[] = {
+        "*-*-solaris*",
+        (const char*)NULL };
+#define AAB_SOLARIS_SYS_VARARGS_H_TEST_CT  0
+#define aAab_Solaris_Sys_Varargs_HTests   (tTestDesc*)NULL
+
+/*
+ *  Fix Command Arguments for Aab_Solaris_Sys_Varargs_H
+ */
+static const char* apzAab_Solaris_Sys_Varargs_HPatch[] = {
+"#ifdef __STDC__\n\
+#include <stdarg.h>\n\
+#else\n\
+#include <varargs.h>\n\
+#endif\n",
     (char*)NULL };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -740,6 +772,41 @@ static tTestDesc aAlpha___AssertTests[] = {
 static const char* apzAlpha___AssertPatch[] = {
     "format",
     "__assert(const char *, const char *, int)",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Alpha_Assert fix
+ */
+tSCC zAlpha_AssertName[] =
+     "alpha_assert";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zAlpha_AssertList[] =
+  "|assert.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+#define apzAlpha_AssertMachs (const char**)NULL
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zAlpha_AssertSelect0[] =
+       "(#define assert\\(EX\\).*)\\(\\(int\\) \\(EX\\)\\)";
+
+#define    ALPHA_ASSERT_TEST_CT  1
+static tTestDesc aAlpha_AssertTests[] = {
+  { TT_EGREP,    zAlpha_AssertSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Alpha_Assert
+ */
+static const char* apzAlpha_AssertPatch[] = {
+    "format",
+    "%1(EX)",
     (char*)NULL };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -3627,6 +3694,85 @@ static const char* apzSolaris_Mutex_InitPatch[] = {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * *
  *
+ *  Description of Solaris_Stdio_Tag fix
+ */
+tSCC zSolaris_Stdio_TagName[] =
+     "solaris_stdio_tag";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zSolaris_Stdio_TagList[] =
+  "|stdio_tag.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+#define apzSolaris_Stdio_TagMachs (const char**)NULL
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zSolaris_Stdio_TagSelect0[] =
+       "__cplusplus < 54321L";
+
+#define    SOLARIS_STDIO_TAG_TEST_CT  1
+static tTestDesc aSolaris_Stdio_TagTests[] = {
+  { TT_EGREP,    zSolaris_Stdio_TagSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Solaris_Stdio_Tag
+ */
+static const char* apzSolaris_Stdio_TagPatch[] = { "sed",
+    "-e", "s/defined(__cplusplus) && (__cplusplus < 54321L)/0/",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Description of Solaris_Widec fix
+ */
+tSCC zSolaris_WidecName[] =
+     "solaris_widec";
+
+/*
+ *  File name selection pattern
+ */
+tSCC zSolaris_WidecList[] =
+  "|widec.h|";
+/*
+ *  Machine/OS name selection pattern
+ */
+tSCC* apzSolaris_WidecMachs[] = {
+        "*-*-solaris2.[0-5]*",
+        (const char*)NULL };
+
+/*
+ *  content selection pattern - do fix if pattern found
+ */
+tSCC zSolaris_WidecSelect0[] =
+       "#include <euc.h>";
+
+/*
+ *  content bypass pattern - skip fix if pattern found
+ */
+tSCC zSolaris_WidecBypass0[] =
+       "include.*wchar\\.h";
+
+#define    SOLARIS_WIDEC_TEST_CT  2
+static tTestDesc aSolaris_WidecTests[] = {
+  { TT_NEGREP,   zSolaris_WidecBypass0, (regex_t*)NULL },
+  { TT_EGREP,    zSolaris_WidecSelect0, (regex_t*)NULL }, };
+
+/*
+ *  Fix Command Arguments for Solaris_Widec
+ */
+static const char* apzSolaris_WidecPatch[] = {
+    "format",
+    "%0\n\
+#include <wchar.h>",
+    (char*)NULL };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
  *  Description of Statsswtch fix
  */
 tSCC zStatsswtchName[] =
@@ -5435,9 +5581,9 @@ static const char* apzX11_SprintfPatch[] = {
  *
  *  List of all fixes
  */
-#define REGEX_COUNT          147
+#define REGEX_COUNT          151
 #define MACH_LIST_SIZE_LIMIT 279
-#define FIX_COUNT            138
+#define FIX_COUNT            142
 
 /*
  *  Enumerate the fixes
@@ -5448,6 +5594,7 @@ typedef enum {
     AAB_FD_ZERO_GNU_TYPES_H_FIXIDX,
     AAB_FD_ZERO_SELECTBITS_H_FIXIDX,
     AAB_SUN_MEMCPY_FIXIDX,
+    AAB_SOLARIS_SYS_VARARGS_H_FIXIDX,
     AAB_SVR4_REPLACE_BYTEORDER_FIXIDX,
     AAB_ULTRIX_ANSI_COMPAT_FIXIDX,
     AAB_ULTRIX_LIMITS_FIXIDX,
@@ -5458,6 +5605,7 @@ typedef enum {
     AIX_SYSWAIT_FIXIDX,
     AIX_VOLATILE_FIXIDX,
     ALPHA___ASSERT_FIXIDX,
+    ALPHA_ASSERT_FIXIDX,
     ALPHA_GETOPT_FIXIDX,
     ALPHA_PARENS_FIXIDX,
     ALPHA_SBRK_FIXIDX,
@@ -5534,6 +5682,8 @@ typedef enum {
     SCO_STATIC_FUNC_FIXIDX,
     SCO_UTIME_FIXIDX,
     SOLARIS_MUTEX_INIT_FIXIDX,
+    SOLARIS_STDIO_TAG_FIXIDX,
+    SOLARIS_WIDEC_FIXIDX,
     STATSSWTCH_FIXIDX,
     STDIO_STDARG_H_FIXIDX,
     STDIO_VA_LIST_FIXIDX,
@@ -5609,6 +5759,11 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      AAB_SUN_MEMCPY_TEST_CT, FD_MACH_ONLY | FD_REPLACEMENT,
      aAab_Sun_MemcpyTests,   apzAab_Sun_MemcpyPatch, 0 },
 
+  {  zAab_Solaris_Sys_Varargs_HName,    zAab_Solaris_Sys_Varargs_HList,
+     apzAab_Solaris_Sys_Varargs_HMachs,
+     AAB_SOLARIS_SYS_VARARGS_H_TEST_CT, FD_MACH_ONLY | FD_REPLACEMENT,
+     aAab_Solaris_Sys_Varargs_HTests,   apzAab_Solaris_Sys_Varargs_HPatch, 0 },
+
   {  zAab_Svr4_Replace_ByteorderName,    zAab_Svr4_Replace_ByteorderList,
      apzAab_Svr4_Replace_ByteorderMachs,
      AAB_SVR4_REPLACE_BYTEORDER_TEST_CT, FD_MACH_ONLY | FD_REPLACEMENT,
@@ -5658,6 +5813,11 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      apzAlpha___AssertMachs,
      ALPHA___ASSERT_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aAlpha___AssertTests,   apzAlpha___AssertPatch, 0 },
+
+  {  zAlpha_AssertName,    zAlpha_AssertList,
+     apzAlpha_AssertMachs,
+     ALPHA_ASSERT_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aAlpha_AssertTests,   apzAlpha_AssertPatch, 0 },
 
   {  zAlpha_GetoptName,    zAlpha_GetoptList,
      apzAlpha_GetoptMachs,
@@ -6038,6 +6198,16 @@ tFixDesc fixDescList[ FIX_COUNT ] = {
      apzSolaris_Mutex_InitMachs,
      SOLARIS_MUTEX_INIT_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
      aSolaris_Mutex_InitTests,   apzSolaris_Mutex_InitPatch, 0 },
+
+  {  zSolaris_Stdio_TagName,    zSolaris_Stdio_TagList,
+     apzSolaris_Stdio_TagMachs,
+     SOLARIS_STDIO_TAG_TEST_CT, FD_MACH_ONLY,
+     aSolaris_Stdio_TagTests,   apzSolaris_Stdio_TagPatch, 0 },
+
+  {  zSolaris_WidecName,    zSolaris_WidecList,
+     apzSolaris_WidecMachs,
+     SOLARIS_WIDEC_TEST_CT, FD_MACH_ONLY | FD_SUBROUTINE,
+     aSolaris_WidecTests,   apzSolaris_WidecPatch, 0 },
 
   {  zStatsswtchName,    zStatsswtchList,
      apzStatsswtchMachs,

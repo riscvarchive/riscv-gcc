@@ -84,6 +84,7 @@ bool test01(void)
 void
 test02()
 {
+  bool test = true;
   const char* strlit = "../the long pier/Hanalei Bay/Kauai/Hawaii";
   std::string aux = strlit;
   aux.replace(aux.begin()+5, aux.begin()+20,
@@ -100,6 +101,7 @@ test02()
 void
 test03()
 {
+  bool test = true;
   const char* title01 = "nine types of ambiguity";
   const char* title02 = "ultra";
   std::string str01 = title01;
@@ -139,10 +141,62 @@ test03()
   VERIFY(str01 == "ultra");
 }
 
+// We wrongly used __n1 instead of __foldn1 in the length_error
+// check at the beginning of replace(__pos, __n1, __s, __n2)
+void
+test04()
+{
+  bool test = true;
+  std::string str01 = "londinium";
+  std::string str02 = "cydonia";
+
+  str01.replace(0, 20, str02.c_str(), 3);
+  VERIFY(str01 == "cyd");
+}
+
+// Some more tests for 
+// template<typename InputIter>
+//   string& replace(iterator it1, iterator it2, InputIter j1, InputIter j2)
+void
+test05()
+{
+  bool test = true;
+  std::string str01 = "geogaddi";
+  std::string str02;
+
+  typedef std::string::iterator iterator;
+  typedef std::string::const_iterator const_iterator;
+  
+  iterator it1 = str01.begin();
+  iterator it2 = str01.end();
+  str02.replace(str02.begin(), str02.end(), it1, it2);
+  VERIFY(str02 == "geogaddi");
+
+  str02 = "boards";
+  const_iterator c_it1 = str01.begin();
+  const_iterator c_it2 = str01.end();
+  str02.replace(str02.begin(), str02.end(), c_it1, c_it2);
+  VERIFY(str02 == "geogaddi");
+
+  str02 = "boards";
+  const char* c_ptr1 = str01.c_str();
+  const char* c_ptr2 = str01.c_str() + 8;
+  str02.replace(str02.begin(), str02.end(), c_ptr1, c_ptr2);
+  VERIFY(str02 == "geogaddi");
+
+  str02 = "boards";
+  char* ptr1 = &*str01.begin();
+  char* ptr2 = &*str01.end();
+  str02.replace(str02.begin(), str02.end(), ptr1, ptr2);
+  VERIFY(str02 == "geogaddi");
+}
+
 int main()
 { 
   test01();
   test02();
   test03();
+  test04();
+  test05();
   return 0;
 }

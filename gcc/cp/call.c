@@ -795,9 +795,8 @@ standard_conversion (to, from, expr)
 	{
 	  tree fbase = TYPE_OFFSET_BASETYPE (TREE_TYPE (from));
 	  tree tbase = TYPE_OFFSET_BASETYPE (TREE_TYPE (to));
-	  tree binfo = lookup_base (tbase, fbase, ba_check, NULL);
 
-	  if (binfo && !binfo_from_vbase (binfo)
+	  if (DERIVED_FROM_P (fbase, tbase)
 	      && (same_type_ignoring_top_level_qualifiers_p
 		  (TREE_TYPE (TREE_TYPE (from)),
 		   TREE_TYPE (TREE_TYPE (to)))))
@@ -843,9 +842,8 @@ standard_conversion (to, from, expr)
       tree tofn = TREE_TYPE (TYPE_PTRMEMFUNC_FN_TYPE (to));
       tree fbase = TREE_TYPE (TREE_VALUE (TYPE_ARG_TYPES (fromfn)));
       tree tbase = TREE_TYPE (TREE_VALUE (TYPE_ARG_TYPES (tofn)));
-      tree binfo = lookup_base (tbase, fbase, ba_check, NULL);
 
-      if (!binfo || binfo_from_vbase (binfo)
+      if (!DERIVED_FROM_P (fbase, tbase)
 	  || !same_type_p (TREE_TYPE (fromfn), TREE_TYPE (tofn))
 	  || !compparms (TREE_CHAIN (TYPE_ARG_TYPES (fromfn)),
 			 TREE_CHAIN (TYPE_ARG_TYPES (tofn)))
@@ -2240,6 +2238,36 @@ add_template_candidate_real (candidates, tmpl, ctype, explicit_targs,
   if (fn == error_mark_node)
     return candidates;
 
+  /* In [class.copy]:
+
+       A member function template is never instantiated to perform the
+       copy of a class object to an object of its class type.  
+
+     It's a little unclear what this means; the standard explicitly
+     does allow a template to be used to copy a class.  For example,
+     in:
+
+       struct A {
+         A(A&);
+	 template <class T> A(const T&);
+       };
+       const A f ();
+       void g () { A a (f ()); }
+       
+     the member template will be used to make the copy.  The section
+     quoted above appears in the paragraph that forbids constructors
+     whose only parameter is (a possibly cv-qualified variant of) the
+     class type, and a logical interpretation is that the intent was
+     to forbid the instantiation of member templates which would then
+     have that form.  */
+  if (DECL_CONSTRUCTOR_P (fn) && list_length (arglist) == 2) 
+    {
+      tree arg_types = FUNCTION_FIRST_USER_PARMTYPE (fn);
+      if (arg_types && same_type_p (TYPE_MAIN_VARIANT (TREE_VALUE (arg_types)),
+				    ctype))
+	return candidates;
+    }
+
   if (obj != NULL_TREE)
     /* Aha, this is a conversion function.  */
     cand = add_conv_candidate (candidates, fn, obj, arglist);
@@ -3580,8 +3608,7 @@ builtin:
    match with the placement new is accepted.
 
    CODE is either DELETE_EXPR or VEC_DELETE_EXPR.
-   ADDR is the pointer to be deleted.  For placement delete, it is also
-     used to determine what the corresponding new looked like.
+   ADDR is the pointer to be deleted.
    SIZE is the size of the memory block to be deleted.
    FLAGS are the usual overloading flags.
    PLACEMENT is the corresponding placement new call, or NULL_TREE.  */
@@ -3626,15 +3653,22 @@ build_op_delete_call (code, addr, size, flags, placement)
 
   if (placement)
     {
-      /* placement is a CALL_EXPR around an ADDR_EXPR around a function.  */
+      tree alloc_fn;
+      tree call_expr;
 
+      /* Find the allocation function that is being called. */
+      call_expr = placement;
+      /* Sometimes we have a COMPOUND_EXPR, rather than a simple
+	 CALL_EXPR. */
+      while (TREE_CODE (call_expr) == COMPOUND_EXPR)
+	call_expr = TREE_OPERAND (call_expr, 1);
       /* Extract the function.  */
-      argtypes = TREE_OPERAND (TREE_OPERAND (placement, 0), 0);
+      alloc_fn = get_callee_fndecl (call_expr);
+      my_friendly_assert (alloc_fn != NULL_TREE, 20020327);
       /* Then the second parm type.  */
-      argtypes = TREE_CHAIN (TYPE_ARG_TYPES (TREE_TYPE (argtypes)));
-
+      argtypes = TREE_CHAIN (TYPE_ARG_TYPES (TREE_TYPE (alloc_fn)));
       /* Also the second argument.  */
-      args = TREE_CHAIN (TREE_OPERAND (placement, 1));
+      args = TREE_CHAIN (TREE_OPERAND (call_expr, 1));
     }
   else
     {
@@ -4271,7 +4305,8 @@ build_over_call (cand, args, flags)
 	          be touched as it might overlay things. When the
 	          gcc core learns about empty classes, we can treat it
 	          like other classes. */
-	       && !is_empty_class (DECL_CONTEXT (fn)))
+	       && !(is_empty_class (DECL_CONTEXT (fn))
+		    && TYPE_HAS_TRIVIAL_INIT_REF (DECL_CONTEXT (fn))))
 	{
 	  tree address;
 	  tree to = stabilize_reference
@@ -4307,6 +4342,7 @@ build_over_call (cand, args, flags)
 	     Ideally, the notions of having side-effects and of being
 	     useless would be orthogonal.  */
 	  TREE_SIDE_EFFECTS (val) = 1;
+	  TREE_NO_UNUSED_WARNING (val) = 1;
 	}
       else
 	val = build (MODIFY_EXPR, TREE_TYPE (to), to, arg);

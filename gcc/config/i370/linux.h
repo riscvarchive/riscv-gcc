@@ -1,5 +1,6 @@
 /* Definitions of target machine for GNU compiler.  System/370 version.
-   Copyright (C) 1989, 1993, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1989, 1993, 1995, 1996, 1997, 1999, 2000, 2001, 2002
+   Free Software Foundation, Inc.
    Contributed by Jan Stein (jan@cd.chalmers.se).
    Modified for Linux/390 by Linas Vepstas (linas@linas.org)
 
@@ -43,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-DGCC -Dgcc -D__ELF__ -Dunix -Dlinux -Asystem=posix -Acpu=i370 -Amachine=i370"
+#define CPP_PREDEFINES "-DGCC -Dgcc -D__ELF__ -Dunix -D__gnu_linux__ -Dlinux -Asystem=posix -Acpu=i370 -Amachine=i370"
 
 /* Options for this target machine.  */
 
@@ -94,7 +95,7 @@ Boston, MA 02111-1307, USA.  */
 #endif
 
 #ifndef CPP_OS_LINUX_SPEC
-#define CPP_OS_LINUX_SPEC "-D__unix__ -D__linux__ \
+#define CPP_OS_LINUX_SPEC "-D__unix__ -D__gnu_linux__ -D__linux__ \
 %{!ansi: -Dunix -Dlinux } \
 -Asystem=unix -Asystem=linux"
 #endif

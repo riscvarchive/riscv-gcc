@@ -48,19 +48,19 @@
   ctype<char>::ctype(const mask* __table, bool __del, size_t __refs)
   : __ctype_abstract_base<char>(__refs), _M_del(__table != 0 && __del), 
   _M_toupper(__trans_upper), _M_tolower(__trans_lower),
-  _M_table(__table == 0 ? __table : classic_table()) 
+  _M_table(__table ? __table : classic_table()) 
   { }
 
   char
   ctype<char>::do_toupper(char __c) const
-  { return _M_toupper[(int) __c]; }
+  { return _M_toupper[static_cast<unsigned char>(__c)]; }
 
   const char*
   ctype<char>::do_toupper(char* __low, const char* __high) const
   {
     while (__low < __high)
       {
-	*__low = _M_toupper[(int) *__low];
+	*__low = _M_toupper[static_cast<unsigned char>(*__low)];
 	++__low;
       }
     return __high;
@@ -68,17 +68,15 @@
 
   char
   ctype<char>::do_tolower(char __c) const
-  { return _M_tolower[(int) __c]; }
+  { return _M_tolower[static_cast<unsigned char>(__c)]; }
 
   const char* 
   ctype<char>::do_tolower(char* __low, const char* __high) const
   {
     while (__low < __high)
       {
-	*__low = _M_tolower[(int) *__low];
+	*__low = _M_tolower[static_cast<unsigned char>(*__low)];
 	++__low;
       }
     return __high;
   }
-
-

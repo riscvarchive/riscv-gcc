@@ -529,13 +529,14 @@ GC_bool GC_register_dynamic_libraries_dl_iterate_phdr()
 
 # endif
 
+#ifdef __GNUC__
+# pragma weak _DYNAMIC
+#endif
+extern ElfW(Dyn) _DYNAMIC[];
+
 static struct link_map *
 GC_FirstDLOpenedLinkMap()
 {
-#   ifdef __GNUC__
-#     pragma weak _DYNAMIC
-#   endif
-    extern ElfW(Dyn) _DYNAMIC[];
     ElfW(Dyn) *dp;
     struct r_debug *r;
     static struct link_map *cachedResult = 0;
@@ -775,7 +776,7 @@ void GC_register_dynamic_libraries()
 # endif
 
 # ifndef MSWINCE
-  extern GC_bool GC_win32s;
+  extern GC_bool GC_no_win32_dlls;
 # endif
   
   void GC_register_dynamic_libraries()
@@ -788,7 +789,7 @@ void GC_register_dynamic_libraries()
     char * limit, * new_limit;
 
 #   ifdef MSWIN32
-      if (GC_win32s) return;
+      if (GC_no_win32_dlls) return;
 #   endif
     base = limit = p = GC_sysinfo.lpMinimumApplicationAddress;
 #   if defined(MSWINCE) && !defined(_WIN32_WCE_EMULATION)

@@ -48,6 +48,9 @@ struct lang_hooks_for_tree_inlining
   int (*anon_aggr_type_p) PARAMS ((union tree_node *));
   int (*start_inlining) PARAMS ((union tree_node *));
   void (*end_inlining) PARAMS ((union tree_node *));
+  union tree_node *(*convert_parm_for_inlining) PARAMS ((union tree_node *,
+							 union tree_node *,
+							 union tree_node *));
 };
 
 /* The following hooks are used by tree-dump.c.  */
@@ -90,7 +93,10 @@ struct lang_hooks
   /* Called when all command line options have been parsed.  Should do
      any required consistency checks, modifications etc.  Complex
      initialization should be left to the "init" callback, since GC
-     and the identifier hashes are set up between now and then.  */
+     and the identifier hashes are set up between now and then.
+
+     If errorcount is non-zero after this call the compiler exits
+     immediately and the finish hook is not called.  */
   void (*post_options) PARAMS ((void));
 
   /* Called after post_options, to initialize the front end.  The main

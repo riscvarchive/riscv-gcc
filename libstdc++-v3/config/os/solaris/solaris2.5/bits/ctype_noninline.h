@@ -35,7 +35,7 @@
 
   const ctype_base::mask*
   ctype<char>::classic_table() throw()
-  { return 0; }
+  { return __ctype; }
 
   ctype<char>::ctype(__c_locale, const mask* __table, bool __del, 
 		     size_t __refs) 
@@ -52,7 +52,7 @@
 
   char
   ctype<char>::do_toupper(char __c) const
-  { return ((_M_table + 258)[static_cast<int>(__c)]); }
+  { return ((_M_table + 258)[static_cast<unsigned char>(__c)]); }
 
   const char*
   ctype<char>::do_toupper(char* __low, const char* __high) const
@@ -67,7 +67,7 @@
 
   char
   ctype<char>::do_tolower(char __c) const
-  { return ((_M_table + 258)[static_cast<int>(__c)]); }
+  { return ((_M_table + 258)[static_cast<unsigned char>(__c)]); }
 
   const char* 
   ctype<char>::do_tolower(char* __low, const char* __high) const
@@ -79,5 +79,3 @@
       }
     return __high;
   }
-
-

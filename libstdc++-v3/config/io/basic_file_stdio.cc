@@ -40,13 +40,7 @@ namespace std
   : _M_cfile(NULL), _M_cfile_created(false) { }
 
   __basic_file<char>::~__basic_file()
-  {
-    if (this->is_open())
-      {
-	fflush(_M_cfile);
-	this->close();
-      }
-  }
+  { this->close(); }
       
   void 
   __basic_file<char>::_M_open_mode(ios_base::openmode __mode, int&, int&, 
@@ -75,23 +69,48 @@ namespace std
   }
   
   __basic_file<char>*
-  __basic_file<char>::sys_open(__c_file_type* __file, ios_base::openmode) 
+  __basic_file<char>::sys_open(__c_file* __file, ios_base::openmode) 
   {
     __basic_file* __ret = NULL;
     if (!this->is_open() && __file)
       {
-	_M_cfile = __file;
-	_M_cfile_created = false;
+ 	_M_cfile = __file;
+ 	_M_cfile_created = false;
+  	__ret = this;
+      }
+    return __ret;
+  }
+  
+  __basic_file<char>*
+  __basic_file<char>::sys_open(int __fd, ios_base::openmode __mode, 
+			       bool __del) 
+  {
+    __basic_file* __ret = NULL;
+    int __p_mode = 0;
+    int __rw_mode = 0;
+    char __c_mode[4];
+    
+    _M_open_mode(__mode, __p_mode, __rw_mode, __c_mode);
+    if (!this->is_open() && (_M_cfile = fdopen(__fd, __c_mode)))
+      {
+	// Iff __del is true, then close will fclose the fd.
+	_M_cfile_created = __del;
+
+	if (__fd == 0)
+	  setvbuf(_M_cfile, reinterpret_cast<char*>(NULL), _IONBF, 0);
+
 	__ret = this;
       }
     return __ret;
   }
 
-  char
-  __basic_file<char>::sys_getc() { return getc (_M_cfile); }
-  
-  char
-  __basic_file<char>::sys_ungetc(char __s) { return ungetc (__s, _M_cfile); }
+  int
+  __basic_file<char>::sys_getc() 
+  { return getc(_M_cfile); }
+
+  int
+  __basic_file<char>::sys_ungetc(int __c) 
+  { return ungetc(__c, _M_cfile); }
   
   __basic_file<char>* 
   __basic_file<char>::open(const char* __name, ios_base::openmode __mode, 
@@ -116,17 +135,26 @@ namespace std
   }
   
   bool 
-  __basic_file<char>::is_open() { return _M_cfile != 0; }
+  __basic_file<char>::is_open() const 
+  { return _M_cfile != 0; }
   
   int 
-  __basic_file<char>::fd() { return fileno(_M_cfile) ; }
+  __basic_file<char>::fd() 
+  { return fileno(_M_cfile) ; }
   
   __basic_file<char>* 
   __basic_file<char>::close()
   { 
     __basic_file* __retval = static_cast<__basic_file*>(NULL);
-    if (_M_cfile_created && fclose(_M_cfile))
-      __retval = this;
+    if (this->is_open())
+      {
+	fflush(_M_cfile);
+	if ((_M_cfile_created && fclose(_M_cfile) == 0) || !_M_cfile_created)
+	  {
+	    _M_cfile = 0;
+	    __retval = this;
+	  }
+      }
     return __retval;
   }
  
@@ -154,5 +182,6 @@ namespace std
   }
   
   int 
-  __basic_file<char>::sync() { return fflush(_M_cfile); }
+  __basic_file<char>::sync() 
+  { return fflush(_M_cfile); }
 }  // namespace std

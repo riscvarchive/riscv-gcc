@@ -1236,13 +1236,13 @@ df_insn_refs_record (df, bb, insn)
 	       note = XEXP (note, 1))
 	    {
 	      if (GET_CODE (XEXP (note, 0)) == USE)
-		df_uses_record (df, &SET_DEST (XEXP (note, 0)), DF_REF_REG_USE,
+		df_uses_record (df, &XEXP (XEXP (note, 0), 0), DF_REF_REG_USE,
 				bb, insn, 0);
 	    }
 
 	  /* The stack ptr is used (honorarily) by a CALL insn.  */
 	  x = df_reg_use_gen (STACK_POINTER_REGNUM);
-	  df_uses_record (df, &SET_DEST (x), DF_REF_REG_USE, bb, insn, 0);
+	  df_uses_record (df, &XEXP (x, 0), DF_REF_REG_USE, bb, insn, 0);
 
 	  if (df->flags & DF_HARD_REGS)
 	    {

@@ -289,6 +289,45 @@ void test07()
 #endif
 }
 
+void test08()
+{
+  bool test = true;
+  char* pt = NULL;
+
+  // 1
+  std::ostringstream oss;
+  oss << pt;
+  VERIFY( oss.bad() );
+  VERIFY( oss.str().size() == 0 );
+
+  oss.clear();
+  oss << "";
+  VERIFY( oss.good() );
+
+#if _GLIBCPP_USE_WCHAR_T
+  // 2
+  std::wostringstream woss;
+  woss << pt;
+  VERIFY( woss.bad() );
+  VERIFY( woss.str().size() == 0 );
+
+  woss.clear();
+  woss << "";
+  VERIFY( woss.good() );
+
+  // 3
+  wchar_t* wt = NULL;
+  woss.clear();
+  woss << wt;
+  VERIFY( woss.bad() );
+  VERIFY( woss.str().size() == 0 );
+
+  woss.clear();
+  woss << L"";
+  VERIFY( woss.good() );
+#endif
+}
+
 int main()
 {
   test01();
@@ -298,5 +337,6 @@ int main()
   test05();
   test06();
   test07();
+  test08();
   return 0;
 }

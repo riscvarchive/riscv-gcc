@@ -144,8 +144,15 @@ void GC_push_all_stacks()
     	  GC_push_one ((word) thread_table[i].context.Edx);
     	  GC_push_one ((word) thread_table[i].context.Ecx);
     	  GC_push_one ((word) thread_table[i].context.Eax);
-	  GC_push_all_stack((char *) thread_table[i].context.Esp,
-			    thread_table[i].stack);
+	  if (thread_table[i].context.Esp >= (DWORD)thread_table[i].stack
+	      || thread_table[i].context.Esp < (DWORD)bottom) {
+	      WARN("Thread stack pointer 0x%lx out of range, pushing everything",
+		   thread_table[i].context.Esp);
+	      GC_push_all_stack((char *) bottom, thread_table[i].stack);
+	  } else {
+	      GC_push_all_stack((char *) thread_table[i].context.Esp,
+			        thread_table[i].stack);
+	  }
 #       else
 #       ifdef ARM32
 	  if (thread_table[i].context.Sp >= (DWORD)thread_table[i].stack
@@ -447,16 +454,22 @@ static DWORD WINAPI thread_start(LPVOID arg)
     /* Clear the thread entry even if we exit with an exception.	*/
     /* This is probably pointless, since an uncaught exception is	*/
     /* supposed to result in the process being killed.			*/
+#ifndef __GNUC__
     __try {
+#endif /* __GNUC__ */
 	ret = args.start (args.param);
+#ifndef __GNUC__
     } __finally {
+#endif /* __GNUC__ */
 	LOCK();
 	args.entry->stack = 0;
 	args.entry->in_use = FALSE;
 	      /* cast away volatile qualifier */
 	BZERO((void *) &args.entry->context, sizeof(CONTEXT));
 	UNLOCK();
+#ifndef __GNUC__
     }
+#endif /* __GNUC__ */
 
     return ret;
 }

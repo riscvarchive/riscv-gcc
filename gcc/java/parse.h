@@ -80,7 +80,8 @@ extern tree stabilize_reference PARAMS ((tree));
 			 ACC_STATIC|ACC_FINAL|ACC_SYNCHRONIZED|ACC_NATIVE| \
 			 ACC_STRICT
 #define INTERFACE_MODIFIERS ACC_PUBLIC|ACC_ABSTRACT|ACC_STRICT
-#define INTERFACE_INNER_MODIFIERS ACC_PUBLIC|ACC_PROTECTED|ACC_ABSTRACT|ACC_STATIC
+#define INTERFACE_INNER_MODIFIERS ACC_PUBLIC|ACC_PROTECTED|ACC_ABSTRACT| \
+				  ACC_STATIC|ACC_PRIVATE
 #define INTERFACE_METHOD_MODIFIERS ACC_PUBLIC|ACC_ABSTRACT
 #define INTERFACE_FIELD_MODIFIERS ACC_PUBLIC|ACC_STATIC|ACC_FINAL
 
@@ -762,7 +763,7 @@ struct parser_ctxt {
 
   /* This section is defined only if we compile jc1 */
 #ifndef JC1_LITE
-  tree modifier_ctx [11];	    /* WFL of modifiers */
+  tree modifier_ctx [12];	    /* WFL of modifiers */
   tree class_type;		    /* Current class */
   tree function_decl;	            /* Current function decl, save/restore */
 

@@ -107,6 +107,7 @@ show_help=
 execute_dlfiles=
 lo2o="s/\\.lo\$/.${objext}/"
 o2lo="s/\\.${objext}\$/.lo/"
+taglist=
 
 # Parse our command line options once, thoroughly.
 while test $# -gt 0
@@ -140,6 +141,7 @@ do
       CC)
 	# Don't test for the "default" C tag, as we know, it's there, but
 	# not specially marked.
+	taglist="$taglist $tagname"
 	;;
       *)
         if grep "^### BEGIN LIBTOOL TAG CONFIG: $tagname$" < "$0" > /dev/null; then
@@ -4245,6 +4247,20 @@ fi\
           objlist=
           concat_cmds=
           save_oldobjs=$oldobjs
+	  # GNU ar 2.10+ was changed to match POSIX; thus no paths are
+	  # encoded into archives.  This makes 'ar r' malfunction in
+	  # this piecewise linking case whenever conflicting object
+	  # names appear in distinct ar calls; check, warn and compensate.
+          if (for obj in $save_oldobjs
+	    do
+	      $echo "X$obj" | $Xsed -e 's%^.*/%%'
+	    done | sort | sort -uc >/dev/null 2>&1); then
+	    :
+	  else
+	    $echo "$modename: warning: object name conflicts; overriding AR_FLAGS to 'cq'" 1>&2
+	    $echo "$modename: warning: to ensure that POSIX-compatible ar will work" 1>&2
+	    AR_FLAGS=cq
+	  fi
           for obj in $save_oldobjs
           do
             oldobjs="$objlist $obj"
@@ -4299,7 +4315,11 @@ fi\
 	fi
       done
       # Quote the link command for shipping.
-      relink_command="cd `pwd`; $SHELL $0 --mode=relink $libtool_args"
+      tagopts=
+      for tag in $taglist; do
+        tagopts="$tagopts --tag $tag"
+      done
+      relink_command="(cd `pwd`; $SHELL $0$tagopts --mode=relink $libtool_args)"
       relink_command=`$echo "X$relink_command" | $Xsed -e "$sed_quote_subst"`
 
       # Only create the output if not a dry run.
@@ -4605,7 +4625,7 @@ relink_command=\"$relink_command\""
 	  if $run eval "$relink_command"; then :
 	  else
 	    $echo "$modename: error: relink \`$file' with the above command before installing it" 1>&2
-	    continue
+	    exit 1
 	  fi
 	fi
 

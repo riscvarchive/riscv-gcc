@@ -440,12 +440,32 @@ mem_operand (op, mode)
 
 
 int
-non_acc_reg_operand (op, mode)
-     rtx op;
+xtensa_valid_move (mode, operands)
      enum machine_mode mode;
+     rtx *operands;
 {
-  if (register_operand (op, mode))
-    return !ACC_REG_P (xt_true_regnum (op));
+  /* Either the destination or source must be a register, and the
+     MAC16 accumulator doesn't count.  */
+
+  if (register_operand (operands[0], mode))
+    {
+      int dst_regnum = xt_true_regnum (operands[0]);
+
+      /* The stack pointer can only be assigned with a MOVSP opcode. */
+      if (dst_regnum == STACK_POINTER_REGNUM)
+	return (mode == SImode
+		&& register_operand (operands[1], mode)
+		&& !ACC_REG_P (xt_true_regnum (operands[1])));
+
+      if (!ACC_REG_P (dst_regnum))
+	return true;
+    }
+  if (register_operand (operands[1], mode))
+    {
+      int src_regnum = xt_true_regnum (operands[1]);
+      if (!ACC_REG_P (src_regnum))
+	return true;
+    }
   return FALSE;
 }
 
@@ -1239,8 +1259,7 @@ xtensa_emit_move_sequence (operands, mode)
 
   if (!(reload_in_progress | reload_completed))
     {
-      if (!non_acc_reg_operand (operands[0], mode)
-	  && !non_acc_reg_operand (operands[1], mode))
+      if (!xtensa_valid_move (mode, operands))
 	operands[1] = force_reg (mode, operands[1]);
 
       /* Check if this move is copying an incoming argument in a7.  If
@@ -1353,8 +1372,8 @@ xtensa_expand_block_move (operands)
     return 0;
 
    /* make sure the memory addresses are valid */
-  operands[0] = change_address (dest, VOIDmode, NULL);
-  operands[1] = change_address (src, VOIDmode, NULL);
+  operands[0] = validize_mem (dest);
+  operands[1] = validize_mem (src);
 
   emit_insn (gen_movstrsi_internal (operands[0], operands[1],
 				    operands[2], operands[3]));
@@ -1907,10 +1926,8 @@ print_operand (file, op, letter)
       }
 
     case MEM:
-        /*
-	 * For a volatile memory reference, emit a MEMW before the
-	 * load or store.
-	 */
+      /* For a volatile memory reference, emit a MEMW before the
+	 load or store.  */
  	if (letter == 'v')
 	  {
 	    if (MEM_VOLATILE_P (op) && TARGET_SERIALIZE_VOLATILE)
@@ -1918,7 +1935,16 @@ print_operand (file, op, letter)
 	    break;
 	  }
  	else if (letter == 'N')
-	  op = adjust_address (op, GET_MODE (op), 4);
+	  {
+	    enum machine_mode mode;
+	    switch (GET_MODE (op))
+	      {
+	      case DFmode: mode = SFmode; break;
+	      case DImode: mode = SImode; break;
+	      default: abort ();
+	      }
+	    op = adjust_address (op, mode, 4);
+	  }
 
 	output_address (XEXP (op, 0));
 	break;
@@ -2268,6 +2294,33 @@ xtensa_function_epilogue (file, size)
 }
 
 
+rtx
+xtensa_return_addr (count, frame)
+     int count;
+     rtx frame;
+{
+  rtx result, retaddr;
+
+  if (count == -1)
+    retaddr = gen_rtx_REG (Pmode, 0);
+  else
+    {
+      rtx addr = plus_constant (frame, -4 * UNITS_PER_WORD);
+      addr = memory_address (Pmode, addr);
+      retaddr = gen_reg_rtx (Pmode);
+      emit_move_insn (retaddr, gen_rtx_MEM (Pmode, addr));
+    }
+
+  /* The 2 most-significant bits of the return address on Xtensa hold
+     the register window size.  To get the real return address, these
+     bits must be replaced with the high bits from the current PC.  */
+
+  result = gen_reg_rtx (Pmode);
+  emit_insn (gen_fix_return_addr (result, retaddr));
+  return result;
+}
+
+
 /* Create the va_list data type.
    This structure is set up by __builtin_saveregs.  The __va_reg
    field points to a stack-allocated region holding the contents of the
@@ -2405,13 +2458,9 @@ xtensa_va_arg (valist, type)
   tree f_stk, stk;
   tree f_reg, reg;
   tree f_ndx, ndx;
-  tree tmp, addr_tree;
-  rtx array, orig_ndx, r, addr;
-  HOST_WIDE_INT size, va_size;
+  tree tmp, addr_tree, type_size;
+  rtx array, orig_ndx, r, addr, size, va_size;
   rtx lab_false, lab_over, lab_false2;
-
-  size = int_size_in_bytes (type);
-  va_size = (size + UNITS_PER_WORD - 1) & -UNITS_PER_WORD;
 
   f_stk = TYPE_FIELDS (va_list_type_node);
   f_reg = TREE_CHAIN (f_stk);
@@ -2420,6 +2469,20 @@ xtensa_va_arg (valist, type)
   stk = build (COMPONENT_REF, TREE_TYPE (f_stk), valist, f_stk);
   reg = build (COMPONENT_REF, TREE_TYPE (f_reg), valist, f_reg);
   ndx = build (COMPONENT_REF, TREE_TYPE (f_ndx), valist, f_ndx);
+
+  type_size = TYPE_SIZE_UNIT (TYPE_MAIN_VARIANT (type));
+
+  va_size = gen_reg_rtx (SImode);
+  tmp = fold (build (MULT_EXPR, sizetype,
+		     fold (build (TRUNC_DIV_EXPR, sizetype,
+				  fold (build (PLUS_EXPR, sizetype,
+					       type_size,
+					       size_int (UNITS_PER_WORD - 1))),
+				  size_int (UNITS_PER_WORD))),
+		     size_int (UNITS_PER_WORD)));
+  r = expand_expr (tmp, va_size, SImode, EXPAND_NORMAL);
+  if (r != va_size)
+    emit_move_insn (va_size, r);
 
 
   /* First align __va_ndx to a double word boundary if necessary for this arg:
@@ -2451,7 +2514,8 @@ xtensa_va_arg (valist, type)
   if (r != orig_ndx)
     emit_move_insn (orig_ndx, r);
 
-  tmp = build (PLUS_EXPR, integer_type_node, ndx, build_int_2 (va_size, 0));
+  tmp = build (PLUS_EXPR, integer_type_node, ndx,
+	       make_tree (intSI_type_node, va_size));
   tmp = build (MODIFY_EXPR, integer_type_node, ndx, tmp);
   TREE_SIDE_EFFECTS (tmp) = 1;
   expand_expr (tmp, const0_rtx, VOIDmode, EXPAND_NORMAL);
@@ -2459,26 +2523,33 @@ xtensa_va_arg (valist, type)
 
   /* Check if the argument is in registers:
 
-     if ((AP).__va_ndx <= __MAX_ARGS_IN_REGISTERS * 4)
+     if ((AP).__va_ndx <= __MAX_ARGS_IN_REGISTERS * 4
+         && !MUST_PASS_IN_STACK (type))
         __array = (AP).__va_reg;
   */
 
-  lab_false = gen_label_rtx ();
-  lab_over = gen_label_rtx ();
   array = gen_reg_rtx (Pmode);
 
-  emit_cmp_and_jump_insns (expand_expr (ndx, NULL_RTX, SImode, EXPAND_NORMAL),
-			   GEN_INT (MAX_ARGS_IN_REGISTERS * UNITS_PER_WORD),
-			   GT, const1_rtx, SImode, 0, lab_false);
+  lab_over = NULL_RTX;
+  if (!MUST_PASS_IN_STACK (VOIDmode, type))
+    {
+      lab_false = gen_label_rtx ();
+      lab_over = gen_label_rtx ();
 
-  r = expand_expr (reg, array, Pmode, EXPAND_NORMAL);
-  if (r != array)
-    emit_move_insn (array, r);
+      emit_cmp_and_jump_insns (expand_expr (ndx, NULL_RTX, SImode,
+					    EXPAND_NORMAL),
+			       GEN_INT (MAX_ARGS_IN_REGISTERS
+					* UNITS_PER_WORD),
+			       GT, const1_rtx, SImode, 0, lab_false);
 
-  emit_jump_insn (gen_jump (lab_over));
-  emit_barrier ();
-  emit_label (lab_false);
+      r = expand_expr (reg, array, Pmode, EXPAND_NORMAL);
+      if (r != array)
+	emit_move_insn (array, r);
 
+      emit_jump_insn (gen_jump (lab_over));
+      emit_barrier ();
+      emit_label (lab_false);
+    }
 
   /* ...otherwise, the argument is on the stack (never split between
      registers and the stack -- change __va_ndx if necessary):
@@ -2496,7 +2567,8 @@ xtensa_va_arg (valist, type)
 			   GEN_INT (MAX_ARGS_IN_REGISTERS * UNITS_PER_WORD),
 			   GE, const1_rtx, SImode, 0, lab_false2);
 
-  tmp = build_int_2 ((MAX_ARGS_IN_REGISTERS * UNITS_PER_WORD) + va_size, 0);
+  tmp = build (PLUS_EXPR, sizetype, make_tree (intSI_type_node, va_size),
+	       build_int_2 (MAX_ARGS_IN_REGISTERS * UNITS_PER_WORD, 0));
   tmp = build (MODIFY_EXPR, integer_type_node, ndx, tmp);
   TREE_SIDE_EFFECTS (tmp) = 1;
   expand_expr (tmp, const0_rtx, VOIDmode, EXPAND_NORMAL);
@@ -2507,34 +2579,64 @@ xtensa_va_arg (valist, type)
   if (r != array)
     emit_move_insn (array, r);
 
+  if (lab_over != NULL_RTX)
+    emit_label (lab_over);
+
 
   /* Given the base array pointer (__array) and index to the subsequent
      argument (__va_ndx), find the address:
 
-     Big-endian:
-     __array + (AP).__va_ndx - sizeof (TYPE)
-
-     Little-endian:
-     __array + (AP).__va_ndx - __va_size (TYPE)
+     __array + (AP).__va_ndx - (BYTES_BIG_ENDIAN && sizeof (TYPE) < 4
+				? sizeof (TYPE)
+				: __va_size (TYPE))
 
      The results are endian-dependent because values smaller than one word
      are aligned differently.
   */
 
-  emit_label (lab_over);
+  size = gen_reg_rtx (SImode);
+  emit_move_insn (size, va_size);
+  
+  if (BYTES_BIG_ENDIAN)
+    {
+      rtx lab_use_va_size = gen_label_rtx ();
+
+      emit_cmp_and_jump_insns (expand_expr (type_size, NULL_RTX, SImode,
+					    EXPAND_NORMAL),
+			       GEN_INT (PARM_BOUNDARY / BITS_PER_UNIT),
+			       GE, const1_rtx, SImode, 0, lab_use_va_size);
+
+      r = expand_expr (type_size, size, SImode, EXPAND_NORMAL);
+      if (r != size)
+	emit_move_insn (size, r);
+
+      emit_label (lab_use_va_size);
+    }
 
   addr_tree = build (PLUS_EXPR, ptr_type_node,
 		     make_tree (ptr_type_node, array),
 		     ndx);
-  addr_tree = build (PLUS_EXPR, ptr_type_node,
-		     addr_tree,
-		     build_int_2 (BYTES_BIG_ENDIAN
-				  && size < (PARM_BOUNDARY / BITS_PER_UNIT)
-				  ? -size
-				  : -va_size, -1));
+  addr_tree = build (MINUS_EXPR, ptr_type_node, addr_tree,
+		     make_tree (intSI_type_node, size));
   addr = expand_expr (addr_tree, NULL_RTX, Pmode, EXPAND_NORMAL);
   addr = copy_to_reg (addr);
   return addr;
+}
+
+
+enum reg_class
+xtensa_preferred_reload_class (x, class)
+     rtx x;
+     enum reg_class class;
+{
+  if (CONSTANT_P (x) && GET_CODE (x) == CONST_DOUBLE)
+    return NO_REGS;
+
+  /* Don't use sp for reloads! */
+  if (class == AR_REGS)
+    return GR_REGS;
+
+  return class;
 }
 
 

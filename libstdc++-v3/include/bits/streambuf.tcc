@@ -40,6 +40,10 @@
 namespace std 
 {
   template<typename _CharT, typename _Traits>
+    const typename basic_streambuf<_CharT, _Traits>::int_type
+    basic_streambuf<_CharT, _Traits>::_S_pback_size;
+
+  template<typename _CharT, typename _Traits>
     typename basic_streambuf<_CharT, _Traits>::int_type
     basic_streambuf<_CharT, _Traits>::
     sbumpc()
@@ -47,7 +51,7 @@ namespace std
       int_type __ret;
       if (_M_in_cur && _M_in_cur < _M_in_end)
 	{
-	  char_type __c = *gptr();
+	  char_type __c = *(this->gptr());
 	  _M_in_cur_move(1);
 	  __ret = traits_type::to_int_type(__c);
 	}

@@ -44,6 +44,8 @@
 #define _CPP_CCTYPE 1
 
 #pragma GCC system_header
+
+#include <bits/c++config.h>
 #include <ctype.h>
 
 // Get rid of those macros defined in <ctype.h> in lieu of real functions.

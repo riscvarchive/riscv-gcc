@@ -1,3 +1,66 @@
+2002-07-25  Release Manager
+
+	* GCC 3.1.1 Released.
+
+2002-06-30  Toon Moene  <toon@moene.indiv.nluug.nl>
+
+	* news.texi: Mention 2 Gbyte limit on 32-bit targets
+	for arrays explicitly in news on g77-3.1.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-04-29  Joseph S. Myers  <jsm28@cam.ac.uk>
+
+	* invoke.texi: Use @gol at ends of lines inside @gccoptlist.
+	* g77.texi: Update last update date.
+
+2002-04-20  Toon Moene  <toon@moene.indiv.nluug.nl>
+
+	* root.texi: Remove variable version-g77.
+	* g77.texi: Remove the single use of that variable.
+
+Tue Apr 16 14:55:47 2002  Mark Mitchell  <mark@codesourcery.com>
+
+	* com.c (ffecom_expr_power_integer): Add has_scope argument to
+	call to expand_start_stmt_expr.
+
+Mon Apr 15 10:59:14 2002  Mark Mitchell  <mark@codesourcery.com>
+
+	* g77.texi: Remove Chill reference.
+
+2002-04-14  Hans-Peter Nilsson  <hp@bitrange.com>
+
+	* Make-lang.in (f/target.o): Depend on diagnostic.h.
+	* target.c: Include diagnostic.h.
+ 	(ffetarget_memcpy_): Call sorry if host and target endians are
+	not matching.
+
+2002-04-13  Toon Moene  <toon@moene.indiv.nluug.nl>
+
+	* news.texi: Deprecate frontend version number;
+	update list of fixed bugs.
+
+2002-04-01  Phil Edwards  <pme@gcc.gnu.org>
+
+	* version.c:  Fix misplaced leading blanks on first line.
+
+2002-03-23  Toon Moene  <toon@moene.indiv.nluug.nl>
+
+	* com.c (ffecom_check_size_overflow_): Add a test
+	so that arrays too large for 32-bit byte-offset
+	addressing get caught.
+	* news.texi: Document the fixing of this problem.
+
+Mon Mar 18 18:43:22 CET 2002  Jan Hubicka  <jh@suse.cz>
+
+	* target.h (FFETARGET_32bit_longs): Undefine for x86-64.
+
 2002-02-13  Toon Moene  <toon@moene.indiv.nluug.nl>
 
 	* news.texi: List Problem Reports fixed in 3.1.

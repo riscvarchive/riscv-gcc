@@ -24,7 +24,9 @@ c19             Note A
 c20             Note A
 c21             Untouched, Note B
 c22             Untouched
-c23             See doxygroups.cc and Note B.
+c23             See doxygroups.cc and Note B.  Notes on what invalidates
+                iterators need to be added.  std::list-specific memfns need
+                to be filled out.
 c24             stl_iterator.h (__normal_iterator, other small TODO bits)
                 stream iterators
 c25             stl_algo.h (lots of stuff)
@@ -48,10 +50,10 @@ do not have the C code (to which the doxygen comments would be attached),
 this would need to be done in entirely separate files, a la doxygroups.cc.
 
 B)  Huge chunks of containers and strings are described in common "Tables"
-in the standard.  These are being pseudo-duplicated in tables.html.  We can
+in the standard.  These are pseudo-duplicated in tables.html.  We can
 use doxygen hooks like @pre and @see to reference the tables.  Then the
-individual classes would do like the standard does, and only document
-members for which additional info is available.
+individual classes do like the standard does, and only document members for
+which additional info is available.
 
 
 STYLE:

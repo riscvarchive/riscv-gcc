@@ -1,6 +1,6 @@
 /* Control flow graph manipulation code for GNU compiler.
    Copyright (C) 1987, 1988, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001 Free Software Foundation, Inc.
+   1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -101,8 +101,7 @@ can_delete_label_p (label)
 	  /* User declared labels must be preserved.  */
 	  && LABEL_NAME (label) == 0
 	  && !in_expr_list_p (forced_labels, label)
-	  && !in_expr_list_p (label_value_list, label)
-	  && !in_expr_list_p (exception_handler_labels, label));
+	  && !in_expr_list_p (label_value_list, label));
 }
 
 /* Delete INSN by patching it out.  Return the next insn.  */
@@ -323,7 +322,7 @@ create_basic_block (index, head, end)
    to post-process the stream to remove empty blocks, loops, ranges, etc.  */
 
 int
-flow_delete_block (b)
+flow_delete_block_noexpunge (b)
      basic_block b;
 {
   int deleted_handler = 0;
@@ -372,6 +371,15 @@ flow_delete_block (b)
   b->pred = NULL;
   b->succ = NULL;
 
+  return deleted_handler;
+}
+
+int
+flow_delete_block (b)
+     basic_block b;
+{
+  int deleted_handler = flow_delete_block_noexpunge (b);
+  
   /* Remove the basic block from the array, and compact behind it.  */
   expunge_block (b);
 
@@ -611,9 +619,9 @@ merge_blocks_nomove (a, b)
 	  rtx x;
 
 	  for (x = a_end; x != b_end; x = NEXT_INSN (x))
-	    BLOCK_FOR_INSN (x) = a;
+	    set_block_for_insn (x, a);
 
-	  BLOCK_FOR_INSN (b_end) = a;
+	  set_block_for_insn (b_end, a);
 	}
 
       a_end = b_end;
@@ -928,6 +936,9 @@ force_nonfallthru_and_redirect (e, target)
       /* Change the existing edge's source to be the new block, and add
 	 a new edge from the entry block to the new block.  */
       e->src = bb;
+      bb->count = e->count;
+      bb->frequency = EDGE_FREQUENCY (e);
+      bb->loop_depth = 0;
       for (pe1 = &ENTRY_BLOCK_PTR->succ; *pe1; pe1 = &(*pe1)->succ_next)
 	if (*pe1 == e)
 	  {
@@ -942,9 +953,21 @@ force_nonfallthru_and_redirect (e, target)
   if (e->src->succ->succ_next)
     {
       /* Create the new structures.  */
+
+      /* Position the new block correctly relative to loop notes.  */
       note = last_loop_beg_note (e->src->end);
-      jump_block
-	= create_basic_block (e->src->index + 1, NEXT_INSN (note), NULL);
+      note = NEXT_INSN (note);
+
+      /* ... and ADDR_VECs.  */
+      if (note != NULL
+	  && GET_CODE (note) == CODE_LABEL
+	  && NEXT_INSN (note)
+	  && GET_CODE (NEXT_INSN (note)) == JUMP_INSN
+	  && (GET_CODE (PATTERN (NEXT_INSN (note))) == ADDR_DIFF_VEC
+	      || GET_CODE (PATTERN (NEXT_INSN (note))) == ADDR_VEC))
+	note = NEXT_INSN (NEXT_INSN (note));
+
+      jump_block = create_basic_block (e->src->index + 1, note, NULL);
       jump_block->count = e->count;
       jump_block->frequency = EDGE_FREQUENCY (e);
       jump_block->loop_depth = target->loop_depth;
@@ -1214,6 +1237,7 @@ split_edge (edge_in)
 			   : edge_in->dest->index, before, NULL);
   bb->count = edge_in->count;
   bb->frequency = EDGE_FREQUENCY (edge_in);
+  bb->loop_depth = edge_in->dest->loop_depth;
 
   /* ??? This info is likely going to be out of date very soon.  */
   if (edge_in->dest->global_live_at_start)
@@ -1897,9 +1921,30 @@ purge_dead_edges (bb)
   rtx insn = bb->end, note;
   bool purged = false;
 
-  /* ??? This makes no sense since the later test includes more cases.  */
-  if (GET_CODE (insn) == JUMP_INSN && !simplejump_p (insn))
-    return false;
+  /* If this instruction cannot trap, remove REG_EH_REGION notes.  */
+  if (GET_CODE (insn) == INSN
+      && (note = find_reg_note (insn, REG_EH_REGION, NULL)))
+    {
+      rtx eqnote;
+
+      if (! may_trap_p (PATTERN (insn))
+	  || ((eqnote = find_reg_equal_equiv_note (insn))
+	      && ! may_trap_p (XEXP (eqnote, 0))))
+	remove_note (insn, note);
+    }
+
+  /* Cleanup abnormal edges caused by throwing insns that have been
+     eliminated.  */
+  if (! can_throw_internal (bb->end))
+    for (e = bb->succ; e; e = next)
+      {
+	next = e->succ_next;
+	if (e->flags & EDGE_EH)
+	  {
+	    remove_edge (e);
+	    purged = true;
+	  }
+      }
 
   if (GET_CODE (insn) == JUMP_INSN)
     {
@@ -1921,17 +1966,26 @@ purge_dead_edges (bb)
  
 	  e->flags &= ~EDGE_ABNORMAL;
 
-	  /* Check purposes we can have edge.  */
-	  if ((e->flags & EDGE_FALLTHRU)
-	      && any_condjump_p (insn))
+	  /* See if this edge is one we should keep.  */
+	  if ((e->flags & EDGE_FALLTHRU) && any_condjump_p (insn))
+	    /* A conditional jump can fall through into the next
+	       block, so we should keep the edge.  */
 	    continue;
 	  else if (e->dest != EXIT_BLOCK_PTR
 		   && e->dest->head == JUMP_LABEL (insn))
+	    /* If the destination block is the target of the jump,
+	       keep the edge.  */
 	    continue;
-	  else if (e->dest == EXIT_BLOCK_PTR
-		   && returnjump_p (insn))
+	  else if (e->dest == EXIT_BLOCK_PTR && returnjump_p (insn))
+	    /* If the destination block is the exit block, and this
+	       instruction is a return, then keep the edge.  */
+	    continue;
+	  else if ((e->flags & EDGE_EH) && can_throw_internal (insn))
+	    /* Keep the edges that correspond to exceptions thrown by
+	       this instruction.  */
 	    continue;
 
+	  /* We do not need this edge.  */
 	  purged = true;
 	  remove_edge (e);
 	}
@@ -1967,31 +2021,6 @@ purge_dead_edges (bb)
 
       return purged;
     }
-
-  /* If this instruction cannot trap, remove REG_EH_REGION notes.  */
-  if (GET_CODE (insn) == INSN
-      && (note = find_reg_note (insn, REG_EH_REGION, NULL)))
-    {
-      rtx eqnote;
-
-      if (! may_trap_p (PATTERN (insn))
-	  || ((eqnote = find_reg_equal_equiv_note (insn))
-	      && ! may_trap_p (XEXP (eqnote, 0))))
-	remove_note (insn, note);
-    }
-
-  /* Cleanup abnormal edges caused by throwing insns that have been
-     eliminated.  */
-  if (! can_throw_internal (bb->end))
-    for (e = bb->succ; e; e = next)
-      {
-	next = e->succ_next;
-	if (e->flags & EDGE_EH)
-	  {
-	    remove_edge (e);
-	    purged = true;
-	  }
-      }
 
   /* If we don't see a jump insn, we don't know exactly why the block would
      have been broken at this point.  Look for a simple, non-fallthru edge,

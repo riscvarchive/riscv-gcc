@@ -444,6 +444,9 @@ void test05()
   strmsz_1 = fb_03.sputn("because because because. . .", 28);  
   VERIFY( strmsz_1 == 28 );
   c1 = fb_03.sungetc();
+  // Defect?  retval of sungetc is not necessarily the character ungotten.
+  // So re-get it.
+  c1 = fb_03.sgetc();
   fb_03.pubsync(); 
   c3 = fb_03.sgetc();
   VERIFY( c1 == c3 );
@@ -551,6 +554,13 @@ void test07()
       VERIFY( test );
     }
 }
+
+#if !__GXX_WEAK__
+// Explicitly instantiate for systems with no COMDAT or weak support.
+template 
+  std::basic_streambuf<gnu_char_type>::int_type
+  std::basic_streambuf<gnu_char_type>::_S_pback_size;
+#endif
 
 main() 
 {

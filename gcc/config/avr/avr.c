@@ -4669,7 +4669,20 @@ avr_handle_progmem_attribute (node, name, args, flags, no_add_attrs)
 {
   if (DECL_P (*node))
     {
-      if (TREE_STATIC (*node) || DECL_EXTERNAL (*node))
+      if (TREE_CODE (*node) == TYPE_DECL)
+	{
+	  /* This is really a decl attribute, not a type attribute,
+	     but try to handle it for GCC 3.0 backwards compatibility.  */
+
+	  tree type = TREE_TYPE (*node);
+	  tree attr = tree_cons (name, args, TYPE_ATTRIBUTES (type));
+	  tree newtype = build_type_attribute_variant (type, attr);
+
+	  TYPE_MAIN_VARIANT (newtype) = TYPE_MAIN_VARIANT (type);
+	  TREE_TYPE (*node) = newtype;
+	  *no_add_attrs = true;
+        }
+      else if (TREE_STATIC (*node) || DECL_EXTERNAL (*node))
 	{
 	  if (DECL_INITIAL (*node) == NULL_TREE && !DECL_EXTERNAL (*node))
 	    {
@@ -5051,11 +5064,11 @@ machine_dependent_reorg (first_insn)
 		  rtx pat = PATTERN (next);
 		  rtx src = SET_SRC (pat);
 		  rtx t = XEXP (src,0);
+		  enum machine_mode mode = GET_MODE (XEXP (pattern, 0));
 
-		  if (avr_simplify_comparision_p (GET_MODE (XEXP (pattern,0)),
-						  GET_CODE (t), x))
+		  if (avr_simplify_comparision_p (mode, GET_CODE (t), x))
 		    {
-		      XEXP (pattern,1) = GEN_INT (INTVAL (x)+1);
+		      XEXP (pattern, 1) = gen_int_mode (INTVAL (x) + 1, mode);
 		      PUT_CODE (t, avr_normalize_condition (GET_CODE (t)));
 		      INSN_CODE (next) = -1;
 		      INSN_CODE (insn) = -1;
@@ -5169,7 +5182,11 @@ test_hard_reg_class (class, x)
   int regno = true_regnum (x);
   if (regno < 0)
     return 0;
-  return TEST_HARD_REG_CLASS (class, regno);
+
+  if (TEST_HARD_REG_CLASS (class, regno))
+    return 1;
+
+  return 0;
 }
 
 void
@@ -5210,6 +5227,13 @@ avr_hard_regno_mode_ok (regno, mode)
      int regno;
      enum machine_mode mode;
 {
+  /* Bug workaround: recog.c (peep2_find_free_register) and probably
+     a few other places assume that the frame pointer is a single hard
+     register, so r29 may be allocated and overwrite the high byte of
+     the frame pointer.  Do not allow any value to start in r29.  */
+  if (regno == REG_Y + 1)
+    return 0;
+
   if (mode == QImode)
     return 1;
   /*  if (regno < 24 && !AVR_ENHANCED)

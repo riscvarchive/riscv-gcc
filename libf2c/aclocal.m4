@@ -11,8 +11,8 @@ dnl PARTICULAR PURPOSE.
 dnl
 dnl Initialize configure bits.
 dnl
-dnl GLIBCPP_CONFIGURE
-AC_DEFUN(GLIBCPP_CONFIGURE, [
+dnl GLIBCPP_TOPREL_CONFIGURE
+AC_DEFUN(GLIBCPP_TOPREL_CONFIGURE, [
   dnl Default to --enable-multilib
   AC_ARG_ENABLE(multilib,
   [  --enable-multilib       build hella library versions (default)],
@@ -43,7 +43,13 @@ fi
 AC_CONFIG_AUX_DIR(${srcdir}/$toprel)
 toplevel_srcdir=\${top_srcdir}/$toprel
 AC_SUBST(toplevel_srcdir)
+])
 
+dnl
+dnl Initialize configure bits.
+dnl
+dnl GLIBCPP_CONFIGURE
+AC_DEFUN(GLIBCPP_CONFIGURE, [
 # Export build and source directories.
 # These need to be absolute paths, yet at the same time need to
 # canonicalize only relative paths, because then amd will not unmount
@@ -179,7 +185,7 @@ version_specific_libs=no)dnl
 # Option set, now we can test it.
 AC_MSG_RESULT($version_specific_libs)
 
-gcc_version_trigger=${srcdir}/../gcc/version.c
+gcc_version_trigger=${toplevel_srcdir}/gcc/version.c
 gcc_version_full=`grep version_string ${gcc_version_trigger} | sed -e 's/.*\"\([[^ \"]]*\)[[ \"]].*/\1/'`
 gcc_version=`echo ${gcc_version_full} | sed -e 's/\([^ ]*\) .*/\1/'`
 AC_SUBST(gcc_version)

@@ -51,6 +51,8 @@ struct string_option
 static const char *java_init PARAMS ((const char *));
 static void java_finish PARAMS ((void));
 static void java_init_options PARAMS ((void));
+static void java_post_options PARAMS ((void));
+
 static int java_decode_option PARAMS ((int, char **));
 static void put_decl_string PARAMS ((const char *, int));
 static void put_decl_node PARAMS ((tree));
@@ -157,8 +159,15 @@ int flag_optimize_sci = 1;
    in order to improve binary compatibility. */
 int flag_indirect_dispatch = 0;
 
+/* When zero, don't generate runtime array store checks. */
+int flag_store_check = 1;
+
 /* When non zero, print extra version information.  */
 static int version_flag = 0;
+
+/* Set non-zero if the user specified -finline-functions on the command 
+   line.  */
+int flag_really_inline = 0;
 
 /* Table of language-dependent -f options.
    STRING is the option name.  VARIABLE is the address of the variable.
@@ -179,7 +188,8 @@ lang_f_options[] =
   {"check-references", &flag_check_references, 1},
   {"force-classes-archive-check", &flag_force_classes_archive_check, 1},
   {"optimize-static-class-initialization", &flag_optimize_sci, 1 },
-  {"indirect-dispatch", &flag_indirect_dispatch, 1}
+  {"indirect-dispatch", &flag_indirect_dispatch, 1},
+  {"store-check", &flag_store_check, 1}
 };
 
 static const struct string_option
@@ -212,6 +222,8 @@ static int dependency_tracking = 0;
 #define LANG_HOOKS_INIT_OPTIONS java_init_options
 #undef LANG_HOOKS_DECODE_OPTION
 #define LANG_HOOKS_DECODE_OPTION java_decode_option
+#undef LANG_HOOKS_POST_OPTIONS
+#define LANG_HOOKS_POST_OPTIONS java_post_options
 #undef LANG_HOOKS_SET_YYDEBUG
 #define LANG_HOOKS_SET_YYDEBUG java_set_yydebug
 
@@ -256,6 +268,8 @@ java_decode_option (argc, argv)
      char **argv;
 {
   char *p = argv[0];
+
+  jcf_path_init ();
 
   if (strcmp (p, "-version") == 0)
     {
@@ -302,7 +316,7 @@ java_decode_option (argc, argv)
 #define CLARG "-fCLASSPATH="
   if (strncmp (p, CLARG, sizeof (CLARG) - 1) == 0)
     {
-      jcf_path_CLASSPATH_arg (p + sizeof (CLARG) - 1);
+      jcf_path_classpath_arg (p + sizeof (CLARG) - 1);
       return 1;
     }
 #undef CLARG
@@ -310,6 +324,20 @@ java_decode_option (argc, argv)
   if (strncmp (p, CLARG, sizeof (CLARG) - 1) == 0)
     {
       jcf_path_classpath_arg (p + sizeof (CLARG) - 1);
+      return 1;
+    }
+#undef CLARG
+#define CLARG "-fbootclasspath="
+  if (strncmp (p, CLARG, sizeof (CLARG) - 1) == 0)
+    {
+      jcf_path_bootclasspath_arg (p + sizeof (CLARG) - 1);
+      return 1;
+    }
+#undef CLARG
+#define CLARG "-fextdirs="
+  if (strncmp (p, CLARG, sizeof (CLARG) - 1) == 0)
+    {
+      jcf_path_extdirs_arg (p + sizeof (CLARG) - 1);
       return 1;
     }
 #undef CLARG
@@ -330,6 +358,14 @@ java_decode_option (argc, argv)
   if (strncmp (p, ARG, sizeof (ARG) - 1) == 0)
     {
       current_encoding = p + sizeof (ARG) - 1;
+      return 1;
+    }
+#undef ARG
+#define ARG "-finline-functions"
+  if (strncmp (p, ARG, sizeof (ARG) - 1) == 0)
+    {
+      flag_inline_functions = 1;
+      flag_really_inline = 1;
       return 1;
     }
 #undef ARG
@@ -741,4 +777,16 @@ java_init_options ()
   flag_bounds_check = 1;
   flag_exceptions = 1;
   flag_non_call_exceptions = 1;
+}
+
+/* Post-switch processing.  */
+static void
+java_post_options ()
+{
+  /* Turn off RTL inliner unless -finline-functions was really specified.  */
+  if (flag_really_inline == 0)
+    {
+      flag_no_inline = 1;
+      flag_inline_functions = 0;
+    }
 }

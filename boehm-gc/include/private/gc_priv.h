@@ -205,6 +205,12 @@ typedef char * ptr_t;	/* A generic pointer to which we can add	*/
    /* odd numbered words to have mark bits.				*/
 #endif
 
+#if defined(GC_GCJ_SUPPORT) && ALIGNMENT < 8 && !defined(ALIGN_DOUBLE)
+   /* GCJ's Hashtable synchronization code requires 64-bit alignment.	*/
+#  define ALIGN_DOUBLE
+#endif
+
+
 /* ALIGN_DOUBLE requires MERGE_SIZES at present. */
 # if defined(ALIGN_DOUBLE) && !defined(MERGE_SIZES)
 #   define MERGE_SIZES
@@ -493,7 +499,7 @@ struct hblk;	/* See below.	*/
 # endif
 
 /* Print warning message, e.g. almost out of memory.	*/
-# define WARN(msg,arg) (*GC_current_warn_proc)(msg, (GC_word)(arg))
+# define WARN(msg,arg) (*GC_current_warn_proc)("GC Warning: " msg, (GC_word)(arg))
 extern GC_warn_proc GC_current_warn_proc;
 
 /* Get environment entry */
@@ -1217,7 +1223,12 @@ extern word GC_root_size;	/* Total size of registered root sections */
 
 extern GC_bool GC_debugging_started;	/* GC_debug_malloc has been called. */ 
 
-			
+extern long GC_large_alloc_warn_interval;
+	/* Interval between unsuppressed warnings.	*/
+
+extern long GC_large_alloc_warn_suppressed;
+	/* Number of warnings suppressed so far.	*/
+
 /* Operations */
 # ifndef abs
 #   define abs(x)  ((x) < 0? (-(x)) : (x))

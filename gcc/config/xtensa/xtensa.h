@@ -719,12 +719,8 @@ extern enum reg_class xtensa_char_to_class[256];
    : ((CODE) == 'U') ? !constantpool_mem_p (OP)				\
    : FALSE)
 
-/* Given an rtx X being reloaded into a reg required to be
-   in class CLASS, return the class of reg to actually use.  */
 #define PREFERRED_RELOAD_CLASS(X, CLASS)				\
-  (CONSTANT_P (X)							\
-   ? (GET_CODE (X) == CONST_DOUBLE) ? NO_REGS : (CLASS)			\
-   : (CLASS))
+  xtensa_preferred_reload_class (X, CLASS)
 
 #define PREFERRED_OUTPUT_RELOAD_CLASS(X, CLASS)				\
   (CLASS)
@@ -938,29 +934,33 @@ typedef struct xtensa_args {
    && (TREE_CODE (TYPE_SIZE (TYPE)) != INTEGER_CST			\
        || TREE_ADDRESSABLE (TYPE)))
 
-/* Output assembler code to FILE to increment profiler label LABELNO
-   for profiling a function entry.
-
-   The mcount code in glibc doesn't seem to use this LABELNO stuff.
-   Some ports (e.g., MIPS) don't even bother to pass the label
-   address, and even those that do (e.g., i386) don't seem to use it.
-   The information needed by mcount() is the current PC and the
-   current return address, so that mcount can identify an arc in the
-   call graph.  For Xtensa, we pass the current return address as
-   the first argument to mcount, and the current PC is available as
-   a0 in mcount's register window.  Both of these values contain
-   window size information in the two most significant bits; we assume
-   that the mcount code will mask off those bits.  The call to mcount
-   uses a window size of 8 to make sure that mcount doesn't clobber
+/* Profiling Xtensa code is typically done with the built-in profiling
+   feature of Tensilica's instruction set simulator, which does not
+   require any compiler support.  Profiling code on a real (i.e.,
+   non-simulated) Xtensa processor is currently only supported by
+   GNU/Linux with glibc.  The glibc version of _mcount doesn't require
+   counter variables.  The _mcount function needs the current PC and
+   the current return address to identify an arc in the call graph.
+   Pass the current return address as the first argument; the current
+   PC is available as a0 in _mcount's register window.  Both of these
+   values contain window size information in the two most significant
+   bits; we assume that _mcount will mask off those bits.  The call to
+   _mcount uses a window size of 8 to make sure that it doesn't clobber
    any incoming argument values. */
 
-#define FUNCTION_PROFILER(FILE, LABELNO)				\
+#define NO_PROFILE_COUNTERS
+
+#define FUNCTION_PROFILER(FILE, LABELNO) \
   do {									\
-    fprintf (FILE, "\taddi\t%s, %s, 0\t# save current return address\n", \
-	     reg_names[GP_REG_FIRST+10],				\
-	     reg_names[GP_REG_FIRST+0]);				\
-    fprintf (FILE, "\tcall8\t_mcount\n");				\
-  } while (0);
+    fprintf (FILE, "\t%s\ta10, a0\n", TARGET_DENSITY ? "mov.n" : "mov"); \
+    if (flag_pic)							\
+      {									\
+	fprintf (FILE, "\tmovi\ta8, _mcount@PLT\n");			\
+	fprintf (FILE, "\tcallx8\ta8\n");				\
+      }									\
+    else								\
+      fprintf (FILE, "\tcall8\t_mcount\n");				\
+  } while (0)
 
 /* Stack pointer value doesn't matter at exit.  */
 #define EXIT_IGNORE_STACK 1
@@ -1073,8 +1073,7 @@ typedef struct xtensa_args {
    we currently need to ensure that there is a frame pointer when these
    builtin functions are used. */
 
-#define SETUP_FRAME_ADDRESSES() \
-  xtensa_setup_frame_addresses ()
+#define SETUP_FRAME_ADDRESSES  xtensa_setup_frame_addresses
 
 /* A C expression whose value is RTL representing the address in a
    stack frame where the pointer to the caller's frame is stored.
@@ -1098,22 +1097,8 @@ typedef struct xtensa_args {
 
 /* A C expression whose value is RTL representing the value of the
    return address for the frame COUNT steps up from the current
-   frame, after the prologue.  FRAMEADDR is the frame pointer of the
-   COUNT frame, or the frame pointer of the COUNT - 1 frame if
-   'RETURN_ADDR_IN_PREVIOUS_FRAME' is defined.
-
-   The 2 most-significant bits of the return address on Xtensa hold
-   the register window size.  To get the real return address, these bits
-   must be masked off and replaced with the high bits from the current
-   PC.  Since it is unclear how the __builtin_return_address function
-   is used, the current code does not do this masking and simply returns
-   the raw return address from the a0 register. */
-#define RETURN_ADDR_RTX(count, frame)					\
-  ((count) == -1							\
-   ? gen_rtx_REG (Pmode, 0)						\
-   : gen_rtx_MEM (Pmode, memory_address					\
-		  (Pmode, plus_constant (frame, -4 * UNITS_PER_WORD))))
-
+   frame, after the prologue.  */
+#define RETURN_ADDR_RTX  xtensa_return_addr
 
 /* Addressing modes, and classification of registers for them.  */
 
@@ -1260,7 +1245,19 @@ typedef struct xtensa_args {
   } while (0)
 
 
-#define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR, LABEL) {}
+/* Treat constant-pool references as "mode dependent" since they can
+   only be accessed with SImode loads.  This works around a bug in the
+   combiner where a constant pool reference is temporarily converted
+   to an HImode load, which is then assumed to zero-extend based on
+   our definition of LOAD_EXTEND_OP.  This is wrong because the high
+   bits of a 16-bit value in the constant pool are now sign-extended
+   by default.  */
+
+#define GO_IF_MODE_DEPENDENT_ADDRESS(ADDR, LABEL)			\
+  do {									\
+    if (constantpool_address_p (ADDR))					\
+      goto LABEL;							\
+  } while (0)
 
 /* If we are referencing a function that is static, make the SYMBOL_REF
    special so that we can generate direct calls to it even with -fpic.  */
@@ -1510,7 +1507,6 @@ typedef struct xtensa_args {
   {"add_operand",		{ REG, CONST_INT, SUBREG }},		\
   {"arith_operand",		{ REG, CONST_INT, SUBREG }},		\
   {"nonimmed_operand",		{ REG, SUBREG, MEM }},			\
-  {"non_acc_reg_operand",	{ REG, SUBREG }},			\
   {"mem_operand",		{ MEM }},				\
   {"mask_operand",		{ REG, CONST_INT, SUBREG }},		\
   {"extui_fldsz_operand",	{ CONST_INT }},				\
@@ -1658,13 +1654,18 @@ typedef struct xtensa_args {
 #define ASM_OUTPUT_POOL_PROLOGUE(FILE, FUNNAME, FUNDECL, SIZE)          \
   do {									\
     tree fnsection;							\
-    resolve_unique_section ((FUNDECL), 0);				\
+    resolve_unique_section ((FUNDECL), 0, flag_function_sections);	\
     fnsection = DECL_SECTION_NAME (FUNDECL);				\
     if (fnsection != NULL_TREE)						\
       {									\
 	const char *fnsectname = TREE_STRING_POINTER (fnsection);	\
 	fprintf (FILE, "\t.begin\tliteral_prefix %s\n",			\
 		 strcmp (fnsectname, ".text") ? fnsectname : "");	\
+      }									\
+    if ((SIZE) > 0)							\
+      {									\
+	function_section (FUNDECL);  					\
+	fprintf (FILE, "\t.literal_position\n");			\
       }									\
   } while (0)
 

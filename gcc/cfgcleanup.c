@@ -1,6 +1,6 @@
 /* Control flow optimization code for GNU compiler.
    Copyright (C) 1987, 1988, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-   1999, 2000, 2001 Free Software Foundation, Inc.
+   1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -1097,9 +1097,20 @@ outgoing_edges_match (mode, bb1, bb2)
 
       if (!bb2->succ
           || !bb2->succ->succ_next
-	  || bb1->succ->succ_next->succ_next
+	  || bb2->succ->succ_next->succ_next
 	  || !any_condjump_p (bb2->end)
-	  || !onlyjump_p (bb1->end))
+	  || !onlyjump_p (bb2->end))
+	return false;
+
+      /* Do not crossjump across loop boundaries.  This is a temporary
+	 workaround for the common scenario in which crossjumping results
+	 in killing the duplicated loop condition, making bb-reorder rotate
+	 the loop incorectly, leaving an extra unconditional jump inside
+	 the loop.
+
+	 This check should go away once bb-reorder knows how to duplicate
+	 code in this case or rotate the loops to avoid this scenario.  */
+      if (bb1->loop_depth != bb2->loop_depth)
 	return false;
 
       b1 = BRANCH_EDGE (bb1);
@@ -1175,9 +1186,10 @@ outgoing_edges_match (mode, bb1, bb2)
 	    /* Do not use f2 probability as f2 may be forwarded.  */
 	    prob2 = REG_BR_PROB_BASE - b2->probability;
 
-	  /* Fail if the difference in probabilities is
-	     greater than 5%.  */
-	  if (abs (b1->probability - prob2) > REG_BR_PROB_BASE / 20)
+	  /* Fail if the difference in probabilities is greater than 50%.
+	     This rules out two well-predicted branches with opposite
+	     outcomes.  */
+	  if (abs (b1->probability - prob2) > REG_BR_PROB_BASE / 2)
 	    {
 	      if (rtl_dump_file)
 		fprintf (rtl_dump_file,
@@ -1278,12 +1290,10 @@ try_crossjump_to_edge (mode, e1, e2)
      away.  We do this to look past the unconditional jump following a
      conditional jump that is required due to the current CFG shape.  */
   if (src1->pred
-      && !src1->pred->pred_next
       && FORWARDER_BLOCK_P (src1))
     e1 = src1->pred, src1 = e1->src;
 
   if (src2->pred
-      && !src2->pred->pred_next
       && FORWARDER_BLOCK_P (src2))
     e2 = src2->pred, src2 = e2->src;
 
@@ -1624,6 +1634,7 @@ try_optimize_cfg (mode)
 		     && !(s->flags & EDGE_COMPLEX)
 		     && (c = s->dest) != EXIT_BLOCK_PTR
 		     && c->pred->pred_next == NULL
+		     && b != c
 		     /* If the jump insn has side effects,
 			we can't kill the edge.  */
 		     && (GET_CODE (b->end) != JUMP_INSN
@@ -1719,22 +1730,33 @@ try_optimize_cfg (mode)
 static bool
 delete_unreachable_blocks ()
 {
-  int i;
+  int i, j;
   bool changed = false;
 
   find_unreachable_blocks ();
 
-  /* Delete all unreachable basic blocks.  Count down so that we
-     don't interfere with the block renumbering that happens in
-     flow_delete_block.  */
+  /* Delete all unreachable basic blocks.  Do compaction concurrently,
+     as otherwise we can wind up with O(N^2) behaviour here when we 
+     have oodles of dead code.  */
 
-  for (i = n_basic_blocks - 1; i >= 0; --i)
+  for (i = j = 0; i < n_basic_blocks; ++i)
     {
       basic_block b = BASIC_BLOCK (i);
 
       if (!(b->flags & BB_REACHABLE))
-	flow_delete_block (b), changed = true;
+	{
+	  flow_delete_block_noexpunge (b);
+	  expunge_block_nocompact (b);
+	  changed = true;
+	}
+      else
+	{
+	  BASIC_BLOCK (j) = b;
+	  b->index = j++;
+	}
     }
+  n_basic_blocks = j;
+  basic_block_info->num_elements = j;
 
   if (changed)
     tidy_fallthru_edges ();

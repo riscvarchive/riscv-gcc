@@ -47,9 +47,6 @@
 /* Define if using POSIX threads that have the mutexattr functions.  */
 #undef HAVE_PTHREAD_MUTEXATTR_INIT
 
-/* Define this if you prefer size over speed for java.lang.Character.  */
-#undef COMPACT_CHARACTER
-
 /* Define if you have memcpy.  */
 #undef HAVE_MEMCPY
 
@@ -120,8 +117,9 @@
 /* Define if global `timezone' exists.  */
 #undef HAVE_TIMEZONE
 
-/* Define to version of GCJ in use.  */
-#undef GCJVERSION
+/* Define if if the synchronization code should try to avoid pthread_self 
+   calls by caching thread IDs in a hashtable.  */
+#undef SLOW_PTHREAD_SELF
 
 /* Define if you have the appropriate function.  */
 #undef HAVE_ACCESS
@@ -415,6 +413,9 @@
 
 /* The number of bytes in type void * */
 #undef SIZEOF_VOID_P
+
+/* Short GCJ version */
+#undef GCJVERSION
 
 /* Define if <inttypes.h> is available */
 #undef HAVE_INTTYPES_H

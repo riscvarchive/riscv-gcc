@@ -207,6 +207,80 @@ gas="$gas_flag"
 gnu_ld="$gnu_ld_flag"
 enable_threads=$enable_threads_flag
 
+# Obsolete configurations.
+# To avoid some tedious lists, we have a blacklist with a whitelist
+# embedded within it.
+case $machine in
+	  1750a-* \
+	| a29k-* \
+	| alpha*-*-osf[123]* \
+	| arm-*-riscix* \
+	| c*-convex-* \
+	| clipper-* \
+	| elxsi-* \
+	| i860-* \
+	| i?86-*-aix* \
+	| i?86-*-bsd* \
+	| i?86-*-chorusos* \
+	| i?86-*-dgux* \
+	| i?86-*-freebsd1.* \
+	| i?86-*-isc* \
+	| i?86-*-linux*oldld* \
+	| i?86-*-osf1* \
+	| i?86-*-osfrose* \
+	| i?86-*-rtemscoff* \
+	| i?86-*-sunos* \
+	| i?86-go32-rtems* \
+	| i?86-next-* \
+	| i?86-sequent-bsd* \
+	| i?86-sequent-ptx[12]* \
+	| i?86-sequent-sysv3* \
+	| m68[k0]*-*-lynxos* \
+	| m68[k0]*-*-rtemscoff* \
+	| m68[k0]*-*-sysv3* \
+	| m68[k0]*-altos-* \
+	| m68[k0]*-apollo-* \
+	| m68[k0]*-apple-* \
+	| m68[k0]*-bull-* \
+	| m68[k0]*-convergent-* \
+	| m68[k0]*-isi-* \
+	| m68[k0]*-next-* \
+	| m68[k0]*-sony-* \
+	| m88k-* \
+	| mips-*-bsd* \
+	| mips-*-riscos* \
+	| mips-*-sysv* \
+	| mips-*-ultrix* \
+	| mips-dec-* \
+	| mips-sgi-irix[1234]* \
+	| mips-sony-* \
+	| mips-tandem-* \
+	| ns32k-* \
+	| pj-* \
+	| pjl-* \
+	| romp-* \
+	| sparc-*-rtemsaout* \
+	| we32k-* \
+)
+  case $machine in
+	  mips-sni-sysv4 \
+	| m88k-*-aout* | m88k-*-openbsd* | m88k-*-sysv4* \
+	| ns32k-*-netbsd* | ns32k-*-openbsd* \
+	| romp-*-openbsd* \
+   )
+    # Whitelisted.
+    ;;
+  *)
+    if test "x$enable_obsolete" != xyes; then
+      echo "*** Configuration $machine is obsolete." >&2
+      echo "*** Specify --enable-obsolete to build it anyway." >&2
+      echo "*** Support will be REMOVED in the next major release of GCC," >&2
+      echo "*** unless a maintainer comes forward." >&2
+      exit 1
+    fi;;
+  esac
+esac
+
 # Set default cpu_type, tm_file, tm_p_file and xm_file so it can be
 # updated in each machine entry.  Also set default extra_headers for some
 # machines.
@@ -323,7 +397,7 @@ case $machine in
 	fi
 	;;
 *-*-netbsd*)
-	tmake_file="t-libc-ok t-netbsd"
+	tmake_file="t-slibgcc-elf-ver t-libc-ok t-netbsd"
 	xm_defines=POSIX
 	gas=yes
 	gnu_ld=yes
@@ -363,7 +437,7 @@ case $machine in
 	*-*-freebsd6 | *-*-freebsd[6].*) fbsd_tm_file="freebsd6.h";;
 	*) echo 'Please update *-*-freebsd* in gcc/config.gcc'; exit 1;;
 	esac
-	tmake_file=t-freebsd
+	tmake_file="t-slibgcc-elf-ver t-freebsd"
 	xmake_file=none
 	xm_defines=POSIX
 	case x${enable_threads} in
@@ -371,6 +445,12 @@ case $machine in
 	x | xyes | xpthreads | xposix)
 		thread_file='posix'
 		tmake_file="${tmake_file} t-freebsd-thread"
+		# Before 5.0, FreeBSD can't bind shared libraries to -lc
+		# when "optionally" threaded via weak pthread_* checks.
+		case $machine in
+		*-*-freebsd[34] | *-*-freebsd[34].*)
+			tmake_file="${tmake_file} t-slibgcc-nolc-override";;
+		esac
 		;;
 	*) echo 'Unknown thread configuration for FreeBSD'; exit 1;;
 	esac
@@ -492,7 +572,6 @@ alpha*-*-netbsd*)
 	tm_file="${tm_file} netbsd.h alpha/elf.h netbsd-elf.h alpha/netbsd.h"
 	target_cpu_default="MASK_GAS"
 	tmake_file="${tmake_file} alpha/t-alpha alpha/t-ieee"
-	extra_parts="crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o"
 	;;
 
 alpha*-*-openbsd*)
@@ -804,11 +883,13 @@ hppa1.1-*-pro*)
 	target_cpu_default="(MASK_JUMP_IN_DELAY | MASK_PORTABLE_RUNTIME | MASK_GAS | MASK_NO_SPACE_REGS | MASK_SOFT_FLOAT)"
 	tm_file="${tm_file} pa/pa32-regs.h dbxelf.h elfos.h pa/elf.h pa/pa-pro-end.h libgloss.h"
 	tmake_file="pa/t-bsd pa/t-pro"
+	xmake_file="pa/x-ada"
 	;;
 hppa1.1-*-osf*)
 	target_cpu_default="MASK_PA_11"
 	tm_file="${tm_file} pa/pa32-regs.h pa/som.h pa/pa-osf.h"
 	tmake_file="pa/t-bsd pa/t-pa"
+	xmake_file="pa/x-ada"
 	use_collect2=yes
 	;;
 hppa1.1-*-rtems*)
@@ -816,21 +897,25 @@ hppa1.1-*-rtems*)
 	target_cpu_default="(MASK_JUMP_IN_DELAY | MASK_PORTABLE_RUNTIME | MASK_GAS | MASK_NO_SPACE_REGS | MASK_SOFT_FLOAT)"
 	tm_file="${tm_file} pa/pa32-regs.h dbxelf.h elfos.h pa/elf.h pa/pa-pro-end.h libgloss.h pa/rtems.h rtems.h"
 	tmake_file="pa/t-bsd pa/t-pro"
+	xmake_file="pa/x-ada"
 	;;
 hppa1.0-*-osf*)
 	tm_file="${tm_file} pa/pa32-regs.h pa/som.h pa/pa-osf.h"
 	tmake_file="pa/t-bsd pa/t-pa"
+	xmake_file="pa/x-ada"
 	use_collect2=yes
 	;;
 hppa1.1-*-bsd*)
 	tm_file="${tm_file} pa/pa32-regs.h pa/som.h"
 	target_cpu_default="MASK_PA_11"
 	tmake_file="pa/t-bsd pa/t-pa"
+	xmake_file="pa/x-ada"
 	use_collect2=yes
 	;;
 hppa1.0-*-bsd*)
 	tm_file="${tm_file} pa/pa32-regs.h pa/som.h"
 	tmake_file="pa/t-bsd pa/t-pa"
+	xmake_file="pa/x-ada"
 	use_collect2=yes
 	;;
 hppa1.0-*-hpux7*)
@@ -884,6 +969,7 @@ hppa1.1-*-hpux10* | hppa2*-*-hpux10*)
 	float_format=i128
 	xm_defines=POSIX
 	tmake_file="pa/t-pa pa/t-pa-hpux pa/t-hpux-shlib"
+	xmake_file="pa/x-ada"
 	if test x$enable_threads = x; then
 	    enable_threads=$have_pthread_h
 	fi
@@ -900,6 +986,7 @@ hppa1.0-*-hpux10*)
 	float_format=i128
 	xm_defines=POSIX
 	tmake_file="pa/t-pa pa/t-pa-hpux pa/t-hpux-shlib"
+	xmake_file="pa/x-ada"
 	if test x$enable_threads = x; then
 	    enable_threads=$have_pthread_h
 	fi
@@ -916,6 +1003,7 @@ hppa*64*-*-hpux11*)
 	tm_file="pa/pa64-start.h ${tm_file} pa/pa64-regs.h pa/long_double.h pa/elf.h pa/pa-hpux.h pa/pa-hpux11.h pa/pa-64.h pa/pa64-hpux.h"
 	float_format=i128
 	tmake_file="pa/t-pa64 pa/t-pa-hpux"
+	xmake_file="pa/x-ada"
 	target_cpu_default="(MASK_PA_11|MASK_PA_20|MASK_GAS)"
 
 #	if [ x$enable_threads = x ]; then
@@ -934,6 +1022,7 @@ hppa1.1-*-hpux11* | hppa2*-*-hpux11*)
 	float_format=i128
 	xm_defines=POSIX
 	tmake_file="pa/t-pa pa/t-pa-hpux pa/t-hpux-shlib"
+	xmake_file="pa/x-ada"
 #	if test x$enable_threads = x; then
 #	    enable_threads=$have_pthread_h
 #	fi
@@ -949,6 +1038,7 @@ hppa1.0-*-hpux11*)
 	float_format=i128
 	xm_defines=POSIX
 	tmake_file="pa/t-pa pa/t-pa-hpux pa/t-hpux-shlib"
+	xmake_file="pa/x-ada"
 #	if test x$enable_threads = x; then
 #	    enable_threads=$have_pthread_h
 #	fi
@@ -993,6 +1083,7 @@ hppa*-*-lites*)
 	tm_file="${tm_file} pa/pa32-regs.h dbxelf.h elfos.h pa/elf.h"
 	target_cpu_default="MASK_PA_11"
 	tmake_file="pa/t-bsd pa/t-pa"
+	xmake_file="pa/x-ada"
 	use_collect2=yes
 	;;
 hppa*-*-mpeix*)
@@ -1333,7 +1424,6 @@ i[34567]86-*-solaris2*)
 	xm_defines="POSIX SMALL_ARG_MAX"
 	tm_file="${tm_file} i386/att.h dbxelf.h elfos.h svr4.h i386/sysv4.h i386/sol2.h"
 	if test x$gas = xyes; then
-		# Only needed if gas does not support -s
 		tm_file="i386/sol2gas.h ${tm_file}"
 	fi
 	tmake_file="i386/t-sol2 t-svr4"
@@ -1606,7 +1696,7 @@ ia64*-*-elf*)
 	float_format=i386
 	;;
 ia64*-*-freebsd*)
-	tm_file="${tm_file} ${fbsd_tm_file} dbxelf.h elfos.h ia64/sysv4.h ia64/freebsd.h"
+	tm_file="${tm_file} dbxelf.h elfos.h ${fbsd_tm_file} ia64/sysv4.h ia64/freebsd.h"
 	target_cpu_default="MASK_GNU_AS|MASK_GNU_LD"
 	tmake_file="${tmake_file} ia64/t-ia64"
 	float_format=i386
@@ -2288,6 +2378,7 @@ mips*-*-netbsd*)			# NetBSD/mips, either endian.
 		tm_file="mips/little.h $tm_file" 
 		;;
 	esac
+	tmake_file="${tmake_file} mips/t-netbsd"
 	;;
 mips*-*-linux*)				# Linux MIPS, either endian.
         tm_file="dbxelf.h elfos.h svr4.h linux.h mips/linux.h"
@@ -2677,7 +2768,7 @@ powerpc-*-openbsd*)
 powerpc64-*-linux*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h freebsd-spec.h rs6000/sysv4.h rs6000/linux64.h"
 	out_file=rs6000/rs6000.c
-	tmake_file="rs6000/t-ppcos t-slibgcc-elf-ver t-linux rs6000/t-ppccomm"
+	tmake_file="rs6000/t-rs6000 t-slibgcc-elf-ver t-linux rs6000/t-linux64"
 	;;
 powerpc64-*-gnu*)
 	tm_file="${cpu_type}/${cpu_type}.h elfos.h svr4.h freebsd-spec.h gnu.h rs6000/sysv4.h rs6000/linux64.h rs6000/gnu.h"
@@ -2968,7 +3059,7 @@ sparc-tti-*)
 	;;
 sparc64-wrs-vxworks*)
         tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/elf.h sparc/biarch64.h gofast.h sparc/vxsparc64.h"
-        tmake_file=sparc/t-vxsparc64
+        tmake_file="sparc/t-vxsparc64 sparc/t-crtfm"
         use_collect2=yes
         ;;
 sparc-wrs-vxworks* | sparclite-wrs-vxworks*)
@@ -2996,12 +3087,19 @@ sparc-*-openbsd*)
 	# we need collect2 until our bug is fixed...
 	use_collect2=yes
 	;;
+sparc64-*-openbsd*)
+	tm_file="sparc/openbsd1-64.h sparc/sparc.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/sp64-elf.h openbsd.h sparc/openbsd64.h"
+	xm_file=sparc/xm-sp64.h
+	gas=yes gnu_ld=yes
+	with_cpu=ultrasparc
+	float_format=i128
+	;;
 sparc-*-bsd*)
 	tm_file="${tm_file} sparc/bsd.h"
 	;;
 sparc-*-chorusos*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/elf.h chorus.h"
-	tmake_file=sparc/t-chorus-elf
+	tmake_file="sparc/t-chorus-elf sparc/t-crtfm"
 	extra_parts="crti.o crtn.o crtbegin.o crtend.o"
 	float_format=i64
 	case x${enable_threads} in
@@ -3012,7 +3110,7 @@ sparc-*-chorusos*)
 	;;
 sparc-*-elf*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/elf.h"
-	tmake_file=sparc/t-elf
+	tmake_file="sparc/t-elf sparc/t-crtfm"
 	extra_parts="crti.o crtn.o crtbegin.o crtend.o"
 	#float_format=i128
 	float_format=i64
@@ -3023,14 +3121,14 @@ sparc-*-linux*aout*)		# Sparc's running GNU/Linux, a.out
 	;;
 sparc-*-linux*libc1*)	# Sparc's running GNU/Linux, libc5
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/linux.h"
-	tmake_file="t-slibgcc-elf-ver t-linux t-linux-gnulibc1"
+	tmake_file="t-slibgcc-elf-ver t-linux t-linux-gnulibc1 sparc/t-crtfm"
 	extra_parts="crtbegin.o crtbeginS.o crtend.o crtendS.o"
 	gnu_ld=yes
 	float_format=sparc
 	;;
 sparc-*-linux*)		# Sparc's running GNU/Linux, libc6
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/linux.h"
-	tmake_file="t-slibgcc-elf-ver t-linux"
+	tmake_file="t-slibgcc-elf-ver t-linux sparc/t-crtfm"
 	extra_parts="crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o"
 	gnu_ld=yes
 	if test x$enable_threads = xyes; then
@@ -3058,7 +3156,7 @@ sparc-*-rtemsaout*)
 sparc-*-rtems*|sparc-*-rtemself*)
 	xm_defines=POSIX
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/elf.h sparc/rtemself.h rtems.h"
-	tmake_file="sparc/t-elf t-rtems"
+	tmake_file="sparc/t-elf sparc/t-crtfm t-rtems"
 	extra_parts="crti.o crtn.o crtbegin.o crtend.o"
 	#float_format=i128
 	float_format=i64
@@ -3066,22 +3164,23 @@ sparc-*-rtems*|sparc-*-rtemself*)
 	  thread_file='rtems'
 	fi
 	;;
-sparcv9-*-solaris2* | sparc64-*-solaris2*)
-	if test x$gnu_ld = xyes
-	then
-		tm_file="sparc/sol2-sld-64.h sparc/sol2-64.h"
-	else
-		tm_file=sparc/sol2-sld-64.h
+sparc64-*-solaris2* | sparcv9-*-solaris2*)
+	tm_file="sparc/biarch64.h ${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/sol2-64.h sparc/sol2-bi.h"
+	if test x$gnu_ld = xyes; then
+		tm_file="${tm_file} sparc/sol2-gld.h sparc/sol2-gld-bi.h"
+	fi
+	if test x$gas = xyes; then
+		tm_file="${tm_file} sparc/sol2-gas-bi.h"
 	fi
 	xm_defines=POSIX
-	tmake_file="sparc/t-sol2 sparc/t-sol2-64"
+	tmake_file="sparc/t-sol2 sparc/t-sol2-64 sparc/t-crtfm"
 	if test x$gnu_ld = xyes; then
 		tmake_file="$tmake_file t-slibgcc-elf-ver"
 	else
 		tmake_file="$tmake_file t-slibgcc-sld"
 	fi
 	extra_parts="crt1.o crti.o crtn.o gcrt1.o crtbegin.o crtend.o"
-	float_format=none
+	float_format=i128
 	if test x${enable_threads} = x ; then
 	    enable_threads=$have_pthread_h
 	    if test x${enable_threads} = x ; then
@@ -3099,58 +3198,50 @@ sparcv9-*-solaris2* | sparc64-*-solaris2*)
 sparc-hal-solaris2*)
         xm_defines=POSIX
         tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/hal.h"
-        tmake_file="sparc/t-halos sparc/t-sol2"
+        tmake_file="sparc/t-halos sparc/t-sol2 sparc/t-crtfm"
 	if test x$gnu_ld = xyes; then
+		tm_file="${tm_file} sparc/sol2-gld.h"
 		tmake_file="$tmake_file t-slibgcc-elf-ver"
 	else
 		tmake_file="$tmake_file t-slibgcc-sld"
 	fi
         extra_parts="crt1.o crti.o crtn.o gmon.o crtbegin.o crtend.o"
-        case $machine in
-        *-*-solaris2.[0-4])
-                float_format=i128
-        ;;
-        *)
-                float_format=none
-                ;;
-        esac
+	float_format=i128
 	thread_file='solaris'
         ;;
 sparc-*-solaris2*)
-	if test x$gnu_ld = xyes
-	then
-		tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h"
-	else
-		tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/sol2-sld.h"
+	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h"
+	if test x$gnu_ld = xyes; then
+		tm_file="${tm_file} sparc/sol2-gld.h"
 	fi
-	xm_defines=POSIX
-	tmake_file=sparc/t-sol2
+	tmake_file="sparc/t-sol2 sparc/t-crtfm"
 	if test x$gnu_ld = xyes; then
 		tmake_file="$tmake_file t-slibgcc-elf-ver"
 	else
 		tmake_file="$tmake_file t-slibgcc-sld"
 	fi
-	extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
 	case $machine in
-	*-*-solaris2.[0-6] | *-*-solaris2.[0-6].*) ;;
-	*-*-solaris2*)
-		if test x$gnu_ld = xyes
-		then
-			tm_file="sparc/sol2-sld-64.h sparc/sol2-64.h"
-		else
-			tm_file="sparc/sol2-sld-64.h"
+	*-*-solaris2.[789])
+		tm_file="sparc/biarch64.h ${tm_file} sparc/sol2-bi.h"
+		if test x$gnu_ld = xyes; then
+			tm_file="${tm_file} sparc/sol2-gld-bi.h"
+		fi
+		if test x$gas = xyes; then
+			tm_file="${tm_file} sparc/sol2-gas-bi.h"
 		fi
 		tmake_file="$tmake_file sparc/t-sol2-64"
 		;;
 	esac
 	case $machine in
-	*-*-solaris2.[0-4])
-		float_format=i128
-		;;
-	*)
-		float_format=none
+	*-*-solaris2.[0-7] | *-*-solaris2.[0-7].*)
+		if test x$gnu_ld = xno; then
+			tm_file="${tm_file} sparc/sol27-sld.h"
+		fi
 		;;
 	esac
+	xm_defines=POSIX
+	extra_parts="crt1.o crti.o crtn.o gcrt1.o gmon.o crtbegin.o crtend.o"
+	float_format=i128
 	if test x${enable_threads} = x; then
 	    enable_threads=$have_pthread_h
 	    if test x${enable_threads} = x; then
@@ -3206,7 +3297,7 @@ sparclite-*-aout*)
 	;;
 sparclite-*-elf*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/elf.h gofast.h sparc/liteelf.h"
-	tmake_file=sparc/t-sparclite
+	tmake_file="sparc/t-sparclite sparc/t-crtfm"
         extra_parts="crtbegin.o crtend.o"
 	;;
 sparc86x-*-aout*)
@@ -3215,7 +3306,7 @@ sparc86x-*-aout*)
 	;;
 sparc86x-*-elf*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/elf.h gofast.h sparc/sp86x-elf.h"
-	tmake_file=sparc/t-sp86x
+	tmake_file="sparc/t-sp86x sparc/t-crtfm"
         extra_parts="crtbegin.o crtend.o"
 	;;
 sparc64-*-aout*)
@@ -3223,18 +3314,21 @@ sparc64-*-aout*)
 	;;
 sparc64-*-elf*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/sol2.h sparc/sp64-elf.h"
+	tmake_file="${tmake_file} sparc/t-crtfm"
 	extra_parts="crtbegin.o crtend.o"
 	;;
 sparc64-*-freebsd*|ultrasparc-*-freebsd*)
 	tm_file="${tm_file} ${fbsd_tm_file} dbxelf.h elfos.h sparc/sysv4.h sparc/freebsd.h"
+	tmake_file="${tmake_file} sparc/t-crtfm"
 	xmake_file=none
 	case "x$with_cpu" in
+		xultrasparc) ;;
 		x) with_cpu=ultrasparc ;;
 		*) echo "$with_cpu not supported for freebsd target"; exit 1 ;;
 	esac
 	;;
 sparc64-*-linux*)		# 64-bit Sparc's running GNU/Linux
-	tmake_file="t-slibgcc-elf-ver t-linux sparc/t-linux64"
+	tmake_file="t-slibgcc-elf-ver t-linux sparc/t-linux64 sparc/t-crtfm"
 	tm_file="sparc/biarch64.h ${tm_file} dbxelf.h elfos.h svr4.h sparc/sysv4.h sparc/linux64.h"
 	extra_parts="crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o"
 	gnu_ld=yes

@@ -2404,12 +2404,16 @@ clear_last_expr ()
   last_expr_type = 0;
 }
 
-/* Begin a statement which will return a value.
-   Return the RTL_EXPR for this statement expr.
-   The caller must save that value and pass it to expand_end_stmt_expr.  */
+/* Begin a statement-expression, i.e., a series of statements which
+   may return a value.  Return the RTL_EXPR for this statement expr.
+   The caller must save that value and pass it to
+   expand_end_stmt_expr.  If HAS_SCOPE is nonzero, temporaries created
+   in the statement-expression are deallocated at the end of the
+   expression.  */
 
 tree
-expand_start_stmt_expr ()
+expand_start_stmt_expr (has_scope)
+     int has_scope;
 {
   tree t;
 
@@ -2417,7 +2421,10 @@ expand_start_stmt_expr ()
      so that rtl_expr_chain doesn't become garbage.  */
   t = make_node (RTL_EXPR);
   do_pending_stack_adjust ();
-  start_sequence_for_rtl_expr (t);
+  if (has_scope)
+    start_sequence_for_rtl_expr (t);
+  else
+    start_sequence ();
   NO_DEFER_POP;
   expr_stmts_for_value++;
   last_expr_value = NULL_RTX;
@@ -3666,9 +3673,7 @@ expand_nl_goto_receivers (thisblock)
   if (any_invalid)
     {
       expand_nl_goto_receiver ();
-      emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "abort"), LCT_NORETURN,
-			 VOIDmode, 0);
-      emit_barrier ();
+      expand_builtin_trap ();
     }
 
   nonlocal_goto_handler_labels = label_list;
@@ -3970,7 +3975,7 @@ expand_decl (decl)
 			   : GET_MODE_BITSIZE (DECL_MODE (decl)));
       DECL_USER_ALIGN (decl) = 0;
 
-      x = assign_temp (TREE_TYPE (decl), 1, 1, 1);
+      x = assign_temp (decl, 1, 1, 1);
       set_mem_attributes (x, decl, 1);
       SET_DECL_RTL (decl, x);
 
@@ -4169,6 +4174,23 @@ expand_decl_cleanup (decl, cleanup)
     }
   return 1;
 }
+
+/* Like expand_decl_cleanup, but maybe only run the cleanup if an exception
+   is thrown.  */
+
+int
+expand_decl_cleanup_eh (decl, cleanup, eh_only)
+     tree decl, cleanup;
+     int eh_only;
+{
+  int ret = expand_decl_cleanup (decl, cleanup);
+  if (cleanup && ret)
+    {
+      tree node = block_stack->data.block.cleanups;
+      CLEANUP_EH_ONLY (node) = eh_only;
+    }
+  return ret;
+}
 
 /* DECL is an anonymous union.  CLEANUP is a cleanup for DECL.
    DECL_ELTS is the list of elements that belong to DECL's type.
@@ -4277,7 +4299,7 @@ expand_cleanups (list, dont_do, in_fixup, reachable)
 	    if (! in_fixup && using_eh_for_cleanups_p)
 	      expand_eh_region_end_cleanup (TREE_VALUE (tail));
 
-	    if (reachable)
+	    if (reachable && !CLEANUP_EH_ONLY (tail))
 	      {
 		/* Cleanups may be run multiple times.  For example,
 		   when exiting a binding contour, we expand the

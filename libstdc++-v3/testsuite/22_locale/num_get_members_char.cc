@@ -213,7 +213,7 @@ void test01()
   VERIFY( err == goodbit );
 
   // const void
-  iss.str("0xbffff74c.");
+  iss.str("0xbffff74c,");
   iss.clear();
   err = goodbit;
   ng.get(iss.rdbuf(), 0, iss, err, v);
@@ -222,8 +222,8 @@ void test01()
 
 
 #ifdef _GLIBCPP_USE_LONG_LONG
-  long long ll1 = 9223372036854775807;
-  long long ll2 = -9223372036854775807;
+  long long ll1 = 9223372036854775807LL;
+  long long ll2 = -9223372036854775807LL;
   long long ll;
 
   iss.str("9.223.372.036.854.775.807");
@@ -274,7 +274,7 @@ void test02()
   VERIFY( rem1 == " Elizabeth Durack" );
 
   // 02 get(long double)
-  long double ld = 0;
+  long double ld = 0.0;
   err = goodbit;
   iter_type end2 = ng.get(str.begin(), str.end(), iss, err, ld);
   string rem2(end2, str.end());
@@ -332,11 +332,113 @@ void test03()
 #endif
 }
 
+// Testing the correct parsing of grouped hexadecimals and octals.
+void test04()
+{
+  using namespace std;
+
+  bool test = true;
+ 
+  unsigned long ul;
+
+  istringstream iss;
+
+  // A locale that expects grouping  
+  locale loc_de("de_DE");
+  iss.imbue(loc_de);
+
+  const num_get<char>& ng = use_facet<num_get<char> >(iss.getloc()); 
+  const ios_base::iostate goodbit = ios_base::goodbit;
+  ios_base::iostate err = ios_base::goodbit;
+
+  iss.setf(ios::hex, ios::basefield);
+  iss.str("0xbf.fff.74c ");
+  err = goodbit;
+  ng.get(iss.rdbuf(), 0, iss, err, ul);
+  VERIFY( err == goodbit );
+  VERIFY( ul == 0xbffff74c );
+
+  iss.str("0Xf.fff ");
+  err = goodbit;
+  ng.get(iss.rdbuf(), 0, iss, err, ul);
+  VERIFY( err == goodbit );
+  VERIFY( ul == 0xffff );
+
+  iss.str("ffe ");
+  err = goodbit;
+  ng.get(iss.rdbuf(), 0, iss, err, ul);
+  VERIFY( err == goodbit );
+  VERIFY( ul == 0xffe );
+
+  iss.setf(ios::oct, ios::basefield);
+  iss.str("07.654.321 ");
+  err = goodbit;
+  ng.get(iss.rdbuf(), 0, iss, err, ul);
+  VERIFY( err == goodbit );
+  VERIFY( ul == 07654321 );
+
+  iss.str("07.777 ");
+  err = goodbit;
+  ng.get(iss.rdbuf(), 0, iss, err, ul);
+  VERIFY( err == goodbit );
+  VERIFY( ul == 07777 );
+
+  iss.str("776 ");
+  err = goodbit;
+  ng.get(iss.rdbuf(), 0, iss, err, ul);
+  VERIFY( err == goodbit );
+  VERIFY( ul == 0776 );
+}
+
+// libstdc++/5816
+void test05()
+{
+  using namespace std;
+  bool test = true;
+
+  double d = 0.0;
+
+  istringstream iss;
+  locale loc_de("de_DE");
+  iss.imbue(loc_de);
+
+  const num_get<char>& ng = use_facet<num_get<char> >(iss.getloc()); 
+  const ios_base::iostate goodbit = ios_base::goodbit;
+  ios_base::iostate err = ios_base::goodbit;
+
+  iss.str("1234,5 ");
+  err = goodbit;
+  ng.get(iss.rdbuf(), 0, iss, err, d);
+  VERIFY( err == goodbit );
+  VERIFY( d == 1234.5 );
+}
+
+// http://gcc.gnu.org/ml/libstdc++/2002-05/msg00038.html
+void test06()
+{
+  bool test = true;
+
+  const char* tentLANG = std::setlocale(LC_ALL, "ja_JP.eucjp");
+  if (tentLANG != NULL)
+    {
+      std::string preLANG = tentLANG;
+      test01();
+      test02();
+      test04();
+      test05();
+      std::string postLANG = std::setlocale(LC_ALL, NULL);
+      VERIFY( preLANG == postLANG );
+    }
+}
+
 int main()
 {
   test01();
   test02();
   test03();
+  test04();
+  test05();
+  test06();
   return 0;
 }
 

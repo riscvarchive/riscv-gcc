@@ -1,3 +1,19 @@
+2002-07-25  Release Manager
+
+	* GCC 3.1.1 Released.
+
+2002-05-25  Roman Lechtchinsky  <rl@cs.tu-berlin.de>
+
+	* gettextP.h (SWAP): Change parameter type to unsigned int.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
 Tue Dec 11 07:08:57 2001  Douglas B. Rupp  <rupp@gnat.com>
 
 	* localealias.c (strings.h): Include.

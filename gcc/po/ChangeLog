@@ -1,3 +1,32 @@
+2002-07-25  Release Manager
+
+	* GCC 3.1.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-10  Philipp Thomas  <pthomas@suse.de>
+
+	* es.po, tr.po, fr.po: Update to version
+	for the 20020415 snapshot.
+
+2002-04-24  Philipp Thomas  <pthomas@suse.de>
+
+	* gcc.pot: Regenerate.
+
+2002-04-15  Philipp Thomas  <pthomas@suse.de>
+
+	* tr.po: Update to latest revision.
+
+2002-03-14  Philipp Thomas  <pthomas@suse.de>
+
+	* fr.po: Update to latest revision.
+
 2002-02-18  Philipp Thomas  <pthomas@suse.de>
 
 	* es.po, fr.po: Updated to newest version.

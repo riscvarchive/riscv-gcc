@@ -15,7 +15,7 @@
 ## for 'Autoconf' (autoconf.texi) and 'Configure' (configure.texi).  
 
 #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998,
-#   1999, 2000 Free Software Foundation, Inc.
+#   1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ fi
 
 libstdcxx_version="target-libstdc++-v3"
 # Don't use libstdc++-v3's flags to configure/build itself.
-libstdcxx_flags='`case $$dir in libstdc++-v3) ;; *) test ! -f $$r/$(TARGET_SUBDIR)/libstdc++-v3/testsuite_flags || $(SHELL) $$r/$(TARGET_SUBDIR)/libstdc++-v3/testsuite_flags --build-includes;; esac` -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs'
+libstdcxx_flags='`case $$dir in libstdc++-v3 | libjava) ;; *) test ! -f $$r/$(TARGET_SUBDIR)/libstdc++-v3/testsuite_flags || $(SHELL) $$r/$(TARGET_SUBDIR)/libstdc++-v3/testsuite_flags --build-includes;; esac` -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src -L$$r/$(TARGET_SUBDIR)/libstdc++-v3/src/.libs'
 
 # these tools are built for the host environment
 # Note, the powerpc-eabi build depends on sim occurring before gdb in order to
@@ -73,7 +73,6 @@ target_libs="target-libiberty \
 		target-librx \
 		${libstdcxx_version} \
 		target-libf2c \
-		target-libchill \
 		${libgcj}
 		target-libobjc"
 
@@ -617,12 +616,16 @@ case "${target}" in
   *-*-chorusos)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
     ;;
+  *-*-freebsd[12] | *-*-freebsd[12].* | *-*-freebsd*aout*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    ;;
   *-*-netbsd*)
     # Skip some stuff on all NetBSD configurations.
     skipdirs="$skipdirs target-newlib target-libiberty target-libgloss"
 
     # Skip some stuff that's unsupported on some NetBSD configurations.
     case "${target}" in
+      i*86-*-netbsdelf*) ;;
       *)
 	noconfigdirs="$noconfigdirs ${libgcj}"
 	;;
@@ -633,6 +636,12 @@ case "${target}" in
     ;;
   *-*-rtems*)
     noconfigdirs="$noconfigdirs target-libgloss ${libgcj}"
+    case ${target} in
+	h8300*-*-* | h8500-*-*)
+	  noconfigdirs="$noconfigdirs target-libf2c"
+          ;;
+        *) ;;
+    esac
     ;;
   *-*-vxworks*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
@@ -641,7 +650,7 @@ case "${target}" in
     # ld works, but does not support shared libraries.  emacs doesn't
     # work.  newlib is not 64 bit ready.  I'm not sure about fileutils.
     # gas doesn't generate exception information.
-    noconfigdirs="$noconfigdirs gas ld emacs fileutils target-newlib target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs gas ld emacs fileutils target-newlib target-libgloss"
     ;;
   alpha*-*-*vms*)
     noconfigdirs="$noconfigdirs gdb ld target-newlib target-libgloss ${libgcj}"
@@ -651,6 +660,9 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     # linux has rx in libc
     skipdirs="$skipdirs target-librx"
+    ;;
+  alpha*-*-freebsd*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
   alpha*-*-*)
     # newlib is not 64 bit ready
@@ -725,7 +737,7 @@ case "${target}" in
     fi
     ;;
   xscale-*-elf)
-    noconfigdirs="$noconfigdirs target-libgloss ${libgcj}"
+    noconfigdirs="$noconfigdirs target-libgloss target-libffi target-qthreads"
     if [ x${is_cross_compiler} != xno ] ; then
 	   target_configdirs="${target_configdirs} target-bsp target-cygmon"
     fi
@@ -796,6 +808,15 @@ case "${target}" in
          target_configdirs="${target_configdirs} target-libstub target-cygmon"
     fi
     ;;
+  i[34567]86-*-freebsd*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+    ;;
+  s390*-*-linux*)
+    # The libffi port is not yet in the GCC tree
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss ${libgcj}"
+    # linux has rx in libc
+    skipdirs="$skipdirs target-librx"
+    ;;
   *-*-linux*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     # linux has rx in libc
@@ -865,6 +886,11 @@ case "${target}" in
     if [ x${is_cross_compiler} != xno ] ; then
 	   target_configdirs="${target_configdirs} target-bsp target-cygmon"
     fi
+    ;;
+  mcore-*-pe*)
+  # The EPOC C++ environment does not support exceptions or rtti,
+  # and so building libstdc++-v3 tends not to always work.
+    noconfigdirs="$noconfigdirs target-libstdc++-v3"
     ;;
   mmix-*-*)
     noconfigdirs="$noconfigdirs ${libgcj}"
@@ -951,6 +977,9 @@ case "${target}" in
     noconfigdirs="$noconfigdirs gprof ${libgcj}"   # same as generic mips
     target_configdirs="${target_configdirs} target-bsp target-libstub target-cygmon"
    ;;
+  mips*-*-linux*)
+    noconfigdirs="$noconfigdirs target-libffi"
+    ;;
   mips*-*-*)
     noconfigdirs="$noconfigdirs gprof ${libgcj}"
     ;;
@@ -973,11 +1002,13 @@ case "${target}" in
     if [ x${is_cross_compiler} != xno ] ; then
 	   target_configdirs="${target_configdirs} target-libstub target-cygmon"
     fi
+    noconfigdirs="$noconfigdirs ${libgcj}"
     ;;
   sparc64-*-elf*)
     if [ x${is_cross_compiler} != xno ] ; then
 	   target_configdirs="${target_configdirs} target-libstub target-cygmon"
     fi
+    noconfigdirs="$noconfigdirs ${libgcj}"
     ;;
   sparclite-*-*)
     if [ x${is_cross_compiler} != xno ] ; then
@@ -993,16 +1024,7 @@ case "${target}" in
            use_gnu_ld=no
     fi
     ;;
-  sparc-*-solaris*)
-    case "${host}" in
-    sparc-*-solaris2.8)
-      # According to Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>, libjava
-      # won't build correctly on Solaris 8 if there's a
-      # previously-installed version of GCC in the configured prefix.
-      # This problem does not show up on earlier versions of Solaris.
-      noconfigdirs="$noconfigdirs ${libgcj}"
-      ;;
-    esac
+  sparc-*-solaris* | sparc64-*-solaris* | sparcv9-*-solaris*)
     ;;
   v810-*-*)
     noconfigdirs="$noconfigdirs bfd binutils gas gcc gdb ld ${libstdcxx_version} opcodes target-libgloss ${libgcj}"
@@ -1433,7 +1455,7 @@ if test -n "${with_gxx_include_dir}"; then
 fi
 if test x${gxx_include_dir} = x; then
   if test x${enable_version_specific_runtime_libs} = xyes; then
-    gxx_include_dir='${libsubdir}/include/g++'
+    gxx_include_dir='${libsubdir}/include/c++'
   else
     . ${topsrcdir}/config.if
     gxx_include_dir='${prefix}/include/${libstdcxx_incdir}'
@@ -1521,20 +1543,6 @@ case $CC_FOR_TARGET in
 *) CC_FOR_TARGET=$CC_FOR_TARGET' $(FLAGS_FOR_TARGET)' ;;
 esac
 
-if test "x${CHILL_FOR_TARGET+set}" = xset; then
-  :
-elif test -d ${topsrcdir}/gcc; then
-  CHILL_FOR_TARGET='$$r/gcc/xgcc -B$$r/gcc/ -L$$r/gcc/ch/runtime/'
-elif test "$host" = "$target"; then
-  CHILL_FOR_TARGET='$(CC)'
-else
-  CHILL_FOR_TARGET=`echo gcc | sed -e 's/x/x/' ${program_transform_name}`
-fi
-case $CHILL_FOR_TARGET in
-*' $(FLAGS_FOR_TARGET)') ;;
-*) CHILL_FOR_TARGET=$CHILL_FOR_TARGET' $(FLAGS_FOR_TARGET)' ;;
-esac
-
 if test "x${GCJ_FOR_TARGET+set}" = xset; then
   :
 elif test -d ${topsrcdir}/gcc; then
@@ -1544,10 +1552,17 @@ elif test "$host" = "$target"; then
 else
   GCJ_FOR_TARGET=`echo gcj | sed -e 's/x/x/' ${program_transform_name}`
 fi
+case $GCJ_FOR_TARGET in
+*' $(FLAGS_FOR_TARGET)') ;;
+*) GCJ_FOR_TARGET=$GCJ_FOR_TARGET' $(FLAGS_FOR_TARGET)' ;;
+esac
 
 if test "x${CXX_FOR_TARGET+set}" = xset; then
   :
 elif test -d ${topsrcdir}/gcc; then
+  # We add -shared-libgcc to CXX_FOR_TARGET whenever we use xgcc instead
+  # of g++ for linking C++ or Java, because g++ has -shared-libgcc by
+  # default whereas gcc does not.
   CXX_FOR_TARGET='$$r/gcc/`case $$dir in libstdc++-v3 | libjava) echo xgcc -shared-libgcc ;; *) echo g++ ;; esac` -B$$r/gcc/ -nostdinc++ '$libstdcxx_flags
 elif test "$host" = "$target"; then
   CXX_FOR_TARGET='$(CXX)'
@@ -1574,7 +1589,6 @@ s:^TARGET_CONFIGDIRS[ 	]*=.*$:TARGET_CONFIGDIRS = ${target_configdirs}:
 s%^TARGET_CONFIGARGS[ 	]*=.*$%TARGET_CONFIGARGS = ${targargs}%
 s%^FLAGS_FOR_TARGET[ 	]*=.*$%FLAGS_FOR_TARGET = ${FLAGS_FOR_TARGET}%
 s%^CC_FOR_TARGET[ 	]*=.*$%CC_FOR_TARGET = ${CC_FOR_TARGET}%
-s%^CHILL_FOR_TARGET[ 	]*=.*$%CHILL_FOR_TARGET = ${CHILL_FOR_TARGET}%
 s%^GCJ_FOR_TARGET[      ]*=.*$%GCJ_FOR_TARGET = ${GCJ_FOR_TARGET}%
 s%^CXX_FOR_TARGET[ 	]*=.*$%CXX_FOR_TARGET = ${qCXX_FOR_TARGET}%
 s%^CXX_FOR_TARGET_FOR_RECURSIVE_MAKE[ 	]*=.*$%CXX_FOR_TARGET_FOR_RECURSIVE_MAKE = ${qqCXX_FOR_TARGET}%

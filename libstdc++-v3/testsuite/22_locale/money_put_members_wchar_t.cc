@@ -42,7 +42,7 @@ void test01()
   locale loc_c = locale::classic();
   locale loc_hk("en_HK");
   locale loc_fr("fr_FR@euro");
-  locale loc_de("de_DE");
+  locale loc_de("de_DE@euro");
   VERIFY( loc_c != loc_de );
   VERIFY( loc_hk != loc_fr );
   VERIFY( loc_hk != loc_de );
@@ -97,12 +97,12 @@ void test01()
   oss.str(empty);
   iterator_type os_it03 = mon_put.put(oss.rdbuf(), true, oss, ' ', digits1);
   wstring result3 = oss.str();
-  VERIFY( result3 == L"7.200.000.000,00 DEM ");
+  VERIFY( result3 == L"7.200.000.000,00 EUR ");
 
   oss.str(empty);
   iterator_type os_it04 = mon_put.put(oss.rdbuf(), false, oss, ' ', digits1);
   wstring result4 = oss.str();
-  VERIFY( result4 == L"7.200.000.000,00 DM");
+  VERIFY( result4 == L"7.200.000.000,00 \x20ac");
 
   // intl and non-intl versions should be different.
   VERIFY( result3 != result4 );
@@ -175,7 +175,7 @@ void test02()
   locale loc_c = locale::classic();
   locale loc_hk("en_HK");
   locale loc_fr("fr_FR@euro");
-  locale loc_de("de_DE");
+  locale loc_de("de_DE@euro");
   VERIFY( loc_c != loc_de );
   VERIFY( loc_hk != loc_fr );
   VERIFY( loc_hk != loc_de );
@@ -195,13 +195,13 @@ void test02()
   const wstring empty;
 
   // total EPA budget FY 2002
-  const long double  digits1 = 720000000000;
+  const long double  digits1 = 720000000000.0;
 
   // est. cost, national missile "defense", expressed as a loss in USD 2001
-  const long double digits2 = -10000000000000;  
+  const long double digits2 = -10000000000000.0;  
 
   // input less than frac_digits
-  const long double digits4 = -1;
+  const long double digits4 = -1.0;
   
 
   wostringstream oss;
@@ -226,14 +226,14 @@ void test02()
   oss.setf(ios_base::showbase);
 
   oss.str(empty);
- iterator_type os_it03 = mon_put.put(oss.rdbuf(), true, oss, ' ', digits1);
+  iterator_type os_it03 = mon_put.put(oss.rdbuf(), true, oss, ' ', digits1);
   wstring result3 = oss.str();
-  VERIFY( result3 == L"7.200.000.000,00 DEM ");
+  VERIFY( result3 == L"7.200.000.000,00 EUR ");
 
   oss.str(empty);
   iterator_type os_it04 = mon_put.put(oss.rdbuf(), false, oss, ' ', digits1);
   wstring result4 = oss.str();
-  VERIFY( result4 == L"7.200.000.000,00 DM");
+  VERIFY( result4 == L"7.200.000.000,00 \x20ac");
 
   // intl and non-intl versions should be different.
   VERIFY( result3 != result4 );
@@ -256,7 +256,7 @@ void test03()
   const locale loc_c = locale::classic();
   // woman, art, thief (stole the blues)
   const wstring str(L"1943 Janis Joplin");
-  const long double ld = 1943;
+  const long double ld = 1943.0;
   const wstring x(str.size(), 'x'); // have to have allocated string!
   wstring res;
 
@@ -288,12 +288,12 @@ void test04()
 {
 #ifdef _GLIBCPP_HAVE_SETENV 
   // Set the global locale to non-"C".
-  std::locale loc_de("de_DE");
+  std::locale loc_de("de_DE@euro");
   std::locale::global(loc_de);
 
-  // Set LANG environment variable to de_DE.
+  // Set LANG environment variable to de_DE@euro.
   const char* oldLANG = getenv("LANG");
-  if (!setenv("LANG", "de_DE", 1))
+  if (!setenv("LANG", "de_DE@euro", 1))
     {
       test01();
       test02();
@@ -340,6 +340,52 @@ void test05()
   mp.put(out,intl,fmt,L'*',val);
   VERIFY( fmt.str() == L"*(1,234.56)" );
 }
+
+struct My_money_io_2 : public std::moneypunct<wchar_t,false>
+{
+  char_type do_thousands_sep() const { return L','; }
+  std::string do_grouping() const { return "\001"; }
+};
+
+// Make sure we can output a very big amount of money (with grouping too).
+void test06()
+{
+  using namespace std;
+  typedef ostreambuf_iterator<wchar_t> OutIt;
+
+  locale loc(locale::classic(), new My_money_io_2);
+
+  bool intl = false;
+
+  long double val = 1.0e50L;
+  const money_put<wchar_t,OutIt>& mp  =
+    use_facet<money_put<wchar_t, OutIt> >(loc);
+
+  wostringstream fmt;
+  fmt.imbue(loc);
+  OutIt out(fmt);
+  mp.put(out,intl,fmt,'*',val);
+  VERIFY( fmt );
+}
+
+// http://gcc.gnu.org/ml/libstdc++/2002-05/msg00038.html
+void test07()
+{
+  bool test = true;
+
+  const char* tentLANG = std::setlocale(LC_ALL, "ja_JP.eucjp");
+  if (tentLANG != NULL)
+    {
+      std::string preLANG = tentLANG;
+      test01();
+      test02();
+      test03();
+      test05();
+      test06();
+      std::string postLANG = std::setlocale(LC_ALL, NULL);
+      VERIFY( preLANG == postLANG );
+    }
+}
 #endif
 
 int main()
@@ -350,6 +396,8 @@ int main()
   test03();
   test04();
   test05();
+  test06();
+  test07();
 #endif
   return 0;
 }

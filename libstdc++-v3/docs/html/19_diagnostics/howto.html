@@ -102,6 +102,8 @@
    <p>For GCC 3.0 and 3.1 they are off by default.  They can be enabled at
       configure time with
       <a href="../configopts.html"><code>--enable-concept-checks</code></a>.
+      For 3.1 you can instead #define _GLIBCPP_CONCEPT_CHECKS to enable them
+      on a per-translation-unit basis.
    </p>
    <p>Return <a href="#top">to top of page</a> or
       <a href="../faq/index.html">to the FAQ</a>.
@@ -117,12 +119,12 @@
 
    int main()
    {
-       std::set_terminate (__gnu_cxx::verbose_terminate_handler);
+       std::set_terminate (__gnu_cxx::__verbose_terminate_handler);
        ...
        throw <em>anything</em>;
    }</pre>
    </p>
-   <p>The <code> verbose_terminate_handler </code> function obtains the name
+   <p>The <code> __verbose_terminate_handler </code> function obtains the name
       of the current exception, attempts to demangle it, and prints it to
       stderr.  If the exception is derived from <code> std::exception </code>
       then the output from <code>what()</code> will be included.
@@ -143,7 +145,7 @@
 
    int main (int argc)
    {
-       std::set_terminate (__gnu_cxx::verbose_terminate_handler);
+       std::set_terminate (__gnu_cxx::__verbose_terminate_handler);
        if (argc &gt; 5)
            throw BLARGH(&quot;argc is greater than 5!&quot;);
        else

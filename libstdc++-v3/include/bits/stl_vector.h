@@ -1,6 +1,6 @@
 // Vector implementation -*- C++ -*-
 
-// Copyright (C) 2001 Free Software Foundation, Inc.
+// Copyright (C) 2001, 2002 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -148,6 +148,15 @@ struct _Vector_base
  *  @brief  A standard container which offers fixed time access to individual
  *  elements in any order.
  *
+ *  @ingroup Containers
+ *  @ingroup Sequences
+ *
+ *  Meets the requirements of a <a href="tables.html#65">container</a>, a
+ *  <a href="tables.html#66">reversible container</a>, and a
+ *  <a href="tables.html#67">sequence</a>, including the
+ *  <a href="tables.html#68">optional sequence requirements</a> with the
+ *  %exception of @c push_front and @c pop_front.
+ *
  *  In some terminology a vector can be described as a dynamic C-style array,
  *  it offers fast and efficient access to individual elements in any order
  *  and saves the user from worrying about memory and size allocation.
@@ -166,8 +175,9 @@ public:
   typedef _Tp 						value_type;
   typedef value_type* 					pointer;
   typedef const value_type* 				const_pointer;
-  typedef __normal_iterator<pointer, vector_type> 	iterator;
-  typedef __normal_iterator<const_pointer, vector_type> const_iterator;
+  typedef __gnu_cxx::__normal_iterator<pointer, vector_type> 	iterator;
+  typedef __gnu_cxx::__normal_iterator<const_pointer, vector_type>
+                                                        const_iterator;
   typedef value_type& 					reference;
   typedef const value_type& 				const_reference;
   typedef size_t 					size_type;
@@ -413,32 +423,34 @@ public:
 
   template<class _InputIterator>
     void
-	assign(_InputIterator __first, _InputIterator __last)
-	{
+    assign(_InputIterator __first, _InputIterator __last)
+    {
       typedef typename _Is_integer<_InputIterator>::_Integral _Integral;
       _M_assign_dispatch(__first, __last, _Integral());
     }
 
   template<class _Integer>
     void
-	_M_assign_dispatch(_Integer __n, _Integer __val, __true_type)
-    { _M_fill_assign((size_type) __n, (_Tp) __val); }
+     _M_assign_dispatch(_Integer __n, _Integer __val, __true_type)
+     { _M_fill_assign((size_type) __n, (_Tp) __val); }
 
   template<class _InputIter>
     void
-	_M_assign_dispatch(_InputIter __first, _InputIter __last, __false_type)
+    _M_assign_dispatch(_InputIter __first, _InputIter __last, __false_type)
     {
-	  typedef typename iterator_traits<_InputIter>::iterator_category _IterCategory;
-	  _M_assign_aux(__first, __last, _IterCategory());
-	}
+      typedef typename iterator_traits<_InputIter>::iterator_category _IterCategory;
+      _M_assign_aux(__first, __last, _IterCategory());
+    }
 
   template <class _InputIterator>
-  void _M_assign_aux(_InputIterator __first, _InputIterator __last,
-                     input_iterator_tag);
+    void 
+    _M_assign_aux(_InputIterator __first, _InputIterator __last,
+		  input_iterator_tag);
 
   template <class _ForwardIterator>
-  void _M_assign_aux(_ForwardIterator __first, _ForwardIterator __last,
-                     forward_iterator_tag);
+    void 
+    _M_assign_aux(_ForwardIterator __first, _ForwardIterator __last,
+		  forward_iterator_tag);
 
   /**
    *  Returns a read/write reference to the data at the first element of the
@@ -484,9 +496,13 @@ public:
       _M_insert_aux(end(), __x);
   }
 
+#ifdef _GLIBCPP_DEPRECATED
   /**
    *  Add an element to the end of the vector.  The element is
    *  default-constructed.
+   *
+   *  @note You must define _GLIBCPP_DEPRECATED to make this visible; see
+   *        c++config.h.
   */
   void
   push_back()
@@ -498,6 +514,7 @@ public:
     else
       _M_insert_aux(end());
   }
+#endif
 
   void
   swap(vector<_Tp, _Alloc>& __x)

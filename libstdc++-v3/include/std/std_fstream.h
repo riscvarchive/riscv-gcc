@@ -74,33 +74,29 @@ namespace std
 
     protected:
       // Data Members:
+      // MT lock inherited from libio or other low-level io library.
+      __c_lock          	_M_lock;
+
       // External buffer.
-      __file_type* 		_M_file;
+      __file_type 		_M_file;
 
       // Current and beginning state type for codecvt.
       __state_type		_M_state_cur;
       __state_type 		_M_state_beg;
 
-      // MT lock inherited from libio or other low-level io library.
-      __c_lock          	_M_lock;
-
-      // Set iff _M_buf is allocated memory from _M_allocate_internal_buffer..
+      // Set iff _M_buf is allocated memory from _M_allocate_internal_buffer.
       bool			_M_buf_allocated;
-
+      
       // XXX Needed?
       bool			_M_last_overflowed;
+
+      // The position in the buffer corresponding to the external file
+      // pointer.
+      char_type*		_M_filepos;
 
     public:
       // Constructors/destructor:
       basic_filebuf();
-
-      // Non-standard ctor:
-      basic_filebuf(__c_file_type* __f, ios_base::openmode __mode,
-		    int_type __s = static_cast<int_type>(BUFSIZ));
-
-      // Non-standard member:
-      int
-      fd();
 
       virtual
       ~basic_filebuf()
@@ -111,7 +107,7 @@ namespace std
 
       // Members:
       bool
-      is_open() const { return _M_file ? _M_file->is_open() : false; }
+      is_open() const { return _M_file.is_open(); }
 
       __filebuf_type*
       open(const char* __s, ios_base::openmode __mode);
@@ -126,13 +122,6 @@ namespace std
       void
       _M_destroy_internal_buffer();
 
-      void
-      _M_allocate_pback_buffer();
-
-      // Create __file_type object and initialize it properly.
-      void
-      _M_allocate_file();
-
       // Overridden virtual functions:
       virtual streamsize
       showmanyc();
@@ -141,8 +130,21 @@ namespace std
       // underflow() and uflow() functions are called to get the next
       // charater from the real input source when the buffer is empty.
       // Buffered input uses underflow()
+
+      // The only difference between underflow() and uflow() is that the
+      // latter bumps _M_in_cur after the read.  In the sync_with_stdio
+      // case, this is important, as we need to unget the read character in
+      // the underflow() case in order to maintain synchronization.  So
+      // instead of calling underflow() from uflow(), we create a common
+      // subroutine to do the real work.
+      int_type
+      _M_underflow_common(bool __bump);
+
       virtual int_type
-      underflow();
+      underflow() { return _M_underflow_common(false); }
+
+      virtual int_type
+      uflow() { return _M_underflow_common(true); }
 
       virtual int_type
       pbackfail(int_type __c = _Traits::eof());
@@ -191,17 +193,16 @@ namespace std
 
 	// Make sure that the internal buffer resyncs its idea of
 	// the file position with the external file.
-	if (__testput && !_M_file->sync())
+	if (__testput)
 	  {
-	    // Need to restore current position. This interpreted as
-	    // the position of the external byte sequence (_M_file)
-	    // plus the offset in the current internal buffer
-	    // (_M_out_beg - _M_out_cur)
-	    streamoff __cur = _M_file->seekoff(0, ios_base::cur);
-	    off_type __off = _M_out_cur - _M_out_beg;
-	    _M_really_overflow();
-	    _M_file->seekpos(__cur + __off);
+	    // Need to restore current position after the write.
+	    off_type __off = _M_out_cur - _M_out_end;
+	    _M_really_overflow(); // _M_file.sync() will be called within
+	    if (__off)
+	      _M_file.seekoff(__off, ios_base::cur);
 	  }
+	else
+	  _M_file.sync();
 	_M_last_overflowed = false;
 	return 0;
       }
@@ -239,6 +240,50 @@ namespace std
 
       void
       _M_output_unshift();
+
+      // These three functions are used to clarify internal buffer
+      // maintenance. After an overflow, or after a seekoff call that
+      // started at beg or end, or possibly when the stream becomes
+      // unbuffered, and a myrid other obscure corner cases, the
+      // internal buffer does not truly reflect the contents of the
+      // external buffer. At this point, for whatever reason, it is in
+      // an indeterminate state.
+      void
+      _M_set_indeterminate(void)
+      {
+	if (_M_mode & ios_base::in)
+	  this->setg(_M_buf, _M_buf, _M_buf);
+	if (_M_mode & ios_base::out)
+	  this->setp(_M_buf, _M_buf);
+	_M_filepos = _M_buf;
+      }
+
+      void
+      _M_set_determinate(off_type __off)
+      {
+	bool __testin = _M_mode & ios_base::in;
+	bool __testout = _M_mode & ios_base::out;
+	if (__testin)
+	  this->setg(_M_buf, _M_buf, _M_buf + __off);
+	if (__testout)
+	  this->setp(_M_buf, _M_buf + __off);
+	_M_filepos = _M_buf + __off;
+      }
+
+      bool
+      _M_is_indeterminate(void)
+      { 
+	bool __ret = false;
+	// Don't return true if unbuffered.
+	if (_M_buf)
+	  {
+	    if (_M_mode & ios_base::in)
+	      __ret = _M_in_beg == _M_in_cur && _M_in_cur == _M_in_end;
+	    if (_M_mode & ios_base::out)
+	      __ret = _M_out_beg == _M_out_cur && _M_out_cur == _M_out_end;
+	  }
+	return __ret;
+      }
     };
 
 
@@ -306,7 +351,7 @@ namespace std
       void
       open(const char* __s, ios_base::openmode __mode = ios_base::in)
       {
-	if (_M_filebuf.open(__s, __mode | ios_base::in) == NULL)
+	if (!_M_filebuf.open(__s, __mode | ios_base::in))
 	  this->setstate(ios_base::failbit);
       }
 

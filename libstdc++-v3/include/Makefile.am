@@ -21,7 +21,7 @@
 ## Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307,
 ## USA.
 
-AUTOMAKE_OPTIONS = 1.3 gnits
+AUTOMAKE_OPTIONS = 1.3 cygnus
 MAINT_CHARSET = latin1
 
 mkinstalldirs = $(SHELL) $(toplevel_srcdir)/mkinstalldirs
@@ -96,7 +96,7 @@ bits_headers = \
 	${bits_srcdir}/type_traits.h \
 	${bits_srcdir}/valarray_array.h \
 	${bits_srcdir}/valarray_array.tcc \
-	${bits_srcdir}/valarray_meta.h
+	${bits_srcdir}/valarray_meta.h 
 
 backward_srcdir = ${glibcpp_srcdir}/include/backward
 backward_builddir = ./backward
@@ -143,6 +143,8 @@ ext_srcdir = ${glibcpp_srcdir}/include/ext
 ext_builddir = ./ext
 ext_headers = \
 	${ext_srcdir}/algorithm \
+	${ext_srcdir}/enc_filebuf.h \
+	${ext_srcdir}/stdio_filebuf.h \
 	${ext_srcdir}/functional \
 	${ext_srcdir}/hash_map \
 	${ext_srcdir}/hash_set \
@@ -179,9 +181,6 @@ c_base_headers = \
 	${c_base_srcdir}/std_ctime.h \
 	${c_base_srcdir}/std_cwchar.h \
 	${c_base_srcdir}/std_cwctype.h 
-# Some of the "C" headers need extra files.
-c_base_headers_extra = \
-	${c_base_srcdir}/cmath.tcc 
 c_base_headers_rename = \
 	cassert \
 	cctype \
@@ -201,6 +200,45 @@ c_base_headers_rename = \
 	ctime \
 	cwchar \
 	cwctype 
+
+# "C" compatibility headers.
+c_compatibility_srcdir = ${glibcpp_srcdir}/include/c_compatibility
+c_compatibility_builddir = .
+c_compatibility_headers = \
+	${c_compatibility_srcdir}/assert.h \
+	${c_compatibility_srcdir}/ctype.h \
+	${c_compatibility_srcdir}/errno.h \
+	${c_compatibility_srcdir}/float.h \
+	${c_compatibility_srcdir}/iso646.h \
+	${c_compatibility_srcdir}/limits.h \
+	${c_compatibility_srcdir}/locale.h \
+	${c_compatibility_srcdir}/math.h \
+	${c_compatibility_srcdir}/setjmp.h \
+	${c_compatibility_srcdir}/signal.h \
+	${c_compatibility_srcdir}/stdarg.h \
+	${c_compatibility_srcdir}/stddef.h \
+	${c_compatibility_srcdir}/stdio.h \
+	${c_compatibility_srcdir}/stdlib.h \
+	${c_compatibility_srcdir}/string.h \
+	${c_compatibility_srcdir}/time.h \
+	${c_compatibility_srcdir}/wchar.h \
+	${c_compatibility_srcdir}/wctype.h 
+
+# Some of the different "C" header models need extra files.
+# Some "C" header schemes require the "C" compatibility headers.
+# For --enable-cheaders=c_std
+if GLIBCPP_C_HEADERS_C_STD
+c_base_headers_extra = ${c_base_srcdir}/cmath.tcc 
+else
+c_base_headers_extra = 
+endif
+
+if GLIBCPP_C_HEADERS_COMPATIBILITY
+c_compatibility_headers_extra = ${c_compatibility_headers}
+else
+c_compatibility_headers_extra = 
+endif
+
 
 std_srcdir = ${glibcpp_srcdir}/include/std
 std_builddir = .
@@ -275,8 +313,8 @@ target_headers = \
 	${target_srcdir}/os_defines.h \
 	${glibcpp_srcdir}/@ATOMICITY_INC_SRCDIR@/atomicity.h \
 	${glibcpp_srcdir}/@CPU_LIMITS_INC_SRCDIR@/cpu_limits.h 
-# These extra_target_headers files are all built with ad hoc naming rules.
-extra_target_headers = \
+# These target_headers_extra files are all built with ad hoc naming rules.
+target_headers_extra = \
 	${target_builddir}/basic_file.h \
 	${target_builddir}/c++config.h \
 	${target_builddir}/c++io.h \
@@ -287,11 +325,14 @@ extra_target_headers = \
 thread_target_headers = \
 	${target_builddir}/gthr.h \
 	${target_builddir}/gthr-single.h \
+	${target_builddir}/gthr-posix.h \
 	${target_builddir}/gthr-default.h
 
 # List of all timestamp files.  By keeping only one copy of this list, both
 # CLEANFILES and all-local are kept up-to-date.
-allstamps = stamp-std stamp-bits stamp-c_base stamp-backward stamp-ext \
+allstamps = \
+	stamp-std stamp-bits stamp-c_base stamp-c_compatibility \
+	stamp-backward stamp-ext \
 	${target_builddir}/stamp-target
 
 
@@ -317,7 +358,7 @@ stamp-bits: ${bits_headers}
 	(cd ${bits_builddir} && @LN_S@ $? . || true) ;\
 	echo `date` > stamp-bits
 
-stamp-c_base: ${c_base_headers} ${c_base_headers_extra}
+stamp-c_base: ${c_base_headers} ${c_base_headers_extra} 
 	@if [ ! -d "${c_base_builddir}" ]; then \
 	  mkdir -p ${c_base_builddir} ;\
 	fi ;\
@@ -325,8 +366,19 @@ stamp-c_base: ${c_base_headers} ${c_base_headers_extra}
 	  official_name=`echo $$h | sed -e 's,.*/std_,,' -e 's,\.h$$,,'` ;\
 	  @LN_S@ $$h ./$${official_name} || true ;\
 	done) ;\
-	(cd ${c_base_builddir} && @LN_S@ ${c_base_headers_extra}  . || true) ;\
+	if [ ! -z "${c_base_headers_extra}" ]; then \
+	  (cd ${bits_builddir} && @LN_S@ ${c_base_headers_extra}  . || true) ;\
+	fi ;\
 	echo `date` > stamp-c_base
+
+stamp-c_compatibility: ${c_compatibility_headers_extra}
+	@if [ ! -d "${c_compatibility_builddir}" ]; then \
+	  mkdir -p ${c_compatibility_builddir} ;\
+	fi ;\
+	if [ ! -z "${c_compatibility_headers_extra}" ]; then \
+	  (cd ${c_compatibility_builddir} && @LN_S@ $? . || true) ;\
+	fi ;\
+	echo `date` > stamp-c_compatibility
 
 stamp-backward: ${backward_headers}
 	@if [ ! -d "${backward_builddir}" ]; then \
@@ -388,11 +440,19 @@ ${target_builddir}/gthr-single.h: ${toplevel_srcdir}/gcc/gthr-single.h \
 	    -e 's/\(GCC${uppercase}*_H\)/_GLIBCPP_\1/g' \
 	    < ${toplevel_srcdir}/gcc/gthr-single.h > $@
 
+${target_builddir}/gthr-posix.h: ${toplevel_srcdir}/gcc/gthr-posix.h \
+				   stamp-${target_alias}
+	sed -e 's/\(UNUSED\)/_GLIBCPP_\1/g' \
+	    -e 's/\(GCC${uppercase}*_H\)/_GLIBCPP_\1/g' \
+	    -e 's/\(${uppercase}*WEAK\)/_GLIBCPP_\1/g' \
+	    < ${toplevel_srcdir}/gcc/gthr-posix.h > $@
+
 ${target_builddir}/gthr-default.h: ${toplevel_srcdir}/gcc/${glibcpp_thread_h} \
 				   stamp-${target_alias}
 	sed -e 's/\(UNUSED\)/_GLIBCPP_\1/g' \
 	    -e 's/\(GCC${uppercase}*_H\)/_GLIBCPP_\1/g' \
 	    -e 's/\(${uppercase}*WEAK\)/_GLIBCPP_\1/g' \
+	    -e 's,^#include "\(.*\)",#include <bits/\1>,g' \
 	    < ${toplevel_srcdir}/gcc/${glibcpp_thread_h} > $@
 
 # For robustness sake (in light of junk files or in-source
@@ -400,33 +460,35 @@ ${target_builddir}/gthr-default.h: ${toplevel_srcdir}/gcc/${glibcpp_thread_h} \
 # tree using only the human-maintained file lists and directory
 # components.  Yes, with minor differences, this is sheer duplication
 # of the staging rules above using $(INSTALL_DATA) instead of LN_S and
-# `$(INSTALL) -d' instead of `mkdir -p'.  In particular,
-# extra_target_headers are taken out of the build tree staging area;
+# `$(mkinstalldirs)' instead of `mkdir -p'.  In particular,
+# target_headers_extra are taken out of the build tree staging area;
 # the rest are taken from the original source tree.
 gxx_include_dir = @gxx_include_dir@
 install-data-local:
-	$(INSTALL) -d ${gxx_include_dir}
-	$(INSTALL) -d ${gxx_include_dir}/${bits_builddir}
+	$(mkinstalldirs) ${gxx_include_dir}
+	$(mkinstalldirs) ${gxx_include_dir}/${bits_builddir}
 	for file in ${bits_headers}; do \
 	  $(INSTALL_DATA) $${file} ${gxx_include_dir}/${bits_builddir}; done
-	$(INSTALL) -d ${gxx_include_dir}/${backward_builddir}
+	$(mkinstalldirs) ${gxx_include_dir}/${backward_builddir}
 	for file in ${backward_headers}; do \
 	  $(INSTALL_DATA) $${file} ${gxx_include_dir}/${backward_builddir}; done
-	$(INSTALL) -d ${gxx_include_dir}/${ext_builddir}
+	$(mkinstalldirs) ${gxx_include_dir}/${ext_builddir}
 	for file in ${ext_headers}; do \
 	  $(INSTALL_DATA) $${file} ${gxx_include_dir}/${ext_builddir}; done
-	$(INSTALL) -d ${gxx_include_dir}/${c_base_builddir}
+	$(mkinstalldirs) ${gxx_include_dir}/${c_base_builddir}
 	for file in ${c_base_headers_rename}; do \
-	  $(INSTALL_DATA) ${c_base_builddir}/$${file} \
-	    ${gxx_include_dir}/${c_base_builddir}; done
-	for file in ${c_base_headers_extra}; do \
-	  $(INSTALL_DATA) $${file} ${gxx_include_dir}/${c_base_builddir}; done
-	$(INSTALL) -d ${gxx_include_dir}/${std_builddir}
+	  $(INSTALL_DATA) ${c_base_builddir}/$${file} ${gxx_include_dir}; done
+	c_base_headers_extra_install='$(c_base_headers_extra)';\
+	for file in $$c_base_headers_extra_install; do \
+	  $(INSTALL_DATA) $$file ${gxx_include_dir}/${bits_builddir}; done
+	c_compatibility_headers_install='$(c_compatibility_headers_extra)';\
+	for file in $$c_compatibility_headers_install; do \
+	  $(INSTALL_DATA) $$file ${gxx_include_dir}; done
+	$(mkinstalldirs) ${gxx_include_dir}/${std_builddir}
 	for file in ${std_headers_rename}; do \
-	  $(INSTALL_DATA) ${std_builddir}/$${file} \
-	    ${gxx_include_dir}/${std_builddir}; done
-	$(INSTALL) -d ${gxx_include_dir}/${target_builddir}
-	for file in ${target_headers} ${extra_target_headers} \
+	  $(INSTALL_DATA) ${std_builddir}/$${file} ${gxx_include_dir}; done
+	$(mkinstalldirs) ${gxx_include_dir}/${target_builddir}
+	for file in ${target_headers} ${target_headers_extra} \
 	 ${thread_target_headers}; do \
 	  $(INSTALL_DATA) $${file} ${gxx_include_dir}/${target_builddir}; done
 

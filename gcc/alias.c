@@ -564,6 +564,14 @@ get_alias_set (t)
      and references to functions, but that's different.)  */
   else if (TREE_CODE (t) == FUNCTION_TYPE)
     set = 0;
+
+  /* Unless the language specifies otherwise, let vector types alias
+     their components.  This avoids some nasty type punning issues in
+     normal usage.  And indeed lets vectors be treated more like an
+     array slice.  */
+  else if (TREE_CODE (t) == VECTOR_TYPE)
+    set = get_alias_set (TREE_TYPE (t));
+
   else
     /* Otherwise make a new alias set for this type.  */
     set = new_alias_set ();
@@ -2022,6 +2030,13 @@ true_dependence (mem, mem_mode, x, varies)
   if (MEM_VOLATILE_P (x) && MEM_VOLATILE_P (mem))
     return 1;
 
+  /* (mem:BLK (scratch)) is a special mechanism to conflict with everything.
+     This is used in epilogue deallocation functions.  */
+  if (GET_MODE (x) == BLKmode && GET_CODE (XEXP (x, 0)) == SCRATCH)
+    return 1;
+  if (GET_MODE (mem) == BLKmode && GET_CODE (XEXP (mem, 0)) == SCRATCH)
+    return 1;
+
   if (DIFFERENT_ALIAS_SETS_P (x, mem))
     return 0;
 
@@ -2097,6 +2112,13 @@ canon_true_dependence (mem, mem_mode, mem_addr, x, varies)
   if (MEM_VOLATILE_P (x) && MEM_VOLATILE_P (mem))
     return 1;
 
+  /* (mem:BLK (scratch)) is a special mechanism to conflict with everything.
+     This is used in epilogue deallocation functions.  */
+  if (GET_MODE (x) == BLKmode && GET_CODE (XEXP (x, 0)) == SCRATCH)
+    return 1;
+  if (GET_MODE (mem) == BLKmode && GET_CODE (XEXP (mem, 0)) == SCRATCH)
+    return 1;
+
   if (DIFFERENT_ALIAS_SETS_P (x, mem))
     return 0;
 
@@ -2154,6 +2176,13 @@ write_dependence_p (mem, x, writep)
   rtx base;
 
   if (MEM_VOLATILE_P (x) && MEM_VOLATILE_P (mem))
+    return 1;
+
+  /* (mem:BLK (scratch)) is a special mechanism to conflict with everything.
+     This is used in epilogue deallocation functions.  */
+  if (GET_MODE (x) == BLKmode && GET_CODE (XEXP (x, 0)) == SCRATCH)
+    return 1;
+  if (GET_MODE (mem) == BLKmode && GET_CODE (XEXP (mem, 0)) == SCRATCH)
     return 1;
 
   if (DIFFERENT_ALIAS_SETS_P (x, mem))

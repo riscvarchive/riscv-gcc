@@ -136,7 +136,7 @@ EOF
           ${CVS} ci -m 'Update version' ${y}) || \
 	  error "Could not update ${x}"
     done
-    for x in gcc/f/version.c libf2c/libF77/Version.c \
+    for x in gcc/ada/gnatvsn.ads gcc/f/version.c libf2c/libF77/Version.c \
              libf2c/libI77/Version.c libf2c/libU77/Version.c; do
       y=`basename ${x}`
       (changedir `dirname ${SOURCE_DIRECTORY}/${x}` && \
@@ -268,7 +268,6 @@ build_tarfiles() {
 
   # Now, build one for each of the languages.
   build_tarfile gcc-ada-${RELEASE} ${ADA_DIRS}
-  build_tarfile gcc-chill-${RELEASE} ${CHILL_DIRS}
   build_tarfile gcc-g++-${RELEASE} ${CPLUSPLUS_DIRS}
   build_tarfile gcc-g77-${RELEASE} ${FORTRAN_DIRS}
   build_tarfile gcc-java-${RELEASE} ${JAVA_DIRS}
@@ -277,18 +276,19 @@ build_tarfiles() {
    
   # The core is everything else.
   EXCLUDES=""
-  for x in ${ADA_DIRS} ${CHILL_DIRS} ${CPLUSPLUS_DIRS} ${FORTRAN_DIRS} \
+  for x in ${ADA_DIRS} ${CPLUSPLUS_DIRS} ${FORTRAN_DIRS} \
 	   ${JAVA_DIRS} ${OBJECTIVEC_DIRS} ${TESTSUITE_DIRS}; do
     EXCLUDES="${EXCLUDES} --exclude $x"
   done
   build_tarfile gcc-core-${RELEASE} ${EXCLUDES} \
     `basename ${SOURCE_DIRECTORY}`
+}
 
-  # Build .bz2 files.
+# Build .bz2 files.
+build_bzip2() {
   for f in ${FILE_LIST}; do
     bzfile=${f%.gz}.bz2
     (zcat $f | ${BZIP2} > ${bzfile}) || error "Could not create ${bzfile}"
-    FILE_LIST="${FILE_LIST} ${bzfile}"
   done
 }
 
@@ -299,7 +299,7 @@ build_diffs() {
   old_vers=${old_file%.tar.gz}
   old_vers=${old_vers#gcc-}
   inform "Building diffs against version $old_vers"
-  for f in gcc gcc-g++ gcc-g77 gcc-java gcc-objc gcc-testsuite gcc-core; do
+  for f in gcc gcc-ada gcc-g++ gcc-g77 gcc-java gcc-objc gcc-testsuite gcc-core; do
     old_tar=${old_dir}/${f}-${old_vers}.tar.gz
     new_tar=${WORKING_DIRECTORY}/${f}-${RELEASE}.tar.gz
     if [ -e $old_tar ] && [ -e $new_tar ]; then
@@ -337,9 +337,11 @@ upload_files() {
   # Make sure the directory exists on the server.
   if [ $LOCAL -eq 0 ]; then
     ${SSH} -l ${GCC_USERNAME} ${GCC_HOSTNAME} mkdir ${FTP_PATH}
+    UPLOAD_PATH="${GCC_USERNAME}@${GCC_HOSTNAME}:${FTP_PATH}"
   else
     mkdir -p "${FTP_PATH}" \
       || error "Could not create \`${FTP_PATH}'"
+    UPLOAD_PATH=${FTP_PATH}
   fi
 
   for x in gcc*.gz gcc*.bz2; do
@@ -347,8 +349,9 @@ upload_files() {
       # Make sure the file will be readable on the server.
       chmod a+r ${x}
       # Copy it.
-      ${SCP} ${x} ${FTP_PATH} || \
-        error "Could not upload ${x}"
+      if [ $LOCAL -eq 0 ]; then
+        ${SCP} ${x} ${UPLOAD_PATH} || error "Could not upload ${x}"
+      fi
     fi
   done
 }
@@ -409,7 +412,6 @@ SOURCE_DIRECTORY=""
 # The directories that should be part of the various language-specific
 # tar files.  These are all relative to the top of the source tree.
 ADA_DIRS="gcc/ada"
-CHILL_DIRS="gcc/ch libchill"
 CPLUSPLUS_DIRS="gcc/cp libstdc++-v3"
 FORTRAN_DIRS="gcc/f libf2c"
 JAVA_DIRS="gcc/java libjava libffi fastjar zlib boehm-gc"
@@ -428,12 +430,13 @@ SNAPSHOT=0
 LOCAL=0
 
 # Major operation modes.
+MODE_BZIP2=0
 MODE_DIFFS=0
 MODE_SOURCES=0
 MODE_TARFILES=0
 MODE_UPLOAD=0
 
-# Files generated to upload.
+# .gz files generated to create .bz2 files from.
 FILE_LIST=""
 
 # Programs we use.
@@ -516,8 +519,8 @@ if [ $SNAPSHOT -eq 0 ]; then
   fi
 else
   RELEASE=$DATE
-  # For now snapshots come from the mainline.
-  BRANCH=HEAD
+  # For now snapshots come from the 3.1 branch.
+  BRANCH=gcc-3_1-branch
   FTP_PATH="${FTP_PATH}/snapshots/${LONG_DATE}"
   TAG=gcc_ss_${DATE}
 
@@ -538,7 +541,6 @@ SOURCE_DIRECTORY="${WORKING_DIRECTORY}/gcc-${RELEASE}"
 # Recompute the names of all the language-specific directories,
 # relative to the WORKING_DIRECTORY.
 ADA_DIRS=`adjust_dirs ${ADA_DIRS}`
-CHILL_DIRS=`adjust_dirs ${CHILL_DIRS}`
 CPLUSPLUS_DIRS=`adjust_dirs ${CPLUSPLUS_DIRS}`
 FORTRAN_DIRS=`adjust_dirs ${FORTRAN_DIRS}`
 JAVA_DIRS=`adjust_dirs ${JAVA_DIRS}`
@@ -558,14 +560,19 @@ export CVSROOT
 # Main Program
 ########################################################################
 
+# Set the timezone to UTC
+TZ="UTC0"
+export TZ
+
 # Handle the major modes.
 while [ $# -ne 0 ]; do
     case $1 in
+    bzip2)    MODE_BZIP2=1;;
     diffs)    MODE_DIFFS=1;;
     sources)  MODE_SOURCES=1;;
     tarfiles) MODE_TARFILES=1;;
     upload)   MODE_UPLOAD=1;;
-    all)      MODE_SOURCES=1; MODE_TARFILES=1; MODE_DIFFS=1; MODE_UPLOAD=1;;
+    all)      MODE_SOURCES=1; MODE_TARFILES=1; MODE_DIFFS=1; MODE_BZIP2=1; MODE_UPLOAD=1;;
     *)        error "Unknown mode $1";;
     esac
     shift
@@ -592,6 +599,11 @@ if [ $MODE_DIFFS -ne 0 ]; then
       build_diffs $old_tar
     done
   fi
+fi
+
+# Build bzip2 files
+if [ $MODE_BZIP2 -ne 0 ]; then
+  build_bzip2
 fi
 
 # Upload them to the FTP server.

@@ -178,9 +178,10 @@ extern const char * mcore_stack_increment_string;
      N_("Maximum amount for a single stack increment operation")}	\
 }
 
+#ifndef CC1_SPEC
 /* The MCore ABI says that bitfields are unsigned by default. */
-/* The EPOC C++ environment does not support exceptions.  */
-#define CC1_SPEC "-funsigned-bitfields %{!DIN_GCC:-fno-rtti} %{!DIN_GCC:-fno-exceptions}"
+#define CC1_SPEC "-funsigned-bitfields"
+#endif
 
 /* What options are we going to default to specific settings when
    -O* happens; the user can subsequently override these settings.
@@ -268,9 +269,6 @@ extern const char * mcore_stack_increment_string;
    target machine.  If you don't define this, the default is two
    words.  */
 #define LONG_LONG_TYPE_SIZE 64
-
-/* the size of the boolean type -- in C++; */
-#define	BOOL_TYPE_SIZE	8
 
 /* Allocation boundary (in *bits*) for storing arguments in argument list.  */
 #define PARM_BOUNDARY  	32

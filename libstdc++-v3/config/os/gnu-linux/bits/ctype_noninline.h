@@ -60,25 +60,25 @@
   : __ctype_abstract_base<char>(__refs), _M_del(__table != 0 && __del), 
   _M_toupper(__ctype_toupper), _M_tolower(__ctype_tolower),
   _M_table(__table ? __table : classic_table())
-  { _M_c_locale_ctype = NULL; }
+  { _M_c_locale_ctype = _S_c_locale; }
 #endif
 
   ctype<char>::ctype(const mask* __table, bool __del, size_t __refs) : 
   __ctype_abstract_base<char>(__refs), _M_del(__table != 0 && __del), 
   _M_toupper(__ctype_toupper), _M_tolower(__ctype_tolower),
   _M_table(__table ? __table : classic_table())
-  { _M_c_locale_ctype = NULL; }
+  { _M_c_locale_ctype = _S_c_locale; }
 
   char
   ctype<char>::do_toupper(char __c) const
-  { return _M_toupper[static_cast<int>(__c)]; }
+  { return _M_toupper[static_cast<unsigned char>(__c)]; }
 
   const char*
   ctype<char>::do_toupper(char* __low, const char* __high) const
   {
     while (__low < __high)
       {
-	*__low = _M_toupper[static_cast<int>(*__low)];
+	*__low = _M_toupper[static_cast<unsigned char>(*__low)];
 	++__low;
       }
     return __high;
@@ -86,14 +86,14 @@
 
   char
   ctype<char>::do_tolower(char __c) const
-  { return _M_tolower[static_cast<int>(__c)]; }
+  { return _M_tolower[static_cast<unsigned char>(__c)]; }
 
   const char* 
   ctype<char>::do_tolower(char* __low, const char* __high) const
   {
     while (__low < __high)
       {
-	*__low = _M_tolower[static_cast<int>(*__low)];
+	*__low = _M_tolower[static_cast<unsigned char>(*__low)];
 	++__low;
       }
     return __high;

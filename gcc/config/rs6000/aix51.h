@@ -189,22 +189,15 @@ do {									\
 #undef LINK_SPEC
 #define LINK_SPEC "-bpT:0x10000000 -bpD:0x20000000 %{!r:-btextro} -bnodelcsect\
    %{static:-bnso %(link_syscalls) } %{shared:-bM:SRE %{!e:-bnoentry}}\
-   %{!maix64:%{!shared:%{g*: %(link_libg) }}} %{maix64:-b64}"
+   %{!maix64:%{!shared:%{g*: %(link_libg) }}} %{maix64:-b64}\
+   %{mpe:-binitfini:poe_remote_main}"
 
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC "%{!shared:\
-   %{mpe:%{pg:/usr/lpp/ppe.poe/lib/gcrt0.o}\
-         %{!pg:%{p:/usr/lpp/ppe.poe/lib/mcrt0.o}\
-               %{!p:/usr/lpp/ppe.poe/lib/crt0.o}}}\
-   %{!mpe:\
-     %{maix64:%{pg:gcrt0_64%O%s}%{!pg:%{p:mcrt0_64%O%s}%{!p:crt0_64%O%s}}}\
-     %{!maix64:\
-       %{pthread:%{pg:gcrt0_r%O%s}%{!pg:%{p:mcrt0_r%O%s}%{!p:crt0_r%O%s}}}\
-       %{!pthread:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:crt0%O%s}}}}}}"
-
-/* Since there are separate multilibs for pthreads, determine the
-   thread model based on the command-line arguments.  */
-#define THREAD_MODEL_SPEC "%{pthread:posix}%{!pthread:single}"
+   %{maix64:%{pg:gcrt0_64%O%s}%{!pg:%{p:mcrt0_64%O%s}%{!p:crt0_64%O%s}}}\
+   %{!maix64:\
+     %{pthread:%{pg:gcrt0_r%O%s}%{!pg:%{p:mcrt0_r%O%s}%{!p:crt0_r%O%s}}}\
+     %{!pthread:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:crt0%O%s}}}}}"
 
 /* AIX V5 typedefs ptrdiff_t as "long" while earlier releases used "int".  */
 
@@ -213,10 +206,13 @@ do {									\
 
 /* __WCHAR_TYPE__ is dynamic, so do not define it statically.  */
 #define NO_BUILTIN_WCHAR_TYPE
-#undef WCHAR_TYPE
-#undef WCHAR_TYPE_SIZE
+
+/* Type used for wchar_t, as a string used in a declaration.  */
+#undef  WCHAR_TYPE
+#define WCHAR_TYPE (!TARGET_64BIT ? "short unsigned int" : "unsigned int")
 
 /* Width of wchar_t in bits.  */
+#undef  WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE (!TARGET_64BIT ? 16 : 32)
 #define MAX_WCHAR_TYPE_SIZE 32
 

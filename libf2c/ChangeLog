@@ -1,3 +1,43 @@
+2002-07-25  Release Manager
+
+	* GCC 3.1.1 Released.
+
+2002-06-25  DJ Delorie  <dj@redhat.com>
+
+	* aclocal.m4 (GLIBCPP_CONFIGURE): Split out
+	GLIBCPP_TOPREL_CONFIGURE.
+	* configure.in: Call it before AC_CANONICAL_SYSTEM.
+	* configure: Regenerate.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-08  Alexandre Oliva  <aoliva@redhat.com>
+
+	* configure.in (ORIGINAL_LD_FOR_MULTILIBS): Preserve LD at
+	script entry, and set LD to it when configuring multilibs.
+	* configure: Rebuilt.
+
+2002-05-02  Alexandre Oliva  <aoliva@redhat.com>
+
+        * Makefile.in: Fix for multilibbed natives.
+
+2002-04-15  Loren J. Rittle  <ljrittle@acm.org>
+
+	* aclocal.m4 (gcc_version_trigger): Use robust path construction.
+	* configure: Rebuilt.
+
+2002-04-01  Phil Edwards  <pme@gcc.gnu.org>
+
+	* libF77/Version.c:  Fix misplaced leading blanks on first line.
+	* libI77/Version.c:  Likewise.
+	* libU77/Version.c:  Likewise.
+
 2002-01-28  Geoffrey Keating  <geoffk@redhat.com>
 
 	* aclocal.m4: Replace with version copied from libstdc++-v3.

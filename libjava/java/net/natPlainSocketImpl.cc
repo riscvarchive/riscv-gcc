@@ -7,25 +7,51 @@ Libgcj License.  Please consult the file "LIBGCJ_LICENSE" for
 details.  */
 
 #include <config.h>
-
+#include <platform.h>
 
 #ifndef DISABLE_JAVA_NET
-#ifdef USE_WINSOCK
+#ifdef WIN32
 #include <windows.h>
 #include <winsock.h>
 #include <errno.h>
 #include <string.h>
+#undef STRICT
+#undef MAX_PRIORITY
+#undef MIN_PRIORITY
+#undef FIONREAD
+
+// These functions make the Win32 socket API look more POSIXy
+static inline int
+close(int s)
+{
+  return closesocket(s);
+}
+
+static inline int
+write(int s, void *buf, int len)
+{
+  return send(s, (char*)buf, len, 0);
+}
+
+static inline int
+read(int s, void *buf, int len)
+{
+  return recv(s, (char*)buf, len, 0);
+}
+
+// these errors cannot occur on Win32
+#define ENOTCONN 0
+#define ECONNRESET 0
 #ifndef ENOPROTOOPT
 #define ENOPROTOOPT 109
 #endif
-#else /* USE_WINSOCK */
-#include "posix.h"
+#else /* WIN32 */
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <errno.h>
 #include <string.h>
-#endif /* USE_WINSOCK */
+#endif /* WIN32 */
 #endif /* DISABLE_JAVA_NET */
 
 #if HAVE_BSTRING_H
@@ -72,21 +98,11 @@ _Jv_accept (int fd, struct sockaddr *addr, socklen_t *addrlen)
 #undef accept
 #endif
 
-// A wrapper for recv so we don't have to do configure tests.
-template <typename T_ret, typename T_fd, typename T_buf,
-          typename T_len, typename T_flags>
-static inline ssize_t
-_Jv_recv (T_ret (*recv_func) (T_fd s, T_buf buf, T_len len, T_flags flags),
-	  int s, void *buf, size_t len, int flags)
-{
-  return recv_func ((T_fd) s, (T_buf) buf, (T_len) len, (T_flags) flags);
-}
 #endif /* DISABLE_JAVA_NET */
 
 #include <gcj/cni.h>
 #include <gcj/javaprims.h>
 #include <java/io/IOException.h>
-#include <java/io/FileDescriptor.h>
 #include <java/io/InterruptedIOException.h>
 #include <java/net/BindException.h>
 #include <java/net/ConnectException.h>
@@ -215,8 +231,12 @@ java::net::PlainSocketImpl::create (jboolean stream)
       char* strerr = strerror (errno);
       throw new java::io::IOException (JvNewStringUTF (strerr));
     }
+
+  _Jv_platform_close_on_exec (sock);
+
+  // We use fnum in place of fd here.  From leaving fd null we avoid
+  // the double close problem in FileDescriptor.finalize.
   fnum = sock;
-  fd = new java::io::FileDescriptor (sock);
 }
 
 void
@@ -334,6 +354,8 @@ java::net::PlainSocketImpl::accept (java::net::PlainSocketImpl *s)
   socklen_t addrlen = sizeof(u);
   int new_socket = 0; 
 
+// FIXME: implement timeout support for Win32
+#ifndef WIN32
   // Do timeouts via select since SO_RCVTIMEO is not always available.
   if (timeout > 0)
     {
@@ -350,10 +372,14 @@ java::net::PlainSocketImpl::accept (java::net::PlainSocketImpl *s)
 	throw new java::io::InterruptedIOException (
 	         JvNewStringUTF("Accept timed out"));
     }
+#endif /* WIN32 */
 
   new_socket = _Jv_accept (fnum, (sockaddr*) &u, &addrlen);
   if (new_socket < 0)
     goto error;
+
+  _Jv_platform_close_on_exec (new_socket);
+
   jbyteArray raddr;
   jint rport;
   if (u.address.sin_family == AF_INET)
@@ -377,7 +403,6 @@ java::net::PlainSocketImpl::accept (java::net::PlainSocketImpl *s)
   s->localport = localport;
   s->address = new InetAddress (raddr, NULL);
   s->port = rport;
-  s->fd = new java::io::FileDescriptor (new_socket);
   return;
  error:
   char* strerr = strerror (errno);
@@ -388,6 +413,9 @@ java::net::PlainSocketImpl::accept (java::net::PlainSocketImpl *s)
 void
 java::net::PlainSocketImpl::close()
 {
+  // Avoid races from asynchronous finalization.
+  JvSynchronize sync (this);
+
   // should we use shutdown here? how would that effect so_linger?
   int res = ::close (fnum);
 
@@ -400,6 +428,7 @@ java::net::PlainSocketImpl::close()
     }
   // Safe place to reset the file pointer.
   fnum = -1;
+  timeout = 0;
 }
 
 // Write a byte to the socket.
@@ -425,6 +454,7 @@ java::net::PlainSocketImpl::write(jint b)
 	  // Some errors should not cause exceptions.
 	  if (errno != ENOTCONN && errno != ECONNRESET && errno != EBADF)
 	    throw new java::io::IOException (JvNewStringUTF (strerror (errno)));
+	  break;
 	}
     }
 }
@@ -456,6 +486,7 @@ java::net::PlainSocketImpl::write(jbyteArray b, jint offset, jint len)
 	  // Some errors should not cause exceptions.
 	  if (errno != ENOTCONN && errno != ECONNRESET && errno != EBADF)
 	    throw new java::io::IOException (JvNewStringUTF (strerror (errno)));
+	  break;
 	}
       written += r;
       len -= r;
@@ -470,6 +501,8 @@ java::net::PlainSocketImpl::read(void)
 {
   jbyte b;
 
+// FIXME: implement timeout support for Win32
+#ifndef WIN32
   // Do timeouts via select.
   if (timeout > 0)
   {
@@ -491,6 +524,8 @@ java::net::PlainSocketImpl::read(void)
     // If select returns ok we know we either got signalled or read some data...
     // either way we need to try to read.
   }
+#endif /* WIN32 */
+
   int r = ::read (fnum, &b, 1);
 
   if (r == 0)
@@ -525,6 +560,8 @@ java::net::PlainSocketImpl::read(jbyteArray buffer, jint offset, jint count)
     throw new java::lang::ArrayIndexOutOfBoundsException;
   jbyte *bytes = elements (buffer) + offset;
 
+// FIXME: implement timeout support for Win32
+#ifndef WIN32
   // Do timeouts via select.
   if (timeout > 0)
   {
@@ -550,8 +587,10 @@ java::net::PlainSocketImpl::read(jbyteArray buffer, jint offset, jint count)
 	throw iioe;
       }
   }
+#endif
+
   // Read the socket.
-  int r = _Jv_recv (::recv, fnum, (void *) bytes, count, 0);
+  int r = ::recv (fnum, (char *) bytes, count, 0);
   if (r == 0)
     return -1;
   if (java::lang::Thread::interrupted())

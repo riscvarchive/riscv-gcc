@@ -34,6 +34,7 @@
   (UNSPEC_NSAU		1)
   (UNSPEC_NOP		2)
   (UNSPEC_PLT		3)
+  (UNSPEC_RET_ADDR	4)
   (UNSPECV_SET_FP	1)
 ])
 
@@ -88,6 +89,43 @@
 ;;
 ;;  ....................
 ;;
+
+(define_expand "adddi3"
+  [(set (match_operand:DI 0 "register_operand" "")
+	(plus:DI (match_operand:DI 1 "register_operand" "")
+		 (match_operand:DI 2 "register_operand" "")))]
+  ""
+  "
+{
+  rtx dstlo = gen_lowpart (SImode, operands[0]);
+  rtx src1lo = gen_lowpart (SImode, operands[1]);
+  rtx src2lo = gen_lowpart (SImode, operands[2]);
+
+  rtx dsthi = gen_highpart (SImode, operands[0]);
+  rtx src1hi = gen_highpart (SImode, operands[1]);
+  rtx src2hi = gen_highpart (SImode, operands[2]);
+
+  emit_insn (gen_addsi3 (dstlo, src1lo, src2lo));
+  emit_insn (gen_addsi3 (dsthi, src1hi, src2hi));
+  emit_insn (gen_adddi_carry (dsthi, dstlo, src2lo));
+  DONE;
+}")
+
+;; Represent the add-carry operation as an atomic operation instead of
+;; expanding it to a conditional branch.  Otherwise, the edge
+;; profiling code breaks because inserting the count increment code
+;; causes a new jump insn to be added.
+
+(define_insn "adddi_carry"
+  [(set (match_operand:SI 0 "register_operand" "+a")
+	(plus:SI (ltu:SI (match_operand:SI 1 "register_operand" "r")
+			 (match_operand:SI 2 "register_operand" "r"))
+		 (match_dup 0)))]
+  ""
+  "bgeu\\t%1, %2, 0f\;addi\\t%0, %0, 1\;0:"
+  [(set_attr "type"	"arith")
+   (set_attr "mode"	"SI")
+   (set_attr "length"	"6")])
 
 (define_insn "addsi3"
   [(set (match_operand:SI 0 "register_operand" "=D,D,a,a,a")
@@ -155,6 +193,38 @@
 ;;
 ;;  ....................
 ;;
+
+(define_expand "subdi3"
+  [(set (match_operand:DI 0 "register_operand" "")
+	(minus:DI (match_operand:DI 1 "register_operand" "")
+		  (match_operand:DI 2 "register_operand" "")))]
+  ""
+  "
+{
+  rtx dstlo = gen_lowpart (SImode, operands[0]);
+  rtx src1lo = gen_lowpart (SImode, operands[1]);
+  rtx src2lo = gen_lowpart (SImode, operands[2]);
+
+  rtx dsthi = gen_highpart (SImode, operands[0]);
+  rtx src1hi = gen_highpart (SImode, operands[1]);
+  rtx src2hi = gen_highpart (SImode, operands[2]);
+
+  emit_insn (gen_subsi3 (dstlo, src1lo, src2lo));
+  emit_insn (gen_subsi3 (dsthi, src1hi, src2hi));
+  emit_insn (gen_subdi_carry (dsthi, src1lo, src2lo));
+  DONE;
+}")
+
+(define_insn "subdi_carry"
+  [(set (match_operand:SI 0 "register_operand" "+a")
+	(minus:SI (match_dup 0)
+		  (ltu:SI (match_operand:SI 1 "register_operand" "r")
+			  (match_operand:SI 2 "register_operand" "r"))))]
+  ""
+  "bgeu\\t%1, %2, 0f\;addi\\t%0, %0, -1\;0:"
+  [(set_attr "type"	"arith")
+   (set_attr "mode"	"SI")
+   (set_attr "length"	"6")])
 
 (define_insn "subsi3"
   [(set (match_operand:SI 0 "register_operand" "=a")
@@ -940,8 +1010,7 @@
 (define_insn "movsi_internal"
   [(set (match_operand:SI 0 "nonimmed_operand" "=D,D,D,D,R,R,a,q,a,a,a,U,*a,*A")
 	(match_operand:SI 1 "move_operand" "M,D,d,R,D,d,r,r,I,T,U,r,*A,*r"))]
-  "non_acc_reg_operand (operands[0], SImode)
-   || non_acc_reg_operand (operands[1], SImode)"
+  "xtensa_valid_move (SImode, operands)"
   "@
    movi.n\\t%0, %x1
    mov.n\\t%0, %1
@@ -976,8 +1045,7 @@
 (define_insn "movhi_internal"
   [(set (match_operand:HI 0 "nonimmed_operand" "=D,D,a,a,a,U,*a,*A")
 	(match_operand:HI 1 "move_operand" "M,d,r,I,U,r,*A,*r"))]
-  "non_acc_reg_operand (operands[0], HImode)
-   || non_acc_reg_operand (operands[1], HImode)"
+  "xtensa_valid_move (HImode, operands)"
   "@
    movi.n\\t%0, %x1
    mov.n\\t%0, %1
@@ -1006,8 +1074,7 @@
 (define_insn "movqi_internal"
   [(set (match_operand:QI 0 "nonimmed_operand" "=D,D,a,a,a,U,*a,*A")
 	(match_operand:QI 1 "move_operand" "M,d,r,I,U,r,*A,*r"))]
-  "non_acc_reg_operand (operands[0], QImode)
-   || non_acc_reg_operand (operands[1], QImode)"
+  "xtensa_valid_move (QImode, operands)"
   "@
    movi.n\\t%0, %x1
    mov.n\\t%0, %1
@@ -1303,6 +1370,7 @@
   [(set_attr "type"	"multi,multi")
    (set_attr "mode"	"SI")
    (set_attr "length"	"6,6")])
+
 
 ;;
 ;;  ....................
@@ -2365,6 +2433,23 @@
   [(set_attr "type"	"nop")
    (set_attr "mode"	"none")
    (set_attr "length"	"0")])
+
+;; The fix_return_addr pattern sets the high 2 bits of an address in a
+;; register to match the high bits of the current PC.
+
+(define_insn "fix_return_addr"
+  [(set (match_operand:SI 0 "register_operand" "=a")
+	(unspec:SI [(match_operand:SI 1 "register_operand" "r")]
+		   UNSPEC_RET_ADDR))
+   (clobber (match_scratch:SI 2 "=r"))
+   (clobber (match_scratch:SI 3 "=r"))]
+  ""
+  "mov\\t%2, a0\;call0\\t0f\;.align\\t4\;0:\;mov\\t%3, a0\;mov\\ta0, %2\;\
+srli\\t%3, %3, 30\;slli\\t%0, %1, 2\;ssai\\t2\;src\\t%0, %3, %0"
+  [(set_attr "type"	"multi")
+   (set_attr "mode"	"SI")
+   (set_attr "length"	"24")])
+
 
 ;;
 ;;  ....................

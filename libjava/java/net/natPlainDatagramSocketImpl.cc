@@ -1,4 +1,4 @@
-/* Copyright (C) 1999, 2000  Free Software Foundation
+/* Copyright (C) 1999, 2000, 2002  Free Software Foundation
 
    This file is part of libgcj.
 
@@ -8,7 +8,7 @@ details.  */
 
 #include <config.h>
 
-#include<platform.h>
+#include <platform.h>
 
 #ifdef WIN32
 #include <errno.h>
@@ -16,6 +16,13 @@ details.  */
 #ifndef ENOPROTOOPT
 #define ENOPROTOOPT 109
 #endif
+
+static inline int
+close(int s)
+{
+  return closesocket(s);
+}
+
 #else /* WIN32 */
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -51,7 +58,6 @@ _Jv_bind (int fd, struct sockaddr *addr, int addrlen)
 
 #include <gcj/cni.h>
 #include <java/io/IOException.h>
-#include <java/io/FileDescriptor.h>
 #include <java/io/InterruptedIOException.h>
 #include <java/net/BindException.h>
 #include <java/net/SocketException.h>
@@ -88,6 +94,13 @@ java::net::PlainDatagramSocketImpl::peek (java::net::InetAddress *)
 {
   throw new java::io::IOException (
     JvNewStringLatin1 ("DatagramSocketImpl.peek: unimplemented"));
+}
+
+void
+java::net::PlainDatagramSocketImpl::close ()
+{
+  throw new java::io::IOException (
+    JvNewStringLatin1 ("DatagramSocketImpl.close: unimplemented"));
 }
 
 void
@@ -185,8 +198,12 @@ java::net::PlainDatagramSocketImpl::create ()
       char* strerr = strerror (errno);
       throw new java::net::SocketException (JvNewStringUTF (strerr));
     }
+
+  _Jv_platform_close_on_exec (sock);
+
+  // We use fnum in place of fd here.  From leaving fd null we avoid
+  // the double close problem in FileDescriptor.finalize.
   fnum = sock;
-  fd = new java::io::FileDescriptor (sock);
 }
 
 void
@@ -279,6 +296,20 @@ java::net::PlainDatagramSocketImpl::peek (java::net::InetAddress *i)
  error:
   char* strerr = strerror (errno);
   throw new java::io::IOException (JvNewStringUTF (strerr));
+}
+
+// Close(shutdown) the socket.
+void
+java::net::PlainDatagramSocketImpl::close ()
+{
+  // Avoid races from asynchronous finalization.
+  JvSynchronize sync (this);
+
+  // The method isn't declared to throw anything, so we disregard
+  // the return value.
+  ::close (fnum);
+  fnum = -1;
+  timeout = 0;
 }
 
 void

@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for some generic XCOFF file format
-   Copyright (C) 2001 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -21,10 +21,6 @@ Boston, MA 02111-1307, USA.  */
 
 
 #define TARGET_OBJECT_FORMAT OBJECT_XCOFF
-
-/* The AIX linker will discard static constructors in object files before
-   collect has a chance to see them, so scan the object files directly.  */
-#define COLLECT_EXPORT_LIST
 
 /* The RS/6000 uses the XCOFF format.  */
 #define XCOFF_DEBUGGING_INFO
@@ -345,13 +341,7 @@ toc_section ()						\
     SYMBOL_REF_FLAG (sym_ref) = 1;				\
   if (TREE_PUBLIC (DECL))					\
     {								\
-      if (RS6000_WEAK && DECL_WEAK (decl))			\
-	{							\
-	  fputs ("\t.weak .", FILE);				\
-	  RS6000_OUTPUT_BASENAME (FILE, NAME);			\
-	  putc ('\n', FILE);					\
-	}							\
-      else							\
+      if (!RS6000_WEAK || !DECL_WEAK (decl))			\
 	{							\
 	  fputs ("\t.globl .", FILE);				\
 	  RS6000_OUTPUT_BASENAME (FILE, NAME);			\
@@ -464,22 +454,17 @@ toc_section ()						\
 		xcoff_bss_section_name);		\
      } while (0)
 
-/* Output a weak symbol, if weak support present.  */
-#ifdef HAVE_GAS_WEAK
-#define HANDLE_PRAGMA_WEAK 1
-
-#define ASM_WEAKEN_LABEL(FILE, NAME)	\
-  do					\
-    {					\
-      fputs ("\t.weak ", (FILE));	\
-      assemble_name ((FILE), (NAME));	\
-      fputc ('\n', (FILE));		\
-    }					\
-  while (0)
-#endif /* HAVE_GAS_WEAK */
-
 /* This is how we tell the assembler that two symbols have the same value.  */
 #define SET_ASM_OP "\t.set "
+
+/* This is how we tell the assembler to equate two values.  */
+#define ASM_OUTPUT_DEF(FILE,LABEL1,LABEL2)				\
+ do {	fprintf ((FILE), "%s", SET_ASM_OP);				\
+	RS6000_OUTPUT_BASENAME (FILE, LABEL1);				\
+	fprintf (FILE, ",");						\
+	RS6000_OUTPUT_BASENAME (FILE, LABEL2);				\
+	fprintf (FILE, "\n");						\
+  } while (0)
 
 /* Used by rs6000_assemble_integer, among others.  */
 #define DOUBLE_INT_ASM_OP "\t.llong\t"

@@ -64,24 +64,18 @@ namespace std
       // Data members:
     protected:
       basic_ostream<_CharT, _Traits>* 	_M_tie;
-      char_type 			_M_fill;
-      iostate 				_M_exception;
-
+      mutable char_type 		_M_fill;
+      mutable bool			_M_fill_init;
       basic_streambuf<_CharT, _Traits>* _M_streambuf;
-      iostate 				_M_streambuf_state;
 
       // Cached use_facet<ctype>, which is based on the current locale info.
-      const __ctype_type*		_M_ios_fctype;      
+      const __ctype_type*		_M_fctype;      
       // From ostream.
       const __numput_type* 		_M_fnumput;
       // From istream.
       const __numget_type* 		_M_fnumget;
 
     public:
-      const __ctype_type*	
-      _M_get_fctype_ios(void)
-      { return _M_ios_fctype; }
-
       operator void*() const 
       { return this->fail() ? 0 : const_cast<basic_ios*>(this); }
 
@@ -160,7 +154,14 @@ namespace std
 
       char_type 
       fill() const 
-      { return _M_fill; }
+      {
+	if (!_M_fill_init)
+	  {
+	    _M_fill = this->widen(' ');
+	    _M_fill_init = true;
+	  }
+	return _M_fill; 
+      }
 
       char_type 
       fill(char_type __ch)

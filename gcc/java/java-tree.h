@@ -213,6 +213,9 @@ extern int flag_optimize_sci;
    in order to improve binary compatibility. */
 extern int flag_indirect_dispatch;
 
+/* When zero, don't generate runtime array store checks. */
+extern int flag_store_check;
+
 /* Encoding used for source files.  */
 extern const char *current_encoding;
 
@@ -1106,6 +1109,7 @@ extern tree build_java_binop PARAMS ((enum tree_code, tree, tree, tree));
 extern tree build_java_soft_divmod PARAMS ((enum tree_code, tree, tree, tree));
 extern tree binary_numeric_promotion PARAMS ((tree, tree, tree *, tree *));
 extern tree build_java_arrayaccess PARAMS ((tree, tree, tree));
+extern tree build_java_arraystore_check PARAMS ((tree, tree));
 extern tree build_newarray PARAMS ((int, tree));
 extern tree build_anewarray PARAMS ((tree, tree));
 extern tree build_new_array PARAMS ((tree, tree));
@@ -1323,20 +1327,14 @@ extern char *instruction_bits;
 /* True iff the byte is the start of an instruction. */
 #define BCODE_INSTRUCTION_START 1
 
-/* True iff there is a jump to this location. */
+/* True iff there is a jump or a return to this location. */
 #define BCODE_JUMP_TARGET 2
-
-/* True iff there is a return to this location.
-   (I.e. the preceding instruction was a call.) */
-#define BCODE_RETURN_TARGET 4
 
 /* True iff this is the start of an exception handler. */
 #define BCODE_EXCEPTION_TARGET 16
 
 /* True iff there is a jump to this location (and it needs a label). */
-#define BCODE_TARGET \
-  (BCODE_JUMP_TARGET|BCODE_RETURN_TARGET \
-   | BCODE_EXCEPTION_TARGET)
+#define BCODE_TARGET (BCODE_JUMP_TARGET| BCODE_EXCEPTION_TARGET)
 
 /* True iff there is an entry in the linenumber table for this location. */
 #define BCODE_HAS_LINENUMBER 32
@@ -1420,11 +1418,6 @@ extern tree *type_map;
 /* True if class TYPE was requested (on command line) to be compiled.*/
 #define CLASS_FROM_CURRENTLY_COMPILED_P(TYPE) \
   TYPE_LANG_FLAG_5 (TYPE)
-
-/* True if class TYPE is currently being laid out. Helps in detection
-   of inheritance cycle occurring as a side effect of performing the
-   layout of a class.  */
-#define CLASS_BEING_LAIDOUT(TYPE) TYPE_LANG_FLAG_6 (TYPE)
 
 /* True if class TYPE is currently being laid out. Helps in detection
    of inheritance cycle occurring as a side effect of performing the

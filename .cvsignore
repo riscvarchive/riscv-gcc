@@ -25,8 +25,8 @@ configure.tp
 configure.tps
 configure.vr
 configure.vrs
-dir.info
 Makefile
+dir.info
 lost+found
 update.out
 LAST_UPDATED

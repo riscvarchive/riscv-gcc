@@ -105,8 +105,8 @@ Boston, MA 02111-1307, USA.  */
 %{mcpu=rsc: -mpwr} \
 %{mcpu=rsc1: -mpwr} \
 %{mcpu=401: -mppc} \
-%{mcpu=403: -mppc} \
-%{mcpu=405: -mppc} \
+%{mcpu=403: -m403} \
+%{mcpu=405: -m405} \
 %{mcpu=505: -mppc} \
 %{mcpu=601: -m601} \
 %{mcpu=602: -mppc} \
@@ -604,6 +604,9 @@ extern int rs6000_altivec_abi;
 #define LIBGCC2_LONG_DOUBLE_TYPE_SIZE 64
 #endif
 
+/* Work around rs6000_long_double_type_size dependency in ada/targtyps.c.  */
+#define WIDEST_HARDWARE_FP_SIZE 64
+
 /* Width in bits of a pointer.
    See also the macro `Pmode' defined below.  */
 #define POINTER_SIZE (TARGET_32BIT ? 32 : 64)
@@ -625,9 +628,6 @@ extern int rs6000_altivec_abi;
    that the object would ordinarily have.  */
 #define LOCAL_ALIGNMENT(TYPE, ALIGN)				\
   ((TARGET_ALTIVEC && TREE_CODE (TYPE) == VECTOR_TYPE) ? 128 : ALIGN)
-
-/* Handle #pragma pack.  */
-#define HANDLE_PRAGMA_PACK 1
 
 /* Alignment of field after `int : 0' in a structure.  */
 #define EMPTY_FIELD_BOUNDARY 32
@@ -762,7 +762,7 @@ extern int rs6000_altivec_abi;
 #define XER_REGNO    76
 #define FIRST_ALTIVEC_REGNO	77
 #define LAST_ALTIVEC_REGNO	108
-#define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO)
+#define TOTAL_ALTIVEC_REGS	(LAST_ALTIVEC_REGNO - FIRST_ALTIVEC_REGNO + 1)
 #define VRSAVE_REGNO		109
 
 /* List the order in which to allocate registers.  Each register must be
@@ -960,15 +960,18 @@ extern int rs6000_altivec_abi;
     for (i = 32; i < 64; i++)						\
       fixed_regs[i] = call_used_regs[i]					\
         = call_really_used_regs[i] = 1;					\
-  if (DEFAULT_ABI == ABI_V4 && flag_pic == 1)				\
-    fixed_regs[PIC_OFFSET_TABLE_REGNUM]					\
-      = call_used_regs[PIC_OFFSET_TABLE_REGNUM]				\
-      = call_really_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;		\
-  if (DEFAULT_ABI == ABI_DARWIN && flag_pic)				\
-    global_regs[PIC_OFFSET_TABLE_REGNUM]				\
-      = fixed_regs[PIC_OFFSET_TABLE_REGNUM]				\
-      = call_used_regs[PIC_OFFSET_TABLE_REGNUM]				\
-      = call_really_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;		\
+  if (DEFAULT_ABI == ABI_V4						\
+      && PIC_OFFSET_TABLE_REGNUM != INVALID_REGNUM			\
+      && flag_pic == 1)							\
+    fixed_regs[RS6000_PIC_OFFSET_TABLE_REGNUM]				\
+      = call_used_regs[RS6000_PIC_OFFSET_TABLE_REGNUM]			\
+      = call_really_used_regs[RS6000_PIC_OFFSET_TABLE_REGNUM] = 1;	\
+  if (DEFAULT_ABI == ABI_DARWIN						\
+      && PIC_OFFSET_TABLE_REGNUM != INVALID_REGNUM)			\
+    global_regs[RS6000_PIC_OFFSET_TABLE_REGNUM]				\
+      = fixed_regs[RS6000_PIC_OFFSET_TABLE_REGNUM]			\
+      = call_used_regs[RS6000_PIC_OFFSET_TABLE_REGNUM]			\
+      = call_really_used_regs[RS6000_PIC_OFFSET_TABLE_REGNUM] = 1;	\
   if (! TARGET_ALTIVEC)							\
     {									\
       for (i = FIRST_ALTIVEC_REGNO; i <= LAST_ALTIVEC_REGNO; ++i)	\
@@ -1597,8 +1600,7 @@ typedef struct rs6000_args
 #define RS6000_ARG_SIZE(MODE, TYPE)					\
 ((MODE) != BLKmode							\
  ? (GET_MODE_SIZE (MODE) + (UNITS_PER_WORD - 1)) / UNITS_PER_WORD	\
- : ((unsigned HOST_WIDE_INT) int_size_in_bytes (TYPE) 			\
-    + (UNITS_PER_WORD - 1)) / UNITS_PER_WORD)
+ : (int_size_in_bytes (TYPE) + (UNITS_PER_WORD - 1)) / UNITS_PER_WORD)
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
    for a call to a function whose data type is FNTYPE.
@@ -1716,6 +1718,14 @@ typedef struct rs6000_args
 /* Implement `va_arg'.  */
 #define EXPAND_BUILTIN_VA_ARG(valist, type) \
   rs6000_va_arg (valist, type)
+
+/* For AIX, the rule is that structures are passed left-aligned in
+   their stack slot.  However, GCC does not presently do this:
+   structures which are the same size as integer types are passed
+   right-aligned, as if they were in fact integers.  This only
+   matters for structures of size 1 or 2, or 4 when TARGET_64BIT.
+   ABI_V4 does not use std_expand_builtin_va_arg.  */
+#define PAD_VARARGS_DOWN (TYPE_MODE (type) != BLKmode)
 
 /* Define this macro to be a nonzero value if the location where a function
    argument is passed depends on whether or not it is a named argument.  */
@@ -2093,7 +2103,8 @@ do {									     \
    this macro is not defined, it is up to the machine-dependent files
    to allocate such a register (if necessary).  */
 
-#define PIC_OFFSET_TABLE_REGNUM 30
+#define RS6000_PIC_OFFSET_TABLE_REGNUM 30
+#define PIC_OFFSET_TABLE_REGNUM (flag_pic ? RS6000_PIC_OFFSET_TABLE_REGNUM : INVALID_REGNUM)
 
 #define TOC_REGISTER (TARGET_MINIMAL_TOC ? 30 : 2)
 
@@ -2422,43 +2433,73 @@ extern int toc_initialized;
 #define RS6000_WEAK 0
 #endif
 
-/* This implementes the `alias' attribute.  */
-#define ASM_OUTPUT_DEF_FROM_DECLS(FILE,decl,target)	\
-do {							\
-  const char * alias = XSTR (XEXP (DECL_RTL (decl), 0), 0); \
-  char * name = IDENTIFIER_POINTER (target);		\
-  if (TREE_CODE (decl) == FUNCTION_DECL			\
-      && DEFAULT_ABI == ABI_AIX)			\
-    {							\
-      if (TREE_PUBLIC (decl))				\
-	{						\
-	  if (RS6000_WEAK && DECL_WEAK (decl))		\
-	    {						\
-	      fputs ("\t.weak .", FILE);		\
-	      assemble_name (FILE, alias);		\
-	      putc ('\n', FILE);			\
-	    }						\
-	  else						\
-	    {						\
-	      fputs ("\t.globl .", FILE);		\
-	      assemble_name (FILE, alias);		\
-	      putc ('\n', FILE);			\
-	    }						\
-	}						\
-      else						\
-	{						\
-	  fputs ("\t.lglobl .", FILE);			\
-	  assemble_name (FILE, alias);			\
-	  putc ('\n', FILE);				\
-	}						\
-      fputs ("\t.set .", FILE);				\
-      assemble_name (FILE, alias);			\
-      fputs (",.", FILE);				\
-      assemble_name (FILE, name);			\
-      fputc ('\n', FILE);				\
-    }							\
-  ASM_OUTPUT_DEF (FILE, alias, name);			\
-} while (0)
+#if RS6000_WEAK
+/* Used in lieu of ASM_WEAKEN_LABEL.  */
+#define	ASM_WEAKEN_DECL(FILE, DECL, NAME, VAL)			 	\
+  do									\
+    {									\
+      fputs ("\t.weak\t", (FILE));					\
+      RS6000_OUTPUT_BASENAME ((FILE), (NAME)); 			\
+      if ((DECL) && TREE_CODE (DECL) == FUNCTION_DECL			\
+	  && DEFAULT_ABI == ABI_AIX)					\
+	{								\
+	  if (TARGET_XCOFF)						\
+	    fputs ("[DS]", (FILE));					\
+	  fputs ("\n\t.weak\t.", (FILE));				\
+	  RS6000_OUTPUT_BASENAME ((FILE), (NAME)); 			\
+	}								\
+      fputc ('\n', (FILE));						\
+      if (VAL)								\
+	{								\
+	  ASM_OUTPUT_DEF ((FILE), (NAME), (VAL));			\
+	  if ((DECL) && TREE_CODE (DECL) == FUNCTION_DECL		\
+	      && DEFAULT_ABI == ABI_AIX)				\
+	    {								\
+	      fputs ("\t.set\t.", (FILE));				\
+	      RS6000_OUTPUT_BASENAME ((FILE), (NAME));			\
+	      fputs (",.", (FILE));					\
+	      RS6000_OUTPUT_BASENAME ((FILE), (VAL));			\
+	      fputc ('\n', (FILE));					\
+	    }								\
+	}								\
+    }									\
+  while (0)
+#endif
+
+/* This implements the `alias' attribute.  */
+#undef	ASM_OUTPUT_DEF_FROM_DECLS
+#define	ASM_OUTPUT_DEF_FROM_DECLS(FILE, DECL, TARGET)			\
+  do									\
+    {									\
+      const char *alias = XSTR (XEXP (DECL_RTL (DECL), 0), 0);		\
+      const char *name = IDENTIFIER_POINTER (TARGET);			\
+      if (TREE_CODE (DECL) == FUNCTION_DECL				\
+	  && DEFAULT_ABI == ABI_AIX)					\
+	{								\
+	  if (TREE_PUBLIC (DECL))					\
+	    {								\
+	      if (!RS6000_WEAK || !DECL_WEAK (DECL))			\
+		{							\
+		  fputs ("\t.globl\t.", FILE);				\
+		  RS6000_OUTPUT_BASENAME (FILE, alias);			\
+		  putc ('\n', FILE);					\
+		}							\
+	    }								\
+	  else if (TARGET_XCOFF)					\
+	    {								\
+	      fputs ("\t.lglobl\t.", FILE);				\
+	      RS6000_OUTPUT_BASENAME (FILE, alias);			\
+	      putc ('\n', FILE);					\
+	    }								\
+	  fputs ("\t.set\t.", FILE);					\
+	  RS6000_OUTPUT_BASENAME (FILE, alias);				\
+	  fputs (",.", FILE);						\
+	  RS6000_OUTPUT_BASENAME (FILE, name);				\
+	  fputc ('\n', FILE);						\
+	}								\
+      ASM_OUTPUT_DEF (FILE, alias, name);				\
+    }									\
+   while (0)
 
 /* Output to assembler file text saying following lines
    may contain character constants, extra white space, comments, etc.  */
@@ -2713,6 +2754,10 @@ extern char rs6000_reg_names[][8];	/* register names (0 vs. %r0).  */
 /* Define the codes that are matched by predicates in rs6000.c.  */
 
 #define PREDICATE_CODES							   \
+  {"any_operand", {CONST_INT, CONST_DOUBLE, CONST, SYMBOL_REF,		   \
+		   LABEL_REF, SUBREG, REG, MEM, PARALLEL}},		   \
+  {"zero_constant", {CONST_INT, CONST_DOUBLE, CONST, SYMBOL_REF,	   \
+		    LABEL_REF, SUBREG, REG, MEM}},			   \
   {"short_cint_operand", {CONST_INT}},					   \
   {"u_short_cint_operand", {CONST_INT}},				   \
   {"non_short_cint_operand", {CONST_INT}},				   \

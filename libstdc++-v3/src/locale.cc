@@ -30,24 +30,20 @@
 #include <cstring>
 #include <cassert>
 #include <cctype>
+#include <cwctype>     // For towupper, etc.
 #include <limits>
 #include <exception>
 #include <locale>
 #include <istream>
 #include <ostream>
-#include <vector>
-#include <memory>      // for auto_ptr
-#ifdef _GLIBCPP_USE_WCHAR_T  
-# include <cwctype>     // for towupper, etc.
-#endif
-
 #include <bits/atomicity.h>
 
 namespace std 
 {
   // Defined in globals.cc.
-  extern locale::_Impl locale_impl_c;
-  extern locale locale_c;
+  extern locale 		c_locale;
+  extern locale::_Impl 		c_locale_impl;
+  extern locale::facet**	facet_vec;
 
   // Definitions for static const data members of locale.
   const locale::category 	locale::none;
@@ -62,9 +58,8 @@ namespace std
   locale::_Impl* 		locale::_S_classic;
   locale::_Impl* 		locale::_S_global; 
   const size_t 			locale::_S_num_categories;
-  const size_t 			locale::_S_num_facets;
 
-  // Definitions for locale::id of standard facets. 
+  // Definitions for locale::id of standard facets that are specialized.
   locale::id ctype<char>::id;
   locale::id codecvt<char, char, mbstate_t>::id;
 
@@ -160,8 +155,8 @@ namespace std
     locale::_Impl::_S_id_ctype,
     locale::_Impl::_S_id_numeric,
     locale::_Impl::_S_id_collate,
-    locale::_Impl::_S_id_time,
     locale::_Impl::_S_id_monetary,
+    locale::_Impl::_S_id_time,
     locale::_Impl::_S_id_messages,
     0
   };
@@ -252,7 +247,8 @@ namespace std
     _Impl* __old = _S_global;
     __other._M_impl->_M_add_reference();
     _S_global = __other._M_impl; 
-    if (_S_global->_M_check_same_name() && _S_global->_M_names[0] != "*")
+    if (_S_global->_M_check_same_name() 
+	&& (strcmp(_S_global->_M_names[0], "*") != 0))
       setlocale(LC_ALL, __other.name().c_str());
 
     // Reference count sanity check: one reference removed for the
@@ -266,23 +262,26 @@ namespace std
   string
   locale::name() const
   {
-    string __ret;
     // Need some kind of separator character. This one was pretty much
     // arbitrarily chosen as to not conflict with glibc locales: the
     // exact formatting is not set in stone.
     const char __separator = '|';
 
+    string __ret;
     if (_M_impl->_M_check_same_name())
       __ret = _M_impl->_M_names[0];
     else
       {
 	for (size_t i = 0; i < _S_num_categories; ++i)
-	  __ret += __separator + _M_impl->_M_names[i];
+	  {
+	    __ret += __separator;
+	    __ret += _M_impl->_M_names[i];
+	  }
       }
     return __ret;
   }
 
-  locale const&
+  const locale&
   locale::classic()
   {
     static _STL_mutex_lock __lock __STL_MUTEX_INITIALIZER;
@@ -294,9 +293,13 @@ namespace std
 	  {
 	    // 26 Standard facets, 2 references.
 	    // One reference for _M_classic, one for _M_global
-	    _S_classic = new (&locale_impl_c) _Impl("C", 2);
+	    facet** f = new(&facet_vec) facet*[_GLIBCPP_NUM_FACETS];
+	    for (size_t __i = 0; __i < _GLIBCPP_NUM_FACETS; ++__i)
+	      f[__i] = 0;
+
+	    _S_classic = new (&c_locale_impl) _Impl(f, 2, true);
 	    _S_global = _S_classic; 	    
-	    new (&locale_c) locale(_S_classic);
+	    new (&c_locale) locale(_S_classic);
 	  }
 	catch(...) 
 	  {
@@ -308,7 +311,7 @@ namespace std
 	    __throw_exception_again;
 	  }
       }
-    return locale_c;
+    return c_locale;
   }
 
   locale::category
@@ -383,7 +386,8 @@ namespace std
       }
   }
   
-  locale::id::id() { }
+  locale::id::id() 
+  { }
 
   // Definitions for static const data members of ctype_base.
   const ctype_base::mask ctype_base::space;
@@ -405,7 +409,7 @@ namespace std
 
   ctype<char>::~ctype()
   { 
-    if (_M_c_locale_ctype)
+    if (_M_c_locale_ctype != _S_c_locale)
       _S_destroy_c_locale(_M_c_locale_ctype);
     if (_M_del) 
       delete[] this->table(); 
@@ -454,20 +458,24 @@ namespace std
 #ifdef _GLIBCPP_USE_WCHAR_T
   ctype<wchar_t>::ctype(size_t __refs) 
   : __ctype_abstract_base<wchar_t>(__refs)
-  { _M_c_locale_ctype = _S_clone_c_locale(_S_c_locale); }
+  { _M_c_locale_ctype = _S_c_locale; }
 
   ctype<wchar_t>::ctype(__c_locale __cloc, size_t __refs) 
   : __ctype_abstract_base<wchar_t>(__refs) 
   { _M_c_locale_ctype = _S_clone_c_locale(__cloc); }
 
   ctype<wchar_t>::~ctype() 
-  { _S_destroy_c_locale(_M_c_locale_ctype); }
+  { 
+    if (_M_c_locale_ctype != _S_c_locale)
+      _S_destroy_c_locale(_M_c_locale_ctype); 
+  }
 
   template<>
     ctype_byname<wchar_t>::ctype_byname(const char* __s, size_t __refs)
     : ctype<wchar_t>(__refs) 
     { 	
-      _S_destroy_c_locale(_M_c_locale_ctype);
+      if (_M_c_locale_ctype != _S_c_locale)
+	_S_destroy_c_locale(_M_c_locale_ctype);
       _S_create_c_locale(_M_c_locale_ctype, __s); 
     }
 #endif
@@ -499,9 +507,9 @@ namespace std
     const ctype<char>&
     use_facet<ctype<char> >(const locale& __loc)
     {
-      size_t __i = ctype<char>::id._M_index;
+      size_t __i = ctype<char>::id._M_id();
       const locale::_Impl* __tmp = __loc._M_impl;
-      return static_cast<const ctype<char>&>(* (*(__tmp->_M_facets))[__i]);
+      return static_cast<const ctype<char>&>(*(__tmp->_M_facets[__i]));
     }
 
 #ifdef _GLIBCPP_USE_WCHAR_T
@@ -509,18 +517,13 @@ namespace std
     const ctype<wchar_t>&
     use_facet<ctype<wchar_t> >(const locale& __loc)
     {
-      size_t __i = ctype<wchar_t>::id._M_index;
+      size_t __i = ctype<wchar_t>::id._M_id();
       const locale::_Impl* __tmp = __loc._M_impl;
-      return static_cast<const ctype<wchar_t>&>(* (*(__tmp->_M_facets))[__i]);
+      return static_cast<const ctype<wchar_t>&>(*(__tmp->_M_facets[__i]));
     }
 #endif
 
-
   const char __num_base::_S_atoms[] = "0123456789eEabcdfABCDF";
-
-  const double __num_base::_S_scale_hex = log(10.0)/log(16.0);
-
-  const double __num_base::_S_scale_oct = log(10.0)/log(8.0);
 
   bool
   __num_base::_S_format_float(const ios_base& __io, char* __fptr, char __mod,
@@ -582,3 +585,4 @@ namespace std
     *__fptr = '\0';
   }
 } // namespace std
+

@@ -67,10 +67,6 @@ Boston, MA 02111-1307, USA.  */
 #define FRP(INSN) INSN
 #endif
 
-#ifndef FUNC_BEGIN_PROLOG_LABEL
-#define FUNC_BEGIN_PROLOG_LABEL        "LFBP"
-#endif
-
 static inline rtx force_mode PARAMS ((enum machine_mode, rtx));
 static void pa_combine_instructions PARAMS ((rtx));
 static int pa_can_combine_p PARAMS ((rtx, rtx, rtx, int, rtx, rtx, rtx));
@@ -111,11 +107,6 @@ const char *pa_arch_string;
 /* Counts for the number of callee-saved general and floating point
    registers which were saved by the current function's prologue.  */
 static int gr_saved, fr_saved;
-
-/* The number of the current function for which profile information
-   is to be collected.  These numbers are used to create unique label
-   id's for labels emitted at the beginning of profiled functions.  */
-static unsigned int current_function_number = 0;
 
 static rtx find_addr_reg PARAMS ((rtx));
 
@@ -402,7 +393,7 @@ reg_before_reload_operand (op, mode)
   return 0;
 }
 
-/* Accept any constant that can be moved in one instructions into a
+/* Accept any constant that can be moved in one instruction into a
    general register.  */
 int
 cint_ok_for_move (intval)
@@ -536,6 +527,18 @@ arith11_operand (op, mode)
 {
   return (register_operand (op, mode)
 	  || (GET_CODE (op) == CONST_INT && INT_11_BITS (op)));
+}
+
+/* Return truth value of whether OP can be used as an operand in a
+   adddi3 insn.  */
+int
+adddi3_operand (op, mode)
+     rtx op;
+     enum machine_mode mode;
+{
+  return (register_operand (op, mode)
+	  || (GET_CODE (op) == CONST_INT
+	      && (TARGET_64BIT ? INT_14_BITS (op) : INT_11_BITS (op))));
 }
 
 /* A constant integer suitable for use in a PRE_MODIFY memory
@@ -1704,9 +1707,13 @@ emit_move_sequence (operands, mode, scratch_reg)
 	  else
 	    temp = gen_reg_rtx (mode);
 
-	  if (GET_CODE (operand1) == CONST_INT)
+	  /* We don't directly split DImode constants on 32-bit targets
+	     because PLUS uses an 11-bit immediate and the insn sequence
+	     generated is not as efficient as the one using HIGH/LO_SUM.  */
+	  if (GET_CODE (operand1) == CONST_INT
+	      && GET_MODE_BITSIZE (mode) <= HOST_BITS_PER_WIDE_INT)
 	    {
-	      /* Directly break constant into low and high parts.  This
+	      /* Directly break constant into high and low parts.  This
 		 provides better optimization opportunities because various
 		 passes recognize constants split with PLUS but not LO_SUM.
 		 We use a 14-bit signed low part except when the addition
@@ -3071,16 +3078,6 @@ pa_output_function_prologue (file, size)
 
   fputs ("\n\t.ENTRY\n", file);
 
-  /* When profiling, we need a local label at the beginning of the
-     prologue because GAS can't handle the difference of a global symbol
-     and a local symbol.  */
-  if (current_function_profile)
-    {
-      ASM_OUTPUT_INTERNAL_LABEL (file, FUNC_BEGIN_PROLOG_LABEL,
-				 current_function_number);
-      current_function_number++;
-    }
-
   /* If we're using GAS and not using the portable runtime model, then
      we don't need to accumulate the total number of code bytes.  */
   if (TARGET_GAS && ! TARGET_PORTABLE_RUNTIME)
@@ -3540,13 +3537,13 @@ hppa_pic_save_rtx ()
 
 void
 hppa_profile_hook (label_no)
-     int label_no ATTRIBUTE_UNUSED;
+     int label_no;
 {
   rtx begin_label_rtx, call_insn;
   char begin_label_name[16];
 
   ASM_GENERATE_INTERNAL_LABEL (begin_label_name, FUNC_BEGIN_PROLOG_LABEL,
-			       current_function_number);
+			       label_no);
   begin_label_rtx = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (begin_label_name));
 
   if (TARGET_64BIT)
@@ -3564,24 +3561,7 @@ hppa_profile_hook (label_no)
     ASM_GENERATE_INTERNAL_LABEL (count_label_name, "LP", label_no);
     count_label_rtx = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (count_label_name));
 
-    if (flag_pic)
-      {
-	rtx tmpreg;
-
-	current_function_uses_pic_offset_table = 1;
-	tmpreg = gen_rtx_REG (Pmode, 1);
-	emit_move_insn (tmpreg,
-			gen_rtx_PLUS (Pmode, pic_offset_table_rtx,
-				      gen_rtx_HIGH (Pmode, count_label_rtx)));
-	addr = gen_rtx_MEM (Pmode,
-			    gen_rtx_LO_SUM (Pmode, tmpreg, count_label_rtx));
-      }
-    else
-      {
-	rtx tmpreg = gen_rtx_REG (Pmode, 1);
-	emit_move_insn (tmpreg, gen_rtx_HIGH (Pmode, count_label_rtx));
-	addr = gen_rtx_LO_SUM (Pmode, tmpreg, count_label_rtx);
-      }
+    addr = force_reg (Pmode, count_label_rtx);
     r24 = gen_rtx_REG (Pmode, 24);
     emit_move_insn (r24, addr);
 
@@ -5872,9 +5852,13 @@ output_millicode_call (insn, call_dest)
 
   /* Handle common case -- empty delay slot or no jump in the delay slot,
      and we're sure that the branch will reach the beginning of the $CODE$
-     subspace.  */
+     subspace.  The within reach form of the $$sh_func_adrs call has
+     a length of 28 and attribute type of multi.  This length is the
+     same as the maximum length of an out of reach PIC call to $$div.  */
   if ((dbr_sequence_length () == 0
-       && (get_attr_length (insn) == 8 || get_attr_length (insn) == 28))
+       && (get_attr_length (insn) == 8
+	   || (get_attr_length (insn) == 28 
+	       && get_attr_type (insn) == TYPE_MULTI)))
       || (dbr_sequence_length () != 0
 	  && GET_CODE (NEXT_INSN (insn)) != JUMP_INSN
 	  && get_attr_length (insn) == 4))
@@ -5885,7 +5869,7 @@ output_millicode_call (insn, call_dest)
     }
 
   /* This call may not reach the beginning of the $CODE$ subspace.  */
-  if (get_attr_length (insn) > 4)
+  if (get_attr_length (insn) > 8)
     {
       int delay_insn_deleted = 0;
 
@@ -5953,7 +5937,10 @@ output_millicode_call (insn, call_dest)
 	{
 	  xoperands[0] = call_dest;
 	  output_asm_insn ("ldil L%%%0,%3", xoperands);
-	  output_asm_insn ("{ble|be,l} R%%%0(%%sr4,%3)", xoperands);
+	  if (TARGET_PA_20)
+	    output_asm_insn ("be,l R%%%0(%%sr4,%3),%%sr0,%%r31", xoperands);
+	  else
+	    output_asm_insn ("ble R%%%0(%%sr4,%3)", xoperands);
 	  output_asm_insn ("nop", xoperands);
 	}
 
@@ -6198,8 +6185,11 @@ output_call (insn, call_dest, sibcall)
 	      /* Get the high part of the  address of $dyncall into %r2, then
 		 add in the low part in the branch instruction.  */
 	      output_asm_insn ("ldil L%%$$dyncall,%%r2", xoperands);
-	      output_asm_insn ("{ble|be,l}  R%%$$dyncall(%%sr4,%%r2)",
-			       xoperands);
+	      if (TARGET_PA_20)
+		output_asm_insn ("be,l R%%$$dyncall(%%sr4,%%r2),%%sr0,%%r31",
+				 xoperands);
+	      else
+		output_asm_insn ("ble R%%$$dyncall(%%sr4,%%r2)", xoperands);
 
 	      if (sibcall)
 		{
@@ -7086,7 +7076,7 @@ pa_can_combine_p (new, anchor, floater, reversed, dest, src1, src2)
   INSN_CODE (new) = -1;
   insn_code_number = recog_memoized (new);
   if (insn_code_number < 0
-      || !constrain_operands (1))
+      || (extract_insn (new), ! constrain_operands (1)))
     return 0;
 
   if (reversed)
@@ -7341,6 +7331,7 @@ function_arg (cum, mode, type, named, incoming)
 	     to be passed in general registers.  */
 	  || (!TARGET_PORTABLE_RUNTIME
 	      && !TARGET_64BIT
+	      && !TARGET_ELF32
 	      && cum->indirect)
 	  /* If the parameter is not a floating point parameter, then
 	     it belongs in GPRs.  */

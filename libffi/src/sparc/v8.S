@@ -36,7 +36,9 @@
 
 ffi_call_V8:
 _ffi_call_V8:
+.LLFB1:
 	save	%sp, -STACKFRAME, %sp
+.LLCFI0:
 	
 	sub	%sp, %i2, %sp	! alloca() space in stack for frame to set up
 	add	%sp, STACKFRAME, %l0	! %l0 has start of 
@@ -87,7 +89,62 @@ longlong:
 	st	%o1, [%i4+4]
 	ret
 	restore
+.LLFE1:
 
 .ffi_call_V8_end:
-        .size    ffi_call_V8,.ffi_call_V8_end-ffi_call_V8
+	.size	ffi_call_V8,.ffi_call_V8_end-ffi_call_V8
 
+#ifdef SPARC64
+#define WS 8
+#define nword	xword
+#define uanword	uaxword
+#else
+#define WS 4
+#define nword	long
+#define uanword	uaword
+#endif
+
+	.section	".eh_frame",#alloc,#write
+.LLframe1:
+	.uaword	.LLECIE1-.LLSCIE1	! Length of Common Information Entry
+.LLSCIE1:
+	.uaword	0x0	! CIE Identifier Tag
+	.byte	0x1	! CIE Version
+	.ascii "zR\0"	! CIE Augmentation
+	.byte	0x1	! uleb128 0x1; CIE Code Alignment Factor
+	.byte	0x80-WS	! sleb128 -WS; CIE Data Alignment Factor
+	.byte	0xf	! CIE RA Column
+	.byte	0x1	! uleb128 0x1; Augmentation size
+#ifdef HAVE_AS_SPARC_UA_PCREL
+	.byte	0x1b	! FDE Encoding (pcrel sdata4)
+#else
+	.byte	0x50	! FDE Encoding (aligned absolute)
+#endif
+	.byte	0xc	! DW_CFA_def_cfa
+	.byte	0xe	! uleb128 0xe
+	.byte	0x0	! uleb128 0x0
+	.align	WS
+.LLECIE1:
+.LLSFDE1:
+	.uaword	.LLEFDE1-.LLASFDE1	! FDE Length
+.LLASFDE1:
+	.uaword	.LLASFDE1-.LLframe1	! FDE CIE offset
+#ifdef HAVE_AS_SPARC_UA_PCREL
+	.uaword	%r_disp32(.LLFB1)
+	.uaword	.LLFE1-.LLFB1	! FDE address range
+#else
+	.align	WS
+	.nword	.LLFB1
+	.uanword .LLFE1-.LLFB1	! FDE address range
+#endif
+	.byte	0x0	! uleb128 0x0; Augmentation size
+	.byte	0x4	! DW_CFA_advance_loc4
+	.uaword	.LLCFI0-.LLFB1
+	.byte	0xd	! DW_CFA_def_cfa_register
+	.byte	0x1e	! uleb128 0x1e
+	.byte	0x2d	! DW_CFA_GNU_window_save
+	.byte	0x9	! DW_CFA_register
+	.byte	0xf	! uleb128 0xf
+	.byte	0x1f	! uleb128 0x1f
+	.align	WS
+.LLEFDE1:

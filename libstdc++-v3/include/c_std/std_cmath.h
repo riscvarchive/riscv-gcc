@@ -1,6 +1,7 @@
-// -*- C++ -*- C math library.
+// -*- C++ -*- C forwarding header.
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002
+// Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -43,9 +44,10 @@
 #ifndef _CPP_CMATH
 #define _CPP_CMATH 1
 
+#pragma GCC system_header
+
 #include <bits/c++config.h>
 
-#pragma GCC system_header
 #include <math.h>
 
 // Get rid of those macros defined in <math.h> in lieu of real functions.
@@ -80,20 +82,13 @@ namespace std
   // an `exported' forward declaration.
   template<typename _Tp> _Tp __cmath_power(_Tp, unsigned int);
 
-  template<typename _Tp>
-  inline _Tp
-    __cmath_abs(_Tp __x)
-    {
-      return __x < _Tp() ? -__x : __x;
-    }
+  inline double
+  abs(double __x)
+  { return __builtin_fabs(__x); }
 
   inline float
   abs(float __x)
   { return __builtin_fabsf(__x); }
-
-  inline double
-  abs(double __x)
-  { return __builtin_fabs(__x); }
 
   inline long double
   abs(long double __x)
@@ -117,6 +112,8 @@ namespace std
   acos(long double __x) { return ::acos(static_cast<double>(__x)); }
 #endif
 
+  using ::asin;
+
 #if _GLIBCPP_HAVE_ASINF
   inline float 
   asin(float __x) { return ::asinf(__x); }
@@ -124,8 +121,6 @@ namespace std
   inline float 
   asin(float __x) { return ::asin(static_cast<double>(__x)); }
 #endif
-
-  using ::asin;
 
 #if _GLIBCPP_HAVE_ASINL
   inline long double 
@@ -135,6 +130,8 @@ namespace std
   asin(long double __x) { return ::asin(static_cast<double>(__x)); }
 #endif
 
+  using ::atan;
+
 #if _GLIBCPP_HAVE_ATANF
   inline float 
   atan(float __x) { return ::atanf(__x); }
@@ -143,8 +140,6 @@ namespace std
   atan(float __x) { return ::atan(static_cast<double>(__x)); }
 #endif
 
-  using ::atan;
-
 #if _GLIBCPP_HAVE_ATANL
   inline long double 
   atan(long double __x) { return ::atanl(__x); }
@@ -152,6 +147,8 @@ namespace std
   inline long double 
   atan(long double __x) { return ::atan(static_cast<double>(__x)); }
 #endif
+
+  using ::atan2;
 
 #if _GLIBCPP_HAVE_ATAN2F
   inline float 
@@ -162,8 +159,6 @@ namespace std
   { return ::atan2(static_cast<double>(__y), static_cast<double>(__x)); }
 #endif
 
-  using ::atan2;
-
 #if _GLIBCPP_HAVE_ATAN2L
   inline long double 
   atan2(long double __y, long double __x) { return ::atan2l(__y, __x); }
@@ -173,6 +168,8 @@ namespace std
   { return ::atan2(static_cast<double>(__y), static_cast<double>(__x)); }
 #endif
 
+  using ::ceil;
+
 #if _GLIBCPP_HAVE_CEILF
   inline float 
   ceil(float __x) { return ::ceilf(__x); }
@@ -180,8 +177,6 @@ namespace std
   inline float 
   ceil(float __x) { return ::ceil(static_cast<double>(__x)); }
 #endif
-
-  using ::ceil;
 
 #if _GLIBCPP_HAVE_CEILL
   inline long double 
@@ -191,15 +186,17 @@ namespace std
   ceil(long double __x) { return ::ceil(static_cast<double>(__x)); }
 #endif
 
+  using ::cos;
+
   inline float
   cos(float __x)
   { return __builtin_cosf(__x); }
 
-  using ::cos;
-
   inline long double
   cos(long double __x)
   { return __builtin_cosl(__x); }
+
+  using ::cosh;
 
 #if _GLIBCPP_HAVE_COSHF
   inline float 
@@ -209,8 +206,6 @@ namespace std
   cosh(float __x) { return ::cosh(static_cast<double>(__x)); }
 #endif
 
-  using ::cosh;
-
 #if _GLIBCPP_HAVE_COSHL
   inline long double 
   cosh(long double __x) { return ::coshl(__x); }
@@ -218,6 +213,8 @@ namespace std
   inline long double 
   cosh(long double __x) { return ::cosh(static_cast<double>(__x)); }
 #endif
+
+  using ::exp;
 
 #if _GLIBCPP_HAVE_EXPF
   inline float 
@@ -227,8 +224,6 @@ namespace std
   exp(float __x) { return ::exp(static_cast<double>(__x)); }
 #endif
 
-  using ::exp;
-
 #if _GLIBCPP_HAVE_EXPL
   inline long double 
   exp(long double __x) { return ::expl(__x); }
@@ -237,15 +232,17 @@ namespace std
   exp(long double __x) { return ::exp(static_cast<double>(__x)); }
 #endif
 
+  using ::fabs;
+
   inline float
   fabs(float __x)
   { return __builtin_fabsf(__x); }
 
-  using ::fabs;
-
   inline long double
   fabs(long double __x)
   { return __builtin_fabsl(__x); }
+
+  using ::floor;
 
 #if _GLIBCPP_HAVE_FLOORF
   inline float 
@@ -255,8 +252,6 @@ namespace std
   floor(float __x) { return ::floor(static_cast<double>(__x)); }
 #endif
 
-  using ::floor;
-
 #if _GLIBCPP_HAVE_FLOORL
   inline long double 
   floor(long double __x) { return ::floorl(__x); }
@@ -264,6 +259,8 @@ namespace std
   inline long double 
   floor(long double __x) { return ::floor(static_cast<double>(__x)); }
 #endif
+
+  using ::fmod;
 
 #if _GLIBCPP_HAVE_FMODF
   inline float 
@@ -274,8 +271,6 @@ namespace std
   { return ::fmod(static_cast<double>(__x), static_cast<double>(__y)); }
 #endif
 
-  using ::fmod;
-
 #if _GLIBCPP_HAVE_FMODL
   inline long double 
   fmod(long double __x, long double __y) { return ::fmodl(__x, __y); }
@@ -285,6 +280,8 @@ namespace std
   { return ::fmod(static_cast<double>(__x), static_cast<double>(__y)); }
 #endif
 
+  using ::frexp;
+
 #if _GLIBCPP_HAVE_FREXPF
   inline float 
   frexp(float __x, int* __exp) { return ::frexpf(__x, __exp); }
@@ -292,8 +289,6 @@ namespace std
   inline float 
   frexp(float __x, int* __exp) { return ::frexp(__x, __exp); }
 #endif
-
-  using ::frexp;
 
 #if _GLIBCPP_HAVE_FREXPL
   inline long double 
@@ -304,6 +299,8 @@ namespace std
   { return ::frexp(static_cast<double>(__x), __exp); }
 #endif
 
+  using ::ldexp;
+
 #if _GLIBCPP_HAVE_LDEXPF
   inline float 
   ldexp(float __x, int __exp) { return ::ldexpf(__x, __exp); }
@@ -312,8 +309,6 @@ namespace std
   ldexp(float __x, int __exp)
   { return ::ldexp(static_cast<double>(__x), __exp); }
 #endif
-
-  using ::ldexp;
 
 #if _GLIBCPP_HAVE_LDEXPL
   inline long double 
@@ -324,6 +319,8 @@ namespace std
   { return ::ldexp(static_cast<double>(__x), __exp); }
 #endif
 
+  using ::log;
+
 #if _GLIBCPP_HAVE_LOGF
   inline float 
   log(float __x) { return ::logf(__x); }
@@ -331,8 +328,6 @@ namespace std
   inline float log(float __x)
   { return ::log(static_cast<double>(__x)); }
 #endif
-
-  using ::log;
 
 #if _GLIBCPP_HAVE_LOGL
   inline long double 
@@ -342,6 +337,8 @@ namespace std
   log(long double __x) { return ::log(static_cast<double>(__x)); }
 #endif
 
+  using ::log10;
+
 #if _GLIBCPP_HAVE_LOG10F
   inline float 
   log10(float __x) { return ::log10f(__x); }
@@ -350,8 +347,6 @@ namespace std
   log10(float __x) { return ::log10(static_cast<double>(__x)); }
 #endif
 
-  using ::log10;
-
 #if _GLIBCPP_HAVE_LOG10L
   inline long double 
   log10(long double __x) { return ::log10l(__x); }
@@ -359,6 +354,8 @@ namespace std
   inline long double 
   log10(long double __x) { return ::log10(static_cast<double>(__x)); }
 #endif
+
+  using ::modf;
 
 #if _GLIBCPP_HAVE_MODFF
   inline float 
@@ -373,8 +370,6 @@ namespace std
     return __res;
   }
 #endif
-
-  using ::modf;
 
 #if _GLIBCPP_HAVE_MODFL
   inline long double 
@@ -398,7 +393,9 @@ namespace std
         ? _Tp(1)/__cmath_power(__x, -__n)
         : __cmath_power(__x, __n);
     }
-  
+
+  using ::pow;
+
 #if _GLIBCPP_HAVE_POWF
   inline float 
   pow(float __x, float __y) { return ::powf(__x, __y); }
@@ -407,8 +404,6 @@ namespace std
   pow(float __x, float __y)
   { return ::pow(static_cast<double>(__x), static_cast<double>(__y)); }
 #endif
-
-  using ::pow;
 
 #if _GLIBCPP_HAVE_POWL
   inline long double 
@@ -419,27 +414,29 @@ namespace std
   { return ::pow(static_cast<double>(__x), static_cast<double>(__y)); }
 #endif
 
-  inline float 
-  pow(float __x, int __n)
-  { return __pow_helper(__x, __n); }
-
   inline double 
   pow(double __x, int __i)
   { return __pow_helper(__x, __i); }
+
+  inline float 
+  pow(float __x, int __n)
+  { return __pow_helper(__x, __n); }
 
   inline long double 
   pow(long double __x, int __n)
   { return __pow_helper(__x, __n); }
 
+  using ::sin;
+
   inline float
   sin(float __x)
   { return __builtin_sinf(__x); }
 
-  using ::sin;
-
   inline long double
   sin(long double __x)
   { return __builtin_sinl(__x); }
+
+  using ::sinh;
 
 #if _GLIBCPP_HAVE_SINHF
   inline float 
@@ -449,8 +446,6 @@ namespace std
   sinh(float __x) { return ::sinh(static_cast<double>(__x)); }
 #endif
 
-  using ::sinh;
-
 #if _GLIBCPP_HAVE_SINHL
   inline long double 
   sinh(long double __x) { return ::sinhl(__x); }
@@ -459,15 +454,17 @@ namespace std
   sinh(long double __x) { return ::sinh(static_cast<double>(__x)); }
 #endif
 
+  using ::sqrt;
+
   inline float
   sqrt(float __x)
   { return __builtin_sqrtf(__x); }
 
-  using ::sqrt;
-
   inline long double
   sqrt(long double __x)
   { return __builtin_sqrtl(__x); }
+
+  using ::tan;
 
 #if _GLIBCPP_HAVE_TANF
   inline float 
@@ -477,8 +474,6 @@ namespace std
   tan(float __x) { return ::tan(static_cast<double>(__x)); }
 #endif
 
-  using ::tan;
-
 #if _GLIBCPP_HAVE_TANL
   inline long double 
   tan(long double __x) { return ::tanl(__x); }
@@ -487,6 +482,8 @@ namespace std
   tan(long double __x) { return ::tan(static_cast<double>(__x)); }
 #endif
 
+  using ::tanh;
+
 #if _GLIBCPP_HAVE_TANHF
   inline float 
   tanh(float __x) { return ::tanhf(__x); }
@@ -494,8 +491,6 @@ namespace std
   inline float 
   tanh(float __x) { return ::tanh(static_cast<double>(__x)); }
 #endif
-
-  using ::tanh;
 
 #if _GLIBCPP_HAVE_TANHL
   inline long double 
@@ -656,10 +651,7 @@ namespace std
   
 #ifdef _GLIBCPP_NO_TEMPLATE_EXPORT
 #  define export
-#  include <cmath.tcc>
+#  include <bits/cmath.tcc>
 #endif
 
 #endif
-
-
-

@@ -41,9 +41,7 @@
 #include <cmath>     // For ceil
 #include <cctype>    // For isspace
 #include <limits>    // For numeric_limits
-#include <memory>    // For auto_ptr
 #include <bits/streambuf_iterator.h>
-#include <vector>	
 #include <typeinfo>  // For bad_cast.
 
 namespace std
@@ -72,21 +70,20 @@ namespace std
     const _Facet&
     use_facet(const locale& __loc)
     {
-      size_t __i = _Facet::id._M_index;
-      locale::_Impl::__vec_facet* __facet = __loc._M_impl->_M_facets;
-      const locale::facet* __fp = (*__facet)[__i]; 
-      if (__fp == 0 || __i >= __facet->size())
+      size_t __i = _Facet::id._M_id();
+      locale::facet** __facets = __loc._M_impl->_M_facets;
+      if (!(__i < __loc._M_impl->_M_facets_size && __facets[__i]))
         __throw_bad_cast();
-      return static_cast<const _Facet&>(*__fp);
+      return static_cast<const _Facet&>(*__facets[__i]);
     }
 
   template<typename _Facet>
     bool
     has_facet(const locale& __loc) throw()
     {
-      size_t __i = _Facet::id._M_index;
-      locale::_Impl::__vec_facet* __facet = __loc._M_impl->_M_facets;
-      return (__i < __facet->size() && (*__facet)[__i] != 0);
+      size_t __i = _Facet::id._M_id();
+      locale::facet** __facets = __loc._M_impl->_M_facets;
+      return (__i < __loc._M_impl->_M_facets_size && __facets[__i]);
     }
 
 
@@ -174,7 +171,11 @@ namespace std
             }
 	  else if (__c == __dec && !__found_dec)
 	    {
-	      __found_grouping += static_cast<char>(__sep_pos);
+	      // According to the standard, if no grouping chars are seen,
+	      // no grouping check is applied. Therefore __found_grouping
+	      // must be adjusted only if __dec comes after some __sep.
+	      if (__found_grouping.size())
+		__found_grouping += static_cast<char>(__sep_pos);
 	      ++__pos;
 	      __xtrc += '.';
 	      __c = *(++__beg);
@@ -310,7 +311,7 @@ namespace std
       __ctype.widen(_S_atoms, _S_atoms + __len, __watoms);
       string __found_grouping;
       const string __grouping = __np.grouping();
-      bool __check_grouping = __grouping.size() && __base == 10;
+      bool __check_grouping = __grouping.size();
       int __sep_pos = 0;
       const char_type __sep = __np.thousands_sep();
       while (__beg != __end)
@@ -393,19 +394,21 @@ namespace std
       // Parse bool values as alphanumeric
       else
         {
+	  typedef basic_string<_CharT> __string_type;
           locale __loc = __io.getloc();
 	  const numpunct<_CharT>& __np = use_facet<numpunct<_CharT> >(__loc); 
-          const char_type* __true = __np.truename().c_str();
-          const char_type* __false = __np.falsename().c_str();
-
-          const size_t __truen =  __np.truename().size() - 1;
-          const size_t __falsen =  __np.falsename().size() - 1;
+	  const __string_type __true = __np.truename();
+	  const __string_type __false = __np.falsename();
+          const char_type* __trues = __true.c_str();
+          const char_type* __falses = __false.c_str();
+          const size_t __truen =  __true.size() - 1;
+          const size_t __falsen =  __false.size() - 1;
 
           for (size_t __n = 0; __beg != __end; ++__n)
             {
               char_type __c = *__beg++;
-              bool __testf = __n <= __falsen ? __c == __false[__n] : false;
-              bool __testt = __n <= __truen ? __c == __true[__n] : false;
+              bool __testf = __n <= __falsen ? __c == __falses[__n] : false;
+              bool __testt = __n <= __truen ? __c == __trues[__n] : false;
               if (!(__testf || __testt))
                 {
                   __err |= ios_base::failbit;
@@ -589,16 +592,15 @@ namespace std
       return __beg;
     }
 
-
-  // The following code uses sprintf() to convert floating point
-  // values for insertion into a stream.  An optimization would be to
-  // replace sprintf() with code that works directly on a wide buffer
-  // and then use __pad to do the padding. It would be good
-  // to replace sprintf() anyway to avoid accidental buffer overruns
-  // and to gain back the efficiency that C++ provides by knowing up
-  // front the type of the values to insert. This implementation
-  // follows the C++ standard fairly directly as outlined in 22.2.2.2
-  // [lib.locale.num.put]
+  // The following code uses snprintf (or sprintf(), when _GLIBCPP_USE_C99
+  // is not defined) to convert floating point values for insertion into a
+  // stream.  An optimization would be to replace them with code that works
+  // directly on a wide buffer and then use __pad to do the padding.
+  // It would be good to replace them anyway to gain back the efficiency
+  // that C++ provides by knowing up front the type of the values to insert.
+  // Also, sprintf is dangerous since may lead to accidental buffer overruns.
+  // This implementation follows the C++ standard fairly directly as
+  // outlined in 22.2.2.2 [lib.locale.num.put]
   template<typename _CharT, typename _OutIter>
     template<typename _ValueT>
       _OutIter
@@ -606,15 +608,45 @@ namespace std
       _M_convert_float(_OutIter __s, ios_base& __io, _CharT __fill, char __mod,
 		       _ValueT __v) const
       {
-	const int __max_digits = numeric_limits<_ValueT>::digits10;
+	// Note: digits10 is rounded down.  We need to add 1 to ensure
+	// we get the full available precision.
+	const int __max_digits = numeric_limits<_ValueT>::digits10 + 1;
 	streamsize __prec = __io.precision();
-	// Protect against sprintf() buffer overflows.
+
 	if (__prec > static_cast<streamsize>(__max_digits))
 	  __prec = static_cast<streamsize>(__max_digits);
 
 	// Long enough for the max format spec.
 	char __fbuf[16];
 
+	// [22.2.2.2.2] Stage 1, numeric conversion to character.
+	int __len;
+#ifdef _GLIBCPP_USE_C99
+	// First try a buffer perhaps big enough (for sure sufficient for
+	// non-ios_base::fixed outputs)
+	int __cs_size = __max_digits * 3;
+	char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
+
+	const bool __fp = _S_format_float(__io, __fbuf, __mod, __prec);
+	if (__fp)
+	  __len = __convert_from_v(__cs, __cs_size, __fbuf, __v, 
+				   _S_c_locale, __prec);
+	else
+	  __len = __convert_from_v(__cs, __cs_size, __fbuf, __v, _S_c_locale);
+
+	// If the buffer was not large enough, try again with the correct size.
+	if (__len >= __cs_size)
+	  {
+	    __cs_size = __len + 1; 
+	    __cs = static_cast<char*>(__builtin_alloca(__cs_size));
+	    if (__fp)
+	      __len = __convert_from_v(__cs, __cs_size, __fbuf, __v, 
+				       _S_c_locale, __prec);
+	    else
+	      __len = __convert_from_v(__cs, __cs_size, __fbuf, __v, 
+				       _S_c_locale);
+	  }
+#else
 	// Consider the possibility of long ios_base::fixed outputs
 	const bool __fixed = __io.flags() & ios_base::fixed;
 	const int __max_exp = numeric_limits<_ValueT>::max_exponent10;
@@ -627,12 +659,11 @@ namespace std
 	                              : __max_digits * 3;
 	char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
 
-	int __len;
-	// [22.2.2.2.2] Stage 1, numeric conversion to character.
 	if (_S_format_float(__io, __fbuf, __mod, __prec))
-	  __len = __convert_from_v(__cs, __fbuf, __v, _S_c_locale, __prec);
+	  __len = __convert_from_v(__cs, 0, __fbuf, __v, _S_c_locale, __prec);
 	else
-	  __len = __convert_from_v(__cs, __fbuf, __v, _S_c_locale);
+	  __len = __convert_from_v(__cs, 0, __fbuf, __v, _S_c_locale);
+#endif
 	return _M_widen_float(__s, __io, __fill, __cs, __len);
       }
 
@@ -644,13 +675,30 @@ namespace std
 		     char __modl, _ValueT __v) const
       {
 	// [22.2.2.2.2] Stage 1, numeric conversion to character.
-	// Leave room for "+/-," "0x," and commas. This size is
-	// arbitrary, but should work.
-	char __cs[64];
+
 	// Long enough for the max format spec.
 	char __fbuf[16];
 	_S_format_int(__io, __fbuf, __mod, __modl);
-	int __len = __convert_from_v(__cs, __fbuf, __v, _S_c_locale);
+#ifdef _GLIBCPP_USE_C99
+	// First try a buffer perhaps big enough.
+	int __cs_size = 64;
+	char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
+	int __len = __convert_from_v(__cs, __cs_size, __fbuf, __v, 
+				     _S_c_locale);
+	// If the buffer was not large enough, try again with the correct size.
+	if (__len >= __cs_size)
+	  {
+	    __cs_size = __len + 1;
+	    __cs = static_cast<char*>(__builtin_alloca(__cs_size));
+	    __len = __convert_from_v(__cs, __cs_size, __fbuf, __v, 
+				     _S_c_locale);
+	  }
+#else
+	// Leave room for "+/-," "0x," and commas. This size is
+	// arbitrary, but should be largely sufficient.
+	char __cs[128];
+	int __len = __convert_from_v(__cs, 0, __fbuf, __v, _S_c_locale);
+#endif
 	return _M_widen_int(__s, __io, __fill, __cs, __len);
       }
 
@@ -726,18 +774,33 @@ namespace std
 							    * __len * 2));
       __ctype.widen(__cs, __cs + __len, __ws);
 
-      // Add grouping, if necessary.
+      // Add grouping, if necessary. 
       const numpunct<_CharT>& __np = use_facet<numpunct<_CharT> >(__loc);
       const string __grouping = __np.grouping();
-      ios_base::fmtflags __basefield = __io.flags() & ios_base::basefield;
-      bool __dec = __basefield != ios_base::oct 
-	           && __basefield != ios_base::hex;
-      if (__grouping.size() && __dec)
+      const ios_base::fmtflags __basefield = __io.flags() & ios_base::basefield;
+      if (__grouping.size())
 	{
+	  // By itself __add_grouping cannot deal correctly with __ws when
+	  // ios::showbase is set and ios_base::oct || ios_base::hex.
+	  // Therefore we take care "by hand" of the initial 0, 0x or 0X.
+	  streamsize __off = 0;
+	  if (__io.flags() & ios_base::showbase)
+	    if (__basefield == ios_base::oct)
+	      {
+		__off = 1;
+		*__ws2 = *__ws;
+	      }
+	    else if (__basefield == ios_base::hex)
+	      {
+		__off = 2;
+		*__ws2 = *__ws;
+		*(__ws2 + 1) = *(__ws + 1);
+	      }
 	  _CharT* __p;
-	  __p = __add_grouping(__ws2, __np.thousands_sep(), __grouping.c_str(),
+	  __p = __add_grouping(__ws2 + __off, __np.thousands_sep(), 
+			       __grouping.c_str(),
 			       __grouping.c_str() + __grouping.size(),
-			       __ws, __ws + __len);
+			       __ws + __off, __ws + __len);
 	  __len = __p - __ws2;
 	  // Switch strings.
 	  __ws = __ws2;
@@ -786,21 +849,15 @@ namespace std
         }
       else
         {
+	  typedef basic_string<_CharT> __string_type;
           locale __loc = __io.getloc();
 	  const numpunct<_CharT>& __np = use_facet<numpunct<_CharT> >(__loc); 
-          const char_type* __ws;
-          int __len;
+	  __string_type __name;
           if (__v)
-            {
-              __ws = __np.truename().c_str();
-              __len = __np.truename().size();
-            }
+	    __name = __np.truename();
           else
-            {
-              __ws = __np.falsename().c_str();
-              __len = __np.falsename().size();
-            }
-	  __s = _M_insert(__s, __io, __fill, __ws, __len); 
+	    __name = __np.falsename();
+	  __s = _M_insert(__s, __io, __fill, __name.c_str(), __name.size()); 
 	}
       return __s;
     }
@@ -881,7 +938,7 @@ namespace std
       __beg = this->do_get(__beg, __end, __intl, __io, __err, __str); 
 
       const int __n = numeric_limits<long double>::digits10;
-      char* __cs = static_cast<char*>(__builtin_alloca(sizeof(char) * __n));
+      char* __cs = static_cast<char*>(__builtin_alloca(__n));
       const locale __loc = __io.getloc();
       const ctype<_CharT>& __ctype = use_facet<ctype<_CharT> >(__loc); 
       const _CharT* __wcs = __str.c_str();
@@ -943,15 +1000,16 @@ namespace std
 	  switch (__which)
 		{
 		case money_base::symbol:
-		  if (__io.flags() & ios_base::showbase
-		      || __i < 2
-		      || (__i == 2 && static_cast<part>(__p.field[3]) != money_base::none)
-		      || __sign.size() > 1)
+		  if (__io.flags() & ios_base::showbase 
+		      || __i < 2 || __sign.size() > 1
+		      || ((static_cast<part>(__p.field[3]) != money_base::none)
+			  && __i == 2)) 
 		    {
-		      // According to 22.2.6.1.2.2, symbol is required if
-		      // (__io.flags() & ios_base::showbase), otherwise is optional
-		      // and consumed only if other characters are needed to complete
-		      // the format.
+		      // According to 22.2.6.1.2.2, symbol is required
+		      // if (__io.flags() & ios_base::showbase),
+		      // otherwise is optional and consumed only if
+		      // other characters are needed to complete the
+		      // format.
 		      const string_type __symbol = __intl ? __mpt.curr_symbol()
 						    	 : __mpf.curr_symbol();
 		      size_type __len = __symbol.size();
@@ -962,7 +1020,8 @@ namespace std
 			  __c = *(++__beg);
 			  ++__j;
 			}
-		      // When (__io.flags() & ios_base::showbase) symbol is required.
+		      // When (__io.flags() & ios_base::showbase)
+		      // symbol is required.
 		      if (__j != __len && (__io.flags() & ios_base::showbase))
 			__testvalid = false;
 		    }
@@ -1091,11 +1150,29 @@ namespace std
 	   long double __units) const
     { 
       const locale __loc = __io.getloc();
-      const ctype<_CharT>& __ctype = use_facet<ctype<_CharT> >(__loc); 
-      const int __n = numeric_limits<long double>::digits10;
-      char* __cs = static_cast<char*>(__builtin_alloca(sizeof(char) * __n));
-      _CharT* __ws = static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) * __n));
-      int __len = __convert_from_v(__cs, "%.01Lf", __units, _S_c_locale);
+      const ctype<_CharT>& __ctype = use_facet<ctype<_CharT> >(__loc);
+#ifdef _GLIBCPP_USE_C99
+      // First try a buffer perhaps big enough.
+      int __cs_size = 64;
+      char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
+      int __len = __convert_from_v(__cs, __cs_size, "%.01Lf", __units, 
+				   _S_c_locale);
+      // If the buffer was not large enough, try again with the correct size.
+      if (__len >= __cs_size)
+	{
+	  __cs_size = __len + 1;
+	  __cs = static_cast<char*>(__builtin_alloca(__cs_size));
+	  __len = __convert_from_v(__cs, __cs_size, "%.01Lf", __units, 
+				   _S_c_locale);
+	}
+#else
+      // max_exponent10 + 1 for the integer part, + 4 for sign, decimal point,
+      // decimal digit, '\0'. 
+      const int __cs_size = numeric_limits<long double>::max_exponent10 + 5;
+      char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
+      int __len = __convert_from_v(__cs, 0, "%.01Lf", __units, _S_c_locale);
+#endif
+      _CharT* __ws = static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) * __cs_size));
       __ctype.widen(__cs, __cs + __len, __ws);
       string_type __digits(__ws);
       return this->do_put(__s, __intl, __io, __fill, __digits); 
@@ -1187,8 +1264,9 @@ namespace std
 		    			         : __mpf.thousands_sep();
 		  const char* __gbeg = __grouping.c_str();
 		  const char* __gend = __gbeg + __grouping.size();
-		  const int __n = numeric_limits<long double>::digits10 * 2;
-		  _CharT* __ws2 = static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) * __n));
+		  const int __n = (__end - __beg) * 2;
+		  _CharT* __ws2 =
+		    static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) * __n));
 		  _CharT* __ws_end = __add_grouping(__ws2, __sep, __gbeg, 
 						    __gend, __beg, __end);
 		  __value.insert(0, __ws2, __ws_end - __ws2);
@@ -1776,7 +1854,8 @@ namespace std
       // NB: This size is arbitrary. Should this be a data member,
       // initialized at construction?
       const size_t __maxlen = 64;
-      char_type* __res = static_cast<char_type*>(__builtin_alloca(__maxlen));
+      char_type* __res =
+	static_cast<char_type*>(__builtin_alloca(sizeof(char_type) * __maxlen));
 
       // NB: In IEE 1003.1-200x, and perhaps other locale models, it
       // is possible that the format character will be longer than one
@@ -1797,7 +1876,7 @@ namespace std
 	  __fmt[3] = char_type();
 	}
 
-      __tp._M_put_helper(__res, __maxlen, __fmt, __tm);
+      __tp._M_put(__res, __maxlen, __fmt, __tm);
 
       // Write resulting, fully-formatted string to output iterator.
       size_t __len = char_traits<char_type>::length(__res);
@@ -1810,13 +1889,13 @@ namespace std
   // Generic version does nothing.
   template<typename _CharT>
     int
-    collate<_CharT>::_M_compare_helper(const _CharT*, const _CharT*) const
+    collate<_CharT>::_M_compare(const _CharT*, const _CharT*) const
     { return 0; }
 
   // Generic version does nothing.
   template<typename _CharT>
     size_t
-    collate<_CharT>::_M_transform_helper(_CharT*, const _CharT*, size_t) const
+    collate<_CharT>::_M_transform(_CharT*, const _CharT*, size_t) const
     { return 0; }
 
   template<typename _CharT>
@@ -1827,7 +1906,7 @@ namespace std
     { 
       const string_type __one(__lo1, __hi1);
       const string_type __two(__lo2, __hi2);
-      return _M_compare_helper(__one.c_str(), __two.c_str());
+      return _M_compare(__one.c_str(), __two.c_str());
     }
 
  template<typename _CharT>
@@ -1835,16 +1914,17 @@ namespace std
     collate<_CharT>::
     do_transform(const _CharT* __lo, const _CharT* __hi) const
     {
-      size_t __len = __hi - __lo;
-      _CharT* __c = static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) * __len));
-      size_t __res = _M_transform_helper(__c, __lo, __len);
+      size_t __len = (__hi - __lo) * 2;
+      // First try a buffer perhaps big enough.
+      _CharT* __c =
+	static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) * __len));
+      size_t __res = _M_transform(__c, __lo, __len);
+      // If the buffer was not large enough, try again with the correct size.
       if (__res >= __len)
 	{
-	  // Try to increment size of translated string.
-	  size_t __len2 = __len * 2;
-	  _CharT* __c2 = static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) * __len2));
-	  __res = _M_transform_helper(__c2, __lo, __len);
-	  // XXX Throw exception if still indeterminate?
+	  __c =
+	    static_cast<_CharT*>(__builtin_alloca(sizeof(_CharT) * (__res + 1)));
+	  _M_transform(__c, __lo, __res + 1);
 	}
       return string_type(__c);
     }
@@ -1870,20 +1950,43 @@ namespace std
 		   const __c_locale& __cloc, int __base = 10);
 
   // Convert numeric value of type _Tv to string and return length of string.
+  // If snprintf is available use it, otherwise fall back to the unsafe sprintf
+  // which, in general, can be dangerous and should be avoided.
+#ifdef _GLIBCPP_USE_C99
   template<typename _Tv>
     int
-    __convert_from_v(char* __out, const char* __fmt, _Tv __v, 
+    __convert_from_v(char* __out, const int __size, const char* __fmt,
+		     _Tv __v, const __c_locale&, int __prec = -1)
+    {
+      int __ret;
+      char* __old = strdup(setlocale(LC_ALL, NULL));
+      setlocale(LC_ALL, "C");
+      if (__prec >= 0)
+        __ret = snprintf(__out, __size, __fmt, __prec, __v);
+      else
+        __ret = snprintf(__out, __size, __fmt, __v);
+      setlocale(LC_ALL, __old);
+      free(__old);
+      return __ret;
+    }
+#else
+  template<typename _Tv>
+    int
+    __convert_from_v(char* __out, const int, const char* __fmt, _Tv __v,
 		     const __c_locale&, int __prec = -1)
     {
       int __ret;
-      const char* __old = setlocale(LC_ALL, "C");
+      char* __old = strdup(setlocale(LC_ALL, NULL));
+      setlocale(LC_ALL, "C");
       if (__prec >= 0)
-	__ret = sprintf(__out, __fmt, __prec, __v);
+        __ret = sprintf(__out, __fmt, __prec, __v);
       else
-	__ret = sprintf(__out, __fmt, __v);
+        __ret = sprintf(__out, __fmt, __v);
       setlocale(LC_ALL, __old);
+      free(__old);
       return __ret;
     }
+#endif
 
   // Construct correctly padded string, as per 22.2.2.2.2
   // Assumes 
@@ -2048,32 +2151,32 @@ namespace std
   extern template class moneypunct<char, true>;
   extern template class moneypunct_byname<char, false>;
   extern template class moneypunct_byname<char, true>;
-  extern template class money_get<char, istreambuf_iterator<char> >;
-  extern template class money_put<char, ostreambuf_iterator<char> >;
+  extern template class money_get<char>;
+  extern template class money_put<char>;
   extern template class moneypunct<wchar_t, false>;
   extern template class moneypunct<wchar_t, true>;
   extern template class moneypunct_byname<wchar_t, false>;
   extern template class moneypunct_byname<wchar_t, true>;
-  extern template class money_get<wchar_t, istreambuf_iterator<wchar_t> >;
-  extern template class money_put<wchar_t, ostreambuf_iterator<wchar_t> >;
+  extern template class money_get<wchar_t>;
+  extern template class money_put<wchar_t>;
   extern template class numpunct<char>;
   extern template class numpunct_byname<char>;
-  extern template class num_get<char, istreambuf_iterator<char> >;
-  extern template class num_put<char, ostreambuf_iterator<char> >; 
+  extern template class num_get<char>;
+  extern template class num_put<char>; 
   extern template class numpunct<wchar_t>;
   extern template class numpunct_byname<wchar_t>;
-  extern template class num_get<wchar_t, istreambuf_iterator<wchar_t> >;
-  extern template class num_put<wchar_t, ostreambuf_iterator<wchar_t> >;
+  extern template class num_get<wchar_t>;
+  extern template class num_put<wchar_t>;
   extern template class __timepunct<char>;
-  extern template class time_put<char, ostreambuf_iterator<char> >;
-  extern template class time_put_byname<char, ostreambuf_iterator<char> >;
-  extern template class time_get<char, istreambuf_iterator<char> >;
-  extern template class time_get_byname<char, istreambuf_iterator<char> >;
+  extern template class time_put<char>;
+  extern template class time_put_byname<char>;
+  extern template class time_get<char>;
+  extern template class time_get_byname<char>;
   extern template class __timepunct<wchar_t>;
-  extern template class time_put<wchar_t, ostreambuf_iterator<wchar_t> >;
-  extern template class time_put_byname<wchar_t, ostreambuf_iterator<wchar_t> >;
-  extern template class time_get<wchar_t, istreambuf_iterator<wchar_t> >;
-  extern template class time_get_byname<wchar_t, istreambuf_iterator<wchar_t> >;
+  extern template class time_put<wchar_t>;
+  extern template class time_put_byname<wchar_t>;
+  extern template class time_get<wchar_t>;
+  extern template class time_get_byname<wchar_t>;
   extern template class messages<char>;
   extern template class messages_byname<char>;
   extern template class messages<wchar_t>;
@@ -2086,13 +2189,217 @@ namespace std
   extern template class collate_byname<char>;
   extern template class collate<wchar_t>;
   extern template class collate_byname<wchar_t>;
+
+  extern template
+    const codecvt<char, char, mbstate_t>& 
+    use_facet<codecvt<char, char, mbstate_t> >(const locale&);
+
+  extern template
+    const collate<char>& 
+    use_facet<collate<char> >(const locale&);
+
+  extern template
+    const numpunct<char>& 
+    use_facet<numpunct<char> >(const locale&);
+
+  extern template 
+    const num_put<char>& 
+    use_facet<num_put<char> >(const locale&);
+
+  extern template 
+    const num_get<char>& 
+    use_facet<num_get<char> >(const locale&);
+
+  extern template
+    const moneypunct<char, true>& 
+    use_facet<moneypunct<char, true> >(const locale&);
+
+  extern template
+    const moneypunct<char, false>& 
+    use_facet<moneypunct<char, false> >(const locale&);
+
+  extern template 
+    const money_put<char>& 
+    use_facet<money_put<char> >(const locale&);
+
+  extern template 
+    const money_get<char>& 
+    use_facet<money_get<char> >(const locale&);
+
+  extern template
+    const __timepunct<char>& 
+    use_facet<__timepunct<char> >(const locale&);
+
+  extern template 
+    const time_put<char>& 
+    use_facet<time_put<char> >(const locale&);
+
+  extern template 
+    const time_get<char>& 
+    use_facet<time_get<char> >(const locale&);
+
+  extern template 
+    const messages<char>& 
+    use_facet<messages<char> >(const locale&);
+
+  extern template
+    const codecvt<wchar_t, char, mbstate_t>& 
+    use_facet<codecvt<wchar_t, char, mbstate_t> >(locale const&);
+
+  extern template
+    const collate<wchar_t>& 
+    use_facet<collate<wchar_t> >(const locale&);
+
+  extern template
+    const numpunct<wchar_t>& 
+    use_facet<numpunct<wchar_t> >(const locale&);
+
+  extern template 
+    const num_put<wchar_t>& 
+    use_facet<num_put<wchar_t> >(const locale&);
+
+  extern template 
+    const num_get<wchar_t>& 
+    use_facet<num_get<wchar_t> >(const locale&);
+
+  extern template
+    const moneypunct<wchar_t, true>& 
+    use_facet<moneypunct<wchar_t, true> >(const locale&);
+
+  extern template
+    const moneypunct<wchar_t, false>& 
+    use_facet<moneypunct<wchar_t, false> >(const locale&);
+ 
+  extern template 
+    const money_put<wchar_t>& 
+    use_facet<money_put<wchar_t> >(const locale&);
+
+  extern template 
+    const money_get<wchar_t>& 
+    use_facet<money_get<wchar_t> >(const locale&);
+
+  extern template
+    const __timepunct<wchar_t>& 
+    use_facet<__timepunct<wchar_t> >(const locale&);
+
+  extern template 
+    const time_put<wchar_t>& 
+    use_facet<time_put<wchar_t> >(const locale&);
+
+  extern template 
+    const time_get<wchar_t>& 
+    use_facet<time_get<wchar_t> >(const locale&);
+
+  extern template 
+    const messages<wchar_t>& 
+    use_facet<messages<wchar_t> >(const locale&);
+
+
+  extern template 
+    bool
+    has_facet<ctype<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<codecvt<char, char, mbstate_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<collate<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<numpunct<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<num_put<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<num_get<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<moneypunct<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<money_put<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<money_get<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<__timepunct<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<time_put<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<time_get<char> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<messages<char> >(const locale&);
+
+ extern template 
+    bool
+    has_facet<ctype<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<codecvt<wchar_t, char, mbstate_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<collate<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<numpunct<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<num_put<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<num_get<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<moneypunct<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<money_put<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<money_get<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<__timepunct<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<time_put<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<time_get<wchar_t> >(const locale&);
+
+  extern template 
+    bool
+    has_facet<messages<wchar_t> >(const locale&);
 } // namespace std
 
 #endif
-
-
-
-
-
 
 

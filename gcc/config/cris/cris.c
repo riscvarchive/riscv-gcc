@@ -711,7 +711,7 @@ cris_target_asm_function_prologue (file, size)
     {
       if ((((regs_ever_live[regno]
 	     && !call_used_regs[regno])
-	    || (regno == PIC_OFFSET_TABLE_REGNUM
+	    || (regno == (int) PIC_OFFSET_TABLE_REGNUM
 		&& (current_function_uses_pic_offset_table
 		    /* It is saved anyway, if there would be a gap.  */
 		    || (flag_pic
@@ -1043,7 +1043,7 @@ cris_target_asm_function_epilogue (file, size)
        regno++)
     if ((((regs_ever_live[regno]
 	   && !call_used_regs[regno])
-	  || (regno == PIC_OFFSET_TABLE_REGNUM
+	  || (regno == (int) PIC_OFFSET_TABLE_REGNUM
 	      && (current_function_uses_pic_offset_table
 		  /* It is saved anyway, if there would be a gap.  */
 		  || (flag_pic
@@ -1069,7 +1069,7 @@ cris_target_asm_function_epilogue (file, size)
        regno--)
     if ((((regs_ever_live[regno]
 	   && !call_used_regs[regno])
-	  || (regno == PIC_OFFSET_TABLE_REGNUM
+	  || (regno == (int) PIC_OFFSET_TABLE_REGNUM
 	      && (current_function_uses_pic_offset_table
 		  /* It is saved anyway, if there would be a gap.  */
 		  || (flag_pic
@@ -1452,7 +1452,8 @@ cris_print_operand (file, x, code)
 	}
       else if (HOST_BITS_PER_WIDE_INT > 32 && GET_CODE (operand) == CONST_INT)
 	{
-	  fprintf (file, "0x%x", (unsigned int)(INTVAL (x) & 0xffffffff));
+	  fprintf (file, "0x%x",
+		   INTVAL (x) & ((unsigned int) 0x7fffffff * 2 + 1));
 	  return;
 	}
       /* Otherwise the least significant part equals the normal part,
@@ -1658,7 +1659,7 @@ cris_initial_frame_pointer_offset ()
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if ((((regs_ever_live[regno]
 	   && !call_used_regs[regno])
-	  || (regno == PIC_OFFSET_TABLE_REGNUM
+	  || (regno == (int) PIC_OFFSET_TABLE_REGNUM
 	      && (current_function_uses_pic_offset_table
 		  /* It is saved anyway, if there would be a gap.  */
 		  || (flag_pic
@@ -2041,6 +2042,14 @@ cris_simple_epilogue ()
       || current_function_outgoing_args_size
       || current_function_calls_eh_return
 
+      /* Kludge for 3.1: when reorg changes branches to the return label
+	 into return insns, it does not handle the case where there's a
+	 delay list for the epilogue: it just drops the insns in
+	 current_function_epilogue_delay_list on the floor, resulting in
+	 invalid code.  We kludge around it in that case by saying that
+	 we don't have a simple enough epilogue to use return insns.  */
+      || current_function_epilogue_delay_list != NULL
+
       /* If we're not supposed to emit prologue and epilogue, we must
 	 not emit return-type instructions.  */
       || !TARGET_PROLOGUE_EPILOGUE)
@@ -2050,7 +2059,7 @@ cris_simple_epilogue ()
      in the delay-slot of the "ret".  */
   for (regno = 0; regno < reglimit; regno++)
     if ((regs_ever_live[regno] && ! call_used_regs[regno])
-	|| (regno == PIC_OFFSET_TABLE_REGNUM
+	|| (regno == (int) PIC_OFFSET_TABLE_REGNUM
 	    && (current_function_uses_pic_offset_table
 		/* It is saved anyway, if there would be a gap.  */
 		|| (flag_pic
@@ -2540,7 +2549,7 @@ cris_override_options ()
 	 further errors.  */
       if (! TARGET_LINUX)
 	{
-	  error ("-fPIC not supported in this configuration");
+	  error ("-fPIC and -fpic are not supported in this configuration");
 	  flag_pic = 0;
 	}
 
@@ -2612,32 +2621,71 @@ cris_expand_builtin_va_arg (valist, type)
 {
   tree addr_tree, t;
   rtx addr;
-  enum machine_mode mode = TYPE_MODE (type);
-  int passed_size;
+  tree passed_size = size_zero_node;
+  tree type_size = NULL;
+  tree size3 = size_int (3);
+  tree size4 = size_int (4);
+  tree size8 = size_int (8);
+  tree rounded_size;
 
   /* Get AP.  */
   addr_tree = valist;
 
-  /* Check if the type is passed by value or by reference.  */
-  if (MUST_PASS_IN_STACK (mode, type)
-      || CRIS_FUNCTION_ARG_SIZE (mode, type) > 8)
-    {
-      tree type_ptr = build_pointer_type (type);
-      addr_tree = build1 (INDIRECT_REF, type_ptr, addr_tree);
-      passed_size = 4;
-    }
+  if (type == error_mark_node
+      || (type_size = TYPE_SIZE_UNIT (TYPE_MAIN_VARIANT (type))) == NULL
+      || TREE_OVERFLOW (type_size))
+    /* Presumably an error; the size isn't computable.  A message has
+       supposedly been emitted elsewhere.  */
+    rounded_size = size_zero_node;
   else
-    passed_size = (CRIS_FUNCTION_ARG_SIZE (mode, type) > 4) ? 8 : 4;
+    rounded_size
+      = fold (build (MULT_EXPR, sizetype,
+		     fold (build (TRUNC_DIV_EXPR, sizetype,
+				  fold (build (PLUS_EXPR, sizetype,
+					       type_size, size3)),
+				  size4)),
+		     size4));
+
+  if (!integer_zerop (rounded_size))
+    {
+      /* Check if the type is passed by value or by reference.  Values up
+	 to 8 bytes are passed by-value, padded to register-size (4
+	 bytes).  Larger values and varying-size types are passed
+	 by reference.  */
+      passed_size
+	= (!really_constant_p (type_size)
+	   ? size4
+	   : fold (build (COND_EXPR, sizetype,
+			  fold (build (GT_EXPR, sizetype,
+				       rounded_size,
+				       size8)),
+			  size4,
+			  rounded_size)));
+
+      addr_tree
+	= (!really_constant_p (type_size)
+	   ? build1 (INDIRECT_REF, build_pointer_type (type), addr_tree)
+	   : fold (build (COND_EXPR, TREE_TYPE (addr_tree),
+			  fold (build (GT_EXPR, sizetype,
+				       rounded_size,
+				       size8)),
+			  build1 (INDIRECT_REF, build_pointer_type (type),
+				  addr_tree),
+			  addr_tree)));
+    }
 
   addr = expand_expr (addr_tree, NULL_RTX, Pmode, EXPAND_NORMAL);
   addr = copy_to_reg (addr);
 
-  /* Compute new value for AP.  */
-  t = build (MODIFY_EXPR, TREE_TYPE (valist), valist,
-	     build (PLUS_EXPR, TREE_TYPE (valist), valist,
-		    build_int_2 (passed_size, 0)));
-  TREE_SIDE_EFFECTS (t) = 1;
-  expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
+  if (!integer_zerop (rounded_size))
+    {
+      /* Compute new value for AP.  */
+      t = build (MODIFY_EXPR, TREE_TYPE (valist), valist,
+		 build (PLUS_EXPR, TREE_TYPE (valist), valist,
+			passed_size));
+      TREE_SIDE_EFFECTS (t) = 1;
+      expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
+    }
 
   return addr;
 }

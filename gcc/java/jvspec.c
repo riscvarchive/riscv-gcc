@@ -1,6 +1,6 @@
 /* Specific flags and argument handling of the front-end of the 
    GNU compiler for the Java(TM) language.
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -66,7 +66,9 @@ static const char jvgenmain_spec[] =
 		   %{<femit-class-file} %{<femit-class-files} %{<fencoding*}\
 		   %{<fuse-boehm-gc} %{<fhash-synchronization} %{<fjni}\
 		   %{<findirect-dispatch} \
-		   %{<fclasspath*} %{<fCLASSPATH*} %{<foutput-class-dir}\
+		   %{<fno-store-check} %{<foutput-class-dir}\
+		   %{<fclasspath*} %{<fCLASSPATH*} %{<fbootclasspath*}\
+		   %{<fextdirs*}\
 		   %{<fuse-divide-subroutine} %{<fno-use-divide-subroutine}\
 		   %{<fcheck-references} %{<fno-check-references}\
 		   %{<ffilelist-file}\
@@ -208,8 +210,8 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
   int saw_libgcj ATTRIBUTE_UNUSED = 0;
 #endif
 
-  /* Saw -R, -C or -o options, respectively. */
-  int saw_R = 0;
+  /* Saw --resource, -C or -o options, respectively. */
+  int saw_resource = 0;
   int saw_C = 0;
   int saw_o = 0;
 
@@ -301,13 +303,12 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
 	      library = 0;
 	      will_link = 0;
 	    }
-	  else if (strcmp (argv[i], "-R") == 0)
+	  else if (strncmp (argv[i], "-fcompile-resource=", 19) == 0)
 	    {
-	      saw_R = 1;
-	      quote = argv[i];
+	      saw_resource = 1;
 	      want_spec_file = 0;
 	      if (library != 0)
-		added -= 2;
+		--added;
 	      library = 0;
 	      will_link = 0;
 	    }
@@ -328,6 +329,7 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
 	      quote = argv[i];
 	    }
 	  else if (strcmp(argv[i], "-classpath") == 0
+		   || strcmp(argv[i], "-bootclasspath") == 0
 		   || strcmp(argv[i], "-CLASSPATH") == 0)
 	    {
 	      quote = argv[i];
@@ -379,7 +381,7 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
 	      continue;
 	    }
 
-	  if (saw_R)
+	  if (saw_resource)
 	    {
 	      args[i] |= RESOURCE_FILE_ARG;
 	      last_input_index = i;
@@ -427,10 +429,10 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
     fatal ("`%s' is not a valid class name", main_class_name);
 
   num_args = argc + added;
-  if (saw_R)
+  if (saw_resource)
     {
       if (! saw_o)
-	fatal ("-R requires -o");
+	fatal ("--resource requires -o");
     }
   if (saw_C)
     {
@@ -511,16 +513,8 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
 	  arglist[j] = "-xnone";
 	}
 
-      if (strcmp (argv[i], "-R") == 0)
-	{
-	  arglist[j] = concat ("-fcompile-resource=",
-			       *argv[i+1] == '/' ? "" : "/",
-			       argv[i+1], NULL);
-	  i++;
-	  continue;
-	}
-
       if (strcmp (argv[i], "-classpath") == 0
+	  || strcmp (argv[i], "-bootclasspath") == 0
 	  || strcmp (argv[i], "-CLASSPATH") == 0)
 	{
 	  arglist[j] = concat ("-f", argv[i]+1, "=", argv[i+1], NULL);

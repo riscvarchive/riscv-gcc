@@ -1,3 +1,125 @@
+2002-07-25  Release Manager
+
+	* GCC 3.1.1 Released.
+
+2002-04-12  Anthony Green  <green@redhat.com>
+
+	* lib/libjava.exp: Use libgcj-VERSION.jar, not libgcj-3.1.jar.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-05-14  Release Manager
+
+	* GCC 3.1 Released.
+
+2002-04-21  Mark Wielaard  <mark@klomp.org>
+
+	* libjava.mauve/xfail: Expect failures for PR java/6391 and
+	libgcj/6389.
+
+2002-04-16  Mark Wielaard  <mark@klomp.org>
+
+	* libjava.lang/negzero.java: New.
+	* libjava.lang/negzero.out: New.
+
+2002-04-14  Mark Wielaard  <mark@klomp.org>
+
+	* libjava.mauve/xfails: Expect failures for PR libgcj/6302 and
+	libgcj/6298.
+
+2002-04-14  Mark Wielaard  <mark@klomp.org>
+
+	* libjava.mauve/xfails: Expect failures for PR libgcj/6293,
+	libgcj/6295, libgcj/6296 and libgcj/6297.
+
+2002-04-11  Anthony Green  <green@redhat.com>
+
+	* lib/libjava.exp: Use libgcj-3.1.jar, not libgcj.jar.
+
+2002-04-07  Mark Wielaard  <mark@klomp.org>
+
+	* libjava.mauve/xfails: Add CASE_INSENSITIVE_ORDER, result was
+	unspecified and test should be updated to match latest spec.
+	Add AcuniaPropertiesTest, known bug #6219. Add test_getClassLoader,
+	what we do seems to be not really right or wrong.
+
+2002-04-06  Mark Wielaard  <mark@klomp.org>
+
+	* libjava.mauve/mauve.exp: Use libgcj.jar not libgcj.zip.
+	* libjava.mauve/xfails: add Character.classify12 (number 1),
+	Character.getType (number 11), Character.getType (number 20) and
+	Character.getType (number 22). We implement 1.4 Character.
+
+2002-03-28  Andrew Haley  <aph@redhat.com>
+
+	* libjava.lang/Throw_2.java: New.
+	* libjava.lang/Throw_2.out: New.
+
+2002-03-27  Anthony Green  <green@redhat.com>
+
+	* libjava.lang/InvokeReturn.java: Modify test for targets
+	which do not yet support reflection.
+
+2002-03-27  Anthony Green  <green@redhat.com>
+
+	* libjava.jni/jni.exp (gcj_jni_run): Fix cross build test.
+
+2002-03-27  Anthony Green  <green@redhat.com>
+
+	* lib/libjava.exp: Add the wrapper link options only when we're
+	linking.
+
+2002-03-26  Tom Tromey  <tromey@redhat.com>
+
+	* libjava.mauve/mauve.exp (test_mauve): Use correct stderr
+	redirection code.
+
+2002-03-22  Eric Blake  <ebb9@email.byu.edu>
+
+	For PR java/6026:
+	* libjava.compile/PR6026.java: New file.
+
+2002-03-21  Andrew Haley  <aph@redhat.com>
+
+	* libjava.lang/Thread_Interrupt.java (Looper.calibrate): New.
+	(yields): New.
+
+2002-03-18  Tom Tromey  <tromey@redhat.com>
+
+	* libjava.jni/jni.exp (gcj_jni_test_one): Find libstdc++ in build
+	tree.
+	(gcj_invoke): Added ld_library_additions argument.
+
+2002-03-17  Tom Tromey  <tromey@redhat.com>
+
+	* libjava.jni/jni.exp (gcj_jni_build_header): Use local_exec, not
+	target_compile.  Fixes PR other/5874.
+
+2002-03-15  Eric Blake  <ebb9@email.byu.edu>
+
+	For PR java/5902:
+	* libjava.compile/PR5902.java: Does not need to execute.
+	For PR java/5913:
+	* libjava.compile/PR5913.java: Ditto.
+
+2002-03-12  Tom Tromey  <tromey@redhat.com>
+
+	Test for PR java/5848:
+	* libjava.compile/PR5848.xfail: New file.
+	* libjava.compile/PR5848.java: New file.
+
+2002-03-12  Eric Blake  <ebb9@email.byu.edu>
+
+	* libjava.compile/PR5913.java: Expand test.
+
+2002-03-11  Eric Blake  <ebb9@email.byu.edu>
+
+	* libjava.compile/PR5902.java: New file.
+	* libjava.compile/PR5913.java: New file.
+	* libjava.compile/PR5913.xfail: New file.
+
 2002-02-23  Jeff Sturm  <jsturm@one-point.com>
 
 	* libjava.lang/InvokeReturn.java: New file.

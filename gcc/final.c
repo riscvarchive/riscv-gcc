@@ -170,10 +170,6 @@ char regs_ever_live[FIRST_PSEUDO_REGISTER];
 
 int frame_pointer_needed;
 
-/* Assign unique numbers to labels generated for profiling.  */
-
-int profile_label_no;
-
 /* Number of unmatched NOTE_INSN_BLOCK_BEG notes we have seen.  */
 
 static int block_depth;
@@ -1564,8 +1560,6 @@ final_start_function (first, file, optimize)
   if (! HAVE_prologue)
 #endif
     profile_after_prologue (file);
-
-  profile_label_no++;
 }
 
 static void
@@ -1597,7 +1591,7 @@ profile_function (file)
 #ifndef NO_PROFILE_COUNTERS
   data_section ();
   ASM_OUTPUT_ALIGN (file, floor_log2 (align / BITS_PER_UNIT));
-  ASM_OUTPUT_INTERNAL_LABEL (file, "LP", profile_label_no);
+  ASM_OUTPUT_INTERNAL_LABEL (file, "LP", current_function_profile_label_no);
   assemble_integer (const0_rtx, LONG_TYPE_SIZE / BITS_PER_UNIT, align, 1);
 #endif
 
@@ -1627,7 +1621,7 @@ profile_function (file)
 #endif
 #endif
 
-  FUNCTION_PROFILER (file, profile_label_no);
+  FUNCTION_PROFILER (file, current_function_profile_label_no);
 
 #if defined(STATIC_CHAIN_INCOMING_REGNUM) && defined(ASM_OUTPUT_REG_PUSH)
   if (cxt)
@@ -2969,7 +2963,7 @@ output_operand_lossage VPARAMS ((const char *msgid, ...))
 {
   char *fmt_string;
   char *new_message;
-  char *pfx_str;
+  const char *pfx_str;
   VA_OPEN (ap, msgid);
   VA_FIXEDARG (ap, const char *, msgid);
 
@@ -3026,6 +3020,9 @@ get_mem_expr_from_op (op, paddressp)
   int inner_addressp;
 
   *paddressp = 0;
+
+  if (op == NULL)
+    return 0;
 
   if (GET_CODE (op) == REG && ORIGINAL_REGNO (op) >= FIRST_PSEUDO_REGISTER)
     return REGNO_DECL (ORIGINAL_REGNO (op));

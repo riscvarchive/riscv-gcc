@@ -41,7 +41,7 @@ OPTIMIZE_CXXFLAGS = @OPTIMIZE_CXXFLAGS@
 # or configure.in to see how they are set. See GLIBCPP_EXPORT_FLAGS
 # NB: DEBUGFLAGS have to be at the end so that -O2 can be overridden.
 CONFIG_CXXFLAGS = \
-	@EXTRA_CXX_FLAGS@ @SECTION_FLAGS@ @CSHADOW_FLAGS@ @DEBUG_FLAGS@ 
+	@EXTRA_CXX_FLAGS@ @SECTION_FLAGS@ @DEBUG_FLAGS@ 
 
 # Warning flags to use.
 WARN_CXXFLAGS = \
@@ -63,12 +63,14 @@ INCLUDES = \
 sources = \
 	globals.cc limits.cc \
 	basic_file.cc complex_io.cc ios.cc strstream.cc \
-	cmath.cc bitset.cc \
+	bitset.cc \
 	functexcept.cc stdexcept.cc vterminate.cc \
 	c++locale.cc locale.cc localename.cc codecvt.cc \
-	collate.cc ctype.cc messages.cc moneypunct.cc numpunct.cc time.cc \
+	collate.cc ctype.cc messages.cc monetary.cc numeric.cc time.cc \
 	concept-inst.cc locale-inst.cc misc-inst.cc stl-inst.cc \
-	string-inst.cc wstring-inst.cc valarray-inst.cc  ext-inst.cc
+	string-inst.cc wstring-inst.cc valarray-inst.cc  ext-inst.cc \
+	fstream-inst.cc io-inst.cc istream-inst.cc ostream-inst.cc \
+	streambuf-inst.cc sstream-inst.cc
 
 VPATH = $(top_srcdir)/src:$(top_srcdir)
 
@@ -84,7 +86,9 @@ else
 version_arg=
 endif
 
-libstdc___la_LDFLAGS = -version-info @libtool_VERSION@ -lm ${version_arg}
+libstdc___la_LDFLAGS = \
+	-version-info @libtool_VERSION@ ${version_arg} \
+	-lm @LIBUNWIND_FLAG@ 
 
 libstdc___la_DEPENDENCIES = $(libstdc___la_LIBADD) linker.map
 
