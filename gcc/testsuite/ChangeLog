@@ -1,3 +1,38 @@
+Mon Oct  6 12:03:10 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* lib/g77.exp, lib/f-torture.exp: New files.
+
+Mon Sep 15 00:36:53 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* lib/g++.exp (g++_init): Look for xgcc in $basedir too.
+	
+Thu Sep 11 13:52:01 1997  Jeffrey A Law  (law@cygnus.com)
+
+	* g++.old-deja/g++.brendan/scope4.C: No longer expected to fail.
+	* g++.old-deja/g++.mike/p7325.C: Likewise.
+	* g++.old-deja/g++.mike/eh51.C: No longer expected to fail on the PA.
+
+Thu Sep 11 10:00:03 1997  Alexandre Oliva  (oliva@dcc.unicamp.br)
+
+	* g++.old-deja/g++.brendan/crash20.C: Rework to avoid libg++.
+	* g++.old-deja/g++.brendan/crash30.C: Likewise.
+	* g++.old-deja/g++.brendan/crash39.C: Likewise.
+	* g++.old-deja/g++.law/operators4.C: Likewise.
+
+Thu Sep 11 09:53:40 1997  Joe Buck  (jbuck@synopsys.com)
+
+	* g++.old-deja/g++.mike/p658.C: eliminate <bool.h> use.
+	* g++.old-deja/g++.mike/p784.C: Ditto.
+	* g++.old-deja/g++.mike/p785.C: Ditto.
+
+Fri Sep  5 00:20:39 1997  Richard Henderson  (rth@cygnus.com)
+
+	* cbrt.c: Tweak to work on more targets.
+
+Tue Sep  2 16:34:31 1997  Doug Evans  <dje@canuck.cygnus.com>
+
+	* lib/gcc-dg.exp (gcc-dg-test): Fix typos setting compile_type.
+
 Thu Jul 31 12:17:24 1997  Jeffrey A Law  (law@cygnus.com)
 
 	* gcc.c-torture/execute/920501-9.c: Fix to work on targets with
