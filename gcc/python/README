@@ -1,0 +1,36 @@
+GPY - A Python Front-End to GCC
+===============================
+
+Testing the feasibility of building a dynamic language as
+an AOT (ahead-of-time) compiled language, and as a research
+project into optimizing dynamic language's in this manor.
+This project should also establish and maintain a running
+documentation of building a front-end in GCC with interfaces
+and Intermediate Representations GENERIC/GIMPLE documented in
+the GCC internals manual with possibly a working skeleton front-end
+similar to the old Tree-Lang.
+
+Why/Benifits:
+------------------
+Dynamic languages like Python, Perl or JavaScript are becoming
+more and more present in everyday technologies. Though they have
+remained Interpreted implemented usually as a C interpreter which
+adds a layer of abstraction generally slowing the system down, instead
+of an AOT system with target code generated and assembled which may make
+things smaller and faster. This project may serve something akin to that
+of PHC a PHP compiler. There are many problems present in building such
+a dynamic language AOT, being that Static Analysis, implicit type
+conversion or dynamic includes and imports will be difficult to implement.
+I hope this project could at least serve as a proof of concept in that GCC
+is still a very important platform for building new languages, as you not only
+get a strong, portable back-end code-generator but the GCC middle-end will
+perform all of it's built-in optimization passes defined in the 'gcc/tree-ssa-*.c'.
+
+Links and More Information
+--------------------------
+
+Currently being persued as a Gsoc Project by me:
+
+ * Philip Herron ( herron.philip@googlemail.com )
+ 
+Mentor Ian Lance Taylor

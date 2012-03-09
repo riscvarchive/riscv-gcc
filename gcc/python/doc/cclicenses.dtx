@@ -1,0 +1,330 @@
+% \iffalse meta-comment
+% Copyright (C) 2005 Gianluca Pignalberi
+% (g.pignalberi@freesoftwaremagazine.com)
+%
+% this file  may be distributed and/or modified under the conditions of the
+% LaTeX Project Public License, either version 1.3a or
+% (at your option) any later version. The latest version of this
+% license is in http://www.latex-project.org/lppl.txt
+% and version 1.3a or later is part of all distributions of LaTeX
+% version 2004/10/01 or later.
+% \fi
+%
+% \iffalse
+%<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
+%<package>\ProvidesPackage{cclicenses}
+%<package>[2005/05/20 v0.4 .dtx cclicenses file]
+%<*driver>
+\documentclass{ltxdoc}
+\usepackage{cclicenses}
+\usepackage{mflogo}
+\usepackage{booktabs}
+%
+\begin{document}
+%  \OnlyDescription% Comment out to print Section "The Code" as well.
+  \DocInput{cclicenses.dtx}
+\end{document}
+%</driver>
+% \fi
+% \CheckSum{283}
+% \newcommand\CC{Creative Commons}
+%
+% \RecordChanges
+% \changes{v0.4}{2005/05/20}{Initial version}
+%
+%  \GetFileInfo{cclicenses.sty}
+%  \title{The \textsf{cclicenses} package}
+%  \author{Gianluca Pignalberi\\
+%          \texttt{g.pignalberi@freesoftwaremagazine.com}}
+%  \date{\filedate ~(\fileversion)}
+%  \maketitle
+% \begin{abstract}
+% The version 0.4 of \texttt{cclicenses} is my very first attempt to write a
+% package to submit to CTAN. It is intended for typesetting the \CC\
+% licenses icons, using \LaTeX\ instead of defining new strokes by \MF.
+% \end{abstract}
+%
+% \section{Introduction}
+% Some journal and magazines started publishing articles released under free
+% licenses, such as \CC. To show this fact immediately they want to insert the
+%  proper logos
+% along with the articles. Artists who release music, images or other
+% work under \CC may want to add the proper icons to their documents as well.
+%
+% Some of these magazines, including the one I work for, are typeset by
+% \LaTeX. So, I believe there's a need to instruct \LaTeX\ to typeset such
+% logos.
+%
+% This is my very first attempt.
+% All of the icons are typeset in boldface Helvetica. I used |\textcircled{}|
+% to surround symbols by a circle. For some reason, the circle is not quite a
+% circle when the text is very small or it's |\textbf|'ed.
+%
+% As I said, this is only my first attempt. Please do send me your suggestions
+% to improve the result.
+%
+% \section{How to use the package's commands}
+% It coulnd't be easier: according to the license you're going to release
+% your work under, use the corresponding logos.
+%
+% \begin{table*}[h]
+% \centering
+% \caption{What command generates what icon}
+% \begin{tabular}{lcl}
+% \toprule
+% \textbf{Command}&\textbf{Icon}&\textbf{License's type}\\
+% \midrule
+% |\cc|&\cc&Creative Commons\\
+% |\ccby|&\ccby&Attribution\\
+% |\ccnc|&\ccnc&NonCommercial\\
+% |\ccnd|&\ccnd&NoDerivs\\
+% |\ccsa|&\ccsa&Share-alike\\
+% \bottomrule
+% \end{tabular}
+% \end{table*}
+%
+% \section{\CC\ licenses}
+% When an artist wants to release his or her work under a free license, s/he
+% can choose to adopt one of the \CC\ licenses.
+%
+% The CC licenses are used to reserve some rights to the author, give away
+% some other rights, while the copyright is still held by the author.
+%
+% Since version 2.0, each license includes the \emph{Attribution} right which
+% forces every person (who is not the author) to give the original author
+% credit.
+%
+% A \emph{NoDerivs} icon, where ``NoDerivs'' stands for ``Non derivative
+% works'', indicates that you may not alter, transform, or build upon a work;
+% the \emph{NonCommercial} icon indicates that the work can't be used for
+% commercial purposes. The \emph{Share-alike} icon, that applies only to
+% derivative works ---so it can't appear along with the NoDerivs icon---, 
+% forces to release the derivative works under the same license as the 
+% original.
+%
+% \section{The current licenses}
+% The following are the currently used licenses and the related commands:
+%
+% \begin{center}
+% \begin{tabular}{lll}
+% \toprule
+% \textbf{Command}&\textbf{License}&\textbf{Symbol(s)}\\
+% \midrule
+% \multicolumn{3}{c}{Version 2.0}\\
+% \midrule
+% |\by|&Attribution&\by\\
+% |\bynd|&Attribution-NoDerivs&\bynd\\
+% |\byncnd|&Attribution-NonCommercial-NoDerivs&\byncnd\\
+% |\bync|&Attribution-NonCommercial&\bync\\
+% |\byncsa|& Attribution-NonCommercial-ShareAlike&\byncsa\\
+% |\bysa|&Attribution-ShareAlike&\bysa\\
+% \midrule
+% \multicolumn{3}{c}{Version 1.0}\\
+% \midrule
+% |\nd|&NoDerivs&\nd\\
+% |\ndnc|&NoDerivs-NonCommercial&\ndnc\\
+% |\nc|&NonCommercial&\nc\\
+% |\ncsa|&NonCommercial-ShareAlike&\ncsa\\
+% |\sa|&ShareAlike&\sa\\
+% \bottomrule
+% \end{tabular}
+% \end{center}
+%
+% \section{Known issues}
+% As already stated, this package uses the Helvetica font. Be sure it's
+% installed in your system.
+%
+% The strokes are not so elegant. I advice not to use them when typesetting
+% |\tiny| and |\scriptsize| text.
+%
+% The ``NonCommercial'' and ``Share-alike'' logos are just usable, not exactly
+% good-looking. I hope I'll be able to release a new version of this package
+% soon,  where I use the |picture| environment instead of
+% the |\textcircled| command.
+%
+% The space after the icons is wrong: it's always too big (it's not as big
+% while using ``Share-alike'').
+%
+% \StopEventually{\PrintChanges}
+% \section{The Code}
+%
+% This package needs \LaTeXe\ and the \textsf{rotating} package.
+%    \begin{macrocode}
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{cclicenses}[2005/05/20 v0.4 CC licenses typesetting]
+\RequirePackage{rotating}
+%    \end{macrocode}
+%
+% Some counters and dimension registers.
+%    \begin{macrocode}
+\newdimen\chardim
+\newdimen\hdim
+\newdimen\htmp
+\newcount\hpos
+\newcount\vpos
+%    \end{macrocode}
+%
+% \DescribeMacro{\SAarrow}
+% The CC Share-alike symbol has an arrow. This is the macro to draw an
+% arrow, according to the symbol dimensions.
+%    \begin{macrocode}
+\newcommand{\SA@arrow}{
+\hdim\chardim
+\ifdim\hdim<1.5pt \hdim=1.5pt\fi
+\setlength\unitlength{1sp}
+\begin{picture}(0,0)
+  \hpos=0
+  \vpos\hdim
+  \loop
+    \put(\hpos,\vpos){
+      \rule[0mm]{\hdim}{1000sp}
+    }
+    \advance\htmp by 1000sp
+    \hpos\htmp
+    \advance\vpos by -1000
+    \advance\hdim by -2000sp
+  \ifnum\vpos > 0 \repeat
+\end{picture}}
+%    \end{macrocode}
+%
+% \DescribeMacro{\text@cc}
+% The primary Creative Commons logo is a circled capital double c.
+%    \begin{macrocode}
+\DeclareTextCommandDefault{\text@cc}{%
+  \let\origfontfamily\f@family
+  \let\origfontseries\f@series
+  \chardim\fontdimen6\font
+  \divide\chardim by 2
+  {
+    \fontfamily{phv}\fontseries{b}\selectfont%
+    \textcircled{%
+      \raisebox{.12ex}{\fontsize{\chardim}{\baselineskip}\selectfont{CC}}%
+    }
+  }
+  \fontfamily{\origfontfamily}\fontseries{\origfontseries}\selectfont
+}
+%    \end{macrocode}
+%
+% \DescribeMacro{\text@ccnd}
+% The ``NoDerivs'' (no derivative works allowed) icon indicates that you may
+% not alter, transform, or build upon this work. It shows an equal sign into a
+% circle.
+%    \begin{macrocode}
+\DeclareTextCommandDefault{\text@ccnd}{%
+  \let\origfontfamily\f@family
+  \let\origfontseries\f@series
+  \chardim\fontdimen6\font
+  \divide\chardim by 2
+  {
+    \fontfamily{phv}\fontseries{b}\selectfont%
+    \textcircled{%
+      \raisebox{.20ex}{\fontsize{\chardim}{\baselineskip}\selectfont{=}}%
+    }
+  }
+  \fontfamily{\origfontfamily}\fontseries{\origfontseries}\selectfont
+}
+%    \end{macrocode}
+%
+% \DescribeMacro{\text@ccby}
+% The ``Attribution'' logo, introduced in version 2 of the Creative Commons
+% license, forces to give the original author credit. It's a must have
+% attribute, that is typeset as a \textsc{by:} string surrounded by a circle.
+%    \begin{macrocode}
+\DeclareTextCommandDefault{\text@ccby}{%
+  \let\origfontfamily\f@family
+  \let\origfontseries\f@series
+  \chardim\fontdimen6\font
+  \divide\chardim by 2
+  {
+    \fontfamily{phv}\fontseries{b}\selectfont%
+    \textcircled{%
+      \raisebox{.5pt}{\fontsize{\chardim}{\baselineskip}\selectfont%
+      {B\kern -.15em Y\kern -.15em:}}%
+    }
+  }
+  \fontfamily{\origfontfamily}\fontseries{\origfontseries}\selectfont
+}
+%    \end{macrocode}
+%
+% \DescribeMacro{\text@ccnc}
+% The ``NonCommercial'' logo has a barred USD symbol, surrounded by the usual
+% circle. Since I used a \texttt{rotate} environment to typeset this logo,
+% you may experience some troubles when viewing the \texttt{.dvi} document
+% including this logo.
+%    \begin{macrocode}
+\DeclareTextCommandDefault{\text@ccnc}{%
+  \let\origfontfamily\f@family
+  \let\origfontseries\f@series
+  \chardim\fontdimen6\font
+  \divide\chardim by 2
+  {
+    \fontfamily{phv}\fontseries{b}\selectfont%
+    \textcircled{%
+      \raisebox{.15ex}{\fontsize{\chardim}{\baselineskip}\selectfont%
+      \makebox[0cm][c]{\$}}%
+      \setlength{\chardim}{1.98\chardim}%
+      \fontsize{\chardim}{\baselineskip}\selectfont%
+      \raisebox{-.20ex}{\begin{rotate}{45}\textbackslash\end{rotate}}%
+    }
+  }
+  \fontfamily{\origfontfamily}\fontseries{\origfontseries}\selectfont
+}
+%    \end{macrocode}
+%
+% \DescribeMacro{\text@ccsa}
+% The ``Share-alike'' logo shows a reversed C with a strange serif: an arrow
+% that points down. \emph{\c Ca va sans dire}, circled.
+%    \begin{macrocode}
+\DeclareTextCommandDefault{\text@ccsa}{%
+  \let\origfontfamily\f@family
+  \let\origfontseries\f@series
+  \fontfamily{phv}\fontseries{b}\selectfont%
+%  \hskip.3em
+  \textcircled{%
+    \makebox[1em][l]{
+      \raisebox{.95ex}{\hskip-.45ex
+        \begin{rotate}{180}\scshape{c}\end{rotate}}}%
+      \chardim\fontdimen6\font
+      \divide\chardim by 6
+      \raisebox{.3ex}{\hspace{-5ex}
+      \SA@arrow}
+  }
+  \fontfamily{\origfontfamily}\fontseries{\origfontseries}\selectfont
+}
+%    \end{macrocode}
+%
+% The following code defines the robust commands to typeset the logos: you can
+% now use them in text mode and in math mode.
+%
+%    \begin{macrocode}
+\DeclareRobustCommand{\cc}{%
+  \ifmmode{\nfss@text{\text@cc}}\else\text@cc\fi}
+\DeclareRobustCommand{\ccnd}{%
+  \ifmmode{\nfss@text{\text@ccnd}}\else\text@ccnd\fi}
+\DeclareRobustCommand{\ccby}{%
+  \ifmmode{\nfss@text{\text@ccby}}\else\text@ccby\fi}
+\DeclareRobustCommand{\ccnc}{%
+  \ifmmode{\nfss@text{\text@ccnc}}\else\text@ccnc\fi}
+\DeclareRobustCommand{\ccsa}{%
+  \ifmmode{\nfss@text{\text@ccsa}}\else\text@ccsa\fi}
+%    \end{macrocode}
+%
+% Here are the commands that define the 11 \CC\ licenses. The licenses
+% preceded by the ``attribution'' icon are \CC\ version 2.0, the others are
+% version 1.0.
+%    \begin{macrocode}
+\newcommand{\by}{\ccby}
+\newcommand{\bynd}{\ccby\ccnd}
+\newcommand{\byncnd}{\ccby\ccnc\ccnd}
+\newcommand{\bync}{\ccby\ccnc}
+\newcommand{\byncsa}{\ccby\ccnc\ccsa}
+\newcommand{\bysa}{\ccby\ccsa}
+\newcommand{\nd}{\ccnd}
+\newcommand{\ndnc}{\ccnd\ccnc}
+\newcommand{\nc}{\ccnc}
+\newcommand{\ncsa}{\ccnc\ccsa}
+\newcommand{\sa}{\ccsa}
+\endinput
+%    \end{macrocode}
+% \Finale
+% \endinput

@@ -164,7 +164,8 @@ target_libraries="target-libgcc \
 		${libgcj} \
 		target-libobjc \
 		target-libada \
-		target-libgo"
+		target-libgo \
+		target-libgpython"
 
 # these tools are built using the target libraries, and are intended to
 # run only in the target environment

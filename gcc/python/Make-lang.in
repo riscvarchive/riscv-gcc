@@ -1,0 +1,213 @@
+# Make-lang.in -- Top level -*- makefile -*- fragment for gcc Python frontend.
+
+# Copyright (C) 2009, 2010, 2011 Free Software Foundation, Inc.
+
+# This file is part of GCC.
+
+# GCC is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+
+# GCC is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+# This file provides the language dependent support in the main Makefile.
+
+# Installation name.
+
+PYTHON_EXES = python
+
+.phony: python
+
+# Use strict warnings for this front end.
+python-warn = $(STRICT_WARN)
+
+GCCPY_INSTALL_NAME := $(shell echo gccpy|sed '$(program_transform_name)')
+GCCPY_TARGET_INSTALL_NAME := $(target_noncanonical)-$(shell echo gccpy|sed '$(program_transform_name)')
+
+python: gccpy$(exeext) gpy1$(exeext)
+
+FLEX_C_FLAGS := -g -O2 -fomit-frame-pointer -DIN_GCC -W -Wall -Wwrite-strings -Wcast-qual \
+-Wstrict-prototypes -Wmissing-prototypes -Wmissing-format-attribute -pedantic -Wno-long-long \
+-Wno-variadic-macros -Wno-overlength-strings -Wold-style-definition -Wc++-compat -fno-common -DHAVE_CONFIG_H
+
+GPY_CFLAGS := -std=gnu99 -I${srcdir}/python
+
+py-lexer.o: $(srcdir)/python/py-lexer.l py-parser.o
+	$(FLEX) --outfile=lex.py.c $(srcdir)/python/py-lexer.l
+	$(CC) $(GPY_CFLAGS) $(FLEX_C_FLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ lex.py.c
+
+py-parser.o: $(srcdir)/python/py-parser.y
+	$(BISON) -v --debug --verbose --defines=y.py.h --output=y.py.c \
+	$(srcdir)/python/py-parser.y
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ y.py.c
+
+py-lang.o: $(srcdir)/python/py-lang.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-lang.c
+
+py-vec.o: $(srcdir)/python/py-vec.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-vec.c
+
+py-builtins.o: $(srcdir)/python/py-builtins.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-builtins.c
+
+py-dot.o: $(srcdir)/python/py-dot.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-dot.c
+
+py-stmt-pass-mangr.o: $(srcdir)/python/py-stmt-pass-mangr.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-stmt-pass-mangr.c
+
+py-stmt-pass-types.o: $(srcdir)/python/py-stmt-pass-types.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-stmt-pass-types.c
+
+py-stmt-pass-lower.o: $(srcdir)/python/py-stmt-pass-lower.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-stmt-pass-lower.c
+
+py-stmt-pass-translate.o: $(srcdir)/python/py-stmt-pass-translate.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-stmt-pass-translate.c
+
+py-stmt-pass-check1.o: $(srcdir)/python/py-stmt-pass-check1.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-stmt-pass-check1.c
+
+py-stmt-pass-const_fold.o: $(srcdir)/python/py-stmt-pass-const_fold.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-stmt-pass-const_fold.c
+
+py-stmt-pass-pretty_print.o: $(srcdir)/python/py-stmt-pass-pretty_print.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
+  gt-python-py-lang.h gtype-python.h
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-stmt-pass-pretty_print.c
+
+GPY_OBJS = \
+	py-parser.o \
+	py-lexer.o \
+	py-lang.o \
+	py-vec.o \
+	py-builtins.o \
+	py-dot.o \
+	py-stmt-pass-mangr.o \
+	py-stmt-pass-types.o \
+	py-stmt-pass-lower.o \
+	py-stmt-pass-translate.o \
+	py-stmt-pass-check1.o \
+	py-stmt-pass-const_fold.o \
+	py-stmt-pass-pretty_print.o
+
+GCCPY_C_OBJS = $(GPY_OBJS) $(BACKEND) $(LIBSDEPS) attribs.o
+gpy1$(exeext): $(GCCPY_C_OBJS)
+	$(CC) $(GPY_CFLAGS) $(ALL_CFLAGS) $(LDFLAGS) -o $@ $(GCCPY_C_OBJS) \
+	$(GMPLIBS) $(LIBS) $(BACKENDLIBS) 
+
+py-spec.o: $(srcdir)/python/py-spec.c $(CONFIG_H) $(SYSTEM_H) \
+  coretypes.h $(DIAGNOSTIC_H) $(TREE_H) $(FLAGS_H) toplev.h langhooks.h $(TM_H)
+	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(DRIVER_DEFINES) \
+		$(INCLUDES) $(LDFLAGS) -c -o $@ $(srcdir)/python/py-spec.c
+
+GCCPY_D_OBJS = $(GCC_OBJS) py-spec.o
+gccpy$(exeext): $(GCCPY_D_OBJS) $(EXTRA_GCC_OBJS) libcommon-target.a $(LIBDEPS)
+	$(LINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+	  $(GCCPY_D_OBJS) $(EXTRA_GCC_OBJS) $(LIBS) libcommon-target.a \
+	  $(EXTRA_GCC_LIBS) $(LIBS)
+
+python.srcextra: 
+python.all.cross:
+
+python.start.encap:
+python.rest.encap:
+python.man:
+python.srcman:
+
+python.mostlyclean:
+	cd $(srcdir)/python; rm -f *.o y.tab.h y.tab.c lex.yy.c
+
+python.clean: python.mostlyclean
+
+python.tags: force
+	cd $(srcdir)/python; etags -o TAGS.sub *.y *.l *.c *.h; \
+	etags --include TAGS.sub --include ../TAGS.sub
+
+python.info: 
+python.srcinfo: 
+python.dvi: 
+python.pdf: 
+doc/python.info: 
+doc/python.dvi: 
+doc/python.pdf: 
+python.html: 
+
+python.install-common: installdirs
+	-rm -f $(DESTDIR)$(bindir)/$(GCCPY_INSTALL_NAME)$(exeext)
+	-rm -f $(DESTDIR)$(bindir)/$(GCCPY_TARGET_INSTALL_NAME)$(exeext)
+	$(INSTALL_PROGRAM) gccpy$(exeext) $(DESTDIR)$(bindir)/$(GCCPY_INSTALL_NAME)$(exeext)
+	if test -f $(DESTDIR)$(bindir)$(GCCPY_TARGET_INSTALL_NAME)$(exeext); then \
+	  :; \
+	else \
+	  cd $(DESTDIR)$(bindir) && \
+	   $(LN) $(GCCPY_INSTALL_NAME)$(exeext) $(GCCPY_TARGET_INSTALL_NAME)$(exeext); \
+	fi
+
+python.install-plugin:
+
+python.uninstall:
+	-rm -rf $(DESTDIR)/$(bindir)/$(GCCPY_INSTALL_NAME)$(exeext)
+
+python.install-info: 
+python.install-pdf: 
+python.install-man:
+
+# Stage hooks:
+# The main makefile has already created stage?/python.
+
+python.stage1: stage1-start
+	-mv python/*$(objext) stage1/python
+python.stage2: stage2-start
+	-mv python/*$(objext) stage2/python
+python.stage3: stage3-start
+	-mv python/*$(objext) stage3/python
+python.stage4: stage4-start
+	-mv python/*$(objext) stage4/python
+python.stageprofile: stageprofile-start
+	-mv python/*$(objext) stageprofile/python
+python.stagefeedback: stagefeedback-start
+	-mv python/*$(objext) stagefeedback/python
+
+config.status: python/config-lang.in

@@ -1,0 +1,20 @@
+%%
+%% This file will generate fast loadable files and documentation
+%% driver files from the doc files in this package when run through
+%% LaTeX or TeX.
+%%
+\def\batchfile{cclicenses.ins}
+\input docstrip.tex
+\keepsilent
+
+\generateFile{cclicenses.sty}{f}{\from{cclicenses.dtx}{code}}
+
+\Msg{************************************************************}
+\Msg{*}
+\Msg{* To finish the installation you have to move cclicenses.sty}
+\Msg{* into a directory searched by TeX.}
+\Msg{*}
+\Msg{* Happy TeXing!}
+\Msg{*}
+\Msg{************************************************************}
+\endinput
