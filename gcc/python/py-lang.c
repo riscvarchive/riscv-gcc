@@ -134,13 +134,10 @@ gpy_langhook_handle_option (size_t scode, const char *arg, int value, int kind,
 static
 bool gpy_langhook_post_options (const char **pfilename ATTRIBUTE_UNUSED)
 {
-  debug ("post options!\n");
   gcc_assert (num_in_fnames > 0);
 
   if (flag_excess_precision_cmdline == EXCESS_PRECISION_DEFAULT)
-    {
-      flag_excess_precision_cmdline = EXCESS_PRECISION_STANDARD;
-    }
+    flag_excess_precision_cmdline = EXCESS_PRECISION_STANDARD;
 
   /* Returning false means that the backend should be used.  */
   return false;

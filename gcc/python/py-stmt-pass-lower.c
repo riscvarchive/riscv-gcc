@@ -1,18 +1,18 @@
 /* This file is part of GCC.
 
-GCC is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 3, or (at your option) any later
-version.
+   GCC is free software; you can redistribute it and/or modify it under
+   the terms of the GNU General Public License as published by the Free
+   Software Foundation; either version 3, or (at your option) any later
+   version.
 
-GCC is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-for more details.
+   GCC is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+   for more details.
 
-You should have received a copy of the GNU General Public License
-along with GCC; see the file COPYING3.  If not see
-<http://www.gnu.org/licenses/>.  */
+   You should have received a copy of the GNU General Public License
+   along with GCC; see the file COPYING3.  If not see
+   <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
 #include "system.h"
@@ -47,6 +47,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "py-builtins.h"
 
 static VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t *, VEC(gpydot,gc) *);
+
 static tree gpy_stmt_pass_lower_get_module_type (const char *, gpy_hash_tab_t *);
 static void gpy_stmt_pass_lower_gen_toplevl_context (tree, tree, gpy_hash_tab_t *);
 static tree gpy_stmt_pass_lower_gen_main (tree);
@@ -54,12 +55,12 @@ static tree gpy_stmt_pass_lower_toplevel_functor (gpy_dot_tree_t *, gpy_hash_tab
 static VEC(tree,gc) * gpy_stmt_pass_lower_class_decl (gpy_hash_tab_t *, gpy_dot_tree_t *);
 
 tree gpy_stmt_pass_lower_gen_concat_identifier (const char * s1,
-                                                const char * s2)
+						const char * s2)
 {
   size_t s1len = strlen (s1);
   size_t s2len = strlen (s2);
   size_t tlen = s1len + s2len;
-
+  
   char buffer[tlen+3]; 
   char * p;
   for (p = buffer; *s1 != '\0'; ++s1)
@@ -74,7 +75,7 @@ tree gpy_stmt_pass_lower_gen_concat_identifier (const char * s1,
       ++p;
     }
   *p = '\0';
-
+  
   debug ("buffer = <%s>!\n", buffer);
   return get_identifier (buffer);
 }
@@ -82,50 +83,35 @@ tree gpy_stmt_pass_lower_gen_concat_identifier (const char * s1,
 static
 char * gpy_stmt_pass_lower_get_last_token (const char * s)
 {
-  const char * i; int n = 0, nn = 0;
-  for (i = s; *i != '\0'; ++i)
+  int size = strlen (s);
+  int len = size;
+  int dot = -1;
+  const char * i;
+
+  for (i = s + len; len >= 0; i = s+(len--))
     {
       if (*i == '.')
-	n++;
-    }
-
-  int len = 0; bool last = false;
-  for (i = s; *i != '\0'; ++i)
-    {
-      if (last)
 	{
-	  len++;
-	  continue;
+	  dot = len;
+	  break;
 	}
-
-      if (*i == '.')
-	nn++;
-
-      if (n == nn)
-	last = true;
     }
 
-  char buffer [len+1];
-  char * p = buffer;
-  nn = 0; last = false;
-  for (i = s; *i != '\0'; ++i)
+  gcc_assert (dot >= 0);
+  int buffer_len = size - dot;
+  char buffer [buffer_len];
+
+  int idx = dot;
+  int idy = 0;
+  for (idx = dot + 2; idx < size; ++idx)
     {
-      if (last)
-	{
-	  *p = *i;
-	  ++p;
-	  continue;
-	}
-
-      if (*i == '.')
-	nn++;
-
-      if (n == nn)
-	last = true;
+      char c = s[idx];
+      buffer [idy] = c;
+      idy++;
     }
-  p = '\0';
-
+  buffer [idy] = '\0';
   debug ("buffer = <%s>!\n", buffer);
+
   return xstrdup (buffer);
 }
 
@@ -217,7 +203,7 @@ tree gpy_stmt_decl_lower_modify (gpy_dot_tree_t * decl, tree * cblock,
 
     The lhs should be a DOT_CHAIN of identifiers!
     So we just iterate over them and deal with it as such!
-   */
+  */
 
   if (DOT_TYPE (lhs) == D_IDENTIFIER)
     {
@@ -236,7 +222,7 @@ tree gpy_stmt_decl_lower_modify (gpy_dot_tree_t * decl, tree * cblock,
 	  if (!gpy_ctx_push_decl (addr, DOT_IDENTIFIER_POINTER (lhs), 
 				  current_context))
 	    error ("error pushing decl <%s>!\n", IDENTIFIER_POINTER (DECL_NAME (addr)));
-    }
+	}
       gcc_assert (addr != error_mark_node);
       
       tree addr_rhs_tree = gpy_stmt_decl_lower_expr (rhs, cblock, context);
@@ -436,8 +422,6 @@ void gpy_stmt_pass_lower_print_stmt (gpy_dot_tree_t * decl,
 tree gpy_stmt_pass_lower_toplevel_functor (gpy_dot_tree_t * decl,
 					   gpy_hash_tab_t * modules)
 {
-  tree block = alloc_stmt_list ();
-
   gpy_hash_tab_t toplvl, topnxt;
   gpy_dd_hash_init_table (&toplvl);
   gpy_dd_hash_init_table (&topnxt);
@@ -450,7 +434,7 @@ tree gpy_stmt_pass_lower_toplevel_functor (gpy_dot_tree_t * decl,
                                           /* 
                                              handle function parameters
                                              ... 
-                                           */
+					  */
                                           NULL_TREE);
   tree concat_ident = gpy_stmt_pass_lower_gen_concat_identifier ("main.main",
                                                                  DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)));
@@ -459,11 +443,15 @@ tree gpy_stmt_pass_lower_toplevel_functor (gpy_dot_tree_t * decl,
   DECL_EXTERNAL (fndecl) = 0;
   TREE_PUBLIC (fndecl) = 1;
   TREE_STATIC (fndecl) = 1;
+  TREE_USED (fndecl) = 1;
+  DECL_ARTIFICIAL (fndecl) = 1;
   tree arglist = NULL_TREE;
 
-  tree result_decl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
-                                 integer_type_node);
-  DECL_RESULT (fndecl) = result_decl;
+  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
+			     integer_type_node);
+  DECL_ARTIFICIAL(resdecl) = 1;
+  DECL_CONTEXT(resdecl) = fndecl;
+  DECL_RESULT(fndecl) = resdecl;
 
   SET_DECL_ASSEMBLER_NAME (fndecl, concat_ident);
 
@@ -478,6 +466,10 @@ tree gpy_stmt_pass_lower_toplevel_functor (gpy_dot_tree_t * decl,
 
   TREE_USED (self_parm_decl) = 1;
   DECL_ARGUMENTS (fndecl) = arglist;
+
+  DECL_INITIAL (fndecl) = make_node (BLOCK);
+  TREE_USED(DECL_INITIAL(fndecl)) = 1;
+  tree block = DECL_INITIAL (fndecl);
 
   tree main_addr_space = build_decl (BUILTINS_LOCATION, VAR_DECL, create_tmp_var_name ("A"),
 				     gpy_object_type_ptr);
@@ -503,38 +495,38 @@ tree gpy_stmt_pass_lower_toplevel_functor (gpy_dot_tree_t * decl,
   
   DECL_INITIAL(fndecl) = block;
   gpy_dot_tree_t * idtx = DOT_rhs_TT (decl);
-   /*
+  /*
     Iterating over the DOT IL to lower/generate the GENERIC code
     required to compile the stmts and decls
-   */
+  */
   do {
     if (DOT_T_FIELD (idtx) ==  D_D_EXPR)
-        {
-          // append to stmt list as this goes into the module initilizer...
-          gpy_stmt_decl_lower_expr (idtx, &block, toplevl_context);
-          continue;
-        }
+      {
+	// append to stmt list as this goes into the module initilizer...
+	gpy_stmt_decl_lower_expr (idtx, &block, toplevl_context);
+	continue;
+      }
 
-      switch (DOT_TYPE (idtx))
-        {
-        default:
-          fatal_error ("unhandled dot tree code <%i>!\n", DOT_TYPE (idtx));
-          break;
-        }
+    switch (DOT_TYPE (idtx))
+      {
+      default:
+	fatal_error ("unhandled dot tree code <%i>!\n", DOT_TYPE (idtx));
+	break;
+      }
   } while ((idtx = DOT_CHAIN (idtx)));
 
-  tree bl = make_node(BLOCK);
-  BLOCK_SUPERCONTEXT(bl) = fndecl;
-  DECL_INITIAL(fndecl) = bl;
-  BLOCK_VARS(bl) = NULL_TREE;
-  TREE_USED(bl) = 1;
-  tree bind = build3(BIND_EXPR, void_type_node, BLOCK_VARS(bl),
-                     NULL_TREE, bl);
-  TREE_SIDE_EFFECTS(bind) = 1;
+  tree bl = make_node (BLOCK);
+  BLOCK_SUPERCONTEXT (bl) = fndecl;
+  DECL_INITIAL (fndecl) = bl;
+  BLOCK_VARS (bl) = NULL_TREE;
+  TREE_USED (bl) = 1;
+  tree bind = build3 (BIND_EXPR, void_type_node, BLOCK_VARS(bl),
+		      NULL_TREE, bl);
+  TREE_SIDE_EFFECTS (bind) = 1;
   
-  BIND_EXPR_BODY(bind) = block;
+  BIND_EXPR_BODY (bind) = block;
   block = bind;
-  DECL_SAVED_TREE(fndecl) = block;
+  DECL_SAVED_TREE (fndecl) = block;
 
   gimplify_function_tree (fndecl);
 
@@ -658,9 +650,6 @@ tree gpy_stmt_pass_lower_class_attrib_method (gpy_dot_tree_t * attrib,
   block = bind;
   DECL_SAVED_TREE (fndecl) = block;
 
-  debug_tree (fndecl);
-  printf ("------------------------\n");
-
   gimplify_function_tree (fndecl);
    
   cgraph_add_new_function (fndecl, false);
@@ -706,8 +695,16 @@ VEC(tree,gc) * gpy_stmt_pass_lower_class_decl (gpy_hash_tab_t * modules,
   DECL_EXTERNAL (fndecl) = 0;
   TREE_PUBLIC (fndecl) = 1;
   TREE_STATIC (fndecl) = 1;
-
+  TREE_USED (fndecl) = 1;
+  DECL_ARTIFICIAL (fndecl) = 1;
+  
   tree arglist = NULL_TREE;
+  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
+			     integer_type_node);
+  DECL_ARTIFICIAL(resdecl) = 1;
+  DECL_CONTEXT(resdecl) = fndecl;
+  DECL_RESULT(fndecl) = resdecl;
+
 
   SET_DECL_ASSEMBLER_NAME (fndecl, class_attrib_ident);
   tree self_parm_decl = build_decl (BUILTINS_LOCATION, PARM_DECL,
@@ -797,12 +794,15 @@ VEC(tree,gc) * gpy_stmt_pass_lower_class_decl (gpy_hash_tab_t * modules,
   block = bind;
   DECL_SAVED_TREE(fndecl) = block;
 
+  debug_tree (fndecl);
+
   gimplify_function_tree (fndecl);
 
   cgraph_add_new_function (fndecl, false);
   cgraph_finalize_function (fndecl, true);
 
-  VEC_safe_push (tree,gc,retval,fndecl);
+  VEC_safe_push (tree, gc, retval, fndecl);
+  VEC_safe_push (tree, gc, retval, class_type);
 
   return retval;
 }
@@ -871,7 +871,7 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
   /*
     Iterating over the DOT IL to lower/generate the GENERIC code
     required to compile the stmts and decls
-   */
+  */
   for (idx = 0; VEC_iterate (gpydot, decls, idx, idtx); ++idx)
     {
       if (DOT_T_FIELD (idtx) ==  D_D_EXPR)
@@ -916,27 +916,31 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 	    
 	    tree ctype = VEC_pop (tree, class_decls);
 	    GPY_VEC_stmts_append (tree, retval, class_decls);
-
+	    
 	    VEC(tree,gc) * attribs = VEC_alloc (tree,gc,0);
-	    tree field = TYPE_FIELDS (ctype);
-	    for (; field != NULL; field = DECL_CHAIN (field))
+	    debug_tree (ctype);
+	    tree field = NULL_TREE;
+	    
+	    for (field = TYPE_FIELDS (ctype); field != NULL; field = DECL_CHAIN (field))
 	      {
 		gcc_assert (TREE_CODE (field) == FIELD_DECL);
 		const char * attrib_ident = IDENTIFIER_POINTER (DECL_NAME (field));
-
+		
 		tree t = build_decl (BUILTINS_LOCATION ,VAR_DECL, create_tmp_var_name ("P"),
 				     gpy_attrib_type_ptr);
-		VEC_safe_push (tree,gc,attribs,t);
+		VEC_safe_push (tree, gc, attribs, t);
 		tree addr = NULL_TREE;
-
+		 
 		// work out addr...
-		int idy; tree i = NULL_TREE;
-		for (idy = 0; VEC_iterate (tree,class_decls,idy,i); ++idy)
+		int idy;
+		tree i = NULL_TREE;
+		for (idy = 0; VEC_iterate (tree, class_decls, idy, i); ++idy)
 		  {
 		    gcc_assert (TREE_CODE (i) == FUNCTION_DECL);
 		    const char * name = IDENTIFIER_POINTER (DECL_NAME (i));
-
+		    
 		    char * last = gpy_stmt_pass_lower_get_last_token (name);
+		    debug ("attrib_ident = <%s>, last = <%s>!\n", attrib_ident, last);
 		    if (!strcmp (attrib_ident, last))
 		      {
 			addr = i;
@@ -1072,8 +1076,8 @@ tree gpy_stmt_pass_lower_gen_main (tree module)
 /* nessecary for now. */
 /*
   class foobar:
-    def __init__ (self):
-      self.x = 1
+  def __init__ (self):
+  self.x = 1
 
   x = foobar ()
   print x.x
@@ -1081,7 +1085,7 @@ tree gpy_stmt_pass_lower_gen_main (tree module)
   print x.x
 
   def test ():
-    print x+5
+  print x+5
 
   test ()
 */
@@ -1100,80 +1104,80 @@ tree gpy_stmt_pass_lower_gen_main (tree module)
   In the end code generated will look as so:
 
   struct main.main.__attrib__ {
-    gpy_object_t * foobar;
-    gpy_object_t * x;
-    gpy_object_t * test;
-    gpy_object_t * main.__init__;
+  gpy_object_t * foobar;
+  gpy_object_t * x;
+  gpy_object_t * test;
+  gpy_object_t * main.__init__;
   }
 
   struct main.foobar.__attrib__ {
-    gpy_object_t * x;
-    gpy_object_t * pre.__init__;
-    gpy_object_t * foobar.__init__;
+  gpy_object_t * x;
+  gpy_object_t * pre.__init__;
+  gpy_object_t * foobar.__init__;
   }
 
   void main.foobar.pre.__init__ (gpy_object_t * self,
-                                 gpy_object_t * __self__ )
+  gpy_object_t * __self__ )
   {
-    NOP;
+  NOP;
   }
 
   void main.foobar.__init__ (gpy_object_t * self,
-                             gpy_object_t * __self__)
+  gpy_object_t * __self__)
   {
-    unsigned char * T.9 = attrib_ref_flat (self, "x");
-    T.10 = fold_int (1);
-    T.9 = (unsigned char *) &T.10;
+  unsigned char * T.9 = attrib_ref_flat (self, "x");
+  T.10 = fold_int (1);
+  T.9 = (unsigned char *) &T.10;
   }
 
   void main.test (gpy_object_t *self)
   {
-    gpy_object_t * T.8 = fold_int (5);
-    gpy_object_t * T.7 = bin_op (ADD, self->x, T.8);
-    fold_print (1, T.7);
+  gpy_object_t * T.8 = fold_int (5);
+  gpy_object_t * T.7 = bin_op (ADD, self->x, T.8);
+  fold_print (1, T.7);
   }
 
   void main.__mod_init__ (gpy_object_t *self)
   {
-    self->x = fold_call (self->foobar, 0);
+  self->x = fold_call (self->foobar, 0);
 
-    unsigned char * T.1 = attrib_ref_flat (self->x, "x");
-    gpy_object_t * T.2 = *((gpy_object_t **)T.1);
-    fold_print (1, T.2);
+  unsigned char * T.1 = attrib_ref_flat (self->x, "x");
+  gpy_object_t * T.2 = *((gpy_object_t **)T.1);
+  fold_print (1, T.2);
     
-    unsigned char * T.3 = attrib_ref_flat (self->x, "x");
-    T.4 = fold_int (5);
-    T.3 = (unsigned char *) &(T.4);
+  unsigned char * T.3 = attrib_ref_flat (self->x, "x");
+  T.4 = fold_int (5);
+  T.3 = (unsigned char *) &(T.4);
 
-    unsigned char * T.5 = attrib_ref_flat (self->x, "x");
-    gpy_object_t * T.6 = *((gpy_object_t **) T.5);
-    fold_pint (1, T.6);
+  unsigned char * T.5 = attrib_ref_flat (self->x, "x");
+  gpy_object_t * T.6 = *((gpy_object_t **) T.5);
+  fold_pint (1, T.6);
 
-    fold_call (self->test, 0);
+  fold_call (self->test, 0);
   }
 
   int main (int argc, char *argv[])
   {
-    init_runtime ();
+  init_runtime ();
 
-    gpy_object_t toplevel;
-    struct main.main __toplevel_attribs;
+  gpy_object_t toplevel;
+  struct main.main __toplevel_attribs;
 
-    __toplevel_attibs.test = fold_func_decl (&main.test, 0);
+  __toplevel_attibs.test = fold_func_decl (&main.test, 0);
 
-    __toplevel_attribs.foobar = fold_class_decl ("x", NULL, offset,
-                                                 "__init__", &main.foobar.__init__, (1), offset,
-                                                 "pre.__init__", &main.foobar.pre.__init__, (0), offset);
+  __toplevel_attribs.foobar = fold_class_decl ("x", NULL, offset,
+  "__init__", &main.foobar.__init__, (1), offset,
+  "pre.__init__", &main.foobar.pre.__init__, (0), offset);
 						 
-    gpy_rr_fold_init_class (&toplevel, &__toplevel_attribs, member_offsets);
+  gpy_rr_fold_init_class (&toplevel, &__toplevel_attribs, member_offsets);
 
-    main.__init__ (&toplevel);
+  main.__init__ (&toplevel);
 
-    cleanup ();
+  cleanup ();
 
-    return 0;
+  return 0;
   }
- */
+*/
 VEC(tree,gc) * gpy_stmt_pass_lower (VEC(tree,gc) *modules,
                                     VEC(gpydot,gc) *decls)
 {
