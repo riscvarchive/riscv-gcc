@@ -17,6 +17,7 @@ runtime/obj-class.c \
 runtime/obj-functor.c \
 runtime/obj-integer.c \
 runtime/obj-list.c \
+runtime/py-main.c \
 runtime/py-runtime.c \
 runtime/py-type-utils.c \
 runtime/py-routines.c \

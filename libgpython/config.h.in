@@ -172,10 +172,6 @@
 /* Define to 1 if you have the `vfprintf' function. */
 #undef HAVE_VFPRINTF
 
-/* Define to 1 or 0, depending whether the compiler supports simple visibility
-   declarations. */
-#undef HAVE_VISIBILITY
-
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF
 

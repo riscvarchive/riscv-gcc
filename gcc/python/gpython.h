@@ -18,6 +18,7 @@ along with GCC; see the file COPYING3.  If not see
 #define __GPY_H_
 
 extern bool GPY_OPT_dump_dot;
+extern char * GPY_current_module_name;
 
 extern int gpy_enable_dump (const char *);
 extern void gpy_set_prefix (const char *);

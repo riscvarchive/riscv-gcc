@@ -292,8 +292,8 @@ tree gpy_builtin_get_fold_call (bool lex, tree decl, tree globls,
   tree fntype = build_function_type_list (gpy_object_type_ptr,
 					  integer_type_node,
 					  gpy_object_type_ptr,
-					  gpy_object_type_ptr
-					  );
+					  gpy_object_type_ptr,
+					  NULL_TREE);
   tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
 			    get_identifier ("gpy_rr_fold_call"),
 			    fntype);

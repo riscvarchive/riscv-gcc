@@ -44,6 +44,8 @@
 #include "py-tree.h"
 
 bool GPY_OPT_dump_dot = false;
+char * GPY_current_module_name = NULL;
+
 /* Language-dependent contents of a type.  */
 struct GTY(()) lang_type {
   char dummy;
@@ -116,14 +118,10 @@ gpy_langhook_handle_option (size_t scode, const char *arg, int value, int kind,
   switch (code)
     {
     case OPT_fpy_dump_dot:
-      {
-        GPY_OPT_dump_dot = true;
-        debug("whoop handle option!\n");
-      }
+      GPY_OPT_dump_dot = true;
       break;
 
     default:
-      /* Just return 1 to indicate that the option is valid.  */
       break;
     }
 
@@ -147,21 +145,18 @@ static
 void gpy_langhook_parse_file (void)
 {
   unsigned int idx;
-  debug ("parse file!\n");
-
   for (idx = 0; idx < num_in_fnames; ++idx)
     {
       const char * t = in_fnames[idx];
-      debug ("<%i> input = <%s>!\n", idx, t);
+      GPY_current_module_name = xstrdup (t);
       gpy_lex_parse (t);
     }
 }
 
 static tree
-gpy_langhook_type_for_size( unsigned int bits ATTRIBUTE_UNUSED,
-                            int unsignedp ATTRIBUTE_UNUSED )
+gpy_langhook_type_for_size (unsigned int bits ATTRIBUTE_UNUSED,
+                            int unsignedp ATTRIBUTE_UNUSED)
 {
-  debug ("type for size!\n");
   return NULL;
 }
 
@@ -169,7 +164,6 @@ static
 tree gpy_langhook_type_for_mode (enum machine_mode mode ATTRIBUTE_UNUSED,
                                  int unsignedp ATTRIBUTE_UNUSED)
 {
-  debug ("type for mode!\n");
   return NULL_TREE;
 }
 
@@ -177,21 +171,18 @@ tree gpy_langhook_type_for_mode (enum machine_mode mode ATTRIBUTE_UNUSED,
 static
 tree gpy_langhook_builtin_function (tree decl ATTRIBUTE_UNUSED)
 {
-  debug ("builtin function!\n");
   return decl;
 }
 
 static
 bool gpy_langhook_global_bindings_p (void)
 {
-  debug ("global bindings!\n");
   return 1;
 }
 
 static
 tree gpy_langhook_pushdecl (tree decl ATTRIBUTE_UNUSED)
 {
-  debug ("pushdecl!\n");
   gcc_unreachable ();
   return NULL;
 }
@@ -199,7 +190,6 @@ tree gpy_langhook_pushdecl (tree decl ATTRIBUTE_UNUSED)
 static
 tree gpy_langhook_getdecls (void)
 {
-  debug ("get decls!\n");
   return NULL;
 }
 
@@ -211,9 +201,9 @@ void gpy_langhook_write_globals (void)
 }
 
 static int
-gpy_langhook_gimplify_expr( tree *expr_p ATTRIBUTE_UNUSED,
+gpy_langhook_gimplify_expr (tree *expr_p ATTRIBUTE_UNUSED,
                             gimple_seq *pre_p ATTRIBUTE_UNUSED,
-                            gimple_seq *post_p ATTRIBUTE_UNUSED )
+                            gimple_seq *post_p ATTRIBUTE_UNUSED)
 {
   // debug_tree( (*expr_p) );
   enum tree_code code = TREE_CODE (*expr_p);
@@ -233,8 +223,8 @@ gpy_langhook_gimplify_expr( tree *expr_p ATTRIBUTE_UNUSED,
 }
 
 /* Functions called directly by the generic backend.  */
-tree convert( tree type ATTRIBUTE_UNUSED,
-              tree expr ATTRIBUTE_UNUSED )
+tree convert (tree type ATTRIBUTE_UNUSED,
+              tree expr ATTRIBUTE_UNUSED)
 {
   gcc_unreachable ();
 }

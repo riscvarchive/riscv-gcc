@@ -68,7 +68,8 @@ tree gpy_stmt_pass_lower_gen_concat_identifier (const char * s1,
       *p = *s1;
       ++p;
     }
-  *p = '.'; p++;
+  *p = '.';
+  p++;
   for (; *s2 != '\0'; ++s2)
     {
       *p = *s2;
@@ -76,7 +77,7 @@ tree gpy_stmt_pass_lower_gen_concat_identifier (const char * s1,
     }
   *p = '\0';
   
-  debug ("buffer = <%s>!\n", buffer);
+  //debug ("buffer = <%s>!\n", buffer);
   return get_identifier (buffer);
 }
 
@@ -106,12 +107,12 @@ char * gpy_stmt_pass_lower_get_last_token (const char * s)
   for (idx = dot + 2; idx < size; ++idx)
     {
       char c = s[idx];
-      buffer [idy] = c;
+      buffer[idy] = c;
       idy++;
     }
-  buffer [idy] = '\0';
-  debug ("buffer = <%s>!\n", buffer);
+  buffer[idy] = '\0';
 
+  //debug ("buffer = <%s>!\n", buffer);
   return xstrdup (buffer);
 }
 
@@ -777,7 +778,6 @@ VEC(tree,gc) * gpy_stmt_pass_lower_class_decl (gpy_hash_tab_t * modules,
 	  break;
 	}
     }
-  VEC_safe_push (tree,gc,retval,class_type);
 
   tree bl = make_node (BLOCK);
   BLOCK_SUPERCONTEXT (bl) = fndecl;
@@ -923,6 +923,10 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 	    
 	    for (field = TYPE_FIELDS (ctype); field != NULL; field = DECL_CHAIN (field))
 	      {
+		const char * name = IDENTIFIER_POINTER (DECL_NAME (field));
+		printf ("name = <%s>!\n", name);
+
+		/*
 		gcc_assert (TREE_CODE (field) == FIELD_DECL);
 		const char * attrib_ident = IDENTIFIER_POINTER (DECL_NAME (field));
 		
@@ -943,6 +947,7 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 		    debug ("attrib_ident = <%s>, last = <%s>!\n", attrib_ident, last);
 		    if (!strcmp (attrib_ident, last))
 		      {
+			printf ("whoop!\n");
 			addr = i;
 			break;
 		      }
@@ -955,6 +960,7 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 						  DECL_FIELD_OFFSET (field));
 		append_to_statement_list (build2 (MODIFY_EXPR, gpy_attrib_type_ptr,t,e),
 					  &block);
+		*/
 	      }
 	    tree a = build_decl (BUILTINS_LOCATION, VAR_DECL, create_tmp_var_name ("P"),
 				 gpy_attrib_type_ptr_ptr);
