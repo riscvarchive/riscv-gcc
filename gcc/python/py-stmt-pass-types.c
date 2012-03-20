@@ -116,7 +116,6 @@ void gpy_stmt_pass_process_class_attrib_method_suite (gpy_dot_tree_t * suite, gp
 
 			  case D_ATTRIB_REF:
 			    {
-			      debug ("found attribute reference!\n");
 			      gpy_dot_tree_t * root = target->opa.t;
 			      if (DOT_TYPE (root) == D_IDENTIFIER)
 				{
@@ -154,9 +153,6 @@ void gpy_stmt_pass_process_class_attrib_method_suite (gpy_dot_tree_t * suite, gp
 static
 tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
 {
-  debug ("generating type info for class <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)));
-  const char * class_ident = DOT_IDENTIFIER_POINTER (DOT_FIELD (decl));
-
   gpy_dot_tree_t * suite = decl->opa.t;
   gpy_dot_tree_t * dot = suite;
 
@@ -199,8 +195,6 @@ tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
 			case D_IDENTIFIER:
 			  {
 			    gpy_hashval_t h = gpy_dd_hash_string (DOT_IDENTIFIER_POINTER (target));
-			    debug ("found expr decl <%s>!\n", DOT_IDENTIFIER_POINTER (target));
-
 			    void ** e = gpy_dd_hash_insert (h, target, &class_module);
 			    gcc_assert (!e);
 			  }
@@ -221,7 +215,11 @@ tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
 	break;
       }
   } while ((dot = DOT_CHAIN (dot)));
-  
+
+  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string ("__field_init__"),
+				   dot_build_identifier ("__field_init__"),
+				   &class_module)
+	      );
   tree type = NULL_TREE;
   if (class_module.length > 0)
     {
@@ -271,8 +269,9 @@ tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
       free (class_module.array);
 
       layout_type (class_module_struct);
-      tree name = gpy_stmt_pass_lower_gen_concat_identifier ("main", class_ident);
-
+      tree name = GPY_stmt_pass_lower_gen_concat_identifier (GPY_current_module_name,
+							     DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
+							     );
       tree type_decl = build_decl (BUILTINS_LOCATION, TYPE_DECL, name,
 				   class_module_struct);
       DECL_ARTIFICIAL (type_decl) = 1;
@@ -342,7 +341,6 @@ VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) * decls)
 			case D_IDENTIFIER:
 			  {
 			    gpy_hashval_t h = gpy_dd_hash_string (DOT_IDENTIFIER_POINTER (target));
-			    debug ("found expr decl <%s>!\n", DOT_IDENTIFIER_POINTER (target));
 			    void ** e = gpy_dd_hash_insert (h, target, &main_module);
 			    gcc_assert (!e);
 			  }
@@ -364,10 +362,14 @@ VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) * decls)
 	    }
 	}
     }
-  
+
+  char * module_entry = gpy_stmt_pass_lower_gen_concat (GPY_current_module_name, "__main_start__");
+  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (module_entry),
+				   dot_build_identifier (module_entry),
+				   &main_module)
+	      );
   if (main_module.length > 0)
     {
-      const char * ident = "main.main";
       tree field = NULL_TREE, last_field = NULL_TREE;
       tree main_module_struct = make_node (RECORD_TYPE);
 
@@ -414,7 +416,7 @@ VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) * decls)
       free (main_module.array);
 
       layout_type (main_module_struct);
-      tree name = get_identifier (ident);
+      tree name = get_identifier (GPY_current_module_name);
       tree type_decl = build_decl (BUILTINS_LOCATION, TYPE_DECL, name,
 				   main_module_struct);
       DECL_ARTIFICIAL (type_decl) = 1;

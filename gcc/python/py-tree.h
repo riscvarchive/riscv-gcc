@@ -38,7 +38,10 @@ extern tree gpy_stmt_decl_lower_scalar (gpy_dot_tree_t *, tree *);
 extern tree gpy_stmt_decl_lower_modify (gpy_dot_tree_t *, tree *, VEC(gpy_ctx_t,gc) *);
 extern tree gpy_stmt_decl_lower_binary_op (gpy_dot_tree_t *, tree *, VEC(gpy_ctx_t,gc) *);
 extern tree gpy_stmt_pass_lower_functor (gpy_dot_tree_t *, gpy_hash_tab_t *);
-extern tree gpy_stmt_pass_lower_gen_concat_identifier (const char *, const char *);
+
+extern char * gpy_stmt_pass_lower_gen_concat (const char *, const char *);
+#define GPY_stmt_pass_lower_gen_concat_identifier(X_, Y_)	\
+  get_identifier (gpy_stmt_pass_lower_gen_concat (X_, Y_))
 
 extern gpy_dot_tree_t * gpy_stmt_process_AST_Align (gpy_dot_tree_t **);
 extern void gpy_types_init (void);
