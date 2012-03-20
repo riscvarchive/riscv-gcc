@@ -1,8 +1,3 @@
-m4trace:aclocal.m4:987: -1- m4_include([m4/libtool.m4])
-m4trace:aclocal.m4:988: -1- m4_include([m4/ltoptions.m4])
-m4trace:aclocal.m4:989: -1- m4_include([m4/ltsugar.m4])
-m4trace:aclocal.m4:990: -1- m4_include([m4/ltversion.m4])
-m4trace:aclocal.m4:991: -1- m4_include([m4/lt~obsolete.m4])
 m4trace:configure.ac:25: -1- AC_INIT([GNU Python Runtime Library], [0.1], [], [libgpython])
 m4trace:configure.ac:25: -1- m4_pattern_forbid([^_?A[CHUM]_])
 m4trace:configure.ac:25: -1- m4_pattern_forbid([_AC_])
@@ -245,14 +240,14 @@ m4trace:configure.ac:40: -1- AC_SUBST([ac_ct_CXX])
 m4trace:configure.ac:40: -1- AC_SUBST_TRACE([ac_ct_CXX])
 m4trace:configure.ac:40: -1- m4_pattern_allow([^ac_ct_CXX$])
 m4trace:configure.ac:44: -1- _m4_warn([obsolete], [The macro `AC_LIBTOOL_DLOPEN' is obsolete.
-You should run autoupdate.], [m4/ltoptions.m4:111: AC_LIBTOOL_DLOPEN is expanded from...
+You should run autoupdate.], [aclocal.m4:7965: AC_LIBTOOL_DLOPEN is expanded from...
 configure.ac:44: the top level])
 m4trace:configure.ac:44: -1- _m4_warn([obsolete], [AC_LIBTOOL_DLOPEN: Remove this warning and the call to _LT_SET_OPTION when you
-put the `dlopen' option into LT_INIT's first parameter.], [m4/ltoptions.m4:111: AC_LIBTOOL_DLOPEN is expanded from...
+put the `dlopen' option into LT_INIT's first parameter.], [aclocal.m4:7965: AC_LIBTOOL_DLOPEN is expanded from...
 configure.ac:44: the top level])
 m4trace:configure.ac:45: -1- AC_PROG_LIBTOOL
 m4trace:configure.ac:45: -1- _m4_warn([obsolete], [The macro `AC_PROG_LIBTOOL' is obsolete.
-You should run autoupdate.], [m4/libtool.m4:107: AC_PROG_LIBTOOL is expanded from...
+You should run autoupdate.], [aclocal.m4:128: AC_PROG_LIBTOOL is expanded from...
 configure.ac:45: the top level])
 m4trace:configure.ac:45: -1- LT_INIT
 m4trace:configure.ac:45: -1- m4_pattern_forbid([^_?LT_[A-Z_]+$])
@@ -408,7 +403,7 @@ m4trace:configure.ac:45: -1- AC_SUBST([LD])
 m4trace:configure.ac:45: -1- AC_SUBST_TRACE([LD])
 m4trace:configure.ac:45: -1- m4_pattern_allow([^LD$])
 m4trace:configure.ac:46: -1- _m4_warn([obsolete], [The macro `AM_PROG_LIBTOOL' is obsolete.
-You should run autoupdate.], [m4/libtool.m4:108: AM_PROG_LIBTOOL is expanded from...
+You should run autoupdate.], [aclocal.m4:129: AM_PROG_LIBTOOL is expanded from...
 configure.ac:46: the top level])
 m4trace:configure.ac:46: -1- LT_INIT
 m4trace:configure.ac:48: -1- AM_PROG_CC_C_O

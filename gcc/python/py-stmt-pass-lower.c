@@ -106,10 +106,12 @@ tree gpy_stmt_pass_lower_toplevl_functor_decl (gpy_dot_tree_t * decl)
 
   tree block = alloc_stmt_list ();
   DECL_INITIAL (fndecl) = block;
+  TREE_USED(DECL_INITIAL(fndecl)) = 1;
 
   /*
     lower the function suite here and append all initilization
    */
+  append_to_statement_list(build_empty_stmt (BUILTINS_LOCATION), &block);
 
   tree bl = make_node (BLOCK);
   BLOCK_SUPERCONTEXT (bl) = fndecl;
@@ -148,11 +150,10 @@ tree gpy_stmt_pass_lower_class_method_attrib (gpy_dot_tree_t * decl,
   debug ("lowering class attribute <%s> to <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)),
 	 IDENTIFIER_POINTER (ident));
 
-  DECL_EXTERNAL (fndecl) = 0;
-  TREE_PUBLIC (fndecl) = 1;
   TREE_STATIC (fndecl) = 1;
   TREE_USED (fndecl) = 1;
   DECL_ARTIFICIAL (fndecl) = 1;
+  TREE_PUBLIC (fndecl) = 1;
   
   tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
 			     void_type_node);
@@ -164,10 +165,12 @@ tree gpy_stmt_pass_lower_class_method_attrib (gpy_dot_tree_t * decl,
 
   tree block = alloc_stmt_list ();
   DECL_INITIAL (fndecl) = block;
+  TREE_USED(DECL_INITIAL(fndecl)) = 1;
 
   /*
     lower the function suite here and append all initilization
    */
+  append_to_statement_list(build_empty_stmt (BUILTINS_LOCATION), &block);
 
   tree bl = make_node (BLOCK);
   BLOCK_SUPERCONTEXT (bl) = fndecl;
@@ -182,9 +185,15 @@ tree gpy_stmt_pass_lower_class_method_attrib (gpy_dot_tree_t * decl,
   block = bind;
   DECL_SAVED_TREE (fndecl) = block;
 
+  if (DECL_STRUCT_FUNCTION (fndecl) == NULL)
+    push_struct_function (fndecl);
+  else
+    push_cfun (DECL_STRUCT_FUNCTION (fndecl));
+
   gimplify_function_tree (fndecl);
    
   cgraph_add_new_function (fndecl, false);
+  cgraph_mark_needed_node (cgraph_get_node (fndecl));
   cgraph_finalize_function (fndecl, true);
 
   return fndecl;
@@ -208,11 +217,10 @@ VEC(tree,gc) * gpy_stmt_pass_lower_toplevl_class_decl (gpy_dot_tree_t * decl)
   debug ("lowering toplevel class <%s> to <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)),
 	 IDENTIFIER_POINTER (ident));
 
-  DECL_EXTERNAL (fndecl) = 0;
-  TREE_PUBLIC (fndecl) = 1;
   TREE_STATIC (fndecl) = 1;
   TREE_USED (fndecl) = 1;
   DECL_ARTIFICIAL (fndecl) = 1;
+  TREE_PUBLIC (fndecl) = 1;
   
   tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
 			     void_type_node);
@@ -224,6 +232,9 @@ VEC(tree,gc) * gpy_stmt_pass_lower_toplevl_class_decl (gpy_dot_tree_t * decl)
 
   tree block = alloc_stmt_list ();
   DECL_INITIAL (fndecl) = block;
+  TREE_USED(DECL_INITIAL(fndecl)) = 1;
+
+  append_to_statement_list(build_empty_stmt (BUILTINS_LOCATION), &block);
 
   /*
     lower the function suite here and append all initilization
@@ -260,9 +271,15 @@ VEC(tree,gc) * gpy_stmt_pass_lower_toplevl_class_decl (gpy_dot_tree_t * decl)
   block = bind;
   DECL_SAVED_TREE (fndecl) = block;
 
+  if (DECL_STRUCT_FUNCTION (fndecl) == NULL)
+    push_struct_function (fndecl);
+  else
+    push_cfun (DECL_STRUCT_FUNCTION (fndecl));
+
   gimplify_function_tree (fndecl);
    
   cgraph_add_new_function (fndecl, false);
+  cgraph_mark_needed_node (cgraph_get_node (fndecl));
   cgraph_finalize_function (fndecl, true);
 
   VEC_safe_push (tree, gc, lowered_decls, fndecl);

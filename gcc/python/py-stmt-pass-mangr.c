@@ -280,7 +280,12 @@ void gpy_stmt_write_globals (void)
     dump_end(TDI_tu, tu_stream);
 
   wrapup_global_declarations (global_vec, global_vec_len);
+
+  debug ("whoop!\n");
+  cgraph_finalize_compilation_unit ();
+  debug ("whoop2!\n");
+
   check_global_declarations (global_vec, global_vec_len);
   emit_debug_global_declarations (global_vec, global_vec_len);
-  cgraph_finalize_compilation_unit ();
+
 }
