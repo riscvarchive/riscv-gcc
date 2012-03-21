@@ -144,6 +144,9 @@ bool gpy_langhook_post_options (const char **pfilename ATTRIBUTE_UNUSED)
 static
 void gpy_langhook_parse_file (void)
 {
+  /* Add the initial line map */
+  linemap_add (line_table, LC_ENTER, 0, in_fnames[0], 1);
+
   unsigned int idx;
   for (idx = 0; idx < num_in_fnames; ++idx)
     {

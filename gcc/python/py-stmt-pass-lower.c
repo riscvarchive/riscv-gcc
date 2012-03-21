@@ -90,46 +90,45 @@ tree gpy_stmt_pass_lower_toplevl_functor_decl (gpy_dot_tree_t * decl)
   debug ("lowering toplevel function <%s> to <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)),
 	 IDENTIFIER_POINTER (ident));
 
-  DECL_EXTERNAL (fndecl) = 0;
-  TREE_PUBLIC (fndecl) = 1;
   TREE_STATIC (fndecl) = 1;
-  TREE_USED (fndecl) = 1;
-  DECL_ARTIFICIAL (fndecl) = 1;
+  TREE_PUBLIC (fndecl) = 1;
   
-  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
-			     void_type_node);
-  DECL_ARTIFICIAL (resdecl) = 1;
+  /* Define the return type (represented by RESULT_DECL) for the main functin */
+  tree resdecl = build_decl(BUILTINS_LOCATION, RESULT_DECL,
+			    NULL_TREE, TREE_TYPE(fntype));
   DECL_CONTEXT (resdecl) = fndecl;
+  DECL_ARTIFICIAL (resdecl) = true;
+  DECL_IGNORED_P (resdecl) = true;
+
   DECL_RESULT (fndecl) = resdecl;
 
-  SET_DECL_ASSEMBLER_NAME (fndecl, ident);
-
-  tree block = alloc_stmt_list ();
+  /* This is usually used for debugging purpose. this is currently unused */
+  tree block = build_block (NULL_TREE, NULL_TREE, NULL_TREE, NULL_TREE);
   DECL_INITIAL (fndecl) = block;
-  TREE_USED(DECL_INITIAL(fndecl)) = 1;
+
+  tree stmts = alloc_stmt_list ();
 
   /*
     lower the function suite here and append all initilization
    */
-  append_to_statement_list(build_empty_stmt (BUILTINS_LOCATION), &block);
+  tree declare_vars = resdecl;
 
-  tree bl = make_node (BLOCK);
-  BLOCK_SUPERCONTEXT (bl) = fndecl;
+  tree bind = NULL_TREE;
+  tree bl = build_block (declare_vars, NULL_TREE, fndecl, NULL_TREE);
   DECL_INITIAL (fndecl) = bl;
-  BLOCK_VARS (bl) = NULL_TREE;
   TREE_USED (bl) = 1;
-  tree bind = build3 (BIND_EXPR, void_type_node, BLOCK_VARS(bl),
-		      NULL_TREE, bl);
-  TREE_SIDE_EFFECTS(bind) = 1;
-  
-  BIND_EXPR_BODY (bind) = block;
-  block = bind;
-  DECL_SAVED_TREE (fndecl) = block;
 
+  bind = build3 (BIND_EXPR, void_type_node, BLOCK_VARS(bl),
+		 NULL_TREE, bl);
+  TREE_SIDE_EFFECTS (bind) = 1;
+
+  /* Finalize the main function */
+  BIND_EXPR_BODY(bind) = stmts;
+  stmts = bind;
+  DECL_SAVED_TREE (fndecl) = stmts;
+  
   gimplify_function_tree (fndecl);
-   
-  cgraph_add_new_function (fndecl, false);
-  cgraph_finalize_function (fndecl, true);
+  cgraph_finalize_function (fndecl, false);
 
   return fndecl;
 }
@@ -151,50 +150,43 @@ tree gpy_stmt_pass_lower_class_method_attrib (gpy_dot_tree_t * decl,
 	 IDENTIFIER_POINTER (ident));
 
   TREE_STATIC (fndecl) = 1;
-  TREE_USED (fndecl) = 1;
-  DECL_ARTIFICIAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
   
-  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
-			     void_type_node);
-  DECL_ARTIFICIAL (resdecl) = 1;
+  /* Define the return type (represented by RESULT_DECL) for the main functin */
+  tree resdecl = build_decl(BUILTINS_LOCATION, RESULT_DECL,
+			    NULL_TREE, TREE_TYPE(fntype));
   DECL_CONTEXT (resdecl) = fndecl;
+  DECL_ARTIFICIAL (resdecl) = true;
+  DECL_IGNORED_P (resdecl) = true;
+
   DECL_RESULT (fndecl) = resdecl;
 
-  SET_DECL_ASSEMBLER_NAME (fndecl, ident);
-
-  tree block = alloc_stmt_list ();
+  /* This is usually used for debugging purpose. this is currently unused */
+  tree block = build_block (NULL_TREE, NULL_TREE, NULL_TREE, NULL_TREE);
   DECL_INITIAL (fndecl) = block;
-  TREE_USED(DECL_INITIAL(fndecl)) = 1;
 
+  tree stmts = alloc_stmt_list ();
   /*
     lower the function suite here and append all initilization
    */
-  append_to_statement_list(build_empty_stmt (BUILTINS_LOCATION), &block);
+  tree declare_vars = resdecl;
 
-  tree bl = make_node (BLOCK);
-  BLOCK_SUPERCONTEXT (bl) = fndecl;
+  tree bind = NULL_TREE;
+  tree bl = build_block (declare_vars, NULL_TREE, fndecl, NULL_TREE);
   DECL_INITIAL (fndecl) = bl;
-  BLOCK_VARS (bl) = NULL_TREE;
   TREE_USED (bl) = 1;
-  tree bind = build3 (BIND_EXPR, void_type_node, BLOCK_VARS(bl),
-		      NULL_TREE, bl);
-  TREE_SIDE_EFFECTS(bind) = 1;
+
+  bind = build3 (BIND_EXPR, void_type_node, BLOCK_VARS(bl),
+		 NULL_TREE, bl);
+  TREE_SIDE_EFFECTS (bind) = 1;
+
+  /* Finalize the main function */
+  BIND_EXPR_BODY(bind) = stmts;
+  stmts = bind;
+  DECL_SAVED_TREE (fndecl) = stmts;
   
-  BIND_EXPR_BODY (bind) = block;
-  block = bind;
-  DECL_SAVED_TREE (fndecl) = block;
-
-  if (DECL_STRUCT_FUNCTION (fndecl) == NULL)
-    push_struct_function (fndecl);
-  else
-    push_cfun (DECL_STRUCT_FUNCTION (fndecl));
-
   gimplify_function_tree (fndecl);
-   
-  cgraph_add_new_function (fndecl, false);
-  cgraph_mark_needed_node (cgraph_get_node (fndecl));
-  cgraph_finalize_function (fndecl, true);
+  cgraph_finalize_function (fndecl, false);
 
   return fndecl;
 }
@@ -212,29 +204,27 @@ VEC(tree,gc) * gpy_stmt_pass_lower_toplevl_class_decl (gpy_dot_tree_t * decl)
 							  );
   ident = GPY_stmt_pass_lower_gen_concat_identifier (IDENTIFIER_POINTER (ident),
 						     "__field_init__");
-
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL, ident, fntype);
   debug ("lowering toplevel class <%s> to <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)),
 	 IDENTIFIER_POINTER (ident));
 
   TREE_STATIC (fndecl) = 1;
-  TREE_USED (fndecl) = 1;
-  DECL_ARTIFICIAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
   
-  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
-			     void_type_node);
-  DECL_ARTIFICIAL (resdecl) = 1;
+  /* Define the return type (represented by RESULT_DECL) for the main functin */
+  tree resdecl = build_decl(BUILTINS_LOCATION, RESULT_DECL,
+			    NULL_TREE, TREE_TYPE(fntype));
   DECL_CONTEXT (resdecl) = fndecl;
+  DECL_ARTIFICIAL (resdecl) = true;
+  DECL_IGNORED_P (resdecl) = true;
+
   DECL_RESULT (fndecl) = resdecl;
 
-  SET_DECL_ASSEMBLER_NAME (fndecl, ident);
-
-  tree block = alloc_stmt_list ();
+  /* This is usually used for debugging purpose. this is currently unused */
+  tree block = build_block (NULL_TREE, NULL_TREE, NULL_TREE, NULL_TREE);
   DECL_INITIAL (fndecl) = block;
-  TREE_USED(DECL_INITIAL(fndecl)) = 1;
 
-  append_to_statement_list(build_empty_stmt (BUILTINS_LOCATION), &block);
+  tree stmts = alloc_stmt_list ();
 
   /*
     lower the function suite here and append all initilization
@@ -258,29 +248,24 @@ VEC(tree,gc) * gpy_stmt_pass_lower_toplevl_class_decl (gpy_dot_tree_t * decl)
       }
   } while ((node = DOT_CHAIN (node)));
   
-  tree bl = make_node (BLOCK);
-  BLOCK_SUPERCONTEXT (bl) = fndecl;
+  tree declare_vars = resdecl;
+
+  tree bind = NULL_TREE;
+  tree bl = build_block (declare_vars, NULL_TREE, fndecl, NULL_TREE);
   DECL_INITIAL (fndecl) = bl;
-  BLOCK_VARS (bl) = NULL_TREE;
   TREE_USED (bl) = 1;
-  tree bind = build3 (BIND_EXPR, void_type_node, BLOCK_VARS(bl),
-		      NULL_TREE, bl);
-  TREE_SIDE_EFFECTS(bind) = 1;
+
+  bind = build3 (BIND_EXPR, void_type_node, BLOCK_VARS(bl),
+		 NULL_TREE, bl);
+  TREE_SIDE_EFFECTS (bind) = 1;
+
+  /* Finalize the main function */
+  BIND_EXPR_BODY(bind) = stmts;
+  stmts = bind;
+  DECL_SAVED_TREE (fndecl) = stmts;
   
-  BIND_EXPR_BODY (bind) = block;
-  block = bind;
-  DECL_SAVED_TREE (fndecl) = block;
-
-  if (DECL_STRUCT_FUNCTION (fndecl) == NULL)
-    push_struct_function (fndecl);
-  else
-    push_cfun (DECL_STRUCT_FUNCTION (fndecl));
-
   gimplify_function_tree (fndecl);
-   
-  cgraph_add_new_function (fndecl, false);
-  cgraph_mark_needed_node (cgraph_get_node (fndecl));
-  cgraph_finalize_function (fndecl, true);
+  cgraph_finalize_function (fndecl, false);
 
   VEC_safe_push (tree, gc, lowered_decls, fndecl);
 
@@ -336,7 +321,8 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 VEC(tree,gc) * gpy_stmt_pass_lower (VEC(tree,gc) *modules,
                                     VEC(gpydot,gc) *decls)
 {
-  VEC(tree,gc) * retval = NULL;
+  VEC(tree,gc) * retval = VEC_alloc (tree, gc, 0);
+
   gpy_hash_tab_t module_ctx;
   gpy_dd_hash_init_table (&module_ctx);
 
