@@ -54,6 +54,10 @@ static DOT_stmt_pass__ gpy_stmt_pass_mngr[] =
   &gpy_stmt_pass_const_fold,   /* Constant folding */
   &gpy_stmt_pass_translate,    /* translate/fix the python code for lowering */
   &gpy_stmt_pass_pretty_print, /* pretty print if -fdump-dump-dot */
+  /*
+    Potential to add in more passes here ... just hook the function pointer in here
+    and it shall be called and you gain access to the current state of the dot AST.
+   */
   NULL                         /* sentinal */
 };
 
@@ -62,7 +66,6 @@ void gpy_stmt_process_decl (gpy_dot_tree_t * const dot)
 {
   /* Push the declaration! */
   VEC_safe_push (gpydot, gc, gpy_decls, dot);
-  debug ("decl <%p> was pushed!\n", (void*)dot);
 }
 
 /**
@@ -269,7 +272,6 @@ void gpy_stmt_write_globals (void)
   for (idx = 0; VEC_iterate (tree, globals, idx, itx); ++idx)
     {
       debug_tree (itx);
-
       if (tu_stream)
 	dump_node (itx, 0, tu_stream);
 
@@ -280,12 +282,7 @@ void gpy_stmt_write_globals (void)
     dump_end(TDI_tu, tu_stream);
 
   wrapup_global_declarations (global_vec, global_vec_len);
-
-  debug ("whoop!\n");
   cgraph_finalize_compilation_unit ();
-  debug ("whoop2!\n");
-
   check_global_declarations (global_vec, global_vec_len);
   emit_debug_global_declarations (global_vec, global_vec_len);
-
 }
