@@ -95,24 +95,31 @@ tree gpy_stmt_pass_lower_get_module_type (const char * s,
 }
 
 static
-void gpy_stmt_pass_lower_gen_toplevl_context (tree module, tree param_decl,
-                                              gpy_hash_tab_t * context)
+void gpy_stmt_pass_lower_type_to_context (tree type, gpy_hash_tab_t * tbl,
+					  tree stack, tree stack_pointer,
+					  tree *block)
 {
-  if (module == error_mark_node)
+  if (type == error_mark_node)
     return;
   else
     {
-      tree field = TYPE_FIELDS (module);
+      tree field = TYPE_FIELDS (type);
+      tree type_size = TYPE_SIZE (type);
+      /* Use the runtime library to check and extend the stack by type_size if nesecary */
+      append_to_statement_list (gpy_builtin_get_extend_stack (stack, type_size), block);
+
       do {
 	gcc_assert (TREE_CODE (field) == FIELD_DECL);
 
-	debug ("generating refernence to <%s>!\n", IDENTIFIER_POINTER(DECL_NAME (field)));
+	debug ("generating stack offset <%s>!\n", IDENTIFIER_POINTER(DECL_NAME (field)));
 	gpy_hashval_t h = gpy_dd_hash_string (IDENTIFIER_POINTER(DECL_NAME (field)));
+
+	tree ref = 
+
 	tree ref = build3 (COMPONENT_REF, TREE_TYPE (field), build_fold_indirect_ref(param_decl),
 			   field, NULL_TREE);
-	void ** e = gpy_dd_hash_insert (h, ref, context);
-	if (e)
-	  fatal_error ("problem inserting component reference into context!\n");
+
+	gcc_assert (!gpy_dd_hash_insert (h, ref, tbl));
       } while ((field = DECL_CHAIN (field)));
     }
 }
@@ -193,32 +200,6 @@ tree gpy_stmt_decl_lower_modify (gpy_dot_tree_t * decl, tree * cblock,
       append_to_statement_list (gpy_builtin_get_incr_ref_call (addr), cblock);
       retval = addr_rhs_tree;
     }
-  else if (DOT_TYPE (lhs) == D_ATTRIB_REF)
-    {
-      tree type = build_pointer_type (unsigned_char_type_node);
-      tree addr_1 = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("T"),
-				type);
-      gpy_dot_tree_t * xlhs = DOT_lhs_TT (lhs);
-      gpy_dot_tree_t * xrhs = DOT_rhs_TT (lhs);
-      
-      gcc_assert (DOT_TYPE (xlhs) == D_IDENTIFIER);
-      gcc_assert (DOT_TYPE (xrhs) == D_IDENTIFIER);
-
-      tree lhs_tree = gpy_stmt_decl_lower_expr (xlhs, cblock, context);
-      char * attrib_ident = DOT_IDENTIFIER_POINTER (xrhs);
-      tree attrib_ref = build2 (MODIFY_EXPR, type, addr_1,
-				gpy_builtin_get_attrib_ref_flat (lhs_tree, attrib_ident));
-      append_to_statement_list (attrib_ref, cblock);
-
-      tree addr_rhs_tree = gpy_stmt_decl_lower_expr (rhs, cblock, context);
-
-      tree addr_2 = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("T"),
-				type);
-      tree cast = build2 (MODIFY_EXPR, type, addr_2, build_fold_addr_expr (addr_rhs_tree));
-      append_to_statement_list (cast, cblock);
-      append_to_statement_list (build2 (MODIFY_EXPR, type, addr_1, addr_2), cblock);
-      retval = addr_rhs_tree;
-    }
   else
     fatal_error ("unhandled modify target type!\n");
   
@@ -276,54 +257,6 @@ tree gpy_stmt_decl_lower_expr (gpy_dot_tree_t * decl, tree * cblock,
 
     case D_IDENTIFIER:
       retval = gpy_ctx_lookup_decl (context, DOT_IDENTIFIER_POINTER (decl));
-      break;
-
-      /* this isnt fully correct but will do untill attribute calls and recursive'ness matters */ 
-    case D_ATTRIB_REF:
-      {
-	tree type = build_pointer_type (unsigned_char_type_node);
-	tree addr_1 = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("T"),
-				  type);
-	gpy_dot_tree_t * lhs = DOT_lhs_TT (decl);
-	gpy_dot_tree_t * rhs = DOT_rhs_TT (decl);
-
-	gcc_assert (DOT_TYPE (lhs) == D_IDENTIFIER);
-	gcc_assert (DOT_TYPE (rhs) == D_IDENTIFIER);
-
-	tree lhs_tree = gpy_stmt_decl_lower_expr (lhs, cblock, context);
-	char * attrib_ident = DOT_IDENTIFIER_POINTER (rhs);
-	tree attrib_ref = build2 (MODIFY_EXPR, type, addr_1,
-				  gpy_builtin_get_attrib_ref_flat (lhs_tree, attrib_ident));
-	append_to_statement_list (attrib_ref, cblock);
-
-	tree ptr_type = build_pointer_type (gpy_object_type_ptr);
-	tree addr_2 = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("T"),
-				  ptr_type);
-	tree cast = build2 (MODIFY_EXPR, ptr_type, addr_2, addr_1);
-	append_to_statement_list (cast, cblock);
-
-	tree addr_3 = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("T"),
-				  gpy_object_type_ptr);
-	tree def_ref = build2 (MODIFY_EXPR, gpy_object_type_ptr, addr_3,
-			       build_fold_indirect_ref (addr_2));
-	append_to_statement_list (def_ref, cblock);
-	retval = addr_3;
-      }
-      break;
-
-    case D_CALL_EXPR:
-      {
-	tree addr = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("T"),
-				gpy_object_type_ptr);
-	debug ("looking up call within context <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_lhs_TT (decl)));
-	tree call_name_decl =  gpy_ctx_lookup_decl (context, DOT_IDENTIFIER_POINTER (DOT_lhs_TT (decl)));
-
-	tree eval = gpy_builtin_get_fold_call (true, call_name_decl,
-					       gpy_ctx_lookup_decl (context, "__globls__"),
-					       DOT_IDENTIFIER_POINTER (DOT_lhs_TT (decl)));
-	tree tmp = build2 (MODIFY_EXPR, gpy_object_type_ptr, addr, eval);
-	retval = tmp;
-      }
       break;
 
     default:
@@ -629,20 +562,51 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 
   tree stmts = alloc_stmt_list ();
 
-  gpy_stmt_pass_lower_gen_toplevl_context (main_init_module, self_parm_decl,
-                                           &toplvl);
-
   VEC(gpy_ctx_t,gc) * toplevl_context = VEC_alloc (gpy_ctx_t, gc, 0);
   VEC_safe_push (gpy_ctx_t, gc, toplevl_context, &toplvl);
   VEC_safe_push (gpy_ctx_t, gc, toplevl_context, &topnxt);
 
-  tree globls = build_decl (BUILTINS_LOCATION, VAR_DECL, get_identifier ("__globls__"),
-			    gpy_vector_type_ptr);
-  tree gm = build2 (MODIFY_EXPR, gpy_vector_type_ptr, globls,
-		    gpy_builtin_setup_globls_namespace (self_parm_decl));
-  append_to_statement_list (gm, &stmts);
-  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string ("__globls__"),
-				   globls, &toplvl));
+  tree runtime_globl_stack = build_decl (BUILTINS_LOCATION, VAR_DECL,
+					 get_identifier (GPY_GLOBL_STACK_id),
+					 gpy_object_type_ptr_ptr);
+  TREE_STATIC (runtime_globl_stack) = 0;
+  TREE_EXTERN (runtime_globl_stack) = 1;
+  TREE_PUBLIC (runtime_globl_stack) = 1;
+  TREE_USED (runtime_globl_stack) = 1;
+  DECL_ARTIFICIAL (runtime_globl_stack) = 1;
+
+  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack);
+
+  tree runtime_globl_stack_data_offset = build_decl (BUILTINS_LOCATION, VAR_DECL,
+						     get_identifier (GPY_GLOBL_STACK_DATA_OFFSET_id),
+						     long_integer_type_node);
+  TREE_STATIC (runtime_globl_stack_data_offset) = 0;
+  TREE_EXTERN (runtime_globl_stack_data_offset) = 1;
+  TREE_PUBLIC (runtime_globl_stack_data_offset) = 1;
+  TREE_USED (runtime_globl_stack_data_offset) = 1;
+  DECL_ARTIFICIAL (runtime_globl_stack_data_offset) = 1;
+
+  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_data_offset);
+
+  tree runtime_globl_stack_pointer = build_decl (BUILTINS_LOCATION, VAR_DECL,
+						 get_identifier (GPY_GLOBL_STACK_POINTER_id),
+						 long_integer_type_node);
+  TREE_STATIC (runtime_globl_stack_stack_pointer) = 0;
+  TREE_EXTERN (runtime_globl_stack_stack_pointer) = 1;
+  TREE_PUBLIC (runtime_globl_stack_stack_pointer) = 1;
+  TREE_USED (runtime_globl_stack_stack_pointer) = 1;
+  DECL_ARTIFICIAL (runtime_globl_stack_stack_pointer) = 1;
+
+  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_stack_pointer);
+
+  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_id),
+				   runtime_globl_stack, &toplvl));
+  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_DATA_OFFSET_id),
+				   runtime_globl_stack_data_offset, &toplvl));
+  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_POINTER_id),
+				   runtime_globl_stack_data_offset, &toplvl));
+  gpy_stmt_pass_lower_type_to_context (main_init_module, &topnxt, runtime_globl_stack,
+				       runtime_globl_stack_pointer);
   int idx;
   gpy_dot_tree_t * idtx = NULL_DOT;
   /*
@@ -668,7 +632,7 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 
         case D_STRUCT_METHOD:
           {
-	    tree t = gpy_stmt_pass_lower_toplevl_functor_decl (idtx);
+	    tree t = gpy_stmt_pass_lower_toplevl_functor_decl (idtx, toplevl_context, modules);
 	    VEC_safe_push (tree, gc, lowered_decls, t);
 
 	    tree fold_functor = gpy_builtin_get_fold_functor_decl (DOT_IDENTIFIER_POINTER (DOT_FIELD (idtx)),
@@ -681,8 +645,11 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 
 	case D_STRUCT_CLASS:
 	  {
-	    VEC(tree,gc) * lowered_class_decls = gpy_stmt_pass_lower_toplevl_class_decl (idtx);
+	    VEC(tree,gc) * lowered_class_decls = gpy_stmt_pass_lower_toplevl_class_decl (idtx,
+											 toplevl_context,
+											 modules);
 	    GPY_VEC_stmts_append (tree, lowered_decls, lowered_class_decls);
+	    
 	  }
 	  break;
 

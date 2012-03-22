@@ -29,8 +29,29 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/objects.h>
 
 gpy_vector_t * gpy_primitives;
+gpy_object_t ** gpy_globl_runtime_stack;
 
-extern gpy_object_t * gpy_rr_fold_functor_decl (const char *, unsigned char *);
+#define GPY_STACK_SIZE_OFFSET 0
+#define GPY_STACK_DATA_OFFSET SIZEOF_LONG
+
+/*
+  Runtime stack is the globl state for globals access which
+  will have read write lock eventually for concurrency
+
+  Format of the stack will be
+
+  -----------------
+   stack-size (long)
+  -----------------
+   stack-header-offset (long)
+  -----------------
+   .....
+
+
+   We will need to add more meta data to this for exceptions and calls etc
+*/
+long gpy_runtime_stack_header_size = sizeof (long)*2;
+long gpy_runtime_stack_data_offset = gpy_runtime_stack_header_size;
 
 void gpy_rr_init_primitives (void)
 {
@@ -43,9 +64,30 @@ void gpy_rr_init_primitives (void)
   gpy_obj_class_mod_init (gpy_primitives);
 }
 
+void gpy_rr_init_runtime_stack (void)
+{
+  gpy_globl_runtime_stack = (gpy_object_t **)
+    gpy_malloc (gpy_runtime_stack_header_size);
+
+  *(gpy_globl_runtime_stack + GPY_STACK_SIZE_OFFSET) = (long)
+    gpy_runtime_stack_header_size;
+  *(gpy_globl_runtime_stack + GPY_STACK_DATA_OFFSET) = (long)
+    gpy_runtime_stack_header_offset;
+}
+
+void gpy_rr_extend_runtime_stack (long size)
+{
+  long curr_stack_size = (long) *(gpy_globl_runtime_stack + GPY_STACK_SIZE_OFFSET);
+
+  gpy_globl_runtime_stack = (gpy_object_t **)
+    gpy_realloc (gpy_globl_runtime_stack, curr_stack_size + size);
+  *(gpy_globl_runtime_stack + GPY_STACK_SIZE_OFFSET) = curr_stack_size + size;
+}
+
 void gpy_rr_init_runtime (void)
 {
   gpy_rr_init_primitives ();
+  gpy_rr_init_runtime_stack ();
 }
 
 void gpy_rr_cleanup_final (void)
@@ -207,44 +249,6 @@ gpy_object_t * gpy_rr_fold_integer (const int x)
   return retval;
 }
 
-gpy_vector_t * gpy_rr_setup_globls_namespace (void *self)
-{
-  gpy_vector_t * retval = (gpy_vector_t *)
-    gpy_malloc (sizeof (gpy_vector_t));
-  gpy_vec_init (retval);
-
-  gpy_object_state_t * state = (gpy_object_state_t *)
-    gpy_malloc (sizeof(gpy_object_state_t));
-  state->identifier = gpy_strdup ("main");
-  state->ref_count = 0;
-  state->state = self;
-  state->definition = NULL;
-
-  gpy_object_t * obj = (gpy_object_t *)
-    gpy_malloc (sizeof(gpy_object_t));
-  obj->T = TYPE_OBJECT_DECL;
-  obj->o.object_state = state;
-
-  gpy_vec_push (retval, obj);
-
-  return retval;
-}
-
-void gpy_rr_setup_globals (gpy_vector_t * globls, int n, ...)
-{
-  gpy_assert (n == globls->length);
-  va_list vl;
-  va_start (vl, n);
-
-  int idx;
-  for (idx = 0; idx < n; ++idx)
-    {
-      gpy_object_t ** addr = va_arg (vl, gpy_object_t **);
-      *addr = (gpy_object_t *) globls->vector[idx];
-    }
-  va_end (vl);
-}
-
 inline
 void * gpy_rr_get_object_state (gpy_object_t * o)
 {
@@ -308,113 +312,6 @@ void gpy_rr_decr_ref_count (gpy_object_t * x1)
   debug ("decrementing ref count on <%p>:<%i> to <%i>!\n",
 	 (void*) x, x->ref_count, (x->ref_count - 1));
   x->ref_count--;
-}
-
-/* dont handle arguments yet ... */
-gpy_object_t * gpy_rr_fold_call (bool lexical,
-				 gpy_object_t * decl,
-				 gpy_vector_t * globls,
-				 const char * identifier
-				 /* args */)
-{
-  /*
-    if lexical means its defined in the code else its not and
-    were looking up an internal type like int (), staticmethod ()
-    etc ...
-  */
-  gpy_assert (lexical);
-  gpy_object_t * retval = NULL_OBJECT;
-
-  gpy_assert (decl->T == TYPE_OBJECT_DECL);
-  gpy_typedef_t * type = decl->o.object_state->definition;
-  gpy_assert (type->members_defintion);
-
-  if (type->tp_call)
-    {
-      retval = type->tp_call (globls, decl, NULL);
-    }
-  else
-    fatal ("name <%s> is not callable!\n", identifier);
-    
-  return retval;
-}
-
-unsigned char * gpy_rr_eval_attrib_reference (gpy_object_t * base,
-					      const char * attrib)
-{
-  unsigned char * retval = NULL;
-  gpy_assert (base->T == TYPE_OBJECT_STATE);
-
-  gpy_typedef_t * type = base->o.object_state->definition;
-  gpy_assert (type->members_defintion);
-
-  struct gpy_object_attrib_t ** members = type->members_defintion;
-  gpy_object_state_t * objs = base->o.object_state;
-
-  int idx, offset = -1;
-  for (idx = 0; members[idx] != NULL; ++idx)
-    {
-      struct gpy_object_attrib_t * it = members[idx];
-      if (!strcmp (attrib, it->identifier))
-	{
-	  offset = it->offset;
-	  unsigned char * state = (unsigned char *)objs->state;
-	  retval = state + offset;
-	  break;
-	}
-    }
-  gpy_assert (retval);
-  return retval;
-}
-
-gpy_object_t * gpy_rr_eval_attrib_reference_call (gpy_vector_t * globls,
-						  gpy_object_t * base,
-						  const char * attrib)
-{
-  gpy_object_t * retval = NULL_OBJECT;
-
-  gpy_assert (base->T == TYPE_OBJECT_STATE);
-  gpy_typedef_t * type = base->o.object_state->definition;
-  gpy_assert (type->members_defintion);
-
-  struct gpy_object_attrib_t ** members = type->members_defintion;
-  gpy_object_state_t * objs = base->o.object_state;
-
-  unsigned char * att = NULL;
-  int idx, offset = -1;
-  for (idx = 0; members[idx] != NULL; ++idx)
-    {
-      struct gpy_object_attrib_t * it = members[idx];
-      if (!strcmp (attrib, it->identifier))
-	{
-	  offset = it->offset;
-	  unsigned char * state = (unsigned char *)objs->state;
-	  att = state + offset;
-	  break;
-	}
-    }
-
-  if (att)
-    {
-      gpy_object_t * attrib_ref = *((gpy_object_t **)attrib);
-      gpy_vec_push (globls, base);
-
-      gpy_object_state_t * at_state = attrib_ref->o.object_state;
-      gpy_typedef_t * at_type = at_state->definition;
-
-      if (at_type->tp_call)
-	{
-	  retval = at_type->tp_call (globls, attrib_ref, NULL);
-	}
-      else
-	fatal ("name <%s>:<%s> is not callable!\n", type->identifier,
-	       attrib);
-      gpy_vec_pop (globls);
-    }
-  else
-    fatal ("%s instance has no attribute '%s'!\n", type->identifier, attrib);
-
-  return retval;
 }
 
 gpy_object_t * gpy_rr_eval_expression (gpy_object_t * x1,
