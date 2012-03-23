@@ -30,11 +30,11 @@ along with GCC; see the file COPYING3.  If not see
 
 unsigned char * __GPY_RR_GLOBL_STACK;
 
-#define GPY_STACK_SIZE_OFFSET       0
-#define GPY_STACK_DATA_OFFSET       SIZEOF_INT
-#define GPY_STACK_PRIMTIVES_OFFSET  SIZEOF_INT * 2
-#define GPY_STACK_CALL_OFFSET       GPY_STACK_PRIMTIVES_OFFSET + sizeof (gpy_vector_t)
-
+#define GPY_STACK_SIZE_OFFSET        0
+#define GPY_STACK_DATA_OFFSET        SIZEOF_INT
+#define GPY_STACK_PRIMTIVES_OFFSET   SIZEOF_INT * 2
+#define GPY_STACK_CALL_OFFSET        GPY_STACK_PRIMTIVES_OFFSET + sizeof (gpy_vector_t)
+#define GPY_STACK_RETURN_ADDR_OFFSET GPY_STACK_CALL_OFFSET + sizeof (gpy_vector_t)
 /*
   Runtime stack is the globl state for globals access which
   will have read write lock eventually for concurrency
@@ -50,6 +50,8 @@ unsigned char * __GPY_RR_GLOBL_STACK;
   -----------------
    stack trace (gpy_vector_t)
   ----------------
+   return address (gpy_object_t *)
+  ----------------
    possible more runtime data...
   ----------------
    vector of globl symbols (gpy_object_t **)
@@ -57,11 +59,15 @@ unsigned char * __GPY_RR_GLOBL_STACK;
 
    We will need to add more meta data to this for exceptions and calls etc
 */
-int __GPY_GLOBL_RR_STACK_SIZE = (sizeof (int) * 2) + (sizeof (gpy_vector_t) * 2);
+int __GPY_GLOBL_RR_STACK_SIZE =
+    (sizeof (int) * 2)
+  + (sizeof (gpy_vector_t) * 2)
+  +  sizeof (gpy_object_t *);
 int __GPY_GLOBL_RR_STACK_DATA_OFFSET = __GPY_GLOBL_RR_STACK_SIZE;
 
 gpy_vector_t * __GPY_GLOBL_CALL_STACK;
 gpy_vector_t * __GPY_GLOBL_PRIMTIVES;
+gpy_object_t * __GPY_GLOBL_RETURN_ADDR;
 gpy_object_t ** __GPY_GLOBL_RR_STACK_POINTER;
 
 void gpy_rr_init_primitives (void)
@@ -73,47 +79,60 @@ void gpy_rr_init_primitives (void)
 
 void gpy_rr_init_runtime_stack (void)
 {
-  __GPY_RR_GLOBL_STACK = (unsigned char *)
-    gpy_malloc (__GPY_GLOBL_RR_STACK_SIZE);
+  __GPY_RR_GLOBL_STACK = gpy_malloc (__GPY_GLOBL_RR_STACK_SIZE);
+  
+  unsigned char * pointer = __GPY_GLOBL_RR_STACK;
+  *((int *) pointer) = __GPY_GLOBL_RR_STACK_SIZE;
+  pointer += sizeof (int);
+  *((int *) pointer) = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
+  pointer += sizeof (int);
 
-  unsigned char * ptr = __GPY_RR_GLOBL_STACK;
-  int * int_slot = ((int*) ptr);
-  int_slot[0] = __GPY_GLOBL_RR_STACK_SIZE;
-  int_slot[1] = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
+  gpy_vector_t vec = *((gpy_vector_t *) pointer);
+  gpy_vec_init (&vec);
+  __GPY_GLOBL_PRIMITIVES = &vec;
+  
+  pointer += sizeof (gpy_vector_t);
 
-  ptr += sizeof (int) * 2;
+  vec = *((gpy_vector_t *) pointer);
+  gpy_vec_init (&vec);
+  __GPY_GLOBL_CALL_STACK = &vec;
 
-  gpy_vector_t * vec_slot = ((gpy_vector_t *) ptr);
-  gpy_vec_init (&vec_slot[0]);
-  gpy_vec_init (&vec_slot[1]);
+  pointer += sizeof (gpy_vector_t);
+  *((gpy_object_t **) pointer) = NULL;
+  __GPY_GLOBL_RETURN_ADDR = *((gpy_object_t **) pointer);
 
-  __GPY_GLOBL_PRIMTIVES = &vec_slot[0];
-  __GPY_GLOBL_CALL_STACK = &vec_slot[1];
-
-  ptr += sizeof (gpy_vector_t) * 2;
-  __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t**)ptr;
+  pointer += sizeof (gpy_object_t *);
+  __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t **) pointer;
 }
 
 /* remember to update the stack pointer's and the stack size */
 void gpy_rr_extend_runtime_stack (int size)
 {
   __GPY_GLOBL_RR_STACK_SIZE += size;
-  __GPY_GLOBL_RR_STACK = (unsigned char *)
-    gpy_realloc (__GPY_GLOBL_RR_STACK, __GPY_GLOBL_RR_STACK_SIZE);
+  __GPY_GLOBL_RR_STACK = gpy_realloc (__GPY_GLOBL_RR_STACK,
+				      __GPY_GLOBL_RR_STACK_SIZE);
+  unsigned char * pointer = __GPY_GLOBL_RR_STACK;
+  *((int *) pointer) = __GPY_GLOBL_RR_STACK_SIZE;
+  pointer += sizeof (int);
+  *((int *) pointer) = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
+  pointer += sizeof (int);
+
+  gpy_vector_t vec = *((gpy_vector_t *) pointer);
+  gpy_vec_init (&vec);
+  __GPY_GLOBL_PRIMITIVES = &vec;
   
-  unsigned char * ptr = __GPY_RR_GLOBL_STACK;
-  int * int_slot = ((int*) ptr);
-  int_slot[0] = __GPY_GLOBL_RR_STACK_SIZE;
-  int_slot[1] = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
+  pointer += sizeof (gpy_vector_t);
 
-  ptr += sizeof (int) * 2;
+  vec = *((gpy_vector_t *) pointer);
+  gpy_vec_init (&vec);
+  __GPY_GLOBL_CALL_STACK = &vec;
 
-  gpy_vector_t * vec_slot = ((gpy_vector_t *) ptr);
-  __GPY_GLOBL_PRIMTIVES = &vec_slot[0];
-  __GPY_GLOBL_CALL_STACK = &vec_slot[1];
+  pointer += sizeof (gpy_vector_t);
+  *((gpy_object_t **) pointer) = NULL;
+  __GPY_GLOBL_RETURN_ADDR = *((gpy_object_t **) pointer);
 
-  ptr += sizeof (gpy_vector_t) * 2;
-  __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t**)ptr;
+  pointer += sizeof (gpy_object_t *);
+  __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t **) pointer;
 }
 
 void gpy_rr_init_runtime (void)
