@@ -120,7 +120,7 @@ void gpy_stmt_pass_lower_type_to_context (tree type, gpy_hash_tab_t * tbl,
 	/*
 	 stack_addr = (gpy_object_t *) *(__GPY_RR_GLOBL_STACK - field_offset);
 	 */
-	tree addr = 
+	tree addr = build2 ()
 
 	gcc_assert (!gpy_dd_hash_insert (h, ref, tbl));
       } while ((field = DECL_CHAIN (field)));
