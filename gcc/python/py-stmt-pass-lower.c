@@ -111,13 +111,16 @@ void gpy_stmt_pass_lower_type_to_context (tree type, gpy_hash_tab_t * tbl,
       do {
 	gcc_assert (TREE_CODE (field) == FIELD_DECL);
 
-	debug ("generating stack offset <%s>!\n", IDENTIFIER_POINTER(DECL_NAME (field)));
+	debug ("generating stack reference for <%s> @ offset <%i>!\n",
+	       IDENTIFIER_POINTER(DECL_NAME (field)),
+	       DECL_FIELD_OFFSET (field)
+	       );
 	gpy_hashval_t h = gpy_dd_hash_string (IDENTIFIER_POINTER(DECL_NAME (field)));
 
-	tree ref = 
-
-	tree ref = build3 (COMPONENT_REF, TREE_TYPE (field), build_fold_indirect_ref(param_decl),
-			   field, NULL_TREE);
+	/*
+	 stack_addr = (gpy_object_t *) *(__GPY_RR_GLOBL_STACK - field_offset);
+	 */
+	tree addr = 
 
 	gcc_assert (!gpy_dd_hash_insert (h, ref, tbl));
       } while ((field = DECL_CHAIN (field)));
@@ -588,20 +591,33 @@ VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t * modules,
 
   VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_data_offset);
 
+  tree runtime_globl_stack_size = build_decl (BUILTINS_LOCATION, VAR_DECL,
+					      get_identifier (GPY_GLOBL_STACK_SIZE_id),
+					      long_integer_type_node);
+  TREE_STATIC (runtime_globl_stack_data_offset) = 0;
+  TREE_EXTERN (runtime_globl_stack_data_offset) = 1;
+  TREE_PUBLIC (runtime_globl_stack_data_offset) = 1;
+  TREE_USED (runtime_globl_stack_data_offset) = 1;
+  DECL_ARTIFICIAL (runtime_globl_stack_data_offset) = 1;
+
+  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_size);
+
   tree runtime_globl_stack_pointer = build_decl (BUILTINS_LOCATION, VAR_DECL,
 						 get_identifier (GPY_GLOBL_STACK_POINTER_id),
-						 long_integer_type_node);
+						 build_pointer_type (unsigned_char_type_node));
   TREE_STATIC (runtime_globl_stack_stack_pointer) = 0;
   TREE_EXTERN (runtime_globl_stack_stack_pointer) = 1;
   TREE_PUBLIC (runtime_globl_stack_stack_pointer) = 1;
   TREE_USED (runtime_globl_stack_stack_pointer) = 1;
   DECL_ARTIFICIAL (runtime_globl_stack_stack_pointer) = 1;
 
-  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_stack_pointer);
+  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_pointer);
 
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_id),
 				   runtime_globl_stack, &toplvl));
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_DATA_OFFSET_id),
+				   runtime_globl_stack_data_offset, &toplvl));
+  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_SIZE_id),
 				   runtime_globl_stack_data_offset, &toplvl));
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_POINTER_id),
 				   runtime_globl_stack_data_offset, &toplvl));

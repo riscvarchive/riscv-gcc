@@ -37,8 +37,12 @@ typedef struct gpy_hash_table_t {
   gpy_hash_entry_t * array;
 } gpy_hash_tab_t ;
 
-#define Gpy_Vec_Head(V,T)			\
+#define GPY_VEC_head(V,T)			\
   (T)(V->vector[V->length-1])
+#define GPY_VEC_length(V)			\
+  V->length
+#define GPY_VEC_index(T,V,I)			\
+  (T)(V->vector[I])
 
 extern gpy_hashval_t gpy_dd_hash_string (const char *);
 extern gpy_hash_entry_t * gpy_dd_hash_lookup_table (gpy_hash_tab_t *, gpy_hashval_t);

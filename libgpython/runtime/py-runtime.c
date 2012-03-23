@@ -28,11 +28,12 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/vectors.h>
 #include <gpython/objects.h>
 
-gpy_vector_t * gpy_primitives;
-gpy_object_t ** gpy_globl_runtime_stack;
+unsigned char * __GPY_RR_GLOBL_STACK;
 
-#define GPY_STACK_SIZE_OFFSET 0
-#define GPY_STACK_DATA_OFFSET SIZEOF_LONG
+#define GPY_STACK_SIZE_OFFSET       0
+#define GPY_STACK_DATA_OFFSET       SIZEOF_INT
+#define GPY_STACK_PRIMTIVES_OFFSET  SIZEOF_INT * 2
+#define GPY_STACK_CALL_OFFSET       GPY_STACK_PRIMTIVES_OFFSET + sizeof (gpy_vector_t)
 
 /*
   Runtime stack is the globl state for globals access which
@@ -41,58 +42,91 @@ gpy_object_t ** gpy_globl_runtime_stack;
   Format of the stack will be
 
   -----------------
-   stack-size (long)
+   stack-size (int)
   -----------------
-   stack-header-offset (long)
+   stack-header-offset (int)
   -----------------
-   .....
-
+   vector of primitives (gpy_vector_t)
+  -----------------
+   stack trace (gpy_vector_t)
+  ----------------
+   possible more runtime data...
+  ----------------
+   vector of globl symbols (gpy_object_t **)
+  ----------------
 
    We will need to add more meta data to this for exceptions and calls etc
 */
-long gpy_runtime_stack_header_size = sizeof (long)*2;
-long gpy_runtime_stack_data_offset = gpy_runtime_stack_header_size;
+int __GPY_GLOBL_RR_STACK_SIZE = (sizeof (int) * 2) + (sizeof (gpy_vector_t) * 2);
+int __GPY_GLOBL_RR_STACK_DATA_OFFSET = __GPY_GLOBL_RR_STACK_SIZE;
+
+gpy_vector_t * __GPY_GLOBL_CALL_STACK;
+gpy_vector_t * __GPY_GLOBL_PRIMTIVES;
+gpy_object_t ** __GPY_GLOBL_RR_STACK_POINTER;
 
 void gpy_rr_init_primitives (void)
 {
-  gpy_primitives = (gpy_vector_t *)
-    gpy_malloc (sizeof(gpy_vector_t));
-  gpy_vec_init (gpy_primitives);
-
-  gpy_obj_integer_mod_init (gpy_primitives);
-  gpy_obj_functor_mod_init (gpy_primitives);
-  gpy_obj_class_mod_init (gpy_primitives);
+  gpy_obj_integer_mod_init (__GPY_GLOBL_PRIMITIVES);
+  gpy_obj_functor_mod_init (__GPY_GLOBL_PRIMITIVES);
+  gpy_obj_class_mod_init (__GPY_GLOBL_PRIMITIVES);
 }
 
 void gpy_rr_init_runtime_stack (void)
 {
-  gpy_globl_runtime_stack = (gpy_object_t **)
-    gpy_malloc (gpy_runtime_stack_header_size);
+  __GPY_RR_GLOBL_STACK = (unsigned char *)
+    gpy_malloc (__GPY_GLOBL_RR_STACK_SIZE);
 
-  *(gpy_globl_runtime_stack + GPY_STACK_SIZE_OFFSET) = (long)
-    gpy_runtime_stack_header_size;
-  *(gpy_globl_runtime_stack + GPY_STACK_DATA_OFFSET) = (long)
-    gpy_runtime_stack_header_offset;
+  unsigned char * ptr = __GPY_RR_GLOBL_STACK;
+  int * int_slot = ((int*) ptr);
+  int_slot[0] = __GPY_GLOBL_RR_STACK_SIZE;
+  int_slot[1] = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
+
+  ptr += sizeof (int) * 2;
+
+  gpy_vector_t * vec_slot = ((gpy_vector_t *) ptr);
+  gpy_vec_init (&vec_slot[0]);
+  gpy_vec_init (&vec_slot[1]);
+
+  __GPY_GLOBL_PRIMTIVES = &vec_slot[0];
+  __GPY_GLOBL_CALL_STACK = &vec_slot[1];
+
+  ptr += sizeof (gpy_vector_t) * 2;
+  __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t**)ptr;
 }
 
-void gpy_rr_extend_runtime_stack (long size)
+/* remember to update the stack pointer's and the stack size */
+void gpy_rr_extend_runtime_stack (int size)
 {
-  long curr_stack_size = (long) *(gpy_globl_runtime_stack + GPY_STACK_SIZE_OFFSET);
+  __GPY_GLOBL_RR_STACK_SIZE += size;
+  __GPY_GLOBL_RR_STACK = (unsigned char *)
+    gpy_realloc (__GPY_GLOBL_RR_STACK, __GPY_GLOBL_RR_STACK_SIZE);
+  
+  unsigned char * ptr = __GPY_RR_GLOBL_STACK;
+  int * int_slot = ((int*) ptr);
+  int_slot[0] = __GPY_GLOBL_RR_STACK_SIZE;
+  int_slot[1] = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
 
-  gpy_globl_runtime_stack = (gpy_object_t **)
-    gpy_realloc (gpy_globl_runtime_stack, curr_stack_size + size);
-  *(gpy_globl_runtime_stack + GPY_STACK_SIZE_OFFSET) = curr_stack_size + size;
+  ptr += sizeof (int) * 2;
+
+  gpy_vector_t * vec_slot = ((gpy_vector_t *) ptr);
+  __GPY_GLOBL_PRIMTIVES = &vec_slot[0];
+  __GPY_GLOBL_CALL_STACK = &vec_slot[1];
+
+  ptr += sizeof (gpy_vector_t) * 2;
+  __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t**)ptr;
 }
 
 void gpy_rr_init_runtime (void)
 {
-  gpy_rr_init_primitives ();
   gpy_rr_init_runtime_stack ();
+  gpy_rr_init_primitives ();
 }
 
 void gpy_rr_cleanup_final (void)
 {
-  gpy_vec_free (gpy_primitives);
+  /*
+    Cleanup the runtime stack and all other object data
+   */
   mpfr_free_cache ();
 }
 
@@ -167,7 +201,7 @@ gpy_object_t * gpy_rr_fold_class_decl (gpy_object_attrib_t ** attribs,
   args[3] = &a4;
 
   gpy_typedef_t * def = (gpy_typedef_t *)
-    gpy_primitives->vector[2];
+    __GPY_GLOBL_PRIMITIVES->vector[2];
   gpy_assert (def);
 
   retval = def->tp_new (def, args);
@@ -205,7 +239,7 @@ gpy_object_t * gpy_rr_fold_functor_decl (const char * identifier,
   args[2] = &a3;
 
   gpy_typedef_t * def = (gpy_typedef_t *)
-    gpy_primitives->vector[1];
+    __GPY_GLOBL_PRIMITIVES->vector[1];
   gpy_assert (def);
 
   retval = def->tp_new (def, args);
@@ -236,7 +270,7 @@ gpy_object_t * gpy_rr_fold_integer (const int x)
   args[1] = &a2;
 
   gpy_typedef_t * Int_def = (gpy_typedef_t *)
-    gpy_primitives->vector[0];
+    __GPY_GLOBL_PRIMITIVES->vector[0];
   gpy_assert (Int_def);
 
   retval = Int_def->tp_new (Int_def, args);

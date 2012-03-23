@@ -18,6 +18,7 @@ along with GCC; see the file COPYING3.  If not see
 #define __GCC_BUILTINS_H__
 
 #define GPY_GLOBL_STACK_id             "__GPY_GLOBL_RR_STACK"
+#define GPY_GLOBL_STACK_SIZE_id        "__GPY_GLOBL_RR_STACK_SIZE"
 #define GPY_GLOBL_STACK_DATA_OFFSET_id "__GPY_GLOBL_RR_STACK_DATA_OFFSET"
 #define GPY_GLOBL_STACK_POINTER_id     "__GPY_GLOBL_RR_STACK_POINTER"
 
