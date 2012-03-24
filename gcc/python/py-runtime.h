@@ -22,7 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GPY_GLOBL_STACK_DATA_OFFSET_id "__GPY_GLOBL_RR_STACK_DATA_OFFSET"
 #define GPY_GLOBL_STACK_POINTER_id     "__GPY_GLOBL_RR_STACK_POINTER"
 
-enum GPY_RR_Function
+enum GPY_RR_Functionpy-
   {
     
 #define DEF_PY_RUNTIME(CODE, NAME, PARAMS, RESULTS) CODE ,
