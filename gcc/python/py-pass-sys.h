@@ -28,6 +28,7 @@ extern VEC(tree,gc) * gpy_builtin_types_vec;
 #define gpy_attrib_type          VEC_index (tree, gpy_builtin_types_vec, 6)
 #define gpy_attrib_type_ptr      VEC_index (tree, gpy_builtin_types_vec, 7)
 #define gpy_attrib_type_ptr_ptr  VEC_index (tree, gpy_builtin_types_vec, 8)
+#define gpy_unsigned_char_ptr    build_pointer_type (unsigned_char_type_node)
 
 extern VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) *);
 extern VEC(tree,gc) * gpy_stmt_pass_lower (VEC(tree,gc) *, VEC(gpydot,gc) *);

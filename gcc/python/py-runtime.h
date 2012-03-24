@@ -22,20 +22,17 @@ along with GCC; see the file COPYING3.  If not see
 #define GPY_GLOBL_STACK_DATA_OFFSET_id "__GPY_GLOBL_RR_STACK_DATA_OFFSET"
 #define GPY_GLOBL_STACK_POINTER_id     "__GPY_GLOBL_RR_STACK_POINTER"
 
-extern tree gpy_builtin_get_incr_ref_call (tree);
-extern tree gpy_builtin_get_decr_ref_call (tree);
+enum GPY_RR_Function
+  {
+    
+#define DEF_PY_RUNTIME(CODE, NAME, PARAMS, RESULTS) CODE ,
 
-extern tree gpy_builtin_get_attrib_ref_flat (tree, const char *);
-extern tree gpy_builtin_get_eval_expression_call (tree, tree, opcode_t);
+#include "runtime.def"
 
-extern tree gpy_builtin_get_fold_functor_decl (const char *, tree);
-extern tree gpy_builtin_get_fold_class_decl (tree, tree, const char *);
-extern tree gpy_builtin_get_fold_int_call (int);
+#undef DEF_PY_RUNTIME
 
-extern tree gpy_builtin_fold_attrib (const char *, tree, tree);
-extern tree gpy_builtin_fold_attribs_list (VEC(tree,gc) *);
-
-extern tree gpy_builtin_get_print_call (int, tree *);
-extern tree gpy_builtin_get_object_state (tree);
+    // Number of runtime functions.
+    NUMBER_OF_FUNCTIONS
+  };
 
 #endif /* __GCC_BUILTINS_H__ */

@@ -70,6 +70,7 @@ gpy_vector_t * __GPY_GLOBL_PRIMTIVES;
 gpy_object_t * __GPY_GLOBL_RETURN_ADDR;
 gpy_object_t ** __GPY_GLOBL_RR_STACK_POINTER;
 
+static
 void gpy_rr_init_primitives (void)
 {
   gpy_obj_integer_mod_init (__GPY_GLOBL_PRIMITIVES);
@@ -77,6 +78,7 @@ void gpy_rr_init_primitives (void)
   gpy_obj_class_mod_init (__GPY_GLOBL_PRIMITIVES);
 }
 
+static
 void gpy_rr_init_runtime_stack (void)
 {
   __GPY_RR_GLOBL_STACK = gpy_malloc (__GPY_GLOBL_RR_STACK_SIZE);
