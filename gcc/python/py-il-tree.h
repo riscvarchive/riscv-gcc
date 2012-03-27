@@ -37,12 +37,6 @@ extern char * gpy_dot_pass_generificify_gen_concat (const char *, const char *);
 #define GPY_dot_pass_generificify_gen_concat_identifier(X_, Y_)	\
   get_identifier (gpy_dot_pass_generificify_gen_concat (X_, Y_))
 
-extern gpy_dot_tree_t * gpy_stmt_process_AST_Align (gpy_dot_tree_t **);
-extern void gpy_types_init (void);
-
-extern void gpy_initilize_types (void);
-extern void gpy_stmt_process_decl (gpy_dot_tree_t * const);
-
 /* Appends vector y on x */  
 #define GPY_VEC_stmts_append(T,x,y)			\
   do {							\
@@ -58,5 +52,9 @@ extern VEC(gpydot,gc) * gpy_dot_pass_check1 (VEC(gpydot,gc) *);
 extern VEC(gpydot,gc) * gpy_dot_pass_const_fold (VEC(gpydot,gc) *);
 extern VEC(gpydot,gc) * gpy_dot_pass_translate (VEC(gpydot,gc) *);
 extern VEC(gpydot,gc) * gpy_dot_pass_pretty_print (VEC(gpydot,gc) *);
+
+extern void gpy_dot_pass_manager_write_globals (void);
+extern void gpy_dot_pass_manager_process_decl (gpy_dot_tree_t * const);
+extern void gpy_dot_types_init (void);
 
 #endif //__PYGCC_PY_IL_TREE_H__

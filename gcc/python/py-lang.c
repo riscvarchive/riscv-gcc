@@ -85,7 +85,7 @@ bool gpy_langhook_init (void)
   void_list_node = build_tree_list (NULL_TREE, void_type_node);
 
   // init some internal gccpy types
-  gpy_initilize_types ();
+  gpy_dot_types_init ();
 
   /* The default precision for floating point numbers.  This is used
      for floating point constants with abstract type.  This may
@@ -198,7 +198,7 @@ tree gpy_langhook_getdecls (void)
 static
 void gpy_langhook_write_globals (void)
 {
-  gpy_stmt_write_globals ();
+  gpy_dot_pass_manager_write_globals ();
 }
 
 static int

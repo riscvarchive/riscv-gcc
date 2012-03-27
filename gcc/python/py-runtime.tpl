@@ -269,7 +269,7 @@ tree gpy_build_py_object_type (void)
   return build_pointer_type (gpy_object_struct_Type);
 }
 
-void gpy_initilize_types (void)
+void gpy_dot_types_init (void)
 {
   gpy_builtin_types_vec = VEC_alloc (tree,gc,0);
 

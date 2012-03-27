@@ -110,4 +110,6 @@ extern gpy_dot_tree_t * dot_build_integer (int);
 extern gpy_dot_tree_t * dot_build_string (char *);
 extern gpy_dot_tree_t * dot_build_identifier (const char *);
 
+extern gpy_dot_tree_t * gpy_dot_process_AST_Align (gpy_dot_tree_t **);
+
 #endif /* __GCC_PY_IL_DOT_H_ */
