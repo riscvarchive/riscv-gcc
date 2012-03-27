@@ -47,8 +47,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "py-vec.h"
 
 static VEC(gpydot,gc) * gpy_decls;
-typedef VEC(gpydot,gc) * (*DOT_pass__)(VEC(gpydot,gc) *);
-static DOT_pass__ gpy_dot_pass_mngr[] = 
+typedef VEC(gpydot,gc) * (*dot_pass)(VEC(gpydot,gc) *);
+static dot_pass gpy_dot_pass_mngr[] = 
 {
   &gpy_dot_pass_check1,       /* sanity checks */
   &gpy_dot_pass_const_fold,   /* Constant folding */
@@ -74,8 +74,7 @@ void gpy_dot_pass_manager_process_decl (gpy_dot_tree_t * const dot)
  **/
 void gpy_dot_pass_manager_write_globals (void)
 {
-  int idx = 0;
-  DOT_dot_pass__ *p;
+  dot_pass *p = NULL;
   VEC(gpydot,gc) * dot_decls = gpy_decls;
   
   for (p = gpy_dot_pass_mngr; *p != NULL; ++p)
@@ -88,7 +87,7 @@ void gpy_dot_pass_manager_write_globals (void)
   int global_vec_len = VEC_length (tree, globals);
   tree * global_vec = XNEWVEC (tree, global_vec_len);
   tree itx = NULL_TREE;
-  int idy = 0;
+  int idx, idy = 0;
 
   FILE *tu_stream = dump_begin (TDI_tu, NULL);
   for (idx = 0; VEC_iterate (tree, globals, idx, itx); ++idx)
