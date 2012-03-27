@@ -63,11 +63,11 @@ py-vec.o: $(srcdir)/python/py-vec.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) 
 	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-vec.c
 
-py-builtins.o: $(srcdir)/python/py-builtins.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+py-runtime.o: $(srcdir)/python/py-runtime.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
   $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
   gt-python-py-lang.h gtype-python.h
 	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
-	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-builtins.c
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-runtime.c
 
 py-dot.o: $(srcdir)/python/py-dot.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
   $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
