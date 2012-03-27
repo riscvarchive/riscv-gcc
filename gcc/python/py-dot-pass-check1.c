@@ -52,7 +52,7 @@ along with GCC; see the file COPYING3.  If not see
   stright from the parser and preform sanity checks to make
   sure everything looks correct before other pass's
 */
-VEC(gpydot,gc) * gpy_stmt_pass_check1 (VEC(gpydot,gc) * decls)
+VEC(gpydot,gc) * gpy_dot_pass_check1 (VEC(gpydot,gc) * decls)
 {
   return decls;
 }

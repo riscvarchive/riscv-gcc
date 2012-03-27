@@ -47,11 +47,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "py-vec.h"
 #include "py-runtime.h"
 
-static void gpy_stmt_pass_dump_IL (VEC(gpydot,gc) *, const char *);
-static void gpy_stmt_pass_dump_node (FILE *, gpy_dot_tree_t *);
+bool GPY_OPT_dump_dot;
+static void gpy_dot_pass_dump_IL (VEC(gpydot,gc) *, const char *);
+static void gpy_dot_pass_dump_node (FILE *, gpy_dot_tree_t *);
 
 static
-void gpy_stmt_pass_dump_node (FILE * fd, gpy_dot_tree_t * node)
+void gpy_dot_pass_dump_node (FILE * fd, gpy_dot_tree_t * node)
 {
   switch (DOT_TYPE (node))
     {
@@ -63,7 +64,7 @@ void gpy_stmt_pass_dump_node (FILE * fd, gpy_dot_tree_t * node)
 }
 
 static
-void gpy_stmt_pass_dump_IL (VEC(gpydot,gc) * decls, const char * outfile)
+void gpy_dot_pass_dump_IL (VEC(gpydot,gc) * decls, const char * outfile)
 {
   FILE * fd = fopen (outfile, "w");
   if (!fd)
@@ -75,7 +76,7 @@ void gpy_stmt_pass_dump_IL (VEC(gpydot,gc) * decls, const char * outfile)
   gpy_dot_tree_t * idtx = NULL_DOT;
   for (idx = 0; VEC_iterate (gpydot, decls, idx, idtx); ++idx)
     {
-      gpy_stmt_pass_dump_node (fd, idtx);
+      gpy_dot_pass_dump_node (fd, idtx);
     }
   fclose (fd);
 }
@@ -83,10 +84,10 @@ void gpy_stmt_pass_dump_IL (VEC(gpydot,gc) * decls, const char * outfile)
 /*
   A Pretty-printer to dump out the IL if -fpy-dump-dot was passed
 */
-VEC(gpydot,gc) * gpy_stmt_pass_pretty_print (VEC(gpydot,gc) * decls)
+VEC(gpydot,gc) * gpy_dot_pass_pretty_print (VEC(gpydot,gc) * decls)
 {
   if (GPY_OPT_dump_dot)
-    gpy_stmt_pass_dump_IL (decls, "gccpy-tu.dot");
+    gpy_dot_pass_dump_IL (decls, "gccpy-tu.dot");
 
   return decls;
 }

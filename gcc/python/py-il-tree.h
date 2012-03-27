@@ -30,7 +30,7 @@ extern VEC(tree,gc) * gpy_builtin_types_vec;
 #define gpy_attrib_type_ptr_ptr  VEC_index (tree, gpy_builtin_types_vec, 8)
 #define gpy_unsigned_char_ptr    build_pointer_type (unsigned_char_type_node)
 
-extern VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) *);
+extern VEC(tree,gc) * gpy_dot_pass_generate_types (VEC(gpydot,gc) *);
 extern VEC(tree,gc) * gpy_dot_pass_generificify (VEC(tree,gc) *, VEC(gpydot,gc) *);
 
 extern char * gpy_dot_pass_generificify_gen_concat (const char *, const char *);
@@ -54,9 +54,9 @@ extern void gpy_stmt_process_decl (gpy_dot_tree_t * const);
   } while (0);						\
 
 /* Passes */
-extern VEC(gpydot,gc) * gpy_stmt_pass_check1 (VEC(gpydot,gc) *);
-extern VEC(gpydot,gc) * gpy_stmt_pass_const_fold (VEC(gpydot,gc) *);
-extern VEC(gpydot,gc) * gpy_stmt_pass_translate (VEC(gpydot,gc) *);
-extern VEC(gpydot,gc) * gpy_stmt_pass_pretty_print (VEC(gpydot,gc) *);
+extern VEC(gpydot,gc) * gpy_dot_pass_check1 (VEC(gpydot,gc) *);
+extern VEC(gpydot,gc) * gpy_dot_pass_const_fold (VEC(gpydot,gc) *);
+extern VEC(gpydot,gc) * gpy_dot_pass_translate (VEC(gpydot,gc) *);
+extern VEC(gpydot,gc) * gpy_dot_pass_pretty_print (VEC(gpydot,gc) *);
 
 #endif //__PYGCC_PY_IL_TREE_H__

@@ -20,14 +20,13 @@ along with GCC; see the file COPYING3.  If not see
 extern bool GPY_OPT_dump_dot;
 extern char * GPY_current_module_name;
 
-extern int gpy_enable_dump (const char *);
 extern void gpy_set_prefix (const char *);
-
 extern void gpy_preserve_from_gc (tree);
 extern void gpy_add_search_path (const char *);
 extern void gpy_parse_input_files (const char **, unsigned int);
 
-extern void gpy_stmt_write_globals (void);
+extern void gpy_dot_pass_manager_write_globals (void);
+
 extern tree gpy_type_for_size (unsigned int, int);
 extern tree gpy_type_for_mode (enum machine_mode, int);
 

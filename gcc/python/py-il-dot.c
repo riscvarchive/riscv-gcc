@@ -184,3 +184,134 @@ gpy_dot_tree_t * dot_build_identifier (const char * s)
         Loops, conditionals etc ... 
    ...
  */
+
+/**
+ * Fairly Confusing Function to read.
+ *
+ * example:
+ *    >>> x = y = z = 2 + 2 + 2;
+ *
+ *    --- Currently Yacc parses that expression into this Tree, which is just
+          side effect of the way we generate the gpy_dot_tree's the much higher level IR
+	  which we bring down to GENERIC:
+
+                      +
+                     / \
+                    +   2
+		   /
+                  =
+		 / \
+		x   =
+		   / \
+		  y   =
+		     / \
+		    z   2
+
+  -- Is converted into the procedure:
+
+  1. z = 2 + 2 + 2;
+  2. y = z;
+  3. x = y;
+
+  -- Tree structure as so:
+
+                 =
+                / \
+               x   =
+                  / \
+                 y   =
+		    / \
+                   z   +
+                      / \
+                     +   2
+                    / \
+                   2   2
+ **/
+gpy_dot_tree_t * gpy_dot_process_AST_Align (gpy_dot_tree_t ** d_dot)
+{
+  gpy_dot_tree_t * retval = NULL_DOT;
+  gpy_dot_tree_t * nn = NULL_DOT;
+  gpy_dot_tree_t * dot = *d_dot;
+
+  if (DOT_CHAIN(dot))
+    {
+      nn = DOT_CHAIN(dot);
+      DOT_CHAIN(dot) = NULL_DOT;
+    }
+  retval = (*d_dot);
+
+  if (DOT_TYPE(retval) != D_MODIFY_EXPR)
+    {
+      gpy_dot_tree_t *o = retval;
+      gpy_dot_tree_t *h = NULL_DOT;
+
+      while (o != NULL_DOT)
+        {
+          if ((DOT_TYPE(o) != D_IDENTIFIER) ||
+              (DOT_TYPE(o) != D_PRIMITIVE) ||
+	      (DOT_TYPE(o) != D_ATTRIB_REF))
+            {
+              if (DOT_lhs_T(o) == D_TD_DOT)
+                {
+                  if (DOT_TYPE(DOT_lhs_TT(o)) == D_MODIFY_EXPR)
+                    {
+                      h = o; 
+		      break;
+                    }
+                  else
+                    {
+                      o = DOT_lhs_TT(o);
+                    }
+                }
+              else break;
+            }
+          else break;
+        }
+      if (h)
+        {
+          gpy_dot_tree_t  *head = DOT_lhs_TT(h);
+          if (DOT_TYPE(DOT_rhs_TT(head)) == D_MODIFY_EXPR)
+            {
+              gpy_dot_tree_t  *t = head, *m = NULL_DOT;
+              while (t)
+                {
+                  if ((DOT_TYPE(t) != D_IDENTIFIER) ||
+                      (DOT_TYPE(t) != D_PRIMITIVE) ||
+		      (DOT_TYPE(t) != D_ATTRIB_REF))
+                    {
+                      if (DOT_TYPE(DOT_rhs_TT(t)) != D_MODIFY_EXPR)
+                        {
+                          m = t;
+                          break;
+                        }
+                      else
+                        {
+                          t = t->opb.t;
+                        }
+                    }
+                  else break;
+                }
+              
+              if( m )
+                {
+                  DOT_lhs_TT(h) = DOT_rhs_TT(m);
+                  DOT_rhs_TT(m) = retval;
+                }
+              else
+                fatal_error ("error processing the expression AST!\n");
+            }
+          else
+            {
+              DOT_lhs_TT(h) = DOT_rhs_TT(head);
+              DOT_rhs_TT(head) = retval;
+            }
+          retval = head;
+        }
+    }
+  
+  if (nn)
+    DOT_CHAIN(retval) = nn;
+  (*d_dot) = retval;
+
+  return retval;
+}
