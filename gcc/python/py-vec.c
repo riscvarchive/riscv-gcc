@@ -38,9 +38,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "hashtab.h"
 
 #include "gpython.h"
-#include "py-dot.h"
+#include "py-il-dot.h"
+#include "py-il-tree.h"
 #include "py-vec.h"
-#include "py-tree.h"
 
 #define threshold_alloc(x) (((x)+16)*3/2)
 

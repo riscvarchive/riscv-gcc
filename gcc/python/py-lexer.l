@@ -39,9 +39,9 @@
 #include "hashtab.h"
 
 #include "gpython.h"
-#include "py-dot.h"
+#include "py-il-dot.h"
+#include "py-il-tree.h"
 #include "py-vec.h"
-#include "py-tree.h"
 
 #include "y.py.h"
 

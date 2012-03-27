@@ -41,10 +41,10 @@
 #include <hashtab.h>
 
 #include "gpython.h"
-#include "py-dot.h"
+#include "py-il-dot.h"
+#include "py-il-tree.h"
 #include "py-vec.h"
-#include "py-tree.h"
-#include "py-builtins.h"
+#include "py-runtime.h"
 
 static VEC(tree,gc) * gpy_stmt_pass_lower_genericify (gpy_hash_tab_t *, VEC(gpydot,gc) *);
 static tree gpy_stmt_pass_lower_toplevl_functor_decl (gpy_dot_tree_t *);

@@ -42,9 +42,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "hashtab.h"
 
 #include "gpython.h"
-#include "py-dot.h"
+#include "py-il-dot.h"
+#include "py-il-tree.h"
 #include "py-vec.h"
-#include "py-tree.h"
 
 static VEC(gpydot,gc) * gpy_decls;
 typedef VEC(gpydot,gc) * (*DOT_stmt_pass__)(VEC(gpydot,gc) *);

@@ -42,10 +42,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "hashtab.h"
 
 #include "gpython.h"
-#include "py-dot.h"
+#include "py-il-dot.h"
+#include "py-il-tree.h"
 #include "py-vec.h"
-#include "py-tree.h"
-#include "py-builtins.h"
+#include "py-runtime.h"
 
 static void gpy_stmt_pass_dump_IL (VEC(gpydot,gc) *, const char *);
 static void gpy_stmt_pass_dump_node (FILE *, gpy_dot_tree_t *);

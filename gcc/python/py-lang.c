@@ -39,9 +39,9 @@
 #include "mpfr.h"
 
 #include "gpython.h"
-#include "py-dot.h"
+#include "py-il-dot.h"
+#include "py-il-tree.h"
 #include "py-vec.h"
-#include "py-tree.h"
 
 bool GPY_OPT_dump_dot = false;
 char * GPY_current_module_name = NULL;
