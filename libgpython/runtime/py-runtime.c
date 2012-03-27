@@ -28,7 +28,7 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/vectors.h>
 #include <gpython/objects.h>
 
-unsigned char * __GPY_RR_GLOBL_STACK;
+unsigned char * __GPY_GLOBL_RR_STACK;
 
 #define GPY_STACK_SIZE_OFFSET        0
 #define GPY_STACK_DATA_OFFSET        SIZEOF_INT
@@ -66,7 +66,7 @@ int __GPY_GLOBL_RR_STACK_SIZE =
 int __GPY_GLOBL_RR_STACK_DATA_OFFSET = __GPY_GLOBL_RR_STACK_SIZE;
 
 gpy_vector_t * __GPY_GLOBL_CALL_STACK;
-gpy_vector_t * __GPY_GLOBL_PRIMTIVES;
+gpy_vector_t * __GPY_GLOBL_PRIMITIVES;
 gpy_object_t * __GPY_GLOBL_RETURN_ADDR;
 gpy_object_t ** __GPY_GLOBL_RR_STACK_POINTER;
 
@@ -81,7 +81,7 @@ void gpy_rr_init_primitives (void)
 static
 void gpy_rr_init_runtime_stack (void)
 {
-  __GPY_RR_GLOBL_STACK = gpy_malloc (__GPY_GLOBL_RR_STACK_SIZE);
+  __GPY_GLOBL_RR_STACK = gpy_malloc (__GPY_GLOBL_RR_STACK_SIZE);
   
   unsigned char * pointer = __GPY_GLOBL_RR_STACK;
   *((int *) pointer) = __GPY_GLOBL_RR_STACK_SIZE;

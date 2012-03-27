@@ -31,11 +31,11 @@ extern VEC(tree,gc) * gpy_builtin_types_vec;
 #define gpy_unsigned_char_ptr    build_pointer_type (unsigned_char_type_node)
 
 extern VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) *);
-extern VEC(tree,gc) * gpy_stmt_pass_lower (VEC(tree,gc) *, VEC(gpydot,gc) *);
+extern VEC(tree,gc) * gpy_dot_pass_generificify (VEC(tree,gc) *, VEC(gpydot,gc) *);
 
-extern char * gpy_stmt_pass_lower_gen_concat (const char *, const char *);
-#define GPY_stmt_pass_lower_gen_concat_identifier(X_, Y_)	\
-  get_identifier (gpy_stmt_pass_lower_gen_concat (X_, Y_))
+extern char * gpy_dot_pass_generificify_gen_concat (const char *, const char *);
+#define GPY_dot_pass_generificify_gen_concat_identifier(X_, Y_)	\
+  get_identifier (gpy_dot_pass_generificify_gen_concat (X_, Y_))
 
 extern gpy_dot_tree_t * gpy_stmt_process_AST_Align (gpy_dot_tree_t **);
 extern void gpy_types_init (void);
@@ -46,8 +46,8 @@ extern void gpy_stmt_process_decl (gpy_dot_tree_t * const);
 /* Appends vector y on x */  
 #define GPY_VEC_stmts_append(T,x,y)			\
   do {							\
-    int x_ = 0; T t_ = NULL_TREE;			\
-    for (; VEC_iterate (T,y,x_,t_); ++x_)		\
+    int x_; T t_ = NULL_TREE;				\
+    for (x_ = 0; VEC_iterate (T,y,x_,t_); ++x_)		\
       {							\
         VEC_safe_push (T, gc, x, t_);			\
       }							\

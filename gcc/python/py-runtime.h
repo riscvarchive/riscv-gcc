@@ -21,6 +21,17 @@ along with GCC; see the file COPYING3.  If not see
  */
 
 
+#ifndef __GCC_PY_RUNTIME_H__
+#define __GCC_PY_RUNTIME_H__
+
+#define GPY_RR_globl_stack         "__GPY_GLOBL_RR_STACK"
+#define GPY_RR_stack_size          "__GPY_GLOBL_RR_STACK_SIZE"
+#define GPY_RR_stack_data_offset   "__GPY_GLOBL_RR_STACK_DATA_OFFSET"
+#define GPY_RR_globl_stack_pointer "__GPY_GLOBL_RR_STACK_POINTER"
+#define GPY_RR_globl_call_stack    "__GPY_GLOBL_CALL_STACK"
+#define GPY_RR_globl_primitives    "__GPY_GLOBL_PRIMITIVES"
+#define GPY_RR_globl_return_addr   "__GPY_GLOBL_RETURN_ADDR"
+
   
 /* Extends the runtime globl stack by passed size (integer_type_node) */
 extern tree GPY_RR_extend_globl_stack (tree);
@@ -52,4 +63,5 @@ extern tree GPY_RR_eval_print (VEC(tree,gc) *);
 /* Evaluate the operation op of the 2 objects x and y and return result */
 extern tree GPY_RR_eval_expression (tree, tree, tree);
   
+#endif //__GCC_PY_RUNTIME_H__
 

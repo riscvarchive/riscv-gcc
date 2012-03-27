@@ -25,10 +25,22 @@ along with GCC; see the file COPYING3.  If not see
 
 [+ CASE (suffix) +]
 [+ == h +]
+#ifndef __GCC_PY_RUNTIME_H__
+#define __GCC_PY_RUNTIME_H__
+
+#define GPY_RR_globl_stack         "__GPY_GLOBL_RR_STACK"
+#define GPY_RR_stack_size          "__GPY_GLOBL_RR_STACK_SIZE"
+#define GPY_RR_stack_data_offset   "__GPY_GLOBL_RR_STACK_DATA_OFFSET"
+#define GPY_RR_globl_stack_pointer "__GPY_GLOBL_RR_STACK_POINTER"
+#define GPY_RR_globl_call_stack    "__GPY_GLOBL_CALL_STACK"
+#define GPY_RR_globl_primitives    "__GPY_GLOBL_PRIMITIVES"
+#define GPY_RR_globl_return_addr   "__GPY_GLOBL_RETURN_ADDR"
+
   [+ FOR py-runtime +]
 [+ (get "comment") +]
 extern tree [+ (get "code") +] ([+ (get "proto") +]);
   [+ ENDFOR py-runtime +]
+#endif //__GCC_PY_RUNTIME_H__
 [+ == c +]
 #include "config.h"
 #include "system.h"
