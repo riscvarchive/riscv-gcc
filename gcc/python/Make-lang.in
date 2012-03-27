@@ -87,11 +87,11 @@ py-dot-pass-types.o: $(srcdir)/python/py-dot-pass-types.c $(CONFIG_H) $(SYSTEM_H
 	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-dot-pass-types.c
 
-py-dot-pass-lower.o: $(srcdir)/python/py-dot-pass-lower.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+py-dot-pass-genericify.o: $(srcdir)/python/py-dot-pass-genericify.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
   $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
   gt-python-py-lang.h gtype-python.h
 	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
-	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-dot-pass-lower.c
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-dot-pass-genericify.c
 
 py-dot-pass-translate.o: $(srcdir)/python/py-dot-pass-translate.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
   $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
@@ -126,7 +126,7 @@ GPY_OBJS = \
 	py-il-dot.o \
 	py-dot-pass-manager.o \
 	py-dot-pass-types.o \
-	py-dot-pass-lower.o \
+	py-dot-pass-genericify.o \
 	py-dot-pass-translate.o \
 	py-dot-pass-check1.o \
 	py-dot-pass-const_fold.o \

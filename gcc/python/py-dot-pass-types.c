@@ -42,9 +42,9 @@
 #include "hashtab.h"
 
 #include "gpython.h"
-#include "py-dot.h"
+#include "py-il-dot.h"
+#include "py-il-tree.h"
 #include "py-vec.h"
-#include "py-tree.h"
 
 /* Currently we are going to ignore nested methods and classes within existing suites to keep
    things simple for now errors will be thrown from the first pass in sanity checking
