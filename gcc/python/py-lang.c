@@ -43,9 +43,7 @@
 #include "py-il-tree.h"
 #include "py-vec.h"
 
-bool GPY_OPT_dump_dot = false;
 char * GPY_current_module_name = NULL;
-
 /* Language-dependent contents of a type.  */
 struct GTY(()) lang_type {
   char dummy;

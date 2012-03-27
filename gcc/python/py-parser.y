@@ -46,9 +46,24 @@ along with GCC; see the file COPYING3.  If not see
 #include "py-il-tree.h"
 #include "py-vec.h"
 
+#if !defined(YYLLOC_DEFAULT)
+# define YYLLOC_DEFAULT(Current, Rhs, N)                           \
+  do								   \
+    if (N)							   \
+      {								   \
+	(Current).line = YYRHSLOC(Rhs, 1).line;			   \
+	(Current).column = YYRHSLOC(Rhs, 1).column;		   \
+      }								   \
+    else							   \
+      {								   \
+	(Current).line = YYRHSLOC(Rhs, 0).line;			   \
+	(Current).column = YYRHSLOC(Rhs, 0).column;		   \
+      }								   \
+  while (0)
+#endif
+
 static VEC(gpydot,gc) * gpy_symbol_stack;
 extern int yylineno;
-//yydebug = 1;
 
 extern int yylex (void);
 extern void yyerror (const char *);
@@ -59,6 +74,10 @@ extern void yyerror (const char *);
   long int integer;
   gpy_dot_tree_t * symbol;
 }
+
+%debug
+/* Locations will be added later to add debugging information */
+%locations
 
 %error-verbose
 %start declarations
@@ -163,7 +182,7 @@ extern void yyerror (const char *);
 
 %%
 
-declarations:
+declarations: /* epsilon */
             | declarations decl
             {
 	      if ($2)

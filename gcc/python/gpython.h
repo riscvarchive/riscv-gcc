@@ -14,11 +14,21 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>. */
 
-#ifndef __GPY_H_
-#define __GPY_H_
+#ifndef __GCC_GPYTHON_H__
+#define __GCC_GPYTHON_H__
 
 extern bool GPY_OPT_dump_dot;
 extern char * GPY_current_module_name;
+
+#if !defined(YYLTYPE)
+typedef struct gpy_location {
+  int line;
+  int column;
+} gpy_location_t;
+typedef gpy_location_t YYLTYPE;
+
+#define YYLTYPE YYLTYPE
+#endif
 
 extern void gpy_set_prefix (const char *);
 extern void gpy_preserve_from_gc (tree);
@@ -37,4 +47,4 @@ extern void __gpy_debug__ (const char *, unsigned int,
 #define debug(...)					\
   __gpy_debug__( __FILE__, __LINE__, __VA_ARGS__ );
 
-#endif /* __GPY_H_ */
+#endif /* __GCC_GPYTHON_H__ */

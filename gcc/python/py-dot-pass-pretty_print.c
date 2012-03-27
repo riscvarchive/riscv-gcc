@@ -47,7 +47,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "py-vec.h"
 #include "py-runtime.h"
 
-bool GPY_OPT_dump_dot;
+bool GPY_OPT_dump_dot = false;
 static void gpy_dot_pass_dump_IL (VEC(gpydot,gc) *, const char *);
 static void gpy_dot_pass_dump_node (FILE *, gpy_dot_tree_t *);
 
