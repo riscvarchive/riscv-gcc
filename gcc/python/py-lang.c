@@ -239,6 +239,16 @@ void gpy_preserve_from_gc (tree t)
   gpy_gc_root = tree_cons (NULL_TREE, t, gpy_gc_root);
 }
 
+void __gpy_debug__ (const char * file, unsigned int lineno,
+		    const char * fmt, ...)
+{
+  va_list args;
+  fprintf (stderr, "debug: <%s:%i> -> ", file, lineno);
+  va_start (args, fmt);
+  vfprintf (stderr, fmt, args);
+  va_end (args);
+}
+
 /* The language hooks data structure. This is the main interface between the GCC front-end
  * and the GCC middle-end/back-end. A list of language hooks could be found in
  * <gcc>/langhooks.h

@@ -54,7 +54,4 @@ extern void ** gpy_dd_hash_insert (gpy_hashval_t, void *, gpy_hash_tab_t *);
 extern void gpy_dd_hash_grow_table (gpy_hash_tab_t *);
 extern void gpy_dd_hash_init_table (gpy_hash_tab_t *);
 
-extern bool gpy_ctx_push_decl (tree, const char *, gpy_hash_tab_t *);
-extern tree gpy_ctx_lookup_decl (VEC(gpy_ctx_t,gc) *, const char *);
-
 #endif /*__PY_VEC_H__*/
