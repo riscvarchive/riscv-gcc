@@ -46,7 +46,8 @@
 #include "py-vec.h"
 #include "py-runtime.h"
 
-static VEC(tree,gc) * gpy_dot_pass_generificify_genericify (gpy_hash_tab_t *, VEC(gpydot,gc) *);
+static VEC(tree,gc) * gpy_dot_pass_generificify (VEC(tree,gc) *, VEC(gpydot,gc) *);
+
 static tree gpy_dot_pass_generificify_toplevl_functor_decl (gpy_dot_tree_t *);
 static VEC(tree,gc) * gpy_dot_pass_generificify_toplevl_class_decl (gpy_dot_tree_t *);
 static tree gpy_dot_pass_generificify_class_method_attrib (gpy_dot_tree_t *, const char *);
@@ -54,7 +55,7 @@ static tree gpy_dot_pass_generificify_class_method_attrib (gpy_dot_tree_t *, con
 static tree gpy_dot_pass_generificify_scalar (gpy_dot_tree_t *, tree *);
 
 char * gpy_dot_pass_generificify_gen_concat (const char * s1,
-				       const char * s2)
+					     const char * s2)
 {
   size_t s1len = strlen (s1);
   size_t s2len = strlen (s2);
@@ -137,8 +138,8 @@ tree gpy_dot_pass_generificify_toplevl_functor_decl (gpy_dot_tree_t * decl)
 					  /* Arguments .. */
 					  NULL_TREE);
   tree ident = GPY_dot_pass_generificify_gen_concat_identifier (GPY_current_module_name,
-							  DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
-							  );
+								DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
+								);
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL, ident, fntype);
   debug ("lowering toplevel function <%s> to <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)),
 	 IDENTIFIER_POINTER (ident));
@@ -163,7 +164,7 @@ tree gpy_dot_pass_generificify_toplevl_functor_decl (gpy_dot_tree_t * decl)
 
   /*
     lower the function suite here and append all initilization
-   */
+  */
   tree declare_vars = resdecl;
 
   tree bind = NULL_TREE;
@@ -188,15 +189,15 @@ tree gpy_dot_pass_generificify_toplevl_functor_decl (gpy_dot_tree_t * decl)
 
 static
 tree gpy_dot_pass_generificify_class_method_attrib (gpy_dot_tree_t * decl,
-					      const char * parent_ident)
+						    const char * parent_ident)
 {
   tree fntype = build_function_type_list (void_type_node,
 					  /* Arguments .. */
 					  NULL_TREE);
   tree ident = GPY_dot_pass_generificify_gen_concat_identifier (GPY_current_module_name,
-							  parent_ident);
+								parent_ident);
   ident = GPY_dot_pass_generificify_gen_concat_identifier (IDENTIFIER_POINTER (ident),
-						     DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)));
+							   DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)));
 
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL, ident, fntype);
   debug ("lowering class attribute <%s> to <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)),
@@ -221,7 +222,7 @@ tree gpy_dot_pass_generificify_class_method_attrib (gpy_dot_tree_t * decl,
   tree stmts = alloc_stmt_list ();
   /*
     lower the function suite here and append all initilization
-   */
+  */
   tree declare_vars = resdecl;
 
   tree bind = NULL_TREE;
@@ -253,10 +254,10 @@ VEC(tree,gc) * gpy_dot_pass_generificify_toplevl_class_decl (gpy_dot_tree_t * de
 					  /* Arguments .. */
 					  NULL_TREE);
   tree ident = GPY_dot_pass_generificify_gen_concat_identifier (GPY_current_module_name,
-							  DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
-							  );
+								DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
+								);
   ident = GPY_dot_pass_generificify_gen_concat_identifier (IDENTIFIER_POINTER (ident),
-						     "__field_init__");
+							   "__field_init__");
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL, ident, fntype);
   debug ("lowering toplevel class <%s> to <%s>!\n", DOT_IDENTIFIER_POINTER (DOT_FIELD (decl)),
 	 IDENTIFIER_POINTER (ident));
@@ -281,7 +282,7 @@ VEC(tree,gc) * gpy_dot_pass_generificify_toplevl_class_decl (gpy_dot_tree_t * de
 
   /*
     lower the function suite here and append all initilization
-   */
+  */
   gpy_dot_tree_t * class_suite = DOT_lhs_TT (decl);
   gpy_dot_tree_t * node = class_suite;
   do {
@@ -289,10 +290,10 @@ VEC(tree,gc) * gpy_dot_pass_generificify_toplevl_class_decl (gpy_dot_tree_t * de
       {
       case D_STRUCT_METHOD:
 	{
-	  tree class_method_attrib = gpy_dot_pass_generificify_class_method_attrib (node,
-									      DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
-									      );
-	  VEC_safe_push (tree, gc, lowered_decls, class_method_attrib);
+	  tree a = gpy_dot_pass_generificify_class_method_attrib (node,
+								  DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
+								  );
+	  VEC_safe_push (tree, gc, lowered_decls, a);
 	}
 	break;
 
@@ -326,8 +327,8 @@ VEC(tree,gc) * gpy_dot_pass_generificify_toplevl_class_decl (gpy_dot_tree_t * de
 }
 
 static
-VEC(tree,gc) * gpy_dot_pass_generificify_genericify (gpy_hash_tab_t * modules,
-                                               VEC(gpydot,gc) * decls)
+VEC(tree,gc) * gpy_dot_pass_generificify (gpy_hash_tab_t * modules,
+					  VEC(gpydot,gc) * decls)
 {
   VEC(tree,gc) * lowered_decls = VEC_alloc (tree, gc, 0);
   
@@ -336,14 +337,14 @@ VEC(tree,gc) * gpy_dot_pass_generificify_genericify (gpy_hash_tab_t * modules,
   gpy_dd_hash_init_table (&topnxt);
 
   tree main_init_module = gpy_dot_pass_generificify_get_module_type (GPY_current_module_name,
-							       modules);
+								     modules);
   tree pdecl_t = build_pointer_type (main_init_module);
 
   tree fntype = build_function_type_list (void_type_node,
 					  pdecl_t,
 					  NULL_TREE);
   tree ident = GPY_dot_pass_generificify_gen_concat_identifier (GPY_current_module_name,
-							  "__field_init__");
+								"__field_init__");
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL, ident, fntype);
   debug ("lowering toplevel module <%s> to <%s>!\n", GPY_current_module_name,
 	 IDENTIFIER_POINTER (ident));
@@ -409,22 +410,15 @@ VEC(tree,gc) * gpy_dot_pass_generificify_genericify (gpy_hash_tab_t * modules,
           {
 	    tree t = gpy_dot_pass_generificify_toplevl_functor_decl (idtx, toplevl_context, modules);
 	    VEC_safe_push (tree, gc, lowered_decls, t);
-
-	    tree fold_functor = gpy_builtin_get_fold_functor_decl (DOT_IDENTIFIER_POINTER (DOT_FIELD (idtx)),
-								   lowered_functor);
-	    tree addr = gpy_ctx_lookup_decl (toplevl_context, DOT_IDENTIFIER_POINTER (DOT_FIELD (idtx)));
-	    tree modify_stmt = build2 (MODIFY_EXPR, gpy_object_type_ptr, addr, fold_functor);
-	    append_to_statement_list (modify_stmt, &block);
           }
           break;
 
 	case D_STRUCT_CLASS:
 	  {
 	    VEC(tree,gc) * lowered_class_decls = gpy_dot_pass_generificify_toplevl_class_decl (idtx,
-											 toplevl_context,
-											 modules);
+											       toplevl_context,
+											       modules);
 	    GPY_VEC_stmts_append (tree, lowered_decls, lowered_class_decls);
-	    
 	  }
 	  break;
 
@@ -481,7 +475,7 @@ VEC(tree,gc) * gpy_dot_pass_generificify (VEC(tree,gc) *modules,
     }
 
   debug ("genericification...!\n");
-  retval = gpy_dot_pass_generificify_genericify (&module_ctx, decls);
+  retval = gpy_dot_pass_generificify (&module_ctx, decls);
   debug ("finishing genericification!\n");
 
   if (module_ctx.array)
