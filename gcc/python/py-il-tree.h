@@ -14,8 +14,8 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>. */
 
-#ifndef __PY_TREE_H__
-#define __PY_TREE_H__
+#ifndef __GCC_PY_IL_TREE_H__
+#define __GCC_PY_IL_TREE_H__
 
 extern VEC(tree,gc) * gpy_builtin_types_vec;
 
@@ -32,13 +32,6 @@ extern VEC(tree,gc) * gpy_builtin_types_vec;
 
 extern VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) *);
 extern VEC(tree,gc) * gpy_stmt_pass_lower (VEC(tree,gc) *, VEC(gpydot,gc) *);
-
-extern tree gpy_stmt_decl_lower_expr (gpy_dot_tree_t *, tree *, VEC(gpy_ctx_t,gc) *);
-extern tree gpy_stmt_decl_lower_scalar (gpy_dot_tree_t *, tree *);
-
-extern tree gpy_stmt_decl_lower_modify (gpy_dot_tree_t *, tree *, VEC(gpy_ctx_t,gc) *);
-extern tree gpy_stmt_decl_lower_binary_op (gpy_dot_tree_t *, tree *, VEC(gpy_ctx_t,gc) *);
-extern tree gpy_stmt_pass_lower_functor (gpy_dot_tree_t *, gpy_hash_tab_t *);
 
 extern char * gpy_stmt_pass_lower_gen_concat (const char *, const char *);
 #define GPY_stmt_pass_lower_gen_concat_identifier(X_, Y_)	\
@@ -66,4 +59,4 @@ extern VEC(gpydot,gc) * gpy_stmt_pass_const_fold (VEC(gpydot,gc) *);
 extern VEC(gpydot,gc) * gpy_stmt_pass_translate (VEC(gpydot,gc) *);
 extern VEC(gpydot,gc) * gpy_stmt_pass_pretty_print (VEC(gpydot,gc) *);
 
-#endif //__PYPY_TREE_H__
+#endif //__PYGCC_PY_IL_TREE_H__

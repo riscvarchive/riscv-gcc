@@ -50,8 +50,8 @@ static VEC(gpydot,gc) * gpy_symbol_stack;
 extern int yylineno;
 //yydebug = 1;
 
-extern int yylex( void );
-extern void yyerror( const char * );
+extern int yylex (void);
+extern void yyerror (const char *);
 %}
 
 %union {

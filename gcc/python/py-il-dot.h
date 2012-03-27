@@ -13,9 +13,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>. */
-
-#ifndef __SYMBOLS_H_
-#define __SYMBOLS_H__
+#ifndef __GCC_PY_IL_DOT_H_
+#define __GCC_PY_IL_DOT_H__
 
 /* DOT tree codes... */
 typedef enum {
@@ -69,6 +68,14 @@ typedef struct GTY(()) gpy_tree_dot_t {
   } opb;
   struct gpy_tree_dot_t * next;
 } gpy_dot_tree_t ;
+typedef gpy_dot_tree_t * gpydot;
+
+typedef int gpy_int;
+DEF_VEC_I (gpy_int);
+DEF_VEC_ALLOC_I (gpy_int,gc);
+
+DEF_VEC_P (gpydot);
+DEF_VEC_ALLOC_P (gpydot,gc);
 
 #define DOT_TYPE(x)      x->T
 #define DOT_CHAIN(x)     x->next
@@ -103,4 +110,4 @@ extern gpy_dot_tree_t * dot_build_integer (int);
 extern gpy_dot_tree_t * dot_build_string (char *);
 extern gpy_dot_tree_t * dot_build_identifier (const char *);
 
-#endif /* __SYMBOLS_H_ */
+#endif /* __GCC_PY_IL_DOT_H_ */

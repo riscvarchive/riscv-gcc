@@ -32,20 +32,6 @@ typedef struct GTY(()) gpy_hash_table_t {
   signed long size, length;
   gpy_hash_entry_t * array;
 } gpy_hash_tab_t ;
-typedef gpy_dot_tree_t * gpydot;
-typedef gpy_hash_tab_t * gpy_ctx_t;
-
-typedef int gpy_int;
-DEF_VEC_I (gpy_int);
-DEF_VEC_ALLOC_I (gpy_int,gc);
-
-DEF_VEC_P (gpydot);
-DEF_VEC_ALLOC_P (gpydot,gc);
-
-DEF_VEC_P (gpy_ctx_t);
-DEF_VEC_ALLOC_P (gpy_ctx_t, gc);
-
-extern VEC(gpy_ctx_t,gc) * gpy_ctx_table;
 
 extern gpy_hashval_t gpy_dd_hash_string (const char *);
 extern gpy_hash_entry_t * gpy_dd_hash_lookup_table (gpy_hash_tab_t *, gpy_hashval_t);
