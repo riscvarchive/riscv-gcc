@@ -95,7 +95,6 @@ DEF_VEC_ALLOC_P (gpydot,gc);
   xmalloc (sizeof (gpy_dot_tree_t));
 #define DOT_CM_alloc     (gpy_dot_tree_common *)	\
   xmalloc (sizeof (gpy_dot_tree_common))
-
 #define DOT_IDENTIFIER_POINTER(x)		\
   DOT_lhs_TC(x)->o.string
 

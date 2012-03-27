@@ -51,6 +51,8 @@ static tree gpy_dot_pass_generificify_toplevl_functor_decl (gpy_dot_tree_t *);
 static VEC(tree,gc) * gpy_dot_pass_generificify_toplevl_class_decl (gpy_dot_tree_t *);
 static tree gpy_dot_pass_generificify_class_method_attrib (gpy_dot_tree_t *, const char *);
 
+static tree gpy_dot_pass_generificify_scalar (gpy_dot_tree_t *, tree *);
+
 char * gpy_dot_pass_generificify_gen_concat (const char * s1,
 				       const char * s2)
 {
@@ -79,7 +81,7 @@ char * gpy_dot_pass_generificify_gen_concat (const char * s1,
 
 static
 tree gpy_dot_pass_generificify_get_module_type (const char * s, 
-                                          gpy_hash_tab_t * modules)
+						gpy_hash_tab_t * modules)
 {
   tree retval = error_mark_node;
 
@@ -94,35 +96,12 @@ tree gpy_dot_pass_generificify_get_module_type (const char * s,
   return retval;
 }
 
-static
-void gpy_dot_pass_generificify_type_to_context (tree type, gpy_hash_tab_t * tbl,
-					  tree stack, tree stack_pointer,
-					  tree *block)
-{
-  if (type == error_mark_node)
-    return;
-  else
-    {
-      tree field = TYPE_FIELDS (type);
-      tree type_size = TYPE_SIZE (type);
-      do {
-	gcc_assert (TREE_CODE (field) == FIELD_DECL);
-	debug ("generating stack reference for <%s> @ offset <%i>!\n",
-	       IDENTIFIER_POINTER(DECL_NAME (field)),
-	       DECL_FIELD_OFFSET (field)
-	       );
-
-	/* .... */
-
-      } while ((field = DECL_CHAIN (field)));
-    }
-}
-
 /* 
    Creates a DECL_CHAIN of stmts to fold the scalar 
    with the last tree being the address of the primitive 
 */
-tree gpy_stmt_decl_lower_scalar (gpy_dot_tree_t * decl, tree * cblock)
+static
+tree gpy_dot_pass_generificify_scalar (gpy_dot_tree_t * decl, tree * cblock)
 {
   tree retval = error_mark_node;
 
@@ -379,7 +358,7 @@ VEC(tree,gc) * gpy_dot_pass_generificify_genericify (gpy_hash_tab_t * modules,
   DECL_CONTEXT (self_parm_decl) = fndecl;
   DECL_ARG_TYPE (self_parm_decl) = TREE_VALUE (TYPE_ARG_TYPES (TREE_TYPE (fndecl)));
   TREE_READONLY (self_parm_decl) = 1;
-  arglist = chainon (arglist, self_parm_decl);
+  tree arglist = chainon (arglist, self_parm_decl);
 
   TREE_USED (self_parm_decl) = 1;
   DECL_ARGUMENTS (fndecl) = arglist;
@@ -403,60 +382,6 @@ VEC(tree,gc) * gpy_dot_pass_generificify_genericify (gpy_hash_tab_t * modules,
   VEC_safe_push (gpy_ctx_t, gc, toplevl_context, &toplvl);
   VEC_safe_push (gpy_ctx_t, gc, toplevl_context, &topnxt);
 
-  tree runtime_globl_stack = build_decl (BUILTINS_LOCATION, VAR_DECL,
-					 get_identifier (GPY_GLOBL_STACK_id),
-					 gpy_object_type_ptr_ptr);
-  TREE_STATIC (runtime_globl_stack) = 0;
-  TREE_EXTERN (runtime_globl_stack) = 1;
-  TREE_PUBLIC (runtime_globl_stack) = 1;
-  TREE_USED (runtime_globl_stack) = 1;
-  DECL_ARTIFICIAL (runtime_globl_stack) = 1;
-
-  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack);
-
-  tree runtime_globl_stack_data_offset = build_decl (BUILTINS_LOCATION, VAR_DECL,
-						     get_identifier (GPY_GLOBL_STACK_DATA_OFFSET_id),
-						     long_integer_type_node);
-  TREE_STATIC (runtime_globl_stack_data_offset) = 0;
-  TREE_EXTERN (runtime_globl_stack_data_offset) = 1;
-  TREE_PUBLIC (runtime_globl_stack_data_offset) = 1;
-  TREE_USED (runtime_globl_stack_data_offset) = 1;
-  DECL_ARTIFICIAL (runtime_globl_stack_data_offset) = 1;
-
-  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_data_offset);
-
-  tree runtime_globl_stack_size = build_decl (BUILTINS_LOCATION, VAR_DECL,
-					      get_identifier (GPY_GLOBL_STACK_SIZE_id),
-					      long_integer_type_node);
-  TREE_STATIC (runtime_globl_stack_data_offset) = 0;
-  TREE_EXTERN (runtime_globl_stack_data_offset) = 1;
-  TREE_PUBLIC (runtime_globl_stack_data_offset) = 1;
-  TREE_USED (runtime_globl_stack_data_offset) = 1;
-  DECL_ARTIFICIAL (runtime_globl_stack_data_offset) = 1;
-
-  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_size);
-
-  tree runtime_globl_stack_pointer = build_decl (BUILTINS_LOCATION, VAR_DECL,
-						 get_identifier (GPY_GLOBL_STACK_POINTER_id),
-						 build_pointer_type (unsigned_char_type_node));
-  TREE_STATIC (runtime_globl_stack_stack_pointer) = 0;
-  TREE_EXTERN (runtime_globl_stack_stack_pointer) = 1;
-  TREE_PUBLIC (runtime_globl_stack_stack_pointer) = 1;
-  TREE_USED (runtime_globl_stack_stack_pointer) = 1;
-  DECL_ARTIFICIAL (runtime_globl_stack_stack_pointer) = 1;
-
-  VEC_safe_push (tree, gc, lowered_decls, runtime_globl_stack_pointer);
-
-  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_id),
-				   runtime_globl_stack, &toplvl));
-  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_DATA_OFFSET_id),
-				   runtime_globl_stack_data_offset, &toplvl));
-  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_SIZE_id),
-				   runtime_globl_stack_data_offset, &toplvl));
-  gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_GLOBL_STACK_POINTER_id),
-				   runtime_globl_stack_data_offset, &toplvl));
-  gpy_dot_pass_generificify_type_to_context (main_init_module, &topnxt, runtime_globl_stack,
-				       runtime_globl_stack_pointer);
   int idx;
   gpy_dot_tree_t * idtx = NULL_DOT;
   /*
