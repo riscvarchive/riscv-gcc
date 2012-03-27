@@ -16,48 +16,122 @@ along with GCC; see the file COPYING3.  If not see
 
 autogen definitions py-runtime;
 
-py-runtime = { code = GPY_RR_extend_globl_stack,
-	       arguments = { tree size },
-               function_identifier = "gpy_rr_extend_runtime_stack",
-               fntype = { void_type_node,
-                          integer_type_node,
-                          NULL_TREE
-	       },
-	       build_call = build_call_expr,
-	       build_call_args = { fndecl, 1, size }
+py-runtime = { code = GPY_RR_extend_globl_stack;
+	       arguments = "tree size";
+	       proto = "tree";
+	       comment = "/* Extends the runtime globl stack by passed size (integer_type_node) */";
+               function_identifier = "gpy_rr_extend_runtime_stack";
+               fntype = "void_type_node,
+	                 integer_type_node,
+			 NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 1, size";
              };
-py-runtime = { code = GPY_RR_fold_attrib,
-	       arguments = { tree ident, tree addr, tree offset },
-               function_identifier = "gpy_rr_fold_attribute",
-               fntype = { gpy_attrib_type_ptr,
-                          gpy_const_char_ptr,
-                          gpy_unsigned_char_ptr,
-                          integer_type_node,
-                          NULL_TREE
-	       },
-	       build_call = build_call_expr,
-	       build_call_args = { fndecl, 3, ident, addr, offset }
+
+py-runtime = { code = GPY_RR_fold_attrib;
+	       arguments = "tree ident, tree addr, tree offset";
+	       proto = "tree, tree, tree";
+	       comment = "/* Fold attribute info into an attribute type */";
+               function_identifier = "gpy_rr_fold_attribute";
+               fntype = "gpy_attrib_type_ptr,
+                         gpy_const_char_ptr,
+                         gpy_unsigned_char_ptr,
+                         integer_type_node,
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 3, ident, addr, offset";
              };
-py-runtime = { code = GPY_RR_fold_attrib_list,
-	       arguments = { VEC(tree,gc) * attribs }
-	       function_identifier = "gpy_rr_fold_attrib_list",
-               fntype = { gpy_attrib_type_ptr_ptr,
-			  integer_type_node,
-			  va_list_type_node,
-			  NULL_TREE
-	       },
-	       build_call = build_call_expr_loc_vec,
-	       build_call_args = { BUILTINS_LOCATION, fndecl, attribs }
+py-runtime = { code = GPY_RR_fold_attrib_list;
+	       arguments = "VEC(tree,gc) * attribs";
+	       proto = "VEC(tree,gc) *";
+	       comment = "/* Requires the first tree in the arguments to be an integer_type_node of the number of arguments */";
+	       function_identifier = "gpy_rr_fold_attrib_list";
+               fntype = "gpy_attrib_type_ptr_ptr,
+			 integer_type_node,
+			 va_list_type_node,
+			 NULL_TREE";
+	       build_call = build_call_expr_loc_vec;
+	       build_call_args = "BUILTINS_LOCATION, fndecl, attribs";
              };
-py-runtime = { code = GPY_RR_fold_class_decl,
-	       arguments = { tree attribs, tree size, tree ident }
-	       function_identifier = "gpy_rr_fold_class_decl",
-               fntype = { gpy_object_type_ptr,
-			  gpy_attrib_type_ptr_ptr,
-			  integer_type_node,
-			  gpy_const_char_ptr,
-			  NULL_TREE
-	       },
-	       build_call = build_call_expr,
-	       build_call_args = { fndecl, attribs, size, ident }
+py-runtime = { code = GPY_RR_fold_class_decl;
+	       arguments = "tree attrib_list, tree size, tree identifier";
+	       proto = "tree, tree, tree";
+	       comment = "/* Fold class data into class object args = <attrib list><size><identifier> */";
+               function_identifier = "gpy_rr_fold_class_decl";
+               fntype = "gpy_object_type_ptr,
+	       	         gpy_attrib_type_ptr_ptr,
+			 integer_type_node,
+                         gpy_const_char_ptr,
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 3, attrib_list, size, identifier";
+             };
+py-runtime = { code = GPY_RR_fold_integer;
+	       arguments = "tree integer";
+	       proto = "tree";
+	       comment = "/* Fold integer into Int object  via Int (x) */";
+               function_identifier = "gpy_rr_fold_integer";
+               fntype = "gpy_object_type_ptr,
+		         integer_type_node,
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 1, integer";
+             };
+py-runtime = { code = GPY_RR_get_object_state;
+	       arguments = "tree obj";
+	       proto = "tree";
+	       comment = "/* get the current object state  */";
+               function_identifier = "gpy_rr_get_object_state";
+               fntype = "ptr_type_node,
+		         gpy_object_type_ptr,
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 1, obj";
+             };
+py-runtime = { code = GPY_RR_incr_ref_count;
+	       arguments = "tree obj";
+	       proto = "tree";
+	       comment = "/* incr the refrence count on the object  */";
+               function_identifier = "gpy_rr_incr_ref_count";
+               fntype = "void_type_node,
+		         gpy_object_type_ptr,
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 1, obj";
+             };
+py-runtime = { code = GPY_RR_decr_ref_count;
+	       arguments = "tree obj";
+	       proto = "tree";
+	       comment = "/* decr the refrence count on the object  */";
+               function_identifier = "gpy_rr_decr_ref_count";
+               fntype = "void_type_node,
+		         gpy_object_type_ptr,
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 1, obj";
+             };
+py-runtime = { code = GPY_RR_eval_print;
+	       arguments = "VEC(tree,gc) * arguments";
+	       proto = "VEC(tree,gc) *";
+	       comment = "/* first index is the fd (1/0) 2nd idx is number of elements and finaly va_list of args */";
+	       function_identifier = "gpy_rr_eval_print";
+               fntype = "void_type_node,
+			 integer_type_node,
+			 integer_type_node
+			 va_list_type_node,
+			 NULL_TREE";
+	       build_call = build_call_expr_loc_vec;
+	       build_call_args = "BUILTINS_LOCATION, fndecl, arguments";
+             };
+py-runtime = { code = GPY_RR_eval_expression;
+	       arguments = "tree x, tree y, tree op";
+	       proto = "tree, tree, tree";
+	       comment = "/* Evaluate the operation op of the 2 objects x and y and return result */";
+               function_identifier = "gpy_rr_eval_expression";
+               fntype = "gpy_object_type_ptr,
+	       	         gpy_object_type_ptr,
+			 integer_type_node
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 3, x, y, op";
              };

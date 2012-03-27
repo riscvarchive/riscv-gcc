@@ -1,3 +1,4 @@
+
 /* This file is part of GCC.
 
 GCC is free software; you can redistribute it and/or modify it under
@@ -13,6 +14,12 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
+/* 
+   This file was generated via autogen @see py-runtime.{def/tpl}
+     - To regenerate with new definitions $ autogen py-runtime.def
+ */
+
 
 #include "config.h"
 #include "system.h"
@@ -37,103 +44,25 @@ along with GCC; see the file COPYING3.  If not see
 
 #include <gmp.h>
 #include <mpfr.h>
-#include "vec.h"
-#include "hashtab.h"
 
-#include "gpython.h"
-#include "py-dot.h"
-#include "py-vec.h"
-#include "py-tree.h"
-#include "py-builtins.h"
+#include <gpython.h>
+#include <py-il-dot.h>
+#include <py-il-tree.h>
+#include <py-runtime.h>
+#include <py-vec.h>
 
 VEC(tree,gc) * gpy_builtin_types_vec;
 static tree gpy_build_py_object_type (void);
 static tree gpy_build_py_vector_type (void);
 
-tree gpy_builtin_get_init_call (void)
-{
-  tree fntype = build_function_type (void_type_node, void_list_node);
-  tree gpy_rr_init = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
-				 get_identifier("gpy_rr_init_runtime"),
-				 fntype);
-  tree restype = TREE_TYPE (gpy_rr_init);
-  tree resdecl = build_decl (UNKNOWN_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype);
-  DECL_CONTEXT (resdecl) = gpy_rr_init;
-  DECL_RESULT (gpy_rr_init) = resdecl;
-  DECL_EXTERNAL (gpy_rr_init) = 1;
-  TREE_PUBLIC (gpy_rr_init) = 1;
-
-  return build_call_expr (gpy_rr_init, 0, NULL_TREE);
-}
-
-tree gpy_builtin_get_cleanup_final_call (void)
-{
-  tree fntype = build_function_type( void_type_node, void_list_node );
-  tree gpy_rr_cleanup = build_decl( UNKNOWN_LOCATION, FUNCTION_DECL,
-				    get_identifier("gpy_rr_cleanup_final"),
-				    fntype );
-  tree restype = TREE_TYPE( gpy_rr_cleanup );
-  tree resdecl = build_decl( UNKNOWN_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype );
-  DECL_CONTEXT(resdecl) = gpy_rr_cleanup;
-  DECL_RESULT(gpy_rr_cleanup) = resdecl;
-  DECL_EXTERNAL( gpy_rr_cleanup ) = 1;
-  TREE_PUBLIC( gpy_rr_cleanup ) = 1;
-
-  return build_call_expr( gpy_rr_cleanup, 0, NULL_TREE );
-}
-
-tree gpy_builtin_get_fold_int_call (int val)
-{
-  tree params = NULL_TREE;
-
-  chainon( params, tree_cons (NULL_TREE, integer_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, void_type_node, NULL_TREE) );
   
-  tree fntype = build_function_type( ptr_type_node, params );
-  tree gpy_eval_expr_decl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
-					get_identifier ("gpy_rr_fold_integer"),
-					fntype);
-  tree restype = TREE_TYPE(gpy_eval_expr_decl);
-  tree resdecl = build_decl (UNKNOWN_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype);
-  DECL_CONTEXT(resdecl) = gpy_eval_expr_decl;
-  DECL_RESULT(gpy_eval_expr_decl) = resdecl;
-  DECL_EXTERNAL( gpy_eval_expr_decl ) = 1;
-  TREE_PUBLIC( gpy_eval_expr_decl ) = 1;
-
-  return build_call_expr (gpy_eval_expr_decl, 1,
-			  build_int_cst (integer_type_node,
-					 val)
-			  );
-}
-
-tree gpy_stmt_pass_lower_gen_toplevl_offsets_table (tree type, tree * stmts)
+tree GPY_RR_extend_globl_stack (tree size)
 {
-  gcc_assert (type != error_mark_node);
-
-  VEC(tree,gc) * addrs = VEC_alloc (tree,gc,0);
-  tree field = TYPE_FIELDS (type);
-  do {
-    gcc_assert (TREE_CODE (field) == FIELD_DECL);
-
-    tree i = build_decl (BUILTINS_LOCATION, VAR_DECL, create_tmp_var_name ("R"),
-			 gpy_attrib_type_ptr);
-    VEC_safe_push (tree,gc,addrs, i);
-
-    tree field_offset = DECL_FIELD_OFFSET (field);
-    tree eval = gpy_builtin_fold_attrib (IDENTIFIER_POINTER (DECL_NAME (field)),
-					 build_int_cst (ptr_type_node, 0),
-					 field_offset);
-    tree m = build2 (MODIFY_EXPR, gpy_attrib_type_ptr, i, eval);
-    append_to_statement_list (m, stmts);
-  } while ((field = DECL_CHAIN (field)));
-
-  tree fntype = build_function_type_list (gpy_attrib_type_ptr_ptr, integer_type_node,
-					  va_list_type_node, NULL_TREE);
-  tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
-			    get_identifier ("gpy_rr_fold_attrib_list"),
+  tree fntype = build_function_type_list (void_type_node,
+	                 integer_type_node,
+			 NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
+			    get_identifier ("gpy_rr_extend_runtime_stack"),
 			    fntype);
   tree restype = TREE_TYPE (fndecl);
   tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
@@ -142,40 +71,18 @@ tree gpy_stmt_pass_lower_gen_toplevl_offsets_table (tree type, tree * stmts)
   DECL_RESULT (fndecl) = resdecl;
   DECL_EXTERNAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
-  
-  int dlen = VEC_length (tree, addrs);
-  tree * args = XNEWVEC (tree, dlen + 1);
-  args[0] = build_int_cst (integer_type_node, dlen);
 
-  tree it = NULL_TREE;
-  int idx, offset = 1;
-  for (idx = 0; VEC_iterate (tree, addrs, idx, it); ++idx)
-    {
-      args[offset] = it;
-      ++offset;
-    }
-
-  return build_call_expr_loc_array (BUILTINS_LOCATION, fndecl, dlen+1, args);
+  return build_call_expr (fndecl, 1, size);
 }
-
-tree gpy_builtin_fold_attrib (const char * identifier,
-			      tree addr,
-			      tree offset)
+  
+tree GPY_RR_fold_attrib (tree ident, tree addr, tree offset)
 {
-  tree string_type = build_array_type (char_type_node,
-				       build_index_type (size_int (
-								   strlen (identifier)
-								   )
-							 ));
-  string_type = build_qualified_type (string_type, TYPE_QUAL_CONST);
-  gpy_preserve_from_gc (string_type);
-
   tree fntype = build_function_type_list (gpy_attrib_type_ptr,
-					  string_type,
-					  build_pointer_type (unsigned_char_type_node),
-					  integer_type_node,
-					  NULL_TREE);
-  tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
+                         gpy_const_char_ptr,
+                         gpy_unsigned_char_ptr,
+                         integer_type_node,
+                         NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
 			    get_identifier ("gpy_rr_fold_attribute"),
 			    fntype);
   tree restype = TREE_TYPE (fndecl);
@@ -186,22 +93,17 @@ tree gpy_builtin_fold_attrib (const char * identifier,
   DECL_EXTERNAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  tree identifier_tree = build_string (strlen (identifier), identifier);
-  TREE_TYPE (identifier_tree) = string_type;
-
-  return build_call_expr (fndecl, 3, identifier_tree,
-			  addr, offset);
+  return build_call_expr (fndecl, 3, ident, addr, offset);
 }
-
-tree gpy_builtin_fold_attribs_list (VEC(tree,gc) * attribs)
+  
+tree GPY_RR_fold_attrib_list (VEC(tree,gc) * attribs)
 {
   tree fntype = build_function_type_list (gpy_attrib_type_ptr_ptr,
-					  integer_type_node,
-					  va_list_type_node,
-					  NULL_TREE);
-
-  tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
-			    get_identifier ("gpy_rr_get_object_state"),
+			 integer_type_node,
+			 va_list_type_node,
+			 NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
+			    get_identifier ("gpy_rr_fold_attrib_list"),
 			    fntype);
   tree restype = TREE_TYPE (fndecl);
   tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
@@ -211,29 +113,55 @@ tree gpy_builtin_fold_attribs_list (VEC(tree,gc) * attribs)
   DECL_EXTERNAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  int veclen = VEC_length (tree,attribs);
-  tree * vec = XNEWVEC (tree, veclen+1);
-
-  vec[0] = build_int_cst (integer_type_node, 1);
-
-  int idx, offset = 1;
-  tree it = NULL_TREE;
-  for (idx = 0; VEC_iterate (tree,attribs,idx,it); ++idx)
-    {
-      vec[offset] = it;
-      offset++;
-    }
-
-  return build_call_expr_loc_array (BUILTINS_LOCATION, fndecl, veclen, vec);
+  return build_call_expr_loc_vec (BUILTINS_LOCATION, fndecl, attribs);
 }
+  
+tree GPY_RR_fold_class_decl (tree attrib_list, tree size, tree identifier)
+{
+  tree fntype = build_function_type_list (gpy_object_type_ptr,
+	       	         gpy_attrib_type_ptr_ptr,
+			 integer_type_node,
+                         gpy_const_char_ptr,
+                         NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
+			    get_identifier ("gpy_rr_fold_class_decl"),
+			    fntype);
+  tree restype = TREE_TYPE (fndecl);
+  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
+			     restype);
+  DECL_CONTEXT (resdecl) = fndecl;
+  DECL_RESULT (fndecl) = resdecl;
+  DECL_EXTERNAL (fndecl) = 1;
+  TREE_PUBLIC (fndecl) = 1;
 
-tree gpy_builtin_get_object_state (tree decl)
+  return build_call_expr (fndecl, 3, attrib_list, size, identifier);
+}
+  
+tree GPY_RR_fold_integer (tree integer)
+{
+  tree fntype = build_function_type_list (gpy_object_type_ptr,
+		         integer_type_node,
+                         NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
+			    get_identifier ("gpy_rr_fold_integer"),
+			    fntype);
+  tree restype = TREE_TYPE (fndecl);
+  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
+			     restype);
+  DECL_CONTEXT (resdecl) = fndecl;
+  DECL_RESULT (fndecl) = resdecl;
+  DECL_EXTERNAL (fndecl) = 1;
+  TREE_PUBLIC (fndecl) = 1;
+
+  return build_call_expr (fndecl, 1, integer);
+}
+  
+tree GPY_RR_get_object_state (tree obj)
 {
   tree fntype = build_function_type_list (ptr_type_node,
-					  gpy_object_type_ptr,
-					  NULL_TREE);
-
-  tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
+		         gpy_object_type_ptr,
+                         NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
 			    get_identifier ("gpy_rr_get_object_state"),
 			    fntype);
   tree restype = TREE_TYPE (fndecl);
@@ -244,19 +172,16 @@ tree gpy_builtin_get_object_state (tree decl)
   DECL_EXTERNAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  return build_call_expr (fndecl, 1, decl);
+  return build_call_expr (fndecl, 1, obj);
 }
-
-tree gpy_builtin_setup_globls (tree globls, int n, ...)
+  
+tree GPY_RR_incr_ref_count (tree obj)
 {
   tree fntype = build_function_type_list (void_type_node,
-					  gpy_vector_type_ptr,
-					  integer_type_node,
-					  va_list_type_node,
-					  NULL_TREE);
-
-  tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
-			    get_identifier ("gpy_rr_setup_globals"),
+		         gpy_object_type_ptr,
+                         NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
+			    get_identifier ("gpy_rr_incr_ref_count"),
 			    fntype);
   tree restype = TREE_TYPE (fndecl);
   tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
@@ -266,129 +191,16 @@ tree gpy_builtin_setup_globls (tree globls, int n, ...)
   DECL_EXTERNAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  tree *args = XNEWVEC (tree, n+2);
-
-  args[0] = globls;
-  args[1] = build_int_cst (integer_type_node, n);
-
-  va_list vl;
-  va_start (vl, n);
-
-  int idx, offset = 2;
-  for (idx = 0; idx < n; ++idx)
-    {
-      tree addr = va_arg (vl, tree);
-      args[offset] = addr;
-      offset++;
-    }
-  va_end (vl);
-
-  return build_call_expr_loc_array (UNKNOWN_LOCATION, fndecl, n+2, args);
+  return build_call_expr (fndecl, 1, obj);
 }
-
-tree gpy_builtin_get_fold_call (bool lex, tree decl, tree globls,
-				const char * ident)
-{
-  tree fntype = build_function_type_list (gpy_object_type_ptr,
-					  integer_type_node,
-					  gpy_object_type_ptr,
-					  gpy_object_type_ptr,
-					  NULL_TREE);
-  tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
-			    get_identifier ("gpy_rr_fold_call"),
-			    fntype);
-  tree restype = TREE_TYPE (fndecl);
-  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype);
-  DECL_CONTEXT (resdecl) = fndecl;
-  DECL_RESULT (fndecl) = resdecl;
-  DECL_EXTERNAL (fndecl) = 1;
-  TREE_PUBLIC (fndecl) = 1;
-
-  tree string_type = build_array_type (char_type_node,
-				       build_index_type (size_int (
-								   strlen (ident)
-								   )
-							 ));
-  string_type = build_qualified_type (string_type, TYPE_QUAL_CONST);
-  gpy_preserve_from_gc (string_type);
   
-  tree identifier_tree = build_string (strlen (ident), ident);
-  TREE_TYPE (identifier_tree) = string_type;
-
-  return build_call_expr (fndecl, 4, build_int_cst (integer_type_node, lex),
-			  decl, globls, 
-			  identifier_tree);
-}
-
-tree gpy_builtin_get_attrib_ref_flat (tree head, const char * attrib)
+tree GPY_RR_decr_ref_count (tree obj)
 {
-  tree string_parm_type = build_pointer_type (char_type_node);
-  tree cchar_t = build_qualified_type (string_parm_type, TYPE_QUAL_CONST);
-
-  tree fntype = build_function_type_list (unsigned_char_type_node,
-					  gpy_object_type_ptr,
-					  cchar_t,
-					  NULL_TREE);
-  tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
-			    get_identifier ("gpy_rr_fold_call"),
-			    fntype);
-  tree restype = TREE_TYPE (fndecl);
-  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype);
-  DECL_CONTEXT (resdecl) = fndecl;
-  DECL_RESULT (fndecl) = resdecl;
-  DECL_EXTERNAL (fndecl) = 1;
-  TREE_PUBLIC (fndecl) = 1;
-
-  tree string_type = build_array_type (char_type_node,
-				       build_index_type (size_int (
-								   strlen (attrib)
-								   )
-							 ));
-  string_type = build_qualified_type (string_type, TYPE_QUAL_CONST);
-  gpy_preserve_from_gc (string_type);
-
-  tree identifier_tree = build_string (strlen (attrib), attrib);
-  TREE_TYPE (identifier_tree) = string_type;
-
-  return build_call_expr (fndecl, 2, head, identifier_tree);
-}
-
-tree gpy_builtin_setup_globls_namespace (tree main_self)
-{
-  tree fntype = build_function_type_list (gpy_vector_type_ptr,
-					  ptr_type_node, NULL_TREE);
-
-  tree fndecl = build_decl (UNKNOWN_LOCATION, FUNCTION_DECL,
-			    get_identifier ("gpy_rr_setup_globls_namespace"),
-			    fntype);
-  tree restype = TREE_TYPE (fndecl);
-  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype);
-  DECL_CONTEXT (resdecl) = fndecl;
-  DECL_RESULT (fndecl) = resdecl;
-  DECL_EXTERNAL (fndecl) = 1;
-  TREE_PUBLIC (fndecl) = 1;
-
-  tree call =  build_call_expr (fndecl, 1, main_self);
-
-  return call;
-}
-
-tree gpy_builtin_get_fold_functor_decl (const char * ident, tree fndecl_addr)
-{
-  gcc_assert (TREE_CODE(fndecl_addr) == FUNCTION_DECL);
-
-  tree string_parm_type = build_pointer_type (char_type_node);
-  tree cchar_t = build_qualified_type (string_parm_type, TYPE_QUAL_CONST);
-
-  tree fntype = build_function_type_list (gpy_object_type_ptr,
-					  cchar_t,
-					  gpy_object_type_ptr,
-					  NULL_TREE);
+  tree fntype = build_function_type_list (void_type_node,
+		         gpy_object_type_ptr,
+                         NULL_TREE);
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
-			    get_identifier ("gpy_rr_fold_functor_decl"),
+			    get_identifier ("gpy_rr_decr_ref_count"),
 			    fntype);
   tree restype = TREE_TYPE (fndecl);
   tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
@@ -398,33 +210,18 @@ tree gpy_builtin_get_fold_functor_decl (const char * ident, tree fndecl_addr)
   DECL_EXTERNAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  tree string_type = build_array_type (char_type_node,
-				       build_index_type (size_int (
-								   strlen (ident)
-								   )
-							 ));
-  string_type = build_qualified_type (string_type, TYPE_QUAL_CONST);
-  gpy_preserve_from_gc (string_type);
-
-  tree identifier_tree = build_string (strlen (ident), ident);
-  TREE_TYPE (identifier_tree) = string_type;
-
-  return build_call_expr (fndecl, 2, identifier_tree,
-			  build_fold_addr_expr (fndecl_addr));
+  return build_call_expr (fndecl, 1, obj);
 }
-
-tree gpy_builtin_get_fold_class_decl (tree attribs, tree size, const char * identifier)
+  
+tree GPY_RR_eval_print (VEC(tree,gc) * arguments)
 {
-  tree string_parm_type = build_pointer_type (char_type_node);
-  tree cchar_t = build_qualified_type (string_parm_type, TYPE_QUAL_CONST);
-
-  tree fntype = build_function_type_list (gpy_object_type_ptr,
-					  gpy_attrib_type_ptr_ptr,
-					  integer_type_node,
-					  cchar_t,
-					  NULL_TREE);
+  tree fntype = build_function_type_list (void_type_node,
+			 integer_type_node,
+			 integer_type_node
+			 va_list_type_node,
+			 NULL_TREE);
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
-			    get_identifier ("gpy_rr_fold_functor_decl"),
+			    get_identifier ("gpy_rr_eval_print"),
 			    fntype);
   tree restype = TREE_TYPE (fndecl);
   tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
@@ -434,125 +231,29 @@ tree gpy_builtin_get_fold_class_decl (tree attribs, tree size, const char * iden
   DECL_EXTERNAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  tree string_type = build_array_type (char_type_node,
-				       build_index_type (size_int (
-								   strlen (identifier)
-								   )
-							 ));
-  string_type = build_qualified_type (string_type, TYPE_QUAL_CONST);
-  gpy_preserve_from_gc (string_type);
-
-  tree identifier_tree = build_string (strlen (identifier), identifier);
-  TREE_TYPE (identifier_tree) = string_type;
-
-  return build_call_expr (fndecl, 3, attribs, size, identifier_tree);
+  return build_call_expr_loc_vec (BUILTINS_LOCATION, fndecl, arguments);
 }
-
-tree gpy_builtin_get_eval_expression_call (tree t1, tree t2, opcode_t op)
+  
+tree GPY_RR_eval_expression (tree x, tree y, tree op)
 {
-  tree params = NULL_TREE;
+  tree fntype = build_function_type_list (gpy_object_type_ptr,
+	       	         gpy_object_type_ptr,
+			 integer_type_node
+                         NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
+			    get_identifier ("gpy_rr_eval_expression"),
+			    fntype);
+  tree restype = TREE_TYPE (fndecl);
+  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
+			     restype);
+  DECL_CONTEXT (resdecl) = fndecl;
+  DECL_RESULT (fndecl) = resdecl;
+  DECL_EXTERNAL (fndecl) = 1;
+  TREE_PUBLIC (fndecl) = 1;
 
-  chainon( params, tree_cons (NULL_TREE, ptr_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, ptr_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, integer_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, void_type_node, NULL_TREE) );
-
-  tree fntype = build_function_type( ptr_type_node, params );
-  tree gpy_eval_expr_decl = build_decl( UNKNOWN_LOCATION, FUNCTION_DECL,
-					get_identifier ("gpy_rr_eval_expression"),
-					fntype );
-  tree restype = TREE_TYPE(gpy_eval_expr_decl);
-  tree resdecl = build_decl( UNKNOWN_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype );
-  DECL_CONTEXT( resdecl ) = gpy_eval_expr_decl;
-  DECL_RESULT( gpy_eval_expr_decl ) = resdecl;
-  DECL_EXTERNAL( gpy_eval_expr_decl ) = 1;
-  TREE_PUBLIC( gpy_eval_expr_decl ) = 1;
-
-  return build_call_expr (gpy_eval_expr_decl, 3, t1, t2,
-			  build_int_cst (integer_type_node, op));
+  return build_call_expr (fndecl, 3, x, y, op);
 }
-
-tree gpy_builtin_get_incr_ref_call (tree x)
-{
-  tree params = NULL_TREE;
-
-  chainon( params, tree_cons (NULL_TREE, ptr_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, void_type_node, NULL_TREE) );
-
-  tree fntype = build_function_type( ptr_type_node, params );
-  tree gpy_incr_ref_decl = build_decl( UNKNOWN_LOCATION, FUNCTION_DECL,
-					get_identifier("gpy_rr_incr_ref_count"),
-					fntype );
-  tree restype = TREE_TYPE( gpy_incr_ref_decl );
-  tree resdecl = build_decl( UNKNOWN_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype );
-  DECL_CONTEXT( resdecl ) = gpy_incr_ref_decl;
-  DECL_RESULT( gpy_incr_ref_decl ) = resdecl;
-  DECL_EXTERNAL( gpy_incr_ref_decl ) = 1;
-  TREE_PUBLIC( gpy_incr_ref_decl ) = 1;
-
-  return build_call_expr (gpy_incr_ref_decl, 1, x);
-}
-
-tree gpy_builtin_get_decr_ref_call (tree x)
-{
-  tree params = NULL_TREE;
-
-  chainon( params, tree_cons (NULL_TREE, ptr_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, void_type_node, NULL_TREE) );
-
-  tree fntype = build_function_type( ptr_type_node, params );
-  tree gpy_decr_ref_decl = build_decl( UNKNOWN_LOCATION, FUNCTION_DECL,
-					get_identifier ("gpy_rr_decr_ref_count"),
-					fntype );
-  tree restype = TREE_TYPE( gpy_decr_ref_decl );
-  tree resdecl = build_decl( UNKNOWN_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype );
-  DECL_CONTEXT( resdecl ) = gpy_decr_ref_decl;
-  DECL_RESULT( gpy_decr_ref_decl ) = resdecl;
-  DECL_EXTERNAL( gpy_decr_ref_decl ) = 1;
-  TREE_PUBLIC( gpy_decr_ref_decl ) = 1;
-
-  return build_call_expr (gpy_decr_ref_decl, 1, x);
-}
-
-tree gpy_builtin_get_print_call (int n, tree * args)
-{
-  tree params = NULL_TREE;
-
-  chainon( params, tree_cons (NULL_TREE, integer_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, integer_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, va_list_type_node, NULL_TREE) );
-  chainon( params, tree_cons (NULL_TREE, void_type_node, NULL_TREE) );
-
-  tree fntype = build_function_type( ptr_type_node, params );
-  tree gpy_eval_print_decl = build_decl( UNKNOWN_LOCATION, FUNCTION_DECL,
-					get_identifier("gpy_rr_eval_print"),
-					fntype );
-  tree restype = TREE_TYPE(gpy_eval_print_decl);
-  tree resdecl = build_decl( UNKNOWN_LOCATION, RESULT_DECL, NULL_TREE,
-			     restype );
-  DECL_CONTEXT( resdecl ) = gpy_eval_print_decl;
-  DECL_RESULT( gpy_eval_print_decl ) = resdecl;
-  DECL_EXTERNAL( gpy_eval_print_decl ) = 1;
-  TREE_PUBLIC( gpy_eval_print_decl ) = 1;
-
-  tree * vec = XNEWVEC (tree, n+2);
-
-  vec[0] = build_int_cst (integer_type_node, 1);
-  vec[1] = build_int_cst (integer_type_node, n);
-
-  int idx = 2, idy = 0;
-  for (; idy<n; ++idy)
-    {
-      vec[idx] = args[idy];
-      idx++;
-    }
-
-  return build_call_expr_loc_array (UNKNOWN_LOCATION, gpy_eval_print_decl,
-				    n+2, vec);
-}
+  
 
 static
 tree gpy_build_py_vector_type (void)
@@ -675,8 +376,6 @@ tree gpy_build_py_object_type (void)
   tree object_state_ptr_type = build_pointer_type (object_state_struct_Type);
   gpy_preserve_from_gc (object_state_ptr_type);
 
-  //....................
-
   tree union_type__ = make_node (UNION_TYPE);
 
   name = get_identifier ("object_state");
@@ -702,8 +401,6 @@ tree gpy_build_py_object_type (void)
   TYPE_NAME(union_type__) = union_type_decl;
   gpy_preserve_from_gc(union_type_decl);
   rest_of_decl_compilation(union_type_decl, 1, 0);
-
-  //.........................
 
   tree gpy_object_struct_Type = make_node (RECORD_TYPE);
   
@@ -775,3 +472,5 @@ void gpy_initilize_types (void)
 		 build_pointer_type (gpy_attrib_type_ptr));
   gpy_preserve_from_gc (gpy_attrib_type_ptr_ptr);
 }
+
+

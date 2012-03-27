@@ -228,7 +228,7 @@ gpy_object_t * gpy_rr_fold_class_decl (gpy_object_attrib_t ** attribs,
   retval = def->tp_new (def, args);
   gpy_free(args);
 
-  debug ("initilized function object <%p> to <%s>!\n",
+  debug ("initilized class object <%p> to <%s>!\n",
 	 (void*)retval, identifier);
   gpy_assert (retval->T == TYPE_OBJECT_DECL);
 
