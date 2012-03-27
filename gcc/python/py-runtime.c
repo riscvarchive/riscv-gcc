@@ -217,7 +217,7 @@ tree GPY_RR_eval_print (VEC(tree,gc) * arguments)
 {
   tree fntype = build_function_type_list (void_type_node,
 			 integer_type_node,
-			 integer_type_node
+			 integer_type_node,
 			 va_list_type_node,
 			 NULL_TREE);
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
@@ -238,7 +238,7 @@ tree GPY_RR_eval_expression (tree x, tree y, tree op)
 {
   tree fntype = build_function_type_list (gpy_object_type_ptr,
 	       	         gpy_object_type_ptr,
-			 integer_type_node
+			 integer_type_node,
                          NULL_TREE);
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
 			    get_identifier ("gpy_rr_eval_expression"),

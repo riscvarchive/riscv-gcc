@@ -117,7 +117,7 @@ py-runtime = { code = GPY_RR_eval_print;
 	       function_identifier = "gpy_rr_eval_print";
                fntype = "void_type_node,
 			 integer_type_node,
-			 integer_type_node
+			 integer_type_node,
 			 va_list_type_node,
 			 NULL_TREE";
 	       build_call = build_call_expr_loc_vec;
@@ -130,7 +130,7 @@ py-runtime = { code = GPY_RR_eval_expression;
                function_identifier = "gpy_rr_eval_expression";
                fntype = "gpy_object_type_ptr,
 	       	         gpy_object_type_ptr,
-			 integer_type_node
+			 integer_type_node,
                          NULL_TREE";
 	       build_call = build_call_expr;
 	       build_call_args = "fndecl, 3, x, y, op";

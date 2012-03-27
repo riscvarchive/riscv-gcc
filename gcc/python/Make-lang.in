@@ -69,11 +69,11 @@ py-runtime.o: $(srcdir)/python/py-runtime.c $(CONFIG_H) $(SYSTEM_H) coretypes.h 
 	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-runtime.c
 
-py-dot.o: $(srcdir)/python/py-dot.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+py-il-dot.o: $(srcdir)/python/py-il-dot.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
   $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
   gt-python-py-lang.h gtype-python.h
 	$(CC) $(GPY_CFLAGS) $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
-	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-dot.c
+	$(LDFLAGS) -c -o $@ $(srcdir)/python/py-il-dot.c
 
 py-dot-pass-manager.o: $(srcdir)/python/py-dot-pass-manager.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
   $(FLAGS_H) toplev.h $(GGC_H) $(TREE_H) $(DIAGNOSTIC_H) input.h options.h opts.h \
