@@ -52,26 +52,26 @@
    We need to worry about any nested suites because there could possibly be another class definition
    and we still need to generate its type here for the next pass so we can calculate the attribute offsets
 */
-
-static tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const);
-static void gpy_stmt_pass_process_class_attrib_method_suite (gpy_dot_tree_t *, gpy_hash_tab_t *);
+static tree gpy_dot_pass_process_class_decl (gpy_dot_tree_t * const);
+static void gpy_dot_pass_process_class_attrib_method_suite (gpy_dot_tree_t *, gpy_hash_tab_t *);
 
 /*
   Process class method attribute's their suites for more decls to be part of the type for example:
 
   class foo:
-  x = 1
-  def __init__ (self):
-  print x
+    x = 1
+    def __init__ (self):
+      print x
+
   x = foo ()
   x.x = bla
 
-  works the exact same with scoping as:
+  works very similar to at least with scoping and address access with scoping as:
 
   class foo:
-  def __init__ (self):
-  self.x = 1
-  print x
+    def __init__ (self):
+      self.x = 1
+      print x
 
   x = foo ()
   x.x = bla
@@ -84,7 +84,7 @@ static void gpy_stmt_pass_process_class_attrib_method_suite (gpy_dot_tree_t *, g
   we ignore any nested classes we come across within these
 */
 static
-void gpy_stmt_pass_process_class_attrib_method_suite (gpy_dot_tree_t * suite, gpy_hash_tab_t * context)
+void gpy_dot_pass_process_class_attrib_method_suite (gpy_dot_tree_t * suite, gpy_hash_tab_t * context)
 {
   gpy_dot_tree_t * dot = suite;
   do
@@ -98,7 +98,7 @@ void gpy_stmt_pass_process_class_attrib_method_suite (gpy_dot_tree_t * suite, gp
 	  {
 	    if (DOT_T_FIELD (dot) == D_D_EXPR)
 	      {
-		gpy_dot_tree_t * itx = gpy_stmt_process_AST_Align (&dot);
+		gpy_dot_tree_t * itx = gpy_dot_process_AST_Align (&dot);
 	      
 		if (DOT_TYPE(itx) == D_MODIFY_EXPR)
 		  {
@@ -151,7 +151,7 @@ void gpy_stmt_pass_process_class_attrib_method_suite (gpy_dot_tree_t * suite, gp
 }
 
 static
-tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
+tree gpy_dot_pass_process_class_decl (gpy_dot_tree_t * const decl)
 {
   gpy_dot_tree_t * suite = decl->opa.t;
   gpy_dot_tree_t * dot = suite;
@@ -171,7 +171,7 @@ tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
 	  void ** e = gpy_dd_hash_insert (gpy_dd_hash_string (DOT_IDENTIFIER_POINTER (DOT_FIELD (dot))),
 					  dot, &class_module);
 	  gcc_assert (!e);
-	  gpy_stmt_pass_process_class_attrib_method_suite (dot->opb.t, &class_module);
+	  gpy_dot_pass_process_class_attrib_method_suite (dot->opb.t, &class_module);
 	}
 	break;
 
@@ -179,7 +179,7 @@ tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
 	{
 	  if (DOT_T_FIELD (dot) == D_D_EXPR)
 	    {
-	      gpy_dot_tree_t * itx = gpy_stmt_process_AST_Align (&dot);
+	      gpy_dot_tree_t * itx = gpy_dot_process_AST_Align (&dot);
 	      
 	      if (DOT_TYPE(itx) == D_MODIFY_EXPR)
 		{
@@ -265,13 +265,12 @@ tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
 		}
 	    }
 	}
-
       free (class_module.array);
 
       layout_type (class_module_struct);
-      tree name = GPY_stmt_pass_lower_gen_concat_identifier (GPY_current_module_name,
-							     DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
-							     );
+      tree name = GPY_dot_pass_genericify_gen_concat_identifier (GPY_current_module_name,
+								 DOT_IDENTIFIER_POINTER (DOT_FIELD (decl))
+								 );
       tree type_decl = build_decl (BUILTINS_LOCATION, TYPE_DECL, name,
 				   class_module_struct);
       DECL_ARTIFICIAL (type_decl) = 1;
@@ -292,7 +291,7 @@ tree gpy_stmt_pass_process_class_decl (gpy_dot_tree_t * const decl)
   After generating types for each class we generate the module type which is the type of the
   while python module
 */
-VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) * decls)
+VEC(tree,gc) * gpy_dot_pass_generate_types (VEC(gpydot,gc) * decls)
 {
   VEC(tree,gc) * retval = VEC_alloc (tree, gc, 0);
 
@@ -305,7 +304,7 @@ VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) * decls)
     {
       if (DOT_TYPE (idtx) == D_STRUCT_CLASS)
 	{
-	  tree module = gpy_stmt_pass_process_class_decl (idtx);
+	  tree module = gpy_dot_pass_process_class_decl (idtx);
 	  gcc_assert (module);
 	  VEC_safe_push (tree, gc, retval, module);
 
@@ -324,7 +323,7 @@ VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) * decls)
 	{
 	  if (DOT_T_FIELD (idtx) == D_D_EXPR)
 	    {
-	      idtx = gpy_stmt_process_AST_Align (&idtx);
+	      idtx = gpy_dot_process_AST_Align (&idtx);
 	      gpy_dot_tree_t * itx = idtx;
 	      
 	      if (DOT_TYPE(itx) == D_MODIFY_EXPR)
@@ -363,7 +362,7 @@ VEC(tree,gc) * gpy_stmt_pass_generate_types (VEC(gpydot,gc) * decls)
 	}
     }
 
-  char * module_entry = gpy_stmt_pass_lower_gen_concat (GPY_current_module_name, "__main_start__");
+  char * module_entry = gpy_dot_pass_genericify_gen_concat (GPY_current_module_name, "__main_start__");
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (module_entry),
 				   dot_build_identifier (module_entry),
 				   &main_module)

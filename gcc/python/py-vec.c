@@ -59,25 +59,24 @@ gpy_hashval_t gpy_dd_hash_string (const char * s)
 gpy_hash_entry_t *
 gpy_dd_hash_lookup_table (gpy_hash_tab_t * tbl, gpy_hashval_t h)
 {
-  gpy_hash_entry_t* retval = NULL;
+  gpy_hash_entry_t * retval = NULL;
   if (tbl->array)
     {
-      int size= tbl->size, idx= (h % size);
-      gpy_hash_entry_t *array= tbl->array;
+      int size = tbl->size, idx = (h % size);
+      gpy_hash_entry_t *array = tbl->array;
 
-      while( array[idx].data )
+      while (array[idx].data)
         {
-          if( array[idx].hash == h )
+          if (array[idx].hash == h)
             break;
-
           idx++;
-          if( idx >= size )
-            idx= 0;
+          if (idx >= size)
+            idx = 0;
         }
-      retval= (array+idx);
+      retval = (array+idx);
     }
   else
-    retval= NULL;
+    retval = NULL;
 
   return retval;
 }

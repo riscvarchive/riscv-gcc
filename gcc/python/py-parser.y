@@ -187,7 +187,7 @@ declarations: /* epsilon */
             {
 	      if ($2)
 		{
-		  gpy_stmt_process_decl ($2); 
+		  gpy_dot_pass_manager_process_decl ($2); 
 		}
 	    }
             ;

@@ -28,6 +28,10 @@ typedef struct GTY(()) gpy_hash_table_t {
   gpy_hash_entry_t * array;
 } gpy_hash_tab_t ;
 
+typedef struct GTY(()) gpy_symbol_t {
+  tree offset, field, type;
+} gpy_symbol_t;
+
 typedef gpy_hash_tab_t * gpy_context_t;
 DEF_VEC_P (gpy_context_t);
 DEF_VEC_ALLOC_P (gpy_context_t, gc);

@@ -81,7 +81,7 @@ void gpy_dot_pass_manager_write_globals (void)
     dot_decls = (*p)(dot_decls);
 
   VEC(tree,gc) * module_types = gpy_dot_pass_generate_types (dot_decls);
-  VEC(tree,gc) * dot2gen_trees = gpy_dot_pass_lower (module_types, gpy_decls);
+  VEC(tree,gc) * dot2gen_trees = gpy_dot_pass_genericify (module_types, gpy_decls);
   VEC(tree,gc) * globals = dot2gen_trees;
   
   int global_vec_len = VEC_length (tree, globals);
