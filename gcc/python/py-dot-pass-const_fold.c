@@ -51,7 +51,7 @@ along with GCC; see the file COPYING3.  If not see
   as expressions are folded out and evaluated at runtime due
   to dynamic typing so we cant rely on gcc's constant folding
 */
-VEC(gpydot,gc) * gpy_stmt_pass_const_fold (VEC(gpydot,gc) * decls)
+VEC(gpydot,gc) * gpy_dot_pass_const_fold (VEC(gpydot,gc) * decls)
 {
   return decls;
 }

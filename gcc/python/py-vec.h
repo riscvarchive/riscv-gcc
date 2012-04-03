@@ -28,7 +28,7 @@ typedef struct GTY(()) gpy_hash_table_t {
   gpy_hash_entry_t * array;
 } gpy_hash_tab_t ;
 
-typedef struct GTY(()) gpy_symbol_t {
+typedef struct gpy_symbol_t {
   tree offset, field, type;
 } gpy_symbol_t;
 
