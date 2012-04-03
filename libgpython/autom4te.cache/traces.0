@@ -464,6 +464,29 @@ m4trace:configure.ac:77: -1- AH_OUTPUT([HAVE_DLOPEN], [/* Define to 1 if you hav
 @%:@undef HAVE_DLOPEN])
 m4trace:configure.ac:77: -1- AC_DEFINE_TRACE_LITERAL([HAVE_DLOPEN])
 m4trace:configure.ac:77: -1- m4_pattern_allow([^HAVE_DLOPEN$])
+m4trace:configure.ac:79: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
+You should run autoupdate.], [../../lib/autoconf/general.m4:2615: AC_TRY_COMPILE is expanded from...
+../../lib/m4sugar/m4sh.m4:606: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2032: AC_CACHE_VAL is expanded from...
+aclocal.m4:8491: gl_VISIBILITY is expanded from...
+configure.ac:79: the top level])
+m4trace:configure.ac:79: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
+You should run autoupdate.], [../../lib/autoconf/general.m4:2615: AC_TRY_COMPILE is expanded from...
+../../lib/m4sugar/m4sh.m4:606: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2032: AC_CACHE_VAL is expanded from...
+aclocal.m4:8491: gl_VISIBILITY is expanded from...
+configure.ac:79: the top level])
+m4trace:configure.ac:79: -1- AC_SUBST([CFLAG_VISIBILITY])
+m4trace:configure.ac:79: -1- AC_SUBST_TRACE([CFLAG_VISIBILITY])
+m4trace:configure.ac:79: -1- m4_pattern_allow([^CFLAG_VISIBILITY$])
+m4trace:configure.ac:79: -1- AC_SUBST([HAVE_VISIBILITY])
+m4trace:configure.ac:79: -1- AC_SUBST_TRACE([HAVE_VISIBILITY])
+m4trace:configure.ac:79: -1- m4_pattern_allow([^HAVE_VISIBILITY$])
+m4trace:configure.ac:79: -1- AC_DEFINE_TRACE_LITERAL([HAVE_VISIBILITY])
+m4trace:configure.ac:79: -1- m4_pattern_allow([^HAVE_VISIBILITY$])
+m4trace:configure.ac:79: -1- AH_OUTPUT([HAVE_VISIBILITY], [/* Define to 1 or 0, depending whether the compiler supports simple visibility
+   declarations. */
+@%:@undef HAVE_VISIBILITY])
 m4trace:configure.ac:81: -1- AC_SUBST([CFLAGS])
 m4trace:configure.ac:81: -1- AC_SUBST_TRACE([CFLAGS])
 m4trace:configure.ac:81: -1- m4_pattern_allow([^CFLAGS$])

@@ -27,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/gpython.h>
 #include <gpython/vectors.h>
 #include <gpython/objects.h>
+#include <gpython/runtime.h>
 
 unsigned char * __GPY_GLOBL_RR_STACK;
 
@@ -63,7 +64,7 @@ int __GPY_GLOBL_RR_STACK_SIZE =
     (sizeof (int) * 2)
   + (sizeof (gpy_vector_t) * 2)
   +  sizeof (gpy_object_t *);
-int __GPY_GLOBL_RR_STACK_DATA_OFFSET = __GPY_GLOBL_RR_STACK_SIZE;
+int __GPY_GLOBL_RR_STACK_DATA_OFFSET = 0;
 
 gpy_vector_t * __GPY_GLOBL_CALL_STACK;
 gpy_vector_t * __GPY_GLOBL_PRIMITIVES;
@@ -159,7 +160,8 @@ gpy_object_attrib_t * gpy_rr_fold_attribute (const char * identifier,
   attrib->identifier = identifier;
   if (code_addr)
     {
-      attrib->addr = gpy_rr_fold_functor_decl (identifier, code_addr);
+      gpy_object_t * f = gpy_rr_fold_functor_decl (identifier, code_addr);
+      attrib->addr = f;
     }
   else
     attrib->addr = NULL;
