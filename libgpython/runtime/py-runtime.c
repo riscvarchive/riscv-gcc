@@ -109,9 +109,9 @@ void gpy_rr_init_runtime_stack (void)
 }
 
 /* remember to update the stack pointer's and the stack size */
-void gpy_rr_extend_runtime_stack (int size)
+void gpy_rr_extend_runtime_stack (int nslots)
 {
-  __GPY_GLOBL_RR_STACK_SIZE += size;
+  __GPY_GLOBL_RR_STACK_SIZE += nslots * sizeof (gpy_object_t *);
   __GPY_GLOBL_RR_STACK = gpy_realloc (__GPY_GLOBL_RR_STACK,
 				      __GPY_GLOBL_RR_STACK_SIZE);
   unsigned char * pointer = __GPY_GLOBL_RR_STACK;
@@ -119,23 +119,16 @@ void gpy_rr_extend_runtime_stack (int size)
   pointer += sizeof (int);
   *((int *) pointer) = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
   pointer += sizeof (int);
-
-  gpy_vector_t vec = *((gpy_vector_t *) pointer);
-  gpy_vec_init (&vec);
-  __GPY_GLOBL_PRIMITIVES = &vec;
   
   pointer += sizeof (gpy_vector_t);
-
-  vec = *((gpy_vector_t *) pointer);
-  gpy_vec_init (&vec);
-  __GPY_GLOBL_CALL_STACK = &vec;
-
   pointer += sizeof (gpy_vector_t);
+
   *((gpy_object_t **) pointer) = NULL;
   __GPY_GLOBL_RETURN_ADDR = *((gpy_object_t **) pointer);
 
   pointer += sizeof (gpy_object_t *);
   __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t **) pointer;
+  __GPY_GLOBL_RR_STACK_POINTER += nslots;
 }
 
 void gpy_rr_init_runtime (void)

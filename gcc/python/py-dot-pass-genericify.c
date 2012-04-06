@@ -58,6 +58,7 @@ static void gpy_dot_pass_genericify_setup_runtime_globls (gpy_hash_tab_t * const
 static void gpy_dot_pass_genericify_create_offsets_globl_context (tree, tree *,
 								  VEC(gpy_context_t,gc) *);
 static tree gpy_dot_pass_genericify_scalar (gpy_dot_tree_t *, tree *);
+static tree gpy_dot_pass_lower_expr (gpy_dot_tree_t *, tree *, VEC(gpy_context_t,gc) *);
 
 char * gpy_dot_pass_genericify_gen_concat (const char * s1,
 					   const char * s2)
@@ -112,6 +113,7 @@ void gpy_dot_pass_genericify_setup_runtime_globls (gpy_hash_tab_t * context)
   TREE_PUBLIC (decl) = 1;
   TREE_USED (decl) = 1;
   DECL_ARTIFICIAL (decl) = 1;
+  DECL_EXTERNAL (decl) = 1;
 
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_RR_globl_stack),
 				   decl, context)
@@ -124,6 +126,7 @@ void gpy_dot_pass_genericify_setup_runtime_globls (gpy_hash_tab_t * context)
   TREE_PUBLIC (decl) = 1;
   TREE_USED (decl) = 1;
   DECL_ARTIFICIAL (decl) = 1;
+  DECL_EXTERNAL (decl) = 1;
 
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (GPY_RR_globl_stack_pointer),
 				   decl, context)
@@ -134,16 +137,14 @@ static
 void gpy_dot_pass_genericify_create_offsets_globl_context (tree type, tree * cblock,
 							   VEC(gpy_context_t, gc) * context)
 {
-  tree extend_stack = GPY_RR_extend_globl_stack (TYPE_SIZE (type));
-  append_to_statement_list (extend_stack, cblock);
-
   gpy_context_t globls = VEC_index (gpy_context_t, context, 0);
   gpy_context_t globls_symbols = VEC_index (gpy_context_t, context, 1);
   gpy_hash_entry_t * e = gpy_dd_hash_lookup_table (globls,
 						   gpy_dd_hash_string (GPY_RR_globl_stack_pointer));
   gcc_assert (e);
   tree stack_pointer = (tree)e->data;
-  
+
+  int offset = 0, field_count = 0;
   tree field;
   for (field = TYPE_FIELDS (type); field != NULL_TREE;
        field = DECL_CHAIN (field)
@@ -154,20 +155,21 @@ void gpy_dot_pass_genericify_create_offsets_globl_context (tree type, tree * cbl
       debug ("calculating globl stack offset for <%s> from type <%s>!\n",
 	     ident, IDENTIFIER_POINTER (TYPE_NAME (type)));
 
-      tree offset = DECL_FIELD_OFFSET (field);
-      /*
-             *((gpy_object_t **)stack_pointer - offset)
-       */
-      tree offs = build2 (MINUS_EXPR, gpy_object_type_ptr_ptr, stack_pointer, offset);
-      
-      gpy_symbol_t * Sym = (gpy_symbol_t *) xmalloc (sizeof (gpy_symbol_t));
-      Sym->offset = offs;
-      Sym->field = field;
-      Sym->type = type;
-
-      gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (ident), Sym,
-				       globls_symbols));
+      tree element_size = TYPE_SIZE_UNIT (TREE_TYPE (field));
+      tree offs = fold_build2_loc (UNKNOWN_LOCATION, MULT_EXPR, sizetype,
+				   build_int_cst (sizetype, offset),
+				   element_size);
+      tree addr = fold_build2_loc (UNKNOWN_LOCATION, POINTER_PLUS_EXPR,
+				   TREE_TYPE (stack_pointer),
+				   stack_pointer, offs);
+      debug_tree (addr);
+      gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (ident), addr, globls_symbols));
+      offset--;
+      field_count++;
     }
+  append_to_statement_list (GPY_RR_extend_globl_stack (build_int_cst (integer_type_node,
+								      field_count)),
+			    cblock);
 }
 
 /* 
@@ -198,6 +200,230 @@ tree gpy_dot_pass_genericify_scalar (gpy_dot_tree_t * decl, tree * cblock)
 
     default:
       error ("invalid scalar type!\n");
+      break;
+    }
+
+  return retval;
+}
+
+static
+void gpy_dot_pass_genericify_print_stmt (gpy_dot_tree_t * decl, tree * block,
+					 VEC(gpy_context_t,gc) * context)
+{
+  gpy_dot_tree_t * arguments = decl->opa.t;
+  
+  VEC(tree,gc) * callvec_tmp = VEC_alloc (tree,gc,0);
+  gpy_dot_tree_t * it = NULL;
+  for (it = arguments; it != NULL; it = DOT_CHAIN (it))
+    {
+      VEC_safe_push (tree, gc, callvec_tmp,
+		     gpy_dot_pass_lower_expr (it, block, context));
+    }
+  VEC(tree,gc) * callvec = VEC_alloc (tree,gc,0);
+  VEC_safe_push (tree, gc, callvec, build_int_cst (integer_type_node, 1));
+  VEC_safe_push (tree, gc, callvec, build_int_cst (integer_type_node, VEC_length (tree, callvec_tmp)));
+
+  GPY_VEC_stmts_append (tree, callvec, callvec_tmp);
+
+  append_to_statement_list (GPY_RR_eval_print (callvec), block);
+}
+
+static
+int gpy_dot_pass_push_decl (tree decl, const char * ident,
+			    gpy_context_t context)
+{
+  int retval = 0;
+  gpy_hashval_t h = gpy_dd_hash_string (ident);
+  void ** slot = gpy_dd_hash_insert (h, decl, context);
+  if (!slot)
+    {
+      debug ("pushed decl <%s> into context!\n", ident);
+      retval = 1;
+    }
+  else
+    {
+      debug ("error pushing decl <%s>!\n", ident);
+    }
+  return retval;
+}
+
+static
+tree gpy_dot_pass_decl_lookup (VEC(gpy_context_t,gc) * context,
+			       const char * identifier)
+{
+  tree retval = error_mark_node;
+  gpy_hashval_t h = gpy_dd_hash_string (identifier);
+
+  int idx, length = VEC_length (gpy_context_t, context);
+  for (idx = length - 1; idx >= 0; --idx)
+    {
+      gpy_context_t ctx = VEC_index (gpy_context_t, context, idx);
+      gpy_hash_entry_t * o = NULL;
+      o = gpy_dd_hash_lookup_table (ctx, h);
+      if (o)
+	{
+	  if (o->data)
+	    {
+	      debug ("found decl <%s>!\n", identifier);
+	      retval = (tree) o->data;
+	      break;
+	    }
+	}
+    }
+  return retval;
+}
+
+static
+tree gpy_dot_pass_genericify_modify (gpy_dot_tree_t * decl, tree * block,
+				     VEC(gpy_context_t,gc) * context)
+{
+  tree retval = error_mark_node;
+  gpy_dot_tree_t * lhs = DOT_lhs_TT (decl);
+  gpy_dot_tree_t * rhs = DOT_rhs_TT (decl);
+
+  /*
+    We dont handle full target lists yet
+    all targets are in the lhs tree.
+   
+    To implment a target list such as:
+    x,y,z = 1
+
+    The lhs should be a DOT_CHAIN of identifiers!
+    So we just iterate over them and deal with it as such!
+   */
+
+  if (DOT_TYPE (lhs) == D_IDENTIFIER)
+    {
+      tree addr = gpy_dot_pass_decl_lookup (context, DOT_IDENTIFIER_POINTER (lhs));
+      if (!addr)
+	{
+	  /* since not previously declared we need to declare the variable! */
+	  gpy_hash_tab_t * current_context = VEC_index (gpy_context_t, context,
+							(VEC_length (gpy_context_t, context) - 1));
+	  addr = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+			     get_identifier (DOT_IDENTIFIER_POINTER (lhs)),
+			     gpy_object_type_ptr);
+	  if (!gpy_dot_pass_push_decl (addr, DOT_IDENTIFIER_POINTER (lhs), 
+				       current_context))
+	    error ("error pushing decl <%s>!\n", IDENTIFIER_POINTER (DECL_NAME (addr)));
+	}
+      gcc_assert (addr != error_mark_node);
+      tree addr_rhs_tree = gpy_dot_pass_lower_expr (rhs, block, context);
+      
+      switch (TREE_CODE (addr))
+	{
+	case VAR_DECL:
+	  {
+	    debug ("var_decl assign!\n");
+	    append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr,
+					      addr,
+					      addr_rhs_tree),
+				      block);
+	    retval = addr;
+	  }
+	  break;
+
+	default:
+	  {
+	    tree tmp = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+				   create_tmp_var_name ("A"),
+				   gpy_object_type_ptr_ptr);
+	    append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr_ptr,
+					      tmp,
+					      addr),
+				      block);
+	    tree refaddr = build_fold_indirect_ref (tmp);
+	    append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr_ptr,
+					      refaddr,
+					      addr_rhs_tree),
+				      block);
+	    retval = refaddr;
+	  }
+	  break;
+	}
+      append_to_statement_list (GPY_RR_incr_ref_count (retval), block);
+    }
+  else
+    fatal_error ("unhandled modify target type!\n");
+  
+  return retval;
+}
+
+static
+tree gpy_dot_pass_genericify_binary_op (gpy_dot_tree_t * decl, tree * block,
+					VEC(gpy_context_t,gc) * context)
+{
+  tree retval = error_mark_node;
+
+  gcc_assert (DOT_T_FIELD (decl) == D_D_EXPR);
+
+  gpy_dot_tree_t * lhs = DOT_lhs_TT (decl);
+  gpy_dot_tree_t * rhs = DOT_rhs_TT (decl);
+
+  tree lhs_eval = gpy_dot_pass_lower_expr (lhs, block, context);
+  tree rhs_eval = gpy_dot_pass_lower_expr (rhs, block, context);
+
+  tree op = error_mark_node;
+  switch (DOT_TYPE (decl))
+    {
+    case D_ADD_EXPR:
+      op = GPY_RR_eval_expression (lhs_eval, rhs_eval, build_int_cst (integer_type_node,
+								      DOT_TYPE (decl))
+				   );
+      break;
+
+      // .... THE REST OF THE BIN OPERATORS 
+
+    default:
+      error ("unhandled binary operation type!\n");
+      break;
+    }
+  gcc_assert (op != error_mark_node);
+  
+  tree retaddr = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("T"),
+                             gpy_object_type_ptr);
+  append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr, retaddr, op),
+			    block);
+  retval = retaddr;
+
+  return retval;
+}
+
+static
+tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
+			      VEC(gpy_context_t,gc) * context)
+{
+  tree retval = error_mark_node;
+
+  switch (DOT_TYPE (decl))
+    {
+    case D_PRIMITIVE:
+      retval = gpy_dot_pass_genericify_scalar (decl, block);
+      break;
+
+    case D_IDENTIFIER:
+      retval = gpy_dot_pass_decl_lookup (context, DOT_IDENTIFIER_POINTER (decl));
+      break;
+
+    default:
+      {
+	switch (DOT_TYPE (decl))
+          {
+          case D_MODIFY_EXPR:
+            retval = gpy_dot_pass_genericify_modify (decl, block, context);
+            break;
+
+          case D_ADD_EXPR:
+            retval = gpy_dot_pass_genericify_binary_op (decl, block, context);
+            break;
+
+            // ... the rest of the binary operators!
+
+          default:
+            error ("unhandled operation type!\n");
+            break;
+          }
+      }
       break;
     }
 
@@ -418,7 +644,6 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
   tree pdecl_t = build_pointer_type (main_init_module);
 
   tree fntype = build_function_type_list (void_type_node,
-					  pdecl_t,
 					  NULL_TREE);
   tree ident = GPY_dot_pass_genericify_gen_concat_identifier (GPY_current_module_name,
 								"__field_init__");
@@ -430,16 +655,7 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
   TREE_PUBLIC (fndecl) = 1;
   
   tree argslist = NULL_TREE;
-  tree self_parm_decl = build_decl (BUILTINS_LOCATION, PARM_DECL,
-                                    get_identifier ("__self__"),
-                                    pdecl_t);
-  DECL_CONTEXT (self_parm_decl) = fndecl;
-  DECL_ARG_TYPE (self_parm_decl) = TREE_VALUE (TYPE_ARG_TYPES (TREE_TYPE (fndecl)));
-  TREE_READONLY (self_parm_decl) = 1;
-  tree arglist = chainon (arglist, self_parm_decl);
-
-  TREE_USED (self_parm_decl) = 1;
-  DECL_ARGUMENTS (fndecl) = arglist;
+  DECL_ARGUMENTS (fndecl) = argslist;
 
   /* Define the return type (represented by RESULT_DECL) for the main functin */
   tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL,
@@ -475,13 +691,14 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
       if (DOT_T_FIELD (idtx) ==  D_D_EXPR)
 	{
 	  // append to stmt list as this goes into the module initilizer...
-          // gpy_stmt_decl_lower_expr (idtx, &stmts, context);
+          gpy_dot_pass_lower_expr (idtx, &stmts, context);
           continue;
 	}
 
       switch (DOT_TYPE (idtx))
         {
 	case D_PRINT_STMT:
+	  gpy_dot_pass_genericify_print_stmt (idtx, &stmts, context);
 	  break;
 
         case D_STRUCT_METHOD:
