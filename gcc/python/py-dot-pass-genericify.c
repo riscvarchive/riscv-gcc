@@ -162,7 +162,6 @@ void gpy_dot_pass_genericify_create_offsets_globl_context (tree type, tree * cbl
       tree addr = fold_build2_loc (UNKNOWN_LOCATION, POINTER_PLUS_EXPR,
 				   TREE_TYPE (stack_pointer),
 				   stack_pointer, offs);
-      debug_tree (addr);
       gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string (ident), addr, globls_symbols));
       offset--;
       field_count++;

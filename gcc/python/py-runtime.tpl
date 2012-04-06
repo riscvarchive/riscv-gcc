@@ -212,7 +212,6 @@ tree gpy_build_py_object_type (void)
   gpy_preserve_from_gc(object_state_type_decl);
   rest_of_decl_compilation(object_state_type_decl, 1, 0);
 
-  debug_tree (object_state_type_decl);
   tree object_state_ptr_type = build_pointer_type (object_state_struct_Type);
   gpy_preserve_from_gc (object_state_ptr_type);
 
