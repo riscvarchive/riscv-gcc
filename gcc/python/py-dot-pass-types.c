@@ -159,23 +159,20 @@ tree gpy_dot_pass_process_class_decl (gpy_dot_tree_t * const decl)
   gpy_hash_tab_t class_module;
   gpy_dd_hash_init_table (&class_module);
 
-  do {
-    switch (DOT_TYPE (dot))
-      {
-      case D_STRUCT_CLASS:
-	// unhandled for now
-	break;
-
-      case D_STRUCT_METHOD:
+  for (dot = suite; dot != NULL; dot = DOT_CHAIN (dot))
+    {
+      if (DOT_TYPE (dot) == D_STRUCT_CLASS)
+	continue; 
+      else if (DOT_TYPE (dot) == D_PRINT_STMT)
+	continue;
+      else if (DOT_TYPE (dot) ==  D_STRUCT_METHOD)
 	{
 	  void ** e = gpy_dd_hash_insert (gpy_dd_hash_string (DOT_IDENTIFIER_POINTER (DOT_FIELD (dot))),
 					  dot, &class_module);
 	  gcc_assert (!e);
 	  gpy_dot_pass_process_class_attrib_method_suite (dot->opb.t, &class_module);
 	}
-	break;
-
-      default:
+      else
 	{
 	  if (DOT_T_FIELD (dot) == D_D_EXPR)
 	    {
@@ -199,7 +196,7 @@ tree gpy_dot_pass_process_class_decl (gpy_dot_tree_t * const decl)
 			    gcc_assert (!e);
 			  }
 			  break;
-
+			  
 			case D_ATTRIB_REF:
 			  break;
 			  
@@ -210,16 +207,11 @@ tree gpy_dot_pass_process_class_decl (gpy_dot_tree_t * const decl)
 		    } while ((target = DOT_CHAIN (target)));
 		}
 	    }
-	  // remember compound stmts might contain more types
 	}
-	break;
-      }
-  } while ((dot = DOT_CHAIN (dot)));
-
+    }
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string ("__field_init__"),
 				   dot_build_identifier ("__field_init__"),
-				   &class_module)
-	      );
+				   &class_module));
   tree type = NULL_TREE;
   if (class_module.length > 0)
     {
@@ -265,6 +257,7 @@ tree gpy_dot_pass_process_class_decl (gpy_dot_tree_t * const decl)
 		}
 	    }
 	}
+      debug ("------------------------\n");
       free (class_module.array);
 
       layout_type (class_module_struct);
@@ -411,9 +404,9 @@ VEC(tree,gc) * gpy_dot_pass_generate_types (VEC(gpydot,gc) * decls)
 		}
 	    }
 	}
+      debug ("------------------------\n");
 
       free (main_module.array);
-
       layout_type (main_module_struct);
       tree name = get_identifier (GPY_current_module_name);
       tree type_decl = build_decl (BUILTINS_LOCATION, TYPE_DECL, name,

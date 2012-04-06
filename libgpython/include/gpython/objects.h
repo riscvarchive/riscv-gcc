@@ -67,7 +67,7 @@ typedef struct gpy_object_t {
   } o ;
 } gpy_object_t ;
 
-typedef void (*fndecl)(gpy_vector_t *);
+typedef void (*fndecl)(gpy_object_t **);
 typedef gpy_object_t * (*binary_op)(gpy_object_t *, gpy_object_t *);
 typedef struct gpy_number_prot_t
 {
@@ -98,7 +98,7 @@ typedef struct gpy_typedef_t {
   gpy_object_t * (*tp_new)(struct gpy_typedef_t *, gpy_object_t **);
   void (*tp_dealloc)(gpy_object_t *);
   void (*tp_print)(gpy_object_t * , FILE *, bool);
-  gpy_object_t * (*tp_call) (gpy_vector_t *, gpy_object_t *, gpy_object_t **);
+  gpy_object_t * (*tp_call) (gpy_object_t *, gpy_object_t **);
   struct gpy_number_prot_t * binary_protocol;
   struct gpy_object_attrib_t ** members_defintion;
 } gpy_typedef_t ;

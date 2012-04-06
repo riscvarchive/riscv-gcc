@@ -1,4 +1,6 @@
 class foobar:
+    somevar = 5
+    print somevar
     def __init__ (self):
         self.x = 1
 x = foobar ()

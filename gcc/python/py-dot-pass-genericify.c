@@ -588,8 +588,19 @@ VEC(tree,gc) * gpy_dot_pass_genericify_toplevl_class_decl (gpy_dot_tree_t * decl
   gpy_dot_tree_t * class_suite = DOT_lhs_TT (decl);
   gpy_dot_tree_t * node = class_suite;
   do {
+    if (DOT_T_FIELD (node) ==  D_D_EXPR)
+      {
+	// append to stmt list as this goes into the module initilizer...
+	gpy_dot_pass_lower_expr (node, &block, context);
+	continue;
+      }
+    
     switch (DOT_TYPE (node))
       {
+      case D_PRINT_STMT:
+	gpy_dot_pass_genericify_print_stmt (node, &block, context);
+	break;
+	
       case D_STRUCT_METHOD:
 	{
 	  tree a = gpy_dot_pass_genericify_class_method_attrib (node,

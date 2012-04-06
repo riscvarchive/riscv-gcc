@@ -236,7 +236,7 @@ gpy_object_t * gpy_rr_fold_functor_decl (const char * identifier,
   gpy_object_t * retval = NULL_OBJECT;
 
   gpy_object_t ** args = (gpy_object_t **)
-    gpy_calloc (3, sizeof(gpy_object_t*));
+    gpy_calloc (4, sizeof(gpy_object_t*));
 
   gpy_literal_t i;
   i.type = TYPE_STRING;
@@ -246,24 +246,121 @@ gpy_object_t * gpy_rr_fold_functor_decl (const char * identifier,
   p.type = TYPE_ADDR;
   p.literal.addr = code_addr;
 
+  gpy_literal_t n;
+  n.type = TYPE_INTEGER;
+  n.literal.integer = 0;
+
   gpy_object_t a1 = { .T = TYPE_OBJECT_LIT, .o.literal = &i };
   gpy_object_t a2 = { .T = TYPE_OBJECT_LIT, .o.literal = &p };
-  gpy_object_t a3 = { .T = TYPE_NULL, .o.literal = NULL };
+  gpy_object_t a3 = { .T = TYPE_OBJECT_LIT, .o.literal = &n };
+  gpy_object_t a4 = { .T = TYPE_NULL, .o.literal = NULL };
 
   args[0] = &a1;
   args[1] = &a2;
   args[2] = &a3;
+  args[3] = &a4;
 
   gpy_typedef_t * def = (gpy_typedef_t *)
     __GPY_GLOBL_PRIMITIVES->vector[1];
   gpy_assert (def);
 
   retval = def->tp_new (def, args);
-  gpy_free(args);
+  gpy_free (args);
 
   debug ("initilized function object <%p> to <%s>!\n",
 	 (void*)retval, identifier);
   gpy_assert (retval->T == TYPE_OBJECT_DECL);
+
+  return retval;
+}
+
+gpy_object_t * gpy_rr_fold_call (gpy_object_t * decl,
+				 const char * identifier)
+{
+  gpy_object_t * retval = NULL_OBJECT;
+
+  gpy_assert (decl->T == TYPE_OBJECT_DECL);
+  gpy_typedef_t * type = decl->o.object_state->definition;
+  gpy_assert (type->members_defintion);
+
+  if (type->tp_call)
+    {
+      retval = type->tp_call (decl, NULL);
+    }
+  else
+    fatal ("name <%s> is not callable!\n", identifier);
+    
+  return retval;
+}
+
+unsigned char * gpy_rr_eval_attrib_reference (gpy_object_t * base,
+					      const char * attrib)
+{
+  unsigned char * retval = NULL;
+  gpy_assert (base->T == TYPE_OBJECT_STATE);
+
+  gpy_typedef_t * type = base->o.object_state->definition;
+  gpy_assert (type->members_defintion);
+
+  struct gpy_object_attrib_t ** members = type->members_defintion;
+  gpy_object_state_t * objs = base->o.object_state;
+
+  int idx, offset = -1;
+  for (idx = 0; members[idx] != NULL; ++idx)
+    {
+      struct gpy_object_attrib_t * it = members[idx];
+      if (!strcmp (attrib, it->identifier))
+	{
+	  offset = it->offset;
+	  unsigned char * state = (unsigned char *)objs->state;
+	  retval = state + offset;
+	  break;
+	}
+    }
+  gpy_assert (retval);
+  return retval;
+}
+
+gpy_object_t * gpy_rr_eval_attrib_reference_call (gpy_object_t * base,
+						  const char * attrib)
+{
+  gpy_object_t * retval = NULL_OBJECT;
+
+  gpy_assert (base->T == TYPE_OBJECT_STATE);
+  gpy_typedef_t * type = base->o.object_state->definition;
+  gpy_assert (type->members_defintion);
+
+  struct gpy_object_attrib_t ** members = type->members_defintion;
+  gpy_object_state_t * objs = base->o.object_state;
+
+  unsigned char * att = NULL;
+  int idx, offset = -1;
+  for (idx = 0; members[idx] != NULL; ++idx)
+    {
+      struct gpy_object_attrib_t * it = members[idx];
+      if (!strcmp (attrib, it->identifier))
+	{
+	  offset = it->offset;
+	  unsigned char * state = (unsigned char *)objs->state;
+	  att = state + offset;
+	  break;
+	}
+    }
+  if (att)
+    {
+      gpy_object_t * attrib_ref = *((gpy_object_t **)attrib);
+      gpy_object_state_t * at_state = attrib_ref->o.object_state;
+      gpy_typedef_t * at_type = at_state->definition;
+
+      if (at_type->tp_call)
+	{
+	  retval = at_type->tp_call (attrib_ref, NULL);
+	}
+      else
+	fatal ("name <%s>:<%s> is not callable!\n", type->identifier, attrib);
+    }
+  else
+    fatal ("%s instance has no attribute '%s'!\n", type->identifier, attrib);
 
   return retval;
 }

@@ -32,6 +32,7 @@ along with GCC; see the file COPYING3.  If not see
 
 struct gpy_object_staticmethod_t {
   const unsigned char * code;
+  const char * identifier;
   unsigned int nargs;
 };
 
@@ -41,13 +42,15 @@ gpy_object_t * gpy_object_staticmethod_new (gpy_typedef_t * type,
 {
   gpy_object_t * retval = NULL_OBJECT;
 
-  bool check = gpy_args_check_fmt (args, "p,i.");
+  bool check = gpy_args_check_fmt (args, "s,p,i.");
   gpy_assert (check);
 
-  unsigned char * code_addr = gpy_args_lit_parse_pointer (args[0]);
-  int nargs = gpy_args_lit_parse_int (args[1]);
+  char * id = gpy_args_lit_parse_string (args[0]);
+  unsigned char * code_addr = gpy_args_lit_parse_pointer (args[1]);
+  int nargs = gpy_args_lit_parse_int (args[2]);
 
   struct gpy_object_staticmethod_t * self = gpy_malloc (type->state_size);
+  self->identifier = id;
   self->code = code_addr;
   self->nargs = nargs;
 
@@ -73,8 +76,7 @@ void gpy_object_staticmethod_print (gpy_object_t * self, FILE *fd, bool newline)
     fprintf (fd, "\n");
 }
 
-gpy_object_t * gpy_object_staticmethod_call (gpy_vector_t * globls,
-					     gpy_object_t * self,
+gpy_object_t * gpy_object_staticmethod_call (gpy_object_t * self,
 					     gpy_object_t ** args)
 {
   gpy_object_t * retval = NULL_OBJECT;
@@ -84,7 +86,7 @@ gpy_object_t * gpy_object_staticmethod_call (gpy_vector_t * globls,
   if (!state->code)
     {
       fndecl fnptr = (fndecl)state->code;
-      fnptr (globls);
+      fnptr (args);
     }
   return retval;
 }

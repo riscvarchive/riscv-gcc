@@ -113,8 +113,7 @@ void gpy_object_classobj_print (gpy_object_t * self, FILE *fd, bool newline)
 
   x = foo ()
  */
-gpy_object_t * gpy_object_classobj_call (gpy_vector_t * globls,
-					 gpy_object_t * self,
+gpy_object_t * gpy_object_classobj_call (gpy_object_t * self,
 					 gpy_object_t ** args)
 {
    gpy_object_t * retval = NULL_OBJECT;
@@ -127,8 +126,8 @@ gpy_object_t * gpy_object_classobj_call (gpy_vector_t * globls,
    retval = gpy_create_object_state (type, state);
    gpy_assert (retval);
 
-   gpy_rr_eval_attrib_reference_call (globls, retval, "__pre_init__");
-   gpy_rr_eval_attrib_reference_call (globls, retval, "__init__");
+   gpy_rr_eval_attrib_reference_call (retval, "__field_init__");
+   gpy_rr_eval_attrib_reference_call (retval, "__init__");
 
    return retval;
 }
