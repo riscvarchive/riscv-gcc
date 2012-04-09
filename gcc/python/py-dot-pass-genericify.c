@@ -220,7 +220,8 @@ void gpy_dot_pass_genericify_print_stmt (gpy_dot_tree_t * decl, tree * block,
     }
   VEC(tree,gc) * callvec = VEC_alloc (tree,gc,0);
   VEC_safe_push (tree, gc, callvec, build_int_cst (integer_type_node, 1));
-  VEC_safe_push (tree, gc, callvec, build_int_cst (integer_type_node, VEC_length (tree, callvec_tmp)));
+  VEC_safe_push (tree, gc, callvec, build_int_cst (integer_type_node,
+						   VEC_length (tree, callvec_tmp)));
 
   GPY_VEC_stmts_append (tree, callvec, callvec_tmp);
 
@@ -401,7 +402,29 @@ tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
       break;
 
     case D_IDENTIFIER:
-      retval = gpy_dot_pass_decl_lookup (context, DOT_IDENTIFIER_POINTER (decl));
+      {
+	tree lookup = gpy_dot_pass_decl_lookup (context,
+						DOT_IDENTIFIER_POINTER (decl));
+	switch (TREE_CODE (lookup))
+	  {
+	  case VAR_DECL:
+	    retval = lookup;
+	    break;
+	    
+	  default:
+	    {
+	      tree tmp = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+				     create_tmp_var_name ("A"),
+				     gpy_object_type_ptr_ptr);
+	      append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr_ptr,
+						tmp,
+						lookup),
+					block);
+	      retval = build_fold_indirect_ref (tmp);
+	    }
+	    break;
+	  }
+      }
       break;
 
     default:
@@ -460,6 +483,30 @@ tree gpy_dot_pass_genericify_toplevl_functor_decl (gpy_dot_tree_t * decl,
   DECL_INITIAL (fndecl) = block;
 
   tree stmts = alloc_stmt_list ();
+  gpy_hash_tab_t ctx;
+  gpy_dd_hash_init_table (&ctx);
+  VEC_safe_push (gpy_context_t, gc, context, &ctx);
+
+  gpy_dot_tree_t * node = decl->opb.t;
+  do {
+    if (DOT_T_FIELD (node) ==  D_D_EXPR)
+      {
+	// append to stmt list as this goes into the module initilizer...
+	gpy_dot_pass_lower_expr (node, &block, context);
+	continue;
+      }
+    
+    switch (DOT_TYPE (node))
+      {
+      case D_PRINT_STMT:
+	gpy_dot_pass_genericify_print_stmt (node, &block, context);
+	break;
+
+      default:
+	error ("unhandled syntax!\n");
+	break;
+      }
+  } while ((node = DOT_CHAIN (node)));
 
   /*
     lower the function suite here and append all initilization
@@ -482,6 +529,8 @@ tree gpy_dot_pass_genericify_toplevl_functor_decl (gpy_dot_tree_t * decl,
   
   gimplify_function_tree (fndecl);
   cgraph_finalize_function (fndecl, false);
+
+  VEC_pop (gpy_context_t, context);
 
   return fndecl;
 }
