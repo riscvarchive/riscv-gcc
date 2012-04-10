@@ -1758,93 +1758,6 @@ $as_echo "$ac_res" >&6; }
 
 } # ac_fn_c_check_func
 
-# ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
-# -------------------------------------------------------
-# Tests whether HEADER exists, giving a warning if it cannot be compiled using
-# the include files in INCLUDES and setting the cache variable VAR
-# accordingly.
-ac_fn_c_check_header_mongrel ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  if eval \${$3+:} false; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-else
-  # Is the header compilable?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 usability" >&5
-$as_echo_n "checking $2 usability... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-#include <$2>
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_header_compiler=yes
-else
-  ac_header_compiler=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_compiler" >&5
-$as_echo "$ac_header_compiler" >&6; }
-
-# Is the header present?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 presence" >&5
-$as_echo_n "checking $2 presence... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <$2>
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"; then :
-  ac_header_preproc=yes
-else
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.i conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_preproc" >&5
-$as_echo "$ac_header_preproc" >&6; }
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in #((
-  yes:no: )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&5
-$as_echo "$as_me: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
-    ;;
-  no:yes:* )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: present but cannot be compiled" >&5
-$as_echo "$as_me: WARNING: $2: present but cannot be compiled" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     check for missing prerequisite headers?" >&5
-$as_echo "$as_me: WARNING: $2:     check for missing prerequisite headers?" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: see the Autoconf documentation" >&5
-$as_echo "$as_me: WARNING: $2: see the Autoconf documentation" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&5
-$as_echo "$as_me: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
-    ;;
-esac
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  eval "$3=\$ac_header_compiler"
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-fi
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_header_mongrel
-
 # ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
 # --------------------------------------------
 # Tries to find the compile-time value of EXPR in a program that includes
@@ -2076,6 +1989,93 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_type
+
+# ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
+# -------------------------------------------------------
+# Tests whether HEADER exists, giving a warning if it cannot be compiled using
+# the include files in INCLUDES and setting the cache variable VAR
+# accordingly.
+ac_fn_c_check_header_mongrel ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  if eval \${$3+:} false; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+else
+  # Is the header compilable?
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 usability" >&5
+$as_echo_n "checking $2 usability... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+#include <$2>
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_header_compiler=yes
+else
+  ac_header_compiler=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_compiler" >&5
+$as_echo "$ac_header_compiler" >&6; }
+
+# Is the header present?
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 presence" >&5
+$as_echo_n "checking $2 presence... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <$2>
+_ACEOF
+if ac_fn_c_try_cpp "$LINENO"; then :
+  ac_header_preproc=yes
+else
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.i conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_preproc" >&5
+$as_echo "$ac_header_preproc" >&6; }
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in #((
+  yes:no: )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&5
+$as_echo "$as_me: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
+    ;;
+  no:yes:* )
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: present but cannot be compiled" >&5
+$as_echo "$as_me: WARNING: $2: present but cannot be compiled" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     check for missing prerequisite headers?" >&5
+$as_echo "$as_me: WARNING: $2:     check for missing prerequisite headers?" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: see the Autoconf documentation" >&5
+$as_echo "$as_me: WARNING: $2: see the Autoconf documentation" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&5
+$as_echo "$as_me: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
+$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
+    ;;
+esac
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
+$as_echo_n "checking for $2... " >&6; }
+if eval \${$3+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  eval "$3=\$ac_header_compiler"
+fi
+eval ac_res=\$$3
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+fi
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_header_mongrel
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -2429,7 +2429,38 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
+
 ac_config_headers="$ac_config_headers config.h"
+
+
+ac_aux_dir=
+for ac_dir in config "$srcdir"/config; do
+  if test -f "$ac_dir/install-sh"; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/install-sh -c"
+    break
+  elif test -f "$ac_dir/install.sh"; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/install.sh -c"
+    break
+  elif test -f "$ac_dir/shtool"; then
+    ac_aux_dir=$ac_dir
+    ac_install_sh="$ac_aux_dir/shtool install -c"
+    break
+  fi
+done
+if test -z "$ac_aux_dir"; then
+  as_fn_error $? "cannot find install-sh, install.sh, or shtool in config \"$srcdir\"/config" "$LINENO" 5
+fi
+
+# These three variables are undocumented and unsupported,
+# and are intended to be withdrawn in a future Autoconf release.
+# They can cause serious problems if a builder's source tree is in a directory
+# whose full name contains unusual characters.
+ac_config_guess="$SHELL $ac_aux_dir/config.guess"  # Please don't use this var.
+ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
+ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
+
 
 
 
@@ -2472,35 +2503,6 @@ if test $cross_compiling = no && test $multilib = yes \
 fi
 
 ac_config_commands="$ac_config_commands default-1"
-
-
-ac_aux_dir=
-for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
-  if test -f "$ac_dir/install-sh"; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/install-sh -c"
-    break
-  elif test -f "$ac_dir/install.sh"; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/install.sh -c"
-    break
-  elif test -f "$ac_dir/shtool"; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/shtool install -c"
-    break
-  fi
-done
-if test -z "$ac_aux_dir"; then
-  as_fn_error $? "cannot find install-sh, install.sh, or shtool in \"$srcdir\" \"$srcdir/..\" \"$srcdir/../..\"" "$LINENO" 5
-fi
-
-# These three variables are undocumented and unsupported,
-# and are intended to be withdrawn in a future Autoconf release.
-# They can cause serious problems if a builder's source tree is in a directory
-# whose full name contains unusual characters.
-ac_config_guess="$SHELL $ac_aux_dir/config.guess"  # Please don't use this var.
-ac_config_sub="$SHELL $ac_aux_dir/config.sub"  # Please don't use this var.
-ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 
 
 # Make sure we can run config.sub.
@@ -11916,7 +11918,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether -pthread is supported" >&5
 $as_echo_n "checking whether -pthread is supported... " >&6; }
-if ${libgo_cv_lib_pthread+:} false; then :
+if ${libgpython_cv_lib_pthread+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   CFLAGS_hold=$CFLAGS
@@ -11926,17 +11928,17 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int i;
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  libgo_cv_lib_pthread=yes
+  libgpython_cv_lib_pthread=yes
 else
-  libgo_cv_lib_pthread=no
+  libgpython_cv_lib_pthread=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 CFLAGS=$CFLAGS_hold
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgo_cv_lib_pthread" >&5
-$as_echo "$libgo_cv_lib_pthread" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgpython_cv_lib_pthread" >&5
+$as_echo "$libgpython_cv_lib_pthread" >&6; }
 PTHREAD_CFLAGS=
-if test "$libgo_cv_lib_pthread" = yes; then
+if test "$libgpython_cv_lib_pthread" = yes; then
   PTHREAD_CFLAGS=-pthread
 fi
 
@@ -12281,7 +12283,7 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use setjmp/longjmp exceptions" >&5
 $as_echo_n "checking whether to use setjmp/longjmp exceptions... " >&6; }
-if ${libgo_cv_lib_sjlj_exceptions+:} false; then :
+if ${libgpython_cv_lib_sjlj_exceptions+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -12298,29 +12300,29 @@ void foo ()
 _ACEOF
 CFLAGS_hold=$CFLAGS
 CFLAGS="--save-temps -fexceptions"
-libgo_cv_lib_sjlj_exceptions=unknown
+libgpython_cv_lib_sjlj_exceptions=unknown
 if ac_fn_c_try_compile; then :
   if grep _Unwind_SjLj_Resume conftest.s >/dev/null 2>&1; then
-    libgo_cv_lib_sjlj_exceptions=yes
+    libgpython_cv_lib_sjlj_exceptions=yes
   elif grep _Unwind_Resume conftest.s >/dev/null 2>&1; then
-    libgo_cv_lib_sjlj_exceptions=no
+    libgpython_cv_lib_sjlj_exceptions=no
   fi
 fi
 CFLAGS=$CFLAGS_hold
 rm -f conftest*
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgo_cv_lib_sjlj_exceptions" >&5
-$as_echo "$libgo_cv_lib_sjlj_exceptions" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $libgpython_cv_lib_sjlj_exceptions" >&5
+$as_echo "$libgpython_cv_lib_sjlj_exceptions" >&6; }
 
 if test "$enable_sjlj_exceptions" = "auto"; then
-  enable_sjlj_exceptions=$libgo_cv_lib_sjlj_exceptions
+  enable_sjlj_exceptions=$libgpython_cv_lib_sjlj_exceptions
 fi
 
 case $enable_sjlj_exceptions in
 yes)
 
-$as_echo "#define LIBGO_SJLJ_EXCEPTIONS 1" >>confdefs.h
+$as_echo "#define LIBGPYTHON_SJLJ_EXCEPTIONS 1" >>confdefs.h
 
   ;;
 no)
@@ -12329,168 +12331,6 @@ no)
   as_fn_error $? "unable to detect exception model" "$LINENO" 5
   ;;
 esac
-
-for ac_header in sys/mman.h syscall.h sys/epoll.h sys/ptrace.h sys/syscall.h sys/user.h sys/utsname.h sys/select.h sys/socket.h net/if.h sys/prctl.h sys/mount.h sys/vfs.h sys/statfs.h sys/timex.h sys/sysinfo.h utime.h linux/reboot.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-for ac_header in linux/filter.h linux/netlink.h linux/rtnetlink.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-
-"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-# used for constant folding and rounding
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __gmpz_init in -lgmp" >&5
-$as_echo_n "checking for __gmpz_init in -lgmp... " >&6; }
-if ${ac_cv_lib_gmp___gmpz_init+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgmp  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char __gmpz_init ();
-int
-main ()
-{
-return __gmpz_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_gmp___gmpz_init=yes
-else
-  ac_cv_lib_gmp___gmpz_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gmp___gmpz_init" >&5
-$as_echo "$ac_cv_lib_gmp___gmpz_init" >&6; }
-if test "x$ac_cv_lib_gmp___gmpz_init" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBGMP 1
-_ACEOF
-
-  LIBS="-lgmp $LIBS"
-
-else
-  as_fn_error $? "GNU MP not found, see http://gmplib.org/" "$LINENO" 5
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for mpfr_init  in -lmpfr" >&5
-$as_echo_n "checking for mpfr_init  in -lmpfr... " >&6; }
-if ${ac_cv_lib_mpfr_mpfr_init_+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmpfr  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char mpfr_init  ();
-int
-main ()
-{
-return mpfr_init  ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_mpfr_mpfr_init_=yes
-else
-  ac_cv_lib_mpfr_mpfr_init_=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpfr_mpfr_init_" >&5
-$as_echo "$ac_cv_lib_mpfr_mpfr_init_" >&6; }
-if test "x$ac_cv_lib_mpfr_mpfr_init_" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBMPFR 1
-_ACEOF
-
-  LIBS="-lmpfr $LIBS"
-
-else
-  as_fn_error $? "MPFR not found, see http://www.mpfr.org/" "$LINENO" 5
-fi
-
-# The cast to long int works around a bug in the HP C Compiler
-# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
-# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
-# This bug is HP SR number 8606223364.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of mp_limb_t" >&5
-$as_echo_n "checking size of mp_limb_t... " >&6; }
-if ${ac_cv_sizeof_mp_limb_t+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (mp_limb_t))" "ac_cv_sizeof_mp_limb_t"        "#include <gmp.h>
-"; then :
-
-else
-  if test "$ac_cv_type_mp_limb_t" = yes; then
-     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error 77 "cannot compute sizeof (mp_limb_t)
-See \`config.log' for more details" "$LINENO" 5; }
-   else
-     ac_cv_sizeof_mp_limb_t=0
-   fi
-fi
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_mp_limb_t" >&5
-$as_echo "$ac_cv_sizeof_mp_limb_t" >&6; }
-
-
-
-cat >>confdefs.h <<_ACEOF
-#define SIZEOF_MP_LIMB_T $ac_cv_sizeof_mp_limb_t
-_ACEOF
-
-
 
 
 
@@ -13454,6 +13294,10 @@ done
 
 
 ac_config_files="$ac_config_files Makefile"
+
+
+ac_config_commands="$ac_config_commands default"
+
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -14469,6 +14313,11 @@ fi
 
 
 
+# Variables needed in config.status (file generation) which aren't already
+# passed by autoconf.
+SUBDIRS="$SUBDIRS"
+
+
 _ACEOF
 
 cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
@@ -14482,6 +14331,7 @@ do
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+    "default") CONFIG_COMMANDS="$CONFIG_COMMANDS default" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -15810,6 +15660,31 @@ fi
   chmod +x "$ofile"
 
  ;;
+    "default":C) if test -n "$CONFIG_FILES"; then
+   # Multilibs need MULTISUBDIR defined correctly in certain makefiles so
+   # that multilib installs will end up installed in the correct place.
+   # The testsuite needs it for multilib-aware ABI baseline files.
+   # To work around this not being passed down from config-ml.in ->
+   # srcdir/Makefile.am -> srcdir/{src,libsupc++,...}/Makefile.am, manually
+   # append it here.  Only modify Makefiles that have just been created.
+   #
+   # Also, get rid of this simulated-VPATH thing that automake does.
+   cat > vpsed << \_EOF
+s!`test -f '$<' || echo '$(srcdir)/'`!!
+_EOF
+   for i in $SUBDIRS; do
+    case $CONFIG_FILES in
+     *${i}/Makefile*)
+       #echo "Adding MULTISUBDIR to $i/Makefile"
+       sed -f vpsed $i/Makefile > tmp
+       grep '^MULTISUBDIR =' Makefile >> tmp
+       mv tmp $i/Makefile
+       ;;
+    esac
+   done
+   rm vpsed
+ fi
+ ;;
 
   esac
 done # for ac_tag
@@ -15847,4 +15722,5 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
+
 

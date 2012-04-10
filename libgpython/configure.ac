@@ -23,8 +23,11 @@
 
 AC_PREREQ(2.64)
 AC_INIT(package-unused, version-unused,, libgpython)
-AC_CONFIG_HEADER(config.h)
 AC_CONFIG_SRCDIR(Makefile.am)
+AC_CONFIG_HEADER(config.h)
+
+AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR(m4)
 
 libtool_VERSION=1:0:0
 AC_SUBST(libtool_VERSION)
@@ -47,7 +50,6 @@ AC_SUBST(CFLAGS)
 AM_MAINTAINER_MODE
 
 AC_PROG_LD
-AC_PROG_RANLIB
 AC_CHECK_TOOL(OBJCOPY, objcopy, missing-objcopy)
 
 AC_LIBTOOL_DLOPEN
@@ -168,21 +170,6 @@ no)
   ;;
 esac
 
-AC_CHECK_HEADERS(sys/mman.h syscall.h sys/epoll.h sys/ptrace.h sys/syscall.h sys/user.h sys/utsname.h sys/select.h sys/socket.h net/if.h sys/prctl.h sys/mount.h sys/vfs.h sys/statfs.h sys/timex.h sys/sysinfo.h utime.h linux/reboot.h)
-
-AC_CHECK_HEADERS([linux/filter.h linux/netlink.h linux/rtnetlink.h], [], [],
-[#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-])
-
-# used for constant folding and rounding
-AC_CHECK_LIB([gmp], [__gmpz_init], ,
-  [AC_MSG_ERROR([GNU MP not found, see http://gmplib.org/])])
-AC_CHECK_LIB([mpfr],[mpfr_init] , ,
-  [AC_MSG_ERROR([MPFR not found, see http://www.mpfr.org/])])
-AC_CHECK_SIZEOF(mp_limb_t, , [#include <gmp.h>])
-
 gl_VISIBILITY
 
 AC_SUBST(CFLAGS)
@@ -225,4 +212,39 @@ AC_FUNC_MALLOC
 AC_FUNC_UTIME_NULL
 AC_FUNC_VPRINTF
 AC_CONFIG_FILES([Makefile])
+
+AC_CONFIG_COMMANDS([default],
+[if test -n "$CONFIG_FILES"; then
+   # Multilibs need MULTISUBDIR defined correctly in certain makefiles so
+   # that multilib installs will end up installed in the correct place.
+   # The testsuite needs it for multilib-aware ABI baseline files.
+   # To work around this not being passed down from config-ml.in ->
+   # srcdir/Makefile.am -> srcdir/{src,libsupc++,...}/Makefile.am, manually
+   # append it here.  Only modify Makefiles that have just been created.
+   #
+   # Also, get rid of this simulated-VPATH thing that automake does.
+   cat > vpsed << \_EOF
+s!`test -f '$<' || echo '$(srcdir)/'`!!
+_EOF
+   for i in $SUBDIRS; do
+    case $CONFIG_FILES in
+     *${i}/Makefile*)
+       #echo "Adding MULTISUBDIR to $i/Makefile"
+       sed -f vpsed $i/Makefile > tmp
+       grep '^MULTISUBDIR =' Makefile >> tmp
+       mv tmp $i/Makefile
+       ;;
+    esac
+   done
+   rm vpsed
+ fi
+],
+[
+# Variables needed in config.status (file generation) which aren't already
+# passed by autoconf.
+SUBDIRS="$SUBDIRS"
+])
+
 AC_OUTPUT
+dnl libtoolize scans configure.ac  and needs to see some text
+m4_define([LIBTOOLIZE_AC_INIT], [])

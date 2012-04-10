@@ -7,6 +7,7 @@ AM_YFLAGS = -d --verbose
 library_includedir=$(includedir)/gpython
 library_include_HEADERS = \
 include/gpython/gpython.h \
+include/gpython/runtime.h \
 include/gpython/vectors.h \
 include/gpython/objects.h
 
