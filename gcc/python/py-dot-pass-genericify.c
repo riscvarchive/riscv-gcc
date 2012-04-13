@@ -379,12 +379,15 @@ tree gpy_dot_pass_genericify_modify (gpy_dot_tree_t * decl, tree * block,
 
       tree lhs_tree = gpy_dot_pass_lower_expr (xlhs, block, context);
       char * attrib_ident = DOT_IDENTIFIER_POINTER (xrhs);
+
+      tree attrib_str_tree = build_string (strlen (attrib_ident), attrib_ident);
+      TREE_TYPE (attrib_str_tree) = gpy_const_char_ptr;
+
       tree attrib_ref = build2 (MODIFY_EXPR, type, addr_1,
-				gpy_builtin_get_attrib_ref_flat (lhs_tree, attrib_ident));
+				GPY_RR_fold_attrib_ref (lhs_tree, attrib_str_tree));
       append_to_statement_list (attrib_ref, block);
 
-      tree addr_rhs_tree = gpy_stmt_decl_lower_expr (rhs, block, context);
-
+      tree addr_rhs_tree = gpy_dot_pass_lower_expr (rhs, block, context);
       tree addr_2 = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("T"),
 				type);
       tree cast = build2 (MODIFY_EXPR, type, addr_2, build_fold_addr_expr (addr_rhs_tree));
@@ -487,10 +490,15 @@ tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
 	gcc_assert (DOT_TYPE (lhs) == D_IDENTIFIER);
 	gcc_assert (DOT_TYPE (rhs) == D_IDENTIFIER);
 
-	tree lhs_tree = gpy_stmt_decl_lower_expr (lhs, block, context);
+	tree lhs_tree = gpy_dot_pass_lower_expr (lhs, block, context);
 	char * attrib_ident = DOT_IDENTIFIER_POINTER (rhs);
-	tree attrib_ref = build2 (MODIFY_EXPR, type, addr_1,
-				  gpy_builtin_get_attrib_ref_flat (lhs_tree, attrib_ident));
+
+	tree attrib_str_tree = build_string (strlen (attrib_ident), attrib_ident);
+	TREE_TYPE (attrib_str_tree) = gpy_const_char_ptr;
+
+	tree attrib_ref = build2 (MODIFY_EXPR, type,
+				  addr_1,
+				  GPY_RR_fold_attrib_ref (lhs_tree, attrib_str_tree));
 	append_to_statement_list (attrib_ref, block);
 
 	tree ptr_type = build_pointer_type (gpy_object_type_ptr);
@@ -637,7 +645,7 @@ tree gpy_dot_pass_genericify_class_method_attrib (gpy_dot_tree_t * decl,
   TREE_STATIC (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  tree argslist = NULL_TREE;
+  tree arglist = NULL_TREE;
   tree self_parm_decl = build_decl (BUILTINS_LOCATION, PARM_DECL,
                                     get_identifier ("self"),
                                     gpy_object_type_ptr);
@@ -666,7 +674,7 @@ tree gpy_dot_pass_genericify_class_method_attrib (gpy_dot_tree_t * decl,
   gpy_hash_tab_t ctx;
   gpy_dd_hash_init_table (&ctx);
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string ("self"), self_parm_decl,
-				   ctx));
+				   &ctx));
   tree stmts = alloc_stmt_list ();
   /*
     lower the function suite here and append all initilization
@@ -743,7 +751,7 @@ VEC(tree,gc) * gpy_dot_pass_genericify_toplevl_class_decl (gpy_dot_tree_t * decl
   TREE_STATIC (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  tree argslist = NULL_TREE;
+  tree arglist = NULL_TREE;
   tree self_parm_decl = build_decl (BUILTINS_LOCATION, PARM_DECL,
                                     get_identifier ("__object_state__"),
                                     class_type_ptr);
@@ -853,10 +861,8 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
   gpy_dd_hash_init_table (&toplvl);
   gpy_dd_hash_init_table (&topnxt);
 
-  tree main_init_module = gpy_dot_pass_generificify_get_module_type (GPY_current_module_name,
-								     modules);
-  tree pdecl_t = build_pointer_type (main_init_module);
-
+  tree main_init_module = gpy_dot_pass_genericify_get_module_type (GPY_current_module_name,
+								   modules);
   tree fntype = build_function_type_list (void_type_node,
 					  NULL_TREE);
   tree ident = GPY_dot_pass_genericify_gen_concat_identifier (GPY_current_module_name,

@@ -135,7 +135,7 @@ py-runtime = { code = GPY_RR_eval_expression;
 	       build_call = build_call_expr;
 	       build_call_args = "fndecl, 3, x, y, op";
              };
-py-runtime = { code = GPY_RR_eval_attrib_ref;
+py-runtime = { code = GPY_RR_fold_attrib_ref;
 	       arguments = "tree base, tree attrib";
 	       proto = "tree, tree";
 	       comment = "/* Eval base.attrib */";
