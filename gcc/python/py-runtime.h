@@ -63,5 +63,8 @@ extern tree GPY_RR_eval_print (VEC(tree,gc) *);
 /* Evaluate the operation op of the 2 objects x and y and return result */
 extern tree GPY_RR_eval_expression (tree, tree, tree);
   
+/* Eval base.attrib */
+extern tree GPY_RR_fold_attrib_ref (tree, tree);
+  
 #endif //__GCC_PY_RUNTIME_H__
 
