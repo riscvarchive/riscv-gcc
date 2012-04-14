@@ -66,5 +66,8 @@ extern tree GPY_RR_eval_expression (tree, tree, tree);
 /* Eval base.attrib */
 extern tree GPY_RR_fold_attrib_ref (tree, tree);
   
+/* Eval call */
+extern tree GPY_RR_fold_call (tree, tree);
+  
 #endif //__GCC_PY_RUNTIME_H__
 
