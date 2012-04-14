@@ -176,7 +176,7 @@ static
 void gpy_dot_pass_genericify_class_type (tree type, tree self,
 					 gpy_context_t context)
 {
-  const char * class_name = IDENTIFIER_POINTER (DECL_NAME (type));
+  const char * class_name = IDENTIFIER_POINTER (TYPE_NAME (type));
   debug ("generating toplevel addressing to class <%s>!\n", class_name);
 
   tree field = NULL_TREE;
@@ -513,6 +513,16 @@ tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
 			       build_fold_indirect_ref (addr_2));
 	append_to_statement_list (def_ref, block);
 	retval = addr_3;
+      }
+      break;
+
+    case D_CALL_EXPR:
+      {
+	const char * callid = DOT_IDENTIFIER_POINTER (DOT_lhs_TT (decl));
+	debug ("call <%s>!\n", callid);
+	tree call_decl = gpy_dot_pass_decl_lookup (context, callid);
+	gcc_assert (call_decl != error_mark_node);
+	
       }
       break;
 
