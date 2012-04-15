@@ -152,20 +152,16 @@ m4trace:configure.ac:33: -1- AC_SUBST([libtool_VERSION])
 m4trace:configure.ac:33: -1- AC_SUBST_TRACE([libtool_VERSION])
 m4trace:configure.ac:33: -1- m4_pattern_allow([^libtool_VERSION$])
 m4trace:configure.ac:35: -1- AM_ENABLE_MULTILIB([], [..])
-m4trace:configure.ac:35: -1- _m4_warn([obsolete], [AM_ENABLE_MULTILIB will be removed from Automake core soon.
-Files implementing the "multilib" feature are (and will remain) available
-to the 'contrib/' directory in the Automake distribution.], [aclocal.m4:9441: AM_ENABLE_MULTILIB is expanded from...
-configure.ac:35: the top level])
 m4trace:configure.ac:35: -1- AC_SUBST([multi_basedir])
 m4trace:configure.ac:35: -1- AC_SUBST_TRACE([multi_basedir])
 m4trace:configure.ac:35: -1- m4_pattern_allow([^multi_basedir$])
 m4trace:configure.ac:35: -1- _m4_warn([obsolete], [The macro `AC_OUTPUT_COMMANDS' is obsolete.
-You should run autoupdate.], [../../lib/autoconf/status.m4:1040: AC_OUTPUT_COMMANDS is expanded from...
-aclocal.m4:9441: AM_ENABLE_MULTILIB is expanded from...
+You should run autoupdate.], [../../lib/autoconf/status.m4:1028: AC_OUTPUT_COMMANDS is expanded from...
+aclocal.m4:9285: AM_ENABLE_MULTILIB is expanded from...
 configure.ac:35: the top level])
 m4trace:configure.ac:37: -1- AC_CANONICAL_SYSTEM
 m4trace:configure.ac:37: -1- _m4_warn([obsolete], [The macro `AC_CANONICAL_SYSTEM' is obsolete.
-You should run autoupdate.], [../../lib/autoconf/general.m4:1863: AC_CANONICAL_SYSTEM is expanded from...
+You should run autoupdate.], [../../lib/autoconf/general.m4:1858: AC_CANONICAL_SYSTEM is expanded from...
 configure.ac:37: the top level])
 m4trace:configure.ac:37: -1- AC_CANONICAL_TARGET
 m4trace:configure.ac:37: -1- AC_CANONICAL_HOST
@@ -210,7 +206,7 @@ m4trace:configure.ac:37: -1- AC_SUBST_TRACE([target_os])
 m4trace:configure.ac:37: -1- m4_pattern_allow([^target_os$])
 m4trace:configure.ac:40: -1- AM_INIT_AUTOMAKE([1.9.3 no-define foreign -Wall])
 m4trace:configure.ac:40: -1- m4_pattern_allow([^AM_[A-Z]+FLAGS$])
-m4trace:configure.ac:40: -1- AM_AUTOMAKE_VERSION([1.11.3])
+m4trace:configure.ac:40: -1- AM_AUTOMAKE_VERSION([1.11.1])
 m4trace:configure.ac:40: -1- AC_REQUIRE_AUX_FILE([install-sh])
 m4trace:configure.ac:40: -1- AC_SUBST([INSTALL_PROGRAM])
 m4trace:configure.ac:40: -1- AC_SUBST_TRACE([INSTALL_PROGRAM])
@@ -275,7 +271,7 @@ m4trace:configure.ac:40: -1- m4_pattern_allow([^SET_MAKE$])
 m4trace:configure.ac:40: -1- AC_SUBST([am__leading_dot])
 m4trace:configure.ac:40: -1- AC_SUBST_TRACE([am__leading_dot])
 m4trace:configure.ac:40: -1- m4_pattern_allow([^am__leading_dot$])
-m4trace:configure.ac:40: -1- AC_SUBST([AMTAR], ['$${TAR-tar}'])
+m4trace:configure.ac:40: -1- AC_SUBST([AMTAR])
 m4trace:configure.ac:40: -1- AC_SUBST_TRACE([AMTAR])
 m4trace:configure.ac:40: -1- m4_pattern_allow([^AMTAR$])
 m4trace:configure.ac:40: -1- AC_SUBST([am__tar])
@@ -346,10 +342,6 @@ m4trace:configure.ac:46: -1- AC_SUBST([AMDEPBACKSLASH])
 m4trace:configure.ac:46: -1- AC_SUBST_TRACE([AMDEPBACKSLASH])
 m4trace:configure.ac:46: -1- m4_pattern_allow([^AMDEPBACKSLASH$])
 m4trace:configure.ac:46: -1- _AM_SUBST_NOTMAKE([AMDEPBACKSLASH])
-m4trace:configure.ac:46: -1- AC_SUBST([am__nodep])
-m4trace:configure.ac:46: -1- AC_SUBST_TRACE([am__nodep])
-m4trace:configure.ac:46: -1- m4_pattern_allow([^am__nodep$])
-m4trace:configure.ac:46: -1- _AM_SUBST_NOTMAKE([am__nodep])
 m4trace:configure.ac:46: -1- AC_SUBST([CCDEPMODE], [depmode=$am_cv_CC_dependencies_compiler_type])
 m4trace:configure.ac:46: -1- AC_SUBST_TRACE([CCDEPMODE])
 m4trace:configure.ac:46: -1- m4_pattern_allow([^CCDEPMODE$])
@@ -381,7 +373,7 @@ m4trace:configure.ac:50: -1- AC_SUBST([MAINT])
 m4trace:configure.ac:50: -1- AC_SUBST_TRACE([MAINT])
 m4trace:configure.ac:50: -1- m4_pattern_allow([^MAINT$])
 m4trace:configure.ac:52: -1- _m4_warn([obsolete], [The macro `AC_PROG_LD' is obsolete.
-You should run autoupdate.], [aclocal.m4:3119: AC_PROG_LD is expanded from...
+You should run autoupdate.], [aclocal.m4:3074: AC_PROG_LD is expanded from...
 configure.ac:52: the top level])
 m4trace:configure.ac:52: -1- AC_SUBST([SED])
 m4trace:configure.ac:52: -1- AC_SUBST_TRACE([SED])
@@ -405,13 +397,13 @@ m4trace:configure.ac:53: -1- AC_SUBST([OBJCOPY])
 m4trace:configure.ac:53: -1- AC_SUBST_TRACE([OBJCOPY])
 m4trace:configure.ac:53: -1- m4_pattern_allow([^OBJCOPY$])
 m4trace:configure.ac:55: -1- _m4_warn([obsolete], [The macro `AC_LIBTOOL_DLOPEN' is obsolete.
-You should run autoupdate.], [aclocal.m4:8091: AC_LIBTOOL_DLOPEN is expanded from...
+You should run autoupdate.], [aclocal.m4:7965: AC_LIBTOOL_DLOPEN is expanded from...
 configure.ac:55: the top level])
 m4trace:configure.ac:55: -1- _m4_warn([obsolete], [AC_LIBTOOL_DLOPEN: Remove this warning and the call to _LT_SET_OPTION when you
-put the `dlopen' option into LT_INIT's first parameter.], [aclocal.m4:8091: AC_LIBTOOL_DLOPEN is expanded from...
+put the `dlopen' option into LT_INIT's first parameter.], [aclocal.m4:7965: AC_LIBTOOL_DLOPEN is expanded from...
 configure.ac:55: the top level])
 m4trace:configure.ac:56: -1- _m4_warn([obsolete], [The macro `AM_PROG_LIBTOOL' is obsolete.
-You should run autoupdate.], [aclocal.m4:130: AM_PROG_LIBTOOL is expanded from...
+You should run autoupdate.], [aclocal.m4:129: AM_PROG_LIBTOOL is expanded from...
 configure.ac:56: the top level])
 m4trace:configure.ac:56: -1- LT_INIT
 m4trace:configure.ac:56: -1- m4_pattern_forbid([^_?LT_[A-Z_]+$])
@@ -550,6 +542,13 @@ m4trace:configure.ac:89: -1- m4_pattern_allow([^LIBFFIINCS$])
 m4trace:configure.ac:94: -1- AC_SUBST([MATH_LIBS])
 m4trace:configure.ac:94: -1- AC_SUBST_TRACE([MATH_LIBS])
 m4trace:configure.ac:94: -1- m4_pattern_allow([^MATH_LIBS$])
+m4trace:configure.ac:97: -1- _m4_warn([syntax], [AC_LANG_CONFTEST: no AC_LANG_SOURCE call detected in body], [../../lib/autoconf/lang.m4:194: AC_LANG_CONFTEST is expanded from...
+../../lib/autoconf/general.m4:2591: _AC_COMPILE_IFELSE is expanded from...
+../../lib/autoconf/general.m4:2607: AC_COMPILE_IFELSE is expanded from...
+../../lib/m4sugar/m4sh.m4:606: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2032: AC_CACHE_VAL is expanded from...
+../../lib/autoconf/general.m4:2053: AC_CACHE_CHECK is expanded from...
+configure.ac:97: the top level])
 m4trace:configure.ac:109: -1- AC_SUBST([PTHREAD_CFLAGS])
 m4trace:configure.ac:109: -1- AC_SUBST_TRACE([PTHREAD_CFLAGS])
 m4trace:configure.ac:109: -1- m4_pattern_allow([^PTHREAD_CFLAGS$])
@@ -574,23 +573,23 @@ m4trace:configure.ac:119: -1- m4_pattern_allow([^AC_APPLE_UNIVERSAL_BUILD$])
 m4trace:configure.ac:119: -1- AH_OUTPUT([AC_APPLE_UNIVERSAL_BUILD], [/* Define if building universal (internal helper macro) */
 @%:@undef AC_APPLE_UNIVERSAL_BUILD])
 m4trace:configure.ac:124: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
-You should run autoupdate.], [../../lib/autoconf/general.m4:230: AC_HELP_STRING is expanded from...
+You should run autoupdate.], [../../lib/autoconf/general.m4:209: AC_HELP_STRING is expanded from...
 configure.ac:124: the top level])
 m4trace:configure.ac:163: -1- AC_DEFINE_TRACE_LITERAL([LIBGPYTHON_SJLJ_EXCEPTIONS])
 m4trace:configure.ac:163: -1- m4_pattern_allow([^LIBGPYTHON_SJLJ_EXCEPTIONS$])
 m4trace:configure.ac:163: -1- AH_OUTPUT([LIBGPYTHON_SJLJ_EXCEPTIONS], [/* Define if the C++ compiler is configured for setjmp/longjmp exceptions. */
 @%:@undef LIBGPYTHON_SJLJ_EXCEPTIONS])
 m4trace:configure.ac:173: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
-You should run autoupdate.], [../../lib/autoconf/general.m4:2601: AC_TRY_COMPILE is expanded from...
-../../lib/m4sugar/m4sh.m4:620: AS_IF is expanded from...
-../../lib/autoconf/general.m4:2018: AC_CACHE_VAL is expanded from...
-aclocal.m4:8632: gl_VISIBILITY is expanded from...
+You should run autoupdate.], [../../lib/autoconf/general.m4:2615: AC_TRY_COMPILE is expanded from...
+../../lib/m4sugar/m4sh.m4:606: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2032: AC_CACHE_VAL is expanded from...
+aclocal.m4:8491: gl_VISIBILITY is expanded from...
 configure.ac:173: the top level])
 m4trace:configure.ac:173: -1- _m4_warn([obsolete], [The macro `AC_TRY_COMPILE' is obsolete.
-You should run autoupdate.], [../../lib/autoconf/general.m4:2601: AC_TRY_COMPILE is expanded from...
-../../lib/m4sugar/m4sh.m4:620: AS_IF is expanded from...
-../../lib/autoconf/general.m4:2018: AC_CACHE_VAL is expanded from...
-aclocal.m4:8632: gl_VISIBILITY is expanded from...
+You should run autoupdate.], [../../lib/autoconf/general.m4:2615: AC_TRY_COMPILE is expanded from...
+../../lib/m4sugar/m4sh.m4:606: AS_IF is expanded from...
+../../lib/autoconf/general.m4:2032: AC_CACHE_VAL is expanded from...
+aclocal.m4:8491: gl_VISIBILITY is expanded from...
 configure.ac:173: the top level])
 m4trace:configure.ac:173: -1- AC_SUBST([CFLAG_VISIBILITY])
 m4trace:configure.ac:173: -1- AC_SUBST_TRACE([CFLAG_VISIBILITY])
@@ -774,10 +773,10 @@ m4trace:configure.ac:211: -1- AH_OUTPUT([HAVE_MALLOC], [/* Define to 1 if your s
 @%:@undef HAVE_MALLOC])
 m4trace:configure.ac:211: -1- AC_DEFINE_TRACE_LITERAL([HAVE_MALLOC])
 m4trace:configure.ac:211: -1- m4_pattern_allow([^HAVE_MALLOC$])
-m4trace:configure.ac:211: -1- AC_LIBSOURCE([malloc.c])
 m4trace:configure.ac:211: -1- AC_SUBST([LIB@&t@OBJS], ["$LIB@&t@OBJS malloc.$ac_objext"])
 m4trace:configure.ac:211: -1- AC_SUBST_TRACE([LIB@&t@OBJS])
 m4trace:configure.ac:211: -1- m4_pattern_allow([^LIB@&t@OBJS$])
+m4trace:configure.ac:211: -1- AC_LIBSOURCE([malloc.c])
 m4trace:configure.ac:211: -1- AC_DEFINE_TRACE_LITERAL([malloc])
 m4trace:configure.ac:211: -1- m4_pattern_allow([^malloc$])
 m4trace:configure.ac:211: -1- AH_OUTPUT([malloc], [/* Define to rpl_malloc if the replacement function should be used. */
