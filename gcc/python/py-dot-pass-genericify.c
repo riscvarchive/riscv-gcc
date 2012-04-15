@@ -194,6 +194,111 @@ void gpy_dot_pass_genericify_class_type (tree type, tree self,
     }
 }
 
+static
+tree gpy_dot_pass_genericify_find_addr (const char * id,
+					const char * parent_ident,
+					VEC(tree,gc) * decls)
+{
+  bool found = false;
+  tree retval = build_int_cst (integer_type_node, 0);
+  tree ident = GPY_dot_pass_genericify_gen_concat_identifier (parent_ident, id);
+  const char * search = IDENTIFIER_POINTER (ident);
+
+  int idx;
+  tree decl = NULL_TREE;
+  for (idx = 0; VEC_iterate (tree, decls, idx, decl); ++idx)
+    {
+      tree decl_name = DECL_NAME (decl);
+      if (!strcmp (search, IDENTIFIER_POINTER (decl_name)))
+	{
+	  found = true;
+	  break;
+	}
+    }
+  if (found)
+    retval = build_fold_addr_expr (decl);
+  return retval;
+}
+
+static
+void gpy_dot_pass_genericify_walk_class (tree * block, tree type,
+					 tree decl,
+					 VEC(tree,gc) * ldecls)
+{
+  const char * type_name = IDENTIFIER_POINTER (TYPE_NAME (type));
+  VEC(tree,gc) * attribs = VEC_alloc (tree,gc,0);
+
+  tree field = NULL_TREE;
+  int offset = 0;
+  for (field = TYPE_FIELDS (type); field != NULL_TREE;
+       field = DECL_CHAIN (field))
+    {
+      const char * ident = IDENTIFIER_POINTER (DECL_NAME (field));
+
+      tree attrib_str_tree = build_string (strlen (ident), ident);
+      TREE_TYPE (attrib_str_tree) = gpy_const_char_ptr;
+
+      tree element_size = TYPE_SIZE_UNIT (TREE_TYPE (field));
+      tree offs = fold_build2_loc (UNKNOWN_LOCATION, MULT_EXPR, sizetype,
+				   build_int_cst (sizetype, offset),
+				   element_size);
+      tree a = GPY_RR_fold_attrib (attrib_str_tree,
+				   gpy_dot_pass_genericify_find_addr (ident, type_name, ldecls),
+				   offs);
+      tree tdecl = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("CA"),
+			       gpy_attrib_type_ptr);
+      append_to_statement_list (build2 (MODIFY_EXPR, gpy_attrib_type_ptr,
+					tdecl, a),
+				block);
+      VEC_safe_push (tree, gc, attribs, tdecl);
+      offset++;
+    }
+
+  VEC(tree,gc) * args = VEC_alloc (tree,gc,0);
+  VEC_safe_push (tree, gc, args, build_int_cst (integer_type_node, VEC_length (tree, attribs)));
+  GPY_VEC_stmts_append (tree, args, attribs);
+
+  tree attribs_decl = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("CA"),
+				  gpy_attrib_type_ptr_ptr);
+  append_to_statement_list (build2 (MODIFY_EXPR, gpy_attrib_type_ptr_ptr,
+				    attribs_decl,
+				    GPY_RR_fold_attrib_list (args)),
+			    block);
+  tree class_id_str = build_string (strlen (type_name), type_name);
+  TREE_TYPE (class_id_str) = gpy_const_char_ptr;
+
+  tree fold_class = GPY_RR_fold_class_decl (attribs_decl, TYPE_SIZE_UNIT (type),
+					    class_id_str);
+
+  switch (TREE_CODE (decl))
+    {
+    case VAR_DECL:
+      {
+	append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr,
+					  decl, fold_class),
+				  block);
+      }
+      break;
+
+    default:
+      {
+	tree tmp = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+			       create_tmp_var_name ("A"),
+			       gpy_object_type_ptr_ptr);
+	append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr_ptr,
+					  tmp,
+					  decl),
+				  block);
+	tree refaddr = build_fold_indirect_ref (tmp);
+	append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr_ptr,
+					  refaddr,
+					  fold_class),
+				  block);
+      }
+      break;
+    }
+}
+
 /* 
    Creates a DECL_CHAIN of stmts to fold the scalar 
    with the last tree being the address of the primitive 
@@ -465,8 +570,7 @@ tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
 	    
 	  default:
 	    {
-	      tree tmp = build_decl (UNKNOWN_LOCATION, VAR_DECL,
-				     create_tmp_var_name ("A"),
+	      tree tmp = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("A"),
 				     gpy_object_type_ptr_ptr);
 	      append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr_ptr,
 						tmp,
@@ -522,7 +626,19 @@ tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
 	debug ("call <%s>!\n", callid);
 	tree call_decl = gpy_dot_pass_decl_lookup (context, callid);
 	gcc_assert (call_decl != error_mark_node);
-	
+
+	tree func_id_str = build_string (strlen (callid), callid);
+	TREE_TYPE (func_id_str) = gpy_const_char_ptr;
+	tree eval_call = GPY_RR_fold_call (call_decl, func_id_str);
+
+	tree retaddr = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+				  create_tmp_var_name ("C"),
+				  gpy_object_type_ptr);
+	append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr,
+					  retaddr,
+					  eval_call),
+				  block);
+	retval = retaddr;
       }
       break;
 
@@ -689,21 +805,20 @@ tree gpy_dot_pass_genericify_class_method_attrib (gpy_dot_tree_t * decl,
   /*
     lower the function suite here and append all initilization
   */
-
   gpy_dot_tree_t * class_suite = DOT_lhs_TT (decl);
   gpy_dot_tree_t * node = class_suite;
   do {
     if (DOT_T_FIELD (node) ==  D_D_EXPR)
       {
 	// append to stmt list as this goes into the module initilizer...
-	gpy_dot_pass_lower_expr (node, &block, context);
+	gpy_dot_pass_lower_expr (node, &stmts, context);
 	continue;
       }
     
     switch (DOT_TYPE (node))
       {
       case D_PRINT_STMT:
-	gpy_dot_pass_genericify_print_stmt (node, &block, context);
+	gpy_dot_pass_genericify_print_stmt (node, &stmts, context);
 	break;
 
       default:
@@ -812,14 +927,14 @@ VEC(tree,gc) * gpy_dot_pass_genericify_toplevl_class_decl (gpy_dot_tree_t * decl
     if (DOT_T_FIELD (node) ==  D_D_EXPR)
       {
 	// append to stmt list as this goes into the module initilizer...
-	gpy_dot_pass_lower_expr (node, &block, context);
+	gpy_dot_pass_lower_expr (node, &stmts, context);
 	continue;
       }
     
     switch (DOT_TYPE (node))
       {
       case D_PRINT_STMT:
-	gpy_dot_pass_genericify_print_stmt (node, &block, context);
+	gpy_dot_pass_genericify_print_stmt (node, &stmts, context);
 	break;
 	
       case D_STRUCT_METHOD:
@@ -943,10 +1058,15 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
 	    VEC(tree,gc) * cdecls = gpy_dot_pass_genericify_toplevl_class_decl (idtx, context,
 										modules);
 	    GPY_VEC_stmts_append (tree, lowered_decls, cdecls);
-
-	    /*
-	      WHOOOOOOOOOP
-	     */
+	    tree class_name = GPY_dot_pass_genericify_gen_concat_identifier (GPY_current_module_name,
+									     DOT_IDENTIFIER_POINTER (DOT_FIELD (idtx))
+									     );
+	    tree class_type = gpy_dot_pass_genericify_get_module_type (IDENTIFIER_POINTER (class_name),
+								       modules);
+	    tree class_decl_ptr = gpy_dot_pass_decl_lookup (context,
+							    DOT_IDENTIFIER_POINTER (DOT_FIELD (idtx)));
+	    debug_tree (class_decl_ptr);
+	    gpy_dot_pass_genericify_walk_class (&stmts, class_type, class_decl_ptr, cdecls);
 	  }
 	  break;
 

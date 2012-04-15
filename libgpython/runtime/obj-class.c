@@ -40,7 +40,6 @@ void gpy_object_classobj_init_decl_attribs (const void * self,
     {
       gpy_object_attrib_t * i = attribs[idx];
       unsigned char * x = selfptr + (i->offset);
-
       x = (unsigned char *) &(i->addr);
     }
 }
@@ -72,6 +71,8 @@ gpy_object_t * gpy_object_classobj_new (gpy_typedef_t * type,
   ctype->members_defintion = attribs;
 
   retval = gpy_create_object_decl (ctype, self);
+
+  /* we need to walk though the field_init here */
 
   return retval;
 }
