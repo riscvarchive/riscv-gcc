@@ -445,6 +445,17 @@ tree gpy_dot_pass_genericify_modify (gpy_dot_tree_t * decl, tree * block,
 	  fatal_error ("careful now!\n");
 	  break;
 
+	case COMPONENT_REF:
+	  {
+	    debug ("component_ref assign!\n");
+	    append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr,
+					      addr,
+					      addr_rhs_tree),
+				      block);
+	    retval = addr;
+	  }
+	  break;
+
 	default:
 	  {
 	    tree tmp = build_decl (UNKNOWN_LOCATION, VAR_DECL,
@@ -561,6 +572,10 @@ tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
 	    break;
 
 	  case PARM_DECL:
+	    retval = lookup;
+	    break;
+
+	  case COMPONENT_REF:
 	    retval = lookup;
 	    break;
 	    
