@@ -28,7 +28,15 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/vectors.h>
 #include <gpython/objects.h>
 
+typedef void (*main_start)(void);
+main_start __entry = NULL;
+
 int main (int argc, char *argv[])
 {
+  gpy_rr_init_runtime ();
+
+  __entry ();
+
+  gpy_rr_cleanup_final ();
   return 0;
 }

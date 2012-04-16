@@ -982,8 +982,10 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
   debug ("lowering toplevel module <%s> to <%s>!\n", GPY_current_module_name,
 	 IDENTIFIER_POINTER (ident));
 
-  //TREE_STATIC (fndecl) = 1;
-  TREE_PUBLIC (fndecl) = 1;
+  TREE_STATIC(fndecl) = 1;
+  TREE_USED(fndecl) = 1;
+  DECL_ARTIFICIAL(fndecl) = 1;
+  TREE_PUBLIC(fndecl) = 1;
   
   tree argslist = NULL_TREE;
   DECL_ARGUMENTS (fndecl) = argslist;
@@ -1036,6 +1038,8 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
           {
 	    tree t = gpy_dot_pass_genericify_toplevl_functor_decl (idtx, context);
 	    VEC_safe_push (tree, gc, lowered_decls, t);
+
+	    /* assign the function to the decl */
           }
           break;
 
