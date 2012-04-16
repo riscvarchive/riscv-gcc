@@ -738,7 +738,7 @@ tree gpy_dot_pass_genericify_toplevl_functor_decl (gpy_dot_tree_t * decl,
   TREE_SIDE_EFFECTS (bind) = 1;
 
   /* Finalize the main function */
-  BIND_EXPR_BODY(bind) = stmts;
+  BIND_EXPR_BODY (bind) = stmts;
   stmts = bind;
   DECL_SAVED_TREE (fndecl) = stmts;
   
@@ -801,11 +801,13 @@ tree gpy_dot_pass_genericify_class_method_attrib (gpy_dot_tree_t * decl,
   gpy_dd_hash_init_table (&ctx);
   gcc_assert (!gpy_dd_hash_insert (gpy_dd_hash_string ("self"), self_parm_decl,
 				   &ctx));
+  VEC_safe_push (gpy_context_t, gc, context, &ctx);
+
   tree stmts = alloc_stmt_list ();
   /*
     lower the function suite here and append all initilization
   */
-  gpy_dot_tree_t * class_suite = DOT_lhs_TT (decl);
+  gpy_dot_tree_t * class_suite = DOT_rhs_TT (decl);
   gpy_dot_tree_t * node = class_suite;
   do {
     if (DOT_T_FIELD (node) ==  D_D_EXPR)
@@ -844,6 +846,8 @@ tree gpy_dot_pass_genericify_class_method_attrib (gpy_dot_tree_t * decl,
   
   gimplify_function_tree (fndecl);
   cgraph_finalize_function (fndecl, false);
+
+  VEC_pop (gpy_context_t, context);
 
   return fndecl;
 }
@@ -1065,7 +1069,6 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
 								       modules);
 	    tree class_decl_ptr = gpy_dot_pass_decl_lookup (context,
 							    DOT_IDENTIFIER_POINTER (DOT_FIELD (idtx)));
-	    debug_tree (class_decl_ptr);
 	    gpy_dot_pass_genericify_walk_class (&stmts, class_type, class_decl_ptr, cdecls);
 	  }
 	  break;
