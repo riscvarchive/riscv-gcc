@@ -412,6 +412,7 @@ tree gpy_dot_pass_genericify_modify (gpy_dot_tree_t * decl, tree * block,
 
   if (DOT_TYPE (lhs) == D_IDENTIFIER)
     {
+      debug ("lookup addr = <%s>!\n", DOT_IDENTIFIER_POINTER (lhs));
       tree addr = gpy_dot_pass_decl_lookup (context, DOT_IDENTIFIER_POINTER (lhs));
       if (!addr)
 	{
