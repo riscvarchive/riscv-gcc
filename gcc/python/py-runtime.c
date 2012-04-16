@@ -256,7 +256,7 @@ tree GPY_RR_eval_expression (tree x, tree y, tree op)
   
 tree GPY_RR_fold_attrib_ref (tree base, tree attrib)
 {
-  tree fntype = build_function_type_list (gpy_unsigned_char_ptr,
+  tree fntype = build_function_type_list (gpy_object_type_ptr_ptr,
 	       	      	 gpy_object_type_ptr,
 			 gpy_const_char_ptr,
                          NULL_TREE);
@@ -504,7 +504,7 @@ void gpy_dot_types_init (void)
   gpy_preserve_from_gc (gpy_attrib_type);
 
   VEC_safe_push (tree, gc, gpy_builtin_types_vec,
-		 gpy_attrib_type);
+		 build_pointer_type (gpy_attrib_type));
   gpy_preserve_from_gc (gpy_attrib_type_ptr);
 
   VEC_safe_push (tree, gc, gpy_builtin_types_vec,

@@ -304,7 +304,7 @@ void gpy_dot_types_init (void)
   gpy_preserve_from_gc (gpy_attrib_type);
 
   VEC_safe_push (tree, gc, gpy_builtin_types_vec,
-		 gpy_attrib_type);
+		 build_pointer_type (gpy_attrib_type));
   gpy_preserve_from_gc (gpy_attrib_type_ptr);
 
   VEC_safe_push (tree, gc, gpy_builtin_types_vec,
