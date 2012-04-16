@@ -77,10 +77,14 @@ void gpy_dot_pass_manager_write_globals (void)
   dot_pass *p = NULL;
   VEC(gpydot,gc) * dot_decls = gpy_decls;
   
+  /* walk the passes */
   for (p = gpy_dot_pass_mngr; *p != NULL; ++p)
     dot_decls = (*p)(dot_decls);
 
+  /* generate the types from the passed decls */
   VEC(tree,gc) * module_types = gpy_dot_pass_generate_types (dot_decls);
+
+  /* lower the decls from DOT -> GENERIC */
   VEC(tree,gc) * dot2gen_trees = gpy_dot_pass_genericify (module_types, gpy_decls);
   VEC(tree,gc) * globals = dot2gen_trees;
   
@@ -89,10 +93,16 @@ void gpy_dot_pass_manager_write_globals (void)
   tree itx = NULL_TREE;
   int idx, idy = 0;
 
-  FILE *tu_stream = dump_begin (TDI_tu, NULL);
+  /* 
+     Lets make sure to dump the Translation Unit this isn't that
+     useful to read over but can help to make sure certain tree's
+     are being generated...
+
+     We also fill up the vector of tree's to be passed to the middle-end
+   */
+  FILE * tu_stream = dump_begin (TDI_tu, NULL);
   for (idx = 0; VEC_iterate (tree, globals, idx, itx); ++idx)
     {
-      // debug_tree (itx);
       if (tu_stream)
 	dump_node (itx, 0, tu_stream);
 
@@ -102,6 +112,7 @@ void gpy_dot_pass_manager_write_globals (void)
   if (tu_stream)
     dump_end(TDI_tu, tu_stream);
 
+  /* Passing control to GCC middle-end */
   wrapup_global_declarations (global_vec, global_vec_len);
   cgraph_finalize_compilation_unit ();
   check_global_declarations (global_vec, global_vec_len);

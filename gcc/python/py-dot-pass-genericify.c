@@ -412,9 +412,9 @@ tree gpy_dot_pass_genericify_modify (gpy_dot_tree_t * decl, tree * block,
 
   if (DOT_TYPE (lhs) == D_IDENTIFIER)
     {
-      debug ("lookup addr = <%s>!\n", DOT_IDENTIFIER_POINTER (lhs));
       tree addr = gpy_dot_pass_decl_lookup (context, DOT_IDENTIFIER_POINTER (lhs));
-      if (!addr)
+      /* if its not already declared we just create an instance on the stack */
+      if (addr == error_mark_node)
 	{
 	  /* since not previously declared we need to declare the variable! */
 	  gpy_hash_tab_t * current_context = VEC_index (gpy_context_t, context,
@@ -701,14 +701,14 @@ tree gpy_dot_pass_genericify_toplevl_functor_decl (gpy_dot_tree_t * decl,
     if (DOT_T_FIELD (node) ==  D_D_EXPR)
       {
 	// append to stmt list as this goes into the module initilizer...
-	gpy_dot_pass_lower_expr (node, &block, context);
+	gpy_dot_pass_lower_expr (node, &stmts, context);
 	continue;
       }
     
     switch (DOT_TYPE (node))
       {
       case D_PRINT_STMT:
-	gpy_dot_pass_genericify_print_stmt (node, &block, context);
+	gpy_dot_pass_genericify_print_stmt (node, &stmts, context);
 	break;
 
       default:
