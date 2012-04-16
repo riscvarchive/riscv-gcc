@@ -27,14 +27,16 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/gpython.h>
 #include <gpython/vectors.h>
 #include <gpython/objects.h>
+#include <gpython/runtime.h>
 
-typedef void (*main_start)(void);
-main_start __entry = NULL;
+typedef void (*gpy_main_start)(void);
+extern unsigned char * __GPY_entry;
 
 int main (int argc, char *argv[])
 {
   gpy_rr_init_runtime ();
 
+  gpy_main_start __entry = (gpy_main_start)__GPY_entry;
   __entry ();
 
   gpy_rr_cleanup_final ();

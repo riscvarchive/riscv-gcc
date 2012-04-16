@@ -66,6 +66,12 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `gmp' library (-lgmp). */
+#undef HAVE_LIBGMP
+
+/* Define to 1 if you have the `mpfr' library (-lmpfr). */
+#undef HAVE_LIBMPFR
+
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
 #undef HAVE_MALLOC
@@ -221,6 +227,9 @@
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* The size of `mp_limb_t', as computed by sizeof. */
+#undef SIZEOF_MP_LIMB_T
 
 /* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT

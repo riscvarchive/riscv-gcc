@@ -35,6 +35,7 @@ along with GCC; see the file COPYING3.  If not see
 #define GPY_RR_globl_call_stack    "__GPY_GLOBL_CALL_STACK"
 #define GPY_RR_globl_primitives    "__GPY_GLOBL_PRIMITIVES"
 #define GPY_RR_globl_return_addr   "__GPY_GLOBL_RETURN_ADDR"
+#define GPY_RR_entry               "__GPY_entry"
 
 /* return a const string tree */
 extern tree gpy_dot_type_const_string_tree (const char *);

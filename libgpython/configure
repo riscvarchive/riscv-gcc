@@ -11721,6 +11721,136 @@ WARN_FLAGS='-Wall -Wextra -Wwrite-strings -Wcast-qual'
 WERROR="-Werror"
 
 
+# used for constant folding and rounding
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __gmpz_init in -lgmp" >&5
+$as_echo_n "checking for __gmpz_init in -lgmp... " >&6; }
+if ${ac_cv_lib_gmp___gmpz_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgmp  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char __gmpz_init ();
+int
+main ()
+{
+return __gmpz_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_gmp___gmpz_init=yes
+else
+  ac_cv_lib_gmp___gmpz_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gmp___gmpz_init" >&5
+$as_echo "$ac_cv_lib_gmp___gmpz_init" >&6; }
+if test "x$ac_cv_lib_gmp___gmpz_init" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBGMP 1
+_ACEOF
+
+  LIBS="-lgmp $LIBS"
+
+else
+  as_fn_error $? "GNU MP not found, see http://gmplib.org/" "$LINENO" 5
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for mpfr_init  in -lmpfr" >&5
+$as_echo_n "checking for mpfr_init  in -lmpfr... " >&6; }
+if ${ac_cv_lib_mpfr_mpfr_init_+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmpfr  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mpfr_init  ();
+int
+main ()
+{
+return mpfr_init  ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_mpfr_mpfr_init_=yes
+else
+  ac_cv_lib_mpfr_mpfr_init_=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mpfr_mpfr_init_" >&5
+$as_echo "$ac_cv_lib_mpfr_mpfr_init_" >&6; }
+if test "x$ac_cv_lib_mpfr_mpfr_init_" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBMPFR 1
+_ACEOF
+
+  LIBS="-lmpfr $LIBS"
+
+else
+  as_fn_error $? "MPFR not found, see http://www.mpfr.org/" "$LINENO" 5
+fi
+
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of mp_limb_t" >&5
+$as_echo_n "checking size of mp_limb_t... " >&6; }
+if ${ac_cv_sizeof_mp_limb_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (mp_limb_t))" "ac_cv_sizeof_mp_limb_t"        "#include <gmp.h>
+"; then :
+
+else
+  if test "$ac_cv_type_mp_limb_t" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (mp_limb_t)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_mp_limb_t=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_mp_limb_t" >&5
+$as_echo "$ac_cv_sizeof_mp_limb_t" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_MP_LIMB_T $ac_cv_sizeof_mp_limb_t
+_ACEOF
+
+
+
 # See if the user wants to configure without libffi.  Some
 # architectures don't support it.  FIXME: We should set a default
 # based on the host.

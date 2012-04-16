@@ -69,6 +69,13 @@ dnl FIXME: This should be controlled by --enable-maintainer-mode.
 WERROR="-Werror"
 AC_SUBST(WERROR)
 
+# used for constant folding and rounding
+AC_CHECK_LIB([gmp], [__gmpz_init], ,
+  [AC_MSG_ERROR([GNU MP not found, see http://gmplib.org/])])
+AC_CHECK_LIB([mpfr],[mpfr_init] , ,
+  [AC_MSG_ERROR([MPFR not found, see http://www.mpfr.org/])])
+AC_CHECK_SIZEOF(mp_limb_t, , [#include <gmp.h>])
+
 # See if the user wants to configure without libffi.  Some
 # architectures don't support it.  FIXME: We should set a default
 # based on the host.
