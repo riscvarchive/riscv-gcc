@@ -71,7 +71,7 @@ py-runtime = { code = GPY_RR_fold_func_decl;
 	       proto = "tree, tree";
 	       comment = "/* Fold func into decl <identifier><fndcel> */";
                function_identifier = "gpy_rr_fold_class_decl";
-               fntype = "gpy_object_type_ptr
+               fntype = "gpy_object_type_ptr,
                          gpy_const_char_ptr,
 			 ptr_type_node,
                          NULL_TREE";
