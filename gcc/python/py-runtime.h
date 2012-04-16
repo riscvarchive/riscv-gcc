@@ -32,6 +32,9 @@ along with GCC; see the file COPYING3.  If not see
 #define GPY_RR_globl_primitives    "__GPY_GLOBL_PRIMITIVES"
 #define GPY_RR_globl_return_addr   "__GPY_GLOBL_RETURN_ADDR"
 
+/* return a const string tree */
+extern tree gpy_dot_type_const_string_tree (const char *);
+
   
 /* Extends the runtime globl stack by passed size (integer_type_node) */
 extern tree GPY_RR_extend_globl_stack (tree);

@@ -36,6 +36,9 @@ along with GCC; see the file COPYING3.  If not see
 #define GPY_RR_globl_primitives    "__GPY_GLOBL_PRIMITIVES"
 #define GPY_RR_globl_return_addr   "__GPY_GLOBL_RETURN_ADDR"
 
+/* return a const string tree */
+extern tree gpy_dot_type_const_string_tree (const char *);
+
   [+ FOR py-runtime +]
 [+ (get "comment") +]
 extern tree [+ (get "code") +] ([+ (get "proto") +]);
@@ -268,11 +271,24 @@ tree gpy_build_py_object_type (void)
   return build_pointer_type (gpy_object_struct_Type);
 }
 
+tree gpy_dot_type_const_string_tree (const char * str)
+{
+  tree index_type = build_index_type (size_int (strlen (str)));
+  tree const_char_type = build_qualified_type (unsigned_char_type_node,
+					       TYPE_QUAL_CONST);
+  tree string_type = build_array_type (const_char_type, index_type);
+  string_type = build_variant_type_copy (string_type);
+  TYPE_STRING_FLAG (string_type) = 1;
+  tree string_val = build_string (strlen (str), str);
+  TREE_TYPE (string_val) = string_type;
+  return string_val;
+}
+
 void gpy_dot_types_init (void)
 {
   gpy_builtin_types_vec = VEC_alloc (tree,gc,0);
 
-  tree const_char_type = build_qualified_type (unsigned_char_type_node,
+  tree const_char_type = build_qualified_type (char_type_node,
 					       TYPE_QUAL_CONST);
   tree ctype = build_pointer_type (const_char_type);
 
