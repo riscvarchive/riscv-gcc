@@ -139,7 +139,7 @@ tree GPY_RR_fold_class_decl (tree attrib_list, tree size, tree identifier)
   
 tree GPY_RR_fold_func_decl (tree identifier, tree func)
 {
-  tree fntype = build_function_type_list (gpy_object_type_ptr
+  tree fntype = build_function_type_list (gpy_object_type_ptr,
                          gpy_const_char_ptr,
 			 ptr_type_node,
                          NULL_TREE);
