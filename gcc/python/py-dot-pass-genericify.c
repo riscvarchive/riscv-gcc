@@ -1055,6 +1055,13 @@ VEC(tree,gc) * gpy_dot_pass_genericify_TU (gpy_hash_tab_t * modules,
 	    VEC_safe_push (tree, gc, lowered_decls, t);
 
 	    /* assign the function to the decl */
+	    const char * funcid = DOT_IDENTIFIER_POINTER (DOT_FIELD (idtx));
+	    tree funcdecl = gpy_dot_pass_decl_lookup (context, funcid);
+	    append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr,
+					      funcdecl,
+					      GPY_RR_fold_func_decl (gpy_dot_type_const_string_tree (funcid),
+								     t)),
+				      &stmts);
           }
           break;
 

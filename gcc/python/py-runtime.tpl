@@ -38,7 +38,6 @@ along with GCC; see the file COPYING3.  If not see
 
 /* return a const string tree */
 extern tree gpy_dot_type_const_string_tree (const char *);
-
   [+ FOR py-runtime +]
 [+ (get "comment") +]
 extern tree [+ (get "code") +] ([+ (get "proto") +]);
