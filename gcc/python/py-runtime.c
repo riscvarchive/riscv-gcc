@@ -275,11 +275,10 @@ tree GPY_RR_fold_attrib_ref (tree base, tree attrib)
   return build_call_expr (fndecl, 2, base, attrib);
 }
   
-tree GPY_RR_fold_call (tree decl, tree id)
+tree GPY_RR_fold_call (tree decl)
 {
   tree fntype = build_function_type_list (gpy_object_type_ptr,
 	       	      	 gpy_object_type_ptr,
-			 gpy_const_char_ptr,
                          NULL_TREE);
   tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
 			    get_identifier ("gpy_rr_fold_call"),
@@ -292,7 +291,7 @@ tree GPY_RR_fold_call (tree decl, tree id)
   DECL_EXTERNAL (fndecl) = 1;
   TREE_PUBLIC (fndecl) = 1;
 
-  return build_call_expr (fndecl, 2, decl, id);
+  return build_call_expr (fndecl, 1, decl);
 }
   
 

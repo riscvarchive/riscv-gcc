@@ -128,8 +128,8 @@ void gpy_dot_pass_process_class_attrib_method_suite (gpy_dot_tree_t * suite, gpy
 				      if (!strcmp (self, root_ident))
 					{
 					  gpy_hashval_t h = gpy_dd_hash_string (DOT_IDENTIFIER_POINTER (attrib));
-					  void ** e = gpy_dd_hash_insert (h, attrib, context);
-					  gcc_assert (!e);
+					  /* we dont care if it was already declared i guess */
+					  gpy_dd_hash_insert (h, attrib, context);
 					}
 				    }
 				}

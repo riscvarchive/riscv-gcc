@@ -396,11 +396,9 @@ atom: ident
     | literal
     ;
 
-call: IDENTIFIER '(' argument_list_stmt ')'
+call: primary '(' argument_list_stmt ')'
     {
-      gpy_dot_tree_t *dot = dot_build_decl2 (D_CALL_EXPR,
-					     dot_build_identifier($1),
-					     $3);
+      gpy_dot_tree_t *dot = dot_build_decl2 (D_CALL_EXPR, $1, $3);
       $$ = dot;
     }
     ;
