@@ -333,8 +333,8 @@ void gpy_dot_pass_genericify_print_stmt (gpy_dot_tree_t * decl, tree * block,
   gpy_dot_tree_t * it = NULL;
   for (it = arguments; it != NULL; it = DOT_CHAIN (it))
     {
-      VEC_safe_push (tree, gc, callvec_tmp,
-		     gpy_dot_pass_lower_expr (it, block, context));
+      tree lexpr = gpy_dot_pass_lower_expr (it, block, context);
+      VEC_safe_push (tree, gc, callvec_tmp, lexpr);
     }
   VEC(tree,gc) * callvec = VEC_alloc (tree,gc,0);
   VEC_safe_push (tree, gc, callvec, build_int_cst (integer_type_node, 1));
@@ -613,7 +613,7 @@ tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
 							  gpy_dot_type_const_string_tree (attrib_ident))
 				  );
 	append_to_statement_list (attrib_ref, block);
-	retval = build_fold_indirect_ref (attrib_ref);
+	retval = build_fold_indirect_ref (addr_1);
       }
       break;
 
