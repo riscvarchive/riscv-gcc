@@ -81,11 +81,13 @@ am__installdirs = "$(DESTDIR)$(libdir)" \
 	"$(DESTDIR)$(library_includedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libgpython_la_LIBADD =
-am_libgpython_la_OBJECTS = libgpython_la-obj-class.lo \
-	libgpython_la-obj-functor.lo libgpython_la-obj-integer.lo \
-	libgpython_la-obj-list.lo libgpython_la-py-main.lo \
-	libgpython_la-py-runtime.lo libgpython_la-py-type-utils.lo \
-	libgpython_la-py-routines.lo libgpython_la-py-vectors.lo
+am_libgpython_la_OBJECTS = libgpython_la-py-obj_class.lo \
+	libgpython_la-py-obj_staticmethod.lo \
+	libgpython_la-py-obj_classmethod.lo \
+	libgpython_la-py-obj_integer.lo libgpython_la-py-obj_list.lo \
+	libgpython_la-py-main.lo libgpython_la-py-runtime.lo \
+	libgpython_la-py-type-utils.lo libgpython_la-py-routines.lo \
+	libgpython_la-py-vectors.lo
 libgpython_la_OBJECTS = $(am_libgpython_la_OBJECTS)
 libgpython_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libgpython_la_CFLAGS) \
@@ -268,13 +270,14 @@ include/gpython/runtime.h \
 include/gpython/vectors.h \
 include/gpython/objects.h
 
-libgpython_la_CFLAGS = -DPYHON -DSHARED
+libgpython_la_CFLAGS = -DGPYHON -DSHARED
 libgpython_la_LDFLAGS = -release 0.0.1
 libgpython_la_SOURCES = \
-runtime/obj-class.c \
-runtime/obj-functor.c \
-runtime/obj-integer.c \
-runtime/obj-list.c \
+runtime/py-obj_class.c \
+runtime/py-obj_staticmethod.c \
+runtime/py-obj_classmethod.c \
+runtime/py-obj_integer.c \
+runtime/py-obj_list.c \
 runtime/py-main.c \
 runtime/py-runtime.c \
 runtime/py-type-utils.c \
@@ -377,11 +380,12 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-obj-class.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-obj-functor.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-obj-integer.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-obj-list.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-main.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-obj_class.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-obj_classmethod.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-obj_integer.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-obj_list.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-obj_staticmethod.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-routines.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-runtime.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgpython_la-py-type-utils.Plo@am__quote@
@@ -408,33 +412,40 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-libgpython_la-obj-class.lo: runtime/obj-class.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-obj-class.lo -MD -MP -MF $(DEPDIR)/libgpython_la-obj-class.Tpo -c -o libgpython_la-obj-class.lo `test -f 'runtime/obj-class.c' || echo '$(srcdir)/'`runtime/obj-class.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-obj-class.Tpo $(DEPDIR)/libgpython_la-obj-class.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/obj-class.c' object='libgpython_la-obj-class.lo' libtool=yes @AMDEPBACKSLASH@
+libgpython_la-py-obj_class.lo: runtime/py-obj_class.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-py-obj_class.lo -MD -MP -MF $(DEPDIR)/libgpython_la-py-obj_class.Tpo -c -o libgpython_la-py-obj_class.lo `test -f 'runtime/py-obj_class.c' || echo '$(srcdir)/'`runtime/py-obj_class.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-py-obj_class.Tpo $(DEPDIR)/libgpython_la-py-obj_class.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/py-obj_class.c' object='libgpython_la-py-obj_class.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-obj-class.lo `test -f 'runtime/obj-class.c' || echo '$(srcdir)/'`runtime/obj-class.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-py-obj_class.lo `test -f 'runtime/py-obj_class.c' || echo '$(srcdir)/'`runtime/py-obj_class.c
 
-libgpython_la-obj-functor.lo: runtime/obj-functor.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-obj-functor.lo -MD -MP -MF $(DEPDIR)/libgpython_la-obj-functor.Tpo -c -o libgpython_la-obj-functor.lo `test -f 'runtime/obj-functor.c' || echo '$(srcdir)/'`runtime/obj-functor.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-obj-functor.Tpo $(DEPDIR)/libgpython_la-obj-functor.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/obj-functor.c' object='libgpython_la-obj-functor.lo' libtool=yes @AMDEPBACKSLASH@
+libgpython_la-py-obj_staticmethod.lo: runtime/py-obj_staticmethod.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-py-obj_staticmethod.lo -MD -MP -MF $(DEPDIR)/libgpython_la-py-obj_staticmethod.Tpo -c -o libgpython_la-py-obj_staticmethod.lo `test -f 'runtime/py-obj_staticmethod.c' || echo '$(srcdir)/'`runtime/py-obj_staticmethod.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-py-obj_staticmethod.Tpo $(DEPDIR)/libgpython_la-py-obj_staticmethod.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/py-obj_staticmethod.c' object='libgpython_la-py-obj_staticmethod.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-obj-functor.lo `test -f 'runtime/obj-functor.c' || echo '$(srcdir)/'`runtime/obj-functor.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-py-obj_staticmethod.lo `test -f 'runtime/py-obj_staticmethod.c' || echo '$(srcdir)/'`runtime/py-obj_staticmethod.c
 
-libgpython_la-obj-integer.lo: runtime/obj-integer.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-obj-integer.lo -MD -MP -MF $(DEPDIR)/libgpython_la-obj-integer.Tpo -c -o libgpython_la-obj-integer.lo `test -f 'runtime/obj-integer.c' || echo '$(srcdir)/'`runtime/obj-integer.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-obj-integer.Tpo $(DEPDIR)/libgpython_la-obj-integer.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/obj-integer.c' object='libgpython_la-obj-integer.lo' libtool=yes @AMDEPBACKSLASH@
+libgpython_la-py-obj_classmethod.lo: runtime/py-obj_classmethod.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-py-obj_classmethod.lo -MD -MP -MF $(DEPDIR)/libgpython_la-py-obj_classmethod.Tpo -c -o libgpython_la-py-obj_classmethod.lo `test -f 'runtime/py-obj_classmethod.c' || echo '$(srcdir)/'`runtime/py-obj_classmethod.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-py-obj_classmethod.Tpo $(DEPDIR)/libgpython_la-py-obj_classmethod.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/py-obj_classmethod.c' object='libgpython_la-py-obj_classmethod.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-obj-integer.lo `test -f 'runtime/obj-integer.c' || echo '$(srcdir)/'`runtime/obj-integer.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-py-obj_classmethod.lo `test -f 'runtime/py-obj_classmethod.c' || echo '$(srcdir)/'`runtime/py-obj_classmethod.c
 
-libgpython_la-obj-list.lo: runtime/obj-list.c
-@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-obj-list.lo -MD -MP -MF $(DEPDIR)/libgpython_la-obj-list.Tpo -c -o libgpython_la-obj-list.lo `test -f 'runtime/obj-list.c' || echo '$(srcdir)/'`runtime/obj-list.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-obj-list.Tpo $(DEPDIR)/libgpython_la-obj-list.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/obj-list.c' object='libgpython_la-obj-list.lo' libtool=yes @AMDEPBACKSLASH@
+libgpython_la-py-obj_integer.lo: runtime/py-obj_integer.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-py-obj_integer.lo -MD -MP -MF $(DEPDIR)/libgpython_la-py-obj_integer.Tpo -c -o libgpython_la-py-obj_integer.lo `test -f 'runtime/py-obj_integer.c' || echo '$(srcdir)/'`runtime/py-obj_integer.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-py-obj_integer.Tpo $(DEPDIR)/libgpython_la-py-obj_integer.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/py-obj_integer.c' object='libgpython_la-py-obj_integer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-obj-list.lo `test -f 'runtime/obj-list.c' || echo '$(srcdir)/'`runtime/obj-list.c
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-py-obj_integer.lo `test -f 'runtime/py-obj_integer.c' || echo '$(srcdir)/'`runtime/py-obj_integer.c
+
+libgpython_la-py-obj_list.lo: runtime/py-obj_list.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-py-obj_list.lo -MD -MP -MF $(DEPDIR)/libgpython_la-py-obj_list.Tpo -c -o libgpython_la-py-obj_list.lo `test -f 'runtime/py-obj_list.c' || echo '$(srcdir)/'`runtime/py-obj_list.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libgpython_la-py-obj_list.Tpo $(DEPDIR)/libgpython_la-py-obj_list.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='runtime/py-obj_list.c' object='libgpython_la-py-obj_list.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -c -o libgpython_la-py-obj_list.lo `test -f 'runtime/py-obj_list.c' || echo '$(srcdir)/'`runtime/py-obj_list.c
 
 libgpython_la-py-main.lo: runtime/py-main.c
 @am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgpython_la_CFLAGS) $(CFLAGS) -MT libgpython_la-py-main.lo -MD -MP -MF $(DEPDIR)/libgpython_la-py-main.Tpo -c -o libgpython_la-py-main.lo `test -f 'runtime/py-main.c' || echo '$(srcdir)/'`runtime/py-main.c
