@@ -29,6 +29,7 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/gpython.h>
 #include <gpython/vectors.h>
 #include <gpython/objects.h>
+#include <gpython/runtime.h>
 
 typedef void (*__field_init_ptr)(void *);
 
@@ -80,6 +81,7 @@ gpy_object_t * gpy_object_classobj_new (gpy_typedef_t * type,
   unsigned char * codeaddr = gpy_object_staticmethod_getaddr (field_init);
   gpy_assert (codeaddr);
 
+  debug ("calling the __init__!\n");
   __field_init_ptr c = (__field_init_ptr)codeaddr;
   c (self);
 

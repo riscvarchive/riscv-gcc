@@ -17,9 +17,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef __GCC_RUNTIME_H__
 #define __GCC_RUNTIME_H__
 
-extern gpy_vector_t * gpy_primitives;
-extern gpy_object_t ** gpy_globl_runtime_stack;
-
 extern gpy_object_t * gpy_rr_fold_functor_decl (const char *, unsigned char *);
+extern unsigned char * gpy_rr_eval_attrib_reference (gpy_object_t *, const char *);
 
 #endif //__GCC_RUNTIME_H__

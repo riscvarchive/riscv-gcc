@@ -51,6 +51,9 @@ extern tree GPY_RR_fold_class_decl (tree, tree, tree);
 /* Fold func into decl <identifier><fndcel> */
 extern tree GPY_RR_fold_func_decl (tree, tree);
   
+/* Fold func into decl <identifier><fndcel> */
+extern tree GPY_RR_fold_classmethod_decl (tree, tree);
+  
 /* Fold integer into Int object  via Int (x) */
 extern tree GPY_RR_fold_integer (tree);
   

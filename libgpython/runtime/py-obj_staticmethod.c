@@ -109,7 +109,7 @@ static struct gpy_typedef_t functor_obj = {
   NULL
 };
 
-void gpy_obj_functor_mod_init (gpy_vector_t * const vec)
+void gpy_obj_staticmethod_mod_init (gpy_vector_t * const vec)
 {
   gpy_vec_push (vec, &functor_obj);
 }

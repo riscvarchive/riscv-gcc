@@ -70,7 +70,19 @@ py-runtime = { code = GPY_RR_fold_func_decl;
 	       arguments = "tree identifier, tree func";
 	       proto = "tree, tree";
 	       comment = "/* Fold func into decl <identifier><fndcel> */";
-               function_identifier = "gpy_rr_fold_class_decl";
+               function_identifier = "gpy_rr_fold_staticmethod_decl";
+               fntype = "gpy_object_type_ptr,
+                         gpy_const_char_ptr,
+			 ptr_type_node,
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 2, identifier, build_fold_addr_expr (func)";
+             };
+py-runtime = { code = GPY_RR_fold_classmethod_decl;
+	       arguments = "tree identifier, tree func";
+	       proto = "tree, tree";
+	       comment = "/* Fold func into decl <identifier><fndcel> */";
+               function_identifier = "gpy_rr_fold_classmethod_decl";
                fntype = "gpy_object_type_ptr,
                          gpy_const_char_ptr,
 			 ptr_type_node,
