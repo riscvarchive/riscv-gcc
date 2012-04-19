@@ -118,6 +118,7 @@ extern gpy_object_attrib_t ** gpy_args_lit_parse_attrib_table (gpy_object_t *);
 
 extern gpy_object_t * gpy_create_object_state (gpy_typedef_t *, void *);
 extern gpy_object_t * gpy_create_object_decl (gpy_typedef_t *, void *);
+extern unsigned char * gpy_object_staticmethod_getaddr (gpy_object_t *);
 
 extern void gpy_obj_integer_mod_init (gpy_vector_t * const);
 

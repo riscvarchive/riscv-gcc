@@ -40,13 +40,12 @@ char * gpy_strdup (const char * str)
 #endif
 
 inline
-void gpy_assertion_failed( const char * expr, unsigned line,
-			   const char * file, const char * func )
+void gpy_assertion_failed (const char * expr, unsigned line,
+			   const char * file, const char * func)
 {
-  fprintf( stderr, "assertion of <%s> failed at <%s:%s:%u>!\n",
-	   expr, file, func, line );
+  fprintf (stderr, "assertion of <%s> failed at <%s:%s:%u>!\n",
+	   expr, file, func, line);
   /* Call cleanups .... */
-
   exit( EXIT_FAILURE );
 }
 

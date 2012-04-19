@@ -87,9 +87,9 @@ gpy_obj_integer_add (gpy_object_t * o1, gpy_object_t * o2)
   gpy_object_state_t * x = o1->o.object_state;
   gpy_object_state_t * y = o2->o.object_state;
 
-  if( !strcmp (x->identifier, "Int") )
+  if (!strcmp (x->identifier, "Int"))
     {
-      if( !strcmp (y->identifier, "Int") )
+      if (!strcmp (y->identifier, "Int"))
 	{
 	  struct gpy_obj_integer_t *t1 = (struct gpy_obj_integer_t*) x->state;
 	  struct gpy_obj_integer_t *t2 = (struct gpy_obj_integer_t*) y->state;
@@ -137,7 +137,7 @@ static struct gpy_number_prot_t integer_binary_ops = {
 };
 
 static struct gpy_typedef_t integer_obj = {
-  "int",
+  "Int",
   sizeof (struct gpy_obj_integer_t),
   gpy_obj_integer_new,
   gpy_obj_integer_destroy,

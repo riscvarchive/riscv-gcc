@@ -30,29 +30,16 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/vectors.h>
 #include <gpython/objects.h>
 
-#define GPY_ARG_LIT_CHECK(A,I,X,C)				\
+#define GPY_ARG_LIT_CHECK(A,I,X)				\
   gpy_assert (A[I]->T == TYPE_OBJECT_LIT);			\
-  gpy_assert (A[I]->o.literal->type == X);			\
-  C++
-
-static
-int gpy_args_lit_count_args (gpy_object_t ** args)
-{
-  int idx;
-  for (idx = 0; args[idx] != NULL; ++idx)
-    ;
-  return idx;
-}
+  gpy_assert (A[I]->o.literal->type == X);
 
 bool gpy_args_check_fmt (gpy_object_t ** args, const char * fmt)
 {
   bool retval = true;
 
   int idx = 0;
-  int sanity = 0;
-  int count = gpy_args_lit_count_args (args);
   const char * i = fmt;
-
   for (i = fmt; *i != '\0'; ++i)
     {
       switch (*i)
@@ -65,27 +52,27 @@ bool gpy_args_check_fmt (gpy_object_t ** args, const char * fmt)
 
 	case 'i':
 	  {
-	    GPY_ARG_LIT_CHECK (args, idx, TYPE_INTEGER, sanity);
+	    GPY_ARG_LIT_CHECK (args, idx, TYPE_INTEGER);
 	    debug ("integer check pass!\n");
 	  }
 	  break;
 
 	case 's':
 	  {
-	    GPY_ARG_LIT_CHECK (args, idx, TYPE_STRING, sanity);
+	    GPY_ARG_LIT_CHECK (args, idx, TYPE_STRING);
 	    debug ("string check pass!\n");
 	  }
 
 	case 'p':
 	  {
-	    GPY_ARG_LIT_CHECK (args, idx, TYPE_ADDR, sanity);
+	    GPY_ARG_LIT_CHECK (args, idx, TYPE_ADDR);
 	    debug ("pointer check pass!\n");
 	  }
 	  break;
 
 	case 'A':
 	  {
-	    GPY_ARG_LIT_CHECK (args, idx, TYPE_ATTRIB_L, sanity);
+	    GPY_ARG_LIT_CHECK (args, idx, TYPE_ATTRIB_L);
 	    debug ("pointer check pass!\n");
 	  }
 	  break;
@@ -101,10 +88,6 @@ bool gpy_args_check_fmt (gpy_object_t ** args, const char * fmt)
 	break;
       idx++;
     }
-
-  // simple consistancy check to make sure all args were accounted for!\n
-  gpy_assert (count == sanity);
-
   return retval;
 }
 

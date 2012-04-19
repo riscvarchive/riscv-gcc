@@ -30,6 +30,8 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/vectors.h>
 #include <gpython/objects.h>
 
+typedef void (*__field_init_ptr)(void *);
+
 static
 void gpy_object_classobj_init_decl_attribs (const void * self,
 					    gpy_object_attrib_t ** attribs)
@@ -73,6 +75,13 @@ gpy_object_t * gpy_object_classobj_new (gpy_typedef_t * type,
   retval = gpy_create_object_decl (ctype, self);
 
   /* we need to walk though the field_init here */
+  unsigned char * __field_init__ = gpy_rr_eval_attrib_reference (retval, "__field_init__");
+  gpy_object_t * field_init = *((gpy_object_t **) __field_init__);
+  unsigned char * codeaddr = gpy_object_staticmethod_getaddr (field_init);
+  gpy_assert (codeaddr);
+
+  __field_init_ptr c = (__field_init_ptr)codeaddr;
+  c (self);
 
   return retval;
 }
@@ -106,14 +115,6 @@ void gpy_object_classobj_print (gpy_object_t * self, FILE *fd, bool newline)
     fprintf (fd, "\n");
 }
 
-/* Now we create the instance of the class:
-   eg:
-
-   class foo:
-     ...
-
-  x = foo ()
- */
 gpy_object_t * gpy_object_classobj_call (gpy_object_t * self,
 					 gpy_object_t ** args)
 {
@@ -121,14 +122,16 @@ gpy_object_t * gpy_object_classobj_call (gpy_object_t * self,
    gpy_assert (self->T == TYPE_OBJECT_DECL);
 
    gpy_typedef_t * type = self->o.object_state->definition;
-   void * state = gpy_malloc (type->state_size);
-   gpy_object_classobj_init_decl_attribs (state, type->members_defintion);
-
+   void * state = self->o.object_state->state;
    retval = gpy_create_object_state (type, state);
    gpy_assert (retval);
 
-   gpy_rr_eval_attrib_reference_call (retval, "__field_init__");
-   gpy_rr_eval_attrib_reference_call (retval, "__init__");
+   unsigned char * __init__ = gpy_rr_eval_attrib_reference (retval, "__init__");
+   gpy_object_t * init = *((gpy_object_t **)__init__);
+   unsigned char * codeaddr = gpy_object_staticmethod_getaddr (init);
+   gpy_assert (codeaddr);
+
+   
 
    return retval;
 }

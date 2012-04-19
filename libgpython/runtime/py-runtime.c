@@ -29,47 +29,18 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/objects.h>
 #include <gpython/runtime.h>
 
-unsigned char * __GPY_GLOBL_RR_STACK;
-
-#define GPY_STACK_SIZE_OFFSET        0
-#define GPY_STACK_DATA_OFFSET        SIZEOF_INT
-#define GPY_STACK_PRIMTIVES_OFFSET   SIZEOF_INT * 2
-#define GPY_STACK_CALL_OFFSET        GPY_STACK_PRIMTIVES_OFFSET + sizeof (gpy_vector_t)
-#define GPY_STACK_RETURN_ADDR_OFFSET GPY_STACK_CALL_OFFSET + sizeof (gpy_vector_t)
-/*
-  Runtime stack is the globl state for globals access which
-  will have read write lock eventually for concurrency
-
-  Format of the stack will be
-
-  -----------------
-   stack-size (int)
-  -----------------
-   stack-header-offset (int)
-  -----------------
-   vector of primitives (gpy_vector_t)
-  -----------------
-   stack trace (gpy_vector_t)
-  ----------------
-   return address (gpy_object_t *)
-  ----------------
-   possible more runtime data...
-  ----------------
-   vector of globl symbols (gpy_object_t **)
-  ----------------
-
-   We will need to add more meta data to this for exceptions and calls etc
-*/
-int __GPY_GLOBL_RR_STACK_SIZE =
-    (sizeof (int) * 2)
-  + (sizeof (gpy_vector_t) * 2)
-  +  sizeof (gpy_object_t *);
-int __GPY_GLOBL_RR_STACK_DATA_OFFSET = 0;
-
+gpy_object_t ** __GPY_GLOBL_RR_STACK;
 gpy_vector_t * __GPY_GLOBL_CALL_STACK;
 gpy_vector_t * __GPY_GLOBL_PRIMITIVES;
-gpy_object_t * __GPY_GLOBL_RETURN_ADDR;
+gpy_object_t ** __GPY_GLOBL_RETURN_ADDR;
 gpy_object_t ** __GPY_GLOBL_RR_STACK_POINTER;
+
+/*
+  size
+  current_length
+  return addr
+  .... symbols
+*/
 
 static
 void gpy_rr_init_primitives (void)
@@ -82,59 +53,39 @@ void gpy_rr_init_primitives (void)
 static
 void gpy_rr_init_runtime_stack (void)
 {
-  __GPY_GLOBL_RR_STACK = gpy_malloc (__GPY_GLOBL_RR_STACK_SIZE);
-  
-  unsigned char * pointer = __GPY_GLOBL_RR_STACK;
-  *((int *) pointer) = __GPY_GLOBL_RR_STACK_SIZE;
-  pointer += sizeof (int);
-  *((int *) pointer) = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
-  pointer += sizeof (int);
+  __GPY_GLOBL_PRIMITIVES = gpy_malloc (sizeof (gpy_vector_t));
+  gpy_vec_init (__GPY_GLOBL_PRIMITIVES);
+  gpy_rr_init_primitives ();
 
-  gpy_vector_t vec = *((gpy_vector_t *) pointer);
-  gpy_vec_init (&vec);
-  __GPY_GLOBL_PRIMITIVES = &vec;
-  
-  pointer += sizeof (gpy_vector_t);
+  __GPY_GLOBL_CALL_STACK = gpy_malloc (sizeof (gpy_vector_t));
+  gpy_vec_init (__GPY_GLOBL_CALL_STACK);
 
-  vec = *((gpy_vector_t *) pointer);
-  gpy_vec_init (&vec);
-  __GPY_GLOBL_CALL_STACK = &vec;
+  __GPY_GLOBL_RR_STACK = gpy_calloc (3, sizeof (gpy_object_t *));
+  *__GPY_GLOBL_RR_STACK = gpy_rr_fold_integer (2);
 
-  pointer += sizeof (gpy_vector_t);
-  *((gpy_object_t **) pointer) = NULL;
-  __GPY_GLOBL_RETURN_ADDR = *((gpy_object_t **) pointer);
+  __GPY_GLOBL_RR_STACK_POINTER = __GPY_GLOBL_RR_STACK;
+  __GPY_GLOBL_RR_STACK_POINTER++;
 
-  pointer += sizeof (gpy_object_t *);
-  __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t **) pointer;
+  *__GPY_GLOBL_RR_STACK_POINTER = gpy_rr_fold_integer (0);
+
+  __GPY_GLOBL_RR_STACK_POINTER++;
+  *__GPY_GLOBL_RR_STACK_POINTER = NULL;
+  __GPY_GLOBL_RETURN_ADDR = __GPY_GLOBL_RR_STACK_POINTER;
 }
 
 /* remember to update the stack pointer's and the stack size */
 void gpy_rr_extend_runtime_stack (int nslots)
 {
-  __GPY_GLOBL_RR_STACK_SIZE += nslots * sizeof (gpy_object_t *);
-  __GPY_GLOBL_RR_STACK = gpy_realloc (__GPY_GLOBL_RR_STACK,
-				      __GPY_GLOBL_RR_STACK_SIZE);
-  unsigned char * pointer = __GPY_GLOBL_RR_STACK;
-  *((int *) pointer) = __GPY_GLOBL_RR_STACK_SIZE;
-  pointer += sizeof (int);
-  *((int *) pointer) = __GPY_GLOBL_RR_STACK_DATA_OFFSET;
-  pointer += sizeof (int);
+  size_t size = sizeof (gpy_object_t *) * (3+nslots);
+  __GPY_GLOBL_RR_STACK = gpy_realloc (__GPY_GLOBL_RR_STACK, size);
   
-  pointer += sizeof (gpy_vector_t);
-  pointer += sizeof (gpy_vector_t);
-
-  *((gpy_object_t **) pointer) = NULL;
-  __GPY_GLOBL_RETURN_ADDR = *((gpy_object_t **) pointer);
-
-  pointer += sizeof (gpy_object_t *);
-  __GPY_GLOBL_RR_STACK_POINTER = (gpy_object_t **) pointer;
-  __GPY_GLOBL_RR_STACK_POINTER += nslots;
+  __GPY_GLOBL_RR_STACK_POINTER = __GPY_GLOBL_RR_STACK;
+  __GPY_GLOBL_RR_STACK_POINTER += 3+nslots;
 }
 
 void gpy_rr_init_runtime (void)
 {
   gpy_rr_init_runtime_stack ();
-  gpy_rr_init_primitives ();
 }
 
 void gpy_rr_cleanup_final (void)
@@ -274,8 +225,7 @@ gpy_object_t * gpy_rr_fold_functor_decl (const char * identifier,
   return retval;
 }
 
-gpy_object_t * gpy_rr_fold_call (gpy_object_t * decl,
-				 const char * identifier)
+gpy_object_t * gpy_rr_fold_call (gpy_object_t * decl, int nargs, ...)
 {
   gpy_object_t * retval = NULL_OBJECT;
 
@@ -288,7 +238,7 @@ gpy_object_t * gpy_rr_fold_call (gpy_object_t * decl,
       retval = type->tp_call (decl, NULL);
     }
   else
-    fatal ("name <%s> is not callable!\n", identifier);
+    fatal ("name is not callable!\n");
     
   return retval;
 }
@@ -318,50 +268,6 @@ unsigned char * gpy_rr_eval_attrib_reference (gpy_object_t * base,
 	}
     }
   gpy_assert (retval);
-  return retval;
-}
-
-gpy_object_t * gpy_rr_eval_attrib_reference_call (gpy_object_t * base,
-						  const char * attrib)
-{
-  gpy_object_t * retval = NULL_OBJECT;
-
-  gpy_assert (base->T == TYPE_OBJECT_STATE);
-  gpy_typedef_t * type = base->o.object_state->definition;
-  gpy_assert (type->members_defintion);
-
-  struct gpy_object_attrib_t ** members = type->members_defintion;
-  gpy_object_state_t * objs = base->o.object_state;
-
-  unsigned char * att = NULL;
-  int idx, offset = -1;
-  for (idx = 0; members[idx] != NULL; ++idx)
-    {
-      struct gpy_object_attrib_t * it = members[idx];
-      if (!strcmp (attrib, it->identifier))
-	{
-	  offset = it->offset;
-	  unsigned char * state = (unsigned char *)objs->state;
-	  att = state + offset;
-	  break;
-	}
-    }
-  if (att)
-    {
-      gpy_object_t * attrib_ref = *((gpy_object_t **)attrib);
-      gpy_object_state_t * at_state = attrib_ref->o.object_state;
-      gpy_typedef_t * at_type = at_state->definition;
-
-      if (at_type->tp_call)
-	{
-	  retval = at_type->tp_call (attrib_ref, NULL);
-	}
-      else
-	fatal ("name <%s>:<%s> is not callable!\n", type->identifier, attrib);
-    }
-  else
-    fatal ("%s instance has no attribute '%s'!\n", type->identifier, attrib);
-
   return retval;
 }
 

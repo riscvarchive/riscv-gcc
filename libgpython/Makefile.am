@@ -11,13 +11,14 @@ include/gpython/runtime.h \
 include/gpython/vectors.h \
 include/gpython/objects.h
 
-libgpython_la_CFLAGS = -DPYHON -DSHARED
+libgpython_la_CFLAGS = -DGPYHON -DSHARED
 libgpython_la_LDFLAGS = -release 0.0.1
 libgpython_la_SOURCES = \
-runtime/obj-class.c \
-runtime/obj-functor.c \
-runtime/obj-integer.c \
-runtime/obj-list.c \
+runtime/py-obj_class.c \
+runtime/py-obj_staticmethod.c \
+runtime/py-obj_classmethod.c \
+runtime/py-obj_integer.c \
+runtime/py-obj_list.c \
 runtime/py-main.c \
 runtime/py-runtime.c \
 runtime/py-type-utils.c \

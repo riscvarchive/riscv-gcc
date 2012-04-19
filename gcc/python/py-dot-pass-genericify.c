@@ -527,9 +527,7 @@ tree gpy_dot_pass_genericify_binary_op (gpy_dot_tree_t * decl, tree * block,
   switch (DOT_TYPE (decl))
     {
     case D_ADD_EXPR:
-      op = GPY_RR_eval_expression (lhs_eval, rhs_eval, build_int_cst (integer_type_node,
-								      DOT_TYPE (decl))
-				   );
+      op = GPY_RR_eval_expression (lhs_eval, rhs_eval, build_int_cst (integer_type_node, 1));
       break;
 
       // .... THE REST OF THE BIN OPERATORS 
@@ -623,10 +621,22 @@ tree gpy_dot_pass_lower_expr (gpy_dot_tree_t * decl, tree * block,
 	tree call_decl = gpy_dot_pass_lower_expr (callid, block, context);
 	gcc_assert (call_decl != error_mark_node);
 
+	gpy_dot_tree_t * argslist;
+	VEC(tree,gc) * argsvec = VEC_alloc (tree,gc,0);
+	for (argslist = DOT_rhs_TT (decl); argslist != NULL_DOT; argslist = DOT_CHAIN (argslist))
+	  {
+	    tree lexpr = gpy_dot_pass_lower_expr (argslist, block, context);
+	    VEC_safe_push (tree, gc, argsvec, lexpr);
+	  }
+	VEC(tree,gc) * args = VEC_alloc (tree,gc,0);
+	VEC_safe_push (tree, gc, args, call_decl);
+	VEC_safe_push (tree, gc, args, build_int_cst (integer_type_node, VEC_length (tree, argsvec)));
+	GPY_VEC_stmts_append (tree, args, argsvec);
+
 	tree retaddr = build_decl (UNKNOWN_LOCATION, VAR_DECL, create_tmp_var_name ("R"),
 				  gpy_object_type_ptr);
 	append_to_statement_list (build2 (MODIFY_EXPR, gpy_object_type_ptr, retaddr,
-					  GPY_RR_fold_call (call_decl)),
+					  GPY_RR_fold_call (args)),
 				  block);
 	retval = retaddr;
       }

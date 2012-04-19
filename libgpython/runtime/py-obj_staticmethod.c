@@ -91,6 +91,13 @@ gpy_object_t * gpy_object_staticmethod_call (gpy_object_t * self,
   return retval;
 }
 
+unsigned char * gpy_object_staticmethod_getaddr (gpy_object_t * self)
+{
+  gpy_object_state_t * state = self->o.object_state;
+  struct gpy_object_staticmethod_t * s = state->state;
+  return s->code;
+}
+
 static struct gpy_typedef_t functor_obj = {
   "staticmethod",
   sizeof (struct gpy_object_staticmethod_t),
