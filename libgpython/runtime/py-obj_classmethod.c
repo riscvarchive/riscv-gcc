@@ -31,13 +31,13 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/objects.h>
 
 struct gpy_object_classmethod_t {
-  const unsigned char * code;
-  const char * identifier;
+  unsigned char * code;
+  char * identifier;
   unsigned int nargs;
 };
 
 gpy_object_t * gpy_object_classmethod_new (gpy_typedef_t * type,
-					    gpy_object_t ** args)
+					   gpy_object_t ** args)
 {
   gpy_object_t * retval = NULL_OBJECT;
 
@@ -76,16 +76,19 @@ void gpy_object_classmethod_print (gpy_object_t * self, FILE *fd, bool newline)
 }
 
 gpy_object_t * gpy_object_classmethod_call (gpy_object_t * self,
-					     gpy_object_t ** args)
+					    gpy_object_t ** args)
 {
   gpy_object_t * retval = NULL_OBJECT;
   gpy_assert (self->T == TYPE_OBJECT_DECL);
 
   struct gpy_object_classmethod_t * state = self->o.object_state->state;
-  if (!state->code)
+  if (state->code)
     {
-      fndecl fnptr = (fndecl)state->code;
-      fnptr (args);
+      classmethod_fndecl fnptr = (classmethod_fndecl)state->code;
+      gpy_object_t ** ptr = args;
+      gpy_object_t * class = *ptr;
+      ptr++;
+      fnptr (class, ptr);
     }
   return retval;
 }

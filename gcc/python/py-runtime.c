@@ -315,6 +315,26 @@ tree GPY_RR_fold_call (VEC(tree,gc) * arguments)
   return build_call_expr_loc_vec (BUILTINS_LOCATION, fndecl, arguments);
 }
   
+tree GPY_RR_fold_argument (tree args, tree offset)
+{
+  tree fntype = build_function_type_list (gpy_object_type_ptr,
+	       	      	 gpy_object_type_ptr_ptr,
+			 integer_type_node,
+                         NULL_TREE);
+  tree fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
+			    get_identifier ("gpy_rr_fold_argument"),
+			    fntype);
+  tree restype = TREE_TYPE (fndecl);
+  tree resdecl = build_decl (BUILTINS_LOCATION, RESULT_DECL, NULL_TREE,
+			     restype);
+  DECL_CONTEXT (resdecl) = fndecl;
+  DECL_RESULT (fndecl) = resdecl;
+  DECL_EXTERNAL (fndecl) = 1;
+  TREE_PUBLIC (fndecl) = 1;
+
+  return build_call_expr (fndecl, 2, args, offset);
+}
+  
 
 static
 tree gpy_build_py_vector_type (void)

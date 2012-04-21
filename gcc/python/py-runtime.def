@@ -172,3 +172,15 @@ py-runtime = { code = GPY_RR_fold_call;
 	       build_call = build_call_expr_loc_vec;
 	       build_call_args = "BUILTINS_LOCATION, fndecl, arguments";
              };
+py-runtime = { code = GPY_RR_fold_argument;
+	       arguments = "tree args, tree offset";
+	       proto = "tree, tree";
+	       comment = "/* Eval arg */";
+               function_identifier = "gpy_rr_fold_argument";
+               fntype = "gpy_object_type_ptr,
+	       	      	 gpy_object_type_ptr_ptr,
+			 integer_type_node,
+                         NULL_TREE";
+	       build_call = build_call_expr;
+	       build_call_args = "fndecl, 2, args, offset";
+             };

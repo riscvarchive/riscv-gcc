@@ -42,8 +42,32 @@ void gpy_object_classobj_init_decl_attribs (const void * self,
   for (idx = 0; attribs[idx] != NULL; ++idx)
     {
       gpy_object_attrib_t * i = attribs[idx];
-      unsigned char * x = selfptr + (i->offset);
-      x = (unsigned char *) &(i->addr);
+      unsigned char * typeoffs = selfptr + (i->offset);
+
+      gpy_object_t ** offs = (gpy_object_t **) typeoffs;
+      if (i->addr)
+	{
+	  gpy_object_t * attrib = (gpy_object_t *)i->addr;
+	  *offs = i->addr;
+	}
+      else
+	*offs = NULL;
+    }
+}
+
+static
+void gpy_object_classobj_methodattribs_addself (gpy_object_attrib_t ** attribs,
+						gpy_object_t * self)
+{
+  int idx;
+  for (idx = 0; attribs[idx] != NULL; ++idx)
+    {
+      gpy_object_attrib_t * i = attribs[idx];
+      if (i->addr)
+	{
+	  gpy_object_t * att = (gpy_object_t *) i->addr;
+	  gpy_object_classmethod_inherit_self (att, self);
+	}
     }
 }
 
@@ -78,10 +102,9 @@ gpy_object_t * gpy_object_classobj_new (gpy_typedef_t * type,
   /* we need to walk though the field_init here */
   unsigned char * __field_init__ = gpy_rr_eval_attrib_reference (retval, "__field_init__");
   gpy_object_t * field_init = *((gpy_object_t **) __field_init__);
-  unsigned char * codeaddr = gpy_object_staticmethod_getaddr (field_init);
+  unsigned char * codeaddr = gpy_object_classmethod_getaddr (field_init);
   gpy_assert (codeaddr);
 
-  debug ("calling the __init__!\n");
   __field_init_ptr c = (__field_init_ptr)codeaddr;
   c (self);
 
@@ -117,25 +140,58 @@ void gpy_object_classobj_print (gpy_object_t * self, FILE *fd, bool newline)
     fprintf (fd, "\n");
 }
 
+static
+gpy_object_t ** gpy_object_classobj_setupargs (gpy_object_t ** args,
+					       gpy_object_t * self)
+{
+  int idx = 0;
+  gpy_object_t ** ptr;
+  for (ptr = args; *ptr != NULL; ++ptr)
+    idx ++;
+
+  gpy_object_t ** newargs = calloc (idx+2, sizeof (gpy_object_t *));
+  *newargs = self;
+  gpy_object_t ** newargsptr = newargs;
+  newargsptr++;
+
+  for (ptr = args; *ptr != NULL; ++ptr)
+    {
+      *newargsptr = *ptr;
+      newargsptr++;
+    }
+  *newargsptr = NULL;
+
+  return newargs;
+}
+
 gpy_object_t * gpy_object_classobj_call (gpy_object_t * self,
 					 gpy_object_t ** args)
 {
-   gpy_object_t * retval = NULL_OBJECT;
-   gpy_assert (self->T == TYPE_OBJECT_DECL);
+  gpy_object_t * retval = NULL_OBJECT;
+  gpy_assert (self->T == TYPE_OBJECT_DECL);
 
-   gpy_typedef_t * type = self->o.object_state->definition;
-   void * state = self->o.object_state->state;
-   retval = gpy_create_object_state (type, state);
-   gpy_assert (retval);
+  gpy_typedef_t * type = self->o.object_state->definition;
+  void * oldstate = self->o.object_state->state;
 
-   unsigned char * __init__ = gpy_rr_eval_attrib_reference (retval, "__init__");
-   gpy_object_t * init = *((gpy_object_t **)__init__);
-   unsigned char * codeaddr = gpy_object_staticmethod_getaddr (init);
-   gpy_assert (codeaddr);
+  void * newstate = malloc (type->state_size);
+  memcpy (newstate, oldstate, type->state_size);
+  retval = gpy_create_object_state (type, newstate);
+  gpy_assert (retval);
 
-   
+  unsigned char * __init__ = gpy_rr_eval_attrib_reference (retval, "__init__");
+  gpy_object_t * init = *((gpy_object_t **) __init__);
 
-   return retval;
+  gpy_assert (init->T == TYPE_OBJECT_DECL);
+  gpy_typedef_t * calltype = init->o.object_state->definition;
+  if (type->tp_call)
+    {
+      gpy_object_t ** arguments = gpy_object_classobj_setupargs (args, retval);
+      calltype->tp_call (init, arguments);
+    }
+  else
+    fatal ("name is not callable!\n");
+
+  return retval;
 }
 
 static struct gpy_typedef_t class_obj = {

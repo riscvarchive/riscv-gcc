@@ -222,12 +222,12 @@ parameter_list_stmt:
                    { $$ = VEC_pop (gpydot, gpy_symbol_stack); }
 		   ;
 
-parameter_list: parameter_list ',' target
+parameter_list: parameter_list ',' ident
               {
 		DOT_CHAIN($1) = $3;
 		$$ = $3;
 	      }
-              | target
+              | ident
               {
 		VEC_safe_push (gpydot, gc,
 			       gpy_symbol_stack, $1);

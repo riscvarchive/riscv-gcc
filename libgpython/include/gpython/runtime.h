@@ -17,7 +17,22 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef __GCC_RUNTIME_H__
 #define __GCC_RUNTIME_H__
 
-extern gpy_object_t * gpy_rr_fold_functor_decl (const char *, unsigned char *);
+/*
+  accesors to the internal types...
+ */
+#define __gpy_integer_type_node				\
+  (gpy_typedef_t *) __GPY_GLOBL_PRIMITIVES->vector[0]
+#define __gpy_staticmethod_type_node			\
+  (gpy_typedef_t *) __GPY_GLOBL_PRIMITIVES->vector[1]
+#define __gpy_class_type_node				\
+  (gpy_typedef_t *) __GPY_GLOBL_PRIMITIVES->vector[2]
+#define __gpy_classmethod_type_node			\
+  (gpy_typedef_t *) __GPY_GLOBL_PRIMITIVES->vector[3]
+
+extern gpy_object_t * gpy_rr_fold_staticmethod_decl (const char *, unsigned char *);
+extern gpy_object_t * gpy_rr_fold_classmethod_decl (const char *, unsigned char *);
 extern unsigned char * gpy_rr_eval_attrib_reference (gpy_object_t *, const char *);
+
+extern void gpy_rr_eval_print (int, int, ...);
 
 #endif //__GCC_RUNTIME_H__

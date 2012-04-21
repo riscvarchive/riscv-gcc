@@ -67,7 +67,8 @@ typedef struct gpy_object_t {
   } o ;
 } gpy_object_t ;
 
-typedef void (*fndecl)(gpy_object_t **);
+typedef void (*staticmethod_fndecl)(gpy_object_t **);
+typedef void (*classmethod_fndecl) (gpy_object_t *, gpy_object_t **);
 typedef gpy_object_t * (*binary_op)(gpy_object_t *, gpy_object_t *);
 typedef struct gpy_number_prot_t
 {
@@ -119,8 +120,10 @@ extern gpy_object_attrib_t ** gpy_args_lit_parse_attrib_table (gpy_object_t *);
 extern gpy_object_t * gpy_create_object_state (gpy_typedef_t *, void *);
 extern gpy_object_t * gpy_create_object_decl (gpy_typedef_t *, void *);
 extern unsigned char * gpy_object_staticmethod_getaddr (gpy_object_t *);
+extern unsigned char * gpy_object_classmethod_getaddr (gpy_object_t *);
 
 extern void gpy_obj_integer_mod_init (gpy_vector_t * const);
 extern void gpy_obj_staticmethod_mod_init (gpy_vector_t * const);
+extern void gpy_object_classmethod_inherit_self (gpy_object_t *, gpy_object_t *);
 
 #endif //__GCC_OBJECTS_H__

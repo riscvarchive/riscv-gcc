@@ -31,8 +31,8 @@ along with GCC; see the file COPYING3.  If not see
 #include <gpython/objects.h>
 
 struct gpy_object_staticmethod_t {
-  const unsigned char * code;
-  const char * identifier;
+  unsigned char * code;
+  char * identifier;
   unsigned int nargs;
 };
 
@@ -85,7 +85,7 @@ gpy_object_t * gpy_object_staticmethod_call (gpy_object_t * self,
   struct gpy_object_staticmethod_t * state = self->o.object_state->state;
   if (!state->code)
     {
-      fndecl fnptr = (fndecl)state->code;
+      staticmethod_fndecl fnptr = (staticmethod_fndecl)state->code;
       fnptr (args);
     }
   return retval;

@@ -32,7 +32,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #define GPY_ARG_LIT_CHECK(A,I,X)				\
   gpy_assert (A[I]->T == TYPE_OBJECT_LIT);			\
-  gpy_assert (A[I]->o.literal->type == X);
+  gpy_assert (A[I]->o.literal->type == X);			\
+  ++I;
 
 bool gpy_args_check_fmt (gpy_object_t ** args, const char * fmt)
 {
@@ -53,27 +54,24 @@ bool gpy_args_check_fmt (gpy_object_t ** args, const char * fmt)
 	case 'i':
 	  {
 	    GPY_ARG_LIT_CHECK (args, idx, TYPE_INTEGER);
-	    debug ("integer check pass!\n");
 	  }
 	  break;
 
 	case 's':
 	  {
 	    GPY_ARG_LIT_CHECK (args, idx, TYPE_STRING);
-	    debug ("string check pass!\n");
 	  }
+	  break;
 
 	case 'p':
 	  {
 	    GPY_ARG_LIT_CHECK (args, idx, TYPE_ADDR);
-	    debug ("pointer check pass!\n");
 	  }
 	  break;
 
 	case 'A':
 	  {
 	    GPY_ARG_LIT_CHECK (args, idx, TYPE_ATTRIB_L);
-	    debug ("pointer check pass!\n");
 	  }
 	  break;
 
@@ -84,9 +82,6 @@ bool gpy_args_check_fmt (gpy_object_t ** args, const char * fmt)
 	  }
 	  break;
 	}
-      if (!retval)
-	break;
-      idx++;
     }
   return retval;
 }
@@ -99,7 +94,6 @@ int gpy_args_lit_parse_int (gpy_object_t * arg)
   gpy_assert (arg->o.literal->type == TYPE_INTEGER);
 
   retval = arg->o.literal->literal.integer;
-  debug ("parsed int <%i>!\n", retval);
 
   return retval;
 }
@@ -111,7 +105,6 @@ char * gpy_args_lit_parse_string (gpy_object_t * arg)
   gpy_assert (arg->o.literal->type == TYPE_STRING);
 
   retval = arg->o.literal->literal.string;
-  debug ("parsed string <%s>!\n", retval);
 
   return retval;
 }
@@ -123,7 +116,6 @@ unsigned char * gpy_args_lit_parse_pointer (gpy_object_t * arg)
   gpy_assert (arg->o.literal->type == TYPE_ADDR);
 
   retval = arg->o.literal->literal.addr;
-  debug ("parsed pointer <%p>!\n", (void*) retval);
 
   return retval;
 }
@@ -135,7 +127,6 @@ gpy_object_attrib_t ** gpy_args_lit_parse_attrib_table (gpy_object_t * arg)
   gpy_assert (arg->o.literal->type == TYPE_ATTRIB_L);
 
   retval = arg->o.literal->literal.attribs;
-  debug ("parsed attribute table <%p>!\n", (void*) retval);
 
   return retval;
 }

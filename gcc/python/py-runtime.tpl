@@ -288,7 +288,7 @@ void gpy_dot_types_init (void)
 {
   gpy_builtin_types_vec = VEC_alloc (tree,gc,0);
 
-  tree const_char_type = build_qualified_type (char_type_node,
+  tree const_char_type = build_qualified_type (unsigned_char_type_node,
 					       TYPE_QUAL_CONST);
   tree ctype = build_pointer_type (const_char_type);
 

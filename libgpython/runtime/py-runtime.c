@@ -81,7 +81,7 @@ void gpy_rr_extend_runtime_stack (int nslots)
   __GPY_GLOBL_RR_STACK = gpy_realloc (__GPY_GLOBL_RR_STACK, size);
   
   __GPY_GLOBL_RR_STACK_POINTER = __GPY_GLOBL_RR_STACK;
-  __GPY_GLOBL_RR_STACK2_POINTER += 3+nslots;
+  __GPY_GLOBL_RR_STACK_POINTER += 3 + nslots;
 }
 
 void gpy_rr_init_runtime (void)
@@ -97,7 +97,7 @@ void gpy_rr_cleanup_final (void)
   mpfr_free_cache ();
 }
 
-gpy_object_attrib_t * gpy_rr_fold_attribute (const char * identifier,
+gpy_object_attrib_t * gpy_rr_fold_attribute (const unsigned char * identifier,
 					     unsigned char * code_addr,
 					     unsigned int offset)
 {
@@ -168,15 +168,10 @@ gpy_object_t * gpy_rr_fold_class_decl (gpy_object_attrib_t ** attribs,
   args[2] = &a3;
   args[3] = &a4;
 
-  gpy_typedef_t * def = (gpy_typedef_t *)
-    __GPY_GLOBL_PRIMITIVES->vector[2];
-  gpy_assert (def);
-
+  gpy_typedef_t * def = __gpy_class_type_node;
   retval = def->tp_new (def, args);
   gpy_free (args);
 
-  debug ("initilized class object <%p> to <%s>!\n",
-	 (void*)retval, identifier);
   gpy_assert (retval->T == TYPE_OBJECT_DECL);
 
   return retval;
@@ -212,15 +207,10 @@ gpy_object_t * gpy_rr_fold_staticmethod_decl (const char * identifier,
   args[2] = &a3;
   args[3] = &a4;
 
-  gpy_typedef_t * def = (gpy_typedef_t *)
-    __GPY_GLOBL_PRIMITIVES->vector[1];
-  gpy_assert (def);
-
+  gpy_typedef_t * def = __gpy_staticmethod_type_node;
   retval = def->tp_new (def, args);
   gpy_free (args);
 
-  debug ("initilized staticmethod object <%p> to <%s>!\n",
-	 (void*)retval, identifier);
   gpy_assert (retval->T == TYPE_OBJECT_DECL);
 
   return retval;
@@ -234,9 +224,9 @@ gpy_object_t * gpy_rr_fold_classmethod_decl (const char * identifier,
   gpy_object_t ** args = (gpy_object_t **)
     gpy_calloc (4, sizeof(gpy_object_t*));
 
-  gpy_literal_t i;
-  i.type = TYPE_STRING;
-  i.literal.string = (char *)identifier;
+  gpy_literal_t s;
+  s.type = TYPE_STRING;
+  s.literal.string = (char *)identifier;
 
   gpy_literal_t p;
   p.type = TYPE_ADDR;
@@ -246,7 +236,7 @@ gpy_object_t * gpy_rr_fold_classmethod_decl (const char * identifier,
   n.type = TYPE_INTEGER;
   n.literal.integer = 0;
 
-  gpy_object_t a1 = { .T = TYPE_OBJECT_LIT, .o.literal = &i };
+  gpy_object_t a1 = { .T = TYPE_OBJECT_LIT, .o.literal = &s };
   gpy_object_t a2 = { .T = TYPE_OBJECT_LIT, .o.literal = &p };
   gpy_object_t a3 = { .T = TYPE_OBJECT_LIT, .o.literal = &n };
   gpy_object_t a4 = { .T = TYPE_NULL, .o.literal = NULL };
@@ -256,15 +246,10 @@ gpy_object_t * gpy_rr_fold_classmethod_decl (const char * identifier,
   args[2] = &a3;
   args[3] = &a4;
 
-  gpy_typedef_t * def = (gpy_typedef_t *)
-    __GPY_GLOBL_PRIMITIVES->vector[1];
-  gpy_assert (def);
-
+  gpy_typedef_t * def = __gpy_classmethod_type_node;
   retval = def->tp_new (def, args);
   gpy_free (args);
 
-  debug ("initilized classmethod object <%p> to <%s>!\n",
-	 (void*)retval, identifier);
   gpy_assert (retval->T == TYPE_OBJECT_DECL);
 
   return retval;
@@ -277,11 +262,21 @@ gpy_object_t * gpy_rr_fold_call (gpy_object_t * decl, int nargs, ...)
 
   gpy_assert (decl->T == TYPE_OBJECT_DECL);
   gpy_typedef_t * type = decl->o.object_state->definition;
-  gpy_assert (type->members_defintion);
+  
+  /* + 1 for sentinal */
+  gpy_object_t ** args = calloc (nargs + 1, sizeof (gpy_object_t *));
+  va_list ap;
+  int idx;
+  va_start (ap, nargs);
+  for (idx = 0; idx < nargs; ++idx)
+    {
+      args[idx] = va_arg (ap, gpy_object_t *);
+    }
+  args[idx] = NULL;
 
   if (type->tp_call)
     {
-      retval = type->tp_call (decl, NULL);
+      retval = type->tp_call (decl, args);
     }
   else
     fatal ("name is not callable!\n");
@@ -289,17 +284,12 @@ gpy_object_t * gpy_rr_fold_call (gpy_object_t * decl, int nargs, ...)
   return retval;
 }
 
-
-
 unsigned char * gpy_rr_eval_attrib_reference (gpy_object_t * base,
 					      const char * attrib)
 {
   unsigned char * retval = NULL;
-  gpy_assert (base->T == TYPE_OBJECT_STATE);
-
   gpy_typedef_t * type = base->o.object_state->definition;
-  gpy_assert (type->members_defintion);
-
+  
   struct gpy_object_attrib_t ** members = type->members_defintion;
   gpy_object_state_t * objs = base->o.object_state;
 
@@ -336,15 +326,9 @@ gpy_object_t * gpy_rr_fold_integer (const int x)
   args[0] = &a1;
   args[1] = &a2;
 
-  gpy_typedef_t * Int_def = (gpy_typedef_t *)
-    __GPY_GLOBL_PRIMITIVES->vector[0];
-  gpy_assert (Int_def);
-
+  gpy_typedef_t * Int_def = __gpy_integer_type_node;
   retval = Int_def->tp_new (Int_def, args);
   gpy_free(args);
-
-  debug ("initilized integer object <%p> to <%i>!\n",
-	 (void*)retval, x );
   gpy_assert (retval->T == TYPE_OBJECT_STATE);
 
   return retval;
@@ -370,7 +354,6 @@ void gpy_rr_eval_print (int fd, int count, ...)
   for (idx = 0; idx<count; ++idx)
     {
       it = va_arg (vl, gpy_object_t *);
-      gpy_assert (it->T == TYPE_OBJECT_STATE);
       struct gpy_typedef_t * definition = it->o.object_state->definition;
 
       switch (fd)
