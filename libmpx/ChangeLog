@@ -1,6 +1,6 @@
-2016-06-10  Ilya Enkovich  <ilya.enkovich@intel.com>
+2016-04-27  Release Manager
 
-	* mpxwrap/mpx_wrappers.c (move_bounds): Fix overflow bug.
+	* GCC 6.1.0 released.
 
 2016-01-20  Matthias Klose  <doko@ubuntu.com>
 

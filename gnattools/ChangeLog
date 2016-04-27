@@ -1,9 +1,6 @@
-2016-05-16  Eric Botcazou  <ebotcazou@adacore.com>
+2016-04-27  Release Manager
 
-	* configure.ac: Add ACX_NONCANONICAL_HOST.
-	* configure: Regenerate.
-	* Makefile.in: Replace host_alias with host_noncanonical.
-	(gnattools-cross): Do not rename the tools.
+	* GCC 6.1.0 released.
 
 2016-04-04  Segher Boessenkool  <segher@kernel.crashing.org>
 

@@ -1,9 +1,6 @@
-2016-05-02  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+2016-04-27  Release Manager
 
-	* Makefile.am (toolexeclib_LTLIBRARIES): Only set if
-	ENABLE_VTABLE_VERIFY.
-	Simplify.
-	* Makefile.in: Regenerate.
+	* GCC 6.1.0 released.
 
 2015-12-02  Matthias Klose  <doko@ubuntu.com>
 

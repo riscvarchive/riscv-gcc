@@ -1,40 +1,6 @@
-2016-09-21  Jakub Jelinek  <jakub@redhat.com>
+2016-04-27  Release Manager
 
-	PR sanitizer/77567
-	* asan/asan_new_delete.cc: Cherry-pick upstream r282019.
-
-2016-09-05  Jakub Jelinek  <jakub@redhat.com>
-
-	PR sanitizer/77396
-	* asan/asan_globals.cc: Cherry-pick upstream r280657.
-
-2016-08-12  Jakub Jelinek  <jakub@redhat.com>
-
-	PR sanitizer/71042
-	* tsan/tsan_platform_linux.cc: Cherry-pick upstream r278292.
-	* tsan/tsan_rtl_aarch64.S: Likewise.
-
-2016-07-23  Alan Modra  <amodra@gmail.com>
-
-	Revert 2015-11-09  Alan Modra  <amodra@gmail.com>
-	* configure.ac: Don't substitute OBSTACK_DEFS.
-	* asan/Makefile.am: Remove OBSTACK_DEFS from DEFS.
-	* tsan/Makefile.am: Likewise.
-	* configure: Regenerate.
-	* Makefile.in: Regenerate.
-	* asan/Makefile.in: Regenerate.
-	* interception/Makefile.in: Regenerate.
-	* libbacktrace/Makefile.in: Regenerate.
-	* lsan/Makefile.in: Regenerate.
-	* sanitizer_common/Makefile.in: Regenerate.
-	* tsan/Makefile.in: Regenerate.
-	* ubsan/Makefile.in: Regenerate.
-
-2016-05-17  Jakub Jelinek  <jakub@redhat.com>
-
-	PR sanitizer/71160
-	* asan/asan_malloc_linux.cc: Cherry pick upstream r254395
-	and r269633.
+	* GCC 6.1.0 released.
 
 2016-04-21  Maxim Ostapenko  <m.ostapenko@samsung.com>
 

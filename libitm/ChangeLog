@@ -1,8 +1,6 @@
-2016-04-19  H.J. Lu  <hongjiu.lu@intel.com>
+2016-04-27  Release Manager
 
-	PR libitm/70456
-	* util.cc (xmalloc): Use posix_memalign to allocate memory on
-	on cache line if requested.
+	* GCC 6.1.0 released.
 
 2016-03-03  Dominik Vogt  <vogt@linux.vnet.ibm.com>
 

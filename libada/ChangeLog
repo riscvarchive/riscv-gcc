@@ -1,6 +1,6 @@
-2016-04-30  Oleg Endo  <olegendo@gcc.gnu.org>
+2016-04-27  Release Manager
 
-	* configure: Remove SH5 support.
+	* GCC 6.1.0 released.
 
 2016-01-04  Jakub Jelinek  <jakub@redhat.com>
 

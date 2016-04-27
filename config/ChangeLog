@@ -1,11 +1,6 @@
-2016-06-21  Trevor Saunders  <tbsaunde+gcc@tbsaunde.org>
+2016-04-27  Release Manager
 
-	* elf.m4: Remove interix support.
-	* picflag.m4: Likewise.
-
-2016-04-30  Oleg Endo  <olegendo@gcc.gnu.org>
-
-	* picflag.m4:  Remove SH5 support.
+	* GCC 6.1.0 released.
 
 2015-10-21  Maxim Ostapenko  <m.ostapenko@partner.samsung.com>
 
