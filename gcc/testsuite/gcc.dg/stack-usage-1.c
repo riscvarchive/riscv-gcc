@@ -63,6 +63,8 @@
 #  else
 #    define SIZE 240
 #  endif
+#elif defined (__riscv__)
+#  define SIZE 240
 #elif defined (__AVR__)
 #  define SIZE 254
 #elif defined (__s390x__)

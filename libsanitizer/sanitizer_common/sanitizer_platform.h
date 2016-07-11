@@ -113,9 +113,9 @@
 
 // The AArch64 linux port uses the canonical syscall set as mandated by
 // the upstream linux community for all new ports. Other ports may still
-// use legacy syscalls.
+// use legacy syscalls.  The RISC-V port also does this.
 #ifndef SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
-# if defined(__aarch64__) && SANITIZER_LINUX
+# if (defined(__aarch64__) || defined(__riscv__)) && SANITIZER_LINUX
 # define SANITIZER_USES_CANONICAL_LINUX_SYSCALLS 1
 # else
 # define SANITIZER_USES_CANONICAL_LINUX_SYSCALLS 0
