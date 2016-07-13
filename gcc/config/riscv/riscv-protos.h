@@ -24,6 +24,7 @@ along with GCC; see the file COPYING3.  If not see
 
 enum riscv_symbol_type {
   SYMBOL_ABSOLUTE,
+  SYMBOL_PCREL,
   SYMBOL_GOT_DISP,
   SYMBOL_TLS,
   SYMBOL_TLS_LE,
@@ -39,6 +40,7 @@ enum riscv_code_model {
 };
 extern enum riscv_code_model riscv_cmodel;
 
+extern enum riscv_symbol_type riscv_classify_symbolic_expression (rtx);
 extern bool riscv_symbolic_constant_p (rtx, enum riscv_symbol_type *);
 extern int riscv_regno_mode_ok_for_base_p (int, enum machine_mode, bool);
 extern int riscv_address_insns (rtx, enum machine_mode, bool);
@@ -47,6 +49,7 @@ extern int riscv_split_const_insns (rtx);
 extern int riscv_load_store_insns (rtx, rtx_insn *);
 extern rtx riscv_emit_move (rtx, rtx);
 extern bool riscv_split_symbol (rtx, rtx, enum machine_mode, rtx *);
+extern bool riscv_split_symbol_type (enum riscv_symbol_type);
 extern rtx riscv_unspec_address (rtx, enum riscv_symbol_type);
 extern void riscv_move_integer (rtx, rtx, HOST_WIDE_INT);
 extern bool riscv_legitimize_move (enum machine_mode, rtx, rtx);

@@ -326,14 +326,6 @@ static const struct riscv_tune_info *tune_info;
 /* Index [M][R] is true if register R is allowed to hold a value of mode M.  */
 bool riscv_hard_regno_mode_ok[(int) MAX_MACHINE_MODE][FIRST_PSEUDO_REGISTER];
 
-/* riscv_lo_relocs[X] is the relocation to use when a symbol of type X
-   appears in a LO_SUM.  It can be null if such LO_SUMs aren't valid or
-   if they are matched by a special .md file pattern.  */
-const char *riscv_lo_relocs[NUM_SYMBOL_TYPES];
-
-/* Likewise for HIGHs.  */
-const char *riscv_hi_relocs[NUM_SYMBOL_TYPES];
-
 /* Index R is the smallest register class that contains register R.  */
 const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
   GR_REGS,	GR_REGS,	GR_REGS,	GR_REGS,
@@ -554,25 +546,29 @@ riscv_classify_symbol (const_rtx x)
   if (riscv_tls_symbol_p (x))
     return SYMBOL_TLS;
 
-  if (GET_CODE (x) == LABEL_REF)
+  switch (GET_CODE (x))
     {
+    case LABEL_REF:
       if (LABEL_REF_NONLOCAL_P (x))
 	return SYMBOL_GOT_DISP;
-      return SYMBOL_ABSOLUTE;
+      break;
+
+    case SYMBOL_REF:
+      if (flag_pic && !riscv_symbol_binds_local_p (x))
+	return SYMBOL_GOT_DISP;
+      break;
+
+    default:
+      gcc_unreachable ();
     }
 
-  gcc_assert (GET_CODE (x) == SYMBOL_REF);
-
-  if (flag_pic && !riscv_symbol_binds_local_p (x))
-    return SYMBOL_GOT_DISP;
-
-  return SYMBOL_ABSOLUTE;
+  return riscv_cmodel == CM_MEDLOW ? SYMBOL_ABSOLUTE : SYMBOL_PCREL;
 }
 
 /* Classify the base of symbolic expression X, given that X appears in
    context CONTEXT.  */
 
-static enum riscv_symbol_type
+enum riscv_symbol_type
 riscv_classify_symbolic_expression (rtx x)
 {
   rtx offset;
@@ -611,6 +607,7 @@ riscv_symbolic_constant_p (rtx x, enum riscv_symbol_type *symbol_type)
   switch (*symbol_type)
     {
     case SYMBOL_ABSOLUTE:
+    case SYMBOL_PCREL:
     case SYMBOL_TLS_LE:
       return (int32_t) INTVAL (offset) == INTVAL (offset);
 
@@ -628,6 +625,7 @@ static int riscv_symbol_insns (enum riscv_symbol_type type)
     {
     case SYMBOL_TLS: return 0; /* Depends on the TLS model. */
     case SYMBOL_ABSOLUTE: return 2; /* LUI + the reference itself */
+    case SYMBOL_PCREL: return 2; /* AUIPC + the reference itself */
     case SYMBOL_TLS_LE: return 3; /* LUI + ADD TP + the reference itself */
     case SYMBOL_GOT_DISP: return 3; /* AUIPC + LD GOT + the reference itself */
     default: gcc_unreachable();
@@ -730,6 +728,20 @@ riscv_valid_offset_p (rtx x, enum machine_mode mode)
   return true;
 }
 
+/* Should a symbol of type SYMBOL_TYPE should be split in two?  */
+
+bool
+riscv_split_symbol_type (enum riscv_symbol_type symbol_type)
+{
+  if (symbol_type == SYMBOL_TLS_LE)
+    return true;
+
+  if (!TARGET_EXPLICIT_RELOCS)
+    return false;
+
+  return symbol_type == SYMBOL_ABSOLUTE || symbol_type == SYMBOL_PCREL;
+}
+
 /* Return true if a LO_SUM can address a value of mode MODE when the
    LO_SUM symbol has type SYMBOL_TYPE.  */
 
@@ -742,7 +754,7 @@ riscv_valid_lo_sum_p (enum riscv_symbol_type symbol_type, enum machine_mode mode
     return false;
 
   /* Check that there is a known low-part relocation.  */
-  if (riscv_lo_relocs[symbol_type] == NULL)
+  if (!riscv_split_symbol_type (symbol_type))
     return false;
 
   /* We may need to split multiword moves, so make sure that each word
@@ -858,7 +870,7 @@ riscv_const_insns (rtx x)
     {
     case HIGH:
       if (!riscv_symbolic_constant_p (XEXP (x, 0), &symbol_type)
-	  || !riscv_hi_relocs[symbol_type])
+	  || !riscv_split_symbol_type (symbol_type))
 	return 0;
 
       /* This is simply an LUI. */
@@ -1078,28 +1090,51 @@ bool
 riscv_split_symbol (rtx temp, rtx addr, enum machine_mode mode, rtx *low_out)
 {
   enum riscv_symbol_type symbol_type;
-  rtx high;
 
   if ((GET_CODE (addr) == HIGH && mode == MAX_MACHINE_MODE)
       || !riscv_symbolic_constant_p (addr, &symbol_type)
       || riscv_symbol_insns (symbol_type) == 0
-      || !riscv_hi_relocs[symbol_type])
+      || !riscv_split_symbol_type (symbol_type))
     return false;
 
   if (low_out)
-    {
-      switch (symbol_type)
+    switch (symbol_type)
+      {
+      case SYMBOL_ABSOLUTE:
 	{
-	case SYMBOL_ABSOLUTE:
-	  high = gen_rtx_HIGH (Pmode, copy_rtx (addr));
-      	  high = riscv_force_temporary (temp, high);
-      	  *low_out = gen_rtx_LO_SUM (Pmode, high, addr);
-	  break;
-	
-	default:
-	  gcc_unreachable ();
+	  rtx high = gen_rtx_HIGH (Pmode, copy_rtx (addr));
+	  high = riscv_force_temporary (temp, high);
+	  *low_out = gen_rtx_LO_SUM (Pmode, high, addr);
 	}
-    }
+	break;
+
+      case SYMBOL_PCREL:
+	{
+	  static int seqno;
+	  char buf[32];
+	  rtx label;
+
+	  sprintf (buf, ".LA%d", seqno);
+	  label = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (buf));
+	  SYMBOL_REF_FLAGS (label) |= SYMBOL_FLAG_LOCAL;
+
+	  if (temp == NULL)
+	    temp = gen_reg_rtx (Pmode);
+
+	  if (Pmode == DImode)
+	    emit_insn (gen_auipcdi (temp, copy_rtx (addr), GEN_INT (seqno)));
+	  else
+	    emit_insn (gen_auipcsi (temp, copy_rtx (addr), GEN_INT (seqno)));
+
+	  *low_out = gen_rtx_LO_SUM (Pmode, temp, label);
+
+	  seqno++;
+	}
+	break;
+
+      default:
+	gcc_unreachable ();
+      }
 
   return true;
 }
@@ -1646,6 +1681,15 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
       *total = tune_info->fp_add[mode == DFmode];
       return false;
 
+    case UNSPEC:
+      if (XINT (x, 1) == UNSPEC_AUIPC)
+	{
+	  /* Make AUIPC cheap to avoid spilling its result to the stack.  */
+	  *total = 1;
+	  return true;
+	}
+      return false;
+
     default:
       return false;
     }
@@ -1768,6 +1812,7 @@ riscv_output_move (rtx dest, rtx src)
 	  {
 	  case SYMBOL_GOT_DISP: return "la\t%0,%1";
 	  case SYMBOL_ABSOLUTE: return "lla\t%0,%1";
+	  case SYMBOL_PCREL: return "lla\t%0,%1";
 	  default: gcc_unreachable();
 	  }
     }
@@ -2780,44 +2825,35 @@ riscv_expand_block_move (rtx dest, rtx src, rtx length)
   return false;
 }
 
-/* (Re-)Initialize riscv_lo_relocs and riscv_hi_relocs.  */
-
-static void
-riscv_init_relocs (void)
-{
-  memset (riscv_hi_relocs, '\0', sizeof (riscv_hi_relocs));
-  memset (riscv_lo_relocs, '\0', sizeof (riscv_lo_relocs));
-
-  if (!flag_pic && riscv_cmodel == CM_MEDLOW)
-    {
-      riscv_hi_relocs[SYMBOL_ABSOLUTE] = "%hi(";
-      riscv_lo_relocs[SYMBOL_ABSOLUTE] = "%lo(";
-    }
-
-  if (!flag_pic || flag_pie)
-    {
-      riscv_hi_relocs[SYMBOL_TLS_LE] = "%tprel_hi(";
-      riscv_lo_relocs[SYMBOL_TLS_LE] = "%tprel_lo(";
-    }
-}
-
 /* Print symbolic operand OP, which is part of a HIGH or LO_SUM
-   in context CONTEXT.  RELOCS is the array of relocations to use.  */
+   in context CONTEXT.  HI_RELOC indicates a high-part reloc.  */
 
 static void
-riscv_print_operand_reloc (FILE *file, rtx op, const char **relocs)
+riscv_print_operand_reloc (FILE *file, rtx op, bool hi_reloc)
 {
-  enum riscv_symbol_type symbol_type;
-  const char *p;
+  const char *reloc;
 
-  symbol_type = riscv_classify_symbolic_expression (op);
-  gcc_assert (relocs[symbol_type]);
+  switch (riscv_classify_symbolic_expression (op))
+    {
+      case SYMBOL_ABSOLUTE:
+	reloc = hi_reloc ? "%hi" : "%lo";
+	break;
 
-  fputs (relocs[symbol_type], file);
+      case SYMBOL_PCREL:
+	reloc = hi_reloc ? "%pcrel_hi" : "%pcrel_lo";
+	break;
+
+      case SYMBOL_TLS_LE:
+	reloc = hi_reloc ? "%tprel_hi" : "%tprel_lo";
+	break;
+
+      default:
+	gcc_unreachable ();
+    }
+
+  fprintf (file, "%s(", reloc);
   output_addr_const (file, riscv_strip_unspec_address (op));
-  for (p = relocs[symbol_type]; *p != 0; p++)
-    if (*p == '(')
-      fputc (')', file);
+  fputc (')', file);
 }
 
 static const char *
@@ -2866,11 +2902,11 @@ riscv_print_operand (FILE *file, rtx op, int letter)
     case 'h':
       if (code == HIGH)
 	op = XEXP (op, 0);
-      riscv_print_operand_reloc (file, op, riscv_hi_relocs);
+      riscv_print_operand_reloc (file, op, true);
       break;
 
     case 'R':
-      riscv_print_operand_reloc (file, op, riscv_lo_relocs);
+      riscv_print_operand_reloc (file, op, false);
       break;
 
     case 'C':
@@ -2928,7 +2964,7 @@ riscv_print_operand_address (FILE *file, machine_mode mode ATTRIBUTE_UNUSED, rtx
 	return;
 
       case ADDRESS_LO_SUM:
-	riscv_print_operand_reloc (file, addr.offset, riscv_lo_relocs);
+	riscv_print_operand_reloc (file, addr.offset, false);
 	fprintf (file, "(%s)", reg_names[REGNO (addr.reg)]);
 	return;
 
@@ -4071,7 +4107,11 @@ riscv_option_override (void)
   if (flag_pic)
     riscv_cmodel = CM_PIC;
 
-  riscv_init_relocs ();
+  /* We get better code with explicit relocs for CM_MEDLOW, but
+     worse code for the others (for now).  Pick the best default.  */
+  if ((target_flags_explicit & MASK_EXPLICIT_RELOCS) == 0)
+    if (riscv_cmodel == CM_MEDLOW)
+      target_flags |= MASK_EXPLICIT_RELOCS;
 }
 
 /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */
@@ -4172,6 +4212,14 @@ riscv_function_ok_for_sibcall (tree decl ATTRIBUTE_UNUSED,
     }
 
   return true;
+}
+
+/* Return true if INSN should not be copied.  */
+
+static bool
+riscv_cannot_copy_insn_p (rtx_insn *insn)
+{
+  return recog_memoized (insn) >= 0 && get_attr_cannot_copy (insn);
 }
 
 /* Initialize the GCC target structure.  */
@@ -4307,6 +4355,9 @@ riscv_function_ok_for_sibcall (tree decl ATTRIBUTE_UNUSED,
 
 #undef TARGET_REGISTER_PRIORITY
 #define TARGET_REGISTER_PRIORITY riscv_register_priority
+
+#undef TARGET_CANNOT_COPY_INSN_P
+#define TARGET_CANNOT_COPY_INSN_P riscv_cannot_copy_insn_p
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

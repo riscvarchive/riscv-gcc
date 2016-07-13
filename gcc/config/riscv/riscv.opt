@@ -85,3 +85,7 @@ Use smaller but slower prologue and epilogue code
 mcmodel=
 Target RejectNegative Joined Var(riscv_cmodel_string)
 Use given RISC-V code model (medlow or medany)
+
+mexplicit-relocs
+Target Report Mask(EXPLICIT_RELOCS)
+Use %reloc() operators, rather than assembly macros, to load addresses
