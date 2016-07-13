@@ -125,12 +125,14 @@
     case CONST:
     case SYMBOL_REF:
     case LABEL_REF:
-      return (riscv_symbolic_constant_p (op, &symbol_type)
-	      && !riscv_hi_relocs[symbol_type]);
+      return riscv_symbolic_constant_p (op, &symbol_type)
+	      && !riscv_split_symbol_type (symbol_type);
 
     case HIGH:
       op = XEXP (op, 0);
-      return riscv_symbolic_constant_p (op, &symbol_type);
+      return riscv_symbolic_constant_p (op, &symbol_type)
+	      && riscv_split_symbol_type (symbol_type)
+	      && symbol_type != SYMBOL_PCREL;
 
     default:
       return true;
@@ -152,7 +154,7 @@
 {
   enum riscv_symbol_type type;
   return (riscv_symbolic_constant_p (op, &type)
-	  && type == SYMBOL_ABSOLUTE);
+	  && (type == SYMBOL_ABSOLUTE || type == SYMBOL_PCREL));
 })
 
 (define_predicate "plt_symbolic_operand"

@@ -809,9 +809,10 @@ typedef struct {
    that bind locally.  Don't use it for symbols that should be addressed
    via the GOT.  Also, avoid it for CM_MEDLOW, where LUI addressing
    currently results in more opportunities for linker relaxation.  */
-#define USE_LOAD_ADDRESS_MACRO(sym)             \
-  ((flag_pic && SYMBOL_REF_LOCAL_P (sym))       \
-   || riscv_cmodel == CM_MEDANY)
+#define USE_LOAD_ADDRESS_MACRO(sym)					\
+  (!TARGET_EXPLICIT_RELOCS &&						\
+   ((flag_pic && SYMBOL_REF_LOCAL_P (sym))				\
+     || riscv_cmodel == CM_MEDANY))
 
 /* Define this as 1 if `char' should by default be signed; else as 0.  */
 #define DEFAULT_SIGNED_CHAR 0
@@ -1066,7 +1067,6 @@ while (0)
 
 extern const enum reg_class riscv_regno_to_class[];
 extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
-extern const char* riscv_hi_relocs[];
 #endif
 
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL) \

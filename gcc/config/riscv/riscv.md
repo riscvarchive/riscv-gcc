@@ -30,11 +30,14 @@
 
   ;; Symbolic accesses.
   UNSPEC_ADDRESS_FIRST
+  UNSPEC_PCREL
   UNSPEC_LOAD_GOT
   UNSPEC_TLS
   UNSPEC_TLS_LE
   UNSPEC_TLS_IE
   UNSPEC_TLS_GD
+
+  UNSPEC_AUIPC
 
   ;; Register save and restore.
   UNSPEC_GPR_SAVE
@@ -190,10 +193,8 @@
 	  (const_int 4)
 	  (const_int 8))
 
-	  ;; Conservatively assume calls take two instructions, as in:
-	  ;;   auipc t0, %pcrel_hi(target)
-	  ;;   jalr  ra, t0, %lo(target)
-	  ;; The linker will relax these into JAL when appropriate.
+	  ;; Conservatively assume calls take two instructions (AUIPC + JALR).
+	  ;; The linker will opportunistically relax the sequence to JAL.
 	  (eq_attr "type" "call") (const_int 8)
 
 	  ;; "Ghost" instructions occupy no space.
@@ -226,6 +227,9 @@
 	  (eq_attr "move_type" "store,fpstore")
 	  (symbol_ref "riscv_load_store_insns (operands[0], insn) * 4")
 	  ] (const_int 4)))
+
+;; Is copying of this instruction disallowed?
+(define_attr "cannot_copy" "no,yes" (const_string "no"))
 
 ;; Describe a user's asm statement.
 (define_asm_attributes
@@ -1413,6 +1417,17 @@
   [(set_attr "got" "load")
    (set_attr "mode" "<MODE>")])
 
+(define_insn "auipc<mode>"
+  [(set (match_operand:P 0 "register_operand" "=r")
+       (unspec:P [(match_operand:P 1 "symbolic_operand" "")
+                  (match_operand:P 2 "const_int_operand")
+                  (pc)]
+                 UNSPEC_AUIPC))]
+  ""
+  ".LA%2: auipc\t%0,%h1"
+  [(set_attr "type" "arith")
+   (set_attr "cannot_copy" "yes")])
+
 ;; Instructions for adding the low 16 bits of an address to a register.
 ;; Operand 2 is the address: riscv_print_operand works out which relocation
 ;; should be applied.
@@ -1420,7 +1435,7 @@
 (define_insn "*low<mode>"
   [(set (match_operand:P 0 "register_operand" "=r")
 	(lo_sum:P (match_operand:P 1 "register_operand" "r")
-		  (match_operand:P 2 "immediate_operand" "")))]
+		  (match_operand:P 2 "symbolic_operand" "")))]
   ""
   "add\t%0,%1,%R2"
   [(set_attr "type" "arith")
