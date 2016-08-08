@@ -702,7 +702,7 @@ enum reg_class
 /* Accept arguments in a0-a7 and/or fa0-fa7. */
 #define FUNCTION_ARG_REGNO_P(N)					\
   (IN_RANGE((N), GP_ARG_FIRST, GP_ARG_LAST)			\
-   || IN_RANGE((N), FP_ARG_FIRST, FP_ARG_LAST))
+   || (!TARGET_SOFT_FLOAT && IN_RANGE((N), FP_ARG_FIRST, FP_ARG_LAST)))
 
 /* The ABI views the arguments as a structure, of which the first 8
    words go in registers and the rest go on the stack.  If I < 8, N, the Ith
