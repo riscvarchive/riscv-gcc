@@ -2048,6 +2048,11 @@ riscv*-*-linux*)
 	gas=yes
 	gcc_cv_initfini_array=yes
 	;;
+riscv*-*-freebsd*)
+	tm_file="${tm_file} dbxelf.h elfos.h ${fbsd_tm_file} riscv/freebsd.h riscv/freebsd64.h"
+	tmake_file="${tmake_file} riscv/t-freebsd64"
+	gcc_cv_initfini_array=yes
+	;;
 riscv32*-*-elf*)
 	tm_file="elfos.h newlib-stdint.h riscv/default-32.h ${tm_file} riscv/elf.h"
 	tmake_file="${tmake_file} riscv/t-elf"

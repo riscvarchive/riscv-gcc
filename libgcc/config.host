@@ -1100,6 +1100,10 @@ riscv*-*-linux*)
 	tmake_file="${tmake_file} riscv/t-fpbit riscv/t-dpbit riscv/t-tpbit riscv/t-elf riscv/t-elf${host_address}"
 	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
 	;;
+riscv*-*-freebsd*)
+	tmake_file="${tmake_file} riscv/t-fpbit riscv/t-dpbit riscv/t-tpbit riscv/t-elf"
+	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
+	;;
 riscv*-*-*)
 	tmake_file="${tmake_file} riscv/t-fpbit riscv/t-dpbit riscv/t-elf riscv/t-elf${host_address}"
 	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
