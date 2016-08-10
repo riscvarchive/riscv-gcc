@@ -681,8 +681,7 @@
 	(mult:DI (any_extend:DI
 		   (match_operand:SI 1 "register_operand" "r"))
 		 (any_extend:DI
-		   (match_operand:SI 2 "register_operand" "r"))))
-  (clobber (match_scratch:SI 3 "=r"))]
+		   (match_operand:SI 2 "register_operand" "r"))))]
   "TARGET_MULDIV && !TARGET_64BIT"
 {
   rtx temp = gen_reg_rtx (SImode);
@@ -714,8 +713,7 @@
 	(mult:DI (zero_extend:DI
 		   (match_operand:SI 1 "register_operand" "r"))
 		 (sign_extend:DI
-		   (match_operand:SI 2 "register_operand" "r"))))
-  (clobber (match_scratch:SI 3 "=r"))]
+		   (match_operand:SI 2 "register_operand" "r"))))]
   "TARGET_MULDIV && !TARGET_64BIT"
 {
   rtx temp = gen_reg_rtx (SImode);
