@@ -614,31 +614,22 @@
 ;;
 
 
-;; Using a clobber here is ghetto, but I'm not smart enough to do better. '
-(define_insn_and_split "<u>mulditi3"
-  [(set (match_operand:TI 0 "register_operand" "=r")
-	(mult:TI (any_extend:TI
-		   (match_operand:DI 1 "register_operand" "r"))
-		 (any_extend:TI
-		   (match_operand:DI 2 "register_operand" "r"))))
-  (clobber (match_scratch:DI 3 "=r"))]
+(define_expand "<u>mulditi3"
+  [(set (match_operand:TI 0 "register_operand")
+        (mult:TI (any_extend:TI (match_operand:DI 1 "register_operand"))
+                 (any_extend:TI (match_operand:DI 2 "register_operand"))))]
   "TARGET_MULDIV && TARGET_64BIT"
-  "#"
-  "reload_completed"
-  [
-   (set (match_dup 3) (mult:DI (match_dup 1) (match_dup 2)))
-   (set (match_dup 4) (truncate:DI
-			(lshiftrt:TI
-			  (mult:TI (any_extend:TI (match_dup 1))
-				   (any_extend:TI (match_dup 2)))
-			  (const_int 64))))
-   (set (match_dup 5) (match_dup 3))
-  ]
 {
-  operands[4] = riscv_subword (operands[0], true);
-  operands[5] = riscv_subword (operands[0], false);
-}
-  )
+  rtx low = gen_reg_rtx (DImode);
+  emit_insn (gen_muldi3 (low, operands[1], operands[2]));
+
+  rtx high = gen_reg_rtx (DImode);
+  emit_insn (gen_<u>muldi3_highpart (high, operands[1], operands[2]));
+
+  emit_move_insn (gen_lowpart (DImode, operands[0]), low);
+  emit_move_insn (gen_highpart (DImode, operands[0]), high);
+  DONE;
+})
 
 (define_insn "<u>muldi3_highpart"
   [(set (match_operand:DI 0 "register_operand" "=r")
@@ -654,31 +645,22 @@
   [(set_attr "type" "imul")
    (set_attr "mode" "DI")])
 
-
-(define_insn_and_split "usmulditi3"
-  [(set (match_operand:TI 0 "register_operand" "=r")
-	(mult:TI (zero_extend:TI
-		   (match_operand:DI 1 "register_operand" "r"))
-		 (sign_extend:TI
-		   (match_operand:DI 2 "register_operand" "r"))))
-  (clobber (match_scratch:DI 3 "=r"))]
+(define_expand "usmulditi3"
+  [(set (match_operand:TI 0 "register_operand")
+        (mult:TI (zero_extend:TI (match_operand:DI 1 "register_operand"))
+                 (sign_extend:TI (match_operand:DI 2 "register_operand"))))]
   "TARGET_MULDIV && TARGET_64BIT"
-  "#"
-  "reload_completed"
-  [
-   (set (match_dup 3) (mult:DI (match_dup 1) (match_dup 2)))
-   (set (match_dup 4) (truncate:DI
-			(lshiftrt:TI
-			  (mult:TI (zero_extend:TI (match_dup 1))
-				   (sign_extend:TI (match_dup 2)))
-			  (const_int 64))))
-   (set (match_dup 5) (match_dup 3))
-  ]
 {
-  operands[4] = riscv_subword (operands[0], true);
-  operands[5] = riscv_subword (operands[0], false);
-}
-  )
+  rtx low = gen_reg_rtx (DImode);
+  emit_insn (gen_muldi3 (low, operands[1], operands[2]));
+
+  rtx high = gen_reg_rtx (DImode);
+  emit_insn (gen_usmuldi3_highpart (high, operands[1], operands[2]));
+
+  emit_move_insn (gen_lowpart (DImode, operands[0]), low);
+  emit_move_insn (gen_highpart (DImode, operands[0]), high);
+  DONE;
+})
 
 (define_insn "usmuldi3_highpart"
   [(set (match_operand:DI 0 "register_operand" "=r")
@@ -699,8 +681,7 @@
 	(mult:DI (any_extend:DI
 		   (match_operand:SI 1 "register_operand" "r"))
 		 (any_extend:DI
-		   (match_operand:SI 2 "register_operand" "r"))))
-  (clobber (match_scratch:SI 3 "=r"))]
+		   (match_operand:SI 2 "register_operand" "r"))))]
   "TARGET_MULDIV && !TARGET_64BIT"
 {
   rtx temp = gen_reg_rtx (SImode);
@@ -732,8 +713,7 @@
 	(mult:DI (zero_extend:DI
 		   (match_operand:SI 1 "register_operand" "r"))
 		 (sign_extend:DI
-		   (match_operand:SI 2 "register_operand" "r"))))
-  (clobber (match_scratch:SI 3 "=r"))]
+		   (match_operand:SI 2 "register_operand" "r"))))]
   "TARGET_MULDIV && !TARGET_64BIT"
 {
   rtx temp = gen_reg_rtx (SImode);
