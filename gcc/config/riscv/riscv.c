@@ -2170,7 +2170,12 @@ riscv_function_arg_boundary (enum machine_mode mode, const_tree type)
 {
   unsigned int alignment;
 
-  alignment = type ? TYPE_ALIGN (type) : GET_MODE_ALIGNMENT (mode);
+  /* Use natural alignment if the type is not aggregate data.  */
+  if (type && !AGGREGATE_TYPE_P (type))
+    alignment = TYPE_ALIGN (TYPE_MAIN_VARIANT (type));
+  else
+    alignment = type ? TYPE_ALIGN (type) : GET_MODE_ALIGNMENT (mode);
+
   if (alignment < PARM_BOUNDARY)
     alignment = PARM_BOUNDARY;
   if (alignment > STACK_BOUNDARY)
