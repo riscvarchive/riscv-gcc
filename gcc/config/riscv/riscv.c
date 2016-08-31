@@ -388,7 +388,7 @@ riscv_parse_cpu (const char *cpu_string)
     if (strcmp (riscv_cpu_info_table[i].name, cpu_string) == 0)
       return riscv_cpu_info_table + i;
 
-  error ("unknown cpu `%s'", cpu_string);
+  error ("unknown cpu `%s' for -mtune", cpu_string);
   return riscv_cpu_info_table;
 }
 
