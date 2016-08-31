@@ -3574,6 +3574,11 @@ riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
       /* Double-word values must be even-register-aligned.  */
       if (size <= 2 * UNITS_PER_WORD)
 	return regno % 2 == 0;
+
+      /* For __complex__ long long(CDImode) in 32 bit mode,
+	 it's equal to two double-word.  */
+      if (size <= 4 * UNITS_PER_WORD)
+	return regno % 2 == 0;
     }
 
   if (FP_REG_P (regno))
