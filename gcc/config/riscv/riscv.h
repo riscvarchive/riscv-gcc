@@ -380,8 +380,6 @@ along with GCC; see the file COPYING3.  If not see
 
    - 32 integer registers
    - 32 floating point registers
-   - 32 vector integer registers
-   - 32 vector floating point registers
    - 2 fake registers:
 	- ARG_POINTER_REGNUM
 	- FRAME_POINTER_REGNUM */
