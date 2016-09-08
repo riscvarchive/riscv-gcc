@@ -3338,7 +3338,12 @@ riscv_save_reg (rtx reg, rtx mem)
 static void
 riscv_restore_reg (rtx reg, rtx mem)
 {
-  riscv_emit_move (reg, mem);
+  rtx insn = riscv_emit_move (reg, mem);
+  rtx dwarf = NULL_RTX;
+  dwarf = alloc_reg_note (REG_CFA_RESTORE, reg, dwarf);
+  REG_NOTES (insn) = dwarf;
+
+  RTX_FRAME_RELATED_P (insn) = 1;
 }
 
 /* Return the code to invoke the GPR save routine.  */
@@ -3457,6 +3462,7 @@ riscv_expand_epilogue (bool sibcall_p)
   HOST_WIDE_INT step2 = 0;
   bool use_restore_libcall = !sibcall_p && riscv_use_save_libcall (frame);
   rtx ra = gen_rtx_REG (Pmode, RETURN_ADDR_REGNUM);
+  rtx insn;
 
   if (!sibcall_p && riscv_can_use_return_insn ())
     {
@@ -3497,7 +3503,16 @@ riscv_expand_epilogue (bool sibcall_p)
 	  adjust = RISCV_PROLOGUE_TEMP (Pmode);
 	}
 
-      emit_insn (gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx, adjust));
+      insn = emit_insn (
+	       gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx, adjust));
+
+      rtx dwarf = NULL_RTX;
+      rtx cfa_adjust_rtx = gen_rtx_PLUS (Pmode, stack_pointer_rtx,
+                                         const0_rtx);
+      dwarf = alloc_reg_note (REG_CFA_DEF_CFA, cfa_adjust_rtx, dwarf);
+      RTX_FRAME_RELATED_P (insn) = 1;
+
+      REG_NOTES (insn) = dwarf;
     }
 
   if (use_restore_libcall)
@@ -3515,8 +3530,18 @@ riscv_expand_epilogue (bool sibcall_p)
 
   /* Deallocate the final bit of the frame.  */
   if (step2 > 0)
-    emit_insn (gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
-			      GEN_INT (step2)));
+    {
+      insn = emit_insn (gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
+				       GEN_INT (step2)));
+
+      rtx dwarf = NULL_RTX;
+      rtx cfa_adjust_rtx = gen_rtx_PLUS (Pmode, stack_pointer_rtx,
+                                         const0_rtx);
+      dwarf = alloc_reg_note (REG_CFA_DEF_CFA, cfa_adjust_rtx, dwarf);
+      RTX_FRAME_RELATED_P (insn) = 1;
+
+      REG_NOTES (insn) = dwarf;
+    }
 
   if (use_restore_libcall)
     {
