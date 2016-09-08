@@ -802,7 +802,11 @@ typedef struct {
    currently results in more opportunities for linker relaxation.  */
 #define USE_LOAD_ADDRESS_MACRO(sym)					\
   (!TARGET_EXPLICIT_RELOCS &&						\
-   ((flag_pic && SYMBOL_REF_LOCAL_P (sym))				\
+   ((flag_pic								\
+     && ((SYMBOL_REF_P (sym) && SYMBOL_REF_LOCAL_P (sym))		\
+	 || ((GET_CODE (sym) == CONST)					\
+	     && SYMBOL_REF_P (XEXP (XEXP (sym, 0),0))			\
+	     && SYMBOL_REF_LOCAL_P (XEXP (XEXP (sym, 0),0)))))		\
      || riscv_cmodel == CM_MEDANY))
 
 /* Define this as 1 if `char' should by default be signed; else as 0.  */
