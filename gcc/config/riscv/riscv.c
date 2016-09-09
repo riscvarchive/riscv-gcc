@@ -3575,7 +3575,7 @@ static int
 riscv_register_move_cost (enum machine_mode mode,
 			  reg_class_t from, reg_class_t to)
 {
-  return SECONDARY_MEMORY_NEEDED (from, to, mode) ? 8 : 2;
+  return SECONDARY_MEMORY_NEEDED (from, to, mode) ? 8 : 1;
 }
 
 /* Return true if register REGNO can store a value of mode MODE.
