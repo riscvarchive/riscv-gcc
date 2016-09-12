@@ -3677,6 +3677,17 @@ riscv_issue_rate (void)
   return tune_info->issue_rate;
 }
 
+/* Implement TARGET_ASM_FILE_START.  */
+
+static void
+riscv_file_start (void)
+{
+  default_file_start ();
+
+  /* Instruct GAS to generate position-[in]dependent code.  */
+  fprintf (asm_out_file, "\t.option %spic\n", (flag_pic ? "" : "no"));
+}
+
 /* This structure describes a single built-in function.  */
 struct riscv_builtin_description {
   /* The code of the main .md file instruction.  See riscv_builtin_type
@@ -4254,6 +4265,8 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 #undef  TARGET_PREFERRED_RELOAD_CLASS
 #define TARGET_PREFERRED_RELOAD_CLASS riscv_preferred_reload_class
 
+#undef TARGET_ASM_FILE_START
+#define TARGET_ASM_FILE_START riscv_file_start
 #undef TARGET_ASM_FILE_START_FILE_DIRECTIVE
 #define TARGET_ASM_FILE_START_FILE_DIRECTIVE true
 
