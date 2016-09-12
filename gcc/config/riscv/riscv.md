@@ -254,9 +254,6 @@
 ;; 64-bit modes for which we provide move patterns.
 (define_mode_iterator MOVE64 [DI DF])
 
-;; 128-bit modes for which we provide move patterns on 64-bit targets.
-(define_mode_iterator MOVE128 [TI TF])
-
 ;; This mode iterator allows the QI and HI extension patterns to be
 ;; defined from the same template.
 (define_mode_iterator SHORT [QI HI])
@@ -1640,42 +1637,11 @@
   [(set_attr "move_type" "move,load,store")
    (set_attr "mode" "DF")])
 
-;; 128-bit integer moves
-
-(define_expand "movti"
-  [(set (match_operand:TI 0)
-	(match_operand:TI 1))]
-  "TARGET_64BIT"
-{
-  if (riscv_legitimize_move (TImode, operands[0], operands[1]))
-    DONE;
-})
-
-(define_insn "*movti"
-  [(set (match_operand:TI 0 "nonimmediate_operand" "=r,r,r,m")
-	(match_operand:TI 1 "move_operand" "r,i,m,rJ"))]
-  "TARGET_64BIT
-   && (register_operand (operands[0], TImode)
-       || reg_or_0_operand (operands[1], TImode))"
-  "#"
-  [(set_attr "move_type" "move,const,load,store")
-   (set_attr "mode" "TI")])
-
 (define_split
   [(set (match_operand:MOVE64 0 "nonimmediate_operand")
 	(match_operand:MOVE64 1 "move_operand"))]
   "reload_completed && !TARGET_64BIT
    && riscv_split_64bit_move_p (operands[0], operands[1])"
-  [(const_int 0)]
-{
-  riscv_split_doubleword_move (operands[0], operands[1]);
-  DONE;
-})
-
-(define_split
-  [(set (match_operand:MOVE128 0 "nonimmediate_operand")
-	(match_operand:MOVE128 1 "move_operand"))]
-  "TARGET_64BIT && reload_completed"
   [(const_int 0)]
 {
   riscv_split_doubleword_move (operands[0], operands[1]);
