@@ -455,7 +455,6 @@ powerpc*-*-*)
 	;;
 riscv*)
 	cpu_type=riscv
-	need_64bit_hwint=yes
 	;;
 rs6000*-*-*)
 	extra_options="${extra_options} g.opt fused-madd.opt rs6000/rs6000-tables.opt"
