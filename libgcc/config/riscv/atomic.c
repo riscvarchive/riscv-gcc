@@ -25,43 +25,87 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 #ifdef __riscv_atomic
 
-/* Implement old-style __sync atomics with __atomic atomics.  */
+#include <stdbool.h>
 
-#define GENERATE_FETCH_AND_OP(type, size, opname)			\
+#define INVERT		"not %[tmp1], %[tmp1]\n\t"
+#define DONT_INVERT	""
+
+#define GENERATE_FETCH_AND_OP(type, size, opname, insn, invert, cop)	\
   type __sync_fetch_and_ ## opname ## _ ## size (type *p, type v)	\
   {									\
-    return __atomic_fetch_ ## opname (p, v, __ATOMIC_SEQ_CST);		\
+    unsigned long aligned_addr = ((unsigned long) p) & ~3UL;		\
+    int shift = (((unsigned long) p) & 3) * 8;				\
+    unsigned mask = ((1U << ((sizeof v) * 8)) - 1) << shift;		\
+    unsigned old, tmp1, tmp2;						\
+									\
+    asm volatile ("1:\n\t"						\
+		  "lr.w.aq %[old], %[mem]\n\t"				\
+		  #insn " %[tmp1], %[old], %[value]\n\t"		\
+		  invert						\
+		  "and %[tmp1], %[tmp1], %[mask]\n\t"			\
+		  "and %[tmp2], %[old], %[not_mask]\n\t"		\
+		  "or %[tmp2], %[tmp2], %[tmp1]\n\t"			\
+		  "sc.w.rl %[tmp1], %[tmp2], %[mem]\n\t"		\
+		  "bnez %[tmp1], 1b"					\
+		  : [old] "=&r" (old),					\
+		    [mem] "+A" (*(volatile unsigned*) aligned_addr),	\
+		    [tmp1] "=&r" (tmp1),				\
+		    [tmp2] "=&r" (tmp2)					\
+		  : [value] "r" (((unsigned) v) << shift),		\
+		    [mask] "r" (mask),					\
+		    [not_mask] "r" (~mask));				\
+									\
+    return (type) (old >> shift);					\
   }									\
 									\
   type __sync_ ## opname ## _and_fetch_ ## size (type *p, type v)	\
   {									\
-    return __atomic_ ## opname ## _fetch (p, v, __ATOMIC_SEQ_CST);	\
+    type o = __sync_fetch_and_ ## opname ## _ ## size (p, v);		\
+    return cop;								\
   }
 
 #define GENERATE_COMPARE_AND_SWAP(type, size)				\
-  type __sync_bool_compare_and_swap_ ## size (type *p, type o, type n)	\
-  {									\
-    return __atomic_compare_exchange_n (p, &o, n, 0, __ATOMIC_SEQ_CST,	\
-					__ATOMIC_SEQ_CST);		\
-  }									\
-									\
   type __sync_val_compare_and_swap_ ## size (type *p, type o, type n)	\
   {									\
-    __atomic_compare_exchange_n (p, &o, n, 0, __ATOMIC_SEQ_CST,		\
-				 __ATOMIC_SEQ_CST);			\
-    return o;								\
+    unsigned long aligned_addr = ((unsigned long) p) & ~3UL;		\
+    int shift = (((unsigned long) p) & 3) * 8;				\
+    unsigned mask = ((1U << ((sizeof o) * 8)) - 1) << shift;		\
+    unsigned old, tmp1;							\
+									\
+    asm volatile ("1:\n\t"						\
+		  "lr.w.aq %[old], %[mem]\n\t"				\
+		  "and %[tmp1], %[old], %[mask]\n\t"			\
+		  "bne %[tmp1], %[o], 1f\n\t"				\
+		  "and %[tmp1], %[old], %[not_mask]\n\t"		\
+		  "or %[tmp1], %[tmp1], %[n]\n\t"			\
+		  "sc.w.rl %[tmp1], %[tmp1], %[mem]\n\t"		\
+		  "bnez %[tmp1], 1b\n\t"				\
+		  "1:"							\
+		  : [old] "=&r" (old),					\
+		    [mem] "+A" (*(volatile unsigned*) aligned_addr),	\
+		    [tmp1] "=&r" (tmp1)					\
+		  : [o] "r" ((((unsigned) o) << shift) & mask),		\
+		    [n] "r" ((((unsigned) n) << shift) & mask),		\
+		    [mask] "r" (mask),					\
+		    [not_mask] "r" (~mask));				\
+									\
+    return (type) (old >> shift);					\
+  }									\
+  bool __sync_bool_compare_and_swap_ ## size (type *p, type o, type n)	\
+  {									\
+    return __sync_val_compare_and_swap(p, o, n) == o;			\
   }
 
-#define GENERATE_ALL(type, size)		\
-  GENERATE_FETCH_AND_OP(type, size, add)	\
-  GENERATE_FETCH_AND_OP(type, size, sub)	\
-  GENERATE_FETCH_AND_OP(type, size, and)	\
-  GENERATE_FETCH_AND_OP(type, size, xor)	\
-  GENERATE_FETCH_AND_OP(type, size, or)		\
-  GENERATE_FETCH_AND_OP(type, size, nand)	\
+#define GENERATE_ALL(type, size)					\
+  GENERATE_FETCH_AND_OP(type, size, add, add, DONT_INVERT, o + v)	\
+  GENERATE_FETCH_AND_OP(type, size, sub, sub, DONT_INVERT, o - v)	\
+  GENERATE_FETCH_AND_OP(type, size, and, and, DONT_INVERT, o & v)	\
+  GENERATE_FETCH_AND_OP(type, size, xor, xor, DONT_INVERT, o ^ v)	\
+  GENERATE_FETCH_AND_OP(type, size, or, or, DONT_INVERT, o | v)		\
+  GENERATE_FETCH_AND_OP(type, size, nand, and, INVERT, ~(o & v))	\
   GENERATE_COMPARE_AND_SWAP(type, size)
 
-GENERATE_ALL(char, 1)
-GENERATE_ALL(short, 2)
+GENERATE_ALL(unsigned char, 1)
+GENERATE_ALL(unsigned short, 2)
 
 #endif
