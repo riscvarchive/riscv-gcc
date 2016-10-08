@@ -4,3 +4,13 @@ LIB2ADD += $(srcdir)/config/riscv/riscv-fp.c \
 	   $(srcdir)/config/riscv/multi3.S \
 	   $(srcdir)/config/riscv/div.S \
 	   $(srcdir)/config/riscv/atomic.c \
+
+FPBIT = true
+
+ifeq ($(double_type_size),64)
+DPBIT = true
+endif
+
+ifeq ($(long_double_type_size),128)
+TPBIT = true
+endif
