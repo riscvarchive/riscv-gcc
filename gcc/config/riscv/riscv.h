@@ -19,13 +19,6 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* TARGET_HARD_FLOAT and TARGET_SOFT_FLOAT reflect whether the FPU is
-   directly accessible, while the command-line options select
-   TARGET_HARD_FLOAT_ABI and TARGET_SOFT_FLOAT_ABI to reflect the ABI
-   in use.  */
-#define TARGET_HARD_FLOAT TARGET_HARD_FLOAT_ABI
-#define TARGET_SOFT_FLOAT TARGET_SOFT_FLOAT_ABI
-
 /* Target CPU builtins.  */
 #define TARGET_CPU_CPP_BUILTINS()					\
   do									\
@@ -66,15 +59,18 @@ along with GCC; see the file COPYING3.  If not see
       if (TARGET_MULDIV)						\
 	builtin_define ("__riscv_muldiv");				\
 									\
-      if (TARGET_HARD_FLOAT_ABI)					\
+      if (TARGET_HARD_FLOAT)						\
+	builtin_define_with_int_value ("__riscv_flen",			\
+				       UNITS_PER_FPREG * 8);		\
+									\
+      if (TARGET_HARD_FLOAT && TARGET_FDIV)				\
 	{								\
-	  builtin_define ("__riscv_hard_float");			\
-	  if (TARGET_FDIV)						\
-	    {								\
-	      builtin_define ("__riscv_fdiv");				\
-	      builtin_define ("__riscv_fsqrt");				\
-	    }								\
+	  builtin_define ("__riscv_fdiv");				\
+	  builtin_define ("__riscv_fsqrt");				\
 	}								\
+									\
+      if (TARGET_HARD_FLOAT_ABI)					\
+	builtin_define ("__riscv_hard_float");				\
       else								\
 	builtin_define ("__riscv_soft_float");				\
 									\
@@ -230,19 +226,13 @@ along with GCC; see the file COPYING3.  If not see
 #define MIN_UNITS_PER_WORD 4
 #endif
 
-/* We currently require both or neither of the `F' and `D' extensions. */
-#define UNITS_PER_FPREG 8
+/* The `Q' extension is not yet supported.  */
+#define UNITS_PER_FPREG (TARGET_SINGLE_FLOAT ? 4 : 8)
 
 /* The largest size of value that can be held in floating-point
    registers and moved with a single instruction.  */
 #define UNITS_PER_HWFPVALUE \
-  (TARGET_SOFT_FLOAT_ABI ? 0 : UNITS_PER_FPREG)
-
-/* The largest size of value that can be held in floating-point
-   registers.  */
-#define UNITS_PER_FPVALUE			\
-  (TARGET_SOFT_FLOAT_ABI ? 0			\
-   : LONG_DOUBLE_TYPE_SIZE / BITS_PER_UNIT)
+  (TARGET_SOFT_FLOAT ? 0 : UNITS_PER_FPREG)
 
 /* The number of bytes in a double.  */
 #define UNITS_PER_DOUBLE (TYPE_PRECISION (double_type_node) / BITS_PER_UNIT)
@@ -668,7 +658,7 @@ enum reg_class
    point values.  */
 
 #define GP_RETURN GP_ARG_FIRST
-#define FP_RETURN ((TARGET_SOFT_FLOAT) ? GP_RETURN : FP_ARG_FIRST)
+#define FP_RETURN ((TARGET_SOFT_FLOAT_ABI) ? GP_RETURN : FP_ARG_FIRST)
 
 #define MAX_ARGS_IN_REGISTERS 8
 
@@ -699,7 +689,7 @@ enum reg_class
 /* Accept arguments in a0-a7 and/or fa0-fa7. */
 #define FUNCTION_ARG_REGNO_P(N)					\
   (IN_RANGE((N), GP_ARG_FIRST, GP_ARG_LAST)			\
-   || (!TARGET_SOFT_FLOAT && IN_RANGE((N), FP_ARG_FIRST, FP_ARG_LAST)))
+   || (!TARGET_SOFT_FLOAT_ABI && IN_RANGE((N), FP_ARG_FIRST, FP_ARG_LAST)))
 
 /* The ABI views the arguments as a structure, of which the first 8
    words go in registers and the rest go on the stack.  If I < 8, N, the Ith
