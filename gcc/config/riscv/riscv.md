@@ -2256,7 +2256,7 @@
   "SIBLING_CALL_P (insn)"
   { return REG_P (operands[0]) ? "jr\t%0"
 	   : absolute_symbolic_operand (operands[0], VOIDmode) ? "tail\t%0"
-	   : "tail\t%0@"; }
+	   : "tail\t%0@plt"; }
   [(set_attr "type" "call")])
 
 (define_expand "sibcall_value"
@@ -2277,7 +2277,7 @@
   "SIBLING_CALL_P (insn)"
   { return REG_P (operands[1]) ? "jr\t%1"
 	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "tail\t%1"
-	   : "tail\t%1@"; }
+	   : "tail\t%1@plt"; }
   [(set_attr "type" "call")])
 
 (define_insn "sibcall_value_multiple_internal"
@@ -2290,7 +2290,7 @@
   "SIBLING_CALL_P (insn)"
   { return REG_P (operands[1]) ? "jr\t%1"
 	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "tail\t%1"
-	   : "tail\t%1@"; }
+	   : "tail\t%1@plt"; }
   [(set_attr "type" "call")])
 
 (define_expand "call"
@@ -2311,7 +2311,7 @@
   ""
   { return REG_P (operands[0]) ? "jalr\t%0"
 	   : absolute_symbolic_operand (operands[0], VOIDmode) ? "call\t%0"
-	   : "call\t%0@"; }
+	   : "call\t%0@plt"; }
   [(set_attr "type" "call")])
 
 (define_expand "call_value"
@@ -2334,7 +2334,7 @@
   ""
   { return REG_P (operands[1]) ? "jalr\t%1"
 	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "call\t%1"
-	   : "call\t%1@"; }
+	   : "call\t%1@plt"; }
   [(set_attr "type" "call")])
 
 ;; See comment for call_internal.
@@ -2349,7 +2349,7 @@
   ""
   { return REG_P (operands[1]) ? "jalr\t%1"
 	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "call\t%1"
-	   : "call\t%1@"; }
+	   : "call\t%1@plt"; }
   [(set_attr "type" "call")])
 
 ;; Call subroutine returning any type.
