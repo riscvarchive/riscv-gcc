@@ -427,7 +427,7 @@ riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
       alt_codes[alt_cost-1].code = XOR;
       alt_codes[alt_cost-1].value = low_part;
       if (alt_cost < cost)
-	cost = alt_cost, memcpy (codes, alt_codes, sizeof(alt_codes));
+	cost = alt_cost, memcpy (codes, alt_codes, sizeof (alt_codes));
     }
 
   /* Eliminate trailing zeros and end with SLLI */
@@ -440,7 +440,7 @@ riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
       alt_codes[alt_cost-1].code = ASHIFT;
       alt_codes[alt_cost-1].value = shift;
       if (alt_cost < cost)
-	cost = alt_cost, memcpy (codes, alt_codes, sizeof(alt_codes));
+	cost = alt_cost, memcpy (codes, alt_codes, sizeof (alt_codes));
     }
 
   gcc_assert (cost <= RISCV_MAX_INTEGER_OPS);
@@ -1742,7 +1742,7 @@ riscv_split_64bit_move_p (rtx dest, rtx src)
 	   || (FP_REG_RTX_P (src) && FP_REG_RTX_P (dest))
 	   || (FP_REG_RTX_P (dest) && MEM_P (src))
 	   || (FP_REG_RTX_P (src) && MEM_P (dest))
-	   || (FP_REG_RTX_P(dest) && src == CONST0_RTX(GET_MODE(src))));
+	   || (FP_REG_RTX_P (dest) && src == CONST0_RTX (GET_MODE (src))));
 }
 
 /* Split a doubleword move from SRC to DEST.  On 32-bit targets,
@@ -2198,18 +2198,19 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
      floating-point registers, as long as this is a named rather
      than a variable argument.  */
   info->fpr_p = (named
+		 && TARGET_HARD_FLOAT_ABI
 		 && (type == 0 || FLOAT_TYPE_P (type))
 		 && (GET_MODE_CLASS (mode) == MODE_FLOAT
 		     || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT
 		     || GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT)
-		 && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_FPVALUE);
+		 && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_HWFPVALUE);
 
   /* Complex floats should only go into FPRs if there are two FPRs free,
      otherwise they should be passed in the same way as a struct
      containing two floats.  */
   if (info->fpr_p
       && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT
-      && GET_MODE_UNIT_SIZE (mode) < UNITS_PER_FPVALUE)
+      && GET_MODE_UNIT_SIZE (mode) < UNITS_PER_HWFPVALUE)
     {
       if (cum->num_gprs >= MAX_ARGS_IN_REGISTERS - 1)
         info->fpr_p = false;
@@ -2276,7 +2277,7 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
   /* The n32 and n64 ABIs say that if any 64-bit chunk of the structure
      contains a double in its entirety, then that 64-bit chunk is passed
      in a floating-point register.  */
-  if (TARGET_HARD_FLOAT
+  if (TARGET_HARD_FLOAT_ABI
       && named
       && type != 0
       && TREE_CODE (type) == RECORD_TYPE
@@ -2368,7 +2369,7 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
 	}
     }
 
-  return gen_rtx_REG (mode, riscv_arg_regno (&info, TARGET_HARD_FLOAT));
+  return gen_rtx_REG (mode, riscv_arg_regno (&info, TARGET_HARD_FLOAT_ABI));
 }
 
 /* Implement TARGET_FUNCTION_ARG_ADVANCE.  */
@@ -2415,7 +2416,7 @@ riscv_arg_partial_bytes (cumulative_args_t cum,
    type.  */
 
 static int
-riscv_fpr_return_fields (const_tree valtype, tree *fields)
+riscv_fpr_return_fields (const_tree valtype, tree fields[2])
 {
   tree field;
   int i;
@@ -2432,7 +2433,7 @@ riscv_fpr_return_fields (const_tree valtype, tree *fields)
       if (!SCALAR_FLOAT_TYPE_P (TREE_TYPE (field)))
 	return 0;
 
-      if (i == 2)
+      if (i == ARRAY_SIZE (fields))
 	return 0;
 
       fields[i++] = field;
@@ -2449,6 +2450,7 @@ riscv_return_mode_in_fpr_p (enum machine_mode mode)
   return ((GET_MODE_CLASS (mode) == MODE_FLOAT
 	   || GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT
 	   || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
+	  && TARGET_HARD_FLOAT_ABI
 	  && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_HWFPVALUE);
 }
 
@@ -2480,10 +2482,7 @@ riscv_return_fpr_single (enum machine_mode type_mode,
 /* Return a composite value in a pair of floating-point registers.
    MODE1 and OFFSET1 are the mode and byte offset for the first value,
    likewise MODE2 and OFFSET2 for the second.  MODE is the mode of the
-   complete value.
-
-   For n32 & n64, $f0 always holds the first value and $f2 the second.
-   Otherwise the values are packed together as closely as possible.  */
+   complete value.  */
 
 static rtx
 riscv_return_fpr_pair (enum machine_mode mode,
@@ -2521,7 +2520,7 @@ riscv_function_value (const_tree valtype, const_tree func, enum machine_mode mod
 	 return values, promote the mode here too.  */
       mode = promote_function_mode (valtype, mode, &unsigned_p, func, 1);
 
-      /* Handle structures whose fields are returned in $f0/$f2.  */
+      /* Handle structures whose fields are returned in fa0/fa1.  */
       switch (riscv_fpr_return_fields (valtype, fields))
 	{
 	case 1:
@@ -2540,12 +2539,6 @@ riscv_function_value (const_tree valtype, const_tree func, enum machine_mode mod
       if (!FLOAT_TYPE_P (valtype))
 	return gen_rtx_REG (mode, GP_RETURN);
     }
-
-  /* Handle long doubles for n32 & n64.  */
-  if (mode == TFmode)
-    return riscv_return_fpr_pair (mode,
-    			     DImode, 0,
-    			     DImode, GET_MODE_SIZE (mode) / 2);
 
   if (riscv_return_mode_in_fpr_p (mode))
     {
@@ -3332,8 +3325,10 @@ riscv_for_each_saved_reg (HOST_WIDE_INT sp_offset, riscv_save_restore_fn fn)
   for (regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
     if (BITSET_P (cfun->machine->frame.fmask, regno - FP_REG_FIRST))
       {
-	riscv_save_restore_reg (DFmode, regno, offset, fn);
-	offset -= GET_MODE_SIZE (DFmode);
+	enum machine_mode mode = TARGET_DOUBLE_FLOAT ? DFmode : SFmode;
+
+	riscv_save_restore_reg (mode, regno, offset, fn);
+	offset -= GET_MODE_SIZE (mode);
       }
 }
 
@@ -3594,7 +3589,7 @@ riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
       if (mclass == MODE_FLOAT
 	  || mclass == MODE_COMPLEX_FLOAT
 	  || mclass == MODE_VECTOR_FLOAT)
-	return size <= UNITS_PER_FPVALUE;
+	return size <= UNITS_PER_HWFPVALUE;
     }
 
   return false;
@@ -4096,12 +4091,6 @@ riscv_option_override (void)
   if (riscv_branch_cost == 0)
     riscv_branch_cost = tune_info->branch_cost;
 
-  /* Set up riscv_hard_regno_mode_ok.  */
-  for (mode = 0; mode < MAX_MACHINE_MODE; mode++)
-    for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
-      riscv_hard_regno_mode_ok[mode][regno]
-	= riscv_hard_regno_mode_ok_p (regno, (enum machine_mode) mode);
-
   /* Function to allocate machine-dependent function status.  */
   init_machine_status = &riscv_init_machine_status;
 
@@ -4123,6 +4112,21 @@ riscv_option_override (void)
   if ((target_flags_explicit & MASK_EXPLICIT_RELOCS) == 0)
     if (riscv_cmodel == CM_MEDLOW)
       target_flags |= MASK_EXPLICIT_RELOCS;
+
+  /* By default, use soft-float ABI if hardware is only single-precision.  */
+  if ((target_flags_explicit & MASK_SOFT_FLOAT_ABI) == 0)
+    if (TARGET_SINGLE_FLOAT)
+      target_flags |= MASK_SOFT_FLOAT_ABI;
+
+  /* Hardawre floating-point ABI implies floating-point hardware.  */
+  if (TARGET_HARD_FLOAT_ABI)
+    target_flags &= ~MASK_SOFT_FLOAT;
+
+  /* Set up riscv_hard_regno_mode_ok.  */
+  for (mode = 0; mode < MAX_MACHINE_MODE; mode++)
+    for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
+      riscv_hard_regno_mode_ok[mode][regno]
+	= riscv_hard_regno_mode_ok_p (regno, (enum machine_mode) mode);
 }
 
 /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */

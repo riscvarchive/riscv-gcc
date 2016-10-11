@@ -53,23 +53,21 @@ riscv_parse_arch_string (const char *isa, int *flags)
   if (*p == 'A')
     *flags |= MASK_ATOMIC, p++;
 
-  *flags |= MASK_SOFT_FLOAT_ABI;
+  *flags |= MASK_SOFT_FLOAT;
   if (*p == 'F')
-    *flags &= ~MASK_SOFT_FLOAT_ABI, p++;
+    *flags &= ~MASK_SOFT_FLOAT, p++;
 
+  *flags |= MASK_SINGLE_FLOAT;
   if (*p == 'D')
     {
+      *flags &= ~MASK_SINGLE_FLOAT;
       p++;
+
       if (!TARGET_HARD_FLOAT)
 	{
 	  error ("-march=%s: the D extension requires the F extension", isa);
 	  return;
 	}
-    }
-  else if (TARGET_HARD_FLOAT)
-    {
-      error ("-march=%s: single-precision-only is not yet supported", isa);
-      return;
     }
 
   *flags &= ~MASK_RVC;
