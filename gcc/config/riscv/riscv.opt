@@ -72,8 +72,16 @@ Target Report Mask(ATOMIC)
 Use hardware atomic memory instructions.
 
 mmuldiv
-Target Report Mask(MULDIV)
+Target Report Var(TARGET_muldiv)
 Use hardware instructions for integer multiplication and division.
+
+mmul
+Target Report Mask(MUL)
+Use hardware instructions for integer multiplication
+
+mdiv
+Target Report Mask(DIV)
+Use hardware instructions for integer division.
 
 mrvc
 Target Report Mask(RVC)
