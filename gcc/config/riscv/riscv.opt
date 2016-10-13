@@ -47,7 +47,7 @@ Target Report RejectNegative Mask(SOFT_FLOAT_ABI)
 Prevent the use of all hardware floating-point instructions.
 
 mno-fdiv
-Target Report RejectNegative Mask(NO_FDIV)
+Target Report RejectNegative Undocumented Mask(NO_FDIV)
 Don't use hardware floating-point divide and square root instructions.
 
 mfdiv
