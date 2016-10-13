@@ -45,9 +45,9 @@ riscv_parse_arch_string (const char *isa, int *flags)
       return;
     }
 
-  *flags &= ~MASK_MULDIV;
+  *flags &= ~(MASK_MUL | MASK_DIV);
   if (*p == 'M')
-    *flags |= MASK_MULDIV, p++;
+    *flags |= (MASK_MUL | MASK_DIV), p++;
 
   *flags &= ~MASK_ATOMIC;
   if (*p == 'A')
@@ -110,7 +110,16 @@ riscv_handle_option (struct gcc_options *opts,
     case OPT_march_:
       riscv_parse_arch_string (decoded->arg, &opts->x_target_flags);
       return true;
-
+    case OPT_mmuldiv:
+      if (decoded->value)
+         {
+            opts->x_target_flags |= (MASK_MUL | MASK_DIV);
+         }
+      else
+         {
+            opts->x_target_flags &= ~(MASK_MUL | MASK_DIV);
+         }
+      return true;
     default:
       return true;
     }

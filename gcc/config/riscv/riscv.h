@@ -63,7 +63,11 @@ along with GCC; see the file COPYING3.  If not see
       if (TARGET_ATOMIC)						\
 	builtin_define ("__riscv_atomic");				\
 									\
-      if (TARGET_MULDIV)						\
+      if (TARGET_MUL)							\
+	builtin_define ("__riscv_mul");					\
+      if (TARGET_DIV)							\
+	builtin_define ("__riscv_div");					\
+      if (TARGET_DIV && TARGET_MUL)					\
 	builtin_define ("__riscv_muldiv");				\
 									\
       if (TARGET_HARD_FLOAT_ABI)					\
