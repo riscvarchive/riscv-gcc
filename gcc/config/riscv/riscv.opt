@@ -48,7 +48,7 @@ Target Report Var(TARGET_PLT) Init(1)
 When generating -fpic code, allow the use of PLTs. Ignored for fno-pic.
 
 mno-fdiv
-Target Report RejectNegative Mask(NO_FDIV)
+Target Report RejectNegative Undocumented Mask(NO_FDIV)
 Don't use hardware floating-point divide and square root instructions.
 
 mfdiv
