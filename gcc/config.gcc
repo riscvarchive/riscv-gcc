@@ -3933,9 +3933,7 @@ case "${target}" in
 			# Default to soft-float unless D extension is present
 			# (which is also the case if with_arch is not set).
 			case ${with_arch} in
-				"")
-					;;
-				*g* | *G* | *d* | *D*)
+				"" | *g* | *G* | *d* | *D*)
 					with_float=hard
 					;;
 				*)
