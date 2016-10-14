@@ -3668,6 +3668,10 @@ riscv_file_start (void)
 
   /* Instruct GAS to generate position-[in]dependent code.  */
   fprintf (asm_out_file, "\t.option %spic\n", (flag_pic ? "" : "no"));
+
+  /* Inform GAS of the floating-point ABI.  */
+  fprintf (asm_out_file, "\t.option %s-float\n",
+           (TARGET_HARD_FLOAT_ABI ? "hard" : "soft"));
 }
 
 /* This structure describes a single built-in function.  */
@@ -4099,11 +4103,6 @@ riscv_option_override (void)
   if ((target_flags_explicit & MASK_EXPLICIT_RELOCS) == 0)
     if (riscv_cmodel == CM_MEDLOW)
       target_flags |= MASK_EXPLICIT_RELOCS;
-
-  /* By default, use soft-float ABI if hardware is only single-precision.  */
-  if ((target_flags_explicit & MASK_SOFT_FLOAT_ABI) == 0)
-    if (TARGET_SINGLE_FLOAT)
-      target_flags |= MASK_SOFT_FLOAT_ABI;
 
   /* Hardawre floating-point ABI implies floating-point hardware.  */
   if (TARGET_HARD_FLOAT_ABI)

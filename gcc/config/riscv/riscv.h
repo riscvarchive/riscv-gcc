@@ -149,7 +149,6 @@ along with GCC; see the file COPYING3.  If not see
 %(subtarget_asm_debugging_spec) \
 %{m32} %{m64} %{!m32:%{!m64: %(asm_abi_default_spec)}} \
 %{mrvc} %{mno-rvc} \
-%{msoft-float} %{mhard-float} \
 %{march=*} \
 %(subtarget_asm_spec)"
 

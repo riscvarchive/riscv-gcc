@@ -75,8 +75,8 @@ riscv_parse_arch_string (const char *isa, int *flags)
     *flags |= MASK_RVC, p++;
 
   /* FIXME: For now we just stop parsing when faced with a
-     non-standard RISC-V ISA extension, partially becauses of a
-     problem with the naming scheme. */
+     non-standard RISC-V ISA extension.  We might consider
+     ignoring it and passing it through to the assembler.  */
   if (*p == 'X')
     return;
 
