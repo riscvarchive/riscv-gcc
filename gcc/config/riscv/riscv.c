@@ -2274,16 +2274,19 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
   if (info.reg_offset == MAX_ARGS_IN_REGISTERS)
     return NULL;
 
-  /* The n32 and n64 ABIs say that if any 64-bit chunk of the structure
-     contains a double in its entirety, then that 64-bit chunk is passed
-     in a floating-point register.  */
+  /* If any XLEN-bit chunk of a structure contains an XLEN-bit floating-point
+     number in its entirety, and FLEN >= XLEN, pass the chunk in a
+     floating-point register.  */
   if (TARGET_HARD_FLOAT_ABI
       && named
       && type != 0
       && TREE_CODE (type) == RECORD_TYPE
       && TYPE_SIZE_UNIT (type)
+      && UNITS_PER_FPREG >= UNITS_PER_WORD
       && tree_fits_uhwi_p (TYPE_SIZE_UNIT (type)))
     {
+      enum machine_mode fmode = TARGET_64BIT ? DFmode : SFmode;
+      enum machine_mode imode = TARGET_64BIT ? DImode : SImode;
       tree field;
 
       /* First check to see if there is any such field.  */
@@ -2323,9 +2326,9 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
 		  && int_bit_position (field) == bitpos
 		  && SCALAR_FLOAT_TYPE_P (TREE_TYPE (field))
 		  && TYPE_PRECISION (TREE_TYPE (field)) == BITS_PER_WORD)
-		reg = gen_rtx_REG (DFmode, FP_ARG_FIRST + info.reg_offset + i);
+		reg = gen_rtx_REG (fmode, FP_ARG_FIRST + info.reg_offset + i);
 	      else
-		reg = gen_rtx_REG (DImode, GP_ARG_FIRST + info.reg_offset + i);
+		reg = gen_rtx_REG (imode, GP_ARG_FIRST + info.reg_offset + i);
 
 	      XVECEXP (ret, 0, i)
 		= gen_rtx_EXPR_LIST (VOIDmode, reg,
