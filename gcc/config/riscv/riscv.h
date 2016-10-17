@@ -154,6 +154,7 @@ along with GCC; see the file COPYING3.  If not see
 %{m32} %{m64} %{!m32:%{!m64: %(asm_abi_default_spec)}} \
 %{mrvc} %{mno-rvc} \
 %{march=*} \
+%{mhard-float} %{msoft-float} \
 %(subtarget_asm_spec)"
 
 /* Extra switches sometimes passed to the linker.  */
