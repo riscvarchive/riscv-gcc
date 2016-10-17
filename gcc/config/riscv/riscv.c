@@ -2420,7 +2420,7 @@ riscv_fpr_return_fields (const_tree valtype, tree fields[2])
       if (!SCALAR_FLOAT_TYPE_P (TREE_TYPE (field)))
 	return 0;
 
-      if (i == ARRAY_SIZE (fields))
+      if (i == 2)
 	return 0;
 
       fields[i++] = field;
