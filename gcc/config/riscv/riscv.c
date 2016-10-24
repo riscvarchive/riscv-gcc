@@ -2223,9 +2223,11 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
         num_words = 2;
     }
 
-  /* See whether the argument has doubleword alignment.  */
+  /* See whether the argument has doubleword alignment,
+     and do not align for zero size type.   */
   doubleword_aligned_p = (riscv_function_arg_boundary (mode, type)
-			  > BITS_PER_WORD);
+			  > BITS_PER_WORD)
+			 && (num_bytes != 0);
 
   /* Set REG_OFFSET to the register count we're interested in.
      The EABI allocates the floating-point registers separately,
