@@ -249,8 +249,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #define FLOAT_TYPE_SIZE 32
 #define DOUBLE_TYPE_SIZE 64
-/* XXX The ABI says long doubles are IEEE-754-2008 float128s. */
-#define LONG_DOUBLE_TYPE_SIZE 64
+#define LONG_DOUBLE_TYPE_SIZE (TARGET_64BIT ? 128 : 64)
 
 #ifdef IN_LIBGCC2
 # define LIBGCC2_LONG_DOUBLE_TYPE_SIZE LONG_DOUBLE_TYPE_SIZE
