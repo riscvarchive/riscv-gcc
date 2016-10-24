@@ -72,7 +72,7 @@ Target Report Mask(ATOMIC)
 Use hardware atomic memory instructions.
 
 mmuldiv
-Target Report Var(TARGET_muldiv)
+Target Report
 Use hardware instructions for integer multiplication and division.
 
 mmul
