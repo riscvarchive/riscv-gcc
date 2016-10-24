@@ -2554,6 +2554,23 @@ riscv_function_value (const_tree valtype, const_tree func, enum machine_mode mod
 static bool
 riscv_return_in_memory (const_tree type, const_tree fndecl ATTRIBUTE_UNUSED)
 {
+  /* TFmode alwyas pass by reference.  */
+  if (TYPE_MODE (type) == TFmode)
+    {
+      return true;
+    }
+
+  if (TREE_CODE (type) == RECORD_TYPE)
+    {
+      tree field;
+      /* Check if this struc only TFmode, then it's still pass in memory.  */
+      for (field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
+	if (TREE_CODE (field) == FIELD_DECL
+	    && !error_operand_p (field)
+	    && TYPE_MODE (TREE_TYPE (field)) == TFmode)
+	  return true;
+    }
+
   return !IN_RANGE (int_size_in_bytes (type), 0, 2 * UNITS_PER_WORD);
 }
 
@@ -2564,6 +2581,11 @@ riscv_pass_by_reference (cumulative_args_t cum ATTRIBUTE_UNUSED,
 			 enum machine_mode mode, const_tree type,
 			 bool named ATTRIBUTE_UNUSED)
 {
+  /* TFmode alwyas pass by reference.  */
+  if (mode == TFmode)
+    {
+      return true;
+    }
   if (type && riscv_return_in_memory (type, NULL_TREE))
     return true;
   return targetm.calls.must_pass_in_stack (mode, type);
