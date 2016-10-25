@@ -96,20 +96,8 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_DEFAULT 0
 #endif
 
-#ifndef RISCV_ARCH_STRING_DEFAULT
-#define RISCV_ARCH_STRING_DEFAULT "IMAFD"
-#endif
-
-#ifndef RISCV_FLOAT_ABI_DEFAULT
-#define RISCV_FLOAT_ABI_DEFAULT FLOAT_ABI_DOUBLE
-#endif
-
 #ifndef RISCV_TUNE_STRING_DEFAULT
 #define RISCV_TUNE_STRING_DEFAULT "rocket"
-#endif
-
-#ifndef TARGET_64BIT_DEFAULT
-#define TARGET_64BIT_DEFAULT 1
 #endif
 
 #if TARGET_64BIT_DEFAULT
@@ -129,15 +117,13 @@ along with GCC; see the file COPYING3.  If not see
 
 
 /* Support for a compile-time default CPU, et cetera.  The rules are:
-   --with-arch is ignored if -march is specified.
    --with-tune is ignored if -mtune is specified.
    --with-float is ignored if -mfloat-abi is specified.  */
 #define OPTION_DEFAULT_SPECS \
-  {"arch", "%{!march=*:-march=%(VALUE)}"}, \
   {"arch_32", "%{" OPT_ARCH32 ":%{m32}}" }, \
   {"arch_64", "%{" OPT_ARCH64 ":%{m64}}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
-  {"float", "%{!mfloat-abi=*:-mfloat-abi=%(VALUE)}"}, \
+  {"float", "%{!mfloat-abi=*:%{!mno-float:-mfloat-abi=%(VALUE)}}"}, \
 
 #define DRIVER_SELF_SPECS ""
 
@@ -164,6 +150,7 @@ along with GCC; see the file COPYING3.  If not see
 %{fPIC|fpic|fPIE|fpie:-fpic} \
 %{march=*} \
 %{mfloat-abi=*} \
+%{mno-float:-mfloat-abi=soft} \
 %(subtarget_asm_spec)"
 
 /* Extra switches sometimes passed to the linker.  */

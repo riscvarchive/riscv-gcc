@@ -35,17 +35,20 @@ along with GCC; see the file COPYING3.  If not see
 #undef SUBTARGET_CPP_SPEC
 #define SUBTARGET_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
 
-#define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
+#define GLIBC_DYNAMIC_LINKER32 "/lib32/ld.so.1"
+#define GLIBC_DYNAMIC_LINKER64 "/lib/ld.so.1"
 
-/* Borrowed from sparc/linux.h */
 #undef LINK_SPEC
-#define LINK_SPEC \
-  "%{shared:-shared} \
+#define LINK_SPEC "\
+%{shared} \
   %{!shared: \
     %{!static: \
       %{rdynamic:-export-dynamic} \
-      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
-      %{static:-static}}"
+      %{" OPT_ARCH64 ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER64 "} \
+      %{" OPT_ARCH32 ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER32 "}} \
+    %{static:-static}} \
+%{" OPT_ARCH64 ":-melf64lriscv} \
+%{" OPT_ARCH32 ":-melf32lriscv}"
 
 #undef LIB_SPEC
 #define LIB_SPEC "\

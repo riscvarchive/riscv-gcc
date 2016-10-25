@@ -2033,23 +2033,9 @@ microblaze*-*-elf)
 	cxx_target_objs="${cxx_target_objs} microblaze-c.o"
 	tmake_file="${tmake_file} microblaze/t-microblaze"
         ;;
-riscv32*-*-linux*)
-	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h riscv/default-32.h ${tm_file} riscv/linux.h riscv/linux64.h"
-	tmake_file="${tmake_file} riscv/t-linux64"
-	gnu_ld=yes
-	gas=yes
-	gcc_cv_initfini_array=yes
-	;;
 riscv*-*-linux*)
-	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h riscv/linux64.h"
-	tmake_file="${tmake_file} riscv/t-linux64"
-	gnu_ld=yes
-	gas=yes
-	gcc_cv_initfini_array=yes
-	;;
-riscv32*-*-elf*)
-	tm_file="elfos.h newlib-stdint.h riscv/default-32.h ${tm_file} riscv/elf.h"
-	tmake_file="${tmake_file} riscv/t-elf"
+	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
+	tmake_file="${tmake_file} riscv/t-linux"
 	gnu_ld=yes
 	gas=yes
 	gcc_cv_initfini_array=yes
@@ -3993,12 +3979,20 @@ case "${target}" in
 		;;
 
 	riscv*-*-*)
-		supported_defaults="arch arch_32 arch_64 float tune tune_32 tune_64"
+		supported_defaults="arch float tune"
 
+		case "${with_arch}" in
+		"")
+			with_arch="G"
+			;;
+		*)
+			;;
+		esac
+
+		# Handle --with-float, or default to soft-float ABI unless the
+		# D extension is present; then, default to double-float ABI.
 		case "${with_float}" in
 		"")
-			# Default to soft-float unless D extension is present
-			# (which is also the case if with_arch is not set).
 			case ${with_arch} in
 				"" | *g* | *G* | *d* | *D*)
 					with_float=double
@@ -4017,7 +4011,47 @@ case "${target}" in
 			;;
 		esac
 
-    ;;
+		# Set TARGET_64BIT_DEFAULT from --target.
+		case "${target}" in
+		riscv32*)
+			rv64=0
+			;;
+		riscv64*)
+			rv64=1
+			;;
+		*)
+			rv64=""
+			;;
+		esac
+
+		# Or set TARGET_64BIT_DEFAULT from --with-arch.
+		case "`echo $with_arch | tr A-Z_ a-z-`" in
+		rv32)
+			if test "$rv64" = 1; then
+				echo "--with-arch and --target specify conflicting XLEN"
+				exit 1
+			fi
+			rv64=0
+			;;
+		rv64)
+			if test "$rv64" = 0; then
+				echo "--with-arch and --target specify conflicting XLEN"
+				exit 1
+			fi
+			rv64=1
+			;;
+		*)
+			;;
+		esac
+
+		# Or set TARGET_64BIT_DEFAULT to 1.
+		if test "$rv64" = ""; then
+			rv64=1
+		fi
+
+		tm_defines="${tm_defines} TARGET_64BIT_DEFAULT=${rv64}"
+		tm_defines="${tm_defines} TARGET_ARCH_STRING_DEFAULT=${with_arch}"
+		;;
 
 	mips*-*-*)
 		supported_defaults="abi arch arch_32 arch_64 float fpu nan fp_32 odd_spreg_32 tune tune_32 tune_64 divide llsc mips-plt synci"

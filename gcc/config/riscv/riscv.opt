@@ -111,10 +111,13 @@ Target Report Mask(EXPLICIT_RELOCS)
 Use %reloc() operators, rather than assembly macros, to load addresses.
 
 mno-float
-Target Report RejectNegative Undocumented
+Target Report RejectNegative
+Disable hardware floating-point.  Implies -mfloat-abi=soft.
 
 msingle-float
-Target Report RejectNegative Mask(HARD_FLOAT) Undocumented
+Target Report RejectNegative Mask(HARD_FLOAT)
+Enable only single-precision floating-point.
 
 mdouble-float
-Target Report RejectNegative Mask(DOUBLE_FLOAT) Undocumented
+Target Report RejectNegative Mask(DOUBLE_FLOAT)
+Enable single- and double-precision floating-point.

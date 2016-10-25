@@ -5,7 +5,7 @@ MULTILIB_DIRNAMES = 64 32 no-atomic
 MULTILIB_OSDIRNAMES = ../lib ../lib32 no-atomic
 
 ifneq ($(with_float), soft)
-MULTILIB_OPTIONS += msoft-float
+MULTILIB_OPTIONS += mno-float
 MULTILIB_DIRNAMES += soft-float
 MULTILIB_OSDIRNAMES += soft-float
 endif
