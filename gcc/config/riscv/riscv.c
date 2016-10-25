@@ -3603,10 +3603,6 @@ riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
   unsigned int size = GET_MODE_SIZE (mode);
   enum mode_class mclass = GET_MODE_CLASS (mode);
 
-  /* This is hella bogus but ira_build segfaults on RV32 without it. */
-  if (VECTOR_MODE_P (mode))
-    return true;
-
   if (GP_REG_P (regno))
     {
       if (size <= UNITS_PER_WORD)
