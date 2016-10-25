@@ -480,10 +480,22 @@ along with GCC; see the file COPYING3.  If not see
 #define RISCV_PROLOGUE_TEMP_REGNUM (GP_TEMP_FIRST + 1)
 #define RISCV_PROLOGUE_TEMP(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP_REGNUM)
 
-#define FUNCTION_PROFILER(STREAM, LABELNO)	\
-{						\
-    sorry ("profiler support for RISC-V");	\
-}
+#define MCOUNT_NAME "_mcount"
+
+#define NO_PROFILE_COUNTERS 1
+
+/* Emit rtl for profiling.  Output assembler code to FILE
+   to call "_mcount" for profiling a function entry.  */
+#define PROFILE_HOOK(LABEL)						\
+  {									\
+    rtx fun, ra;							\
+    ra = get_hard_reg_initial_val (Pmode, RETURN_ADDR_REGNUM);		\
+    fun = gen_rtx_SYMBOL_REF (Pmode, MCOUNT_NAME);			\
+    emit_library_call (fun, LCT_NORMAL, VOIDmode, 1, ra, Pmode);	\
+  }
+
+/* All the work done in PROFILE_HOOK, but still required.  */
+#define FUNCTION_PROFILER(STREAM, LABELNO) do { } while (0)
 
 /* Define this macro if it is as good or better to call a constant
    function address than to call an address kept in a register.  */
@@ -717,8 +729,6 @@ typedef struct {
 
 /* ABI requires 16-byte alignment, even on ven on RV32. */
 #define RISCV_STACK_ALIGN(LOC) (((LOC) + 15) & -16)
-
-#define NO_PROFILE_COUNTERS 1
 
 /* Define this macro if the code for function profiling should come
    before the function prologue.  Normally, the profiling code comes
