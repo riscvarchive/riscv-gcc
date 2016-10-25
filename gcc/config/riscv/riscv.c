@@ -4176,11 +4176,9 @@ riscv_option_override (void)
 static void
 riscv_conditional_register_usage (void)
 {
-  int regno;
-
   if (!TARGET_HARD_FLOAT)
     {
-      for (regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
+      for (int regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
 	fixed_regs[regno] = call_used_regs[regno] = 1;
     }
 }
