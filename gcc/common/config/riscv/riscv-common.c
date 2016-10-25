@@ -53,17 +53,17 @@ riscv_parse_arch_string (const char *isa, int *flags)
   if (*p == 'A')
     *flags |= MASK_ATOMIC, p++;
 
-  *flags |= MASK_SOFT_FLOAT;
+  *flags &= ~MASK_HARD_FLOAT;
   if (*p == 'F')
-    *flags &= ~MASK_SOFT_FLOAT, p++;
+    *flags |= MASK_HARD_FLOAT, p++;
 
-  *flags |= MASK_SINGLE_FLOAT;
+  *flags &= ~MASK_DOUBLE_FLOAT;
   if (*p == 'D')
     {
-      *flags &= ~MASK_SINGLE_FLOAT;
+      *flags |= MASK_DOUBLE_FLOAT;
       p++;
 
-      if (!TARGET_HARD_FLOAT)
+      if (!(*flags & MASK_HARD_FLOAT))
 	{
 	  error ("-march=%s: the D extension requires the F extension", isa);
 	  return;
@@ -114,6 +114,19 @@ riscv_handle_option (struct gcc_options *opts,
 	opts->x_target_flags |= (MASK_MUL | MASK_DIV);
       else
 	opts->x_target_flags &= ~(MASK_MUL | MASK_DIV);
+      return true;
+
+    case OPT_mno_float:
+      opts->x_target_flags &= ~(MASK_HARD_FLOAT | MASK_DOUBLE_FLOAT);
+      return true;
+
+    case OPT_msingle_float:
+      /* In addition to enabling the F extension, disable the D extension.  */
+      opts->x_target_flags &= ~MASK_DOUBLE_FLOAT;
+      return true;
+
+    case OPT_mdouble_float:
+      opts->x_target_flags |= MASK_HARD_FLOAT;
       return true;
 
     default:

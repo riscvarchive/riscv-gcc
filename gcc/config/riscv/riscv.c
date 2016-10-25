@@ -323,9 +323,6 @@ struct riscv_cpu_info {
 /* Which tuning parameters to use.  */
 static const struct riscv_tune_info *tune_info;
 
-/* Index [M][R] is true if register R is allowed to hold a value of mode M.  */
-bool riscv_hard_regno_mode_ok[(int) MAX_MACHINE_MODE][FIRST_PSEUDO_REGISTER];
-
 /* Index R is the smallest register class that contains register R.  */
 const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
   GR_REGS,	GR_REGS,	GR_REGS,	GR_REGS,
@@ -2203,19 +2200,18 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
      floating-point registers, as long as this is a named rather
      than a variable argument.  */
   info->fpr_p = (named
-		 && TARGET_HARD_FLOAT_ABI
 		 && (type == 0 || FLOAT_TYPE_P (type))
 		 && (GET_MODE_CLASS (mode) == MODE_FLOAT
 		     || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT
 		     || GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT)
-		 && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_HWFPVALUE);
+		 && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_FP_ARG);
 
   /* Complex floats should only go into FPRs if there are two FPRs free,
      otherwise they should be passed in the same way as a struct
      containing two floats.  */
   if (info->fpr_p
       && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT
-      && GET_MODE_UNIT_SIZE (mode) < UNITS_PER_HWFPVALUE)
+      && GET_MODE_UNIT_SIZE (mode) < UNITS_PER_FP_ARG)
     {
       if (cum->num_gprs >= MAX_ARGS_IN_REGISTERS - 1)
         info->fpr_p = false;
@@ -2251,13 +2247,12 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
 }
 
 /* INFO describes a register argument that has the normal format for the
-   argument's mode.  Return the register it uses, assuming that FPRs are
-   available if HARD_FLOAT_P.  */
+   argument's mode.  Return the register it uses.  */
 
 static unsigned int
-riscv_arg_regno (const struct riscv_arg_info *info, bool hard_float_p)
+riscv_arg_regno (const struct riscv_arg_info *info)
 {
-  if (!info->fpr_p || !hard_float_p)
+  if (!info->fpr_p || riscv_float_abi == FLOAT_ABI_SOFT)
     return GP_ARG_FIRST + info->reg_offset;
   else
     return FP_ARG_FIRST + info->reg_offset;
@@ -2282,14 +2277,13 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
     return NULL;
 
   /* If any XLEN-bit chunk of a structure contains an XLEN-bit floating-point
-     number in its entirety, and FLEN >= XLEN, pass the chunk in a
-     floating-point register.  */
-  if (TARGET_HARD_FLOAT_ABI
-      && named
+     number in its entirety, and the floating-point ABI can return XLEN-bit
+     values in FPRs, then pass the chunk in an FPR.  */
+  if (named
       && type != 0
       && TREE_CODE (type) == RECORD_TYPE
       && TYPE_SIZE_UNIT (type)
-      && UNITS_PER_FPREG >= UNITS_PER_WORD
+      && UNITS_PER_FP_ARG >= UNITS_PER_WORD
       && tree_fits_uhwi_p (TYPE_SIZE_UNIT (type)))
     {
       enum machine_mode fmode = TARGET_64BIT ? DFmode : SFmode;
@@ -2363,7 +2357,7 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
       return gen_rtx_PARALLEL (mode, gen_rtvec (2, real, imag));
     }
 
-  return gen_rtx_REG (mode, riscv_arg_regno (&info, TARGET_HARD_FLOAT_ABI));
+  return gen_rtx_REG (mode, riscv_arg_regno (&info));
 }
 
 /* Implement TARGET_FUNCTION_ARG_ADVANCE.  */
@@ -2444,8 +2438,7 @@ riscv_return_mode_in_fpr_p (enum machine_mode mode)
   return ((GET_MODE_CLASS (mode) == MODE_FLOAT
 	   || GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT
 	   || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-	  && TARGET_HARD_FLOAT_ABI
-	  && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_HWFPVALUE);
+	  && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_FP_ARG);
 }
 
 /* Return the representation of an FPR return register when the
@@ -3203,8 +3196,8 @@ riscv_compute_frame_info (void)
   /* Next are the callee-saved FPRs. */
   if (frame->fmask)
     {
-      offset += RISCV_STACK_ALIGN (num_f_saved * UNITS_PER_FPREG);
-      frame->fp_sp_offset = offset - UNITS_PER_HWFPVALUE;
+      offset += RISCV_STACK_ALIGN (num_f_saved * UNITS_PER_FP_REG);
+      frame->fp_sp_offset = offset - UNITS_PER_FP_REG;
     }
   /* Next are the callee-saved GPRs. */
   if (frame->mask)
@@ -3602,10 +3595,9 @@ riscv_register_move_cost (enum machine_mode mode,
   return SECONDARY_MEMORY_NEEDED (from, to, mode) ? 8 : 1;
 }
 
-/* Return true if register REGNO can store a value of mode MODE.
-   The result of this function is cached in riscv_hard_regno_mode_ok.  */
+/* Return true if register REGNO can store a value of mode MODE.  */
 
-static bool
+bool
 riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
 {
   unsigned int size = GET_MODE_SIZE (mode);
@@ -3632,10 +3624,17 @@ riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
 
   if (FP_REG_P (regno))
     {
+      unsigned max_size = UNITS_PER_FP_REG;
+
+      /* Only use callee-saved registers if a potential callee is guaranteed
+	 to spill the requisite width.  */
+      if (UNITS_PER_FP_ARG < UNITS_PER_FP_REG && !call_used_regs[regno])
+	max_size = UNITS_PER_FP_ARG;
+
       if (mclass == MODE_FLOAT
 	  || mclass == MODE_COMPLEX_FLOAT
 	  || mclass == MODE_VECTOR_FLOAT)
-	return size <= UNITS_PER_HWFPVALUE;
+	return size <= max_size;
     }
 
   return false;
@@ -3647,7 +3646,7 @@ unsigned int
 riscv_hard_regno_nregs (int regno, enum machine_mode mode)
 {
   if (FP_REG_P (regno))
-    return (GET_MODE_SIZE (mode) + UNITS_PER_FPREG - 1) / UNITS_PER_FPREG;
+    return (GET_MODE_SIZE (mode) + UNITS_PER_FP_REG - 1) / UNITS_PER_FP_REG;
 
   /* All other registers are word-sized.  */
   return (GET_MODE_SIZE (mode) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
@@ -3727,10 +3726,6 @@ riscv_file_start (void)
 
   /* Instruct GAS to generate position-[in]dependent code.  */
   fprintf (asm_out_file, "\t.option %spic\n", (flag_pic ? "" : "no"));
-
-  /* Inform GAS of the floating-point ABI.  */
-  fprintf (asm_out_file, "\t.option %s-float\n",
-           (TARGET_HARD_FLOAT_ABI ? "hard" : "soft"));
 }
 
 /* This structure describes a single built-in function.  */
@@ -4114,7 +4109,6 @@ riscv_init_machine_status (void)
 static void
 riscv_option_override (void)
 {
-  int regno, mode;
   const struct riscv_cpu_info *cpu;
 
 #ifdef SUBTARGET_OVERRIDE_OPTIONS
@@ -4163,15 +4157,22 @@ riscv_option_override (void)
     if (riscv_cmodel == CM_MEDLOW)
       target_flags |= MASK_EXPLICIT_RELOCS;
 
-  /* Hardawre floating-point ABI implies floating-point hardware.  */
-  if (TARGET_HARD_FLOAT_ABI)
-    target_flags &= ~MASK_SOFT_FLOAT;
+  /* Require that the ISA supports the requested floating-point ABI.  */
+  switch (riscv_float_abi)
+    {
+    case FLOAT_ABI_SOFT:
+      break;
 
-  /* Set up riscv_hard_regno_mode_ok.  */
-  for (mode = 0; mode < MAX_MACHINE_MODE; mode++)
-    for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
-      riscv_hard_regno_mode_ok[mode][regno]
-	= riscv_hard_regno_mode_ok_p (regno, (enum machine_mode) mode);
+    case FLOAT_ABI_SINGLE:
+      if (!TARGET_HARD_FLOAT)
+	error ("-mfloat-abi=single requires -msingle-float or -mdouble-float");
+      break;
+
+    case FLOAT_ABI_DOUBLE:
+      if (!TARGET_DOUBLE_FLOAT)
+	error ("-mfloat-abi=double requires -mdouble-float");
+      break;
+    }
 }
 
 /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */
