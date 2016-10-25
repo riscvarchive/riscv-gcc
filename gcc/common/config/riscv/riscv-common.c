@@ -34,50 +34,61 @@ riscv_parse_arch_string (const char *isa, int *flags)
 {
   const char *p = isa;
 
-  if (strncmp (p, "RV32", 4) == 0)
+  if (strncasecmp (p, "RV32", 4) == 0)
     *flags |= MASK_32BIT, p += 4;
-  else if (strncmp (p, "RV64", 4) == 0)
+  else if (strncasecmp (p, "RV64", 4) == 0)
     *flags &= ~MASK_32BIT, p += 4;
+  else if (strncasecmp (p, "RV", 2) == 0)
+    p += 2;
 
-  if (*p++ != 'I')
+  if (TOUPPER (*p) == 'G')
     {
-      error ("-march=%s: ISA strings must begin with I, RV32I, or RV64I", isa);
+      p++;
+
+      *flags |= MASK_MUL | MASK_DIV;
+      *flags |= MASK_ATOMIC;
+      *flags |= MASK_HARD_FLOAT;
+      *flags |= MASK_DOUBLE_FLOAT;
+    }
+  else if (TOUPPER (*p) == 'I')
+    {
+      p++;
+
+      *flags &= ~(MASK_MUL | MASK_DIV);
+      if (TOUPPER (*p) == 'M')
+	*flags |= (MASK_MUL | MASK_DIV), p++;
+
+      *flags &= ~MASK_ATOMIC;
+      if (TOUPPER (*p) == 'A')
+	*flags |= MASK_ATOMIC, p++;
+
+      *flags &= ~MASK_HARD_FLOAT;
+      if (TOUPPER (*p) == 'F')
+	{
+	  *flags |= MASK_HARD_FLOAT, p++;
+
+	  *flags &= ~MASK_DOUBLE_FLOAT;
+	  if (TOUPPER (*p) == 'D')
+	    {
+	      *flags |= MASK_DOUBLE_FLOAT;
+	      p++;
+	    }
+	}
+    }
+  else
+    {
+      error ("-march=%s: invalid ISA string", isa);
       return;
     }
 
-  *flags &= ~(MASK_MUL | MASK_DIV);
-  if (*p == 'M')
-    *flags |= (MASK_MUL | MASK_DIV), p++;
-
-  *flags &= ~MASK_ATOMIC;
-  if (*p == 'A')
-    *flags |= MASK_ATOMIC, p++;
-
-  *flags &= ~MASK_HARD_FLOAT;
-  if (*p == 'F')
-    *flags |= MASK_HARD_FLOAT, p++;
-
-  *flags &= ~MASK_DOUBLE_FLOAT;
-  if (*p == 'D')
-    {
-      *flags |= MASK_DOUBLE_FLOAT;
-      p++;
-
-      if (!(*flags & MASK_HARD_FLOAT))
-	{
-	  error ("-march=%s: the D extension requires the F extension", isa);
-	  return;
-	}
-    }
-
   *flags &= ~MASK_RVC;
-  if (*p == 'C')
+  if (TOUPPER (*p) == 'C')
     *flags |= MASK_RVC, p++;
 
   /* FIXME: For now we just stop parsing when faced with a
      non-standard RISC-V ISA extension.  We might consider
      ignoring it and passing it through to the assembler.  */
-  if (*p == 'X')
+  if (TOUPPER (*p) == 'X')
     return;
 
   if (*p)
