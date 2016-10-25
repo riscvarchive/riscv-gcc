@@ -265,10 +265,10 @@
 
 ;; This mode iterator allows :ANYF to be used where SF or DF is allowed.
 (define_mode_iterator ANYF [(SF "TARGET_HARD_FLOAT")
-			    (DF "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT")])
+			    (DF "TARGET_DOUBLE_FLOAT")])
 (define_mode_iterator ANYIF [QI HI SI (DI "TARGET_64BIT")
 			     (SF "TARGET_HARD_FLOAT")
-			     (DF "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT")])
+			     (DF "TARGET_DOUBLE_FLOAT")])
 
 ;; A floating-point mode for which moves involving FPRs may need to be split.
 (define_mode_iterator SPLITF
@@ -985,7 +985,7 @@
 (define_insn "truncdfsf2"
   [(set (match_operand:SF 0 "register_operand" "=f")
 	(float_truncate:SF (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT"
+  "TARGET_DOUBLE_FLOAT"
   "fcvt.s.d\t%0,%1"
   [(set_attr "type"	"fcvt")
    (set_attr "cnv_mode"	"D2S")   
@@ -1168,7 +1168,7 @@
 (define_insn "extendsfdf2"
   [(set (match_operand:DF 0 "register_operand" "=f")
 	(float_extend:DF (match_operand:SF 1 "register_operand" "f")))]
-  "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT"
+  "TARGET_DOUBLE_FLOAT"
   "fcvt.d.s\t%0,%1"
   [(set_attr "type"	"fcvt")
    (set_attr "cnv_mode"	"S2D")   
@@ -1184,7 +1184,7 @@
 (define_insn "fix_truncdfsi2"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(fix:SI (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT"
+  "TARGET_DOUBLE_FLOAT"
   "fcvt.w.d %0,%1,rtz"
   [(set_attr "type"	"fcvt")
    (set_attr "mode"	"DF")
@@ -1204,7 +1204,7 @@
 (define_insn "fix_truncdfdi2"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(fix:DI (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_HARD_FLOAT && TARGET_64BIT && TARGET_DOUBLE_FLOAT"
+  "TARGET_64BIT && TARGET_DOUBLE_FLOAT"
   "fcvt.l.d %0,%1,rtz"
   [(set_attr "type"	"fcvt")
    (set_attr "mode"	"DF")
@@ -1224,7 +1224,7 @@
 (define_insn "floatsidf2"
   [(set (match_operand:DF 0 "register_operand" "=f")
 	(float:DF (match_operand:SI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT"
+  "TARGET_DOUBLE_FLOAT"
   "fcvt.d.w\t%0,%z1"
   [(set_attr "type"	"fcvt")
    (set_attr "mode"	"DF")
@@ -1234,7 +1234,7 @@
 (define_insn "floatdidf2"
   [(set (match_operand:DF 0 "register_operand" "=f")
 	(float:DF (match_operand:DI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_HARD_FLOAT && TARGET_64BIT && TARGET_DOUBLE_FLOAT"
+  "TARGET_64BIT && TARGET_DOUBLE_FLOAT"
   "fcvt.d.l\t%0,%z1"
   [(set_attr "type"	"fcvt")
    (set_attr "mode"	"DF")
@@ -1264,7 +1264,7 @@
 (define_insn "floatunssidf2"
   [(set (match_operand:DF 0 "register_operand" "=f")
 	(unsigned_float:DF (match_operand:SI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT"
+  "TARGET_DOUBLE_FLOAT"
   "fcvt.d.wu\t%0,%z1"
   [(set_attr "type"	"fcvt")
    (set_attr "mode"	"DF")
@@ -1274,7 +1274,7 @@
 (define_insn "floatunsdidf2"
   [(set (match_operand:DF 0 "register_operand" "=f")
 	(unsigned_float:DF (match_operand:DI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_HARD_FLOAT && TARGET_64BIT && TARGET_DOUBLE_FLOAT"
+  "TARGET_64BIT && TARGET_DOUBLE_FLOAT"
   "fcvt.d.lu\t%0,%z1"
   [(set_attr "type"	"fcvt")
    (set_attr "mode"	"DF")
@@ -1304,7 +1304,7 @@
 (define_insn "fixuns_truncdfsi2"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(unsigned_fix:SI (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT"
+  "TARGET_DOUBLE_FLOAT"
   "fcvt.wu.d %0,%1,rtz"
   [(set_attr "type"	"fcvt")
    (set_attr "mode"	"DF")
@@ -1324,7 +1324,7 @@
 (define_insn "fixuns_truncdfdi2"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(unsigned_fix:DI (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_HARD_FLOAT && TARGET_64BIT && TARGET_DOUBLE_FLOAT"
+  "TARGET_64BIT && TARGET_DOUBLE_FLOAT"
   "fcvt.lu.d %0,%1,rtz"
   [(set_attr "type"	"fcvt")
    (set_attr "mode"	"DF")
@@ -1587,7 +1587,7 @@
 (define_insn "*movsf_softfloat"
   [(set (match_operand:SF 0 "nonimmediate_operand" "=r,r,m")
 	(match_operand:SF 1 "move_operand" "Gr,m,r"))]
-  "TARGET_SOFT_FLOAT
+  "!TARGET_HARD_FLOAT
    && (register_operand (operands[0], SFmode)
        || reg_or_0_operand (operands[1], SFmode))"
   { return riscv_output_move (operands[0], operands[1]); }
@@ -1610,7 +1610,7 @@
 (define_insn "*movdf_hardfloat_rv32"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=f,f,f,m,m,*r,*r,*m")
 	(match_operand:DF 1 "move_operand" "f,G,m,f,G,*r*G,*m,*r"))]
-  "!TARGET_64BIT && TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
+  "!TARGET_64BIT && TARGET_DOUBLE_FLOAT
    && (register_operand (operands[0], DFmode)
        || reg_or_0_operand (operands[1], DFmode))"
   { return riscv_output_move (operands[0], operands[1]); }
@@ -1620,7 +1620,7 @@
 (define_insn "*movdf_hardfloat_rv64"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=f,f,f,m,m,*f,*r,*r,*r,*m")
 	(match_operand:DF 1 "move_operand" "f,G,m,f,G,*r,*f,*r*G,*m,*r"))]
-  "TARGET_64BIT && TARGET_HARD_FLOAT && TARGET_DOUBLE_FLOAT
+  "TARGET_64BIT && TARGET_DOUBLE_FLOAT
    && (register_operand (operands[0], DFmode)
        || reg_or_0_operand (operands[1], DFmode))"
   { return riscv_output_move (operands[0], operands[1]); }
@@ -1630,7 +1630,7 @@
 (define_insn "*movdf_softfloat"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=r,r,m")
 	(match_operand:DF 1 "move_operand" "rG,m,rG"))]
-  "(TARGET_SOFT_FLOAT || !TARGET_DOUBLE_FLOAT)
+  "!TARGET_DOUBLE_FLOAT
    && (register_operand (operands[0], DFmode)
        || reg_or_0_operand (operands[1], DFmode))"
   { return riscv_output_move (operands[0], operands[1]); }

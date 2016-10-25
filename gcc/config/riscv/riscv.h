@@ -19,6 +19,11 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
+#ifndef GCC_RISCV_H
+#define GCC_RISCV_H
+
+#include "config/riscv/riscv-opts.h"
+
 /* Target CPU builtins.  */
 #define TARGET_CPU_CPP_BUILTINS()					\
   do									\
@@ -73,10 +78,20 @@ along with GCC; see the file COPYING3.  If not see
 	  builtin_define ("__riscv_fsqrt");				\
 	}								\
 									\
-      if (TARGET_HARD_FLOAT_ABI)					\
-	builtin_define ("__riscv_hard_float");				\
-      else								\
-	builtin_define ("__riscv_soft_float");				\
+      switch (riscv_float_abi)						\
+	{								\
+	case FLOAT_ABI_SOFT:						\
+	  builtin_define ("__riscv_float_abi_soft");			\
+	  break;							\
+									\
+	case FLOAT_ABI_SINGLE:						\
+	  builtin_define ("__riscv_float_abi_single");			\
+	  break;							\
+									\
+	case FLOAT_ABI_DOUBLE:						\
+	  builtin_define ("__riscv_float_abi_double");			\
+	  break;							\
+	}								\
 									\
       /* The base RISC-V ISA is always little-endian. */		\
       builtin_define_std ("RISCVEL");					\
@@ -94,6 +109,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef RISCV_ARCH_STRING_DEFAULT
 #define RISCV_ARCH_STRING_DEFAULT "IMAFD"
+#endif
+
+#ifndef RISCV_FLOAT_ABI_DEFAULT
+#define RISCV_FLOAT_ABI_DEFAULT FLOAT_ABI_DOUBLE
 #endif
 
 #ifndef RISCV_TUNE_STRING_DEFAULT
@@ -123,13 +142,13 @@ along with GCC; see the file COPYING3.  If not see
 /* Support for a compile-time default CPU, et cetera.  The rules are:
    --with-arch is ignored if -march is specified.
    --with-tune is ignored if -mtune is specified.
-   --with-float is ignored if -mhard-float or -msoft-float are specified. */
+   --with-float is ignored if -mfloat-abi is specified.  */
 #define OPTION_DEFAULT_SPECS \
-  {"arch", "%{!march=*:-march=%(VALUE)}"},			   \
+  {"arch", "%{!march=*:-march=%(VALUE)}"}, \
   {"arch_32", "%{" OPT_ARCH32 ":%{m32}}" }, \
   {"arch_64", "%{" OPT_ARCH64 ":%{m64}}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
-  {"float", "%{!msoft-float:%{!mhard-float:-m%(VALUE)-float}}" }, \
+  {"float", "%{!mfloat-abi=*:-mfloat-abi=%(VALUE)}"}, \
 
 #define DRIVER_SELF_SPECS ""
 
@@ -153,8 +172,9 @@ along with GCC; see the file COPYING3.  If not see
 %(subtarget_asm_debugging_spec) \
 %{m32} %{m64} %{!m32:%{!m64: %(asm_abi_default_spec)}} \
 %{mrvc} %{mno-rvc} \
+%{fPIC|fpic|fPIE|fpie:-fpic} \
 %{march=*} \
-%{mhard-float} %{msoft-float} \
+%{mfloat-abi=*} \
 %(subtarget_asm_spec)"
 
 /* Extra switches sometimes passed to the linker.  */
@@ -231,12 +251,13 @@ along with GCC; see the file COPYING3.  If not see
 #endif
 
 /* The `Q' extension is not yet supported.  */
-#define UNITS_PER_FPREG (TARGET_SINGLE_FLOAT ? 4 : 8)
+#define UNITS_PER_FP_REG (TARGET_DOUBLE_FLOAT ? 8 : 4)
 
 /* The largest size of value that can be held in floating-point
    registers and moved with a single instruction.  */
-#define UNITS_PER_HWFPVALUE \
-  (TARGET_SOFT_FLOAT ? 0 : UNITS_PER_FPREG)
+#define UNITS_PER_FP_ARG			\
+  (riscv_float_abi == FLOAT_ABI_SOFT ? 0 :	\
+   riscv_float_abi == FLOAT_ABI_SINGLE ? 4 : 8)
 
 /* The number of bytes in a double.  */
 #define UNITS_PER_DOUBLE (TYPE_PRECISION (double_type_node) / BITS_PER_UNIT)
@@ -451,7 +472,7 @@ along with GCC; see the file COPYING3.  If not see
 #define HARD_REGNO_NREGS(REGNO, MODE) riscv_hard_regno_nregs (REGNO, MODE)
 
 #define HARD_REGNO_MODE_OK(REGNO, MODE)					\
-  riscv_hard_regno_mode_ok[ (int)(MODE) ][ (REGNO) ]
+  riscv_hard_regno_mode_ok_p (REGNO, MODE)
 
 #define MODES_TIEABLE_P(MODE1, MODE2)					\
   ((MODE1) == (MODE2) || (GET_MODE_CLASS (MODE1) == MODE_INT		\
@@ -661,7 +682,8 @@ enum reg_class
    point values.  */
 
 #define GP_RETURN GP_ARG_FIRST
-#define FP_RETURN ((TARGET_SOFT_FLOAT_ABI) ? GP_RETURN : FP_ARG_FIRST)
+#define FP_RETURN \
+  (riscv_float_abi == FLOAT_ABI_SOFT ? GP_RETURN : FP_ARG_FIRST)
 
 #define MAX_ARGS_IN_REGISTERS 8
 
@@ -689,10 +711,11 @@ enum reg_class
    We have no FP argument registers when soft-float.  When FP registers
    are 32 bits, we can't directly reference the odd numbered ones.  */
 
-/* Accept arguments in a0-a7 and/or fa0-fa7. */
+/* Accept arguments in a0-a7, and in fa0-fa7 if permitted by the ABI.  */
 #define FUNCTION_ARG_REGNO_P(N)					\
   (IN_RANGE((N), GP_ARG_FIRST, GP_ARG_LAST)			\
-   || (!TARGET_SOFT_FLOAT_ABI && IN_RANGE((N), FP_ARG_FIRST, FP_ARG_LAST)))
+   || (riscv_float_abi != FLOAT_ABI_SOFT			\
+       && IN_RANGE((N), FP_ARG_FIRST, FP_ARG_LAST)))
 
 /* The ABI views the arguments as a structure, of which the first 8
    words go in registers and the rest go on the stack.  If I < 8, N, the Ith
@@ -1079,3 +1102,5 @@ extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 #define IMM_REACH (1LL << IMM_BITS)
 #define CONST_HIGH_PART(VALUE) (((VALUE) + (IMM_REACH/2)) & ~(IMM_REACH-1))
 #define CONST_LOW_PART(VALUE) ((VALUE) - CONST_HIGH_PART (VALUE))
+
+#endif /* ! GCC_RISCV_H */
