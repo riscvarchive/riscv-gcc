@@ -29,27 +29,14 @@ along with GCC; see the file COPYING3.  If not see
   do									\
     {									\
       builtin_assert ("machine=riscv");					\
-									\
       builtin_assert ("cpu=riscv");					\
       builtin_define ("__riscv__");					\
       builtin_define ("__riscv");					\
-      builtin_define ("_riscv");					\
-      builtin_define ("__riscv");					\
 									\
       if (TARGET_64BIT)							\
-	{								\
-	  builtin_define ("__riscv64");					\
-	  builtin_define ("_RISCV_SIM=_ABI64");				\
-	}								\
+	builtin_define ("__riscv64");					\
       else								\
-	{								\
-	  builtin_define ("__riscv32");					\
-	  builtin_define ("_RISCV_SIM=_ABI32");				\
-	}								\
-									\
-      builtin_define ("_ABI32=1");					\
-      builtin_define ("_ABI64=3");					\
-									\
+	builtin_define ("__riscv32");					\
 									\
       builtin_define_with_int_value ("_RISCV_SZINT", INT_TYPE_SIZE);	\
       builtin_define_with_int_value ("_RISCV_SZLONG", LONG_TYPE_SIZE);	\
@@ -68,9 +55,11 @@ along with GCC; see the file COPYING3.  If not see
       if (TARGET_DIV && TARGET_MUL)					\
 	builtin_define ("__riscv_muldiv");				\
 									\
+      builtin_define_with_int_value ("__riscv_xlen",			\
+				     UNITS_PER_WORD * 8);		\
       if (TARGET_HARD_FLOAT)						\
 	builtin_define_with_int_value ("__riscv_flen",			\
-				       UNITS_PER_FPREG * 8);		\
+				       UNITS_PER_FP_REG * 8);		\
 									\
       if (TARGET_HARD_FLOAT && TARGET_FDIV)				\
 	{								\
