@@ -2341,20 +2341,36 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
 	}
     }
 
-  /* Pass complex floating-point arguments in FPR pairs, with the real part
-     in the lower register and the imaginary part in the upper register.  */
-  if (info.fpr_p && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
+  /* Handle the n32/n64 conventions for passing complex floating-point
+     arguments in FPR pairs.  The real part goes in the lower register
+     and the imaginary part goes in the upper register.  */
+  if (info.fpr_p
+      && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
     {
       rtx real, imag;
-      enum machine_mode inner = GET_MODE_INNER (mode);
-      unsigned int regno = FP_ARG_FIRST + info.reg_offset;
+      enum machine_mode inner;
+      unsigned int regno;
 
-      gcc_assert (info.stack_words == 0 && info.reg_words == 2);
-      real = gen_rtx_EXPR_LIST (VOIDmode, gen_rtx_REG (inner, regno),
-				const0_rtx);
-      imag = gen_rtx_EXPR_LIST (VOIDmode, gen_rtx_REG (inner, regno + 1),
-				GEN_INT (GET_MODE_SIZE (inner)));
-      return gen_rtx_PARALLEL (mode, gen_rtvec (2, real, imag));
+      inner = GET_MODE_INNER (mode);
+      regno = FP_ARG_FIRST + info.reg_offset;
+      if (info.reg_words * UNITS_PER_WORD == GET_MODE_SIZE (inner))
+	{
+	  /* Real part in registers, imaginary part on stack.  */
+	  gcc_assert (info.stack_words == info.reg_words);
+	  return gen_rtx_REG (inner, regno);
+	}
+      else
+	{
+	  gcc_assert (info.stack_words == 0);
+	  real = gen_rtx_EXPR_LIST (VOIDmode,
+				    gen_rtx_REG (inner, regno),
+				    const0_rtx);
+	  imag = gen_rtx_EXPR_LIST (VOIDmode,
+				    gen_rtx_REG (inner,
+						 regno + info.reg_words / 2),
+				    GEN_INT (GET_MODE_SIZE (inner)));
+	  return gen_rtx_PARALLEL (mode, gen_rtvec (2, real, imag));
+	}
     }
 
   return gen_rtx_REG (mode, riscv_arg_regno (&info));
