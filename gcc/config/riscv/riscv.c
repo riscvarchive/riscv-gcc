@@ -2209,9 +2209,7 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
   /* Complex floats should only go into FPRs if there are two FPRs free,
      otherwise they should be passed in the same way as a struct
      containing two floats.  */
-  if (info->fpr_p
-      && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT
-      && GET_MODE_UNIT_SIZE (mode) < UNITS_PER_FP_ARG)
+  if (info->fpr_p && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
     {
       if (cum->num_gprs >= MAX_ARGS_IN_REGISTERS - 1)
         info->fpr_p = false;
@@ -2341,20 +2339,36 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
 	}
     }
 
-  /* Pass complex floating-point arguments in FPR pairs, with the real part
-     in the lower register and the imaginary part in the upper register.  */
+  /* Pass complex floating-point arguments in FPR pairs, with the real
+     part in the lower register and the imaginary part in the upper
+     register (or on the stack if no more FPRs are available).  */
   if (info.fpr_p && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
     {
-      rtx real, imag;
       enum machine_mode inner = GET_MODE_INNER (mode);
       unsigned int regno = FP_ARG_FIRST + info.reg_offset;
 
-      gcc_assert (info.stack_words == 0 && info.reg_words == 2);
-      real = gen_rtx_EXPR_LIST (VOIDmode, gen_rtx_REG (inner, regno),
-				const0_rtx);
-      imag = gen_rtx_EXPR_LIST (VOIDmode, gen_rtx_REG (inner, regno + 1),
-				GEN_INT (GET_MODE_SIZE (inner)));
-      return gen_rtx_PARALLEL (mode, gen_rtvec (2, real, imag));
+      gcc_assert (info.reg_words + info.stack_words == 2);
+
+      switch (info.reg_words)
+	{
+	case 1:
+	  /* Real part in registers, imaginary part on stack.  */
+	  return gen_rtx_REG (inner, regno);
+
+	case 2:
+	  {
+	    rtx real = gen_rtx_EXPR_LIST (VOIDmode,
+					  gen_rtx_REG (inner, regno),
+					  const0_rtx);
+	    rtx imag = gen_rtx_EXPR_LIST (VOIDmode,
+					  gen_rtx_REG (inner, regno + 1),
+					  GEN_INT (GET_MODE_SIZE (inner)));
+	    return gen_rtx_PARALLEL (mode, gen_rtvec (2, real, imag));
+	  }
+
+	default:
+	  abort ();
+	}
     }
 
   return gen_rtx_REG (mode, riscv_arg_regno (&info));
