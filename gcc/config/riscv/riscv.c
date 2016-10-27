@@ -3714,6 +3714,9 @@ riscv_scalar_mode_supported_p (enum machine_mode mode)
       && GET_MODE_PRECISION (mode) <= 2 * BITS_PER_WORD)
     return true;
 
+  if (mode == TFmode)
+    return true;
+
   return default_scalar_mode_supported_p (mode);
 }
 
