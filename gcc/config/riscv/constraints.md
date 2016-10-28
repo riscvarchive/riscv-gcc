@@ -27,7 +27,7 @@
 (define_register_constraint "b" "ALL_REGS"
   "@internal")
 
-(define_register_constraint "j" "T_REGS"
+(define_register_constraint "j" "SIBCALL_REGS"
   "@internal")
 
 (define_register_constraint "l" "JALR_REGS"
