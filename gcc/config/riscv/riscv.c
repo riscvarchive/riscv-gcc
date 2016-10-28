@@ -234,10 +234,8 @@ struct riscv_arg_info {
   /* The number of words passed in registers, rounded up.  */
   unsigned int reg_words;
 
-  /* For EABI, the offset of the first register from GP_ARG_FIRST or
-     FP_ARG_FIRST.  For other ABIs, the offset of the first register from
-     the start of the ABI's argument structure (see the CUMULATIVE_ARGS
-     comment for details).
+  /* The offset of the first register from the start of the ABI's argument
+     structure (see the CUMULATIVE_ARGS comment for details).
 
      The value is MAX_ARGS_IN_REGISTERS if the argument is passed entirely
      on the stack.  */
@@ -740,24 +738,22 @@ riscv_split_symbol_type (enum riscv_symbol_type symbol_type)
 }
 
 /* Return true if a LO_SUM can address a value of mode MODE when the
-   LO_SUM symbol has type SYMBOL_TYPE.  */
+   LO_SUM symbol has type SYM_TYPE.  */
 
 static bool
-riscv_valid_lo_sum_p (enum riscv_symbol_type symbol_type, enum machine_mode mode)
+riscv_valid_lo_sum_p (enum riscv_symbol_type sym_type, enum machine_mode mode)
 {
   /* Check that symbols of type SYMBOL_TYPE can be used to access values
      of mode MODE.  */
-  if (riscv_symbol_insns (symbol_type) == 0)
+  if (riscv_symbol_insns (sym_type) == 0)
     return false;
 
   /* Check that there is a known low-part relocation.  */
-  if (!riscv_split_symbol_type (symbol_type))
+  if (!riscv_split_symbol_type (sym_type))
     return false;
 
   /* We may need to split multiword moves, so make sure that each word
-     can be accessed without inducing a carry.  This is mainly needed
-     for o64, which has historically only guaranteed 64-bit alignment
-     for 128-bit types.  */
+     can be accessed without inducing a carry.  */
   if (GET_MODE_SIZE (mode) > UNITS_PER_WORD
       && GET_MODE_BITSIZE (mode) > GET_MODE_ALIGNMENT (mode))
     return false;
@@ -798,7 +794,7 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
 	 create and verify the matching HIGH.  Target-independent code that
 	 adds an offset to a LO_SUM must prove that the offset will not
 	 induce a carry.  Failure to do either of these things would be
-	 a bug, and we are not required to check for it here.  The RISCV
+	 a bug, and we are not required to check for it here.  The RISC-V
 	 backend itself should only create LO_SUMs for valid symbolic
 	 constants, with the high part being either a HIGH or a copy
 	 of _gp. */
@@ -2223,16 +2219,14 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
 			  > BITS_PER_WORD)
 			 && (num_bytes != 0);
 
-  /* Set REG_OFFSET to the register count we're interested in.
-     The EABI allocates the floating-point registers separately,
-     but the other ABIs allocate them like integer registers.  */
-  info->reg_offset = cum->num_gprs;
 
-  /* Advance to an even register if the argument is doubleword-aligned.  */
+  /* Place the argument in the next available register, and align to an
+     even register boundary if the argument is doubleword-aligned.  */
+  info->reg_offset = cum->num_gprs;
   if (doubleword_aligned_p)
     info->reg_offset += info->reg_offset & 1;
 
-  /* Work out the offset of a stack argument.  */
+  /* Similarly compute the offset of a stack argument.  */
   info->stack_offset = cum->stack_words;
   if (doubleword_aligned_p)
     info->stack_offset += info->stack_offset & 1;
@@ -2413,9 +2407,8 @@ riscv_arg_partial_bytes (cumulative_args_t cum,
    list them in FIELDS (which should have two elements).  Return 0
    otherwise.
 
-   For n32 & n64, a structure with one or two fields is returned in
-   floating-point registers as long as every field has a floating-point
-   type.  */
+   A structure with one or two fields is returned in floating-point
+   registers as long as every field has a floating-point type.  */
 
 static int
 riscv_fpr_return_fields (const_tree valtype, tree fields[2])
