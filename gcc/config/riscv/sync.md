@@ -1,6 +1,6 @@
 ;; Machine description for RISC-V atomic operations.
 ;; Copyright (C) 2011-2014 Free Software Foundation, Inc.
-;; Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
+;; Contributed by Andrew Waterman (andrew@sifive.com).
 ;; Based on MIPS target for GNU compiler.
 
 ;; This file is part of GCC.
