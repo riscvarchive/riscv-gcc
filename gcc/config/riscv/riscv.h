@@ -261,7 +261,9 @@ along with GCC; see the file COPYING3.  If not see
 /* There is no point aligning anything to a rounder boundary than this.  */
 #define BIGGEST_ALIGNMENT 128
 
-/* All accesses must be aligned.  */
+/* The user-level ISA permits misaligned accesses, but they may execute
+   extremely slowly and non-atomically.  Some privileged architectures
+   do not permit them at all.  It is best to enforce strict alignment.  */
 #define STRICT_ALIGNMENT 1
 
 /* Define this if you wish to imitate the way many other C compilers
