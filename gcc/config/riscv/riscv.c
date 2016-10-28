@@ -324,13 +324,13 @@ static const struct riscv_tune_info *tune_info;
 /* Index R is the smallest register class that contains register R.  */
 const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
   GR_REGS,	GR_REGS,	GR_REGS,	GR_REGS,
-  GR_REGS,	T_REGS,		T_REGS,		T_REGS,
-  GR_REGS,	GR_REGS,	GR_REGS,	GR_REGS,
-  GR_REGS,	GR_REGS,	GR_REGS,	GR_REGS,
-  GR_REGS,	GR_REGS, 	GR_REGS,	GR_REGS,
-  GR_REGS,	GR_REGS,	GR_REGS,	GR_REGS,
-  GR_REGS,	GR_REGS,	GR_REGS,	GR_REGS,
-  T_REGS,	T_REGS,		T_REGS,		T_REGS,
+  GR_REGS,	GR_REGS,	SIBCALL_REGS,	SIBCALL_REGS,
+  JALR_REGS,	JALR_REGS,	JALR_REGS,	JALR_REGS,
+  JALR_REGS,	JALR_REGS,	JALR_REGS,	JALR_REGS,
+  JALR_REGS,	JALR_REGS, 	JALR_REGS,	JALR_REGS,
+  JALR_REGS,	JALR_REGS,	JALR_REGS,	JALR_REGS,
+  JALR_REGS,	JALR_REGS,	JALR_REGS,	JALR_REGS,
+  SIBCALL_REGS,	SIBCALL_REGS,	SIBCALL_REGS,	SIBCALL_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
@@ -4035,8 +4035,8 @@ riscv_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
   use_sibcall_p = absolute_symbolic_operand (fnaddr, Pmode);
 
   /* We need two temporary registers in some cases.  */
-  temp1 = gen_rtx_REG (Pmode, GP_TEMP_FIRST);
-  temp2 = gen_rtx_REG (Pmode, GP_TEMP_FIRST + 1);
+  temp1 = gen_rtx_REG (Pmode, RISCV_PROLOGUE_TEMP_REGNUM);
+  temp2 = gen_rtx_REG (Pmode, STATIC_CHAIN_REGNUM);
 
   /* Find out which register contains the "this" pointer.  */
   if (aggregate_value_p (TREE_TYPE (TREE_TYPE (function)), function))
@@ -4081,7 +4081,7 @@ riscv_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
     }
   else
     {
-      riscv_emit_move(temp1, fnaddr);
+      riscv_emit_move (temp1, fnaddr);
       emit_jump_insn (gen_indirect_jump (temp1));
     }
 
