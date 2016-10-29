@@ -1701,7 +1701,7 @@
   ""
   "
 {
-  emit_insn(gen_fence_i());
+  emit_insn (gen_fence_i ());
   DONE;
 }")
 
