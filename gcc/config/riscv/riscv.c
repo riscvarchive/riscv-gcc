@@ -623,7 +623,7 @@ static int riscv_symbol_insns (enum riscv_symbol_type type)
     case SYMBOL_PCREL: return 2; /* AUIPC + the reference itself */
     case SYMBOL_TLS_LE: return 3; /* LUI + ADD TP + the reference itself */
     case SYMBOL_GOT_DISP: return 3; /* AUIPC + LD GOT + the reference itself */
-    default: gcc_unreachable();
+    default: gcc_unreachable ();
     }
 }
 
@@ -1050,20 +1050,29 @@ riscv_unspec_offset_high (rtx temp, rtx addr, enum riscv_symbol_type symbol_type
 }
 
 /* Load an entry from the GOT. */
-static rtx riscv_got_load_tls_gd(rtx dest, rtx sym)
+static rtx riscv_got_load_tls_gd (rtx dest, rtx sym)
 {
-  return (Pmode == DImode ? gen_got_load_tls_gddi(dest, sym) : gen_got_load_tls_gdsi(dest, sym));
+  if (Pmode == DImode)
+    return gen_got_load_tls_gddi (dest, sym);
+  else
+    return gen_got_load_tls_gdsi (dest, sym);
 }
 
-static rtx riscv_got_load_tls_ie(rtx dest, rtx sym)
+static rtx riscv_got_load_tls_ie (rtx dest, rtx sym)
 {
-  return (Pmode == DImode ? gen_got_load_tls_iedi(dest, sym) : gen_got_load_tls_iesi(dest, sym));
+  if (Pmode == DImode)
+    return gen_got_load_tls_iedi (dest, sym);
+  else
+    return gen_got_load_tls_iesi (dest, sym);
 }
 
-static rtx riscv_tls_add_tp_le(rtx dest, rtx base, rtx sym)
+static rtx riscv_tls_add_tp_le (rtx dest, rtx base, rtx sym)
 {
   rtx tp = gen_rtx_REG (Pmode, THREAD_POINTER_REGNUM);
-  return (Pmode == DImode ? gen_tls_add_tp_ledi(dest, base, tp, sym) : gen_tls_add_tp_lesi(dest, base, tp, sym));
+  if (Pmode == DImode)
+    return gen_tls_add_tp_ledi (dest, base, tp, sym);
+  else
+    return gen_tls_add_tp_lesi (dest, base, tp, sym);
 }
 
 /* If MODE is MAX_MACHINE_MODE, ADDR appears as a move operand, otherwise
@@ -1486,11 +1495,10 @@ static bool
 riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UNUSED,
 		 int *total, bool speed)
 {
-  int code = GET_CODE(x);
   bool float_mode_p = FLOAT_MODE_P (mode);
   int cost;
 
-  switch (code)
+  switch (GET_CODE (x))
     {
     case CONST_INT:
       if (riscv_immediate_operand_p (outer_code, INTVAL (x)))
@@ -1806,7 +1814,7 @@ riscv_output_move (rtx dest, rtx src)
 	  case SYMBOL_GOT_DISP: return "la\t%0,%1";
 	  case SYMBOL_ABSOLUTE: return "lla\t%0,%1";
 	  case SYMBOL_PCREL: return "lla\t%0,%1";
-	  default: gcc_unreachable();
+	  default: gcc_unreachable ();
 	  }
     }
   if ((src_code == REG && GP_REG_P (REGNO (src)))
@@ -2709,8 +2717,8 @@ riscv_block_move_straight (rtx dest, rtx src, HOST_WIDE_INT length)
   enum machine_mode mode;
   rtx *regs;
 
-  bits = MAX( BITS_PER_UNIT,
-             MIN( BITS_PER_WORD, MIN( MEM_ALIGN(src),MEM_ALIGN(dest) ) ) );
+  bits = MAX (BITS_PER_UNIT,
+	      MIN (BITS_PER_WORD, MIN (MEM_ALIGN (src), MEM_ALIGN (dest))));
 
   mode = mode_for_size (bits, MODE_INT, 0);
   delta = bits / BITS_PER_UNIT;
@@ -2723,7 +2731,7 @@ riscv_block_move_straight (rtx dest, rtx src, HOST_WIDE_INT length)
   for (offset = 0, i = 0; offset + delta <= length; offset += delta, i++)
     {
       regs[i] = gen_reg_rtx (mode);
-	riscv_emit_move (regs[i], adjust_address (src, mode, offset));
+      riscv_emit_move (regs[i], adjust_address (src, mode, offset));
     }
 
   /* Copy the chunks to the destination.  */
@@ -2884,7 +2892,7 @@ riscv_memory_model_suffix (enum memmodel model)
       case MEMMODEL_RELAXED:
 	return "";
       default:
-        gcc_unreachable();
+        gcc_unreachable ();
     }
 }
 
@@ -2900,11 +2908,8 @@ riscv_memory_model_suffix (enum memmodel model)
 static void
 riscv_print_operand (FILE *file, rtx op, int letter)
 {
-  enum machine_mode mode = GET_MODE(op);
-  enum rtx_code code;
-
-  gcc_assert (op);
-  code = GET_CODE (op);
+  enum machine_mode mode = GET_MODE (op);
+  enum rtx_code code = GET_CODE (op);
 
   switch (letter)
     {
@@ -2938,7 +2943,7 @@ riscv_print_operand (FILE *file, rtx op, int letter)
 
 	case MEM:
 	  if (letter == 'y')
-	    fprintf (file, "%s", reg_names[REGNO(XEXP(op, 0))]);
+	    fprintf (file, "%s", reg_names[REGNO (XEXP (op, 0))]);
 	  else if (letter && letter != 'z')
 	    output_operand_lossage ("invalid use of '%%%c'", letter);
 	  else
