@@ -1,6 +1,6 @@
 /* Definition of RISC-V target for GNU compiler.
    Copyright (C) 2011-2014 Free Software Foundation, Inc.
-   Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
+   Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target for GNU compiler.
 
 This file is part of GCC.
@@ -19,39 +19,24 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* TARGET_HARD_FLOAT and TARGET_SOFT_FLOAT reflect whether the FPU is
-   directly accessible, while the command-line options select
-   TARGET_HARD_FLOAT_ABI and TARGET_SOFT_FLOAT_ABI to reflect the ABI
-   in use.  */
-#define TARGET_HARD_FLOAT TARGET_HARD_FLOAT_ABI
-#define TARGET_SOFT_FLOAT TARGET_SOFT_FLOAT_ABI
+#ifndef GCC_RISCV_H
+#define GCC_RISCV_H
+
+#include "config/riscv/riscv-opts.h"
 
 /* Target CPU builtins.  */
 #define TARGET_CPU_CPP_BUILTINS()					\
   do									\
     {									\
       builtin_assert ("machine=riscv");					\
-									\
       builtin_assert ("cpu=riscv");					\
       builtin_define ("__riscv__");					\
       builtin_define ("__riscv");					\
-      builtin_define ("_riscv");					\
-      builtin_define ("__riscv");					\
 									\
       if (TARGET_64BIT)							\
-	{								\
-	  builtin_define ("__riscv64");					\
-	  builtin_define ("_RISCV_SIM=_ABI64");				\
-	}								\
+	builtin_define ("__riscv64");					\
       else								\
-	{								\
-	  builtin_define ("__riscv32");					\
-	  builtin_define ("_RISCV_SIM=_ABI32");				\
-	}								\
-									\
-      builtin_define ("_ABI32=1");					\
-      builtin_define ("_ABI64=3");					\
-									\
+	builtin_define ("__riscv32");					\
 									\
       builtin_define_with_int_value ("_RISCV_SZINT", INT_TYPE_SIZE);	\
       builtin_define_with_int_value ("_RISCV_SZLONG", LONG_TYPE_SIZE);	\
@@ -63,20 +48,39 @@ along with GCC; see the file COPYING3.  If not see
       if (TARGET_ATOMIC)						\
 	builtin_define ("__riscv_atomic");				\
 									\
-      if (TARGET_MULDIV)						\
+      if (TARGET_MUL)							\
+	builtin_define ("__riscv_mul");					\
+      if (TARGET_DIV)							\
+	builtin_define ("__riscv_div");					\
+      if (TARGET_DIV && TARGET_MUL)					\
 	builtin_define ("__riscv_muldiv");				\
 									\
-      if (TARGET_HARD_FLOAT_ABI)					\
+      builtin_define_with_int_value ("__riscv_xlen",			\
+				     UNITS_PER_WORD * 8);		\
+      if (TARGET_HARD_FLOAT)						\
+	builtin_define_with_int_value ("__riscv_flen",			\
+				       UNITS_PER_FP_REG * 8);		\
+									\
+      if (TARGET_HARD_FLOAT && TARGET_FDIV)				\
 	{								\
-	  builtin_define ("__riscv_hard_float");			\
-	  if (TARGET_FDIV)						\
-	    {								\
-	      builtin_define ("__riscv_fdiv");				\
-	      builtin_define ("__riscv_fsqrt");				\
-	    }								\
+	  builtin_define ("__riscv_fdiv");				\
+	  builtin_define ("__riscv_fsqrt");				\
 	}								\
-      else								\
-	builtin_define ("__riscv_soft_float");				\
+									\
+      switch (riscv_float_abi)						\
+	{								\
+	case FLOAT_ABI_SOFT:						\
+	  builtin_define ("__riscv_float_abi_soft");			\
+	  break;							\
+									\
+	case FLOAT_ABI_SINGLE:						\
+	  builtin_define ("__riscv_float_abi_single");			\
+	  break;							\
+									\
+	case FLOAT_ABI_DOUBLE:						\
+	  builtin_define ("__riscv_float_abi_double");			\
+	  break;							\
+	}								\
 									\
       /* The base RISC-V ISA is always little-endian. */		\
       builtin_define_std ("RISCVEL");					\
@@ -92,16 +96,8 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_DEFAULT 0
 #endif
 
-#ifndef RISCV_ARCH_STRING_DEFAULT
-#define RISCV_ARCH_STRING_DEFAULT "IMAFD"
-#endif
-
 #ifndef RISCV_TUNE_STRING_DEFAULT
 #define RISCV_TUNE_STRING_DEFAULT "rocket"
-#endif
-
-#ifndef TARGET_64BIT_DEFAULT
-#define TARGET_64BIT_DEFAULT 1
 #endif
 
 #if TARGET_64BIT_DEFAULT
@@ -121,15 +117,13 @@ along with GCC; see the file COPYING3.  If not see
 
 
 /* Support for a compile-time default CPU, et cetera.  The rules are:
-   --with-arch is ignored if -march is specified.
    --with-tune is ignored if -mtune is specified.
-   --with-float is ignored if -mhard-float or -msoft-float are specified. */
+   --with-float is ignored if -mfloat-abi is specified.  */
 #define OPTION_DEFAULT_SPECS \
-  {"arch", "%{!march=*:-march=%(VALUE)}"},			   \
   {"arch_32", "%{" OPT_ARCH32 ":%{m32}}" }, \
   {"arch_64", "%{" OPT_ARCH64 ":%{m64}}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
-  {"float", "%{!msoft-float:%{!mhard-float:-m%(VALUE)-float}}" }, \
+  {"float", "%{!mfloat-abi=*:%{!mno-float:-mfloat-abi=%(VALUE)}}"}, \
 
 #define DRIVER_SELF_SPECS ""
 
@@ -153,9 +147,10 @@ along with GCC; see the file COPYING3.  If not see
 %(subtarget_asm_debugging_spec) \
 %{m32} %{m64} %{!m32:%{!m64: %(asm_abi_default_spec)}} \
 %{mrvc} %{mno-rvc} \
-%{msoft-float} %{mhard-float} \
 %{fPIC|fpic|fPIE|fpie:-fpic} \
 %{march=*} \
+%{mfloat-abi=*} \
+%{mno-float:-mfloat-abi=soft} \
 %(subtarget_asm_spec)"
 
 /* Extra switches sometimes passed to the linker.  */
@@ -231,19 +226,14 @@ along with GCC; see the file COPYING3.  If not see
 #define MIN_UNITS_PER_WORD 4
 #endif
 
-/* We currently require both or neither of the `F' and `D' extensions. */
-#define UNITS_PER_FPREG 8
+/* The `Q' extension is not yet supported.  */
+#define UNITS_PER_FP_REG (TARGET_DOUBLE_FLOAT ? 8 : 4)
 
 /* The largest size of value that can be held in floating-point
    registers and moved with a single instruction.  */
-#define UNITS_PER_HWFPVALUE \
-  (TARGET_SOFT_FLOAT_ABI ? 0 : UNITS_PER_FPREG)
-
-/* The largest size of value that can be held in floating-point
-   registers.  */
-#define UNITS_PER_FPVALUE			\
-  (TARGET_SOFT_FLOAT_ABI ? 0			\
-   : LONG_DOUBLE_TYPE_SIZE / BITS_PER_UNIT)
+#define UNITS_PER_FP_ARG			\
+  (riscv_float_abi == FLOAT_ABI_SOFT ? 0 :	\
+   riscv_float_abi == FLOAT_ABI_SINGLE ? 4 : 8)
 
 /* The number of bytes in a double.  */
 #define UNITS_PER_DOUBLE (TYPE_PRECISION (double_type_node) / BITS_PER_UNIT)
@@ -256,8 +246,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #define FLOAT_TYPE_SIZE 32
 #define DOUBLE_TYPE_SIZE 64
-/* XXX The ABI says long doubles are IEEE-754-2008 float128s. */
-#define LONG_DOUBLE_TYPE_SIZE 64
+#define LONG_DOUBLE_TYPE_SIZE 128
 
 #ifdef IN_LIBGCC2
 # define LIBGCC2_LONG_DOUBLE_TYPE_SIZE LONG_DOUBLE_TYPE_SIZE
@@ -272,7 +261,9 @@ along with GCC; see the file COPYING3.  If not see
 /* There is no point aligning anything to a rounder boundary than this.  */
 #define BIGGEST_ALIGNMENT 128
 
-/* All accesses must be aligned.  */
+/* The user-level ISA permits misaligned accesses, but they may execute
+   extremely slowly and non-atomically.  Some privileged architectures
+   do not permit them at all.  It is best to enforce strict alignment.  */
 #define STRICT_ALIGNMENT 1
 
 /* Define this if you wish to imitate the way many other C compilers
@@ -381,8 +372,6 @@ along with GCC; see the file COPYING3.  If not see
 
    - 32 integer registers
    - 32 floating point registers
-   - 32 vector integer registers
-   - 32 vector floating point registers
    - 2 fake registers:
 	- ARG_POINTER_REGNUM
 	- FRAME_POINTER_REGNUM */
@@ -461,7 +450,7 @@ along with GCC; see the file COPYING3.  If not see
 #define HARD_REGNO_NREGS(REGNO, MODE) riscv_hard_regno_nregs (REGNO, MODE)
 
 #define HARD_REGNO_MODE_OK(REGNO, MODE)					\
-  riscv_hard_regno_mode_ok[ (int)(MODE) ][ (REGNO) ]
+  riscv_hard_regno_mode_ok_p (REGNO, MODE)
 
 #define MODES_TIEABLE_P(MODE1, MODE2)					\
   ((MODE1) == (MODE2) || (GET_MODE_CLASS (MODE1) == MODE_INT		\
@@ -493,10 +482,22 @@ along with GCC; see the file COPYING3.  If not see
 #define RISCV_PROLOGUE_TEMP_REGNUM (GP_TEMP_FIRST + 1)
 #define RISCV_PROLOGUE_TEMP(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP_REGNUM)
 
-#define FUNCTION_PROFILER(STREAM, LABELNO)	\
-{						\
-    sorry ("profiler support for RISC-V");	\
-}
+#define MCOUNT_NAME "_mcount"
+
+#define NO_PROFILE_COUNTERS 1
+
+/* Emit rtl for profiling.  Output assembler code to FILE
+   to call "_mcount" for profiling a function entry.  */
+#define PROFILE_HOOK(LABEL)						\
+  {									\
+    rtx fun, ra;							\
+    ra = get_hard_reg_initial_val (Pmode, RETURN_ADDR_REGNUM);		\
+    fun = gen_rtx_SYMBOL_REF (Pmode, MCOUNT_NAME);			\
+    emit_library_call (fun, LCT_NORMAL, VOIDmode, 1, ra, Pmode);	\
+  }
+
+/* All the work done in PROFILE_HOOK, but still required.  */
+#define FUNCTION_PROFILER(STREAM, LABELNO) do { } while (0)
 
 /* Define this macro if it is as good or better to call a constant
    function address than to call an address kept in a register.  */
@@ -525,7 +526,7 @@ along with GCC; see the file COPYING3.  If not see
 enum reg_class
 {
   NO_REGS,			/* no registers in set */
-  T_REGS,			/* registers used by indirect sibcalls */
+  SIBCALL_REGS,			/* registers used by indirect sibcalls */
   JALR_REGS,			/* registers used by indirect calls */
   GR_REGS,			/* integer registers */
   FP_REGS,			/* floating point registers */
@@ -545,7 +546,7 @@ enum reg_class
 #define REG_CLASS_NAMES							\
 {									\
   "NO_REGS",								\
-  "T_REGS",								\
+  "SIBCALL_REGS",								\
   "JALR_REGS",								\
   "GR_REGS",								\
   "FP_REGS",								\
@@ -564,11 +565,11 @@ enum reg_class
    sub-initializer must be suitable as an initializer for the type
    `HARD_REG_SET' which is defined in `hard-reg-set.h'.  */
 
-#define REG_CLASS_CONTENTS									\
-{												\
+#define REG_CLASS_CONTENTS						\
+{									\
   { 0x00000000, 0x00000000, 0x00000000 },	/* NO_REGS */		\
-  { 0xf0000040, 0x00000000, 0x00000000 },	/* T_REGS */		\
-  { 0xffffff40, 0x00000000, 0x00000000 },	/* JALR_REGS */		\
+  { 0xf00000c0, 0x00000000, 0x00000000 },	/* SIBCALL_REGS */	\
+  { 0xffffffc0, 0x00000000, 0x00000000 },	/* JALR_REGS */		\
   { 0xffffffff, 0x00000000, 0x00000000 },	/* GR_REGS */		\
   { 0x00000000, 0xffffffff, 0x00000000 },	/* FP_REGS */		\
   { 0x00000000, 0x00000000, 0x00000003 },	/* FRAME_REGS */	\
@@ -671,7 +672,8 @@ enum reg_class
    point values.  */
 
 #define GP_RETURN GP_ARG_FIRST
-#define FP_RETURN ((TARGET_SOFT_FLOAT) ? GP_RETURN : FP_ARG_FIRST)
+#define FP_RETURN \
+  (riscv_float_abi == FLOAT_ABI_SOFT ? GP_RETURN : FP_ARG_FIRST)
 
 #define MAX_ARGS_IN_REGISTERS 8
 
@@ -699,10 +701,11 @@ enum reg_class
    We have no FP argument registers when soft-float.  When FP registers
    are 32 bits, we can't directly reference the odd numbered ones.  */
 
-/* Accept arguments in a0-a7 and/or fa0-fa7. */
+/* Accept arguments in a0-a7, and in fa0-fa7 if permitted by the ABI.  */
 #define FUNCTION_ARG_REGNO_P(N)					\
-  (IN_RANGE((N), GP_ARG_FIRST, GP_ARG_LAST)			\
-   || IN_RANGE((N), FP_ARG_FIRST, FP_ARG_LAST))
+  (IN_RANGE ((N), GP_ARG_FIRST, GP_ARG_LAST)			\
+   || (riscv_float_abi != FLOAT_ABI_SOFT			\
+       && IN_RANGE ((N), FP_ARG_FIRST, FP_ARG_LAST)))
 
 /* The ABI views the arguments as a structure, of which the first 8
    words go in registers and the rest go on the stack.  If I < 8, N, the Ith
@@ -728,8 +731,6 @@ typedef struct {
 
 /* ABI requires 16-byte alignment, even on ven on RV32. */
 #define RISCV_STACK_ALIGN(LOC) (((LOC) + 15) & -16)
-
-#define NO_PROFILE_COUNTERS 1
 
 /* Define this macro if the code for function profiling should come
    before the function prologue.  Normally, the profiling code comes
@@ -811,7 +812,11 @@ typedef struct {
    currently results in more opportunities for linker relaxation.  */
 #define USE_LOAD_ADDRESS_MACRO(sym)					\
   (!TARGET_EXPLICIT_RELOCS &&						\
-   ((flag_pic && SYMBOL_REF_LOCAL_P (sym))				\
+   ((flag_pic								\
+     && ((SYMBOL_REF_P (sym) && SYMBOL_REF_LOCAL_P (sym))		\
+	 || ((GET_CODE (sym) == CONST)					\
+	     && SYMBOL_REF_P (XEXP (XEXP (sym, 0),0))			\
+	     && SYMBOL_REF_LOCAL_P (XEXP (XEXP (sym, 0),0)))))		\
      || riscv_cmodel == CM_MEDANY))
 
 /* Define this as 1 if `char' should by default be signed; else as 0.  */
@@ -1085,3 +1090,5 @@ extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 #define IMM_REACH (1LL << IMM_BITS)
 #define CONST_HIGH_PART(VALUE) (((VALUE) + (IMM_REACH/2)) & ~(IMM_REACH-1))
 #define CONST_LOW_PART(VALUE) ((VALUE) - CONST_HIGH_PART (VALUE))
+
+#endif /* ! GCC_RISCV_H */

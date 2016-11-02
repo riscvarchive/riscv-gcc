@@ -1,6 +1,6 @@
 ;; Constraint definitions for RISC-V target.
 ;; Copyright (C) 2011-2014 Free Software Foundation, Inc.
-;; Contributed by Andrew Waterman (waterman@cs.berkeley.edu) at UC Berkeley.
+;; Contributed by Andrew Waterman (andrew@sifive.com).
 ;; Based on MIPS target for GNU compiler.
 ;;
 ;; This file is part of GCC.
@@ -27,7 +27,7 @@
 (define_register_constraint "b" "ALL_REGS"
   "@internal")
 
-(define_register_constraint "j" "T_REGS"
+(define_register_constraint "j" "SIBCALL_REGS"
   "@internal")
 
 (define_register_constraint "l" "JALR_REGS"

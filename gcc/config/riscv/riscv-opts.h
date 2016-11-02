@@ -1,7 +1,6 @@
-/* Definitions of target machine for GCC, for RISC-V,
-   defaulting to 32-bit code generation.
-
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+/* Definition of RISC-V target for GNU compiler.
+   Copyright (C) 2016 Free Software Foundation, Inc.
+   Contributed by Andrew Waterman (andrew@sifive.com).
 
 This file is part of GCC.
 
@@ -19,4 +18,14 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#define TARGET_64BIT_DEFAULT 0
+#ifndef GCC_RISCV_OPTS_H
+#define GCC_RISCV_OPTS_H
+
+enum riscv_float_abi_type {
+  FLOAT_ABI_SOFT,
+  FLOAT_ABI_SINGLE,
+  FLOAT_ABI_DOUBLE
+};
+extern enum riscv_float_abi_type riscv_float_abi;
+
+#endif /* ! GCC_RISCV_OPTS_H */
