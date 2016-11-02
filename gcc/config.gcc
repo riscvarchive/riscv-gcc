@@ -2054,13 +2054,6 @@ riscv*-*-freebsd*)
 	gas=yes
 	gcc_cv_initfini_array=yes
 	;;
-riscv*-*-elf*)
-	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
-	tmake_file="${tmake_file} riscv/t-elf"
-	gnu_ld=yes
-	gas=yes
-	gcc_cv_initfini_array=yes
-	;;
 mips*-*-netbsd*)			# NetBSD/mips, either endian.
 	target_cpu_default="MASK_ABICALLS"
 	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h"
