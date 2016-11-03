@@ -24,7 +24,7 @@ along with GCC; see the file COPYING3.  If not see
 
       NARGS is the number of arguments.
       LIST contains the return-type code followed by the codes for each
-        argument type.
+	argument type.
 
    Argument- and return-type codes are either modes or one of the following:
 

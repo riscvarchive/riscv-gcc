@@ -1153,8 +1153,8 @@ riscv_add_offset (rtx temp, rtx reg, HOST_WIDE_INT offset)
       rtx high;
 
       /* Leave OFFSET as a 16-bit offset and put the excess in HIGH.
-         The addition inside the macro CONST_HIGH_PART may cause an
-         overflow, so we need to force a sign-extension check.  */
+	 The addition inside the macro CONST_HIGH_PART may cause an
+	 overflow, so we need to force a sign-extension check.  */
       high = gen_int_mode (CONST_HIGH_PART (offset), Pmode);
       offset = CONST_LOW_PART (offset);
       high = riscv_force_temporary (temp, high);
@@ -1180,7 +1180,7 @@ riscv_call_tls_get_addr (rtx sym, rtx result)
     riscv_tls_symbol = init_one_libfunc ("__tls_get_addr");
 
   start_sequence ();
-  
+
   emit_insn (riscv_got_load_tls_gd (a0, sym));
   insn = riscv_expand_call (false, result, riscv_tls_symbol, const0_rtx);
   RTL_CONST_CALL_P (insn) = 1;
@@ -1307,17 +1307,17 @@ riscv_move_integer (rtx temp, rtx dest, HOST_WIDE_INT value)
       x = GEN_INT (codes[0].value);
 
       for (i = 1; i < num_ops; i++)
-        {
-          if (!can_create_pseudo_p ())
-            {
-              emit_insn (gen_rtx_SET (temp, x));
-              x = temp;
-            }
-          else
-            x = force_reg (mode, x);
+	{
+	  if (!can_create_pseudo_p ())
+	    {
+	      emit_insn (gen_rtx_SET (temp, x));
+	      x = temp;
+	    }
+	  else
+	    x = force_reg (mode, x);
 
-          x = gen_rtx_fmt_ee (codes[i].code, mode, x, GEN_INT (codes[i].value));
-        }
+	  x = gen_rtx_fmt_ee (codes[i].code, mode, x, GEN_INT (codes[i].value));
+	}
     }
 
   emit_insn (gen_rtx_SET (dest, x));
@@ -2216,9 +2216,9 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
   if (info->fpr_p && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
     {
       if (cum->num_gprs >= MAX_ARGS_IN_REGISTERS - 1)
-        info->fpr_p = false;
+	info->fpr_p = false;
       else
-        num_words = 2;
+	num_words = 2;
     }
 
   /* See whether the argument has doubleword alignment,
@@ -2545,12 +2545,12 @@ riscv_function_value (const_tree valtype, const_tree func, enum machine_mode mod
   if (riscv_return_mode_in_fpr_p (mode))
     {
       if (GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-        return riscv_return_fpr_pair (mode,
+	return riscv_return_fpr_pair (mode,
     				 GET_MODE_INNER (mode), 0,
     				 GET_MODE_INNER (mode),
     				 GET_MODE_SIZE (mode) / 2);
       else
-        return gen_rtx_REG (mode, FP_RETURN);
+	return gen_rtx_REG (mode, FP_RETURN);
     }
 
   return gen_rtx_REG (mode, GP_RETURN);
@@ -2823,7 +2823,7 @@ riscv_expand_block_move (rtx dest, rtx src, rtx length)
   if (CONST_INT_P (length))
     {
       HOST_WIDE_INT factor, align;
-      
+
       align = MIN (MIN (MEM_ALIGN (src), MEM_ALIGN (dest)), BITS_PER_WORD);
       factor = BITS_PER_WORD / align;
 
@@ -2892,7 +2892,7 @@ riscv_memory_model_suffix (enum memmodel model)
       case MEMMODEL_RELAXED:
 	return "";
       default:
-        gcc_unreachable ();
+	gcc_unreachable ();
     }
 }
 
@@ -3197,7 +3197,7 @@ riscv_compute_frame_info (void)
   if (TARGET_HARD_FLOAT)
     for (regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
       if (riscv_save_reg_p (regno))
-        frame->fmask |= 1 << (regno - FP_REG_FIRST), num_f_saved++;
+	frame->fmask |= 1 << (regno - FP_REG_FIRST), num_f_saved++;
 
   /* At the bottom of the frame are any outgoing stack arguments. */
   offset = crtl->outgoing_args_size;
@@ -3336,8 +3336,8 @@ riscv_for_each_saved_reg (HOST_WIDE_INT sp_offset, riscv_save_restore_fn fn)
   for (regno = GP_REG_FIRST; regno <= GP_REG_LAST-1; regno++)
     if (BITSET_P (cfun->machine->frame.mask, regno - GP_REG_FIRST))
       {
-        riscv_save_restore_reg (word_mode, regno, offset, fn);
-        offset -= UNITS_PER_WORD;
+	riscv_save_restore_reg (word_mode, regno, offset, fn);
+	offset -= UNITS_PER_WORD;
       }
 
   /* This loop must iterate over the same space as its companion in
@@ -3446,7 +3446,7 @@ riscv_expand_prologue (void)
   if (frame_pointer_needed)
     {
       insn = gen_add3_insn (hard_frame_pointer_rtx, stack_pointer_rtx,
-                            GEN_INT (frame->hard_frame_pointer_offset - size));
+			    GEN_INT (frame->hard_frame_pointer_offset - size));
       RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
     }
 
@@ -3537,7 +3537,7 @@ riscv_expand_epilogue (bool sibcall_p)
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_rtx = gen_rtx_PLUS (Pmode, stack_pointer_rtx,
-                                         const0_rtx);
+				         const0_rtx);
       dwarf = alloc_reg_note (REG_CFA_DEF_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
 
@@ -3565,7 +3565,7 @@ riscv_expand_epilogue (bool sibcall_p)
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_rtx = gen_rtx_PLUS (Pmode, stack_pointer_rtx,
-                                         const0_rtx);
+				         const0_rtx);
       dwarf = alloc_reg_note (REG_CFA_DEF_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
 
@@ -3680,7 +3680,7 @@ static reg_class_t
 riscv_preferred_reload_class (rtx x ATTRIBUTE_UNUSED, reg_class_t rclass)
 {
   return reg_class_subset_p (FP_REGS, rclass) ? FP_REGS :
-         reg_class_subset_p (GR_REGS, rclass) ? GR_REGS :
+	 reg_class_subset_p (GR_REGS, rclass) ? GR_REGS :
 	 rclass;
 }
 
@@ -3691,7 +3691,7 @@ riscv_memory_move_cost (enum machine_mode mode, reg_class_t rclass, bool in)
 {
   return (tune_info->memory_cost
 	  + memory_move_secondary_cost (mode, rclass, in));
-} 
+}
 
 /* Implement TARGET_MODE_REP_EXTENDED.  */
 
