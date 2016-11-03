@@ -114,7 +114,7 @@
 	   (match_operand:SI 3 "const_int_operand")] ;; model
 	  UNSPEC_SYNC_EXCHANGE))
    (set (match_dup 1)
-        (match_operand:GPR 2 "register_operand" "0"))]
+	(match_operand:GPR 2 "register_operand" "0"))]
   "TARGET_ATOMIC"
   "amoswap.<amo>%A3 %0,%z2,%1")
 
