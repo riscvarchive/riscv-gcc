@@ -28,7 +28,8 @@
   ;; GP manipulation.
   UNSPEC_EH_RETURN
 
-  ;; Symbolic accesses.
+  ;; Symbolic accesses.  The order of this list must match that of
+  ;; enum riscv_symbol_type in riscv-protos.h.
   UNSPEC_ADDRESS_FIRST
   UNSPEC_PCREL
   UNSPEC_LOAD_GOT
@@ -1355,7 +1356,7 @@
    [(set (match_operand:P 0 "register_operand" "=r")
        (unspec:P [(match_operand:P 1 "symbolic_operand" "")]
 		 UNSPEC_LOAD_GOT))]
-  "flag_pic"
+  ""
   "la\t%0,%1"
    [(set_attr "got" "load")
     (set_attr "mode" "<MODE>")])
@@ -1366,7 +1367,7 @@
 		   (match_operand:P 2 "register_operand" "r")
 		   (match_operand:P 3 "symbolic_operand" "")]
 		  UNSPEC_TLS_LE))]
-  "!flag_pic || flag_pie"
+  ""
   "add\t%0,%1,%2,%%tprel_add(%3)"
   [(set_attr "type" "arith")
    (set_attr "mode" "<MODE>")])
@@ -1375,7 +1376,7 @@
   [(set (match_operand:P 0 "register_operand" "=r")
        (unspec:P [(match_operand:P 1 "symbolic_operand" "")]
 		 UNSPEC_TLS_GD))]
-  "flag_pic"
+  ""
   "la.tls.gd\t%0,%1"
   [(set_attr "got" "load")
    (set_attr "mode" "<MODE>")])
@@ -1384,7 +1385,7 @@
   [(set (match_operand:P 0 "register_operand" "=r")
        (unspec:P [(match_operand:P 1 "symbolic_operand" "")]
 		 UNSPEC_TLS_IE))]
-  "flag_pic"
+  ""
   "la.tls.ie\t%0,%1"
   [(set_attr "got" "load")
    (set_attr "mode" "<MODE>")])
