@@ -3115,6 +3115,11 @@ riscv_use_save_libcall (const struct riscv_frame_info *frame)
   if (!TARGET_SAVE_RESTORE || crtl->calls_eh_return || frame_pointer_needed)
     return false;
 
+  /* The save/restore libcalls don't contain DWARF information at this time,
+     so do not emit them if we are emitting DWARF frame info.  */
+  if (dwarf2out_do_frame ())
+    return false;
+
   return frame->save_libcall_adjustment != 0;
 }
 
@@ -3380,25 +3385,10 @@ riscv_restore_reg (rtx reg, rtx mem)
 const char *
 riscv_output_gpr_save (unsigned mask)
 {
-  static char buf[GP_REG_NUM * 32];
-  size_t len = 0;
-  unsigned n = riscv_save_libcall_count (mask), i;
-  unsigned frame_size = RISCV_STACK_ALIGN ((n + 1) * UNITS_PER_WORD);
+  static char buf[32];
+  unsigned n = riscv_save_libcall_count (mask);
 
-  len += sprintf (buf + len, "call\tt0,__riscv_save_%u", n);
-
-#ifdef DWARF2_UNWIND_INFO
-  /* Describe the effect of the call to __riscv_save_X.  */
-  if (dwarf2out_do_cfi_asm ())
-    {
-      len += sprintf (buf + len, "\n\t.cfi_def_cfa_offset %u", frame_size);
-
-      for (i = GP_REG_FIRST; i <= GP_REG_LAST; i++)
-	if (BITSET_P (cfun->machine->frame.mask, i))
-	  len += sprintf (buf + len, "\n\t.cfi_offset %u,%d", i,
-			  (CALLEE_SAVED_REG_NUMBER (i) + 2) * -UNITS_PER_WORD);
-    }
-#endif
+  sprintf (buf, "call\tt0,__riscv_save_%u", n);
 
   return buf;
 }
