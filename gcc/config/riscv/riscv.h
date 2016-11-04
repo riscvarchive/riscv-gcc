@@ -199,9 +199,10 @@ along with GCC; see the file COPYING3.  If not see
 /* The DWARF 2 CFA column which tracks the return address.  */
 #define DWARF_FRAME_RETURN_COLUMN RETURN_ADDR_REGNUM
 
-/* Don't emit .cfi_sections, as it does not work */
-#undef HAVE_GAS_CFI_SECTIONS_DIRECTIVE
-#define HAVE_GAS_CFI_SECTIONS_DIRECTIVE 0
+/* Disable emission of CFI directives altogether, because they currently
+   preclude linker relaxations.  GCC will emit DWARF directly, anyway.  */
+#undef HAVE_GAS_CFI_PERSONALITY_DIRECTIVE
+#define HAVE_GAS_CFI_PERSONALITY_DIRECTIVE 0
 
 /* Before the prologue, RA lives in r31.  */
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (VOIDmode, RETURN_ADDR_REGNUM)
