@@ -194,7 +194,7 @@ along with GCC; see the file COPYING3.  If not see
 #define USER_LABEL_PREFIX	""
 
 #define DWARF2_DEBUGGING_INFO 1
-#define DWARF2_ASM_LINE_DEBUG_INFO 0
+#define DWARF2_ASM_LINE_DEBUG_INFO (flag_dwarf2_cfi_asm)
 
 /* The mapping from gcc register number to DWARF 2 CFA column number.  */
 #define DWARF_FRAME_REGNUM(REGNO) \
