@@ -125,7 +125,11 @@ along with GCC; see the file COPYING3.  If not see
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
   {"float", "%{!mfloat-abi=*:%{!mno-float:-mfloat-abi=%(VALUE)}}"}, \
 
-#define DRIVER_SELF_SPECS ""
+/* Emitting .cfi directives currently precludes linker relaxations, so by
+   default only emit them if -gdwarf is expicitly passed.  If only -g is
+   passed, GCC will emit DWARF code directly, sans .cfi directives.   */
+#define DRIVER_SELF_SPECS \
+  "%{!gdwarf*:-fno-dwarf2-cfi-asm}"
 
 #ifdef IN_LIBGCC2
 #undef TARGET_64BIT
@@ -198,11 +202,6 @@ along with GCC; see the file COPYING3.  If not see
 
 /* The DWARF 2 CFA column which tracks the return address.  */
 #define DWARF_FRAME_RETURN_COLUMN RETURN_ADDR_REGNUM
-
-/* Disable emission of CFI directives altogether, because they currently
-   preclude linker relaxations.  GCC will emit DWARF directly, anyway.  */
-#undef HAVE_GAS_CFI_PERSONALITY_DIRECTIVE
-#define HAVE_GAS_CFI_PERSONALITY_DIRECTIVE 0
 
 /* Before the prologue, RA lives in r31.  */
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (VOIDmode, RETURN_ADDR_REGNUM)
