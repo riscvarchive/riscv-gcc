@@ -2352,7 +2352,7 @@
 (define_insn "trap"
   [(trap_if (const_int 1) (const_int 0))]
   ""
-  "sbreak")
+  "ebreak")
 
 (define_insn "gpr_save"
   [(unspec_volatile [(match_operand 0 "const_int_operand")] UNSPEC_GPR_SAVE)
