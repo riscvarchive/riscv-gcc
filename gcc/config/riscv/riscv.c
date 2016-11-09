@@ -1990,31 +1990,6 @@ riscv_zero_if_equal (rtx cmp0, rtx cmp1)
 		       cmp0, cmp1, 0, 0, OPTAB_DIRECT);
 }
 
-/* Return false if we can easily emit code for the FP comparison specified
-   by *CODE.  If not, set *CODE to its inverse and return true. */
-
-static bool
-riscv_reversed_fp_cond (enum rtx_code *code)
-{
-  switch (*code)
-    {
-    case EQ:
-    case LT:
-    case LE:
-    case GT:
-    case GE:
-    case LTGT:
-    case ORDERED:
-      /* We know how to emit code for these cases... */
-      return false;
-
-    default:
-      /* ...but we must invert these and rely on the others. */
-      *code = reverse_condition_maybe_unordered (*code);
-      return true;
-    }
-}
-
 /* Convert a comparison into something that can be used in a branch or
    conditional move.  On entry, *OP0 and *OP1 are the values being
    compared and *CODE is the code used to compare them.
@@ -2075,31 +2050,63 @@ riscv_emit_compare (enum rtx_code *code, rtx *op0, rtx *op1)
     {
       /* For FP comparisons, set an integer register with the result of the
 	 comparison, then branch on it. */
-      rtx tmp0, tmp1, final_op;
+      rtx tmp0, tmp1;
       enum rtx_code fp_code = *code;
-      *code = riscv_reversed_fp_cond (&fp_code) ? EQ : NE;
+      *code = NE;
+      *op1 = const0_rtx;
 
       switch (fp_code)
 	{
+	case UNORDERED:
+	  *code = EQ;
+	  /* Fall through.  */
+
 	case ORDERED:
 	  /* a == a && b == b */
 	  tmp0 = gen_reg_rtx (SImode);
 	  riscv_emit_binary (EQ, tmp0, cmp_op0, cmp_op0);
 	  tmp1 = gen_reg_rtx (SImode);
 	  riscv_emit_binary (EQ, tmp1, cmp_op1, cmp_op1);
-	  final_op = gen_reg_rtx (SImode);
-	  riscv_emit_binary (AND, final_op, tmp0, tmp1);
+	  *op0 = gen_reg_rtx (SImode);
+	  riscv_emit_binary (AND, *op0, tmp0, tmp1);
 	  break;
 
+	case UNEQ:
+	  *code = EQ;
+	  /* Fall through.  */
+
 	case LTGT:
-	  /* a < b || a > b */
+	  /* ordered(a, b) != (a == b) */
 	  tmp0 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (LT, tmp0, cmp_op0, cmp_op1);
+	  riscv_emit_binary (EQ, tmp0, cmp_op0, cmp_op0);
 	  tmp1 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (GT, tmp1, cmp_op0, cmp_op1);
-	  final_op = gen_reg_rtx (SImode);
-	  riscv_emit_binary (IOR, final_op, tmp0, tmp1);
+	  riscv_emit_binary (EQ, tmp1, cmp_op1, cmp_op1);
+	  *op0 = gen_reg_rtx (SImode);
+	  riscv_emit_binary (AND, *op0, tmp0, tmp1);
+	  *op1 = gen_reg_rtx (SImode);
+	  riscv_emit_binary (EQ, *op1, cmp_op0, cmp_op1);
 	  break;
+
+#define UNORDERED_COMPARISON(CODE, CMP)					  \
+	case CODE:							  \
+	  *code = EQ;							  \
+	  *op0 = gen_reg_rtx (SImode);					  \
+	  if (GET_MODE (cmp_op0) == SFmode)				  \
+	    emit_insn (gen_f##CMP##_guardedsf4 (*op0, cmp_op0, cmp_op1)); \
+	  else								  \
+	    emit_insn (gen_f##CMP##_guardeddf4 (*op0, cmp_op0, cmp_op1)); \
+	  break;
+
+	UNORDERED_COMPARISON(UNLT, ge)
+	UNORDERED_COMPARISON(UNLE, gt)
+	UNORDERED_COMPARISON(UNGT, le)
+	UNORDERED_COMPARISON(UNGE, lt)
+#undef UNORDERED_COMPARISON
+
+	case NE:
+	  fp_code = EQ;
+	  *code = EQ;
+	  /* Fall through.  */
 
 	case EQ:
 	case LE:
@@ -2107,17 +2114,13 @@ riscv_emit_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 	case GE:
 	case GT:
 	  /* We have instructions for these cases. */
-	  final_op = gen_reg_rtx (SImode);
-	  riscv_emit_binary (fp_code, final_op, cmp_op0, cmp_op1);
+	  *op0 = gen_reg_rtx (SImode);
+	  riscv_emit_binary (fp_code, *op0, cmp_op0, cmp_op1);
 	  break;
 
 	default:
 	  gcc_unreachable ();
 	}
-
-      /* Compare the binary result against 0. */
-      *op0 = final_op;
-      *op1 = const0_rtx;
     }
 }
 

@@ -317,6 +317,9 @@
 ;; from the same template.
 (define_code_iterator any_shift [ashift ashiftrt lshiftrt])
 
+;; This code iterator supports emitting signaling FP comparisons.
+(define_code_iterator fp_scmp [ge gt le lt])
+
 ;; This code iterator allows unsigned and signed division to be generated
 ;; from the same template.
 (define_code_iterator any_div [div udiv])
@@ -349,6 +352,10 @@
 (define_code_attr optab [(ashift "ashl")
 			 (ashiftrt "ashr")
 			 (lshiftrt "lshr")
+			 (ge "ge")
+			 (le "le")
+			 (gt "gt")
+			 (lt "lt")
 			 (ior "ior")
 			 (xor "xor")
 			 (and "and")
@@ -1963,6 +1970,18 @@
 }
   [(set_attr "type" "fcmp")
    (set_attr "mode" "<UNITMODE>")])
+
+(define_insn "f<optab>_guarded<ANYF:mode>4"
+   [(set (match_operand:SI 0 "register_operand" "=r")
+	(fp_scmp:SI
+	      (match_operand:ANYF 1 "register_operand" "f")
+	      (match_operand:ANYF 2 "register_operand" "f")))
+    (clobber (match_scratch:SI 3 "=&r"))]
+  "TARGET_HARD_FLOAT"
+  "frflags\t%3\n\tf<optab>.<fmt>\t%0,%1,%2\n\tfsflags %3"
+  [(set_attr "type" "fcmp")
+   (set_attr "mode" "<UNITMODE>")
+   (set (attr "length") (const_int 12))])
 
 (define_insn "*seq_zero_<GPR:mode><GPR2:mode>"
   [(set (match_operand:GPR2 0 "register_operand" "=r")
