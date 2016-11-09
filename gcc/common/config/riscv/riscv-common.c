@@ -1,5 +1,5 @@
 /* Common hooks for RISC-V.
-   Copyright (C) 1989-2014 Free Software Foundation, Inc.
+   Copyright (C) 2016 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -84,12 +84,6 @@ riscv_parse_arch_string (const char *isa, int *flags)
   *flags &= ~MASK_RVC;
   if (TOUPPER (*p) == 'C')
     *flags |= MASK_RVC, p++;
-
-  /* FIXME: For now we just stop parsing when faced with a
-     non-standard RISC-V ISA extension.  We might consider
-     ignoring it and passing it through to the assembler.  */
-  if (TOUPPER (*p) == 'X')
-    return;
 
   if (*p)
     {
