@@ -545,7 +545,7 @@ enum reg_class
 #define REG_CLASS_NAMES							\
 {									\
   "NO_REGS",								\
-  "SIBCALL_REGS",								\
+  "SIBCALL_REGS",							\
   "JALR_REGS",								\
   "GR_REGS",								\
   "FP_REGS",								\

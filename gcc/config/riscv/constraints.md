@@ -24,21 +24,15 @@
 (define_register_constraint "f" "TARGET_HARD_FLOAT ? FP_REGS : NO_REGS"
   "A floating-point register (if available).")
 
-(define_register_constraint "b" "ALL_REGS"
-  "@internal")
-
 (define_register_constraint "j" "SIBCALL_REGS"
   "@internal")
 
+;; Avoid using register t0 for JALR's argument, because for some
+;; microarchitectures that is a return-address stack hint.
 (define_register_constraint "l" "JALR_REGS"
   "@internal")
 
-;; Integer constraints
-
-(define_constraint "Z"
-  "@internal"
-  (and (match_code "const_int")
-       (match_test "1")))
+;; General constraints
 
 (define_constraint "I"
   "An I-type 12-bit signed immediate."
@@ -50,14 +44,12 @@
   (and (match_code "const_int")
        (match_test "ival == 0")))
 
-;; Floating-point constraints
-
+;; Floating-point constant +0.0, used for FCVT-based moves when FMV is
+;; not available in RV32.
 (define_constraint "G"
-  "Floating-point zero."
+  "@internal"
   (and (match_code "const_double")
        (match_test "op == CONST0_RTX (mode)")))
-
-;; General constraints
 
 (define_constraint "Q"
   "@internal"
@@ -85,9 +77,3 @@
    A memory address based on a member of @code{BASE_REG_CLASS}."
   (and (match_code "mem")
        (match_operand 0 "memory_operand")))
-
-(define_constraint "YG"
-  "@internal
-   A vector zero."
-  (and (match_code "const_vector")
-       (match_test "op == CONST0_RTX (mode)")))
