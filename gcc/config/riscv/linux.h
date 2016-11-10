@@ -18,22 +18,10 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#undef WCHAR_TYPE
-#define WCHAR_TYPE "int"
-
-#undef WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE 32
-
 #define TARGET_OS_CPP_BUILTINS()				\
   do {								\
     GNU_USER_TARGET_OS_CPP_BUILTINS();				\
-    /* The GNU C++ standard library requires this.  */		\
-    if (c_dialect_cxx ())					\
-      builtin_define ("_GNU_SOURCE");				\
   } while (0)
-
-#undef SUBTARGET_CPP_SPEC
-#define SUBTARGET_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
 
 #define GLIBC_DYNAMIC_LINKER32 "/lib32/ld.so.1"
 #define GLIBC_DYNAMIC_LINKER64 "/lib/ld.so.1"
@@ -49,15 +37,3 @@ along with GCC; see the file COPYING3.  If not see
     %{static:-static}} \
 %{" OPT_ARCH64 ":-melf64lriscv} \
 %{" OPT_ARCH32 ":-melf32lriscv}"
-
-#undef LIB_SPEC
-#define LIB_SPEC "\
-%{pthread:-lpthread} \
-%{shared:-lc} \
-%{!shared: \
-  %{profile:-lc_p} %{!profile:-lc}}"
-
-/* Similar to standard Linux, but adding -ffast-math support.  */
-#undef  ENDFILE_SPEC
-#define ENDFILE_SPEC \
-   "%{shared|pie:crtendS.o%s;:crtend.o%s} crtn.o%s"
