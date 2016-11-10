@@ -23,9 +23,10 @@ along with GCC; see the file COPYING3.  If not see
 %{m32:-melf32lriscv} \
 %{shared}"
 
-/* Link against Newlib libraries, because the ELF backend assumes Newlib.  */
+/* Link against Newlib libraries, because the ELF backend assumes Newlib.
+   Handle the circular dependence between libc and libgloss. */
 #undef  LIB_SPEC
-#define LIB_SPEC "-lc -lgloss"
+#define LIB_SPEC "--start-group -lc -lgloss --end-group"
 
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC "crt0%O%s crtbegin%O%s"
