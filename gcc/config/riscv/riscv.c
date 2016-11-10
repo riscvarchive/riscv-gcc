@@ -4064,7 +4064,7 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 #define TARGET_SCALAR_MODE_SUPPORTED_P riscv_scalar_mode_supported_p
 
 #undef TARGET_HAVE_TLS
-#define TARGET_HAVE_TLS HAVE_AS_TLS
+#define TARGET_HAVE_TLS true
 
 #undef TARGET_CANNOT_FORCE_CONST_MEM
 #define TARGET_CANNOT_FORCE_CONST_MEM riscv_cannot_force_const_mem

@@ -135,16 +135,11 @@ along with GCC; see the file COPYING3.  If not see
 #undef TARGET_64BIT
 /* Make this compile time constant for libgcc2 */
 #ifdef __riscv64
-#define TARGET_64BIT		1
+#define TARGET_64BIT           1
 #else
-#define TARGET_64BIT		0
+#define TARGET_64BIT           0
 #endif
 #endif /* IN_LIBGCC2 */
-
-/* Tell collect what flags to pass to nm.  */
-#ifndef NM_FLAGS
-#define NM_FLAGS "-Bn"
-#endif
 
 #undef ASM_SPEC
 #define ASM_SPEC "\
@@ -157,15 +152,6 @@ along with GCC; see the file COPYING3.  If not see
 %{mno-float:-mfloat-abi=soft} \
 %(subtarget_asm_spec)"
 
-/* Extra switches sometimes passed to the linker.  */
-
-#ifndef LINK_SPEC
-#define LINK_SPEC "\
-%{m64:-melf64lriscv} \
-%{m32:-melf32lriscv} \
-%{shared}"
-#endif  /* LINK_SPEC defined */
-
 /* This macro defines names of additional specifications to put in the specs
    that can be used in various specifications like CC1_SPEC.  Its definition
    is an initializer with a subgrouping for each command option.
@@ -176,24 +162,17 @@ along with GCC; see the file COPYING3.  If not see
 
    Do not define this macro if it does not need to do anything.  */
 
-#define EXTRA_SPECS							\
-  { "asm_abi_default_spec", "-" MULTILIB_ARCH_DEFAULT },		\
-  SUBTARGET_EXTRA_SPECS
-
-#ifndef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS
-#endif
+#define EXTRA_SPECS \
+  { "asm_abi_default_spec", "-" MULTILIB_ARCH_DEFAULT }
 
 #define TARGET_DEFAULT_CMODEL CM_MEDLOW
-
-/* By default, turn on GDB extensions.  */
-#define DEFAULT_GDB_EXTENSIONS 1
 
 #define LOCAL_LABEL_PREFIX	"."
 #define USER_LABEL_PREFIX	""
 
 #define DWARF2_DEBUGGING_INFO 1
 #define DWARF2_ASM_LINE_DEBUG_INFO (flag_dwarf2_cfi_asm)
+#define DEFAULT_GDB_EXTENSIONS 1
 
 /* The mapping from gcc register number to DWARF 2 CFA column number.  */
 #define DWARF_FRAME_REGNUM(REGNO) \
@@ -201,8 +180,6 @@ along with GCC; see the file COPYING3.  If not see
 
 /* The DWARF 2 CFA column which tracks the return address.  */
 #define DWARF_FRAME_RETURN_COLUMN RETURN_ADDR_REGNUM
-
-/* Before the prologue, RA lives in r31.  */
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (VOIDmode, RETURN_ADDR_REGNUM)
 
 /* Describe how we implement __builtin_eh_return.  */
@@ -228,14 +205,10 @@ along with GCC; see the file COPYING3.  If not see
 /* The `Q' extension is not yet supported.  */
 #define UNITS_PER_FP_REG (TARGET_DOUBLE_FLOAT ? 8 : 4)
 
-/* The largest size of value that can be held in floating-point
-   registers and moved with a single instruction.  */
+/* The largest type that can be passed in floating-point registers.  */
 #define UNITS_PER_FP_ARG			\
   (riscv_float_abi == FLOAT_ABI_SOFT ? 0 :	\
    riscv_float_abi == FLOAT_ABI_SINGLE ? 4 : 8)
-
-/* The number of bytes in a double.  */
-#define UNITS_PER_DOUBLE (TYPE_PRECISION (double_type_node) / BITS_PER_UNIT)
 
 /* Set the sizes of the core types.  */
 #define SHORT_TYPE_SIZE 16
@@ -246,10 +219,6 @@ along with GCC; see the file COPYING3.  If not see
 #define FLOAT_TYPE_SIZE 32
 #define DOUBLE_TYPE_SIZE 64
 #define LONG_DOUBLE_TYPE_SIZE 128
-
-#ifdef IN_LIBGCC2
-# define LIBGCC2_LONG_DOUBLE_TYPE_SIZE LONG_DOUBLE_TYPE_SIZE
-#endif
 
 /* Allocation boundary (in *bits*) for storing arguments in argument list.  */
 #define PARM_BOUNDARY BITS_PER_WORD
@@ -315,7 +284,6 @@ along with GCC; see the file COPYING3.  If not see
    cause character arrays to be word-aligned so that `strcpy' calls
    that copy constants to character arrays can be done inline.  */
 
-#undef DATA_ALIGNMENT
 #define DATA_ALIGNMENT(TYPE, ALIGN)					\
   ((((ALIGN) < BITS_PER_WORD)						\
     && (TREE_CODE (TYPE) == ARRAY_TYPE					\
@@ -380,14 +348,14 @@ along with GCC; see the file COPYING3.  If not see
 /* x0, sp, gp, and tp are fixed. */
 
 #define FIXED_REGISTERS							\
-{ /* General registers.  */                                             \
+{ /* General registers.  */						\
   1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
-  /* Floating-point registers.  */                                      \
+  /* Floating-point registers.  */					\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
-  /* Others.  */                                                        \
-  1, 1 \
+  /* Others.  */							\
+  1, 1									\
 }
 
 
@@ -395,28 +363,28 @@ along with GCC; see the file COPYING3.  If not see
    The call RTLs themselves clobber ra.  */
 
 #define CALL_USED_REGISTERS						\
-{ /* General registers.  */                                             \
+{ /* General registers.  */						\
   1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
   1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Floating-point registers.  */                                      \
+  /* Floating-point registers.  */					\
   1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
   1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Others.  */                                                        \
-  1, 1 \
+  /* Others.  */							\
+  1, 1									\
 }
 
-#define CALL_REALLY_USED_REGISTERS                                      \
-{ /* General registers.  */                                             \
+#define CALL_REALLY_USED_REGISTERS					\
+{ /* General registers.  */						\
   1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
   1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Floating-point registers.  */                                      \
+  /* Floating-point registers.  */					\
   1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
   1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Others.  */                                                        \
-  1, 1 \
+  /* Others.  */							\
+  1, 1									\
 }
 
-/* Internal macros to classify an ISA register's type. */
+/* Internal macros to classify an ISA register's type.  */
 
 #define GP_REG_FIRST 0
 #define GP_REG_LAST  31
@@ -451,11 +419,13 @@ along with GCC; see the file COPYING3.  If not see
 #define HARD_REGNO_MODE_OK(REGNO, MODE)					\
   riscv_hard_regno_mode_ok_p (REGNO, MODE)
 
+/* Don't allow floating-point modes to be tied, since type punning of
+   single-precision and double-precision is implementation defined.  */
 #define MODES_TIEABLE_P(MODE1, MODE2)					\
   ((MODE1) == (MODE2) || (GET_MODE_CLASS (MODE1) == MODE_INT		\
 			  && GET_MODE_CLASS (MODE2) == MODE_INT))
 
-/* Use s0 as the frame pointer if it is so requested. */
+/* Use s0 as the frame pointer if it is so requested.  */
 #define HARD_FRAME_POINTER_REGNUM 8
 #define STACK_POINTER_REGNUM 2
 #define THREAD_POINTER_REGNUM 4
@@ -464,9 +434,6 @@ along with GCC; see the file COPYING3.  If not see
    the stack or hard frame pointer.  */
 #define ARG_POINTER_REGNUM 64
 #define FRAME_POINTER_REGNUM 65
-
-#define HARD_FRAME_POINTER_IS_FRAME_POINTER 0
-#define HARD_FRAME_POINTER_IS_ARG_POINTER 0
 
 /* Register in which static-chain is passed to a function.  */
 #define STATIC_CHAIN_REGNUM GP_TEMP_FIRST
@@ -528,8 +495,8 @@ enum reg_class
   SIBCALL_REGS,			/* registers used by indirect sibcalls */
   JALR_REGS,			/* registers used by indirect calls */
   GR_REGS,			/* integer registers */
-  FP_REGS,			/* floating point registers */
-  FRAME_REGS,			/* $arg and $frame */
+  FP_REGS,			/* floating-point registers */
+  FRAME_REGS,			/* arg pointer and frame pointer */
   ALL_REGS,			/* all registers */
   LIM_REG_CLASSES		/* max value + 1 */
 };
@@ -728,14 +695,8 @@ typedef struct {
 
 #define EPILOGUE_USES(REGNO)	((REGNO) == RETURN_ADDR_REGNUM)
 
-/* ABI requires 16-byte alignment, even on ven on RV32. */
+/* ABI requires 16-byte alignment, even on RV32. */
 #define RISCV_STACK_ALIGN(LOC) (((LOC) + 15) & -16)
-
-/* Define this macro if the code for function profiling should come
-   before the function prologue.  Normally, the profiling code comes
-   after.  */
-
-/* #define PROFILE_BEFORE_PROLOGUE */
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,
    the stack pointer does not matter.  The value is tested only in
@@ -778,7 +739,6 @@ typedef struct {
 
 #define REG_OK_FOR_INDEX_P(X) 0
 
-
 /* Maximum number of registers that can appear in a valid memory address.  */
 
 #define MAX_REGS_PER_ADDRESS 1
@@ -795,11 +755,6 @@ typedef struct {
 		 XSTR (XEXP (DECL_RTL (current_function_decl), 0), 0));	\
   else									\
     asm_fprintf ((FILE), "%U%s", (NAME))
-
-/* This flag marks functions that cannot be lazily bound.  */
-#define SYMBOL_FLAG_BIND_NOW (SYMBOL_FLAG_MACH_DEP << 1)
-#define SYMBOL_REF_BIND_NOW_P(RTX) \
-  ((SYMBOL_REF_FLAGS (RTX) & SYMBOL_FLAG_BIND_NOW) != 0)
 
 #define JUMP_TABLES_IN_TEXT_SECTION 0
 #define CASE_VECTOR_MODE SImode
@@ -821,7 +776,6 @@ typedef struct {
 /* Define this as 1 if `char' should by default be signed; else as 0.  */
 #define DEFAULT_SIGNED_CHAR 0
 
-/* Consider using fld/fsd to move 8 bytes at a time for RV32IFD. */
 #define MOVE_MAX UNITS_PER_WORD
 #define MAX_MOVE_MAX 8
 
@@ -1062,10 +1016,6 @@ while (0)
 
 #define SET_RATIO(speed) \
   ((speed) ? 15 : RISCV_CALL_RATIO - 2)
-
-#ifndef HAVE_AS_TLS
-#define HAVE_AS_TLS 0
-#endif
 
 #ifndef USED_FOR_TARGET
 
