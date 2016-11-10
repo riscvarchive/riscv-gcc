@@ -18,9 +18,9 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Leave the linker script to choose the appropriate libraries.  */
+/* Link against Newlib libraries, because the ELF backend assumes Newlib.  */
 #undef  LIB_SPEC
-#define LIB_SPEC ""
+#define LIB_SPEC "-lc -lgloss"
 
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC "crt0%O%s crtbegin%O%s"
