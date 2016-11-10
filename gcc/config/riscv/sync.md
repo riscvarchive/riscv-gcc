@@ -68,8 +68,7 @@
     case MEMMODEL_SYNC_RELEASE:
       return "fence rw,w";
     default:
-      fprintf(stderr, "mem_thread_fence_1(%ld)\n", model);
-      gcc_unreachable();
+      gcc_unreachable ();
     }
 })
 
