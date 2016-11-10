@@ -909,7 +909,9 @@ riscv_load_store_insns (rtx mem, rtx_insn *insn)
 
   /* Try to prove that INSN does not need to be split.  */
   might_split_p = true;
-  if (GET_MODE_BITSIZE (mode) == 64)
+  if (GET_MODE_BITSIZE (mode) <= 32)
+    might_split_p = false;
+  else if (GET_MODE_BITSIZE (mode) == 64)
     {
       set = single_set (insn);
       if (set && !riscv_split_64bit_move_p (SET_DEST (set), SET_SRC (set)))
