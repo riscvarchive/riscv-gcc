@@ -1,5 +1,5 @@
 ;; Predicate description for RISC-V target.
-;; Copyright (C) 2011-2014 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2016 Free Software Foundation, Inc.
 ;; Contributed by Andrew Waterman (andrew@sifive.com).
 ;; Based on MIPS target for GNU compiler.
 ;;
@@ -43,27 +43,10 @@
   (ior (match_operand 0 "const_0_operand")
        (match_operand 0 "register_operand")))
 
-(define_predicate "const_1_operand"
-  (and (match_code "const_int,const_double,const_vector")
-       (match_test "op == CONST1_RTX (GET_MODE (op))")))
-
-(define_predicate "reg_or_1_operand"
-  (ior (match_operand 0 "const_1_operand")
-       (match_operand 0 "register_operand")))
-
 ;; Only use branch-on-bit sequences when the mask is not an ANDI immediate.
 (define_predicate "branch_on_bit_operand"
   (and (match_code "const_int")
        (match_test "INTVAL (op) >= IMM_BITS - 1")))
-
-;; This is used for indexing into vectors, and hence only accepts const_int.
-(define_predicate "const_0_or_1_operand"
-  (and (match_code "const_int")
-       (ior (match_test "op == CONST0_RTX (GET_MODE (op))")
-	    (match_test "op == CONST1_RTX (GET_MODE (op))"))))
-
-(define_special_predicate "pc_or_label_operand"
-  (match_code "pc,label_ref"))
 
 ;; A legitimate CONST_INT operand that takes more than one instruction
 ;; to load.
@@ -139,9 +122,6 @@
     }
 })
 
-(define_predicate "consttable_operand"
-  (match_test "CONSTANT_P (op)"))
-
 (define_predicate "symbolic_operand"
   (match_code "const,symbol_ref,label_ref")
 {
@@ -169,9 +149,6 @@
   (ior (match_operand 0 "absolute_symbolic_operand")
        (match_operand 0 "plt_symbolic_operand")
        (match_operand 0 "register_operand")))
-
-(define_predicate "symbol_ref_operand"
-  (match_code "symbol_ref"))
 
 (define_predicate "modular_operator"
   (match_code "plus,minus,mult,ashift"))
