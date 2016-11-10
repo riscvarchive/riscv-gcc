@@ -124,16 +124,8 @@ along with GCC; see the file COPYING3.  If not see
    range  of load/store offsets and must also preserve stack alignment. */
 #define RISCV_MAX_FIRST_STACK_STEP (IMM_REACH/2 - 16)
 
-/* True if INSN is a riscv.md pattern or asm statement.  */
-#define USEFUL_INSN_P(INSN)						\
-  (NONDEBUG_INSN_P (INSN)						\
-   && GET_CODE (PATTERN (INSN)) != USE					\
-   && GET_CODE (PATTERN (INSN)) != CLOBBER				\
-   && GET_CODE (PATTERN (INSN)) != ADDR_VEC				\
-   && GET_CODE (PATTERN (INSN)) != ADDR_DIFF_VEC)
-
 /* True if bit BIT is set in VALUE.  */
-#define BITSET_P(VALUE, BIT) (((VALUE) & (1 << (BIT))) != 0)
+#define BITSET_P(VALUE, BIT) (((VALUE) & (1ULL << (BIT))) != 0)
 
 /* Classifies an address.
 
@@ -192,7 +184,7 @@ struct GTY(())  machine_function {
      This area is allocated by the callee at the very top of the frame.  */
   int varargs_size;
 
-  /* Cached return value of leaf_function_p.  <0 if false, >0 if true.  */
+  /* Memoized return value of leaf_function_p.  <0 if false, >0 if true.  */
   int is_leaf;
 
   /* The current frame information, calculated by riscv_compute_frame_info.  */
@@ -283,9 +275,6 @@ struct riscv_cpu_info {
   /* This CPU's canonical name.  */
   const char *name;
 
-  /* The RISC-V ISA and extensions supported by this CPU.  */
-  const char *isa;
-
   /* Tuning parameters for this CPU.  */
   const struct riscv_tune_info *tune_info;
 };
@@ -316,7 +305,7 @@ const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
   FRAME_REGS,	FRAME_REGS,
 };
 
-/* Costs to use when optimizing for size.  */
+/* Costs to use when optimizing for rocket.  */
 static const struct riscv_tune_info rocket_tune_info = {
   {COSTS_N_INSNS (4), COSTS_N_INSNS (5)},	/* fp_add */
   {COSTS_N_INSNS (4), COSTS_N_INSNS (5)},	/* fp_mul */
@@ -342,8 +331,7 @@ static const struct riscv_tune_info optimize_size_tune_info = {
 
 /* A table describing all the processors GCC knows about.  */
 static const struct riscv_cpu_info riscv_cpu_info_table[] = {
-  /* Entries for generic ISAs.  */
-  { "rocket", "IMAFD", &rocket_tune_info },
+  { "rocket", &rocket_tune_info },
 };
 
 /* Return the riscv_cpu_info entry for the given name string.  */
@@ -351,9 +339,7 @@ static const struct riscv_cpu_info riscv_cpu_info_table[] = {
 static const struct riscv_cpu_info *
 riscv_parse_cpu (const char *cpu_string)
 {
-  unsigned int i;
-
-  for (i = 0; i < ARRAY_SIZE (riscv_cpu_info_table); i++)
+  for (unsigned i = 0; i < ARRAY_SIZE (riscv_cpu_info_table); i++)
     if (strcmp (riscv_cpu_info_table[i].name, cpu_string) == 0)
       return riscv_cpu_info_table + i;
 
@@ -361,8 +347,8 @@ riscv_parse_cpu (const char *cpu_string)
   return riscv_cpu_info_table;
 }
 
-/* Fill CODES with a sequence of rtl operations to load VALUE.
-   Return the number of operations needed.  */
+/* Helper function for riscv_build_integer; arguments are as for
+   riscv_build_integer.  */
 
 static int
 riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
@@ -374,13 +360,15 @@ riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
 
   if (SMALL_OPERAND (value) || LUI_OPERAND (value))
     {
-      /* Simply ADDI or LUI */
+      /* Simply ADDI or LUI.  */
       codes[0].code = UNKNOWN;
       codes[0].value = value;
       return 1;
     }
 
-  /* End with ADDI */
+  /* End with ADDI.  When constructing HImode constants, do not generate any
+     intermediate value that is not itself a valid HImode constant.  The
+     XORI case below will handle those remaining HImode constants.  */
   if (low_part != 0
       && !(mode == HImode && (int16_t)(value - low_part) != (value - low_part)))
     {
@@ -389,7 +377,7 @@ riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
       codes[cost-1].value = low_part;
     }
 
-  /* End with XORI */
+  /* End with XORI.  */
   if (cost > 2 && (low_part < 0 || mode == HImode))
     {
       alt_cost = 1 + riscv_build_integer_1 (alt_codes, value ^ low_part, mode);
@@ -399,7 +387,7 @@ riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
 	cost = alt_cost, memcpy (codes, alt_codes, sizeof (alt_codes));
     }
 
-  /* Eliminate trailing zeros and end with SLLI */
+  /* Eliminate trailing zeros and end with SLLI.  */
   if (cost > 2 && (value & 1) == 0)
     {
       int shift = 0;
@@ -416,20 +404,23 @@ riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
   return cost;
 }
 
+/* Fill CODES with a sequence of rtl operations to load VALUE.
+   Return the number of operations needed.  */
+
 static int
 riscv_build_integer (struct riscv_integer_op *codes, HOST_WIDE_INT value,
 		     enum machine_mode mode)
 {
   int cost = riscv_build_integer_1 (codes, value, mode);
 
-  /* Eliminate leading zeros and end with SRLI */
+  /* Eliminate leading zeros and end with SRLI.  */
   if (value > 0 && cost > 2)
     {
       struct riscv_integer_op alt_codes[RISCV_MAX_INTEGER_OPS];
       int alt_cost, shift = 0;
       HOST_WIDE_INT shifted_val;
 
-      /* Try filling trailing bits with 1s */
+      /* Try filling trailing bits with 1s.  */
       while ((value << shift) >= 0)
 	shift++;
       shifted_val = (value << shift) | ((((HOST_WIDE_INT) 1) << shift) - 1);
@@ -439,7 +430,7 @@ riscv_build_integer (struct riscv_integer_op *codes, HOST_WIDE_INT value,
       if (alt_cost < cost)
 	cost = alt_cost, memcpy (codes, alt_codes, sizeof (alt_codes));
 
-      /* Try filling trailing bits with 0s */
+      /* Try filling trailing bits with 0s.  */
       shifted_val = value << shift;
       alt_cost = 1 + riscv_build_integer_1 (alt_codes, shifted_val, mode);
       alt_codes[alt_cost-1].code = LSHIFTRT;
@@ -450,6 +441,9 @@ riscv_build_integer (struct riscv_integer_op *codes, HOST_WIDE_INT value,
 
   return cost;
 }
+
+/* Return the cost of constructing VAL in the event that a scratch
+   register is available.  */
 
 static int
 riscv_split_integer_cost (HOST_WIDE_INT val)
@@ -465,6 +459,8 @@ riscv_split_integer_cost (HOST_WIDE_INT val)
   return cost;
 }
 
+/* Return the cost of constructing the integer constant VAL.  */
+
 static int
 riscv_integer_cost (HOST_WIDE_INT val)
 {
@@ -473,7 +469,7 @@ riscv_integer_cost (HOST_WIDE_INT val)
 	      riscv_split_integer_cost (val));
 }
 
-/* Try to split a 64b integer into 32b parts, then reassemble. */
+/* Try to split a 64b integer into 32b parts, then reassemble.  */
 
 static rtx
 riscv_split_integer (HOST_WIDE_INT val, enum machine_mode mode)
@@ -498,6 +494,8 @@ riscv_tls_symbol_p (const_rtx x)
   return GET_CODE (x) == SYMBOL_REF && SYMBOL_REF_TLS_MODEL (x) != 0;
 }
 
+/* Return true if symbol X binds locally.  */
+
 static bool
 riscv_symbol_binds_local_p (const_rtx x)
 {
@@ -507,7 +505,7 @@ riscv_symbol_binds_local_p (const_rtx x)
 }
 
 /* Return the method that should be used to access SYMBOL_REF or
-   LABEL_REF X in context CONTEXT.  */
+   LABEL_REF X.  */
 
 static enum riscv_symbol_type
 riscv_classify_symbol (const_rtx x)
@@ -534,8 +532,7 @@ riscv_classify_symbol (const_rtx x)
   return riscv_cmodel == CM_MEDLOW ? SYMBOL_ABSOLUTE : SYMBOL_PCREL;
 }
 
-/* Classify the base of symbolic expression X, given that X appears in
-   context CONTEXT.  */
+/* Classify the base of symbolic expression X.  */
 
 enum riscv_symbol_type
 riscv_classify_symbolic_expression (rtx x)
@@ -549,8 +546,8 @@ riscv_classify_symbolic_expression (rtx x)
   return riscv_classify_symbol (x);
 }
 
-/* Return true if X is a symbolic constant that can be used in context
-   CONTEXT.  If it is, store the type of the symbol in *SYMBOL_TYPE.  */
+/* Return true if X is a symbolic constant.  If it is, store the type of
+   the symbol in *SYMBOL_TYPE.  */
 
 bool
 riscv_symbolic_constant_p (rtx x, enum riscv_symbol_type *symbol_type)
@@ -592,11 +589,11 @@ static int riscv_symbol_insns (enum riscv_symbol_type type)
 {
   switch (type)
     {
-    case SYMBOL_TLS: return 0; /* Depends on the TLS model. */
-    case SYMBOL_ABSOLUTE: return 2; /* LUI + the reference itself */
-    case SYMBOL_PCREL: return 2; /* AUIPC + the reference itself */
-    case SYMBOL_TLS_LE: return 3; /* LUI + ADD TP + the reference itself */
-    case SYMBOL_GOT_DISP: return 3; /* AUIPC + LD GOT + the reference itself */
+    case SYMBOL_TLS: return 0; /* Depends on the TLS model.  */
+    case SYMBOL_ABSOLUTE: return 2; /* LUI + the reference.  */
+    case SYMBOL_PCREL: return 2; /* AUIPC + the reference.  */
+    case SYMBOL_TLS_LE: return 3; /* LUI + ADD TP + the reference.  */
+    case SYMBOL_GOT_DISP: return 3; /* AUIPC + LD GOT + the reference.  */
     default: gcc_unreachable ();
     }
 }
@@ -646,8 +643,9 @@ riscv_cannot_force_const_mem (enum machine_mode mode ATTRIBUTE_UNUSED, rtx x)
    STRICT_P is true if REG_OK_STRICT is in effect.  */
 
 int
-riscv_regno_mode_ok_for_base_p (int regno, enum machine_mode mode ATTRIBUTE_UNUSED,
-			       bool strict_p)
+riscv_regno_mode_ok_for_base_p (int regno,
+				enum machine_mode mode ATTRIBUTE_UNUSED,
+				bool strict_p)
 {
   if (!HARD_REGISTER_NUM_P (regno))
     {
@@ -840,19 +838,19 @@ riscv_const_insns (rtx x)
 	  || !riscv_split_symbol_type (symbol_type))
 	return 0;
 
-      /* This is simply an LUI. */
+      /* This is simply an LUI.  */
       return 1;
 
     case CONST_INT:
       {
 	int cost = riscv_integer_cost (INTVAL (x));
-	/* Force complicated constants to memory. */
+	/* Force complicated constants to memory.  */
 	return cost < 4 ? cost : 0;
       }
 
     case CONST_DOUBLE:
     case CONST_VECTOR:
-      /* Allow zeros for normal mode, where we can use x0.  */
+      /* We can use x0 to load floating-point zero.  */
       return x == CONST0_RTX (GET_MODE (x)) ? 1 : 0;
 
     case CONST:
@@ -977,7 +975,7 @@ riscv_force_temporary (rtx dest, rtx value)
 
 static rtx
 riscv_unspec_address_offset (rtx base, rtx offset,
-			    enum riscv_symbol_type symbol_type)
+			     enum riscv_symbol_type symbol_type)
 {
   base = gen_rtx_UNSPEC (Pmode, gen_rtvec (1, base),
 			 UNSPEC_ADDRESS_FIRST + symbol_type);
@@ -1025,7 +1023,8 @@ riscv_unspec_offset_high (rtx temp, rtx addr, enum riscv_symbol_type symbol_type
   return riscv_force_temporary (temp, addr);
 }
 
-/* Load an entry from the GOT. */
+/* Load an entry from the GOT for a TLS GD access.  */
+
 static rtx riscv_got_load_tls_gd (rtx dest, rtx sym)
 {
   if (Pmode == DImode)
@@ -1034,6 +1033,8 @@ static rtx riscv_got_load_tls_gd (rtx dest, rtx sym)
     return gen_got_load_tls_gdsi (dest, sym);
 }
 
+/* Load an entry from the GOT for a TLS IE access.  */
+
 static rtx riscv_got_load_tls_ie (rtx dest, rtx sym)
 {
   if (Pmode == DImode)
@@ -1041,6 +1042,8 @@ static rtx riscv_got_load_tls_ie (rtx dest, rtx sym)
   else
     return gen_got_load_tls_iesi (dest, sym);
 }
+
+/* Add in the thread pointer for a TLS LE access.  */
 
 static rtx riscv_tls_add_tp_le (rtx dest, rtx base, rtx sym)
 {
@@ -1088,11 +1091,13 @@ riscv_split_symbol (rtx temp, rtx addr, enum machine_mode mode, rtx *low_out)
 
       case SYMBOL_PCREL:
 	{
-	  static int seqno;
+	  static unsigned seqno;
 	  char buf[32];
 	  rtx label;
 
-	  sprintf (buf, ".LA%d", seqno);
+	  if (snprintf (buf, sizeof (buf), ".LA%u", seqno) >= sizeof (buf))
+	    gcc_unreachable ();
+
 	  label = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (buf));
 	  SYMBOL_REF_FLAGS (label) |= SYMBOL_FLAG_LOCAL;
 
@@ -1370,6 +1375,7 @@ riscv_legitimize_move (enum machine_mode mode, rtx dest, rtx src)
       set_unique_reg_note (get_last_insn (), REG_EQUAL, copy_rtx (src));
       return true;
     }
+
   return false;
 }
 
@@ -1406,7 +1412,7 @@ riscv_immediate_operand_p (int code, HOST_WIDE_INT x)
 
     case GE:
     case GEU:
-      /* We can emulate an immediate of 1 by using GT/GTU against x0. */
+      /* We can emulate an immediate of 1 by using GT/GTU against x0.  */
       return x == 1;
 
     default:
@@ -2014,6 +2020,8 @@ riscv_emit_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 		  riscv_emit_binary (PLUS, *op0, cmp_op0, GEN_INT (-rhs));
 		  *op1 = const0_rtx;
 		}
+	      break;
+
 	    default:
 	      break;
 	    }
@@ -2089,7 +2097,7 @@ riscv_emit_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 	case LT:
 	case GE:
 	case GT:
-	  /* We have instructions for these cases. */
+	  /* We have instructions for these cases.  */
 	  *op0 = gen_reg_rtx (SImode);
 	  riscv_emit_binary (fp_code, *op0, cmp_op0, cmp_op1);
 	  break;
@@ -2170,7 +2178,7 @@ riscv_function_arg_boundary (enum machine_mode mode, const_tree type)
 
 static void
 riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
-		   enum machine_mode mode, const_tree type, bool named)
+		    enum machine_mode mode, const_tree type, bool named)
 {
   bool doubleword_aligned_p;
   unsigned int num_bytes, num_words, max_regs;
@@ -2449,9 +2457,8 @@ static rtx
 riscv_return_fpr_single (enum machine_mode type_mode,
 			enum machine_mode value_mode)
 {
-  rtx x;
+  rtx x = gen_rtx_REG (value_mode, FP_RETURN);
 
-  x = gen_rtx_REG (value_mode, FP_RETURN);
   if (type_mode != value_mode)
     {
       x = gen_rtx_EXPR_LIST (VOIDmode, x, const0_rtx);
@@ -2541,11 +2548,9 @@ riscv_function_value (const_tree valtype, const_tree func, enum machine_mode mod
 static bool
 riscv_return_in_memory (const_tree type, const_tree fndecl ATTRIBUTE_UNUSED)
 {
-  /* TFmode alwyas pass by reference.  */
+  /* TFmode is always passed by reference.  */
   if (TYPE_MODE (type) == TFmode)
-    {
-      return true;
-    }
+    return true;
 
   if (TREE_CODE (type) == RECORD_TYPE)
     {
@@ -2568,13 +2573,13 @@ riscv_pass_by_reference (cumulative_args_t cum ATTRIBUTE_UNUSED,
 			 enum machine_mode mode, const_tree type,
 			 bool named ATTRIBUTE_UNUSED)
 {
-  /* TFmode alwyas pass by reference.  */
+  /* TFmode is always passed by reference.  */
   if (mode == TFmode)
-    {
-      return true;
-    }
+    return true;
+
   if (type && riscv_return_in_memory (type, NULL_TREE))
     return true;
+
   return targetm.calls.must_pass_in_stack (mode, type);
 }
 
@@ -2715,7 +2720,7 @@ riscv_block_move_straight (rtx dest, rtx src, HOST_WIDE_INT length)
 
   /* Copy the chunks to the destination.  */
   for (offset = 0, i = 0; offset + delta <= length; offset += delta, i++)
-      riscv_emit_move (adjust_address (dest, mode, offset), regs[i]);
+    riscv_emit_move (adjust_address (dest, mode, offset), regs[i]);
 
   /* Mop up any left-over bytes.  */
   if (offset < length)
@@ -2861,15 +2866,19 @@ riscv_memory_model_suffix (enum memmodel model)
       case MEMMODEL_SEQ_CST:
       case MEMMODEL_SYNC_SEQ_CST:
 	return ".sc";
+
       case MEMMODEL_ACQUIRE:
       case MEMMODEL_CONSUME:
       case MEMMODEL_SYNC_ACQUIRE:
 	return ".aq";
+
       case MEMMODEL_RELEASE:
       case MEMMODEL_SYNC_RELEASE:
 	return ".rl";
+
       case MEMMODEL_RELAXED:
 	return "";
+
       default:
 	gcc_unreachable ();
     }
@@ -2921,9 +2930,7 @@ riscv_print_operand (FILE *file, rtx op, int letter)
 	  break;
 
 	case MEM:
-	  if (letter == 'y')
-	    fprintf (file, "%s", reg_names[REGNO (XEXP (op, 0))]);
-	  else if (letter && letter != 'z')
+	  if (letter && letter != 'z')
 	    output_operand_lossage ("invalid use of '%%%c'", letter);
 	  else
 	    output_address (mode, XEXP (op, 0));
@@ -3064,11 +3071,8 @@ riscv_set_frame_expr (rtx frame_pattern)
 static rtx
 riscv_frame_set (rtx mem, rtx reg)
 {
-  rtx set;
-
-  set = gen_rtx_SET (mem, reg);
+  rtx set = gen_rtx_SET (mem, reg);
   RTX_FRAME_RELATED_P (set) = 1;
-
   return set;
 }
 
@@ -3252,7 +3256,7 @@ riscv_initial_elimination_offset (int from, int to)
   if (to == HARD_FRAME_POINTER_REGNUM)
     dest = cfun->machine->frame.hard_frame_pointer_offset;
   else if (to == STACK_POINTER_REGNUM)
-    dest = 0; /* this is the base of all offsets */
+    dest = 0; /* The stack pointer is the base of all offsets, hence 0.  */
   else
     gcc_unreachable ();
 
@@ -3319,11 +3323,10 @@ static void
 riscv_for_each_saved_reg (HOST_WIDE_INT sp_offset, riscv_save_restore_fn fn)
 {
   HOST_WIDE_INT offset;
-  int regno;
 
   /* Save the link register and s-registers. */
   offset = cfun->machine->frame.gp_sp_offset - sp_offset;
-  for (regno = GP_REG_FIRST; regno <= GP_REG_LAST-1; regno++)
+  for (int regno = GP_REG_FIRST; regno <= GP_REG_LAST-1; regno++)
     if (BITSET_P (cfun->machine->frame.mask, regno - GP_REG_FIRST))
       {
 	riscv_save_restore_reg (word_mode, regno, offset, fn);
@@ -3333,7 +3336,7 @@ riscv_for_each_saved_reg (HOST_WIDE_INT sp_offset, riscv_save_restore_fn fn)
   /* This loop must iterate over the same space as its companion in
      riscv_compute_frame_info.  */
   offset = cfun->machine->frame.fp_sp_offset - sp_offset;
-  for (regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
+  for (int regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
     if (BITSET_P (cfun->machine->frame.fmask, regno - FP_REG_FIRST))
       {
 	enum machine_mode mode = TARGET_DOUBLE_FLOAT ? DFmode : SFmode;
@@ -3370,12 +3373,13 @@ riscv_restore_reg (rtx reg, rtx mem)
 const char *
 riscv_output_gpr_save (unsigned mask)
 {
-  static char buf[32];
+  static char s[32];
   unsigned n = riscv_save_libcall_count (mask);
 
-  sprintf (buf, "call\tt0,__riscv_save_%u", n);
+  if (snprintf (s, sizeof (s), "call\tt0,__riscv_save_%u", n) >= sizeof (s))
+    gcc_unreachable ();
 
-  return buf;
+  return s;
 }
 
 /* Expand the "prologue" pattern.  */
@@ -3893,6 +3897,7 @@ riscv_conditional_register_usage (void)
 }
 
 /* Return a register priority for hard reg REGNO.  */
+
 static int
 riscv_register_priority (int regno)
 {
@@ -3960,7 +3965,7 @@ riscv_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
   emit_insn (gen_clear_cache (addr, end_addr));
 }
 
-/* Return leaf_function_p () and cache the result.  */
+/* Return leaf_function_p () and memoize the result.  */
 
 static bool
 riscv_leaf_function_p (void)
