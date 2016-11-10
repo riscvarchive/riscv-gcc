@@ -161,7 +161,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef LINK_SPEC
 #define LINK_SPEC "\
-%{!T:-dT riscv.ld} \
 %{m64:-melf64lriscv} \
 %{m32:-melf32lriscv} \
 %{shared}"
