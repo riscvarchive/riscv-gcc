@@ -3079,12 +3079,18 @@ riscv_save_reg_p (unsigned int regno)
 {
   bool call_saved = !global_regs[regno] && !call_really_used_regs[regno];
   bool might_clobber = crtl->saves_all_registers
-		       || df_regs_ever_live_p (regno)
-		       || (regno == HARD_FRAME_POINTER_REGNUM
-			   && frame_pointer_needed);
+		       || df_regs_ever_live_p (regno);
 
-  return (call_saved && might_clobber)
-	 || (regno == RETURN_ADDR_REGNUM && crtl->calls_eh_return);
+  if (call_saved && might_clobber)
+    return true;
+
+  if (regno == HARD_FRAME_POINTER_REGNUM && frame_pointer_needed)
+    return true;
+
+  if (regno == RETURN_ADDR_REGNUM && crtl->calls_eh_return)
+    return true;
+
+  return false;
 }
 
 /* Determine whether to call GPR save/restore routines.  */
