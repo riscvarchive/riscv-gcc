@@ -23,6 +23,8 @@ a copy of the GCC Runtime Library Exception along with this program;
 see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 <http://www.gnu.org/licenses/>.  */
 
+typedef unsigned int fpu_control_t;
+
 #ifdef __riscv32
 
 #define _FP_W_TYPE_SIZE		32
@@ -106,7 +108,37 @@ typedef int __gcc_CMPtype __attribute__ ((mode (__libgcc_cmp_return__)));
     R##_c = FP_CLS_NAN;						\
   } while (0)
 
-#define _FP_TININESS_AFTER_ROUNDING 0
+#define _FP_DECL_EX		fpu_control_t _fcw
+
+#define FP_ROUNDMODE		(_fcw >> 5)
+
+#define FP_RND_NEAREST		0x0
+#define FP_RND_ZERO		0x1
+#define FP_RND_PINF		0x2
+#define FP_RND_MINF		0x3
+
+#define FP_EX_INVALID		0x10
+#define FP_EX_OVERFLOW		0x04
+#define FP_EX_UNDERFLOW		0x02
+#define FP_EX_DIVZERO		0x08
+#define FP_EX_INEXACT		0x01
+
+#define _FP_TININESS_AFTER_ROUNDING 1
+
+#ifdef __riscv_flen
+#define FP_INIT_ROUNDMODE			\
+do {						\
+  __asm__ volatile ("frsr %0" : "=r" (_fcw));	\
+} while (0)
+
+#define FP_HANDLE_EXCEPTIONS					\
+do {								\
+  if (__builtin_expect (_fex, 0))				\
+    __asm__ volatile ("fssr %z0" : : "rJ" (_fcw | _fex));	\
+} while (0)
+#else
+#define FP_INIT_ROUNDMODE	_fcw = 0 /* No exceptions; FP_RND_NEAREST.  */
+#endif
 
 #define	__LITTLE_ENDIAN	1234
 #define	__BIG_ENDIAN	4321
