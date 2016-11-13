@@ -174,6 +174,11 @@ along with GCC; see the file COPYING3.  If not see
 #define DWARF2_ASM_LINE_DEBUG_INFO (flag_dwarf2_cfi_asm)
 #define DEFAULT_GDB_EXTENSIONS 1
 
+/* Offsets recorded in opcodes are a multiple of this alignment factor.
+   The default for this in 64-bit mode is 8, which causes problems with
+   SFmode register saves.  */
+#define DWARF_CIE_DATA_ALIGNMENT -4
+
 /* The mapping from gcc register number to DWARF 2 CFA column number.  */
 #define DWARF_FRAME_REGNUM(REGNO) \
   (GP_REG_P (REGNO) || FP_REG_P (REGNO) ? REGNO : INVALID_REGNUM)
