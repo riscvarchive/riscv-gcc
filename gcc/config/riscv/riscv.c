@@ -1986,31 +1986,10 @@ riscv_emit_compare (enum rtx_code *code, rtx *op0, rtx *op1)
     {
       if (splittable_const_int_operand (cmp_op1, VOIDmode))
 	{
-	  HOST_WIDE_INT rhs = INTVAL (cmp_op1), new_rhs;
-	  enum rtx_code new_code;
+	  HOST_WIDE_INT rhs = INTVAL (cmp_op1);
 
-	  switch (*code)
+	  if (*code == EQ || *code == NE)
 	    {
-	    case LTU: new_rhs = rhs - 1; new_code = LEU; goto try_new_rhs;
-	    case LEU: new_rhs = rhs + 1; new_code = LTU; goto try_new_rhs;
-	    case GTU: new_rhs = rhs + 1; new_code = GEU; goto try_new_rhs;
-	    case GEU: new_rhs = rhs - 1; new_code = GTU; goto try_new_rhs;
-	    case LT: new_rhs = rhs - 1; new_code = LE; goto try_new_rhs;
-	    case LE: new_rhs = rhs + 1; new_code = LT; goto try_new_rhs;
-	    case GT: new_rhs = rhs + 1; new_code = GE; goto try_new_rhs;
-	    case GE: new_rhs = rhs - 1; new_code = GT;
-	    try_new_rhs:
-	      /* Convert e.g. OP0 > 4095 into OP0 >= 4096.  */
-	      if ((rhs < 0) == (new_rhs < 0)
-		  && riscv_integer_cost (new_rhs) < riscv_integer_cost (rhs))
-		{
-		  *op1 = GEN_INT (new_rhs);
-		  *code = new_code;
-		}
-	      break;
-
-	    case EQ:
-	    case NE:
 	      /* Convert e.g. OP0 == 2048 into OP0 - 2048 == 0.  */
 	      if (SMALL_OPERAND (-rhs))
 		{
@@ -2018,10 +1997,31 @@ riscv_emit_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 		  riscv_emit_binary (PLUS, *op0, cmp_op0, GEN_INT (-rhs));
 		  *op1 = const0_rtx;
 		}
-	      break;
+	    }
+	  else
+	    {
+	      static const enum rtx_code mag_comparisons[][2] = {
+		{LEU, LTU}, {GTU, GEU}, {LE, LT}, {GT, GE}
+	      };
 
-	    default:
-	      break;
+	      /* Convert e.g. (OP0 <= 0xFFF) into (OP0 < 0x1000).  */
+	      for (size_t i = 0; i < ARRAY_SIZE (mag_comparisons); i++)
+		{
+		  HOST_WIDE_INT new_rhs;
+		  bool increment = *code == mag_comparisons[i][0];
+		  bool decrement = *code == mag_comparisons[i][1];
+		  if (!increment && !decrement)
+		    continue;
+
+		  new_rhs = rhs + (increment ? 1 : -1);
+		  if (riscv_integer_cost (new_rhs) < riscv_integer_cost (rhs)
+		      && (rhs < 0) == (new_rhs < 0))
+		    {
+		      *op1 = GEN_INT (new_rhs);
+		      *code = mag_comparisons[i][increment];
+		    }
+		  break;
+		}
 	    }
 	}
 
