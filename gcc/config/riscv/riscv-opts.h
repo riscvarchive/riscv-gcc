@@ -28,4 +28,11 @@ enum riscv_float_abi_type {
 };
 extern enum riscv_float_abi_type riscv_float_abi;
 
+enum riscv_code_model {
+  CM_MEDLOW,
+  CM_MEDANY,
+  CM_PIC
+};
+extern enum riscv_code_model riscv_cmodel;
+
 #endif /* ! GCC_RISCV_OPTS_H */

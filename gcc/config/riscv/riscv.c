@@ -149,8 +149,6 @@ enum riscv_address_type {
   ADDRESS_SYMBOLIC
 };
 
-enum riscv_code_model riscv_cmodel = TARGET_DEFAULT_CMODEL;
-
 /* Information about a function's frame layout.  */
 struct GTY(())  riscv_frame_info {
   /* The size of the frame in bytes.  */
@@ -3846,16 +3844,6 @@ riscv_option_override (void)
 
   /* Function to allocate machine-dependent function status.  */
   init_machine_status = &riscv_init_machine_status;
-
-  if (riscv_cmodel_string)
-    {
-      if (strcmp (riscv_cmodel_string, "medlow") == 0)
-	riscv_cmodel = CM_MEDLOW;
-      else if (strcmp (riscv_cmodel_string, "medany") == 0)
-	riscv_cmodel = CM_MEDANY;
-      else
-	error ("unsupported code model: %s", riscv_cmodel_string);
-    }
 
   if (flag_pic)
     riscv_cmodel = CM_PIC;

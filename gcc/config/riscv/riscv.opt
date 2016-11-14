@@ -103,8 +103,18 @@ Target Report Mask(SAVE_RESTORE)
 Use smaller but slower prologue and epilogue code.
 
 mcmodel=
-Target RejectNegative Joined Var(riscv_cmodel_string)
-Use given RISC-V code model (medlow or medany).
+Target Report RejectNegative Joined Enum(code_model) Var(riscv_cmodel) Init(TARGET_DEFAULT_CMODEL)
+Specify the code model.
+
+Enum
+Name(code_model) Type(enum riscv_code_model)
+Known code models (for use with the -mcmodel= option):
+
+EnumValue
+Enum(code_model) String(medlow) Value(CM_MEDLOW)
+
+EnumValue
+Enum(code_model) String(medany) Value(CM_MEDANY)
 
 mexplicit-relocs
 Target Report Mask(EXPLICIT_RELOCS)
