@@ -56,8 +56,6 @@ extern bool riscv_split_symbol_type (enum riscv_symbol_type);
 extern rtx riscv_unspec_address (rtx, enum riscv_symbol_type);
 extern void riscv_move_integer (rtx, rtx, HOST_WIDE_INT);
 extern bool riscv_legitimize_move (enum machine_mode, rtx, rtx);
-extern bool riscv_legitimize_vector_move (enum machine_mode, rtx, rtx);
-
 extern rtx riscv_subword (rtx, bool);
 extern bool riscv_split_64bit_move_p (rtx, rtx);
 extern void riscv_split_doubleword_move (rtx, rtx);
@@ -68,33 +66,14 @@ extern void riscv_expand_scc (rtx *);
 extern void riscv_expand_conditional_branch (rtx *);
 #endif
 extern rtx riscv_expand_call (bool, rtx, rtx, rtx);
-extern void riscv_expand_fcc_reload (rtx, rtx, rtx);
 extern void riscv_set_return_address (rtx, rtx);
 extern bool riscv_expand_block_move (rtx, rtx, rtx);
-extern void riscv_expand_synci_loop (rtx, rtx);
-
-extern bool riscv_expand_ext_as_unaligned_load (rtx, rtx, HOST_WIDE_INT,
-					       HOST_WIDE_INT);
-extern bool riscv_expand_ins_as_unaligned_store (rtx, rtx, HOST_WIDE_INT,
-						HOST_WIDE_INT);
-extern void riscv_order_regs_for_local_alloc (void);
-
 extern rtx riscv_return_addr (int, rtx);
 extern HOST_WIDE_INT riscv_initial_elimination_offset (int, int);
 extern void riscv_expand_prologue (void);
 extern void riscv_expand_epilogue (bool);
 extern bool riscv_can_use_return_insn (void);
 extern rtx riscv_function_value (const_tree, const_tree, enum machine_mode);
-
-extern enum reg_class riscv_secondary_reload_class (enum reg_class,
-						   enum machine_mode,
-						   rtx, bool);
 extern unsigned int riscv_hard_regno_nregs (int, enum machine_mode);
-
-extern void irix_asm_output_align (FILE *, unsigned);
-extern const char *current_section_name (void);
-extern unsigned int current_section_flags (void);
-
-extern void riscv_expand_vector_init (rtx, rtx);
 
 #endif /* ! GCC_RISCV_PROTOS_H */
