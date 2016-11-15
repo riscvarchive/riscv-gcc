@@ -20,11 +20,6 @@
 ;; <http://www.gnu.org/licenses/>.
 
 (define_c_enum "unspec" [
-  ;; Floating-point moves.
-  UNSPEC_LOAD_LOW
-  UNSPEC_LOAD_HIGH
-  UNSPEC_STORE_WORD
-
   ;; GP manipulation.
   UNSPEC_EH_RETURN
 
@@ -270,12 +265,6 @@
 (define_mode_iterator ANYIF [QI HI SI (DI "TARGET_64BIT")
 			     (SF "TARGET_HARD_FLOAT")
 			     (DF "TARGET_DOUBLE_FLOAT")])
-
-;; A floating-point mode for which moves involving FPRs may need to be split.
-(define_mode_iterator SPLITF
-  [(DF "!TARGET_64BIT")
-   (DI "!TARGET_64BIT")
-   (TF "TARGET_64BIT")])
 
 ;; This attribute gives the length suffix for a sign- or zero-extension
 ;; instruction.
@@ -1613,8 +1602,8 @@
     DONE;
 })
 
-;; In RV32, we lack mtf.d/mff.d.  Go through memory instead.
-;; (except for moving a constant 0 to an FPR.  for that we use fcvt.d.w.)
+;; In RV32, we lack fmv.x.d and fmv.d.x.  Go through memory instead.
+;; (However, we can still use fcvt.d.w to zero a floating-point register.)
 (define_insn "*movdf_hardfloat_rv32"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=f,f,f,m,m,*r,*r,*m")
 	(match_operand:DF 1 "move_operand" "f,G,m,f,G,*r*G,*m,*r"))]
@@ -1648,58 +1637,13 @@
 (define_split
   [(set (match_operand:MOVE64 0 "nonimmediate_operand")
 	(match_operand:MOVE64 1 "move_operand"))]
-  "reload_completed && !TARGET_64BIT
+  "reload_completed
    && riscv_split_64bit_move_p (operands[0], operands[1])"
   [(const_int 0)]
 {
   riscv_split_doubleword_move (operands[0], operands[1]);
   DONE;
 })
-
-;; 64-bit paired-single floating point moves
-
-;; Load the low word of operand 0 with operand 1.
-(define_insn "load_low<mode>"
-  [(set (match_operand:SPLITF 0 "register_operand" "=f,f")
-	(unspec:SPLITF [(match_operand:<HALFMODE> 1 "general_operand" "rJ,m")]
-		       UNSPEC_LOAD_LOW))]
-  "TARGET_HARD_FLOAT"
-{
-  operands[0] = riscv_subword (operands[0], 0);
-  return riscv_output_move (operands[0], operands[1]);
-}
-  [(set_attr "move_type" "mtc,fpload")
-   (set_attr "mode" "<HALFMODE>")])
-
-;; Load the high word of operand 0 from operand 1, preserving the value
-;; in the low word.
-(define_insn "load_high<mode>"
-  [(set (match_operand:SPLITF 0 "register_operand" "=f,f")
-	(unspec:SPLITF [(match_operand:<HALFMODE> 1 "general_operand" "rJ,m")
-			(match_operand:SPLITF 2 "register_operand" "0,0")]
-		       UNSPEC_LOAD_HIGH))]
-  "TARGET_HARD_FLOAT"
-{
-  operands[0] = riscv_subword (operands[0], 1);
-  return riscv_output_move (operands[0], operands[1]);
-}
-  [(set_attr "move_type" "mtc,fpload")
-   (set_attr "mode" "<HALFMODE>")])
-
-;; Store one word of operand 1 in operand 0.  Operand 2 is 1 to store the
-;; high word and 0 to store the low word.
-(define_insn "store_word<mode>"
-  [(set (match_operand:<HALFMODE> 0 "nonimmediate_operand" "=r,m")
-	(unspec:<HALFMODE> [(match_operand:SPLITF 1 "register_operand" "f,f")
-			    (match_operand 2 "const_int_operand")]
-			   UNSPEC_STORE_WORD))]
-  "TARGET_HARD_FLOAT"
-{
-  operands[1] = riscv_subword (operands[1], INTVAL (operands[2]));
-  return riscv_output_move (operands[0], operands[1]);
-}
-  [(set_attr "move_type" "mfc,fpstore")
-   (set_attr "mode" "<HALFMODE>")])
 
 ;; Expand in-line code to clear the instruction cache between operand[0] and
 ;; operand[1].
