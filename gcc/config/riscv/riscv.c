@@ -1692,20 +1692,17 @@ riscv_address_cost (rtx addr, enum machine_mode mode,
 rtx
 riscv_subword (rtx op, bool high_p)
 {
-  unsigned int byte;
-  enum machine_mode mode;
+  unsigned int byte = high_p ? UNITS_PER_WORD : 0;
+  enum machine_mode mode = GET_MODE (op);
 
-  mode = GET_MODE (op);
   if (mode == VOIDmode)
     mode = TARGET_64BIT ? TImode : DImode;
 
-  byte = high_p ? UNITS_PER_WORD : 0;
-
-  if (FP_REG_RTX_P (op))
-    return gen_rtx_REG (word_mode, REGNO (op) + high_p);
-
   if (MEM_P (op))
     return adjust_address (op, word_mode, byte);
+
+  if (REG_P (op))
+    gcc_assert (!FP_REG_RTX_P (op));
 
   return simplify_gen_subreg (word_mode, op, mode, byte);
 }
@@ -1715,15 +1712,19 @@ riscv_subword (rtx op, bool high_p)
 bool
 riscv_split_64bit_move_p (rtx dest, rtx src)
 {
-  /* All 64b moves are legal in 64b mode.  All 64b FPR <-> FPR and
-     FPR <-> MEM moves are legal in 32b mode, too.  Although
-     FPR <-> GPR moves are not available in general in 32b mode,
-     we can at least load 0 into an FPR with fcvt.d.w fpr, x0. */
-  return !(TARGET_64BIT
-	   || (FP_REG_RTX_P (src) && FP_REG_RTX_P (dest))
-	   || (FP_REG_RTX_P (dest) && MEM_P (src))
-	   || (FP_REG_RTX_P (src) && MEM_P (dest))
-	   || (FP_REG_RTX_P (dest) && src == CONST0_RTX (GET_MODE (src))));
+  if (TARGET_64BIT)
+    return false;
+
+  /* Allow FPR <-> FPR and FPR <-> MEM moves, and permit the special case
+     of zeroing an FPR with FCVT.D.W.  */
+  if (TARGET_DOUBLE_FLOAT
+      && ((FP_REG_RTX_P (src) && FP_REG_RTX_P (dest))
+	  || (FP_REG_RTX_P (dest) && MEM_P (src))
+	  || (FP_REG_RTX_P (src) && MEM_P (dest))
+	  || (FP_REG_RTX_P (dest) && src == CONST0_RTX (GET_MODE (src)))))
+    return false;
+
+  return true;
 }
 
 /* Split a doubleword move from SRC to DEST.  On 32-bit targets,
