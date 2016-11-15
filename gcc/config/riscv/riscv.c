@@ -1093,8 +1093,8 @@ riscv_split_symbol (rtx temp, rtx addr, enum machine_mode mode, rtx *low_out)
 	  char buf[32];
 	  rtx label;
 
-	  if (snprintf (buf, sizeof (buf), ".LA%u", seqno) >= sizeof (buf))
-	    gcc_unreachable ();
+	  ssize_t bytes = snprintf (buf, sizeof (buf), ".LA%u", seqno);
+	  gcc_assert ((size_t) bytes < sizeof (buf));
 
 	  label = gen_rtx_SYMBOL_REF (Pmode, ggc_strdup (buf));
 	  SYMBOL_REF_FLAGS (label) |= SYMBOL_FLAG_LOCAL;
@@ -3374,8 +3374,8 @@ riscv_output_gpr_save (unsigned mask)
   static char s[32];
   unsigned n = riscv_save_libcall_count (mask);
 
-  if (snprintf (s, sizeof (s), "call\tt0,__riscv_save_%u", n) >= sizeof (s))
-    gcc_unreachable ();
+  ssize_t bytes = snprintf (s, sizeof (s), "call\tt0,__riscv_save_%u", n);
+  gcc_assert ((size_t) bytes < sizeof (s));
 
   return s;
 }
