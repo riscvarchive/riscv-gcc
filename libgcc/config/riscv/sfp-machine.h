@@ -114,8 +114,8 @@ typedef int __gcc_CMPtype __attribute__ ((mode (__libgcc_cmp_return__)));
 
 #define FP_RND_NEAREST		0x0
 #define FP_RND_ZERO		0x1
-#define FP_RND_PINF		0x2
-#define FP_RND_MINF		0x3
+#define FP_RND_PINF		0x3
+#define FP_RND_MINF		0x2
 
 #define FP_EX_INVALID		0x10
 #define FP_EX_OVERFLOW		0x04
