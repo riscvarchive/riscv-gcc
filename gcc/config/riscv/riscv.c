@@ -2422,6 +2422,9 @@ riscv_fpr_return_fields (const_tree valtype, tree fields[2])
       if (!SCALAR_FLOAT_TYPE_P (TREE_TYPE (field)))
 	return 0;
 
+      if (GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (field))) > UNITS_PER_FP_ARG)
+	return 0;
+
       if (i == 2)
 	return 0;
 
@@ -2541,28 +2544,20 @@ riscv_function_value (const_tree valtype, const_tree func, enum machine_mode mod
   return gen_rtx_REG (mode, GP_RETURN);
 }
 
-/* Implement TARGET_RETURN_IN_MEMORY.  Scalars and small structures
-   that fit in two registers are returned in a0/a1. */
+/* Data that fit in two words may be passed and returned in registers.  */
+
+static bool
+riscv_size_ok_for_register_arg (HOST_WIDE_INT size)
+{
+  return IN_RANGE (size, 0, 2 * UNITS_PER_WORD);
+}
+
+/* Implement TARGET_RETURN_IN_MEMORY.  */
 
 static bool
 riscv_return_in_memory (const_tree type, const_tree fndecl ATTRIBUTE_UNUSED)
 {
-  /* TFmode is always passed by reference.  */
-  if (TYPE_MODE (type) == TFmode)
-    return true;
-
-  if (TREE_CODE (type) == RECORD_TYPE)
-    {
-      tree field;
-      /* Check if this struc only TFmode, then it's still pass in memory.  */
-      for (field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
-	if (TREE_CODE (field) == FIELD_DECL
-	    && !error_operand_p (field)
-	    && TYPE_MODE (TREE_TYPE (field)) == TFmode)
-	  return true;
-    }
-
-  return !IN_RANGE (int_size_in_bytes (type), 0, 2 * UNITS_PER_WORD);
+  return !riscv_size_ok_for_register_arg (int_size_in_bytes (type));
 }
 
 /* Implement TARGET_PASS_BY_REFERENCE. */
@@ -2572,11 +2567,9 @@ riscv_pass_by_reference (cumulative_args_t cum ATTRIBUTE_UNUSED,
 			 enum machine_mode mode, const_tree type,
 			 bool named ATTRIBUTE_UNUSED)
 {
-  /* TFmode is always passed by reference.  */
-  if (mode == TFmode)
-    return true;
+  HOST_WIDE_INT size = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode);
 
-  if (type && riscv_return_in_memory (type, NULL_TREE))
+  if (!riscv_size_ok_for_register_arg (size))
     return true;
 
   return targetm.calls.must_pass_in_stack (mode, type);
@@ -3690,9 +3683,6 @@ riscv_scalar_mode_supported_p (enum machine_mode mode)
 {
   if (ALL_FIXED_POINT_MODE_P (mode)
       && GET_MODE_PRECISION (mode) <= 2 * BITS_PER_WORD)
-    return true;
-
-  if (mode == TFmode)
     return true;
 
   return default_scalar_mode_supported_p (mode);
