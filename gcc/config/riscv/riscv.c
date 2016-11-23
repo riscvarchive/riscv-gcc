@@ -2192,8 +2192,7 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
   info->fpr_p = (named
 		 && (type == 0 || FLOAT_TYPE_P (type))
 		 && (GET_MODE_CLASS (mode) == MODE_FLOAT
-		     || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT
-		     || GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT)
+		     || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
 		 && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_FP_ARG);
 
   /* Complex floats should only go into FPRs if there are two FPRs free,
@@ -2440,7 +2439,6 @@ static bool
 riscv_return_mode_in_fpr_p (enum machine_mode mode)
 {
   return ((GET_MODE_CLASS (mode) == MODE_FLOAT
-	   || GET_MODE_CLASS (mode) == MODE_VECTOR_FLOAT
 	   || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
 	  && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_FP_ARG);
 }
@@ -3611,8 +3609,7 @@ riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
 	max_size = UNITS_PER_FP_ARG;
 
       if (mclass == MODE_FLOAT
-	  || mclass == MODE_COMPLEX_FLOAT
-	  || mclass == MODE_VECTOR_FLOAT)
+	  || mclass == MODE_COMPLEX_FLOAT)
 	return size <= max_size;
     }
 
