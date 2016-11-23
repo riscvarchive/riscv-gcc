@@ -119,11 +119,6 @@ along with GCC; see the file COPYING3.  If not see
 #define UNSPEC_ADDRESS_TYPE(X) \
   ((enum riscv_symbol_type) (XINT (X, 1) - UNSPEC_ADDRESS_FIRST))
 
-/* The maximum distance between the top of the stack frame and the
-   value sp has when we save and restore registers.  This is set by the
-   range  of load/store offsets and must also preserve stack alignment. */
-#define RISCV_MAX_FIRST_STACK_STEP (IMM_REACH/2 - 16)
-
 /* True if bit BIT is set in VALUE.  */
 #define BITSET_P(VALUE, BIT) (((VALUE) & (1ULL << (BIT))) != 0)
 
@@ -3191,10 +3186,8 @@ riscv_compute_frame_info (void)
   frame->frame_pointer_offset = offset;
   /* Next are the callee-saved FPRs. */
   if (frame->fmask)
-    {
-      offset += RISCV_STACK_ALIGN (num_f_saved * UNITS_PER_FP_REG);
-      frame->fp_sp_offset = offset - UNITS_PER_FP_REG;
-    }
+    offset += RISCV_STACK_ALIGN (num_f_saved * UNITS_PER_FP_REG);
+  frame->fp_sp_offset = offset - UNITS_PER_FP_REG;
   /* Next are the callee-saved GPRs. */
   if (frame->mask)
     {
@@ -3206,8 +3199,8 @@ riscv_compute_frame_info (void)
 	frame->save_libcall_adjustment = x_save_size;
 
       offset += x_save_size;
-      frame->gp_sp_offset = offset - UNITS_PER_WORD;
     }
+  frame->gp_sp_offset = offset - UNITS_PER_WORD;
   /* The hard frame pointer points above the callee-saved GPRs. */
   frame->hard_frame_pointer_offset = offset;
   /* Above the hard frame pointer is the callee-allocated varags save area. */
@@ -3372,6 +3365,30 @@ riscv_output_gpr_save (unsigned mask)
   return s;
 }
 
+/* For stack frames that can't be allocated with a single ADDI instruction,
+   compute the best value to initially allocate.  It must at a minimum
+   allocate enough space to spill the callee-saved registers.  */
+
+static HOST_WIDE_INT
+riscv_first_stack_step (struct riscv_frame_info *frame)
+{
+  HOST_WIDE_INT min_first_step = frame->total_size - frame->fp_sp_offset;
+  HOST_WIDE_INT max_first_step = IMM_REACH / 2 - STACK_BOUNDARY / 8;
+
+  if (SMALL_OPERAND (frame->total_size))
+    return frame->total_size;
+
+  /* As an optimization, use the least-significant bits of the total frame
+     size, so that the second adjustment step is just LUI + ADD.  */
+  if (!SMALL_OPERAND (frame->total_size - max_first_step)
+      && frame->total_size % IMM_REACH < IMM_REACH / 2
+      && frame->total_size % IMM_REACH >= min_first_step)
+    return frame->total_size % IMM_REACH;
+
+  gcc_assert (min_first_step <= max_first_step);
+  return max_first_step;
+}
+
 /* Expand the "prologue" pattern.  */
 
 void
@@ -3393,14 +3410,11 @@ riscv_expand_prologue (void)
       emit_insn (gen_gpr_save (GEN_INT (mask)));
     }
 
-  /* Save the registers.  Allocate up to RISCV_MAX_FIRST_STACK_STEP
-     bytes beforehand; this is enough to cover the register save area
-     without going out of range.  */
+  /* Save the registers.  */
   if ((frame->mask | frame->fmask) != 0)
     {
-      HOST_WIDE_INT step1;
+      HOST_WIDE_INT step1 = riscv_first_stack_step (frame);
 
-      step1 = MIN (size, RISCV_MAX_FIRST_STACK_STEP);
       insn = gen_add3_insn (stack_pointer_rtx,
 			    stack_pointer_rtx,
 			    GEN_INT (-step1));
@@ -3486,7 +3500,7 @@ riscv_expand_epilogue (bool sibcall_p)
      possible in the second step without going out of range.  */
   if ((frame->mask | frame->fmask) != 0)
     {
-      step2 = MIN (step1, RISCV_MAX_FIRST_STACK_STEP);
+      step2 = riscv_first_stack_step (frame);
       step1 -= step2;
     }
 
