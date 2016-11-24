@@ -3609,8 +3609,7 @@ riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
 
       /* For RV32, treat CDImode like two doublewords, but forbid allocating
 	 them in x30, since they need 4 consecutive registers.  */
-      if (GET_MODE_CLASS (mode) == MODE_COMPLEX_INT
-	  && size <= 4 * UNITS_PER_WORD)
+      if (size <= 4 * UNITS_PER_WORD)
 	return regno % 2 == 0 && GP_REG_P (regno + 2);
     }
 
