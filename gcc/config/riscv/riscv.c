@@ -2842,27 +2842,52 @@ riscv_print_operand_reloc (FILE *file, rtx op, bool hi_reloc)
   fputc (')', file);
 }
 
-static const char *
-riscv_memory_model_suffix (enum memmodel model)
+/* Return true if the .AQ suffix should be added to an AMO to implement the
+   acquire portion of memory model MODEL.  */
+
+static bool
+riscv_memmodel_needs_amo_acquire (enum memmodel model)
 {
   switch (model)
     {
       case MEMMODEL_ACQ_REL:
       case MEMMODEL_SEQ_CST:
       case MEMMODEL_SYNC_SEQ_CST:
-	return ".sc";
+      case MEMMODEL_ACQUIRE:
+      case MEMMODEL_CONSUME:
+      case MEMMODEL_SYNC_ACQUIRE:
+	return true;
+
+      case MEMMODEL_RELEASE:
+      case MEMMODEL_SYNC_RELEASE:
+      case MEMMODEL_RELAXED:
+	return false;
+
+      default:
+	gcc_unreachable ();
+    }
+}
+
+/* Return true if a FENCE should be emitted to before a memory access to
+   implement the release portion of memory model MODEL.  */
+
+static bool
+riscv_memmodel_needs_release_fence (enum memmodel model)
+{
+  switch (model)
+    {
+      case MEMMODEL_ACQ_REL:
+      case MEMMODEL_SEQ_CST:
+      case MEMMODEL_SYNC_SEQ_CST:
+      case MEMMODEL_RELEASE:
+      case MEMMODEL_SYNC_RELEASE:
+	return true;
 
       case MEMMODEL_ACQUIRE:
       case MEMMODEL_CONSUME:
       case MEMMODEL_SYNC_ACQUIRE:
-	return ".aq";
-
-      case MEMMODEL_RELEASE:
-      case MEMMODEL_SYNC_RELEASE:
-	return ".rl";
-
       case MEMMODEL_RELAXED:
-	return "";
+	return false;
 
       default:
 	gcc_unreachable ();
@@ -2876,6 +2901,7 @@ riscv_memory_model_suffix (enum memmodel model)
    'R'	Print the low-part relocation associated with OP.
    'C'	Print the integer branch condition for comparison OP.
    'A'	Print the atomic operation suffix for memory model OP.
+   'F'	Print a FENCE if the memory model requires a release.
    'z'	Print $0 if OP is zero, otherwise print OP normally.  */
 
 static void
@@ -2902,7 +2928,13 @@ riscv_print_operand (FILE *file, rtx op, int letter)
       break;
 
     case 'A':
-      fputs (riscv_memory_model_suffix ((enum memmodel)INTVAL (op)), file);
+      if (riscv_memmodel_needs_amo_acquire ((enum memmodel) INTVAL (op)))
+	fputs (".aq", file);
+      break;
+
+    case 'F':
+      if (riscv_memmodel_needs_release_fence ((enum memmodel) INTVAL (op)))
+	fputs ("fence rw,w; ", file);
       break;
 
     default:
