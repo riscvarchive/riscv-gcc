@@ -28,19 +28,7 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_CPU_CPP_BUILTINS()					\
   do									\
     {									\
-      builtin_assert ("machine=riscv");					\
-      builtin_assert ("cpu=riscv");					\
-      builtin_define ("__riscv__");					\
       builtin_define ("__riscv");					\
-									\
-      if (TARGET_64BIT)							\
-	builtin_define ("__riscv64");					\
-      else								\
-	builtin_define ("__riscv32");					\
-									\
-      builtin_define_with_int_value ("_RISCV_SZINT", INT_TYPE_SIZE);	\
-      builtin_define_with_int_value ("_RISCV_SZLONG", LONG_TYPE_SIZE);	\
-      builtin_define_with_int_value ("_RISCV_SZPTR", POINTER_SIZE);	\
 									\
       if (TARGET_RVC)							\
 	builtin_define ("__riscv_compressed");				\
@@ -82,11 +70,20 @@ along with GCC; see the file COPYING3.  If not see
 	  break;							\
 	}								\
 									\
-      /* The base RISC-V ISA is always little-endian. */		\
-      builtin_define_std ("RISCVEL");					\
+      switch (riscv_cmodel)						\
+	{								\
+	case CM_MEDLOW:							\
+	  builtin_define ("__riscv_cmodel_medlow");			\
+	  break;							\
 									\
-      if (riscv_cmodel == CM_MEDANY)					\
-	builtin_define ("_RISCV_CMODEL_MEDANY");			\
+	case CM_MEDANY:							\
+	  builtin_define ("__riscv_cmodel_medany");			\
+	  break;							\
+									\
+	case CM_PIC:							\
+	  builtin_define ("__riscv_cmodel_pic");			\
+	  break;							\
+	}								\
     }									\
   while (0)
 
@@ -134,11 +131,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifdef IN_LIBGCC2
 #undef TARGET_64BIT
 /* Make this compile time constant for libgcc2 */
-#ifdef __riscv64
-#define TARGET_64BIT           1
-#else
-#define TARGET_64BIT           0
-#endif
+#define TARGET_64BIT           (__riscv_xlen == 64)
 #endif /* IN_LIBGCC2 */
 
 #undef ASM_SPEC

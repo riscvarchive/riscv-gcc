@@ -26,7 +26,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
   .text
   .align 2
 
-#ifndef __riscv64
+#if __riscv_xlen == 32
 /* Our RV64 64-bit routines are equivalent to our RV32 32-bit routines.  */
 # define __udivdi3 __udivsi3
 # define __umoddi3 __umodsi3
@@ -137,7 +137,7 @@ __moddi3:
   neg    a0, a1
   jr     t0
 
-#ifdef __riscv64
+#if __riscv_xlen == 64
   /* continuation of __divsi3 */
 .L20:
   sll   t0, t0, 31

@@ -25,7 +25,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 
 typedef unsigned int fpu_control_t;
 
-#ifdef __riscv32
+#if __riscv_xlen == 32
 
 #define _FP_W_TYPE_SIZE		32
 #define _FP_W_TYPE		unsigned long
@@ -71,7 +71,7 @@ typedef unsigned int fpu_control_t;
 
 #endif
 
-#ifdef __riscv64
+#if __riscv_xlen == 64
 typedef int TItype __attribute__ ((mode (TI)));
 typedef unsigned int UTItype __attribute__ ((mode (TI)));
 #define TI_BITS (__CHAR_BIT__ * (int)sizeof(TItype))

@@ -53,7 +53,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
   .globl __riscv_restore_1
   .globl __riscv_restore_0
 
-#ifdef __riscv64
+#if __riscv_xlen == 64
 
 __riscv_save_12:
   addi sp, sp, -112
