@@ -186,26 +186,24 @@ struct GTY(())  machine_function {
 
 /* Information about a single argument.  */
 struct riscv_arg_info {
-  /* True if the argument is passed in a floating-point register, or
-     would have been if we hadn't run out of registers.  */
+  /* True if the argument is allocated to floating-point registers.  */
   bool fpr_p;
 
-  /* The number of words passed in registers, rounded up.  */
-  unsigned int reg_words;
+  /* True if the argument is at least partially passed on the stack.  */
+  bool stack_p;
 
-  /* The offset of the first register from the start of the ABI's argument
-     structure (see the CUMULATIVE_ARGS comment for details).
+  /* The number of integer registers allocated to this argument.  */
+  unsigned int num_gprs;
 
-     The value is MAX_ARGS_IN_REGISTERS if the argument is passed entirely
-     on the stack.  */
-  unsigned int reg_offset;
+  /* The offset of the first register used, provided num_gprs is nonzero.
+     If passed entirely on the stack, the value is MAX_ARGS_IN_REGISTERS.  */
+  unsigned int gpr_offset;
 
-  /* The number of words that must be passed on the stack, rounded up.  */
-  unsigned int stack_words;
+  /* The number of floating-point registers allocated to this argument.  */
+  unsigned int num_fprs;
 
-  /* The offset from the start of the stack overflow area of the argument's
-     first stack word.  Only meaningful when STACK_WORDS is nonzero.  */
-  unsigned int stack_offset;
+  /* The offset of the first register used, provided num_fprs is nonzero.  */
+  unsigned int fpr_offset;
 };
 
 /* Information about an address described by riscv_address_type.
@@ -2165,77 +2163,300 @@ riscv_function_arg_boundary (enum machine_mode mode, const_tree type)
   return alignment;
 }
 
-/* Fill INFO with information about a single argument.  CUM is the
-   cumulative state for earlier arguments.  MODE is the mode of this
-   argument and TYPE is its type (if known).  NAMED is true if this
-   is a named (fixed) argument rather than a variable one.  */
+/* If MODE represents an argument that can be passed or returned in
+   floating-point registers, return the number of registers, else 0.  */
 
-static void
-riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
-		    enum machine_mode mode, const_tree type, bool named)
+static unsigned
+riscv_pass_mode_in_fpr_p (enum machine_mode mode)
 {
-  bool doubleword_aligned_p;
-  unsigned int num_bytes, num_words, max_regs;
+  if (GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_FP_ARG)
+    {
+      if (GET_MODE_CLASS (mode) == MODE_FLOAT)
+	return 1;
+
+      if (GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
+	return 2;
+    }
+
+  return 0;
+}
+
+typedef struct {
+  const_tree type;
+  HOST_WIDE_INT offset;
+} riscv_aggregate_field;
+
+/* Identify subfields of aggregates that are candidates for passing in
+   floating-point registers.  */
+
+static int
+riscv_flatten_aggregate_field (const_tree type,
+			       riscv_aggregate_field fields[2],
+			       int n, HOST_WIDE_INT offset)
+{
+  switch (TREE_CODE (type))
+    {
+    case RECORD_TYPE:
+      for (tree f = TYPE_FIELDS (type); f; f = DECL_CHAIN (f))
+	if (TREE_CODE (f) == FIELD_DECL)
+	  {
+	    if (!TYPE_P (TREE_TYPE (f)))
+	      return -1;
+
+	    n = riscv_flatten_aggregate_field (TREE_TYPE (f), fields, n,
+					       offset + int_byte_position (f));
+	    if (n < 0)
+	        return -1;
+	  }
+      return n;
+
+    case ARRAY_TYPE:
+      {
+	HOST_WIDE_INT n_elts;
+	riscv_aggregate_field subfields[2];
+	tree index = TYPE_DOMAIN (type);
+	tree elt_size = TYPE_SIZE_UNIT (TREE_TYPE (type));
+	int n_subfields = riscv_flatten_aggregate_field (TREE_TYPE (type),
+							 subfields, 0, offset);
+
+	/* Can't handle incomplete types nor sizes that are not fixed.  */
+	if (n_subfields < 0
+	    || !COMPLETE_TYPE_P (type)
+	    || TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST
+	    || !index
+	    || !TYPE_MAX_VALUE (index)
+	    || !tree_fits_uhwi_p (TYPE_MAX_VALUE (index))
+	    || !TYPE_MIN_VALUE (index)
+	    || !tree_fits_uhwi_p (TYPE_MIN_VALUE (index))
+	    || !tree_fits_uhwi_p (elt_size))
+	  return -1;
+
+	n_elts = 1 + tree_to_uhwi (TYPE_MAX_VALUE (index))
+		   - tree_to_uhwi (TYPE_MIN_VALUE (index));
+	gcc_assert (n_elts >= 0);
+
+	for (HOST_WIDE_INT i = 0; i < n_elts; i++)
+	  for (int j = 0; j < n_subfields; j++)
+	    {
+	      if (n >= 2)
+		return -1;
+
+	      fields[n] = subfields[j];
+	      fields[n++].offset += i * tree_to_uhwi (elt_size);
+	    }
+
+	return n;
+      }
+
+    default:
+      if (n < 2
+	  && ((SCALAR_FLOAT_TYPE_P (type)
+	       && GET_MODE_SIZE (TYPE_MODE (type)) <= UNITS_PER_FP_ARG)
+	      || (INTEGRAL_TYPE_P (type)
+		  && GET_MODE_SIZE (TYPE_MODE (type)) <= UNITS_PER_WORD)))
+	{
+	  fields[n].type = type;
+	  fields[n].offset = offset;
+	  return n + 1;
+	}
+      else
+	return -1;
+    }
+}
+
+/* Identify candidate aggregates for passing in floating-point registers.
+   Candidates have at most two fields after flattening.  */
+
+static int
+riscv_flatten_aggregate_argument (const_tree type,
+				  riscv_aggregate_field fields[2])
+{
+  if (!type || TREE_CODE (type) != RECORD_TYPE)
+    return -1;
+
+  return riscv_flatten_aggregate_field (type, fields, 0, 0);
+}
+
+/* See whether TYPE is a record whose fields should be returned in one or
+   two floating-point registers.  If so, populate FIELDS accordingly.  */
+
+static unsigned
+riscv_pass_aggregate_in_fpr_pair_p (const_tree type,
+				    riscv_aggregate_field fields[2])
+{
+  int n = riscv_flatten_aggregate_argument (type, fields);
+
+  for (int i = 0; i < n; i++)
+    if (!SCALAR_FLOAT_TYPE_P (fields[i].type))
+      return 0;
+
+  return n > 0 ? n : 0;
+}
+
+/* See whether TYPE is a record whose fields should be returned in one or
+   floating-point register and one integer register.  If so, populate
+   FIELDS accordingly.  */
+
+static bool
+riscv_pass_aggregate_in_fpr_and_gpr_p (const_tree type,
+				       riscv_aggregate_field fields[2])
+{
+  unsigned num_int = 0, num_float = 0;
+  int n = riscv_flatten_aggregate_argument (type, fields);
+
+  for (int i = 0; i < n; i++)
+    {
+      num_float += SCALAR_FLOAT_TYPE_P (fields[i].type);
+      num_int += INTEGRAL_TYPE_P (fields[i].type);
+    }
+
+  return num_int == 1 && num_float == 1;
+}
+
+/* Return the representation of an argument passed or returned in an FPR
+   when the value has mode VALUE_MODE and the type has TYPE_MODE.  The
+   two modes may be different for structures like:
+
+       struct __attribute__((packed)) foo { float f; }
+
+  where the SFmode value "f" is passed in REGNO but the struct itself
+  has mode BLKmode.  */
+
+static rtx
+riscv_pass_fpr_single (enum machine_mode type_mode, unsigned regno,
+		       enum machine_mode value_mode)
+{
+  rtx x = gen_rtx_REG (value_mode, regno);
+
+  if (type_mode != value_mode)
+    {
+      x = gen_rtx_EXPR_LIST (VOIDmode, x, const0_rtx);
+      x = gen_rtx_PARALLEL (type_mode, gen_rtvec (1, x));
+    }
+  return x;
+}
+
+/* Pass or return a composite value in the FPR pair REGNO and REGNO + 1.
+   MODE is the mode of the composite.  MODE1 and OFFSET1 are the mode and
+   byte offset for the first value, likewise MODE2 and OFFSET2 for the
+   second value.  */
+
+static rtx
+riscv_pass_fpr_pair (enum machine_mode mode, unsigned regno1,
+		     enum machine_mode mode1, HOST_WIDE_INT offset1,
+		     unsigned regno2, enum machine_mode mode2,
+		     HOST_WIDE_INT offset2)
+{
+  return gen_rtx_PARALLEL
+    (mode,
+     gen_rtvec (2,
+		gen_rtx_EXPR_LIST (VOIDmode,
+				   gen_rtx_REG (mode1, regno1),
+				   GEN_INT (offset1)),
+		gen_rtx_EXPR_LIST (VOIDmode,
+				   gen_rtx_REG (mode2, regno2),
+				   GEN_INT (offset2))));
+}
+
+/* Fill INFO with information about a single argument, and return an
+   RTL pattern to pass or return the argument.  CUM is the cumulative
+   state for earlier arguments.  MODE is the mode of this argument and
+   TYPE is its type (if known).  NAMED is true if this is a named
+   (fixed) argument rather than a variable one.  RETURN_P is true if
+   returning the argument, or false if passing the argument.  */
+
+static rtx
+riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
+		    enum machine_mode mode, const_tree type, bool named,
+		    bool return_p)
+{
+  unsigned num_bytes, num_words;
+  unsigned fpr_base = return_p ? FP_RETURN : FP_ARG_FIRST;
+  unsigned gpr_base = return_p ? GP_RETURN : GP_ARG_FIRST;
+
+  memset (info, 0, sizeof (*info));
+  info->gpr_offset = cum->num_gprs;
+  info->fpr_offset = cum->num_fprs;
+
+  if (named)
+    {
+      riscv_aggregate_field fields[2];
+      unsigned fregno = fpr_base + info->fpr_offset;
+      unsigned gregno = gpr_base + info->gpr_offset;
+
+      /* Pass one- or two-element floating-point aggregates in FPRs.  */
+      if ((info->num_fprs = riscv_pass_aggregate_in_fpr_pair_p (type, fields))
+	  && info->fpr_offset + info->num_fprs <= MAX_ARGS_IN_REGISTERS)
+	switch (info->num_fprs)
+	  {
+	  case 1:
+	    return riscv_pass_fpr_single (mode, fregno,
+					  TYPE_MODE (fields[0].type));
+
+	  case 2:
+	    return riscv_pass_fpr_pair (mode, fregno,
+					TYPE_MODE (fields[0].type),
+					fields[0].offset,
+					fregno + 1,
+					TYPE_MODE (fields[1].type),
+					fields[1].offset);
+
+	  default:
+	    gcc_unreachable ();
+	  }
+
+      /* Pass real and complex floating-point numbers in FPRs.  */
+      if ((info->num_fprs = riscv_pass_mode_in_fpr_p (mode))
+	  && info->fpr_offset + info->num_fprs <= MAX_ARGS_IN_REGISTERS)
+	switch (GET_MODE_CLASS (mode))
+	  {
+	  case MODE_FLOAT:
+	    return gen_rtx_REG (mode, fregno);
+
+	  case MODE_COMPLEX_FLOAT:
+	    return riscv_pass_fpr_pair (mode, fregno, GET_MODE_INNER (mode), 0,
+					fregno + 1, GET_MODE_INNER (mode),
+					GET_MODE_UNIT_SIZE (mode));
+
+	  default:
+	    gcc_unreachable ();
+	  }
+
+      /* Pass structs with one float and one integer in an FPR and a GPR.  */
+      if (riscv_pass_aggregate_in_fpr_and_gpr_p (type, fields)
+	  && info->gpr_offset < MAX_ARGS_IN_REGISTERS
+	  && info->fpr_offset < MAX_ARGS_IN_REGISTERS)
+	{
+	  info->num_gprs = 1;
+	  info->num_fprs = 1;
+
+	  if (!SCALAR_FLOAT_TYPE_P (fields[0].type))
+	    std::swap (fregno, gregno);
+
+	  return riscv_pass_fpr_pair (mode, fregno, TYPE_MODE (fields[0].type),
+				      fields[0].offset,
+				      gregno, TYPE_MODE (fields[1].type),
+				      fields[1].offset);
+	}
+    }
 
   /* Work out the size of the argument.  */
   num_bytes = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode);
   num_words = (num_bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
-  /* Scalar, complex and vector floating-point types are passed in
-     floating-point registers, as long as this is a named rather
-     than a variable argument.  */
-  info->fpr_p = (named
-		 && (type == 0 || FLOAT_TYPE_P (type))
-		 && (GET_MODE_CLASS (mode) == MODE_FLOAT
-		     || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-		 && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_FP_ARG);
-
-  /* Complex floats should only go into FPRs if there are two FPRs free,
-     otherwise they should be passed in the same way as a struct
-     containing two floats.  */
-  if (info->fpr_p && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-    {
-      if (cum->num_gprs >= MAX_ARGS_IN_REGISTERS - 1)
-	info->fpr_p = false;
-      else
-	num_words = 2;
-    }
-
-  /* See whether the argument has doubleword alignment,
-     and do not align for zero size type.   */
-  doubleword_aligned_p = (riscv_function_arg_boundary (mode, type)
-			  > BITS_PER_WORD)
-			 && (num_bytes != 0);
-
-
-  /* Place the argument in the next available register, and align to an
-     even register boundary if the argument is doubleword-aligned.  */
-  info->reg_offset = cum->num_gprs;
-  if (doubleword_aligned_p)
-    info->reg_offset += info->reg_offset & 1;
-
-  /* Similarly compute the offset of a stack argument.  */
-  info->stack_offset = cum->stack_words;
-  if (doubleword_aligned_p)
-    info->stack_offset += info->stack_offset & 1;
-
-  max_regs = MAX_ARGS_IN_REGISTERS - info->reg_offset;
+  /* Doubleword-aligned arguments start on an even register boundary.  */
+  if (num_bytes && riscv_function_arg_boundary (mode, type) > BITS_PER_WORD)
+    info->gpr_offset += info->gpr_offset & 1;
 
   /* Partition the argument between registers and stack.  */
-  info->reg_words = MIN (num_words, max_regs);
-  info->stack_words = num_words - info->reg_words;
-}
+  info->num_fprs = 0;
+  info->num_gprs = MIN (num_words, MAX_ARGS_IN_REGISTERS - info->gpr_offset);
+  info->stack_p = (num_words - info->num_gprs) != 0;
 
-/* INFO describes a register argument that has the normal format for the
-   argument's mode.  Return the register it uses.  */
+  if (info->num_gprs || return_p)
+    return gen_rtx_REG (mode, gpr_base + info->gpr_offset);
 
-static unsigned int
-riscv_arg_regno (const struct riscv_arg_info *info)
-{
-  if (!info->fpr_p || riscv_float_abi == FLOAT_ABI_SOFT)
-    return GP_ARG_FIRST + info->reg_offset;
-  else
-    return FP_ARG_FIRST + info->reg_offset;
+  return NULL_RTX;
 }
 
 /* Implement TARGET_FUNCTION_ARG.  */
@@ -2250,110 +2471,7 @@ riscv_function_arg (cumulative_args_t cum_v, enum machine_mode mode,
   if (mode == VOIDmode)
     return NULL;
 
-  riscv_get_arg_info (&info, cum, mode, type, named);
-
-  /* Return straight away if the whole argument is passed on the stack.  */
-  if (info.reg_offset == MAX_ARGS_IN_REGISTERS)
-    return NULL;
-
-  /* If any XLEN-bit chunk of a structure contains an XLEN-bit floating-point
-     number in its entirety, and the floating-point ABI can return XLEN-bit
-     values in FPRs, then pass the chunk in an FPR.  */
-  if (named
-      && type != 0
-      && TREE_CODE (type) == RECORD_TYPE
-      && TYPE_SIZE_UNIT (type)
-      && UNITS_PER_FP_ARG >= UNITS_PER_WORD
-      && tree_fits_uhwi_p (TYPE_SIZE_UNIT (type)))
-    {
-      enum machine_mode fmode = TARGET_64BIT ? DFmode : SFmode;
-      enum machine_mode imode = TARGET_64BIT ? DImode : SImode;
-      tree field;
-
-      /* First check to see if there is any such field.  */
-      for (field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
-	if (TREE_CODE (field) == FIELD_DECL
-	    && SCALAR_FLOAT_TYPE_P (TREE_TYPE (field))
-	    && TYPE_PRECISION (TREE_TYPE (field)) == BITS_PER_WORD
-	    && tree_fits_shwi_p (bit_position (field))
-	    && int_bit_position (field) % BITS_PER_WORD == 0)
-	  break;
-
-      if (field != 0)
-	{
-	  /* Now handle the special case by returning a PARALLEL
-	     indicating where each 64-bit chunk goes.  INFO.REG_WORDS
-	     chunks are passed in registers.  */
-	  unsigned int i;
-	  HOST_WIDE_INT bitpos;
-	  rtx ret;
-
-	  /* assign_parms checks the mode of ENTRY_PARM, so we must
-	     use the actual mode here.  */
-	  ret = gen_rtx_PARALLEL (mode, rtvec_alloc (info.reg_words));
-
-	  bitpos = 0;
-	  field = TYPE_FIELDS (type);
-	  for (i = 0; i < info.reg_words; i++)
-	    {
-	      rtx reg;
-
-	      for (; field; field = DECL_CHAIN (field))
-		if (TREE_CODE (field) == FIELD_DECL
-		    && int_bit_position (field) >= bitpos)
-		  break;
-
-	      if (field
-		  && int_bit_position (field) == bitpos
-		  && SCALAR_FLOAT_TYPE_P (TREE_TYPE (field))
-		  && TYPE_PRECISION (TREE_TYPE (field)) == BITS_PER_WORD)
-		reg = gen_rtx_REG (fmode, FP_ARG_FIRST + info.reg_offset + i);
-	      else
-		reg = gen_rtx_REG (imode, GP_ARG_FIRST + info.reg_offset + i);
-
-	      XVECEXP (ret, 0, i)
-		= gen_rtx_EXPR_LIST (VOIDmode, reg,
-				     GEN_INT (bitpos / BITS_PER_UNIT));
-
-	      bitpos += BITS_PER_WORD;
-	    }
-	  return ret;
-	}
-    }
-
-  /* Pass complex floating-point arguments in FPR pairs, with the real
-     part in the lower register and the imaginary part in the upper
-     register (or on the stack if no more FPRs are available).  */
-  if (info.fpr_p && GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-    {
-      enum machine_mode inner = GET_MODE_INNER (mode);
-      unsigned int regno = FP_ARG_FIRST + info.reg_offset;
-
-      gcc_assert (info.reg_words + info.stack_words == 2);
-
-      switch (info.reg_words)
-	{
-	case 1:
-	  /* Real part in registers, imaginary part on stack.  */
-	  return gen_rtx_REG (inner, regno);
-
-	case 2:
-	  {
-	    rtx real = gen_rtx_EXPR_LIST (VOIDmode,
-					  gen_rtx_REG (inner, regno),
-					  const0_rtx);
-	    rtx imag = gen_rtx_EXPR_LIST (VOIDmode,
-					  gen_rtx_REG (inner, regno + 1),
-					  GEN_INT (GET_MODE_SIZE (inner)));
-	    return gen_rtx_PARALLEL (mode, gen_rtvec (2, real, imag));
-	  }
-
-	default:
-	  abort ();
-	}
-    }
-
-  return gen_rtx_REG (mode, riscv_arg_regno (&info));
+  return riscv_get_arg_info (&info, cum, mode, type, named, false);
 }
 
 /* Implement TARGET_FUNCTION_ARG_ADVANCE.  */
@@ -2365,17 +2483,14 @@ riscv_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
   struct riscv_arg_info info;
 
-  riscv_get_arg_info (&info, cum, mode, type, named);
+  riscv_get_arg_info (&info, cum, mode, type, named, false);
 
   /* Advance the register count.  This has the effect of setting
      num_gprs to MAX_ARGS_IN_REGISTERS if a doubleword-aligned
      argument required us to skip the final GPR and pass the whole
      argument on the stack.  */
-  cum->num_gprs = info.reg_offset + info.reg_words;
-
-  /* Advance the stack word count.  */
-  if (info.stack_words > 0)
-    cum->stack_words = info.stack_offset + info.stack_words;
+  cum->num_fprs = info.fpr_offset + info.num_fprs;
+  cum->num_gprs = info.gpr_offset + info.num_gprs;
 }
 
 /* Implement TARGET_ARG_PARTIAL_BYTES.  */
@@ -2384,104 +2499,10 @@ static int
 riscv_arg_partial_bytes (cumulative_args_t cum,
 			 enum machine_mode mode, tree type, bool named)
 {
-  struct riscv_arg_info info;
+  struct riscv_arg_info arg;
 
-  riscv_get_arg_info (&info, get_cumulative_args (cum), mode, type, named);
-  return info.stack_words > 0 ? info.reg_words * UNITS_PER_WORD : 0;
-}
-
-/* See whether VALTYPE is a record whose fields should be returned in
-   floating-point registers.  If so, return the number of fields and
-   list them in FIELDS (which should have two elements).  Return 0
-   otherwise.
-
-   A structure with one or two fields is returned in floating-point
-   registers as long as every field has a floating-point type.  */
-
-static int
-riscv_fpr_return_fields (const_tree valtype, tree fields[2])
-{
-  tree field;
-  int i;
-
-  if (TREE_CODE (valtype) != RECORD_TYPE)
-    return 0;
-
-  i = 0;
-  for (field = TYPE_FIELDS (valtype); field != 0; field = DECL_CHAIN (field))
-    {
-      if (TREE_CODE (field) != FIELD_DECL)
-	continue;
-
-      if (!SCALAR_FLOAT_TYPE_P (TREE_TYPE (field)))
-	return 0;
-
-      if (GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (field))) > UNITS_PER_FP_ARG)
-	return 0;
-
-      if (i == 2)
-	return 0;
-
-      fields[i++] = field;
-    }
-  return i;
-}
-
-/* Return true if the function return value MODE will get returned in a
-   floating-point register.  */
-
-static bool
-riscv_return_mode_in_fpr_p (enum machine_mode mode)
-{
-  return ((GET_MODE_CLASS (mode) == MODE_FLOAT
-	   || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-	  && GET_MODE_UNIT_SIZE (mode) <= UNITS_PER_FP_ARG);
-}
-
-/* Return the representation of an FPR return register when the
-   value being returned in FP_RETURN has mode VALUE_MODE and the
-   return type itself has mode TYPE_MODE.  On NewABI targets,
-   the two modes may be different for structures like:
-
-       struct __attribute__((packed)) foo { float f; }
-
-   where we return the SFmode value of "f" in FP_RETURN, but where
-   the structure itself has mode BLKmode.  */
-
-static rtx
-riscv_return_fpr_single (enum machine_mode type_mode,
-			enum machine_mode value_mode)
-{
-  rtx x = gen_rtx_REG (value_mode, FP_RETURN);
-
-  if (type_mode != value_mode)
-    {
-      x = gen_rtx_EXPR_LIST (VOIDmode, x, const0_rtx);
-      x = gen_rtx_PARALLEL (type_mode, gen_rtvec (1, x));
-    }
-  return x;
-}
-
-/* Return a composite value in a pair of floating-point registers.
-   MODE1 and OFFSET1 are the mode and byte offset for the first value,
-   likewise MODE2 and OFFSET2 for the second.  MODE is the mode of the
-   complete value.  */
-
-static rtx
-riscv_return_fpr_pair (enum machine_mode mode,
-		      enum machine_mode mode1, HOST_WIDE_INT offset1,
-		      enum machine_mode mode2, HOST_WIDE_INT offset2)
-{
-  return gen_rtx_PARALLEL
-    (mode,
-     gen_rtvec (2,
-		gen_rtx_EXPR_LIST (VOIDmode,
-				   gen_rtx_REG (mode1, FP_RETURN),
-				   GEN_INT (offset1)),
-		gen_rtx_EXPR_LIST (VOIDmode,
-				   gen_rtx_REG (mode2, FP_RETURN + 1),
-				   GEN_INT (offset2))));
-
+  riscv_get_arg_info (&arg, get_cumulative_args (cum), mode, type, named, false);
+  return arg.stack_p ? arg.num_gprs * UNITS_PER_WORD : 0;
 }
 
 /* Implement FUNCTION_VALUE and LIBCALL_VALUE.  For normal calls,
@@ -2489,60 +2510,49 @@ riscv_return_fpr_pair (enum machine_mode mode,
    VALTYPE is null and MODE is the mode of the return value.  */
 
 rtx
-riscv_function_value (const_tree valtype, const_tree func, enum machine_mode mode)
+riscv_function_value (const_tree type, const_tree func, enum machine_mode mode)
 {
-  if (valtype)
-    {
-      tree fields[2];
-      int unsigned_p;
+  struct riscv_arg_info info;
+  CUMULATIVE_ARGS args;
 
-      mode = TYPE_MODE (valtype);
-      unsigned_p = TYPE_UNSIGNED (valtype);
+  if (type)
+    {
+      int unsigned_p = TYPE_UNSIGNED (type);
+
+      mode = TYPE_MODE (type);
 
       /* Since TARGET_PROMOTE_FUNCTION_MODE unconditionally promotes,
 	 return values, promote the mode here too.  */
-      mode = promote_function_mode (valtype, mode, &unsigned_p, func, 1);
-
-      /* Handle structures whose fields are returned in fa0/fa1.  */
-      switch (riscv_fpr_return_fields (valtype, fields))
-	{
-	case 1:
-	  return riscv_return_fpr_single (mode,
-					 TYPE_MODE (TREE_TYPE (fields[0])));
-
-	case 2:
-	  return riscv_return_fpr_pair (mode,
-				       TYPE_MODE (TREE_TYPE (fields[0])),
-				       int_byte_position (fields[0]),
-				       TYPE_MODE (TREE_TYPE (fields[1])),
-				       int_byte_position (fields[1]));
-	}
-
-      /* Only use FPRs for scalar, complex or vector types.  */
-      if (!FLOAT_TYPE_P (valtype))
-	return gen_rtx_REG (mode, GP_RETURN);
+      mode = promote_function_mode (type, mode, &unsigned_p, func, 1);
     }
 
-  if (riscv_return_mode_in_fpr_p (mode))
-    {
-      if (GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-	return riscv_return_fpr_pair (mode,
-    				 GET_MODE_INNER (mode), 0,
-    				 GET_MODE_INNER (mode),
-    				 GET_MODE_SIZE (mode) / 2);
-      else
-	return gen_rtx_REG (mode, FP_RETURN);
-    }
-
-  return gen_rtx_REG (mode, GP_RETURN);
+  memset (&args, 0, sizeof args);
+  return riscv_get_arg_info (&info, &args, mode, type, true, true);
 }
 
-/* Data that fit in two words may be passed and returned in registers.  */
+/* Implement TARGET_PASS_BY_REFERENCE. */
 
 static bool
-riscv_size_ok_for_register_arg (HOST_WIDE_INT size)
+riscv_pass_by_reference (cumulative_args_t cum_v, enum machine_mode mode,
+			 const_tree type, bool named)
 {
-  return IN_RANGE (size, 0, 2 * UNITS_PER_WORD);
+  HOST_WIDE_INT size = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode);
+  struct riscv_arg_info info;
+  CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
+
+  /* ??? std_gimplify_va_arg_expr passes NULL for cum.  Fortunately, we
+     never pass variadic arguments in floating-point registers, so we can
+     avoid the call to riscv_get_arg_info in this case.  */
+  if (cum != NULL)
+    {
+      /* Don't pass by reference if we can use a floating-point register.  */
+      riscv_get_arg_info (&info, cum, mode, type, named, false);
+      if (info.num_fprs)
+	return false;
+    }
+
+  /* Pass by reference if the data do not fit in two integer registers.  */
+  return !IN_RANGE (size, 0, 2 * UNITS_PER_WORD);
 }
 
 /* Implement TARGET_RETURN_IN_MEMORY.  */
@@ -2550,22 +2560,13 @@ riscv_size_ok_for_register_arg (HOST_WIDE_INT size)
 static bool
 riscv_return_in_memory (const_tree type, const_tree fndecl ATTRIBUTE_UNUSED)
 {
-  return !riscv_size_ok_for_register_arg (int_size_in_bytes (type));
-}
+  CUMULATIVE_ARGS args;
+  cumulative_args_t cum = pack_cumulative_args (&args);
 
-/* Implement TARGET_PASS_BY_REFERENCE. */
-
-static bool
-riscv_pass_by_reference (cumulative_args_t cum ATTRIBUTE_UNUSED,
-			 enum machine_mode mode, const_tree type,
-			 bool named ATTRIBUTE_UNUSED)
-{
-  HOST_WIDE_INT size = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode);
-
-  if (!riscv_size_ok_for_register_arg (size))
-    return true;
-
-  return targetm.calls.must_pass_in_stack (mode, type);
+  /* The rules for returning in memory are the same as for passing the
+     first named argument by reference.  */
+  memset (&args, 0, sizeof args);
+  return riscv_pass_by_reference (cum, TYPE_MODE (type), type, true);
 }
 
 /* Implement TARGET_SETUP_INCOMING_VARARGS.  */
@@ -2589,12 +2590,10 @@ riscv_setup_incoming_varargs (cumulative_args_t cum, enum machine_mode mode,
 
   if (!no_rtl && gp_saved > 0)
     {
-      rtx ptr, mem;
-
-      ptr = plus_constant (Pmode, virtual_incoming_args_rtx,
-			   REG_PARM_STACK_SPACE (cfun->decl)
-			   - gp_saved * UNITS_PER_WORD);
-      mem = gen_frame_mem (BLKmode, ptr);
+      rtx ptr = plus_constant (Pmode, virtual_incoming_args_rtx,
+			       REG_PARM_STACK_SPACE (cfun->decl)
+			       - gp_saved * UNITS_PER_WORD);
+      rtx mem = gen_frame_mem (BLKmode, ptr);
       set_mem_alias_set (mem, get_varargs_alias_set ());
 
       move_block_from_reg (local_cum.num_gprs + GP_ARG_FIRST,
@@ -2643,7 +2642,7 @@ riscv_expand_call (bool sibcall_p, rtx result, rtx addr, rtx args_size)
     }
   else if (GET_CODE (result) == PARALLEL && XVECLEN (result, 0) == 2)
     {
-      /* Handle return values created by riscv_return_fpr_pair.  */
+      /* Handle return values created by riscv_pass_fpr_pair.  */
       rtx (*fn) (rtx, rtx, rtx, rtx);
       rtx reg1, reg2;
 
@@ -2665,7 +2664,7 @@ riscv_expand_call (bool sibcall_p, rtx result, rtx addr, rtx args_size)
       else
 	fn = gen_call_value_internal;
 
-      /* Handle return values created by riscv_return_fpr_single.  */
+      /* Handle return values created by riscv_pass_fpr_single.  */
       if (GET_CODE (result) == PARALLEL && XVECLEN (result, 0) == 1)
 	result = XEXP (XVECEXP (result, 0, 0), 0);
       pattern = fn (result, addr, args_size);
@@ -3596,7 +3595,6 @@ bool
 riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
 {
   unsigned int size = GET_MODE_SIZE (mode);
-  enum mode_class mclass = GET_MODE_CLASS (mode);
 
   if (GP_REG_P (regno))
     {
@@ -3622,9 +3620,9 @@ riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
       if (UNITS_PER_FP_ARG < UNITS_PER_FP_REG && !call_used_regs[regno])
 	max_size = UNITS_PER_FP_ARG;
 
-      if (mclass == MODE_FLOAT
-	  || mclass == MODE_COMPLEX_FLOAT)
-	return size <= max_size;
+      if (GET_MODE_CLASS (mode) == MODE_FLOAT
+	  || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
+	return GET_MODE_UNIT_SIZE (mode) <= max_size;
     }
 
   return false;

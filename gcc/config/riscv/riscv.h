@@ -671,17 +671,12 @@ enum reg_class
    || (riscv_float_abi != FLOAT_ABI_SOFT			\
        && IN_RANGE ((N), FP_ARG_FIRST, FP_ARG_LAST)))
 
-/* The ABI views the arguments as a structure, of which the first 8
-   words go in registers and the rest go on the stack.  If I < 8, N, the Ith
-   word might go in the Ith integer argument register or the Ith
-   floating-point argument register. */
-
 typedef struct {
   /* Number of integer registers used so far, up to MAX_ARGS_IN_REGISTERS. */
   unsigned int num_gprs;
 
-  /* Number of words passed on the stack.  */
-  unsigned int stack_words;
+  /* Number of floating-point registers used so far, likewise.  */
+  unsigned int num_fprs;
 } CUMULATIVE_ARGS;
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
