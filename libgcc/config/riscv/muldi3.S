@@ -26,7 +26,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
   .text
   .align 2
 
-#ifndef __riscv64
+#if __riscv_xlen == 32
 /* Our RV64 64-bit routine is equivalent to our RV32 32-bit routine.  */
 # define __muldi3 __mulsi3
 #endif

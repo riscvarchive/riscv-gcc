@@ -1136,7 +1136,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *pc = ucontext->uc_mcontext.pc;
   *bp = ucontext->uc_mcontext.gregs[30];
   *sp = ucontext->uc_mcontext.gregs[29];
-# elif defined(__riscv__)
+# elif defined(__riscv)
   ucontext_t *ucontext = (ucontext_t*)context;
   *pc = ucontext->uc_mcontext.gregs[REG_PC];
   *bp = ucontext->uc_mcontext.gregs[REG_S0];
