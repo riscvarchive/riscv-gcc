@@ -97,16 +97,8 @@ along with GCC; see the file COPYING3.  If not see
 #define RISCV_TUNE_STRING_DEFAULT "rocket"
 #endif
 
-#if TARGET_64BIT_DEFAULT
-# define MULTILIB_ARCH_DEFAULT "march=rv64g"
-# define MULTILIB_ABI_DEFAULT "mabi=lp64d"
-#else
-# define MULTILIB_ARCH_DEFAULT "march=rv32g"
-# define MULTILIB_ABI_DEFAULT "mabi=ilp32d"
-#endif
-
-/* RISC-V ISA names are defined to be case-insensitive, but I can't just pass
-   "march=*64*" as a spec because GCC blows up when I do.  */
+/* RISC-V ISA names are case-insensitive, but SPECS are case-sensitive and
+   don't support internal wildcards, so enumerate all possibilities.  */
 #define OPT_ARCH64LL "march=rv64*"
 #define OPT_ARCH64UL "march=Rv64*"
 #define OPT_ARCH64LU "march=rV64*"
@@ -116,12 +108,6 @@ along with GCC; see the file COPYING3.  If not see
 #define OPT_ARCH32LU "march=rV32*"
 #define OPT_ARCH32UU "march=RV32*"
 
-#ifndef MULTILIB_DEFAULTS
-#define MULTILIB_DEFAULTS \
-    { MULTILIB_ARCH_DEFAULT, MULTILIB_ABI_DEFAULT }
-#endif
-
-
 /* Support for a compile-time default CPU, et cetera.  The rules are:
    --with-arch is ignored if -march is specified.
    --with-abi is ignored if -mabi is specified.
@@ -130,6 +116,8 @@ along with GCC; see the file COPYING3.  If not see
   {"march", "%{!march=*:-march=%(VALUE)}" }, \
   {"mabi", "%{!mabi=*:-mabi=%(VALUE)}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
+  {"arch", "%{!march=*:-march=%(VALUE)}" }, \
+  {"abi", "%{!mabi=*:-mabi=%(VALUE)}" }, \
 
 /* Emitting .cfi directives currently precludes linker relaxations, so by
    default only emit them if -gdwarf is expicitly passed.  If only -g is
@@ -146,27 +134,10 @@ along with GCC; see the file COPYING3.  If not see
 #undef ASM_SPEC
 #define ASM_SPEC "\
 %(subtarget_asm_debugging_spec) \
-%{m32} %{m64} \
-%{mrvc} %{mno-rvc} \
 %{fPIC|fpic|fPIE|fpie:-fpic} \
 %{march=*} \
 %{mabi=*} \
-%{mfloat-abi=*} \
-%{mno-float:-mfloat-abi=soft} \
 %(subtarget_asm_spec)"
-
-/* This macro defines names of additional specifications to put in the specs
-   that can be used in various specifications like CC1_SPEC.  Its definition
-   is an initializer with a subgrouping for each command option.
-
-   Each subgrouping contains a string constant, that defines the
-   specification name, and a string constant that used by the GCC driver
-   program.
-
-   Do not define this macro if it does not need to do anything.  */
-
-#define EXTRA_SPECS \
-  { "asm_abi_default_spec", "-" MULTILIB_ARCH_DEFAULT }
 
 #define TARGET_DEFAULT_CMODEL CM_MEDLOW
 

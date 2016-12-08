@@ -173,15 +173,6 @@ static const struct default_options riscv_option_optimization_table[] =
 #undef TARGET_OPTION_OPTIMIZATION_TABLE
 #define TARGET_OPTION_OPTIMIZATION_TABLE riscv_option_optimization_table
 
-#define STR(x) #x
-#define XSTR(x) STR (x)
-
-#undef TARGET_DEFAULT_TARGET_FLAGS
-#define TARGET_DEFAULT_TARGET_FLAGS					\
-  (TARGET_DEFAULT							\
-   | riscv_flags_from_arch_string (XSTR (TARGET_ARCH_STRING_DEFAULT))	\
-   | (TARGET_64BIT_DEFAULT ? 0 : MASK_32BIT))
-
 #undef TARGET_HANDLE_OPTION
 #define TARGET_HANDLE_OPTION riscv_handle_option
 

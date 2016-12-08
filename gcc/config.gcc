@@ -3983,78 +3983,102 @@ case "${target}" in
 		;;
 
 	riscv*-*-*)
-		supported_defaults="arch float tune"
+		supported_defaults="abi arch tune"
+		with_arch="`echo ${with_arch} | tr A-Z_ a-z-`"
 
-		case "${with_arch}" in
-		"")
-			with_arch="G"
+		case "${target}" in
+		riscv32*)
+			xlen=32
+			;;
+		riscv64*)
+			xlen=64
 			;;
 		*)
-			;;
-		esac
-
-		# Handle --with-float, or default to soft-float ABI unless the
-		# D extension is present; then, default to double-float ABI.
-		case "${with_float}" in
-		"")
-			case ${with_arch} in
-				"" | *g* | *G* | *d* | *D*)
-					with_float=double
-					;;
-				*)
-					with_float=soft
-					;;
-			esac
-			;;
-		soft | single | double)
-			# OK
-			;;
-		*)
-			echo "Unknown floating point type used in --with-float-abi=$with_float" 1>&2
+			echo "Unsupported RISC-V target ${target}"
 			exit 1
 			;;
 		esac
 
-		# Set TARGET_64BIT_DEFAULT from --target.
-		case "${target}" in
-		riscv32*)
-			rv64=0
+		# Make sure --with-arch is valid and compatible with --target.
+		# If --with-arch was not given but --with-abi was, use
+		# --with-abi to decide the floating-point ISA.
+		case "${with_arch}" in
+		"")
+			case "${with_abi}" in
+			ilp32 | lp64)
+				with_arch="rv${xlen}ima"
+				;;
+			ilp32f | lp64f)
+				with_arch="rv${xlen}imaf"
+				;;
+			*)
+				with_arch="rv${xlen}g"
+				;;
+			esac
 			;;
-		riscv64*)
-			rv64=1
+		i* | g*)
+			with_arch="rv${xlen}${with_arch}"
 			;;
-		*)
-			rv64=""
-			;;
-		esac
-
-		# Or set TARGET_64BIT_DEFAULT from --with-arch.
-		case "`echo $with_arch | tr A-Z_ a-z-`" in
-		rv32)
-			if test "$rv64" = 1; then
+		rv32i* | rv32g*)
+			if test "$xlen" != 32; then
 				echo "--with-arch and --target specify conflicting XLEN"
 				exit 1
 			fi
-			rv64=0
 			;;
-		rv64)
-			if test "$rv64" = 0; then
+		rv64i* | rv64g*)
+			if test "$xlen" != 64; then
 				echo "--with-arch and --target specify conflicting XLEN"
 				exit 1
 			fi
-			rv64=1
 			;;
 		*)
+			echo "--with-arch=${with_arch} is not supported"
+			exit 1
 			;;
 		esac
 
-		# Or set TARGET_64BIT_DEFAULT to 1.
-		if test "$rv64" = ""; then
-			rv64=1
-		fi
+		# Make sure --with-abi is valid.  If it was not specified,
+		# pick a default based on the ISA, preferring soft-float
+		# unless the D extension is present.
+		case "${with_abi}" in
+		ilp32 | ilp32f | ilp32d | lp64 | lp64f | lp64d)
+			;;
+		"")
+			case "${with_arch}" in
+			rv32*d* | rv32g*)
+				with_abi=ilp32d
+				;;
+			rv32*)
+				with_abi=ilp32
+				;;
+			rv64*d* | rv64g*)
+				with_abi=lp64d
+				;;
+			rv64*)
+				with_abi=lp64
+				;;
+			esac
+			;;
+		*)
+			echo "--with-abi=${with_abi} is not supported"
+			exit 1
+			;;
+		esac
 
-		tm_defines="${tm_defines} TARGET_64BIT_DEFAULT=${rv64}"
-		tm_defines="${tm_defines} TARGET_ARCH_STRING_DEFAULT=${with_arch}"
+		# Make sure ABI and ISA are compatible.
+		case "${with_abi},${with_arch}" in
+		ilp32,rv32* \
+		| ilp32f,rv32*f* | ilp32f,rv32g* \
+		| ilp32d,rv32*d* | ilp32d,rv32g* \
+		| lp64,rv64* \
+		| lp64f,rv64*f* | lp64f,rv64g* \
+		| lp64d,rv64*d* | lp64d,rv64g*)
+			;;
+		*)
+			echo "--with-abi=${with_abi} is not supported for ISA ${with_arch}"
+			exit 1
+			;;
+		esac
 		;;
 
 	mips*-*-*)
