@@ -99,8 +99,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #if TARGET_64BIT_DEFAULT
 # define MULTILIB_ARCH_DEFAULT "march=rv64g"
+# define MULTILIB_ABI_DEFAULT "mabi=lp64d"
 #else
-# define MULTILIB_ARCH_DEFAULT "march=rv64g"
+# define MULTILIB_ARCH_DEFAULT "march=rv32g"
+# define MULTILIB_ABI_DEFAULT "mabi=ilp32d"
 #endif
 
 /* RISC-V ISA names are defined to be case-insensitive, but I can't just pass
@@ -116,13 +118,17 @@ along with GCC; see the file COPYING3.  If not see
 
 #ifndef MULTILIB_DEFAULTS
 #define MULTILIB_DEFAULTS \
-    { MULTILIB_ARCH_DEFAULT }
+    { MULTILIB_ARCH_DEFAULT, MULTILIB_ABI_DEFAULT }
 #endif
 
 
 /* Support for a compile-time default CPU, et cetera.  The rules are:
+   --with-arch is ignored if -march is specified.
+   --with-abi is ignored if -mabi is specified.
    --with-tune is ignored if -mtune is specified.  */
 #define OPTION_DEFAULT_SPECS \
+  {"march", "%{!march=*:-march=%(VALUE)}" }, \
+  {"mabi", "%{!mabi=*:-mabi=%(VALUE)}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
 
 /* Emitting .cfi directives currently precludes linker relaxations, so by
