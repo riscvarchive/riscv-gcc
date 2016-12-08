@@ -1,11 +1,30 @@
 # Build the libraries for both hard and soft floating point
+# This specifies the possible RISC-V multilib names, along with the directory
+# structures that will be created.  MULTILIB_OPTIONS defines which flags can be
+# passed, with options seperated by a "/" being mutually exclusive.  GCC's
+# build infastructure will append no flag as one of the targets, which is why
+# MULTILIB_REQUIRED is defined.  The directory names line up with the various
+# options, ignoring space vs slash distinctions.  The full directory name for a
+# multilib is a slash-joined string of every present option, with the DIRNAME
+# being the directory inside GCC (for libgcc and friends) and the OSDIRNAME
+# setting the default library search path for the linker.  OSDIRNAME starts
+# relative to lib, which is why there's a ".." before some of them.  As an
+# example, one of the generated multilibs will be:
+#  CFLAGS:    -march=rv32imafd -mabi=ilp32d
+#  DIRNAME:   GCC_HOME/rv32imafd/ilp32d
+#  OSDIRNAME: /lib32/ilp32d
+MULTILIB_OPTIONS    = march=rv32imafd/march=rv64imafd/march=rv32ima/march=rv64ima mabi=ilp32/mabi=ilp32d/mabi=lp64/mabi=lp64d
+MULTILIB_DIRNAMES   =       rv32imafd       rv64imafd       rv32ima       rv64ima      ilp32      ilp32d      lp64      lp64d
+MULTILIB_OSDIRNAMES =       rv32imafd       rv64imafd       rv32ima       rv64ima      ilp32      ilp32d      lp64      lp64d
 
-MULTILIB_OPTIONS = m64/m32
-MULTILIB_DIRNAMES = 64 32
-MULTILIB_OSDIRNAMES = ../lib ../lib32
-
-ifneq ($(with_float), soft)
-MULTILIB_OPTIONS += mfloat-abi=soft
-MULTILIB_DIRNAMES += soft-float
-MULTILIB_OSDIRNAMES += soft-float
-endif
+# We don't actually support all the possible multilib configurations on RISC-V.
+# Here's a blessed list of the interesting ones.  Some will never be supported
+# (rv32imafd/lp64), some are impossible (rv64ima/lp64d) and some will eventually be
+# supported (rv64imafd/ilp32).
+MULTILIB_REQUIRED  =
+MULTILIB_REQUIRED += march=rv32ima/mabi=ilp32
+MULTILIB_REQUIRED += march=rv32imafd/mabi=ilp32
+MULTILIB_REQUIRED += march=rv32imafd/mabi=ilp32d
+MULTILIB_REQUIRED += march=rv64ima/mabi=lp64
+MULTILIB_REQUIRED += march=rv64imafd/mabi=lp64
+MULTILIB_REQUIRED += march=rv64imafd/mabi=lp64d
