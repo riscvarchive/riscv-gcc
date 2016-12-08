@@ -19,8 +19,14 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #define LINK_SPEC "\
-%{m64:-melf64lriscv} \
-%{m32:-melf32lriscv} \
+%{" OPT_ARCH64LL ":-melf64lriscv} \
+%{" OPT_ARCH64LU ":-melf64lriscv} \
+%{" OPT_ARCH64UL ":-melf64lriscv} \
+%{" OPT_ARCH64UU ":-melf64lriscv} \
+%{" OPT_ARCH32LL ":-melf32lriscv} \
+%{" OPT_ARCH32LU ":-melf32lriscv} \
+%{" OPT_ARCH32UL ":-melf32lriscv} \
+%{" OPT_ARCH32UU ":-melf33lriscv} \
 %{shared}"
 
 /* Link against Newlib libraries, because the ELF backend assumes Newlib.

@@ -98,14 +98,21 @@ along with GCC; see the file COPYING3.  If not see
 #endif
 
 #if TARGET_64BIT_DEFAULT
-# define MULTILIB_ARCH_DEFAULT "m64"
-# define OPT_ARCH64 "!m32"
-# define OPT_ARCH32 "m32"
+# define MULTILIB_ARCH_DEFAULT "march=rv64g"
 #else
-# define MULTILIB_ARCH_DEFAULT "m32"
-# define OPT_ARCH64 "m64"
-# define OPT_ARCH32 "!m64"
+# define MULTILIB_ARCH_DEFAULT "march=rv64g"
 #endif
+
+/* RISC-V ISA names are defined to be case-insensitive, but I can't just pass
+   "march=*64*" as a spec because GCC blows up when I do.  */
+#define OPT_ARCH64LL "march=rv64*"
+#define OPT_ARCH64UL "march=Rv64*"
+#define OPT_ARCH64LU "march=rV64*"
+#define OPT_ARCH64UU "march=RV64*"
+#define OPT_ARCH32LL "march=rv32*"
+#define OPT_ARCH32UL "march=Rv32*"
+#define OPT_ARCH32LU "march=rV32*"
+#define OPT_ARCH32UU "march=RV32*"
 
 #ifndef MULTILIB_DEFAULTS
 #define MULTILIB_DEFAULTS \
@@ -117,8 +124,6 @@ along with GCC; see the file COPYING3.  If not see
    --with-tune is ignored if -mtune is specified.
    --with-float is ignored if -mfloat-abi is specified.  */
 #define OPTION_DEFAULT_SPECS \
-  {"arch_32", "%{" OPT_ARCH32 ":%{m32}}" }, \
-  {"arch_64", "%{" OPT_ARCH64 ":%{m64}}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
   {"float", "%{!mfloat-abi=*:%{!mno-float:-mfloat-abi=%(VALUE)}}"}, \
 
@@ -137,7 +142,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef ASM_SPEC
 #define ASM_SPEC "\
 %(subtarget_asm_debugging_spec) \
-%{m32} %{m64} %{!m32:%{!m64: %(asm_abi_default_spec)}} \
+%{m32} %{m64} \
 %{mrvc} %{mno-rvc} \
 %{fPIC|fpic|fPIE|fpie:-fpic} \
 %{march=*} \
