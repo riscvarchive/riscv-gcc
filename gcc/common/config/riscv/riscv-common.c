@@ -103,19 +103,20 @@ riscv_flags_from_arch_string (const char *isa)
 static void
 riscv_parse_abi_string(const char *abi, int *flags)
 {
-  if (strcmp(abi, "ilp32") == 0) {
+  if (strcmp (abi, "ilp32") == 0)
     riscv_float_abi = FLOAT_ABI_SOFT;
-  } else if (strcmp(abi, "ilp32f") == 0) {
+  else if (strcmp (abi, "ilp32f") == 0)
     riscv_float_abi = FLOAT_ABI_SINGLE;
-  } else if (strcmp(abi, "ilp32d") == 0) {
+  else if (strcmp (abi, "ilp32d") == 0)
     riscv_float_abi = FLOAT_ABI_DOUBLE;
-  } else if (strcmp(abi, "lp64") == 0) {
+  else if (strcmp (abi, "lp64") == 0)
     riscv_float_abi = FLOAT_ABI_SOFT;
-  } else if (strcmp(abi, "lp64f") == 0) {
+  else if (strcmp (abi, "lp64f") == 0)
     riscv_float_abi = FLOAT_ABI_SINGLE;
-  } else if (strcmp(abi, "lp64d") == 0) {
+  else if (strcmp (abi, "lp64d") == 0)
     riscv_float_abi = FLOAT_ABI_DOUBLE;
-  }
+  else
+    error ("-mabi=%s: unsupported ABI", abi);
 }
 
 /* Implement TARGET_HANDLE_OPTION.  */
