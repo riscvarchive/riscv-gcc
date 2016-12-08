@@ -62,12 +62,11 @@ riscv_parse_arch_string (const char *isa, int *flags)
       if (TOUPPER (*p) == 'A')
 	*flags |= MASK_ATOMIC, p++;
 
-      *flags &= ~MASK_HARD_FLOAT;
+      *flags &= ~(MASK_HARD_FLOAT | MASK_DOUBLE_FLOAT);
       if (TOUPPER (*p) == 'F')
 	{
 	  *flags |= MASK_HARD_FLOAT, p++;
 
-	  *flags &= ~MASK_DOUBLE_FLOAT;
 	  if (TOUPPER (*p) == 'D')
 	    {
 	      *flags |= MASK_DOUBLE_FLOAT;
