@@ -121,11 +121,9 @@ along with GCC; see the file COPYING3.  If not see
 
 
 /* Support for a compile-time default CPU, et cetera.  The rules are:
-   --with-tune is ignored if -mtune is specified.
-   --with-float is ignored if -mfloat-abi is specified.  */
+   --with-tune is ignored if -mtune is specified.  */
 #define OPTION_DEFAULT_SPECS \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
-  {"float", "%{!mfloat-abi=*:%{!mno-float:-mfloat-abi=%(VALUE)}}"}, \
 
 /* Emitting .cfi directives currently precludes linker relaxations, so by
    default only emit them if -gdwarf is expicitly passed.  If only -g is
