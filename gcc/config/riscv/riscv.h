@@ -144,6 +144,7 @@ along with GCC; see the file COPYING3.  If not see
 %{mrvc} %{mno-rvc} \
 %{fPIC|fpic|fPIE|fpie:-fpic} \
 %{march=*} \
+%{mabi=*} \
 %{mfloat-abi=*} \
 %{mno-float:-mfloat-abi=soft} \
 %(subtarget_asm_spec)"
