@@ -58,6 +58,10 @@ Enum(float_abi_type) String(single) Value(FLOAT_ABI_SINGLE)
 EnumValue
 Enum(float_abi_type) String(double) Value(FLOAT_ABI_DOUBLE)
 
+mabi=
+Target Report RejectNegative Joined
+Specify calling convention.
+
 mno-fdiv
 Target Report RejectNegative Undocumented Mask(NO_FDIV)
 Don't use hardware floating-point divide and square root instructions.
