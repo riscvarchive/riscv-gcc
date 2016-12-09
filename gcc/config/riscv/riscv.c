@@ -186,9 +186,6 @@ struct GTY(())  machine_function {
 
 /* Information about a single argument.  */
 struct riscv_arg_info {
-  /* True if the argument is allocated to floating-point registers.  */
-  bool fpr_p;
-
   /* True if the argument is at least partially passed on the stack.  */
   bool stack_p;
 
