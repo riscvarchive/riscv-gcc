@@ -3859,6 +3859,17 @@ riscv_option_override (void)
   if (flag_pic)
     g_switch_value = 0;
 
+  /* The presence of the M extension implies that division instructions
+     are present, so include them unless explicitly disabled.  */
+  if (TARGET_MUL && (target_flags_explicit & MASK_DIV) == 0)
+    target_flags |= MASK_DIV;
+  else if (!TARGET_MUL && TARGET_DIV)
+    error ("-mdiv requires -march to subsume the `M' extension");
+
+  /* Likewise floating-point division and square root.  */
+  if (TARGET_HARD_FLOAT && (target_flags_explicit & MASK_FDIV) == 0)
+    target_flags |= MASK_FDIV;
+
   /* Prefer a call to memcpy over inline code when optimizing for size,
      though see MOVE_RATIO in riscv.h.  */
   if (optimize_size && (target_flags_explicit & MASK_MEMCPY) == 0)
@@ -3887,21 +3898,13 @@ riscv_option_override (void)
       target_flags |= MASK_EXPLICIT_RELOCS;
 
   /* Require that the ISA supports the requested floating-point ABI.  */
-  switch (riscv_float_abi)
-    {
-    case FLOAT_ABI_SOFT:
-      break;
+  if (UNITS_PER_FP_ARG > (TARGET_HARD_FLOAT ? UNITS_PER_FP_REG : 0))
+    error ("requested ABI requires -march to subsume the `%c' extension",
+	   UNITS_PER_FP_ARG > 8 ? 'Q' : (UNITS_PER_FP_ARG > 4 ? 'D' : 'F'));
 
-    case FLOAT_ABI_SINGLE:
-      if (!TARGET_HARD_FLOAT)
-	error ("-mfloat-abi=single requires -msingle-float or -mdouble-float");
-      break;
-
-    case FLOAT_ABI_DOUBLE:
-      if (!TARGET_DOUBLE_FLOAT)
-	error ("-mfloat-abi=double requires -mdouble-float");
-      break;
-    }
+  /* We do not yet support ILP32 on RV64.  */
+  if (BITS_PER_WORD != POINTER_SIZE)
+    error ("ABI requires -march=rv%d", POINTER_SIZE);
 }
 
 /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */

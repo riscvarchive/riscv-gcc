@@ -41,34 +41,39 @@ mplt
 Target Report Var(TARGET_PLT) Init(1)
 When generating -fpic code, allow the use of PLTs. Ignored for fno-pic.
 
-mfloat-abi=
-Target Report RejectNegative Joined Enum(float_abi_type) Var(riscv_float_abi) Init(FLOAT_ABI_SOFT)
+mabi=
+Target Report RejectNegative Joined Enum(abi_type) Var(riscv_abi) Init(ABI_ILP32)
 Specify floating-point calling convention.
 
 Enum
-Name(float_abi_type) Type(enum riscv_float_abi_type)
-Known floating-point ABIs (for use with the -mfloat-abi= option):
+Name(abi_type) Type(enum riscv_abi_type)
+Supported ABIs (for use with the -mabi= option):
 
 EnumValue
-Enum(float_abi_type) String(soft) Value(FLOAT_ABI_SOFT)
+Enum(abi_type) String(ilp32) Value(ABI_ILP32)
 
 EnumValue
-Enum(float_abi_type) String(single) Value(FLOAT_ABI_SINGLE)
+Enum(abi_type) String(ilp32f) Value(ABI_ILP32F)
 
 EnumValue
-Enum(float_abi_type) String(double) Value(FLOAT_ABI_DOUBLE)
+Enum(abi_type) String(ilp32d) Value(ABI_ILP32D)
 
-mabi=
-Target Report RejectNegative Joined
-Specify calling convention.
+EnumValue
+Enum(abi_type) String(lp64) Value(ABI_LP64)
 
-mno-fdiv
-Target Report RejectNegative Undocumented Mask(NO_FDIV)
-Don't use hardware floating-point divide and square root instructions.
+EnumValue
+Enum(abi_type) String(lp64f) Value(ABI_LP64F)
+
+EnumValue
+Enum(abi_type) String(lp64d) Value(ABI_LP64D)
 
 mfdiv
-Target Report RejectNegative InverseMask(NO_FDIV, FDIV)
+Target Report Mask(FDIV)
 Use hardware floating-point divide and square root instructions.
+
+mdiv
+Target Report Mask(DIV)
+Use hardware instructions for integer division.
 
 march=
 Target Report RejectNegative Joined
@@ -81,26 +86,6 @@ Target RejectNegative Joined Var(riscv_tune_string)
 msmall-data-limit=
 Target Joined Separate UInteger Var(g_switch_value) Init(8)
 -msmall-data-limit=N	Put global and static data smaller than <number> bytes into a special section (on some targets).
-
-matomic
-Target Report Mask(ATOMIC)
-Use hardware atomic memory instructions.
-
-mmuldiv
-Target Report
-Use hardware instructions for integer multiplication and division.
-
-mmul
-Target Report Mask(MUL)
-Use hardware instructions for integer multiplication.
-
-mdiv
-Target Report Mask(DIV)
-Use hardware instructions for integer division.
-
-mrvc
-Target Report Mask(RVC)
-Use compressed instruction encoding.
 
 msave-restore
 Target Report Mask(SAVE_RESTORE)
@@ -124,14 +109,12 @@ mexplicit-relocs
 Target Report Mask(EXPLICIT_RELOCS)
 Use %reloc() operators, rather than assembly macros, to load addresses.
 
-mno-float
-Target Report RejectNegative
-Disable hardware floating-point.  Implies -mfloat-abi=soft.
+Mask(MUL)
 
-msingle-float
-Target Report RejectNegative Mask(HARD_FLOAT)
-Enable only single-precision floating-point.
+Mask(ATOMIC)
 
-mdouble-float
-Target Report RejectNegative Mask(DOUBLE_FLOAT)
-Enable single- and double-precision floating-point.
+Mask(HARD_FLOAT)
+
+Mask(DOUBLE_FLOAT)
+
+Mask(RVC)

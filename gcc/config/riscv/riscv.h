@@ -55,17 +55,20 @@ along with GCC; see the file COPYING3.  If not see
 	  builtin_define ("__riscv_fsqrt");				\
 	}								\
 									\
-      switch (riscv_float_abi)						\
+      switch (riscv_abi)						\
 	{								\
-	case FLOAT_ABI_SOFT:						\
+	case ABI_ILP32:							\
+	case ABI_LP64:							\
 	  builtin_define ("__riscv_float_abi_soft");			\
 	  break;							\
 									\
-	case FLOAT_ABI_SINGLE:						\
+	case ABI_ILP32F:						\
+	case ABI_LP64F:							\
 	  builtin_define ("__riscv_float_abi_single");			\
 	  break;							\
 									\
-	case FLOAT_ABI_DOUBLE:						\
+	case ABI_ILP32D:						\
+	case ABI_LP64D:							\
 	  builtin_define ("__riscv_float_abi_double");			\
 	  break;							\
 	}								\
@@ -185,15 +188,16 @@ along with GCC; see the file COPYING3.  If not see
 #define UNITS_PER_FP_REG (TARGET_DOUBLE_FLOAT ? 8 : 4)
 
 /* The largest type that can be passed in floating-point registers.  */
-#define UNITS_PER_FP_ARG			\
-  (riscv_float_abi == FLOAT_ABI_SOFT ? 0 :	\
-   riscv_float_abi == FLOAT_ABI_SINGLE ? 4 : 8)
+#define UNITS_PER_FP_ARG					\
+  (riscv_abi == ABI_ILP32 || riscv_abi == ABI_LP64 ? 0 :	\
+   riscv_abi == ABI_ILP32F || riscv_abi == ABI_LP64F ? 4 : 8)	\
 
 /* Set the sizes of the core types.  */
 #define SHORT_TYPE_SIZE 16
 #define INT_TYPE_SIZE 32
-#define LONG_TYPE_SIZE (TARGET_64BIT ? 64 : 32)
 #define LONG_LONG_TYPE_SIZE 64
+#define POINTER_SIZE (riscv_abi >= ABI_LP64 ? 64 : 32)
+#define LONG_TYPE_SIZE POINTER_SIZE
 
 #define FLOAT_TYPE_SIZE 32
 #define DOUBLE_TYPE_SIZE 64
@@ -617,8 +621,7 @@ enum reg_class
    point values.  */
 
 #define GP_RETURN GP_ARG_FIRST
-#define FP_RETURN \
-  (riscv_float_abi == FLOAT_ABI_SOFT ? GP_RETURN : FP_ARG_FIRST)
+#define FP_RETURN (UNITS_PER_FP_ARG == 0 ? GP_RETURN : FP_ARG_FIRST)
 
 #define MAX_ARGS_IN_REGISTERS 8
 
@@ -647,10 +650,9 @@ enum reg_class
    are 32 bits, we can't directly reference the odd numbered ones.  */
 
 /* Accept arguments in a0-a7, and in fa0-fa7 if permitted by the ABI.  */
-#define FUNCTION_ARG_REGNO_P(N)					\
-  (IN_RANGE ((N), GP_ARG_FIRST, GP_ARG_LAST)			\
-   || (riscv_float_abi != FLOAT_ABI_SOFT			\
-       && IN_RANGE ((N), FP_ARG_FIRST, FP_ARG_LAST)))
+#define FUNCTION_ARG_REGNO_P(N)						\
+  (IN_RANGE ((N), GP_ARG_FIRST, GP_ARG_LAST)				\
+   || (UNITS_PER_FP_ARG && IN_RANGE ((N), FP_ARG_FIRST, FP_ARG_LAST)))
 
 typedef struct {
   /* Number of integer registers used so far, up to MAX_ARGS_IN_REGISTERS. */

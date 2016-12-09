@@ -54,9 +54,9 @@ riscv_parse_arch_string (const char *isa, int *flags)
     {
       p++;
 
-      *flags &= ~(MASK_MUL | MASK_DIV);
+      *flags &= ~MASK_MUL;
       if (TOUPPER (*p) == 'M')
-	*flags |= (MASK_MUL | MASK_DIV), p++;
+	*flags |= MASK_MUL, p++;
 
       *flags &= ~MASK_ATOMIC;
       if (TOUPPER (*p) == 'A')
@@ -86,36 +86,9 @@ riscv_parse_arch_string (const char *isa, int *flags)
 
   if (*p)
     {
-      error ("-march=%s: unsupported ISA substring %s", isa, p);
+      error ("-march=%s: unsupported ISA substring `%s'", isa, p);
       return;
     }
-}
-
-static int
-riscv_flags_from_arch_string (const char *isa)
-{
-  int flags = 0;
-  riscv_parse_arch_string (isa, &flags);
-  return flags;
-}
-
-static void
-riscv_parse_abi_string(const char *abi, int *flags)
-{
-  if (strcmp (abi, "ilp32") == 0)
-    riscv_float_abi = FLOAT_ABI_SOFT;
-  else if (strcmp (abi, "ilp32f") == 0)
-    riscv_float_abi = FLOAT_ABI_SINGLE;
-  else if (strcmp (abi, "ilp32d") == 0)
-    riscv_float_abi = FLOAT_ABI_DOUBLE;
-  else if (strcmp (abi, "lp64") == 0)
-    riscv_float_abi = FLOAT_ABI_SOFT;
-  else if (strcmp (abi, "lp64f") == 0)
-    riscv_float_abi = FLOAT_ABI_SINGLE;
-  else if (strcmp (abi, "lp64d") == 0)
-    riscv_float_abi = FLOAT_ABI_DOUBLE;
-  else
-    error ("-mabi=%s: unsupported ABI", abi);
 }
 
 /* Implement TARGET_HANDLE_OPTION.  */
@@ -130,30 +103,6 @@ riscv_handle_option (struct gcc_options *opts,
     {
     case OPT_march_:
       riscv_parse_arch_string (decoded->arg, &opts->x_target_flags);
-      return true;
-
-    case OPT_mmuldiv:
-      if (decoded->value)
-	opts->x_target_flags |= (MASK_MUL | MASK_DIV);
-      else
-	opts->x_target_flags &= ~(MASK_MUL | MASK_DIV);
-      return true;
-
-    case OPT_mno_float:
-      opts->x_target_flags &= ~(MASK_HARD_FLOAT | MASK_DOUBLE_FLOAT);
-      return true;
-
-    case OPT_msingle_float:
-      /* In addition to enabling the F extension, disable the D extension.  */
-      opts->x_target_flags &= ~MASK_DOUBLE_FLOAT;
-      return true;
-
-    case OPT_mdouble_float:
-      opts->x_target_flags |= MASK_HARD_FLOAT;
-      return true;
-
-    case OPT_mabi_:
-      riscv_parse_abi_string (decoded->arg, &opts->x_target_flags);
       return true;
 
     default:
