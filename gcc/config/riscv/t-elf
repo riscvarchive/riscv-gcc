@@ -1,9 +1,2 @@
-# Build the libraries for both hard and soft floating point
-
-MULTILIB_OPTIONS = m64/m32
-MULTILIB_DIRNAMES = 64 32
-
-ifneq ($(with_float), soft)
-MULTILIB_OPTIONS += mfloat-abi=soft
-MULTILIB_DIRNAMES += soft-float
-endif
+# For the time being, Linux and Newlib have the same multilib settings.
+include $(srcdir)/config/riscv/t-linux
