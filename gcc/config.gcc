@@ -3987,52 +3987,28 @@ case "${target}" in
 		with_arch="`echo ${with_arch} | tr A-Z_ a-z-`"
 
 		case "${target}" in
-		riscv32*)
-			xlen=32
-			;;
-		riscv64*)
-			xlen=64
-			;;
-		*)
-			echo "Unsupported RISC-V target ${target}"
-			exit 1
-			;;
+		riscv32*) xlen=32 ;;
+		riscv64*) xlen=64 ;;
+		*) echo "Unsupported RISC-V target ${target}" 1>&2; exit 1 ;;
 		esac
 
-		# Make sure --with-arch is valid and compatible with --target.
-		# If --with-arch was not given but --with-abi was, use
-		# --with-abi to decide the floating-point ISA.
+		# Infer arch from --with-arch, --target, and --with-abi.
 		case "${with_arch}" in
 		"")
+			# Infer XLEN, but otherwise assume GC.
 			case "${with_abi}" in
-			ilp32 | lp64)
-				with_arch="rv${xlen}ima"
-				;;
-			ilp32f | lp64f)
-				with_arch="rv${xlen}imaf"
-				;;
-			*)
-				with_arch="rv${xlen}g"
-				;;
+			ilp32 | ilp32f | ilp32d) with_arch="rv32gc" ;;
+			lp64 | lp64f | lp64d) with_arch="rv64gc" ;;
+			*) with_arch="rv${xlen}gc" ;;
 			esac
 			;;
 		i* | g*)
 			with_arch="rv${xlen}${with_arch}"
 			;;
-		rv32i* | rv32g*)
-			if test "$xlen" != 32; then
-				echo "--with-arch and --target specify conflicting XLEN"
-				exit 1
-			fi
-			;;
-		rv64i* | rv64g*)
-			if test "$xlen" != 64; then
-				echo "--with-arch and --target specify conflicting XLEN"
-				exit 1
-			fi
+		rv32i* | rv32g* | rv64i* | rv64g*)
 			;;
 		*)
-			echo "--with-arch=${with_arch} is not supported"
+			echo "--with-arch=${with_arch} is not supported" 1>&2
 			exit 1
 			;;
 		esac
@@ -4045,22 +4021,14 @@ case "${target}" in
 			;;
 		"")
 			case "${with_arch}" in
-			rv32*d* | rv32g*)
-				with_abi=ilp32d
-				;;
-			rv32*)
-				with_abi=ilp32
-				;;
-			rv64*d* | rv64g*)
-				with_abi=lp64d
-				;;
-			rv64*)
-				with_abi=lp64
-				;;
+			rv32*d* | rv32g*) with_abi=ilp32d ;;
+			rv32*) with_abi=ilp32 ;;
+			rv64*d* | rv64g*) with_abi=lp64d ;;
+			rv64*) with_abi=lp64 ;;
 			esac
 			;;
 		*)
-			echo "--with-abi=${with_abi} is not supported"
+			echo "--with-abi=${with_abi} is not supported" 1>&2
 			exit 1
 			;;
 		esac
@@ -4075,7 +4043,7 @@ case "${target}" in
 		| lp64d,rv64*d* | lp64d,rv64g*)
 			;;
 		*)
-			echo "--with-abi=${with_abi} is not supported for ISA ${with_arch}"
+			echo "--with-abi=${with_abi} is not supported for ISA ${with_arch}" 1>&2
 			exit 1
 			;;
 		esac
