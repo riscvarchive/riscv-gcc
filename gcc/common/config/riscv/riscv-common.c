@@ -34,40 +34,43 @@ riscv_parse_arch_string (const char *isa, int *flags)
 {
   const char *p = isa;
 
-  if (strncasecmp (p, "RV32", 4) == 0)
-    *flags |= MASK_32BIT, p += 4;
-  else if (strncasecmp (p, "RV64", 4) == 0)
-    *flags &= ~MASK_32BIT, p += 4;
-  else if (strncasecmp (p, "RV", 2) == 0)
-    p += 2;
+  if (strncmp (p, "rv32", 4) == 0)
+    *flags &= ~MASK_64BIT, p += 4;
+  else if (strncmp (p, "rv64", 4) == 0)
+    *flags |= MASK_64BIT, p += 4;
+  else
+    {
+      error ("-march=%s: ISA string must begin with rv32 or rv64", isa);
+      return;
+    }
 
-  if (TOUPPER (*p) == 'G')
+  if (*p == 'g')
     {
       p++;
 
-      *flags |= MASK_MUL | MASK_DIV;
+      *flags |= MASK_MUL;
       *flags |= MASK_ATOMIC;
       *flags |= MASK_HARD_FLOAT;
       *flags |= MASK_DOUBLE_FLOAT;
     }
-  else if (TOUPPER (*p) == 'I')
+  else if (*p == 'i')
     {
       p++;
 
       *flags &= ~MASK_MUL;
-      if (TOUPPER (*p) == 'M')
+      if (*p == 'm')
 	*flags |= MASK_MUL, p++;
 
       *flags &= ~MASK_ATOMIC;
-      if (TOUPPER (*p) == 'A')
+      if (*p == 'a')
 	*flags |= MASK_ATOMIC, p++;
 
       *flags &= ~(MASK_HARD_FLOAT | MASK_DOUBLE_FLOAT);
-      if (TOUPPER (*p) == 'F')
+      if (*p == 'f')
 	{
 	  *flags |= MASK_HARD_FLOAT, p++;
 
-	  if (TOUPPER (*p) == 'D')
+	  if (*p == 'd')
 	    {
 	      *flags |= MASK_DOUBLE_FLOAT;
 	      p++;
@@ -81,7 +84,7 @@ riscv_parse_arch_string (const char *isa, int *flags)
     }
 
   *flags &= ~MASK_RVC;
-  if (TOUPPER (*p) == 'C')
+  if (*p == 'c')
     *flags |= MASK_RVC, p++;
 
   if (*p)

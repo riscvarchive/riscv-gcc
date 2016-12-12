@@ -21,14 +21,6 @@
 HeaderInclude
 config/riscv/riscv-opts.h
 
-m32
-Target RejectNegative Mask(32BIT)
-Generate RV32 code.
-
-m64
-Target RejectNegative InverseMask(32BIT, 64BIT)
-Generate RV64 code.
-
 mbranch-cost=
 Target RejectNegative Joined UInteger Var(riscv_branch_cost)
 -mbranch-cost=N	Set the cost of branches to roughly N instructions.
@@ -108,6 +100,8 @@ Enum(code_model) String(medany) Value(CM_MEDANY)
 mexplicit-relocs
 Target Report Mask(EXPLICIT_RELOCS)
 Use %reloc() operators, rather than assembly macros, to load addresses.
+
+Mask(64BIT)
 
 Mask(MUL)
 
