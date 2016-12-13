@@ -100,17 +100,6 @@ along with GCC; see the file COPYING3.  If not see
 #define RISCV_TUNE_STRING_DEFAULT "rocket"
 #endif
 
-/* RISC-V ISA names are case-insensitive, but SPECS are case-sensitive and
-   don't support internal wildcards, so enumerate all possibilities.  */
-#define OPT_ARCH64LL "march=rv64*"
-#define OPT_ARCH64UL "march=Rv64*"
-#define OPT_ARCH64LU "march=rV64*"
-#define OPT_ARCH64UU "march=RV64*"
-#define OPT_ARCH32LL "march=rv32*"
-#define OPT_ARCH32UL "march=Rv32*"
-#define OPT_ARCH32LU "march=rV32*"
-#define OPT_ARCH32UU "march=RV32*"
-
 /* Support for a compile-time default CPU, et cetera.  The rules are:
    --with-arch is ignored if -march is specified.
    --with-abi is ignored if -mabi is specified.
@@ -1001,6 +990,22 @@ extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL) \
   (((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | DW_EH_PE_sdata4)
+
+#define XLEN_SPEC \
+  "%{march=rv32*:32}" \
+  "%{march=rv64*:64}" \
+
+#define ABI_SPEC \
+  "%{mabi=ilp32:ilp32}" \
+  "%{mabi=ilp32f:ilp32f}" \
+  "%{mabi=ilp32d:ilp32d}" \
+  "%{mabi=lp64:lp64}" \
+  "%{mabi=lp64f:lp64f}" \
+  "%{mabi=lp64d:lp64d}" \
+
+#define STARTFILE_PREFIX_SPEC 			\
+   "/lib" XLEN_SPEC "/" ABI_SPEC "/ "		\
+   "/usr/lib" XLEN_SPEC "/" ABI_SPEC "/ "
 
 /* ISA constants needed for code generation.  */
 #define OPCODE_LW    0x2003

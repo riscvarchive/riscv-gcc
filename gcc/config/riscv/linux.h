@@ -23,28 +23,13 @@ along with GCC; see the file COPYING3.  If not see
     GNU_USER_TARGET_OS_CPP_BUILTINS();				\
   } while (0)
 
-#define GLIBC_DYNAMIC_LINKER32 "/lib32/ld.so.1"
-#define GLIBC_DYNAMIC_LINKER64 "/lib/ld.so.1"
+#define GLIBC_DYNAMIC_LINKER "/lib" XLEN_SPEC "/" ABI_SPEC "/ld.so.1"
 
 #define LINK_SPEC "\
+-melf" XLEN_SPEC "lriscv \
 %{shared} \
   %{!shared: \
     %{!static: \
       %{rdynamic:-export-dynamic} \
-      %{" OPT_ARCH64LL ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER64 "} \
-      %{" OPT_ARCH64LU ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER64 "} \
-      %{" OPT_ARCH64UL ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER64 "} \
-      %{" OPT_ARCH64UU ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER64 "} \
-      %{" OPT_ARCH32LL ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER32 "} \
-      %{" OPT_ARCH32LU ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER32 "} \
-      %{" OPT_ARCH32UL ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER32 "} \
-      %{" OPT_ARCH32UU ": -dynamic-linker " GNU_USER_DYNAMIC_LINKER32 "}} \
-    %{static:-static}} \
-%{" OPT_ARCH64LL ":-melf64lriscv} \
-%{" OPT_ARCH64LU ":-melf64lriscv} \
-%{" OPT_ARCH64UL ":-melf64lriscv} \
-%{" OPT_ARCH64UU ":-melf64lriscv} \
-%{" OPT_ARCH32LL ":-melf32lriscv} \
-%{" OPT_ARCH32LU ":-melf32lriscv} \
-%{" OPT_ARCH32UL ":-melf32lriscv} \
-%{" OPT_ARCH32UU ":-melf32lriscv}"
+      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
+    %{static:-static}}"

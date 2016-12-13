@@ -13,9 +13,9 @@
 #  CFLAGS:    -march=rv32imafd -mabi=ilp32d
 #  DIRNAME:   GCC_HOME/rv32imafd/ilp32d
 #  OSDIRNAME: /lib32/ilp32d
-MULTILIB_OPTIONS    = march=rv32g/march=rv64g/march=rv32imafd/march=rv64imafd/march=rv32ima/march=rv64ima mabi=ilp32/mabi=ilp32d/mabi=lp64/mabi=lp64d
-MULTILIB_DIRNAMES   =       rv32g       rv64g       rv32imafd       rv64imafd       rv32ima       rv64ima      ilp32      ilp32d      lp64      lp64d
-MULTILIB_OSDIRNAMES =       rv32g       rv64g       rv32imafd       rv64imafd       rv32ima       rv64ima      ilp32      ilp32d      lp64      lp64d
+MULTILIB_OPTIONS    = march=rv32g/march=rv64g/march=rv32imafd/march=rv64imafd/march=rv32imaf/march=rv64imaf/march=rv32ima/march=rv64ima mabi=ilp32/mabi=ilp32f/mabi=ilp32d/mabi=lp64/mabi=lp64f/mabi=lp64d
+MULTILIB_DIRNAMES   =       lib32       lib64           lib32           lib64          lib32          lib64         lib32         lib64      ilp32      ilp32f      ilp32d      lp64      lp64f      lp64d
+MULTILIB_OSDIRNAMES =    ../lib32    ../lib64        ../lib32        ../lib64       ../lib32       ../lib64      ../lib32      ../lib64      ilp32      ilp32f      ilp32d      lp64      lp64f      lp64d
 
 # We don't actually support all the possible multilib configurations on RISC-V.
 # Here's a blessed list of the interesting ones.  Some will never be supported
@@ -23,10 +23,10 @@ MULTILIB_OSDIRNAMES =       rv32g       rv64g       rv32imafd       rv64imafd   
 # supported (rv64imafd/ilp32).
 MULTILIB_REQUIRED  =
 MULTILIB_REQUIRED += march=rv32ima/mabi=ilp32
-MULTILIB_REQUIRED += march=rv32imafd/mabi=ilp32
+MULTILIB_REQUIRED += march=rv32imaf/mabi=ilp32f
 MULTILIB_REQUIRED += march=rv32imafd/mabi=ilp32d
 MULTILIB_REQUIRED += march=rv64ima/mabi=lp64
-MULTILIB_REQUIRED += march=rv64imafd/mabi=lp64
+MULTILIB_REQUIRED += march=rv64imaf/mabi=lp64f
 MULTILIB_REQUIRED += march=rv64imafd/mabi=lp64d
 
 # There's a hack in the multilibs we build: it appears that if I tell GCC to
@@ -35,7 +35,5 @@ MULTILIB_REQUIRED += march=rv64imafd/mabi=lp64d
 # multilib", but I don't want to also go and build a libc for them so instead I
 # inform GCC that G ISAs are actually IMAFD.
 MULTILIB_REUSE  =
-MULTILIB_REUSE += march.rv32imafd/mabi.ilp32=march.rv32g/mabi.ilp32
 MULTILIB_REUSE += march.rv32imafd/mabi.ilp32d=march.rv32g/mabi.ilp32d
-MULTILIB_REUSE += march.rv64imafd/mabi.lp64=march.rv64g/mabi.lp64
 MULTILIB_REUSE += march.rv64imafd/mabi.lp64d=march.rv64g/mabi.lp64d
