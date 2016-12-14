@@ -23,10 +23,8 @@ MULTILIB_OSDIRNAMES =    ../lib32    ../lib64        ../lib32        ../lib64   
 # supported (rv64imafd/ilp32).
 MULTILIB_REQUIRED  =
 MULTILIB_REQUIRED += march=rv32ima/mabi=ilp32
-MULTILIB_REQUIRED += march=rv32imaf/mabi=ilp32f
 MULTILIB_REQUIRED += march=rv32imafd/mabi=ilp32d
 MULTILIB_REQUIRED += march=rv64ima/mabi=lp64
-MULTILIB_REQUIRED += march=rv64imaf/mabi=lp64f
 MULTILIB_REQUIRED += march=rv64imafd/mabi=lp64d
 
 # There's a hack in the multilibs we build: it appears that if I tell GCC to
