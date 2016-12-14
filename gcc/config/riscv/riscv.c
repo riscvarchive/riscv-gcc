@@ -1140,10 +1140,11 @@ static GTY(()) rtx riscv_tls_symbol;
    (either global dynamic or local dynamic).  RESULT is an RTX for the
    return value location.  */
 
-static rtx
+static rtx_insn *
 riscv_call_tls_get_addr (rtx sym, rtx result)
 {
-  rtx insn, a0 = gen_rtx_REG (Pmode, GP_ARG_FIRST);
+  rtx a0 = gen_rtx_REG (Pmode, GP_ARG_FIRST);
+  rtx_insn *insn;
 
   if (!riscv_tls_symbol)
     riscv_tls_symbol = init_one_libfunc ("__tls_get_addr");
@@ -1168,7 +1169,7 @@ riscv_call_tls_get_addr (rtx sym, rtx result)
 static rtx
 riscv_legitimize_tls_address (rtx loc)
 {
-  rtx dest, insn, tp, tmp1;
+  rtx dest, tp, tmp;
   enum tls_model model = SYMBOL_REF_TLS_MODEL (loc);
 
   /* Since we support TLS copy relocs, non-PIC TLS accesses may all use LE.  */
@@ -1181,25 +1182,24 @@ riscv_legitimize_tls_address (rtx loc)
       /* Rely on section anchors for the optimization that LDM TLS
 	 provides.  The anchor's address is loaded with GD TLS. */
     case TLS_MODEL_GLOBAL_DYNAMIC:
-      tmp1 = gen_rtx_REG (Pmode, GP_RETURN);
-      insn = riscv_call_tls_get_addr (loc, tmp1);
+      tmp = gen_rtx_REG (Pmode, GP_RETURN);
       dest = gen_reg_rtx (Pmode);
-      emit_libcall_block (insn, dest, tmp1, loc);
+      emit_libcall_block (riscv_call_tls_get_addr (loc, tmp), dest, tmp, loc);
       break;
 
     case TLS_MODEL_INITIAL_EXEC:
       /* la.tls.ie; tp-relative add */
       tp = gen_rtx_REG (Pmode, THREAD_POINTER_REGNUM);
-      tmp1 = gen_reg_rtx (Pmode);
-      emit_insn (riscv_got_load_tls_ie (tmp1, loc));
+      tmp = gen_reg_rtx (Pmode);
+      emit_insn (riscv_got_load_tls_ie (tmp, loc));
       dest = gen_reg_rtx (Pmode);
-      emit_insn (gen_add3_insn (dest, tmp1, tp));
+      emit_insn (gen_add3_insn (dest, tmp, tp));
       break;
 
     case TLS_MODEL_LOCAL_EXEC:
-      tmp1 = riscv_unspec_offset_high (NULL, loc, SYMBOL_TLS_LE);
+      tmp = riscv_unspec_offset_high (NULL, loc, SYMBOL_TLS_LE);
       dest = gen_reg_rtx (Pmode);
-      emit_insn (riscv_tls_add_tp_le (dest, tmp1, loc));
+      emit_insn (riscv_tls_add_tp_le (dest, tmp, loc));
       dest = gen_rtx_LO_SUM (Pmode, dest,
 			     riscv_unspec_address (loc, SYMBOL_TLS_LE));
       break;
@@ -2614,7 +2614,7 @@ riscv_va_start (tree valist, rtx nextarg)
    ARGS_SIZE is the size of the arguments and AUX is the value passed
    to us by riscv_function_arg.  Return the call itself.  */
 
-rtx
+rtx_insn *
 riscv_expand_call (bool sibcall_p, rtx result, rtx addr, rtx args_size)
 {
   rtx pattern;

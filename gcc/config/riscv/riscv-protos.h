@@ -58,7 +58,7 @@ extern const char *riscv_output_gpr_save (unsigned);
 extern void riscv_expand_scc (rtx *);
 extern void riscv_expand_conditional_branch (rtx *);
 #endif
-extern rtx riscv_expand_call (bool, rtx, rtx, rtx);
+extern rtx_insn *riscv_expand_call (bool, rtx, rtx, rtx);
 extern void riscv_set_return_address (rtx, rtx);
 extern bool riscv_expand_block_move (rtx, rtx, rtx);
 extern rtx riscv_return_addr (int, rtx);
