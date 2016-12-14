@@ -111,12 +111,6 @@ along with GCC; see the file COPYING3.  If not see
   {"arch", "%{!march=*:-march=%(VALUE)}" }, \
   {"abi", "%{!mabi=*:-mabi=%(VALUE)}" }, \
 
-/* Emitting .cfi directives currently precludes linker relaxations, so by
-   default only emit them if -gdwarf is expicitly passed.  If only -g is
-   passed, GCC will emit DWARF code directly, sans .cfi directives.   */
-#define DRIVER_SELF_SPECS \
-  "%{!gdwarf*:-fno-dwarf2-cfi-asm}"
-
 #ifdef IN_LIBGCC2
 #undef TARGET_64BIT
 /* Make this compile time constant for libgcc2 */
