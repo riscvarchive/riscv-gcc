@@ -4019,10 +4019,8 @@ case "${target}" in
 		"")
 			case "${with_arch}" in
 			rv32*d* | rv32g*) with_abi=ilp32d ;;
-			rv32*f*) with_abi=ilp32f ;;
 			rv32*) with_abi=ilp32 ;;
 			rv64*d* | rv64g*) with_abi=lp64d ;;
-			rv64*f* ) with_abi=lp64f ;;
 			rv64*) with_abi=lp64 ;;
 			esac
 			;;
