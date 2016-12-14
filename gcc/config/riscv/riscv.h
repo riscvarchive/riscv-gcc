@@ -130,10 +130,6 @@ along with GCC; see the file COPYING3.  If not see
 #define LOCAL_LABEL_PREFIX	"."
 #define USER_LABEL_PREFIX	""
 
-#define DWARF2_DEBUGGING_INFO 1
-#define DWARF2_ASM_LINE_DEBUG_INFO (flag_dwarf2_cfi_asm)
-#define DEFAULT_GDB_EXTENSIONS 1
-
 /* Offsets recorded in opcodes are a multiple of this alignment factor.
    The default for this in 64-bit mode is 8, which causes problems with
    SFmode register saves.  */
