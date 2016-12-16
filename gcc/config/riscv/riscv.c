@@ -2217,7 +2217,7 @@ riscv_flatten_aggregate_field (const_tree type,
 							 subfields, 0, offset);
 
 	/* Can't handle incomplete types nor sizes that are not fixed.  */
-	if (n_subfields < 0
+	if (n_subfields <= 0
 	    || !COMPLETE_TYPE_P (type)
 	    || TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST
 	    || !index
