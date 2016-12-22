@@ -107,15 +107,15 @@ __umoddi3:
 
   /* Handle negative arguments to __divdi3.  */
 .L10:
-  neg   a0, a0 
+  neg   a0, a0
   bgez  a1, .L12      /* Compute __udivdi3(-a0, a1), then negate the result.  */
   neg   a1, a1
-  j     __divdi3      /* Compute __udivdi3(-a0, -a1).  */
+  j     __udivdi3     /* Compute __udivdi3(-a0, -a1).  */
 .L11:                 /* Compute __udivdi3(a0, -a1), then negate the result.  */
   neg   a1, a1
 .L12:
   move  t0, ra
-  jal   __divdi3
+  jal   __udivdi3
   neg   a0, a0
   jr    t0
 
