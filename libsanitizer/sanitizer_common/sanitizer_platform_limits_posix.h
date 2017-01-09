@@ -83,6 +83,9 @@ namespace __sanitizer {
                  SANITIZER_ANDROID ? FIRST_32_SECOND_64(104, 128) :
                                      FIRST_32_SECOND_64(144, 216);
   const unsigned struct_kernel_stat64_sz = 104;
+#elif defined(__riscv)
+  const unsigned struct_kernel_stat_sz = 128;
+  const unsigned struct_kernel_stat64_sz = 128;
 #elif defined(__s390__) && !defined(__s390x__)
   const unsigned struct_kernel_stat_sz = 64;
   const unsigned struct_kernel_stat64_sz = 104;
@@ -117,7 +120,7 @@ namespace __sanitizer {
 
 #if SANITIZER_LINUX || SANITIZER_FREEBSD
 
-#if defined(__powerpc64__) || defined(__s390__)
+#if defined(__powerpc64__) || defined(__riscv) || defined(__s390__)
   const unsigned struct___old_kernel_stat_sz = 0;
 #elif !defined(__sparc__)
   const unsigned struct___old_kernel_stat_sz = 32;
@@ -540,7 +543,7 @@ namespace __sanitizer {
   typedef long __sanitizer___kernel_off_t;
 #endif
 
-#if defined(__powerpc__) || defined(__mips__)
+#if defined(__powerpc__) || defined(__mips__) || defined(__riscv)
   typedef unsigned int __sanitizer___kernel_old_uid_t;
   typedef unsigned int __sanitizer___kernel_old_gid_t;
 #else
