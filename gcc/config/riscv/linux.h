@@ -1,0 +1,34 @@
+/* Definitions for RISC-V GNU/Linux systems with ELF format.
+   Copyright (C) 1998-2017 Free Software Foundation, Inc.
+
+This file is part of GCC.
+
+GCC is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3, or (at your option)
+any later version.
+
+GCC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GCC; see the file COPYING3.  If not see
+<http://www.gnu.org/licenses/>.  */
+
+#define TARGET_OS_CPP_BUILTINS()				\
+  do {								\
+    GNU_USER_TARGET_OS_CPP_BUILTINS();				\
+  } while (0)
+
+#define GLIBC_DYNAMIC_LINKER "/lib" XLEN_SPEC "/" ABI_SPEC "/ld.so.1"
+
+#define LINK_SPEC "\
+-melf" XLEN_SPEC "lriscv \
+%{shared} \
+  %{!shared: \
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
+    %{static:-static}}"
