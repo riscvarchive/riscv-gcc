@@ -3949,9 +3949,9 @@ riscv_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
   addr = force_reg (Pmode, XEXP (m_tramp, 0));
   end_addr = riscv_force_binary (Pmode, PLUS, addr, GEN_INT (TRAMPOLINE_CODE_SIZE));
 
-  /* auipc   t0, 0
-     l[wd]   t1, target_function_offset(t0)
-     l[wd]   t0, static_chain_offset(t0)
+  /* auipc   t2, 0
+     l[wd]   t1, target_function_offset(t2)
+     l[wd]   t2, static_chain_offset(t2)
      jr      t1
   */
   trampoline[0] = OPCODE_AUIPC | (STATIC_CHAIN_REGNUM << SHIFT_RD);
