@@ -167,7 +167,7 @@ powerpc*-*-*)
 	;;
 rs6000*-*-*)
 	;;
-riscv*)
+riscv*-*-*)
 	cpu_type=riscv
 	;;
 sparc64*-*-*)
