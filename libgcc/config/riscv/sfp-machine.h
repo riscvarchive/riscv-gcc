@@ -43,9 +43,9 @@ typedef unsigned int fpu_control_t;
 #define _FP_DIV_MEAT_D(R,X,Y)	_FP_DIV_MEAT_2_udiv(D,R,X,Y)
 #define _FP_DIV_MEAT_Q(R,X,Y)	_FP_DIV_MEAT_4_udiv(Q,R,X,Y)
 
-#define _FP_NANFRAC_S		((_FP_QNANBIT_S << 1) - 1)
-#define _FP_NANFRAC_D		((_FP_QNANBIT_D << 1) - 1), -1
-#define _FP_NANFRAC_Q		((_FP_QNANBIT_Q << 1) - 1), -1, -1, -1
+#define _FP_NANFRAC_S		_FP_QNANBIT_S
+#define _FP_NANFRAC_D		_FP_QNANBIT_D, 0
+#define _FP_NANFRAC_Q		_FP_QNANBIT_Q, 0, 0, 0
 
 #else
 
@@ -65,9 +65,9 @@ typedef unsigned int fpu_control_t;
 #define _FP_DIV_MEAT_D(R,X,Y)	_FP_DIV_MEAT_1_udiv_norm(D,R,X,Y)
 #define _FP_DIV_MEAT_Q(R,X,Y)	_FP_DIV_MEAT_2_udiv(Q,R,X,Y)
 
-#define _FP_NANFRAC_S		((_FP_QNANBIT_S << 1) - 1)
-#define _FP_NANFRAC_D		((_FP_QNANBIT_D << 1) - 1)
-#define _FP_NANFRAC_Q		((_FP_QNANBIT_Q << 1) - 1), -1
+#define _FP_NANFRAC_S		_FP_QNANBIT_S
+#define _FP_NANFRAC_D		_FP_QNANBIT_D
+#define _FP_NANFRAC_Q		_FP_QNANBIT_Q, 0
 
 #endif
 
