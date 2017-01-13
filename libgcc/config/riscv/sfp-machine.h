@@ -131,11 +131,7 @@ do {								\
 #define	__LITTLE_ENDIAN	1234
 #define	__BIG_ENDIAN	4321
 
-#if defined __big_endian__
-# define __BYTE_ORDER __BIG_ENDIAN
-#else
-# define __BYTE_ORDER __LITTLE_ENDIAN
-#endif
+#define __BYTE_ORDER __LITTLE_ENDIAN
 
 
 /* Define ALIASNAME as a strong alias for NAME.  */
