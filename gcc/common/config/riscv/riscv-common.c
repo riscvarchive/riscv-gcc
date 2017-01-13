@@ -25,12 +25,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "common/common-target-def.h"
 #include "opts.h"
 #include "flags.h"
-#include "errors.h"
+#include "diagnostic-core.h"
 
 /* Parse a RISC-V ISA string into an option mask.  */
 
 static void
-riscv_parse_arch_string (const char *isa, int *flags)
+riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
 {
   const char *p = isa;
 
@@ -40,7 +40,7 @@ riscv_parse_arch_string (const char *isa, int *flags)
     *flags |= MASK_64BIT, p += 4;
   else
     {
-      error ("-march=%s: ISA string must begin with rv32 or rv64", isa);
+      error_at (loc, "-march=%s: ISA string must begin with rv32 or rv64", isa);
       return;
     }
 
@@ -79,7 +79,7 @@ riscv_parse_arch_string (const char *isa, int *flags)
     }
   else
     {
-      error ("-march=%s: invalid ISA string", isa);
+      error_at (loc, "-march=%s: invalid ISA string", isa);
       return;
     }
 
@@ -89,7 +89,7 @@ riscv_parse_arch_string (const char *isa, int *flags)
 
   if (*p)
     {
-      error ("-march=%s: unsupported ISA substring `%s'", isa, p);
+      error_at (loc, "-march=%s: unsupported ISA substring `%s'", isa, p);
       return;
     }
 }
@@ -100,12 +100,12 @@ static bool
 riscv_handle_option (struct gcc_options *opts,
 		     struct gcc_options *opts_set ATTRIBUTE_UNUSED,
 		     const struct cl_decoded_option *decoded,
-		     location_t loc ATTRIBUTE_UNUSED)
+		     location_t loc)
 {
   switch (decoded->opt_index)
     {
     case OPT_march_:
-      riscv_parse_arch_string (decoded->arg, &opts->x_target_flags);
+      riscv_parse_arch_string (decoded->arg, &opts->x_target_flags, loc);
       return true;
 
     default:
