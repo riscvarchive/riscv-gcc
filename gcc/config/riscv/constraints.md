@@ -44,6 +44,11 @@
   (and (match_code "const_int")
        (match_test "ival == 0")))
 
+(define_constraint "K"
+  "A 5-bit unsigned immediate for CSR access instructions."
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (ival, 0, 31)")))
+
 ;; Floating-point constant +0.0, used for FCVT-based moves when FMV is
 ;; not available in RV32.
 (define_constraint "G"
