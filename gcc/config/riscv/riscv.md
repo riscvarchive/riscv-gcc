@@ -20,7 +20,6 @@
 ;; <http://www.gnu.org/licenses/>.
 
 (define_c_enum "unspec" [
-  ;; GP manipulation.
   UNSPEC_EH_RETURN
 
   ;; Symbolic accesses.  The order of this list must match that of
@@ -39,7 +38,10 @@
   UNSPEC_GPR_SAVE
   UNSPEC_GPR_RESTORE
 
-  ;; Blockage and synchronisation.
+  ;; Floating-point unspecs.
+  UNSPEC_COPYSIGN
+
+  ;; Blockage and synchronization.
   UNSPEC_BLOCKAGE
   UNSPEC_FENCE
   UNSPEC_FENCE_I
@@ -887,6 +889,15 @@
   [(set_attr "type" "fmove")
    (set_attr "mode" "<UNITMODE>")])
 
+(define_insn "copysign<mode>3"
+  [(set (match_operand:ANYF 0 "register_operand" "=f")
+	(unspec:ANYF [(match_operand:ANYF 1 "register_operand" "f")
+		      (match_operand:ANYF 2 "register_operand" "f")]
+		     UNSPEC_COPYSIGN))]
+  "TARGET_HARD_FLOAT"
+  "fsgnj.<fmt>\t%0,%1,%2"
+  [(set_attr "type" "fmove")
+   (set_attr "mode" "<UNITMODE>")])
 
 ;;
 ;;  ....................
