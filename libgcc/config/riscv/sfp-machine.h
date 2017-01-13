@@ -86,26 +86,14 @@ typedef int __gcc_CMPtype __attribute__ ((mode (__libgcc_cmp_return__)));
 #define _FP_NANSIGN_D		0
 #define _FP_NANSIGN_Q		0
 
-#define _FP_KEEPNANFRACP 1
+#define _FP_KEEPNANFRACP 0
 #define _FP_QNANNEGATEDP 0
 
-
-/* From my experiments it seems X is chosen unless one of the
-   NaNs is sNaN,  in which case the result is NANSIGN/NANFRAC.  */
-#define _FP_CHOOSENAN(fs, wc, R, X, Y, OP)			\
-  do {								\
-    if ((_FP_FRAC_HIGH_RAW_##fs(X) |				\
-	 _FP_FRAC_HIGH_RAW_##fs(Y)) & _FP_QNANBIT_##fs)		\
-      {								\
-	R##_s = _FP_NANSIGN_##fs;				\
-        _FP_FRAC_SET_##wc(R,_FP_NANFRAC_##fs);			\
-      }								\
-    else							\
-      {								\
-	R##_s = X##_s;						\
-        _FP_FRAC_COPY_##wc(R,X);				\
-      }								\
-    R##_c = FP_CLS_NAN;						\
+#define _FP_CHOOSENAN(fs, wc, R, X, Y, OP)	\
+  do {						\
+    R##_s = _FP_NANSIGN_##fs;			\
+    _FP_FRAC_SET_##wc(R,_FP_NANFRAC_##fs);	\
+    R##_c = FP_CLS_NAN;				\
   } while (0)
 
 #define _FP_DECL_EX		fpu_control_t _fcw
