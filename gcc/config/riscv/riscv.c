@@ -4143,9 +4143,6 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 #undef TARGET_MAX_ANCHOR_OFFSET
 #define TARGET_MAX_ANCHOR_OFFSET (IMM_REACH/2-1)
 
-#undef TARGET_LRA_P
-#define TARGET_LRA_P hook_bool_void_true
-
 #undef TARGET_REGISTER_PRIORITY
 #define TARGET_REGISTER_PRIORITY riscv_register_priority
 
