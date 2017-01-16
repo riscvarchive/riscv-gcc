@@ -105,8 +105,6 @@ along with GCC; see the file COPYING3.  If not see
    --with-abi is ignored if -mabi is specified.
    --with-tune is ignored if -mtune is specified.  */
 #define OPTION_DEFAULT_SPECS \
-  {"march", "%{!march=*:-march=%(VALUE)}" }, \
-  {"mabi", "%{!mabi=*:-mabi=%(VALUE)}" }, \
   {"tune", "%{!mtune=*:-mtune=%(VALUE)}" }, \
   {"arch", "%{!march=*:-march=%(VALUE)}" }, \
   {"abi", "%{!mabi=*:-mabi=%(VALUE)}" }, \
