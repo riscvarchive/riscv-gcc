@@ -332,7 +332,7 @@ riscv_parse_cpu (const char *cpu_string)
     if (strcmp (riscv_cpu_info_table[i].name, cpu_string) == 0)
       return riscv_cpu_info_table + i;
 
-  error ("unknown cpu `%s' for -mtune", cpu_string);
+  error ("unknown cpu %qs for -mtune", cpu_string);
   return riscv_cpu_info_table;
 }
 
@@ -3862,7 +3862,7 @@ riscv_option_override (void)
   if (TARGET_MUL && (target_flags_explicit & MASK_DIV) == 0)
     target_flags |= MASK_DIV;
   else if (!TARGET_MUL && TARGET_DIV)
-    error ("-mdiv requires -march to subsume the `M' extension");
+    error ("-mdiv requires -march to subsume the %<M%> extension");
 
   /* Likewise floating-point division and square root.  */
   if (TARGET_HARD_FLOAT && (target_flags_explicit & MASK_FDIV) == 0)
@@ -3897,7 +3897,7 @@ riscv_option_override (void)
 
   /* Require that the ISA supports the requested floating-point ABI.  */
   if (UNITS_PER_FP_ARG > (TARGET_HARD_FLOAT ? UNITS_PER_FP_REG : 0))
-    error ("requested ABI requires -march to subsume the `%c' extension",
+    error ("requested ABI requires -march to subsume the %qc extension",
 	   UNITS_PER_FP_ARG > 8 ? 'Q' : (UNITS_PER_FP_ARG > 4 ? 'D' : 'F'));
 
   /* We do not yet support ILP32 on RV64.  */
