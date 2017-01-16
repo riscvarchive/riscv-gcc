@@ -118,7 +118,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef ASM_SPEC
 #define ASM_SPEC "\
 %(subtarget_asm_debugging_spec) \
-%{fPIC|fpic|fPIE|fpie:-fpic} \
+%{" FPIE_OR_FPIC_SPEC ":-fpic} \
 %{march=*} \
 %{mabi=*} \
 %(subtarget_asm_spec)"
