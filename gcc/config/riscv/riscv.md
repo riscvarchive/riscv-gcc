@@ -40,6 +40,8 @@
 
   ;; Floating-point unspecs.
   UNSPEC_COPYSIGN
+  UNSPEC_FRFLAGS
+  UNSPEC_FSFLAGS
 
   ;; Blockage and synchronization.
   UNSPEC_BLOCKAGE
@@ -2346,6 +2348,17 @@
    (const_int 0)]
   ""
   "")
+
+(define_insn "riscv_frflags"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(unspec_volatile [(const_int 0)] UNSPEC_FRFLAGS))]
+  "TARGET_HARD_FLOAT"
+  "frflags %0")
+
+(define_insn "riscv_fsflags"
+  [(unspec_volatile [(match_operand:SI 0 "csr_operand" "rK")] UNSPEC_FSFLAGS)]
+  "TARGET_HARD_FLOAT"
+  "fsflags %0")
 
 (include "sync.md")
 (include "peephole.md")
