@@ -4148,6 +4148,9 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 #undef TARGET_CANNOT_COPY_INSN_P
 #define TARGET_CANNOT_COPY_INSN_P riscv_cannot_copy_insn_p
 
+#undef TARGET_ATOMIC_ASSIGN_EXPAND_FENV
+#define TARGET_ATOMIC_ASSIGN_EXPAND_FENV riscv_atomic_assign_expand_fenv
+
 #undef TARGET_INIT_BUILTINS
 #define TARGET_INIT_BUILTINS riscv_init_builtins
 
