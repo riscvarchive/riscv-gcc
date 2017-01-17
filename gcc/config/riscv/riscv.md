@@ -40,6 +40,8 @@
 
   ;; Floating-point unspecs.
   UNSPEC_COPYSIGN
+  UNSPEC_LRINT
+  UNSPEC_LROUND
   UNSPEC_FRFLAGS
   UNSPEC_FSFLAGS
 
@@ -289,6 +291,11 @@
 ;; This attribute gives the integer mode that has half the size of
 ;; the controlling mode.
 (define_mode_attr HALFMODE [(DF "SI") (DI "SI") (TF "DI")])
+
+;; Iterator and attributes for floating-point rounding instructions.
+(define_int_iterator RINT [UNSPEC_LRINT UNSPEC_LROUND])
+(define_int_attr rint_pattern [(UNSPEC_LRINT "rint") (UNSPEC_LROUND "round")])
+(define_int_attr rint_rm [(UNSPEC_LRINT "dyn") (UNSPEC_LROUND "rmm")])
 
 ;; This code iterator allows signed and unsigned widening multiplications
 ;; to use the same template.
@@ -1210,6 +1217,15 @@
 	(unsigned_float:ANYF (match_operand:GPR 1 "reg_or_0_operand" "rJ")))]
   "TARGET_HARD_FLOAT"
   "fcvt.<ANYF:fmt>.<GPR:ifmt>u\t%0,%z1"
+  [(set_attr "type" "fcvt")
+   (set_attr "mode" "<ANYF:MODE>")])
+
+(define_insn "l<rint_pattern><ANYF:mode><GPR:mode>2"
+  [(set (match_operand:GPR 0 "register_operand" "=r")
+	(unspec:GPR [(match_operand:ANYF 1 "register_operand" "f")]
+		    RINT))]
+  "TARGET_HARD_FLOAT"
+  "fcvt.<GPR:ifmt>.<ANYF:fmt> %0,%1,<rint_rm>"
   [(set_attr "type" "fcvt")
    (set_attr "mode" "<ANYF:MODE>")])
 
