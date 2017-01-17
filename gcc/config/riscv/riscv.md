@@ -161,17 +161,6 @@
 	 (eq_attr "move_type" "const") (const_string "const")]
 	(const_string "unknown")))
 
-;; Mode for conversion types (fcvt)
-;; I2S          integer to float single (SI/DI to SF)
-;; I2D          integer to float double (SI/DI to DF)
-;; S2I          float to integer (SF to SI/DI)
-;; D2I          float to integer (DF to SI/DI)
-;; D2S          double to float single
-;; S2D          float single to double
-
-(define_attr "cnv_mode" "unknown,I2S,I2D,S2I,D2I,D2S,S2D" 
-  (const_string "unknown"))
-
 ;; Length of instruction in bytes.
 (define_attr "length" ""
    (cond [
@@ -286,6 +275,9 @@
 
 ;; This attribute gives the format suffix for floating-point operations.
 (define_mode_attr fmt [(SF "s") (DF "d")])
+
+;; This attribute gives the integer suffix for floating-point conversions.
+(define_mode_attr ifmt [(SI "w") (DI "l")])
 
 ;; This attribute gives the format suffix for atomic memory operations.
 (define_mode_attr amo [(SI "w") (DI "d")])
@@ -997,9 +989,8 @@
 	(float_truncate:SF (match_operand:DF 1 "register_operand" "f")))]
   "TARGET_DOUBLE_FLOAT"
   "fcvt.s.d\t%0,%1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "cnv_mode"	"D2S")   
-   (set_attr "mode"	"SF")])
+  [(set_attr "type" "fcvt")
+   (set_attr "mode" "SF")])
 
 ;; Integer truncation patterns.  Truncating to HImode/QImode is a no-op.
 ;; Truncating from DImode to SImode is not, because we always keep SImode
@@ -1180,9 +1171,8 @@
 	(float_extend:DF (match_operand:SF 1 "register_operand" "f")))]
   "TARGET_DOUBLE_FLOAT"
   "fcvt.d.s\t%0,%1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "cnv_mode"	"S2D")   
-   (set_attr "mode"	"DF")])
+  [(set_attr "type" "fcvt")
+   (set_attr "mode" "DF")])
 
 ;;
 ;;  ....................
@@ -1191,164 +1181,37 @@
 ;;
 ;;  ....................
 
-(define_insn "fix_truncdfsi2"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(fix:SI (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_DOUBLE_FLOAT"
-  "fcvt.w.d %0,%1,rtz"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"DF")
-   (set_attr "cnv_mode"	"D2I")])
-
-
-(define_insn "fix_truncsfsi2"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(fix:SI (match_operand:SF 1 "register_operand" "f")))]
+(define_insn "fix_trunc<ANYF:mode><GPR:mode>2"
+  [(set (match_operand:GPR 0 "register_operand" "=r")
+	(fix:GPR (match_operand:ANYF 1 "register_operand" "f")))]
   "TARGET_HARD_FLOAT"
-  "fcvt.w.s %0,%1,rtz"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"SF")
-   (set_attr "cnv_mode"	"S2I")])
+  "fcvt.<GPR:ifmt>.<ANYF:fmt> %0,%1,rtz"
+  [(set_attr "type" "fcvt")
+   (set_attr "mode" "<ANYF:MODE>")])
 
-
-(define_insn "fix_truncdfdi2"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(fix:DI (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_64BIT && TARGET_DOUBLE_FLOAT"
-  "fcvt.l.d %0,%1,rtz"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"DF")
-   (set_attr "cnv_mode"	"D2I")])
-
-
-(define_insn "fix_truncsfdi2"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(fix:DI (match_operand:SF 1 "register_operand" "f")))]
-  "TARGET_HARD_FLOAT && TARGET_64BIT"
-  "fcvt.l.s %0,%1,rtz"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"SF")
-   (set_attr "cnv_mode"	"S2I")])
-
-
-(define_insn "floatsidf2"
-  [(set (match_operand:DF 0 "register_operand" "=f")
-	(float:DF (match_operand:SI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_DOUBLE_FLOAT"
-  "fcvt.d.w\t%0,%z1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"DF")
-   (set_attr "cnv_mode"	"I2D")])
-
-
-(define_insn "floatdidf2"
-  [(set (match_operand:DF 0 "register_operand" "=f")
-	(float:DF (match_operand:DI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_64BIT && TARGET_DOUBLE_FLOAT"
-  "fcvt.d.l\t%0,%z1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"DF")
-   (set_attr "cnv_mode"	"I2D")])
-
-
-(define_insn "floatsisf2"
-  [(set (match_operand:SF 0 "register_operand" "=f")
-	(float:SF (match_operand:SI 1 "reg_or_0_operand" "rJ")))]
+(define_insn "fixuns_trunc<ANYF:mode><GPR:mode>2"
+  [(set (match_operand:GPR 0 "register_operand" "=r")
+	(unsigned_fix:GPR (match_operand:ANYF 1 "register_operand" "f")))]
   "TARGET_HARD_FLOAT"
-  "fcvt.s.w\t%0,%z1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"SF")
-   (set_attr "cnv_mode"	"I2S")])
+  "fcvt.<GPR:ifmt>u.<ANYF:fmt> %0,%1,rtz"
+  [(set_attr "type" "fcvt")
+   (set_attr "mode" "<ANYF:MODE>")])
 
-
-(define_insn "floatdisf2"
-  [(set (match_operand:SF 0 "register_operand" "=f")
-	(float:SF (match_operand:DI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_HARD_FLOAT && TARGET_64BIT"
-  "fcvt.s.l\t%0,%z1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"SF")
-   (set_attr "cnv_mode"	"I2S")])
-
-
-(define_insn "floatunssidf2"
-  [(set (match_operand:DF 0 "register_operand" "=f")
-	(unsigned_float:DF (match_operand:SI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_DOUBLE_FLOAT"
-  "fcvt.d.wu\t%0,%z1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"DF")
-   (set_attr "cnv_mode"	"I2D")])
-
-
-(define_insn "floatunsdidf2"
-  [(set (match_operand:DF 0 "register_operand" "=f")
-	(unsigned_float:DF (match_operand:DI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_64BIT && TARGET_DOUBLE_FLOAT"
-  "fcvt.d.lu\t%0,%z1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"DF")
-   (set_attr "cnv_mode"	"I2D")])
-
-
-(define_insn "floatunssisf2"
-  [(set (match_operand:SF 0 "register_operand" "=f")
-	(unsigned_float:SF (match_operand:SI 1 "reg_or_0_operand" "rJ")))]
+(define_insn "float<GPR:mode><ANYF:mode>2"
+  [(set (match_operand:ANYF 0 "register_operand" "=f")
+	(float:ANYF (match_operand:GPR 1 "reg_or_0_operand" "rJ")))]
   "TARGET_HARD_FLOAT"
-  "fcvt.s.wu\t%0,%z1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"SF")
-   (set_attr "cnv_mode"	"I2S")])
+  "fcvt.<ANYF:fmt>.<GPR:ifmt>\t%0,%z1"
+  [(set_attr "type" "fcvt")
+   (set_attr "mode" "<ANYF:MODE>")])
 
-
-(define_insn "floatunsdisf2"
-  [(set (match_operand:SF 0 "register_operand" "=f")
-	(unsigned_float:SF (match_operand:DI 1 "reg_or_0_operand" "rJ")))]
-  "TARGET_HARD_FLOAT && TARGET_64BIT"
-  "fcvt.s.lu\t%0,%z1"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"SF")
-   (set_attr "cnv_mode"	"I2S")])
-
-
-(define_insn "fixuns_truncdfsi2"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(unsigned_fix:SI (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_DOUBLE_FLOAT"
-  "fcvt.wu.d %0,%1,rtz"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"DF")
-   (set_attr "cnv_mode"	"D2I")])
-
-
-(define_insn "fixuns_truncsfsi2"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(unsigned_fix:SI (match_operand:SF 1 "register_operand" "f")))]
+(define_insn "floatuns<GPR:mode><ANYF:mode>2"
+  [(set (match_operand:ANYF 0 "register_operand" "=f")
+	(unsigned_float:ANYF (match_operand:GPR 1 "reg_or_0_operand" "rJ")))]
   "TARGET_HARD_FLOAT"
-  "fcvt.wu.s %0,%1,rtz"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"SF")
-   (set_attr "cnv_mode"	"S2I")])
-
-
-(define_insn "fixuns_truncdfdi2"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(unsigned_fix:DI (match_operand:DF 1 "register_operand" "f")))]
-  "TARGET_64BIT && TARGET_DOUBLE_FLOAT"
-  "fcvt.lu.d %0,%1,rtz"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"DF")
-   (set_attr "cnv_mode"	"D2I")])
-
-
-(define_insn "fixuns_truncsfdi2"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(unsigned_fix:DI (match_operand:SF 1 "register_operand" "f")))]
-  "TARGET_HARD_FLOAT && TARGET_64BIT"
-  "fcvt.lu.s %0,%1,rtz"
-  [(set_attr "type"	"fcvt")
-   (set_attr "mode"	"SF")
-   (set_attr "cnv_mode"	"S2I")])
+  "fcvt.<ANYF:fmt>.<GPR:ifmt>u\t%0,%z1"
+  [(set_attr "type" "fcvt")
+   (set_attr "mode" "<ANYF:MODE>")])
 
 ;;
 ;;  ....................
