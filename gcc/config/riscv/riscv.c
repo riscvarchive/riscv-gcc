@@ -4009,7 +4009,7 @@ riscv_function_ok_for_sibcall (tree decl ATTRIBUTE_UNUSED,
   return true;
 }
 
-/* Return true if INSN should not be copied.  */
+/* Implement TARGET_CANNOT_COPY_INSN_P.  */
 
 static bool
 riscv_cannot_copy_insn_p (rtx_insn *insn)
@@ -4147,6 +4147,15 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 
 #undef TARGET_CANNOT_COPY_INSN_P
 #define TARGET_CANNOT_COPY_INSN_P riscv_cannot_copy_insn_p
+
+#undef TARGET_INIT_BUILTINS
+#define TARGET_INIT_BUILTINS riscv_init_builtins
+
+#undef TARGET_BUILTIN_DECL
+#define TARGET_BUILTIN_DECL riscv_builtin_decl
+
+#undef TARGET_EXPAND_BUILTIN
+#define TARGET_EXPAND_BUILTIN riscv_expand_builtin
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
