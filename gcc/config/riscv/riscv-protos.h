@@ -69,4 +69,9 @@ extern bool riscv_can_use_return_insn (void);
 extern rtx riscv_function_value (const_tree, const_tree, enum machine_mode);
 extern unsigned int riscv_hard_regno_nregs (int, enum machine_mode);
 
+extern void riscv_atomic_assign_expand_fenv (tree *, tree *, tree *);
+extern rtx riscv_expand_builtin (tree, rtx, rtx, enum machine_mode, int);
+extern tree riscv_builtin_decl (unsigned int, bool);
+extern void riscv_init_builtins (void);
+
 #endif /* ! GCC_RISCV_PROTOS_H */
