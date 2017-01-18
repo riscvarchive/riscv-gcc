@@ -2024,7 +2024,7 @@ riscv*-*-linux*)
 	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
 	tmake_file="${tmake_file} riscv/t-riscv"
 	case "x${enable_multilib}" in
-	xno) tmake_file="${tmake_file} riscv/t-linux-nomultilib" ;;
+	xno) ;;
 	xyes) tmake_file="${tmake_file} riscv/t-linux-multilib" ;;
 	*) echo "Unknown value for enable_multilib"; exit 1
 	esac
@@ -2038,7 +2038,7 @@ riscv*-*-elf*)
 	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
 	tmake_file="${tmake_file} riscv/t-riscv"
 	case "x${enable_multilib}" in
-	xno) tmake_file="${tmake_file} riscv/t-elf-nomultilib" ;;
+	xno) ;;
 	xyes) tmake_file="${tmake_file} riscv/t-elf-multilib" ;;
 	*) echo "Unknown value for enable_multilib"; exit 1
 	esac
