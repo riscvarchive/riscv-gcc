@@ -994,7 +994,9 @@ extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 
 #define STARTFILE_PREFIX_SPEC 			\
    "/lib" XLEN_SPEC "/" ABI_SPEC "/ "		\
-   "/usr/lib" XLEN_SPEC "/" ABI_SPEC "/ "
+   "/usr/lib" XLEN_SPEC "/" ABI_SPEC "/ "	\
+   "/lib/ "					\
+   "/usr/lib/ "
 
 /* ISA constants needed for code generation.  */
 #define OPCODE_LW    0x2003
