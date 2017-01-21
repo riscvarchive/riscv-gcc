@@ -765,7 +765,7 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
 
     case CONST_INT:
       /* Small-integer addresses don't occur very often, but they
-	 are legitimate if $0 is a valid base register.  */
+	 are legitimate if x0 is a valid base register.  */
       info->type = ADDRESS_CONST_INT;
       return SMALL_OPERAND (INTVAL (x));
 
@@ -2898,7 +2898,7 @@ riscv_memmodel_needs_release_fence (enum memmodel model)
    'C'	Print the integer branch condition for comparison OP.
    'A'	Print the atomic operation suffix for memory model OP.
    'F'	Print a FENCE if the memory model requires a release.
-   'z'	Print $0 if OP is zero, otherwise print OP normally.  */
+   'z'	Print x0 if OP is zero, otherwise print OP normally.  */
 
 static void
 riscv_print_operand (FILE *file, rtx op, int letter)
