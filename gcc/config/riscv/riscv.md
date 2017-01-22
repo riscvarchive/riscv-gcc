@@ -395,8 +395,8 @@
 
 (define_insn "*addsi3"
   [(set (match_operand:SI 0 "register_operand" "=r,r")
-	(plus:SI (match_operand:GPR 1 "register_operand" "r,r")
-		  (match_operand:GPR2 2 "arith_operand" "r,Q")))]
+	(plus:SI (match_operand:SI 1 "register_operand" "r,r")
+		  (match_operand:SI 2 "arith_operand" "r,Q")))]
   ""
   { return TARGET_64BIT ? "addw\t%0,%1,%2" : "add\t%0,%1,%2"; }
   [(set_attr "type" "arith")
@@ -483,8 +483,8 @@
 
 (define_insn "*subsi3"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(minus:SI (match_operand:GPR 1 "reg_or_0_operand" "rJ")
-		   (match_operand:GPR2 2 "register_operand" "r")))]
+	(minus:SI (match_operand:SI 1 "reg_or_0_operand" "rJ")
+		  (match_operand:SI 2 "register_operand" "r")))]
   ""
   { return TARGET_64BIT ? "subw\t%0,%z1,%2" : "sub\t%0,%z1,%2"; }
   [(set_attr "type" "arith")
@@ -562,8 +562,8 @@
 
 (define_insn "*mulsi3"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(mult:SI (match_operand:GPR 1 "register_operand" "r")
-		  (match_operand:GPR2 2 "register_operand" "r")))]
+	(mult:SI (match_operand:SI 1 "register_operand" "r")
+		 (match_operand:SI 2 "register_operand" "r")))]
   "TARGET_MUL"
   { return TARGET_64BIT ? "mulw\t%0,%1,%2" : "mul\t%0,%1,%2"; }
   [(set_attr "type" "imul")
