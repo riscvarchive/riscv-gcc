@@ -304,13 +304,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #define FP_REG_RTX_P(X) (REG_P (X) && FP_REG_P (REGNO (X)))
 
-/* Return coprocessor number from register number.  */
-
-#define COPNUM_AS_CHAR_FROM_REGNUM(REGNO) 				\
-  (COP0_REG_P (REGNO) ? '0' : COP2_REG_P (REGNO) ? '2'			\
-   : COP3_REG_P (REGNO) ? '3' : '?')
-
-
 #define HARD_REGNO_NREGS(REGNO, MODE) riscv_hard_regno_nregs (REGNO, MODE)
 
 #define HARD_REGNO_MODE_OK(REGNO, MODE)					\
