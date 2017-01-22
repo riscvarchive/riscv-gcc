@@ -20,6 +20,7 @@
 ;; <http://www.gnu.org/licenses/>.
 
 (define_c_enum "unspec" [
+  ;; Override return address for exception handling.
   UNSPEC_EH_RETURN
 
   ;; Symbolic accesses.  The order of this list must match that of
@@ -32,16 +33,21 @@
   UNSPEC_TLS_IE
   UNSPEC_TLS_GD
 
+  ;; High part of PC-relative address.
   UNSPEC_AUIPC
-
-  ;; Register save and restore.
-  UNSPEC_GPR_SAVE
-  UNSPEC_GPR_RESTORE
 
   ;; Floating-point unspecs.
   UNSPEC_COPYSIGN
   UNSPEC_LRINT
   UNSPEC_LROUND
+])
+
+(define_c_enum "unspecv" [
+  ;; Register save and restore.
+  UNSPEC_GPR_SAVE
+  UNSPEC_GPR_RESTORE
+
+  ;; Floating-point unspecs.
   UNSPEC_FRFLAGS
   UNSPEC_FSFLAGS
 
