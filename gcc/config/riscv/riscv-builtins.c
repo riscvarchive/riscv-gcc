@@ -1,7 +1,6 @@
 /* Subroutines used for expanding RISC-V builtins.
    Copyright (C) 2011-2017 Free Software Foundation, Inc.
    Contributed by Andrew Waterman (andrew@sifive.com).
-   Based on MIPS target for GNU compiler.
 
 This file is part of GCC.
 

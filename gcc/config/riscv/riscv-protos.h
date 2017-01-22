@@ -35,6 +35,7 @@ enum riscv_symbol_type {
 };
 #define NUM_SYMBOL_TYPES (SYMBOL_TLS_GD + 1)
 
+/* Routines implemented in riscv.c.  */
 extern enum riscv_symbol_type riscv_classify_symbolic_expression (rtx);
 extern bool riscv_symbolic_constant_p (rtx, enum riscv_symbol_type *);
 extern int riscv_regno_mode_ok_for_base_p (int, enum machine_mode, bool);
@@ -69,6 +70,10 @@ extern bool riscv_can_use_return_insn (void);
 extern rtx riscv_function_value (const_tree, const_tree, enum machine_mode);
 extern unsigned int riscv_hard_regno_nregs (int, enum machine_mode);
 
+/* Routines implemented in riscv-c.c.  */
+void riscv_cpu_cpp_builtins (cpp_reader *);
+
+/* Routines implemented in riscv-builtins.c.  */
 extern void riscv_atomic_assign_expand_fenv (tree *, tree *, tree *);
 extern rtx riscv_expand_builtin (tree, rtx, rtx, enum machine_mode, int);
 extern tree riscv_builtin_decl (unsigned int, bool);
