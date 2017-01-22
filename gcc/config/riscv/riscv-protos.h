@@ -74,4 +74,6 @@ extern rtx riscv_expand_builtin (tree, rtx, rtx, enum machine_mode, int);
 extern tree riscv_builtin_decl (unsigned int, bool);
 extern void riscv_init_builtins (void);
 
+extern void riscv_cpu_cpp_builtins (cpp_reader *);
+
 #endif /* ! GCC_RISCV_PROTOS_H */
