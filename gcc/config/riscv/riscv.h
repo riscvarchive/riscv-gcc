@@ -270,8 +270,6 @@ along with GCC; see the file COPYING3.  If not see
   1, 1									\
 }
 
-#define CALL_REALLY_USED_REGISTERS CALL_USED_REGISTERS
-
 /* Internal macros to classify an ISA register's type.  */
 
 #define GP_REG_FIRST 0

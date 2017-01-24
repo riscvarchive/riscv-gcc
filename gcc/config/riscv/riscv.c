@@ -2979,7 +2979,7 @@ riscv_frame_set (rtx mem, rtx reg)
 static bool
 riscv_save_reg_p (unsigned int regno)
 {
-  bool call_saved = !global_regs[regno] && !call_really_used_regs[regno];
+  bool call_saved = !global_regs[regno] && !call_used_regs[regno];
   bool might_clobber = crtl->saves_all_registers
 		       || df_regs_ever_live_p (regno);
 
