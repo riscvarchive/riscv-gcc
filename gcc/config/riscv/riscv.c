@@ -499,7 +499,7 @@ riscv_split_integer (HOST_WIDE_INT val, enum machine_mode mode)
 static bool
 riscv_tls_symbol_p (const_rtx x)
 {
-  return GET_CODE (x) == SYMBOL_REF && SYMBOL_REF_TLS_MODEL (x) != 0;
+  return SYMBOL_REF_P (x) && SYMBOL_REF_TLS_MODEL (x) != 0;
 }
 
 /* Return true if symbol X binds locally.  */
