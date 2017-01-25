@@ -844,51 +844,23 @@ while (0)
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE (POINTER_SIZE == 64 ? "long int" : "int")
 
-/* The maximum number of bytes that can be copied by one iteration of
-   a movmemsi loop; see riscv_block_move_loop.  */
-#define RISCV_MAX_MOVE_BYTES_PER_LOOP_ITER 32
+/* If a memory-to-memory move would take MOVE_RATIO or more simple
+   move-instruction pairs, we will do a movmem or libcall instead.  */
 
-/* The maximum number of bytes that can be copied by a straight-line
-   implementation of movmemsi; see riscv_block_move_straight.  We want
-   to make sure that any loop-based implementation will iterate at
-   least twice.  */
-#define RISCV_MAX_MOVE_BYTES_STRAIGHT (RISCV_MAX_MOVE_BYTES_PER_LOOP_ITER * 2)
-
-/* The base cost of a memcpy call, for MOVE_RATIO and friends. */
-
-#define RISCV_CALL_RATIO 6
-
-/* Any loop-based implementation of movmemsi will have at least
-   RISCV_MAX_MOVE_BYTES_STRAIGHT / UNITS_PER_WORD memory-to-memory
-   moves, so allow individual copies of fewer elements.
-
-   When movmemsi is not available, use a value approximating
-   the length of a memcpy call sequence, so that move_by_pieces
-   will generate inline code if it is shorter than a function call.
-   Since move_by_pieces_ninsns counts memory-to-memory moves, but
-   we'll have to generate a load/store pair for each, halve the
-   value of RISCV_CALL_RATIO to take that into account.  */
-
-#define MOVE_RATIO(speed)				\
-  (HAVE_movmemsi					\
-   ? RISCV_MAX_MOVE_BYTES_STRAIGHT / MOVE_MAX		\
-   : RISCV_CALL_RATIO / 2)
+#define MOVE_RATIO(speed) (CLEAR_RATIO (speed) / 2)
 
 /* For CLEAR_RATIO, when optimizing for size, give a better estimate
    of the length of a memset call, but use the default otherwise.  */
 
-#define CLEAR_RATIO(speed)\
-  ((speed) ? 15 : RISCV_CALL_RATIO)
+#define CLEAR_RATIO(speed) ((speed) ? 16 : 6)
 
 /* This is similar to CLEAR_RATIO, but for a non-zero constant, so when
    optimizing for size adjust the ratio to account for the overhead of
    loading the constant and replicating it across the word.  */
 
-#define SET_RATIO(speed) \
-  ((speed) ? 15 : RISCV_CALL_RATIO - 2)
+#define SET_RATIO(speed) (CLEAR_RATIO (speed) - ((speed) ? 0 : 2))
 
 #ifndef USED_FOR_TARGET
-
 extern const enum reg_class riscv_regno_to_class[];
 extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 #endif

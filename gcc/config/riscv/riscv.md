@@ -1420,25 +1420,6 @@
   ""
   "fence.i")
 
-;; Block moves, see riscv.c for more details.
-;; Argument 0 is the destination
-;; Argument 1 is the source
-;; Argument 2 is the length
-;; Argument 3 is the alignment
-
-(define_expand "movmemsi"
-  [(parallel [(set (match_operand:BLK 0 "general_operand")
-		   (match_operand:BLK 1 "general_operand"))
-	      (use (match_operand:SI 2 ""))
-	      (use (match_operand:SI 3 "const_int_operand"))])]
-  "!TARGET_MEMCPY"
-{
-  if (riscv_expand_block_move (operands[0], operands[1], operands[2]))
-    DONE;
-  else
-    FAIL;
-})
-
 ;;
 ;;  ....................
 ;;
