@@ -921,26 +921,30 @@ riscv_emit_move (rtx dest, rtx src)
 	  : emit_move_insn_1 (dest, src));
 }
 
-/* Emit an instruction of the form (set TARGET (CODE OP0 OP1)).  */
+/* Emit an instruction of the form (set TARGET SRC).  */
 
-static void
-riscv_emit_binary (enum rtx_code code, rtx target, rtx op0, rtx op1)
+static rtx
+riscv_emit_set (rtx target, rtx src)
 {
-  emit_insn (gen_rtx_SET (target,
-			  gen_rtx_fmt_ee (code, GET_MODE (target), op0, op1)));
+  emit_insn (gen_rtx_SET (target, src));
+  return target;
 }
 
-/* Compute (CODE OP0 OP1) and store the result in a new register
+/* Emit an instruction of the form (set DEST (CODE X Y)).  */
+
+static rtx
+riscv_emit_binary (enum rtx_code code, rtx dest, rtx x, rtx y)
+{
+  return riscv_emit_set (dest, gen_rtx_fmt_ee (code, GET_MODE (dest), x, y));
+}
+
+/* Compute (CODE X Y) and store the result in a new register
    of mode MODE.  Return that new register.  */
 
 static rtx
-riscv_force_binary (enum machine_mode mode, enum rtx_code code, rtx op0, rtx op1)
+riscv_force_binary (enum machine_mode mode, enum rtx_code code, rtx x, rtx y)
 {
-  rtx reg;
-
-  reg = gen_reg_rtx (mode);
-  riscv_emit_binary (code, reg, op0, op1);
-  return reg;
+  return riscv_emit_binary (code, gen_reg_rtx (mode), x, y);
 }
 
 /* Copy VALUE to a register and return that register.  If new pseudos
@@ -1278,10 +1282,7 @@ riscv_move_integer (rtx temp, rtx dest, HOST_WIDE_INT value)
       for (i = 1; i < num_ops; i++)
 	{
 	  if (!can_create_pseudo_p ())
-	    {
-	      emit_insn (gen_rtx_SET (temp, x));
-	      x = temp;
-	    }
+	    x = riscv_emit_set (temp, x);
 	  else
 	    x = force_reg (mode, x);
 
@@ -1289,7 +1290,7 @@ riscv_move_integer (rtx temp, rtx dest, HOST_WIDE_INT value)
 	}
     }
 
-  emit_insn (gen_rtx_SET (dest, x));
+  riscv_emit_set (dest, x);
 }
 
 /* Subroutine of riscv_legitimize_move.  Move constant SRC into register
@@ -1311,7 +1312,7 @@ riscv_legitimize_const_move (enum machine_mode mode, rtx dest, rtx src)
   /* Split moves of symbolic constants into high/low pairs.  */
   if (riscv_split_symbol (dest, src, MAX_MACHINE_MODE, &src))
     {
-      emit_insn (gen_rtx_SET (dest, src));
+      riscv_emit_set (dest, src);
       return;
     }
 
@@ -1422,41 +1423,24 @@ riscv_binary_cost (rtx x, int single_insns, int double_insns)
   return COSTS_N_INSNS (single_insns);
 }
 
-/* Return the cost of sign-extending OP to mode MODE, not including the
-   cost of OP itself.  */
+/* Return the cost of sign- or zero-extending OP.  */
 
 static int
-riscv_sign_extend_cost (enum machine_mode mode, rtx op)
+riscv_extend_cost (rtx op, bool unsigned_p)
 {
   if (MEM_P (op))
-    /* Extended loads are as cheap as unextended ones.  */
     return 0;
 
-  if (TARGET_64BIT && mode == DImode && GET_MODE (op) == SImode)
-    /* A sign extension from SImode to DImode in 64-bit mode is free.  */
-    return 0;
+  if (unsigned_p && GET_MODE (op) == QImode)
+    /* We can use ANDI.  */
+    return COSTS_N_INSNS (1);
+
+  if (!unsigned_p && GET_MODE (op) == SImode)
+    /* We can use SEXT.W.  */
+    return COSTS_N_INSNS (1);
 
   /* We need to use a shift left and a shift right.  */
   return COSTS_N_INSNS (2);
-}
-
-/* Return the cost of zero-extending OP to mode MODE, not including the
-   cost of OP itself.  */
-
-static int
-riscv_zero_extend_cost (enum machine_mode mode, rtx op)
-{
-  if (MEM_P (op))
-    /* Extended loads are as cheap as unextended ones.  */
-    return 0;
-
-  if ((TARGET_64BIT && mode == DImode && GET_MODE (op) == SImode) ||
-      ((mode == DImode || mode == SImode) && GET_MODE (op) == HImode))
-    /* We need a shift left by 32 bits and a shift right by 32 bits.  */
-    return COSTS_N_INSNS (2);
-
-  /* We can use ANDI.  */
-  return COSTS_N_INSNS (1);
 }
 
 /* Implement TARGET_RTX_COSTS.  */
@@ -1482,10 +1466,19 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
     case LABEL_REF:
     case CONST_DOUBLE:
     case CONST:
-      if (speed)
-	*total = 1;
-      else if ((cost = riscv_const_insns (x)) > 0)
-	*total = COSTS_N_INSNS (cost);
+      if ((cost = riscv_const_insns (x)) > 0)
+	{
+	  /* If the constant is likely to be stored in a GPR, SETs of
+	     single-insn constants are as cheap as register sets; we
+	     never want to CSE them.  */
+	  if (cost == 1 && outer_code == SET)
+	    *total = 0;
+	  /* When we load a constant more than once, it usually is better
+	     to duplicate the last operation in the sequence than to CSE
+	     the constant itself.  */
+	  else if (outer_code == SET || GET_MODE (x) == VOIDmode)
+	    *total = COSTS_N_INSNS (1);
+	}
       else /* The instruction will be fetched from the constant pool.  */
 	*total = COSTS_N_INSNS (riscv_symbol_insns (SYMBOL_ABSOLUTE));
       return true;
@@ -1637,11 +1630,8 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
       return false;
 
     case SIGN_EXTEND:
-      *total = riscv_sign_extend_cost (mode, XEXP (x, 0));
-      return false;
-
     case ZERO_EXTEND:
-      *total = riscv_zero_extend_cost (mode, XEXP (x, 0));
+      *total = riscv_extend_cost (XEXP (x, 0), GET_CODE (x) == ZERO_EXTEND);
       return false;
 
     case FLOAT:
@@ -1934,10 +1924,8 @@ riscv_emit_int_order_test (enum rtx_code code, bool *invert_ptr,
 	}
       else if (invert_ptr == 0)
 	{
-	  rtx inv_target;
-
-	  inv_target = riscv_force_binary (GET_MODE (target),
-					  inv_code, cmp0, cmp1);
+	  rtx inv_target = riscv_force_binary (GET_MODE (target),
+					       inv_code, cmp0, cmp1);
 	  riscv_emit_binary (XOR, target, inv_target, const1_rtx);
 	}
       else
@@ -1961,157 +1949,174 @@ riscv_zero_if_equal (rtx cmp0, rtx cmp1)
 		       cmp0, cmp1, 0, 0, OPTAB_DIRECT);
 }
 
-/* Convert a comparison into something that can be used in a branch or
-   conditional move.  On entry, *OP0 and *OP1 are the values being
-   compared and *CODE is the code used to compare them.
+/* Sign-extend OP, which may be a subreg, to MODE.  */
 
-   Update *CODE, *OP0 and *OP1 so that they describe the final comparison. */
+static rtx
+riscv_sign_extend (enum machine_mode mode, rtx op)
+{
+  if (GET_CODE (op) == SUBREG && SCALAR_INT_MODE_P (GET_MODE (XEXP (op, 0))))
+    op = XEXP (op, 0);
+  return gen_rtx_SIGN_EXTEND (mode, op);
+}
+
+/* Convert a comparison into something that can be used in a branch.  On
+   entry, *OP0 and *OP1 are the values being compared and *CODE is the code
+   used to compare them.  Update them to describe the final comparison.  */
 
 static void
-riscv_emit_compare (enum rtx_code *code, rtx *op0, rtx *op1)
+riscv_emit_int_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 {
-  rtx cmp_op0 = *op0;
-  rtx cmp_op1 = *op1;
-
-  if (GET_MODE_CLASS (GET_MODE (*op0)) == MODE_INT)
+  if (splittable_const_int_operand (*op1, VOIDmode))
     {
-      if (splittable_const_int_operand (cmp_op1, VOIDmode))
+      HOST_WIDE_INT rhs = INTVAL (*op1);
+
+      if (*code == EQ || *code == NE)
 	{
-	  HOST_WIDE_INT rhs = INTVAL (cmp_op1);
-
-	  if (*code == EQ || *code == NE)
+	  /* Convert e.g. OP0 == 2048 into OP0 - 2048 == 0.  */
+	  if (SMALL_OPERAND (-rhs))
 	    {
-	      /* Convert e.g. OP0 == 2048 into OP0 - 2048 == 0.  */
-	      if (SMALL_OPERAND (-rhs))
-		{
-		  *op0 = gen_reg_rtx (GET_MODE (cmp_op0));
-		  riscv_emit_binary (PLUS, *op0, cmp_op0, GEN_INT (-rhs));
-		  *op1 = const0_rtx;
-		}
-	    }
-	  else
-	    {
-	      static const enum rtx_code mag_comparisons[][2] = {
-		{LEU, LTU}, {GTU, GEU}, {LE, LT}, {GT, GE}
-	      };
-
-	      /* Convert e.g. (OP0 <= 0xFFF) into (OP0 < 0x1000).  */
-	      for (size_t i = 0; i < ARRAY_SIZE (mag_comparisons); i++)
-		{
-		  HOST_WIDE_INT new_rhs;
-		  bool increment = *code == mag_comparisons[i][0];
-		  bool decrement = *code == mag_comparisons[i][1];
-		  if (!increment && !decrement)
-		    continue;
-
-		  new_rhs = rhs + (increment ? 1 : -1);
-		  if (riscv_integer_cost (new_rhs) < riscv_integer_cost (rhs)
-		      && (rhs < 0) == (new_rhs < 0))
-		    {
-		      *op1 = GEN_INT (new_rhs);
-		      *code = mag_comparisons[i][increment];
-		    }
-		  break;
-		}
+	      *op0 = riscv_force_binary (GET_MODE (*op0), PLUS, *op0,
+					 GEN_INT (-rhs));
+	      *op1 = const0_rtx;
 	    }
 	}
-
-      if (*op1 != const0_rtx)
-	*op1 = force_reg (GET_MODE (cmp_op0), *op1);
-    }
-  else
-    {
-      /* For FP comparisons, set an integer register with the result of the
-	 comparison, then branch on it. */
-      rtx tmp0, tmp1;
-      enum rtx_code fp_code = *code;
-      *code = NE;
-      *op1 = const0_rtx;
-
-      switch (fp_code)
+      else
 	{
-	case UNORDERED:
-	  *code = EQ;
-	  /* Fall through.  */
+	  static const enum rtx_code mag_comparisons[][2] = {
+	    {LEU, LTU}, {GTU, GEU}, {LE, LT}, {GT, GE}
+	  };
 
-	case ORDERED:
-	  /* a == a && b == b */
-	  tmp0 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (EQ, tmp0, cmp_op0, cmp_op0);
-	  tmp1 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (EQ, tmp1, cmp_op1, cmp_op1);
-	  *op0 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (AND, *op0, tmp0, tmp1);
-	  break;
+	  /* Convert e.g. (OP0 <= 0xFFF) into (OP0 < 0x1000).  */
+	  for (size_t i = 0; i < ARRAY_SIZE (mag_comparisons); i++)
+	    {
+	      HOST_WIDE_INT new_rhs;
+	      bool increment = *code == mag_comparisons[i][0];
+	      bool decrement = *code == mag_comparisons[i][1];
+	      if (!increment && !decrement)
+	        continue;
 
-	case UNEQ:
-	  *code = EQ;
-	  /* Fall through.  */
+	      new_rhs = rhs + (increment ? 1 : -1);
+	      if (riscv_integer_cost (new_rhs) < riscv_integer_cost (rhs)
+	          && (rhs < 0) == (new_rhs < 0))
+		{
+		  *op1 = GEN_INT (new_rhs);
+		  *code = mag_comparisons[i][increment];
+		}
+	      break;
+	    }
+	}
+    }
 
-	case LTGT:
-	  /* ordered(a, b) != (a == b) */
-	  tmp0 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (EQ, tmp0, cmp_op0, cmp_op0);
-	  tmp1 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (EQ, tmp1, cmp_op1, cmp_op1);
-	  *op0 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (AND, *op0, tmp0, tmp1);
-	  *op1 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (EQ, *op1, cmp_op0, cmp_op1);
-	  break;
+  /* The fastest way to branch on sub-XLEN values is usually to sign-extend
+     them.  It is cheaper than zero-extension and is often eliminated.  */
+  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (*op0)))
+    {
+      *op0 = force_reg (word_mode, riscv_sign_extend (word_mode, *op0));
+      *op1 = riscv_sign_extend (word_mode, *op1);
+    }
 
-#define UNORDERED_COMPARISON(CODE, CMP)					  \
-	case CODE:							  \
-	  *code = EQ;							  \
-	  *op0 = gen_reg_rtx (SImode);					  \
-	  if (GET_MODE (cmp_op0) == SFmode)				  \
-	    emit_insn (gen_f##CMP##_guardedsf4 (*op0, cmp_op0, cmp_op1)); \
-	  else								  \
-	    emit_insn (gen_f##CMP##_guardeddf4 (*op0, cmp_op0, cmp_op1)); \
-	  break;
+  if (*op1 != const0_rtx)
+    *op1 = force_reg (GET_MODE (*op0), *op1);
+}
 
-	UNORDERED_COMPARISON(UNLT, ge)
-	UNORDERED_COMPARISON(UNLE, gt)
-	UNORDERED_COMPARISON(UNGT, le)
-	UNORDERED_COMPARISON(UNGE, lt)
+/* Like riscv_emit_int_compare, but for floating-point comparisons.  */
+
+static void
+riscv_emit_float_compare (enum rtx_code *code, rtx *op0, rtx *op1, bool scc_p)
+{
+  rtx tmp0, tmp1, cmp_op0 = *op0, cmp_op1 = *op1;
+  enum rtx_code fp_code = *code;
+  *code = NE;
+
+  switch (fp_code)
+    {
+    case UNORDERED:
+      *code = EQ;
+      /* Fall through.  */
+
+    case ORDERED:
+      /* a == a && b == b */
+      tmp0 = riscv_force_binary (word_mode, EQ, cmp_op0, cmp_op0);
+      tmp1 = riscv_force_binary (word_mode, EQ, cmp_op1, cmp_op1);
+      *op0 = riscv_force_binary (word_mode, AND, tmp0, tmp1);
+      *op1 = const0_rtx;
+      break;
+
+    case UNEQ:
+      *code = scc_p ? IOR : EQ;
+      /* Fall through.  */
+
+    case LTGT:
+      /* ordered(a, b) > (a == b) */
+      *code = fp_code == LTGT ? GTU : *code;
+      tmp0 = riscv_force_binary (word_mode, EQ, cmp_op0, cmp_op0);
+      tmp1 = riscv_force_binary (word_mode, EQ, cmp_op1, cmp_op1);
+      *op0 = riscv_force_binary (word_mode, AND, tmp0, tmp1);
+      *op1 = riscv_force_binary (word_mode, EQ, cmp_op0, cmp_op1);
+      break;
+
+#define UNORDERED_COMPARISON(CODE, CMP)					\
+    case CODE:								\
+      *code = EQ;							\
+      *op0 = gen_reg_rtx (word_mode);					\
+      if (GET_MODE (cmp_op0) == SFmode && TARGET_64BIT)			\
+	emit_insn (gen_f##CMP##_quietsfdi4 (*op0, cmp_op0, cmp_op1));	\
+      else if (GET_MODE (cmp_op0) == SFmode)				\
+	emit_insn (gen_f##CMP##_quietsfsi4 (*op0, cmp_op0, cmp_op1));	\
+      else if (GET_MODE (cmp_op0) == DFmode && TARGET_64BIT)		\
+	emit_insn (gen_f##CMP##_quietdfdi4 (*op0, cmp_op0, cmp_op1));	\
+      else if (GET_MODE (cmp_op0) == DFmode)				\
+	emit_insn (gen_f##CMP##_quietdfsi4 (*op0, cmp_op0, cmp_op1));	\
+      else								\
+	gcc_unreachable ();						\
+      *op1 = const0_rtx;						\
+      break;
+
+    case UNLT:
+      std::swap (cmp_op0, cmp_op1);
+      /* Fall through.  */
+
+    UNORDERED_COMPARISON(UNGT, le)
+
+    case UNLE:
+      std::swap (cmp_op0, cmp_op1);
+      /* Fall through.  */
+
+    UNORDERED_COMPARISON(UNGE, lt)
 #undef UNORDERED_COMPARISON
 
-	case NE:
-	  fp_code = EQ;
-	  *code = EQ;
-	  /* Fall through.  */
+    case NE:
+      fp_code = EQ;
+      *code = EQ;
+      /* Fall through.  */
 
-	case EQ:
-	case LE:
-	case LT:
-	case GE:
-	case GT:
-	  /* We have instructions for these cases.  */
-	  *op0 = gen_reg_rtx (SImode);
-	  riscv_emit_binary (fp_code, *op0, cmp_op0, cmp_op1);
-	  break;
+    case EQ:
+    case LE:
+    case LT:
+    case GE:
+    case GT:
+      /* We have instructions for these cases.  */
+      *op0 = riscv_force_binary (word_mode, fp_code, cmp_op0, cmp_op1);
+      *op1 = const0_rtx;
+      break;
 
-	default:
-	  gcc_unreachable ();
-	}
+    default:
+      gcc_unreachable ();
     }
 }
 
-/* Try performing the comparison in OPERANDS[1], whose arms are OPERANDS[2]
-   and OPERAND[3].  Store the result in OPERANDS[0].
-
-   On 64-bit targets, the mode of the comparison and target will always be
-   SImode, thus possibly narrower than that of the comparison's operands.  */
+/* CODE-compare OP0 and OP1.  Store the result in TARGET.  */
 
 void
-riscv_expand_scc (rtx operands[])
+riscv_expand_int_scc (rtx target, enum rtx_code code, rtx op0, rtx op1)
 {
-  rtx target = operands[0];
-  enum rtx_code code = GET_CODE (operands[1]);
-  rtx op0 = operands[2];
-  rtx op1 = operands[3];
-
-  gcc_assert (GET_MODE_CLASS (GET_MODE (op0)) == MODE_INT);
+  /* Sign-extend 32-bit values to XLEN.  */
+  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (op0)))
+    {
+      op0 = force_reg (word_mode, riscv_sign_extend (word_mode, op0));
+      if (op1 != const0_rtx)
+	op1 = riscv_sign_extend (word_mode, op1);
+    }
 
   if (code == EQ || code == NE)
     {
@@ -2122,20 +2127,29 @@ riscv_expand_scc (rtx operands[])
     riscv_emit_int_order_test (code, 0, target, op0, op1);
 }
 
-/* Compare OPERANDS[1] with OPERANDS[2] using comparison code
-   CODE and jump to OPERANDS[3] if the condition holds.  */
+/* Like riscv_expand_int_scc, but for floating-point comparisons.  */
 
 void
-riscv_expand_conditional_branch (rtx *operands)
+riscv_expand_float_scc (rtx target, enum rtx_code code, rtx op0, rtx op1)
 {
-  enum rtx_code code = GET_CODE (operands[0]);
-  rtx op0 = operands[1];
-  rtx op1 = operands[2];
-  rtx condition;
+  riscv_emit_float_compare (&code, &op0, &op1, true);
 
-  riscv_emit_compare (&code, &op0, &op1);
-  condition = gen_rtx_fmt_ee (code, VOIDmode, op0, op1);
-  emit_jump_insn (gen_condjump (condition, operands[3]));
+  rtx cmp = riscv_force_binary (word_mode, code, op0, op1);
+  riscv_emit_set (target, lowpart_subreg (SImode, cmp, word_mode));
+}
+
+/* Jump to LABEL if (CODE OP0 OP1) holds.  */
+
+void
+riscv_expand_conditional_branch (rtx label, rtx_code code, rtx op0, rtx op1)
+{
+  if (FLOAT_MODE_P (GET_MODE (op1)))
+    riscv_emit_float_compare (&code, &op0, &op1, false);
+  else
+    riscv_emit_int_compare (&code, &op0, &op1);
+
+  rtx condition = gen_rtx_fmt_ee (code, VOIDmode, op0, op1);
+  emit_jump_insn (gen_condjump (condition, label));
 }
 
 /* Implement TARGET_FUNCTION_ARG_BOUNDARY.  Every parameter gets at
@@ -3681,7 +3695,7 @@ static int
 riscv_register_move_cost (enum machine_mode mode,
 			  reg_class_t from, reg_class_t to)
 {
-  return SECONDARY_MEMORY_NEEDED (from, to, mode) ? 8 : 1;
+  return SECONDARY_MEMORY_NEEDED (from, to, mode) ? 8 : 2;
 }
 
 /* Return true if register REGNO can store a value of mode MODE.  */
@@ -3766,18 +3780,6 @@ riscv_memory_move_cost (enum machine_mode mode, reg_class_t rclass, bool in)
 {
   return (tune_info->memory_cost
 	  + memory_move_secondary_cost (mode, rclass, in));
-}
-
-/* Implement TARGET_MODE_REP_EXTENDED.  */
-
-static int
-riscv_mode_rep_extended (enum machine_mode mode, enum machine_mode mode_rep)
-{
-  /* On 64-bit targets, SImode register values are sign-extended to DImode.  */
-  if (TARGET_64BIT && mode == SImode && mode_rep == DImode)
-    return SIGN_EXTEND;
-
-  return UNKNOWN;
 }
 
 /* Implement TARGET_SCALAR_MODE_SUPPORTED_P.  */
@@ -4155,9 +4157,6 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 #define TARGET_FUNCTION_ARG_ADVANCE riscv_function_arg_advance
 #undef TARGET_FUNCTION_ARG_BOUNDARY
 #define TARGET_FUNCTION_ARG_BOUNDARY riscv_function_arg_boundary
-
-#undef TARGET_MODE_REP_EXTENDED
-#define TARGET_MODE_REP_EXTENDED riscv_mode_rep_extended
 
 #undef TARGET_SCALAR_MODE_SUPPORTED_P
 #define TARGET_SCALAR_MODE_SUPPORTED_P riscv_scalar_mode_supported_p

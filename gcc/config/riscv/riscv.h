@@ -201,8 +201,7 @@ along with GCC; see the file COPYING3.  If not see
 /* When in 64-bit mode, move insns will sign extend SImode and CCmode
    moves.  All other references are zero extended.  */
 #define LOAD_EXTEND_OP(MODE) \
-  (TARGET_64BIT && ((MODE) == SImode || (MODE) == CCmode) \
-   ? SIGN_EXTEND : ZERO_EXTEND)
+  (TARGET_64BIT && (MODE) == SImode ? SIGN_EXTEND : ZERO_EXTEND)
 
 /* Define this macro if it is advisable to hold scalars in registers
    in a wider mode than that declared by the program.  In such cases,
@@ -212,9 +211,11 @@ along with GCC; see the file COPYING3.  If not see
 
 #define PROMOTE_MODE(MODE, UNSIGNEDP, TYPE)	\
   if (GET_MODE_CLASS (MODE) == MODE_INT		\
-      && GET_MODE_SIZE (MODE) < 4)		\
+      && GET_MODE_SIZE (MODE) < UNITS_PER_WORD)	\
     {						\
-      (MODE) = Pmode;				\
+      if ((MODE) == SImode)			\
+	(UNSIGNEDP) = 0;			\
+      (MODE) = word_mode;			\
     }
 
 /* Pmode is always the same as ptr_mode, but not always the same as word_mode.
@@ -242,7 +243,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #define FIRST_PSEUDO_REGISTER 66
 
-/* x0, sp, gp, and tp are fixed. */
+/* x0, sp, gp, and tp are fixed.  */
 
 #define FIXED_REGISTERS							\
 { /* General registers.  */						\
@@ -254,7 +255,6 @@ along with GCC; see the file COPYING3.  If not see
   /* Others.  */							\
   1, 1									\
 }
-
 
 /* a0-a7, t0-a6, fa0-fa7, and ft0-ft11 are volatile across calls.
    The call RTLs themselves clobber ra.  */
@@ -270,16 +270,7 @@ along with GCC; see the file COPYING3.  If not see
   1, 1									\
 }
 
-#define CALL_REALLY_USED_REGISTERS					\
-{ /* General registers.  */						\
-  1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
-  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Floating-point registers.  */					\
-  1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
-  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
-  /* Others.  */							\
-  1, 1									\
-}
+#define CALL_REALLY_USED_REGISTERS CALL_USED_REGISTERS
 
 /* Internal macros to classify an ISA register's type.  */
 
@@ -667,18 +658,13 @@ typedef struct {
 
 #define SHIFT_COUNT_TRUNCATED 1
 
-/* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
-   is done just by pretending it is already truncated.  */
-#define TRULY_NOOP_TRUNCATION(OUTPREC, INPREC) \
-  (TARGET_64BIT ? ((INPREC) <= 32 || (OUTPREC) < 32) : 1)
+#define TRULY_NOOP_TRUNCATION(OUTPREC, INPREC) 1
 
 /* Specify the machine mode that pointers have.
    After generation of rtl, the compiler makes no further distinction
    between pointers and any other objects of this machine mode.  */
 
-#ifndef Pmode
-#define Pmode (TARGET_64BIT ? DImode : SImode)
-#endif
+#define Pmode word_mode
 
 /* Give call MEMs SImode since it is the "most permissive" mode
    for both 32-bit and 64-bit targets.  */

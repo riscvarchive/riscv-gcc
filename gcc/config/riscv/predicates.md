@@ -167,5 +167,8 @@
 (define_predicate "order_operator"
   (match_code "eq,ne,lt,ltu,le,leu,ge,geu,gt,gtu"))
 
-(define_predicate "fp_order_operator"
-  (match_code "eq,ne,lt,le,gt,ge"))
+(define_predicate "fp_native_comparison"
+  (match_code "eq,lt,le,gt,ge"))
+
+(define_predicate "fp_comparison"
+  (match_code "unordered,ordered,unlt,unge,unle,ungt,uneq,ltgt,ne,eq,lt,le,gt,ge"))
