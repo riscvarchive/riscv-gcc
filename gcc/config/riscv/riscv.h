@@ -327,7 +327,7 @@ along with GCC; see the file COPYING3.  If not see
 #define FRAME_POINTER_REGNUM 65
 
 /* Register in which static-chain is passed to a function.  */
-#define STATIC_CHAIN_REGNUM GP_TEMP_FIRST
+#define STATIC_CHAIN_REGNUM (GP_TEMP_FIRST + 2)
 
 /* Registers used as temporaries in prologue/epilogue code.
 

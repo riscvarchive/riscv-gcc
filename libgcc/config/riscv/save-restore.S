@@ -56,6 +56,9 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #if __riscv_xlen == 64
 
 __riscv_save_12:
+  .cfi_startproc
+  # __riscv_save_* routine use t0/x5 as return address
+  .cfi_return_column 5
   addi sp, sp, -112
   li t1, 0
   sd s11, 8(sp)
@@ -108,15 +111,21 @@ __riscv_save_2:
   sd ra, 104(sp)
   sub sp, sp, t1
   jr t0
+  .cfi_endproc
 
 __riscv_save_1:
 __riscv_save_0:
+  .cfi_startproc
+  # __riscv_save_* routine use t0/x5 as return address
+  .cfi_return_column 5
   addi sp, sp, -16
   sd s0, 0(sp)
   sd ra, 8(sp)
   jr t0
+  .cfi_endproc
 
 __riscv_restore_12:
+  .cfi_startproc
   ld s11, 8(sp)
   addi sp, sp, 16
 
@@ -156,10 +165,14 @@ __riscv_restore_0:
   ld ra, 8(sp)
   addi sp, sp, 16
   ret
+  .cfi_endproc
 
 #else
 
 __riscv_save_12:
+  .cfi_startproc
+  # __riscv_save_* routine use t0/x5 as return address
+  .cfi_return_column 5
   addi sp, sp, -64
   li t1, 0
   sw s11, 12(sp)
@@ -195,19 +208,25 @@ __riscv_save_4:
   sw ra, 60(sp)
   sub sp, sp, t1
   jr t0
+  .cfi_endproc
 
 __riscv_save_3:
 __riscv_save_2:
 __riscv_save_1:
 __riscv_save_0:
+  .cfi_startproc
+  # __riscv_save_* routine use t0/x5 as return address
+  .cfi_return_column 5
   addi sp, sp, -16
   sw s2, 0(sp)
   sw s1, 4(sp)
   sw s0, 8(sp)
   sw ra, 12(sp)
   jr t0
+  .cfi_endproc
 
 __riscv_restore_12:
+  .cfi_startproc
   lw s11, 12(sp)
   addi sp, sp, 16
 
@@ -241,5 +260,6 @@ __riscv_restore_0:
   lw ra, 12(sp)
   addi sp, sp, 16
   ret
+  .cfi_endproc
 
 #endif

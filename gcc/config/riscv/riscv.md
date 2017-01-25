@@ -44,23 +44,26 @@
 
 (define_c_enum "unspecv" [
   ;; Register save and restore.
-  UNSPEC_GPR_SAVE
-  UNSPEC_GPR_RESTORE
+  UNSPECV_GPR_SAVE
+  UNSPECV_GPR_RESTORE
 
   ;; Floating-point unspecs.
-  UNSPEC_FRFLAGS
-  UNSPEC_FSFLAGS
+  UNSPECV_FRFLAGS
+  UNSPECV_FSFLAGS
 
   ;; Blockage and synchronization.
-  UNSPEC_BLOCKAGE
-  UNSPEC_FENCE
-  UNSPEC_FENCE_I
+  UNSPECV_BLOCKAGE
+  UNSPECV_FENCE
+  UNSPECV_FENCE_I
 ])
 
 (define_constants
   [(RETURN_ADDR_REGNUM		1)
    (T0_REGNUM			5)
    (T1_REGNUM			6)
+   (S0_REGNUM			8)
+   (S1_REGNUM			9)
+   (S2_REGNUM			18)
 ])
 
 (include "predicates.md")
@@ -1556,12 +1559,12 @@
 }")
 
 (define_insn "fence"
-  [(unspec_volatile [(const_int 0)] UNSPEC_FENCE)]
+  [(unspec_volatile [(const_int 0)] UNSPECV_FENCE)]
   ""
   "%|fence%-")
 
 (define_insn "fence_i"
-  [(unspec_volatile [(const_int 0)] UNSPEC_FENCE_I)]
+  [(unspec_volatile [(const_int 0)] UNSPECV_FENCE_I)]
   ""
   "fence.i")
 
@@ -1964,7 +1967,7 @@
 ;; saved or used to pass arguments.
 
 (define_insn "blockage"
-  [(unspec_volatile [(const_int 0)] UNSPEC_BLOCKAGE)]
+  [(unspec_volatile [(const_int 0)] UNSPECV_BLOCKAGE)]
   ""
   ""
   [(set_attr "type" "ghost")
@@ -2216,14 +2219,14 @@
   "ebreak")
 
 (define_insn "gpr_save"
-  [(unspec_volatile [(match_operand 0 "const_int_operand")] UNSPEC_GPR_SAVE)
+  [(unspec_volatile [(match_operand 0 "const_int_operand")] UNSPECV_GPR_SAVE)
    (clobber (reg:SI T0_REGNUM))
    (clobber (reg:SI T1_REGNUM))]
   ""
   { return riscv_output_gpr_save (INTVAL (operands[0])); })
 
 (define_insn "gpr_restore"
-  [(unspec_volatile [(match_operand 0 "const_int_operand")] UNSPEC_GPR_RESTORE)]
+  [(unspec_volatile [(match_operand 0 "const_int_operand")] UNSPECV_GPR_RESTORE)]
   ""
   "tail\t__riscv_restore_%0")
 
@@ -2236,12 +2239,12 @@
 
 (define_insn "riscv_frflags"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(unspec_volatile [(const_int 0)] UNSPEC_FRFLAGS))]
+	(unspec_volatile [(const_int 0)] UNSPECV_FRFLAGS))]
   "TARGET_HARD_FLOAT"
   "frflags %0")
 
 (define_insn "riscv_fsflags"
-  [(unspec_volatile [(match_operand:SI 0 "csr_operand" "rK")] UNSPEC_FSFLAGS)]
+  [(unspec_volatile [(match_operand:SI 0 "csr_operand" "rK")] UNSPECV_FSFLAGS)]
   "TARGET_HARD_FLOAT"
   "fsflags %0")
 

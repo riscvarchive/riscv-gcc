@@ -3117,11 +3117,6 @@ riscv_use_save_libcall (const struct riscv_frame_info *frame)
   if (!TARGET_SAVE_RESTORE || crtl->calls_eh_return || frame_pointer_needed)
     return false;
 
-  /* The save/restore libcalls don't contain DWARF information at this time,
-     so do not emit them if we are emitting DWARF frame info.  */
-  if (dwarf2out_do_frame ())
-    return false;
-
   return frame->save_libcall_adjustment != 0;
 }
 
@@ -3417,6 +3412,44 @@ riscv_first_stack_step (struct riscv_frame_info *frame)
   return max_first_step;
 }
 
+static rtx
+riscv_adjust_libcall_cfi_prologue ()
+{
+  rtx dwarf = NULL_RTX;
+  rtx adjust_sp_rtx, reg, mem, insn;
+  int saved_size = cfun->machine->frame.save_libcall_adjustment;
+  int offset;
+
+  for (int regno = GP_REG_FIRST; regno <= GP_REG_LAST-1; regno++)
+    if (BITSET_P (cfun->machine->frame.mask, regno - GP_REG_FIRST))
+      {
+	/* The save order is ra, s0, s1, s2 to s11.  */
+	if (regno == RETURN_ADDR_REGNUM)
+	  offset = saved_size - UNITS_PER_WORD;
+	else if (regno == S0_REGNUM)
+	  offset = saved_size - UNITS_PER_WORD * 2;
+	else if (regno == S1_REGNUM)
+	  offset = saved_size - UNITS_PER_WORD * 3;
+	else
+	  offset = saved_size - ((regno - S2_REGNUM + 4) * UNITS_PER_WORD);
+
+	reg = gen_rtx_REG (SImode, regno);
+	mem = gen_frame_mem (SImode, plus_constant (Pmode,
+						    stack_pointer_rtx,
+						    offset));
+
+	insn = gen_rtx_SET (mem, reg);
+	dwarf = alloc_reg_note (REG_CFA_OFFSET, insn, dwarf);
+      }
+
+  /* Debug info for adjust sp.  */
+  adjust_sp_rtx = gen_add3_insn (stack_pointer_rtx,
+				 stack_pointer_rtx, GEN_INT (-saved_size));
+  dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, adjust_sp_rtx,
+		          dwarf);
+  return dwarf;
+}
+
 /* Expand the "prologue" pattern.  */
 
 void
@@ -3433,9 +3466,15 @@ riscv_expand_prologue (void)
   /* When optimizing for size, call a subroutine to save the registers.  */
   if (riscv_use_save_libcall (frame))
     {
+      rtx dwarf = NULL_RTX;
+      dwarf = riscv_adjust_libcall_cfi_prologue ();
+
       frame->mask = 0; /* Temporarily fib that we need not save GPRs.  */
       size -= frame->save_libcall_adjustment;
-      emit_insn (gen_gpr_save (GEN_INT (mask)));
+      insn = emit_insn (gen_gpr_save (GEN_INT (mask)));
+
+      RTX_FRAME_RELATED_P (insn) = 1;
+      REG_NOTES (insn) = dwarf;
     }
 
   /* Save the registers.  */
@@ -3483,6 +3522,29 @@ riscv_expand_prologue (void)
 	  riscv_set_frame_expr (insn);
 	}
     }
+}
+
+static rtx
+riscv_adjust_libcall_cfi_epilogue ()
+{
+  rtx dwarf = NULL_RTX;
+  rtx adjust_sp_rtx, reg;
+  int saved_size = cfun->machine->frame.save_libcall_adjustment;
+
+  /* Debug info for adjust sp.  */
+  adjust_sp_rtx = gen_add3_insn (stack_pointer_rtx,
+				 stack_pointer_rtx, GEN_INT (saved_size));
+  dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, adjust_sp_rtx,
+		          dwarf);
+
+  for (int regno = GP_REG_FIRST; regno <= GP_REG_LAST-1; regno++)
+    if (BITSET_P (cfun->machine->frame.mask, regno - GP_REG_FIRST))
+      {
+	reg = gen_rtx_REG (SImode, regno);
+        dwarf = alloc_reg_note (REG_CFA_RESTORE, reg, dwarf);
+      }
+
+  return dwarf;
 }
 
 /* Expand an "epilogue" or "sibcall_epilogue" pattern; SIBCALL_P
@@ -3585,7 +3647,11 @@ riscv_expand_epilogue (bool sibcall_p)
 
   if (use_restore_libcall)
     {
-      emit_insn (gen_gpr_restore (GEN_INT (riscv_save_libcall_count (mask))));
+      rtx dwarf = riscv_adjust_libcall_cfi_epilogue ();
+      insn = emit_insn (gen_gpr_restore (GEN_INT (riscv_save_libcall_count (mask))));
+      RTX_FRAME_RELATED_P (insn) = 1;
+      REG_NOTES (insn) = dwarf;
+
       emit_jump_insn (gen_gpr_restore_return (ra));
       return;
     }
@@ -3949,9 +4015,9 @@ riscv_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
   addr = force_reg (Pmode, XEXP (m_tramp, 0));
   end_addr = riscv_force_binary (Pmode, PLUS, addr, GEN_INT (TRAMPOLINE_CODE_SIZE));
 
-  /* auipc   t0, 0
-     l[wd]   t1, target_function_offset(t0)
-     l[wd]   t0, static_chain_offset(t0)
+  /* auipc   t2, 0
+     l[wd]   t1, target_function_offset(t2)
+     l[wd]   t2, static_chain_offset(t2)
      jr      t1
   */
   trampoline[0] = OPCODE_AUIPC | (STATIC_CHAIN_REGNUM << SHIFT_RD);
