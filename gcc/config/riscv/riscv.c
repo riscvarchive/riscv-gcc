@@ -507,9 +507,12 @@ riscv_tls_symbol_p (const_rtx x)
 static bool
 riscv_symbol_binds_local_p (const_rtx x)
 {
-  return (SYMBOL_REF_DECL (x)
-	  ? targetm.binds_local_p (SYMBOL_REF_DECL (x))
-	  : SYMBOL_REF_LOCAL_P (x));
+  if (SYMBOL_REF_P (x))
+    return (SYMBOL_REF_DECL (x)
+	    ? targetm.binds_local_p (SYMBOL_REF_DECL (x))
+	    : SYMBOL_REF_LOCAL_P (x));
+  else
+    return false;
 }
 
 /* Return the method that should be used to access SYMBOL_REF or
