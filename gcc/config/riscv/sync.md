@@ -158,10 +158,14 @@
       emit_insn (gen_rtx_SET (compare, difference));
     }
 
-  rtx eq = gen_rtx_EQ (<MODE>mode, compare, const0_rtx);
-  rtx result = gen_reg_rtx (<MODE>mode);
-  emit_insn (gen_rtx_SET (result, eq));
-  emit_insn (gen_rtx_SET (operands[0], gen_lowpart (SImode, result)));
+  if (word_mode != <MODE>mode)
+    {
+      rtx reg = gen_reg_rtx (word_mode);
+      emit_insn (gen_rtx_SET (reg, gen_rtx_SIGN_EXTEND (word_mode, compare)));
+      compare = reg;
+    }
+
+  emit_insn (gen_rtx_SET (operands[0], gen_rtx_EQ (SImode, compare, const0_rtx)));
   DONE;
 })
 
