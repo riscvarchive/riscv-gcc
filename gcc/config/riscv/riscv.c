@@ -519,21 +519,8 @@ riscv_classify_symbol (const_rtx x)
   if (riscv_tls_symbol_p (x))
     return SYMBOL_TLS;
 
-  switch (GET_CODE (x))
-    {
-    case LABEL_REF:
-      if (LABEL_REF_NONLOCAL_P (x))
-	return SYMBOL_GOT_DISP;
-      break;
-
-    case SYMBOL_REF:
-      if (flag_pic && !riscv_symbol_binds_local_p (x))
-	return SYMBOL_GOT_DISP;
-      break;
-
-    default:
-      gcc_unreachable ();
-    }
+  if (GET_CODE (x) == SYMBOL_REF && flag_pic && !riscv_symbol_binds_local_p (x))
+    return SYMBOL_GOT_DISP;
 
   return riscv_cmodel == CM_MEDLOW ? SYMBOL_ABSOLUTE : SYMBOL_PCREL;
 }
