@@ -1571,33 +1571,6 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
       return false;
 
     case MINUS:
-      if (float_mode_p
-	  && !HONOR_NANS (mode)
-	  && !HONOR_SIGNED_ZEROS (mode))
-	{
-	  /* See if we can use NMADD or NMSUB.  See riscv.md for the
-	     associated patterns.  */
-	  rtx op0 = XEXP (x, 0);
-	  rtx op1 = XEXP (x, 1);
-	  if (GET_CODE (op0) == MULT && GET_CODE (XEXP (op0, 0)) == NEG)
-	    {
-	      *total = (tune_info->fp_mul[mode == DFmode]
-			+ set_src_cost (XEXP (XEXP (op0, 0), 0), mode, speed)
-			+ set_src_cost (XEXP (op0, 1), mode, speed)
-			+ set_src_cost (op1, mode, speed));
-	      return true;
-	    }
-	  if (GET_CODE (op1) == MULT)
-	    {
-	      *total = (tune_info->fp_mul[mode == DFmode]
-			+ set_src_cost (op0, mode, speed)
-			+ set_src_cost (XEXP (op1, 0), mode, speed)
-			+ set_src_cost (XEXP (op1, 1), mode, speed));
-	      return true;
-	    }
-	}
-      /* Fall through.  */
-
     case PLUS:
       if (float_mode_p)
 	*total = tune_info->fp_add[mode == DFmode];
@@ -1606,23 +1579,17 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
       return false;
 
     case NEG:
-      if (float_mode_p
-	  && !HONOR_NANS (mode)
-	  && HONOR_SIGNED_ZEROS (mode))
-	{
-	  /* See if we can use NMADD or NMSUB.  See riscv.md for the
-	     associated patterns.  */
-	  rtx op = XEXP (x, 0);
-	  if ((GET_CODE (op) == PLUS || GET_CODE (op) == MINUS)
-	      && GET_CODE (XEXP (op, 0)) == MULT)
-	    {
-	      *total = (tune_info->fp_mul[mode == DFmode]
-			+ set_src_cost (XEXP (XEXP (op, 0), 0), mode, speed)
-			+ set_src_cost (XEXP (XEXP (op, 0), 1), mode, speed)
-			+ set_src_cost (XEXP (op, 1), mode, speed));
-	      return true;
-	    }
-	}
+      {
+	rtx op = XEXP (x, 0);
+	if (GET_CODE (op) == FMA)
+	  {
+	    *total = (tune_info->fp_mul[mode == DFmode]
+		      + set_src_cost (XEXP (op, 0), mode, speed)
+		      + set_src_cost (XEXP (op, 1), mode, speed)
+		      + set_src_cost (XEXP (op, 2), mode, speed));
+	    return true;
+	  }
+      }
 
       if (float_mode_p)
 	*total = tune_info->fp_add[mode == DFmode];
@@ -1671,6 +1638,13 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
     case FLOAT_TRUNCATE:
       *total = tune_info->fp_add[mode == DFmode];
       return false;
+
+    case FMA:
+      *total = (tune_info->fp_mul[mode == DFmode]
+		+ set_src_cost (XEXP (x, 0), mode, speed)
+		+ set_src_cost (XEXP (x, 1), mode, speed)
+		+ set_src_cost (XEXP (x, 2), mode, speed));
+      return true;
 
     case UNSPEC:
       if (XINT (x, 1) == UNSPEC_AUIPC)
