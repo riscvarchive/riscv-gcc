@@ -2013,11 +2013,11 @@ riscv_emit_int_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 	      bool increment = *code == mag_comparisons[i][0];
 	      bool decrement = *code == mag_comparisons[i][1];
 	      if (!increment && !decrement)
-	        continue;
+		continue;
 
 	      new_rhs = rhs + (increment ? 1 : -1);
 	      if (riscv_integer_cost (new_rhs) < riscv_integer_cost (rhs)
-	          && (rhs < 0) == (new_rhs < 0))
+		  && (rhs < 0) == (new_rhs < 0))
 		{
 		  *op1 = GEN_INT (new_rhs);
 		  *code = mag_comparisons[i][increment];
@@ -2224,7 +2224,7 @@ riscv_flatten_aggregate_field (const_tree type,
 	    n = riscv_flatten_aggregate_field (TREE_TYPE (f), fields, n,
 					       offset + int_byte_position (f));
 	    if (n < 0)
-	        return -1;
+	      return -1;
 	  }
       return n;
 
@@ -3308,7 +3308,7 @@ riscv_adjust_libcall_cfi_prologue ()
   adjust_sp_rtx = gen_add3_insn (stack_pointer_rtx,
 				 stack_pointer_rtx, GEN_INT (-saved_size));
   dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, adjust_sp_rtx,
-		          dwarf);
+			  dwarf);
   return dwarf;
 }
 
@@ -3397,13 +3397,13 @@ riscv_adjust_libcall_cfi_epilogue ()
   adjust_sp_rtx = gen_add3_insn (stack_pointer_rtx,
 				 stack_pointer_rtx, GEN_INT (saved_size));
   dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, adjust_sp_rtx,
-		          dwarf);
+			  dwarf);
 
   for (int regno = GP_REG_FIRST; regno <= GP_REG_LAST-1; regno++)
     if (BITSET_P (cfun->machine->frame.mask, regno - GP_REG_FIRST))
       {
 	reg = gen_rtx_REG (SImode, regno);
-        dwarf = alloc_reg_note (REG_CFA_RESTORE, reg, dwarf);
+	dwarf = alloc_reg_note (REG_CFA_RESTORE, reg, dwarf);
       }
 
   return dwarf;
@@ -3472,7 +3472,7 @@ riscv_expand_epilogue (bool sibcall_p)
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_rtx = gen_rtx_PLUS (Pmode, stack_pointer_rtx,
-				         const0_rtx);
+					 const0_rtx);
       dwarf = alloc_reg_note (REG_CFA_DEF_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
 
@@ -3500,7 +3500,7 @@ riscv_expand_epilogue (bool sibcall_p)
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_rtx = gen_rtx_PLUS (Pmode, stack_pointer_rtx,
-				         const0_rtx);
+					 const0_rtx);
       dwarf = alloc_reg_note (REG_CFA_DEF_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
 
