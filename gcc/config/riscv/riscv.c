@@ -1954,16 +1954,6 @@ riscv_zero_if_equal (rtx cmp0, rtx cmp1)
 		       cmp0, cmp1, 0, 0, OPTAB_DIRECT);
 }
 
-/* Sign-extend OP, which may be a subreg, to MODE.  */
-
-static rtx
-riscv_sign_extend (enum machine_mode mode, rtx op)
-{
-  if (GET_CODE (op) == SUBREG && SCALAR_INT_MODE_P (GET_MODE (XEXP (op, 0))))
-    op = XEXP (op, 0);
-  return gen_rtx_SIGN_EXTEND (mode, op);
-}
-
 /* Convert a comparison into something that can be used in a branch.  On
    entry, *OP0 and *OP1 are the values being compared and *CODE is the code
    used to compare them.  Update them to describe the final comparison.  */
@@ -2016,8 +2006,8 @@ riscv_emit_int_compare (enum rtx_code *code, rtx *op0, rtx *op1)
      them.  It is cheaper than zero-extension and is often eliminated.  */
   if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (*op0)))
     {
-      *op0 = force_reg (word_mode, riscv_sign_extend (word_mode, *op0));
-      *op1 = riscv_sign_extend (word_mode, *op1);
+      *op0 = force_reg (word_mode, gen_rtx_SIGN_EXTEND (word_mode, *op0));
+      *op1 = gen_rtx_SIGN_EXTEND (word_mode, *op1);
     }
 
   if (*op1 != const0_rtx)
@@ -2115,9 +2105,9 @@ riscv_expand_int_scc (rtx target, enum rtx_code code, rtx op0, rtx op1)
   /* Sign-extend 32-bit values to XLEN.  */
   if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (op0)))
     {
-      op0 = force_reg (word_mode, riscv_sign_extend (word_mode, op0));
+      op0 = force_reg (word_mode, gen_rtx_SIGN_EXTEND (word_mode, op0));
       if (op1 != const0_rtx)
-	op1 = riscv_sign_extend (word_mode, op1);
+	op1 = gen_rtx_SIGN_EXTEND (word_mode, op1);
     }
 
   if (code == EQ || code == NE)
