@@ -822,6 +822,28 @@
   [(set_attr "type" "fmadd")
    (set_attr "mode" "<UNITMODE>")])
 
+(define_insn "fnma<mode>4"
+  [(set (match_operand:ANYF 0 "register_operand" "=f")
+    (fma:ANYF
+      (neg:ANYF	(match_operand:ANYF 1 "register_operand" "f"))
+      (match_operand:ANYF 2 "register_operand" "f")
+      (match_operand:ANYF 3 "register_operand" "f")))]
+  "TARGET_HARD_FLOAT"
+  "fnmadd.<fmt>\t%0,%1,%2,%3"
+  [(set_attr "type" "fmadd")
+   (set_attr "mode" "<UNITMODE>")])
+
+(define_insn "fnms<mode>4"
+  [(set (match_operand:ANYF 0 "register_operand" "=f")
+    (fma:ANYF
+      (neg:ANYF (match_operand:ANYF 1 "register_operand" "f"))
+      (match_operand:ANYF 2 "register_operand" "f")
+      (neg:ANYF (match_operand:ANYF 3 "register_operand" "f"))))]
+  "TARGET_HARD_FLOAT"
+  "fnmsub.<fmt>\t%0,%1,%2,%3"
+  [(set_attr "type" "fmadd")
+   (set_attr "mode" "<UNITMODE>")])
+
 (define_insn "nfma<mode>4"
   [(set (match_operand:ANYF 0 "register_operand" "=f")
     (neg:ANYF
