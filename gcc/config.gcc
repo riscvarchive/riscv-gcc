@@ -2059,6 +2059,13 @@ riscv*-*-elf*)
 	# automatically detect that GAS supports it, yet we require it.
 	gcc_cv_initfini_array=yes
 	;;
+riscv*-*-freebsd*)
+	tm_file="${tm_file} dbxelf.h elfos.h ${fbsd_tm_file} riscv/freebsd.h riscv/freebsd64.h"
+	tmake_file="${tmake_file} riscv/t-freebsd64"
+	gnu_ld=yes
+	gas=yes
+	gcc_cv_initfini_array=yes
+	;;
 mips*-*-netbsd*)			# NetBSD/mips, either endian.
 	target_cpu_default="MASK_ABICALLS"
 	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h"
