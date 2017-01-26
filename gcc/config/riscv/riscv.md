@@ -177,18 +177,7 @@
 ;; Length of instruction in bytes.
 (define_attr "length" ""
    (cond [
-	  ;; Direct branch instructions have a range of [-0x1000,0xffc],
-	  ;; relative to the address of the delay slot.  If a branch is
-	  ;; outside this range, convert a branch like:
-	  ;;
-	  ;;	bne	r1,r2,target
-	  ;;
-	  ;; to:
-	  ;;
-	  ;;	beq	r1,r2,1f
-	  ;;  j target
-	  ;; 1:
-	  ;;
+	  ;; Branches further than +/- 4 KiB require two instructions.
 	  (eq_attr "type" "branch")
 	  (if_then_else (and (le (minus (match_dup 0) (pc)) (const_int 4088))
 				  (le (minus (pc) (match_dup 0)) (const_int 4092)))
