@@ -240,9 +240,8 @@ struct riscv_integer_op {
 };
 
 /* The largest number of operations needed to load an integer constant.
-   The worst case is LUI, ADDI, SLLI, ADDI, SLLI, ADDI, SLLI, ADDI,
-   but we may attempt and reject even worse sequences.  */
-#define RISCV_MAX_INTEGER_OPS 32
+   The worst case is LUI, ADDI, SLLI, ADDI, SLLI, ADDI, SLLI, ADDI.  */
+#define RISCV_MAX_INTEGER_OPS 8
 
 /* Costs of various operations on the different architectures.  */
 
@@ -339,11 +338,11 @@ riscv_parse_cpu (const char *cpu_string)
    riscv_build_integer.  */
 
 static int
-riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
-		       enum machine_mode mode)
+riscv_build_integer_1 (struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS],
+		       HOST_WIDE_INT value, enum machine_mode mode)
 {
   HOST_WIDE_INT low_part = CONST_LOW_PART (value);
-  int cost = INT_MAX, alt_cost;
+  int cost = RISCV_MAX_INTEGER_OPS + 1, alt_cost;
   struct riscv_integer_op alt_codes[RISCV_MAX_INTEGER_OPS];
 
   if (SMALL_OPERAND (value) || LUI_OPERAND (value))
@@ -357,35 +356,50 @@ riscv_build_integer_1 (struct riscv_integer_op *codes, HOST_WIDE_INT value,
   /* End with ADDI.  When constructing HImode constants, do not generate any
      intermediate value that is not itself a valid HImode constant.  The
      XORI case below will handle those remaining HImode constants.  */
-  if (low_part != 0
-      && !(mode == HImode && (int16_t)(value - low_part) != (value - low_part)))
+  if (low_part != 0 && (mode != HImode || value - low_part <= INT16_MAX))
     {
-      cost = 1 + riscv_build_integer_1 (codes, value - low_part, mode);
-      codes[cost-1].code = PLUS;
-      codes[cost-1].value = low_part;
+      alt_cost = 1 + riscv_build_integer_1 (alt_codes, value - low_part, mode);
+      if (alt_cost < cost)
+	{
+	  alt_codes[alt_cost-1].code = PLUS;
+	  alt_codes[alt_cost-1].value = low_part;
+	  memcpy (codes, alt_codes, sizeof (alt_codes));
+	  cost = alt_cost;
+	}
     }
 
   /* End with XORI.  */
   if (cost > 2 && (low_part < 0 || mode == HImode))
     {
       alt_cost = 1 + riscv_build_integer_1 (alt_codes, value ^ low_part, mode);
-      alt_codes[alt_cost-1].code = XOR;
-      alt_codes[alt_cost-1].value = low_part;
       if (alt_cost < cost)
-	cost = alt_cost, memcpy (codes, alt_codes, sizeof (alt_codes));
+	{
+	  alt_codes[alt_cost-1].code = XOR;
+	  alt_codes[alt_cost-1].value = low_part;
+	  memcpy (codes, alt_codes, sizeof (alt_codes));
+	  cost = alt_cost;
+	}
     }
 
   /* Eliminate trailing zeros and end with SLLI.  */
   if (cost > 2 && (value & 1) == 0)
     {
-      int shift = 0;
-      while ((value & 1) == 0)
-	shift++, value >>= 1;
-      alt_cost = 1 + riscv_build_integer_1 (alt_codes, value, mode);
-      alt_codes[alt_cost-1].code = ASHIFT;
-      alt_codes[alt_cost-1].value = shift;
+      int shift = ctz_hwi (value);
+      unsigned HOST_WIDE_INT x = value;
+      x = sext_hwi (x >> shift, HOST_BITS_PER_WIDE_INT - shift);
+
+      /* Don't eliminate the lower 12 bits if LUI might apply.  */
+      if (shift > IMM_BITS && !SMALL_OPERAND (x) && LUI_OPERAND (x << IMM_BITS))
+	shift -= IMM_BITS, x <<= IMM_BITS;
+
+      alt_cost = 1 + riscv_build_integer_1 (alt_codes, x, mode);
       if (alt_cost < cost)
-	cost = alt_cost, memcpy (codes, alt_codes, sizeof (alt_codes));
+	{
+	  alt_codes[alt_cost-1].code = ASHIFT;
+	  alt_codes[alt_cost-1].value = shift;
+	  memcpy (codes, alt_codes, sizeof (alt_codes));
+	  cost = alt_cost;
+	}
     }
 
   gcc_assert (cost <= RISCV_MAX_INTEGER_OPS);
@@ -405,26 +419,30 @@ riscv_build_integer (struct riscv_integer_op *codes, HOST_WIDE_INT value,
   if (value > 0 && cost > 2)
     {
       struct riscv_integer_op alt_codes[RISCV_MAX_INTEGER_OPS];
-      int alt_cost, shift = 0;
+      int alt_cost, shift = clz_hwi (value);
       HOST_WIDE_INT shifted_val;
 
       /* Try filling trailing bits with 1s.  */
-      while ((value << shift) >= 0)
-	shift++;
       shifted_val = (value << shift) | ((((HOST_WIDE_INT) 1) << shift) - 1);
       alt_cost = 1 + riscv_build_integer_1 (alt_codes, shifted_val, mode);
-      alt_codes[alt_cost-1].code = LSHIFTRT;
-      alt_codes[alt_cost-1].value = shift;
       if (alt_cost < cost)
-	cost = alt_cost, memcpy (codes, alt_codes, sizeof (alt_codes));
+	{
+	  alt_codes[alt_cost-1].code = LSHIFTRT;
+	  alt_codes[alt_cost-1].value = shift;
+	  memcpy (codes, alt_codes, sizeof (alt_codes));
+	  cost = alt_cost;
+	}
 
       /* Try filling trailing bits with 0s.  */
       shifted_val = value << shift;
       alt_cost = 1 + riscv_build_integer_1 (alt_codes, shifted_val, mode);
-      alt_codes[alt_cost-1].code = LSHIFTRT;
-      alt_codes[alt_cost-1].value = shift;
       if (alt_cost < cost)
-	cost = alt_cost, memcpy (codes, alt_codes, sizeof (alt_codes));
+	{
+	  alt_codes[alt_cost-1].code = LSHIFTRT;
+	  alt_codes[alt_cost-1].value = shift;
+	  memcpy (codes, alt_codes, sizeof (alt_codes));
+	  cost = alt_cost;
+	}
     }
 
   return cost;
