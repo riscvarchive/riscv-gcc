@@ -313,7 +313,7 @@ static const struct riscv_tune_info optimize_size_tune_info = {
   {COSTS_N_INSNS (1), COSTS_N_INSNS (1)},	/* int_div */
   1,						/* issue_rate */
   1,						/* branch_cost */
-  1						/* memory_cost */
+  2						/* memory_cost */
 };
 
 /* A table describing all the processors GCC knows about.  */
