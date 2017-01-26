@@ -170,5 +170,8 @@
 (define_predicate "fp_native_comparison"
   (match_code "eq,lt,le,gt,ge"))
 
-(define_predicate "fp_comparison"
+(define_predicate "fp_scc_comparison"
+  (match_code "unordered,ordered,unlt,unge,unle,ungt,ltgt,ne,eq,lt,le,gt,ge"))
+
+(define_predicate "fp_branch_comparison"
   (match_code "unordered,ordered,unlt,unge,unle,ungt,uneq,ltgt,ne,eq,lt,le,gt,ge"))

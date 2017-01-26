@@ -1549,7 +1549,7 @@
 
 (define_expand "cbranch<mode>4"
   [(set (pc)
-	(if_then_else (match_operator 0 "fp_comparison"
+	(if_then_else (match_operator 0 "fp_branch_comparison"
 		       [(match_operand:ANYF 1 "register_operand")
 			(match_operand:ANYF 2 "register_operand")])
 		      (label_ref (match_operand 3 ""))
@@ -1640,7 +1640,7 @@
 
 (define_expand "cstore<mode>4"
   [(set (match_operand:SI 0 "register_operand")
-	(match_operator:SI 1 "fp_comparison"
+	(match_operator:SI 1 "fp_scc_comparison"
 	 [(match_operand:ANYF 2 "register_operand")
 	  (match_operand:ANYF 3 "register_operand")]))]
   ""
