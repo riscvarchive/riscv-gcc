@@ -2212,6 +2212,9 @@ riscv_flatten_aggregate_field (const_tree type,
 			       riscv_aggregate_field fields[2],
 			       int n, HOST_WIDE_INT offset)
 {
+  if (n >= 2)
+    return -1;
+
   switch (TREE_CODE (type))
     {
     case RECORD_TYPE:
