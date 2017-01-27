@@ -1419,11 +1419,10 @@
   [(match_operand 0 "pmode_register_operand")
    (match_operand 1 "pmode_register_operand")]
   ""
-  "
 {
   emit_insn (gen_fence_i ());
   DONE;
-}")
+})
 
 (define_insn "fence"
   [(unspec_volatile [(const_int 0)] UNSPECV_FENCE)]
