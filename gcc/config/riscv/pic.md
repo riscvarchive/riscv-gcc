@@ -47,7 +47,7 @@
 
 (define_insn "*local_pic_loadu<mode>"
   [(set (match_operand:SUPERQI 0 "register_operand" "=r")
-	(zero_extend:SUPERQI (mem:SUBDI (match_operand 1 "absolute_symbolic_operand" ""))))]
+	(zero_extend:SUPERQI (mem:SUBX (match_operand 1 "absolute_symbolic_operand" ""))))]
   "USE_LOAD_ADDRESS_MACRO (operands[1])"
   "<load>u\t%0,%1"
   [(set (attr "length") (const_int 8))])

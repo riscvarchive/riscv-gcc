@@ -229,7 +229,6 @@
 ;; This mode iterator allows 32-bit and 64-bit GPR patterns to be generated
 ;; from the same template.
 (define_mode_iterator GPR [SI (DI "TARGET_64BIT")])
-(define_mode_iterator SUPERQI [HI SI (DI "TARGET_64BIT")])
 
 ;; This mode iterator allows :P to be used for patterns that operate on
 ;; pointer-sized quantities.  Exactly one of the two alternatives will match.
@@ -238,27 +237,30 @@
 ;; Likewise, but for XLEN-sized quantities.
 (define_mode_iterator X [(SI "!TARGET_64BIT") (DI "TARGET_64BIT")])
 
-;; 32-bit integer moves for which we provide move patterns.
-(define_mode_iterator IMOVE32 [SI])
+;; 32-bit moves for which we provide move patterns.
+(define_mode_iterator MOVE32 [SI])
 
 ;; 64-bit modes for which we provide move patterns.
 (define_mode_iterator MOVE64 [DI DF])
 
-;; This mode iterator allows the QI and HI extension patterns to be
-;; defined from the same template.
+;; Iterator for sub-32-bit integer modes.
 (define_mode_iterator SHORT [QI HI])
 
-;; Likewise the 64-bit truncate-and-shift patterns.
-(define_mode_iterator SUBDI [QI HI SI])
+;; Iterator for HImode constant generation.
 (define_mode_iterator HISI [HI SI])
+
+;; Iterator for QImode extension patterns.
+(define_mode_iterator SUPERQI [HI SI (DI "TARGET_64BIT")])
+
+;; Iterator for hardware integer modes narrower than XLEN.
+(define_mode_iterator SUBX [QI HI (SI "TARGET_64BIT")])
+
+;; Iterator for hardware-supported integer modes.
 (define_mode_iterator ANYI [QI HI SI (DI "TARGET_64BIT")])
 
-;; This mode iterator allows :ANYF to be used where SF or DF is allowed.
+;; Iterator for hardware-supported floating-point modes.
 (define_mode_iterator ANYF [(SF "TARGET_HARD_FLOAT")
 			    (DF "TARGET_DOUBLE_FLOAT")])
-(define_mode_iterator ANYIF [QI HI SI (DI "TARGET_64BIT")
-			     (SF "TARGET_HARD_FLOAT")
-			     (DF "TARGET_DOUBLE_FLOAT")])
 
 ;; This attribute gives the length suffix for a sign- or zero-extension
 ;; instruction.
@@ -1242,24 +1244,20 @@
 
 ;; 32-bit Integer moves
 
-;; Unlike most other insns, the move insns can't be split with
-;; different predicates, because register spilling and other parts of
-;; the compiler, have memoized the insn number already.
-
 (define_expand "mov<mode>"
-  [(set (match_operand:IMOVE32 0 "")
-	(match_operand:IMOVE32 1 ""))]
+  [(set (match_operand:MOVE32 0 "")
+	(match_operand:MOVE32 1 ""))]
   ""
 {
   if (riscv_legitimize_move (<MODE>mode, operands[0], operands[1]))
     DONE;
 })
 
-(define_insn "*mov<mode>_internal"
-  [(set (match_operand:IMOVE32 0 "nonimmediate_operand" "=r,r,r,m,*f,*f,*r,*m")
-	(match_operand:IMOVE32 1 "move_operand" "r,T,m,rJ,*r*J,*m,*f,*f"))]
-  "(register_operand (operands[0], <MODE>mode)
-    || reg_or_0_operand (operands[1], <MODE>mode))"
+(define_insn "*movsi_internal"
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=r,r,r,m,*f,*f,*r,*m")
+	(match_operand:SI 1 "move_operand" "r,T,m,rJ,*r*J,*m,*f,*f"))]
+  "(register_operand (operands[0], SImode)
+    || reg_or_0_operand (operands[1], SImode))"
   { return riscv_output_move (operands[0], operands[1]); }
   [(set_attr "move_type" "move,const,load,store,mtc,fpload,mfc,fpstore")
    (set_attr "mode" "SI")])
@@ -1999,7 +1997,6 @@
   DONE;
 })
 
-;; See comment for call_internal.
 (define_insn "call_value_internal"
   [(set (match_operand 0 "register_operand" "")
 	(call (mem:SI (match_operand 1 "call_insn_operand" "l,S"))
@@ -2011,7 +2008,6 @@
 	   : "call\t%1@plt"; }
   [(set_attr "type" "call")])
 
-;; See comment for call_internal.
 (define_insn "call_value_multiple_internal"
   [(set (match_operand 0 "register_operand" "")
 	(call (mem:SI (match_operand 1 "call_insn_operand" "l,S"))
