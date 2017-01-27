@@ -2269,6 +2269,27 @@ riscv_flatten_aggregate_field (const_tree type,
 	return n;
       }
 
+    case COMPLEX_TYPE:
+      {
+	/* Complex type need consume 2 field, so n must be 0.  */
+	if (n != 0)
+	  return -1;
+
+	HOST_WIDE_INT elt_size = GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (type)));
+
+	if (elt_size <= UNITS_PER_FP_ARG)
+	  {
+	    fields[0].type = TREE_TYPE (type);
+	    fields[0].offset = offset;
+	    fields[1].type = TREE_TYPE (type);
+	    fields[1].offset = offset + elt_size;
+
+	    return 2;
+	  }
+
+	return -1;
+      }
+
     default:
       if (n < 2
 	  && ((SCALAR_FLOAT_TYPE_P (type)
