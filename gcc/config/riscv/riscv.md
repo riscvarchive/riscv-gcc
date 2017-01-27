@@ -1503,15 +1503,24 @@
 	(if_then_else
 	 (match_operator 1 "order_operator"
 			 [(match_operand:X 2 "register_operand" "r")
-			  (match_operand:X 3 "reg_or_0_operand" "rJ")])
+			  (match_operand:X 3 "register_operand" "r")])
 	 (label_ref (match_operand 0 "" ""))
 	 (pc)))]
   ""
-{
-  if (GET_CODE (operands[3]) == CONST_INT)
-    return "b%C1z\t%2,%0";
-  return "b%C1\t%2,%3,%0";
-}
+  "b%C1\t%2,%3,%0"
+  [(set_attr "type" "branch")
+   (set_attr "mode" "none")])
+
+(define_insn "*branch_zero<mode>"
+  [(set (pc)
+	(if_then_else
+	 (match_operator 1 "signed_order_operator"
+			 [(match_operand:X 2 "register_operand" "r")
+			  (const_int 0)])
+	 (label_ref (match_operand 0 "" ""))
+	 (pc)))]
+  ""
+  "b%C1z\t%2,%0"
   [(set_attr "type" "branch")
    (set_attr "mode" "none")])
 
