@@ -582,7 +582,10 @@ typedef struct {
 /* Trampolines are a block of code followed by two pointers.  */
 
 #define TRAMPOLINE_CODE_SIZE 16
-#define TRAMPOLINE_SIZE (TRAMPOLINE_CODE_SIZE + POINTER_SIZE * 2)
+#define TRAMPOLINE_SIZE		\
+  ((Pmode == SImode)		\
+   ? TRAMPOLINE_CODE_SIZE	\
+   : (TRAMPOLINE_CODE_SIZE + POINTER_SIZE * 2))
 #define TRAMPOLINE_ALIGNMENT POINTER_SIZE
 
 /* Addressing modes, and classification of registers for them.  */
@@ -889,10 +892,13 @@ extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 #define OPCODE_LD    0x3003
 #define OPCODE_AUIPC 0x17
 #define OPCODE_JALR  0x67
+#define OPCODE_LUI   0x37
+#define OPCODE_ADDI  0x13
 #define SHIFT_RD  7
 #define SHIFT_RS1 15
 #define SHIFT_IMM 20
 #define IMM_BITS 12
+#define UIMM_MASK 0xfffff000lu
 
 #define IMM_REACH (1LL << IMM_BITS)
 #define CONST_HIGH_PART(VALUE) (((VALUE) + (IMM_REACH/2)) & ~(IMM_REACH-1))

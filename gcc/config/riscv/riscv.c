@@ -3841,43 +3841,122 @@ riscv_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
   /* Work out the offsets of the pointers from the start of the
      trampoline code.  */
   gcc_assert (ARRAY_SIZE (trampoline) * 4 == TRAMPOLINE_CODE_SIZE);
-  static_chain_offset = TRAMPOLINE_CODE_SIZE;
-  target_function_offset = static_chain_offset + GET_MODE_SIZE (ptr_mode);
 
   /* Get pointers to the beginning and end of the code block.  */
   addr = force_reg (Pmode, XEXP (m_tramp, 0));
-  end_addr = riscv_force_binary (Pmode, PLUS, addr, GEN_INT (TRAMPOLINE_CODE_SIZE));
+  end_addr = riscv_force_binary (Pmode, PLUS, addr,
+				 GEN_INT (TRAMPOLINE_CODE_SIZE));
 
-  /* auipc   t2, 0
-     l[wd]   t1, target_function_offset(t2)
-     l[wd]   t2, static_chain_offset(t2)
-     jr      t1
-  */
-  trampoline[0] = OPCODE_AUIPC | (STATIC_CHAIN_REGNUM << SHIFT_RD);
-  trampoline[1] = (Pmode == DImode ? OPCODE_LD : OPCODE_LW)
-		  | (RISCV_PROLOGUE_TEMP_REGNUM << SHIFT_RD)
-		  | (STATIC_CHAIN_REGNUM << SHIFT_RS1)
-		  | (target_function_offset << SHIFT_IMM);
-  trampoline[2] = (Pmode == DImode ? OPCODE_LD : OPCODE_LW)
-		  | (STATIC_CHAIN_REGNUM << SHIFT_RD)
-		  | (STATIC_CHAIN_REGNUM << SHIFT_RS1)
-		  | (static_chain_offset << SHIFT_IMM);
-  trampoline[3] = OPCODE_JALR | (RISCV_PROLOGUE_TEMP_REGNUM << SHIFT_RS1);
 
-  /* Copy the trampoline code.  */
-  for (i = 0; i < ARRAY_SIZE (trampoline); i++)
+  if (Pmode == SImode)
     {
-      mem = adjust_address (m_tramp, SImode, i * GET_MODE_SIZE (SImode));
-      riscv_emit_move (mem, gen_int_mode (trampoline[i], SImode));
+      chain_value = force_reg (Pmode, chain_value);
+
+      rtx target_function = force_reg (Pmode, XEXP (DECL_RTL (fndecl), 0));
+      /* lui     t2, hi(chain)
+	 lui     t1, hi(func)
+	 addi    t2, t2, lo(chain)
+	 jr      r1, lo(func)
+      */
+      unsigned HOST_WIDE_INT lui_hi_chain_code, lui_hi_func_code;
+      unsigned HOST_WIDE_INT lo_chain_code, lo_func_code;
+
+      rtx uimm_mask = force_reg (SImode, gen_int_mode (UIMM_MASK, SImode));
+
+      /* 0xfff.  */
+      rtx imm12_mask = gen_reg_rtx (SImode);
+      emit_insn (gen_one_cmplsi2 (imm12_mask, uimm_mask));
+
+      rtx fixup_value = force_reg (SImode, gen_int_mode (0x800, SImode));
+
+      /* Gen lui t2, hi(chain).  */
+      rtx hi_chain = riscv_force_binary (SImode, PLUS, chain_value,
+					 fixup_value);
+      hi_chain = riscv_force_binary (SImode, AND, hi_chain,
+				     uimm_mask);
+      lui_hi_chain_code = OPCODE_LUI | (STATIC_CHAIN_REGNUM << SHIFT_RD);
+      rtx lui_hi_chain = riscv_force_binary (SImode, IOR, hi_chain,
+					     gen_int_mode (lui_hi_chain_code, SImode));
+
+      mem = adjust_address (m_tramp, SImode, 0);
+      riscv_emit_move (mem, lui_hi_chain);
+
+      /* Gen lui t1, hi(func).  */
+      rtx hi_func = riscv_force_binary (SImode, PLUS, target_function,
+					fixup_value);
+      hi_func = riscv_force_binary (SImode, AND, hi_func,
+				    uimm_mask);
+      lui_hi_func_code = OPCODE_LUI | (RISCV_PROLOGUE_TEMP_REGNUM << SHIFT_RD);
+      rtx lui_hi_func = riscv_force_binary (SImode, IOR, hi_func,
+					    gen_int_mode (lui_hi_func_code, SImode));
+
+      mem = adjust_address (m_tramp, SImode, 1 * GET_MODE_SIZE (SImode));
+      riscv_emit_move (mem, lui_hi_func);
+
+      /* Gen addi t2, t2, lo(chain).  */
+      rtx lo_chain = riscv_force_binary (SImode, AND, chain_value,
+					 imm12_mask);
+      lo_chain = riscv_force_binary (SImode, ASHIFT, lo_chain, GEN_INT (20));
+
+      lo_chain_code = OPCODE_ADDI
+		      | (STATIC_CHAIN_REGNUM << SHIFT_RD)
+		      | (STATIC_CHAIN_REGNUM << SHIFT_RS1);
+
+      rtx addi_lo_chain = riscv_force_binary (SImode, IOR, lo_chain,
+					      force_reg (SImode, GEN_INT (lo_chain_code)));
+
+      mem = adjust_address (m_tramp, SImode, 2 * GET_MODE_SIZE (SImode));
+      riscv_emit_move (mem, addi_lo_chain);
+
+      /* Gen jr r1, lo(func).  */
+      rtx lo_func = riscv_force_binary (SImode, AND, target_function,
+					imm12_mask);
+      lo_func = riscv_force_binary (SImode, ASHIFT, lo_func, GEN_INT (20));
+
+      lo_func_code = OPCODE_JALR | (RISCV_PROLOGUE_TEMP_REGNUM << SHIFT_RS1);
+
+      rtx jr_lo_func = riscv_force_binary (SImode, IOR, lo_func,
+					   force_reg (SImode, GEN_INT (lo_func_code)));
+
+      mem = adjust_address (m_tramp, SImode, 3 * GET_MODE_SIZE (SImode));
+      riscv_emit_move (mem, jr_lo_func);
     }
+  else
+    {
+      static_chain_offset = TRAMPOLINE_CODE_SIZE;
+      target_function_offset = static_chain_offset + GET_MODE_SIZE (ptr_mode);
 
-  /* Set up the static chain pointer field.  */
-  mem = adjust_address (m_tramp, ptr_mode, static_chain_offset);
-  riscv_emit_move (mem, chain_value);
+      /* auipc   t2, 0
+	 l[wd]   t1, target_function_offset(t2)
+	 l[wd]   t2, static_chain_offset(t2)
+	 jr      t1
+      */
+      trampoline[0] = OPCODE_AUIPC | (STATIC_CHAIN_REGNUM << SHIFT_RD);
+      trampoline[1] = (Pmode == DImode ? OPCODE_LD : OPCODE_LW)
+		      | (RISCV_PROLOGUE_TEMP_REGNUM << SHIFT_RD)
+		      | (STATIC_CHAIN_REGNUM << SHIFT_RS1)
+		      | (target_function_offset << SHIFT_IMM);
+      trampoline[2] = (Pmode == DImode ? OPCODE_LD : OPCODE_LW)
+		      | (STATIC_CHAIN_REGNUM << SHIFT_RD)
+		      | (STATIC_CHAIN_REGNUM << SHIFT_RS1)
+		      | (static_chain_offset << SHIFT_IMM);
+      trampoline[3] = OPCODE_JALR | (RISCV_PROLOGUE_TEMP_REGNUM << SHIFT_RS1);
 
-  /* Set up the target function field.  */
-  mem = adjust_address (m_tramp, ptr_mode, target_function_offset);
-  riscv_emit_move (mem, XEXP (DECL_RTL (fndecl), 0));
+      /* Copy the trampoline code.  */
+      for (i = 0; i < ARRAY_SIZE (trampoline); i++)
+	{
+	  mem = adjust_address (m_tramp, SImode, i * GET_MODE_SIZE (SImode));
+	  riscv_emit_move (mem, gen_int_mode (trampoline[i], SImode));
+	}
+
+      /* Set up the static chain pointer field.  */
+      mem = adjust_address (m_tramp, ptr_mode, static_chain_offset);
+      riscv_emit_move (mem, chain_value);
+
+      /* Set up the target function field.  */
+      mem = adjust_address (m_tramp, ptr_mode, target_function_offset);
+      riscv_emit_move (mem, XEXP (DECL_RTL (fndecl), 0));
+    }
 
   /* Flush the code part of the trampoline.  */
   emit_insn (gen_add3_insn (end_addr, addr, GEN_INT (TRAMPOLINE_SIZE)));
