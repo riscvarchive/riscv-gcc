@@ -56,10 +56,6 @@
   (and (match_code "const_double")
        (match_test "op == CONST0_RTX (mode)")))
 
-(define_constraint "Q"
-  "@internal"
-  (match_operand 0 "const_arith_operand"))
-
 (define_memory_constraint "A"
   "An address that is held in a general-purpose register."
   (and (match_code "mem")
@@ -76,9 +72,3 @@
    A constant @code{move_operand}."
   (and (match_operand 0 "move_operand")
        (match_test "CONSTANT_P (op)")))
-
-(define_memory_constraint "W"
-  "@internal
-   A memory address based on a member of @code{BASE_REG_CLASS}."
-  (and (match_code "mem")
-       (match_operand 0 "memory_operand")))

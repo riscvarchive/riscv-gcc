@@ -400,7 +400,7 @@
 (define_insn "addsi3"
   [(set (match_operand:SI 0 "register_operand" "=r,r")
 	(plus:SI (match_operand:SI 1 "register_operand" "r,r")
-		  (match_operand:SI 2 "arith_operand" "r,Q")))]
+		  (match_operand:SI 2 "arith_operand" "r,I")))]
   ""
   { return TARGET_64BIT ? "addw\t%0,%1,%2" : "add\t%0,%1,%2"; }
   [(set_attr "type" "arith")
@@ -409,7 +409,7 @@
 (define_insn "adddi3"
   [(set (match_operand:DI 0 "register_operand" "=r,r")
 	(plus:DI (match_operand:DI 1 "register_operand" "r,r")
-		  (match_operand:DI 2 "arith_operand" "r,Q")))]
+		  (match_operand:DI 2 "arith_operand" "r,I")))]
   "TARGET_64BIT"
   "add\t%0,%1,%2"
   [(set_attr "type" "arith")
@@ -419,7 +419,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r,r")
 	(sign_extend:DI
 	     (plus:SI (match_operand:SI 1 "register_operand" "r,r")
-		      (match_operand:SI 2 "arith_operand" "r,Q"))))]
+		      (match_operand:SI 2 "arith_operand" "r,I"))))]
   "TARGET_64BIT"
   "addw\t%0,%1,%2"
   [(set_attr "type" "arith")
@@ -429,7 +429,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r,r")
 	(sign_extend:DI
 	  (subreg:SI (plus:DI (match_operand:DI 1 "register_operand" "r,r")
-			      (match_operand:DI 2 "arith_operand" "r,Q"))
+			      (match_operand:DI 2 "arith_operand" "r,I"))
 		     0)))]
   "TARGET_64BIT"
   "addw\t%0,%1,%2"
@@ -917,7 +917,7 @@
 (define_insn "<optab><mode>3"
   [(set (match_operand:X 0 "register_operand" "=r,r")
 	(any_bitwise:X (match_operand:X 1 "register_operand" "%r,r")
-		       (match_operand:X 2 "arith_operand" "r,Q")))]
+		       (match_operand:X 2 "arith_operand" "r,I")))]
   ""
   "<insn>\t%0,%1,%2"
   [(set_attr "type" "logical")
@@ -926,7 +926,7 @@
 (define_insn "*<optab>si3_internal"
   [(set (match_operand:SI 0 "register_operand" "=r,r")
 	(any_bitwise:SI (match_operand:SI 1 "register_operand" "%r,r")
-			(match_operand:SI 2 "arith_operand" "r,Q")))]
+			(match_operand:SI 2 "arith_operand" "r,I")))]
   "TARGET_64BIT"
   "<insn>\t%0,%1,%2"
   [(set_attr "type" "logical")
@@ -974,7 +974,7 @@
 
 (define_insn_and_split "zero_extendsidi2"
   [(set (match_operand:DI 0 "register_operand" "=r,r")
-	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand" "r,W")))]
+	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand" "r,m")))]
   "TARGET_64BIT"
   "@
    #
@@ -1295,7 +1295,7 @@
 (define_insn "*add<mode>hi3"
   [(set (match_operand:HI 0 "register_operand" "=r,r")
 	(plus:HI (match_operand:HISI 1 "register_operand" "r,r")
-		  (match_operand:HISI 2 "arith_operand" "r,Q")))]
+		  (match_operand:HISI 2 "arith_operand" "r,I")))]
   ""
   { return TARGET_64BIT ? "addw\t%0,%1,%2" : "add\t%0,%1,%2"; }
   [(set_attr "type" "arith")
@@ -1304,7 +1304,7 @@
 (define_insn "*xor<mode>hi3"
   [(set (match_operand:HI 0 "register_operand" "=r,r")
 	(xor:HI (match_operand:HISI 1 "register_operand" "r,r")
-		  (match_operand:HISI 2 "arith_operand" "r,Q")))]
+		  (match_operand:HISI 2 "arith_operand" "r,I")))]
   ""
   "xor\t%0,%1,%2"
   [(set_attr "type" "logical")
