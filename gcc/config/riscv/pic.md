@@ -32,17 +32,17 @@
 (define_insn "*local_pic_load<mode>"
   [(set (match_operand:ANYF 0 "register_operand" "=f")
 	(mem:ANYF (match_operand 1 "absolute_symbolic_operand" "")))
-   (clobber (reg:DI T0_REGNUM))]
+   (clobber (match_scratch:DI 2 "=r"))]
   "TARGET_HARD_FLOAT && TARGET_64BIT && USE_LOAD_ADDRESS_MACRO (operands[1])"
-  "<load>\t%0,%1,t0"
+  "<load>\t%0,%1,%2"
   [(set (attr "length") (const_int 8))])
 
 (define_insn "*local_pic_load<mode>"
   [(set (match_operand:ANYF 0 "register_operand" "=f")
 	(mem:ANYF (match_operand 1 "absolute_symbolic_operand" "")))
-   (clobber (reg:SI T0_REGNUM))]
+   (clobber (match_scratch:SI 2 "=r"))]
   "TARGET_HARD_FLOAT && !TARGET_64BIT && USE_LOAD_ADDRESS_MACRO (operands[1])"
-  "<load>\t%0,%1,t0"
+  "<load>\t%0,%1,%2"
   [(set (attr "length") (const_int 8))])
 
 (define_insn "*local_pic_loadu<mode>"
@@ -55,31 +55,31 @@
 (define_insn "*local_pic_storedi<mode>"
   [(set (mem:ANYI (match_operand 0 "absolute_symbolic_operand" ""))
 	(match_operand:ANYI 1 "reg_or_0_operand" "rJ"))
-   (clobber (reg:DI T0_REGNUM))]
+   (clobber (match_scratch:DI 2 "=&r"))]
   "TARGET_64BIT && USE_LOAD_ADDRESS_MACRO (operands[0])"
-  "<store>\t%z1,%0,t0"
+  "<store>\t%z1,%0,%2"
   [(set (attr "length") (const_int 8))])
 
 (define_insn "*local_pic_storesi<mode>"
   [(set (mem:ANYI (match_operand 0 "absolute_symbolic_operand" ""))
 	(match_operand:ANYI 1 "reg_or_0_operand" "rJ"))
-   (clobber (reg:SI T0_REGNUM))]
+   (clobber (match_scratch:SI 2 "=&r"))]
   "!TARGET_64BIT && USE_LOAD_ADDRESS_MACRO (operands[0])"
-  "<store>\t%z1,%0,t0"
+  "<store>\t%z1,%0,%2"
   [(set (attr "length") (const_int 8))])
 
 (define_insn "*local_pic_storedi<mode>"
   [(set (mem:ANYF (match_operand 0 "absolute_symbolic_operand" ""))
 	(match_operand:ANYF 1 "register_operand" "f"))
-   (clobber (reg:DI T0_REGNUM))]
+   (clobber (match_scratch:DI 2 "=r"))]
   "TARGET_HARD_FLOAT && TARGET_64BIT && USE_LOAD_ADDRESS_MACRO (operands[0])"
-  "<store>\t%1,%0,t0"
+  "<store>\t%1,%0,%2"
   [(set (attr "length") (const_int 8))])
 
 (define_insn "*local_pic_storesi<mode>"
   [(set (mem:ANYF (match_operand 0 "absolute_symbolic_operand" ""))
 	(match_operand:ANYF 1 "register_operand" "f"))
-   (clobber (reg:SI T0_REGNUM))]
+   (clobber (match_scratch:SI 2 "=r"))]
   "TARGET_HARD_FLOAT && !TARGET_64BIT && USE_LOAD_ADDRESS_MACRO (operands[0])"
-  "<store>\t%1,%0,t0"
+  "<store>\t%1,%0,%2"
   [(set (attr "length") (const_int 8))])
