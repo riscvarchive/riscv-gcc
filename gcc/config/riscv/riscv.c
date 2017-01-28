@@ -2329,8 +2329,15 @@ riscv_pass_aggregate_in_fpr_pair_p (const_tree type,
   int n = riscv_flatten_aggregate_argument (type, fields);
 
   for (int i = 0; i < n; i++)
-    if (!SCALAR_FLOAT_TYPE_P (fields[i].type))
-      return 0;
+    {
+      // Check offset is begin from 0 for first field
+      //  to filter out empty struct before that in C++.
+      if (i == 0 && (fields[i].offset != 0))
+	return 0;
+
+      if (!SCALAR_FLOAT_TYPE_P (fields[i].type))
+	return 0;
+    }
 
   return n > 0 ? n : 0;
 }
