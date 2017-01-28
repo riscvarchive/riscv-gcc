@@ -3343,6 +3343,15 @@ riscv_adjust_libcall_cfi_prologue ()
   return dwarf;
 }
 
+static void
+riscv_emit_stack_tie (void)
+{
+  if (Pmode == SImode)
+    emit_insn (gen_stack_tiesi (stack_pointer_rtx, hard_frame_pointer_rtx));
+  else
+    emit_insn (gen_stack_tiedi (stack_pointer_rtx, hard_frame_pointer_rtx));
+}
+
 /* Expand the "prologue" pattern.  */
 
 void
@@ -3391,6 +3400,8 @@ riscv_expand_prologue (void)
       insn = gen_add3_insn (hard_frame_pointer_rtx, stack_pointer_rtx,
 			    GEN_INT (frame->hard_frame_pointer_offset - size));
       RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
+
+      riscv_emit_stack_tie ();
     }
 
   /* Allocate the rest of the frame.  */
@@ -3459,6 +3470,10 @@ riscv_expand_epilogue (bool sibcall_p)
   rtx ra = gen_rtx_REG (Pmode, RETURN_ADDR_REGNUM);
   rtx insn;
 
+  /* We need to add memory barrier to prevent read from deallocated stack.  */
+  bool need_barrier_p = (get_frame_size ()
+			 + cfun->machine->frame.arg_pointer_offset) != 0;
+
   if (!sibcall_p && riscv_can_use_return_insn ())
     {
       emit_jump_insn (gen_return ());
@@ -3468,6 +3483,10 @@ riscv_expand_epilogue (bool sibcall_p)
   /* Move past any dynamic stack allocations.  */
   if (cfun->calls_alloca)
     {
+      /* Emit a barrier to prevent loads from a deallocated stack.  */
+      riscv_emit_stack_tie ();
+      need_barrier_p = false;
+
       rtx adjust = GEN_INT (-frame->hard_frame_pointer_offset);
       if (!SMALL_OPERAND (INTVAL (adjust)))
 	{
@@ -3501,6 +3520,10 @@ riscv_expand_epilogue (bool sibcall_p)
   /* Set TARGET to BASE + STEP1.  */
   if (step1 > 0)
     {
+      /* Emit a barrier to prevent loads from a deallocated stack.  */
+      riscv_emit_stack_tie ();
+      need_barrier_p = false;
+
       /* Get an rtx for STEP1 that we can add to BASE.  */
       rtx adjust = GEN_INT (step1);
       if (!SMALL_OPERAND (step1))
@@ -3534,6 +3557,9 @@ riscv_expand_epilogue (bool sibcall_p)
       gcc_assert (step2 >= frame->save_libcall_adjustment);
       step2 -= frame->save_libcall_adjustment;
     }
+
+  if (need_barrier_p)
+    riscv_emit_stack_tie ();
 
   /* Deallocate the final bit of the frame.  */
   if (step2 > 0)
