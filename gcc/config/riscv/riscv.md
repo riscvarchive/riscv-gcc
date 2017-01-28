@@ -42,6 +42,9 @@
   UNSPEC_COPYSIGN
   UNSPEC_LRINT
   UNSPEC_LROUND
+
+  ;; Stack tie
+  UNSPEC_TIE
 ])
 
 (define_c_enum "unspecv" [
@@ -2088,6 +2091,16 @@
   [(unspec_volatile [(match_operand:SI 0 "csr_operand" "rK")] UNSPECV_FSFLAGS)]
   "TARGET_HARD_FLOAT"
   "fsflags %0")
+
+(define_insn "stack_tie<mode>"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK [(match_operand:X 0 "register_operand" "r")
+		     (match_operand:X 1 "register_operand" "r")]
+		    UNSPEC_TIE))]
+  ""
+  ""
+  [(set_attr "length" "0")]
+)
 
 (include "sync.md")
 (include "peephole.md")
