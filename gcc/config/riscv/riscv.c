@@ -3475,8 +3475,19 @@ riscv_expand_epilogue (bool sibcall_p)
 	  adjust = RISCV_PROLOGUE_TEMP (Pmode);
 	}
 
-      emit_insn (gen_add3_insn (stack_pointer_rtx, hard_frame_pointer_rtx,
-				adjust));
+      insn = emit_insn (
+	       gen_add3_insn (stack_pointer_rtx, hard_frame_pointer_rtx,
+			      adjust));
+
+      rtx dwarf = NULL_RTX;
+      rtx cfa_adjust_value = gen_rtx_PLUS (
+			       Pmode, hard_frame_pointer_rtx,
+			       GEN_INT (-frame->hard_frame_pointer_offset));
+      rtx cfa_adjust_rtx = gen_rtx_SET (stack_pointer_rtx, cfa_adjust_value);
+      dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, cfa_adjust_rtx, dwarf);
+      RTX_FRAME_RELATED_P (insn) = 1;
+
+      REG_NOTES (insn) = dwarf;
     }
 
   /* If we need to restore registers, deallocate as much stack as
@@ -3503,7 +3514,8 @@ riscv_expand_epilogue (bool sibcall_p)
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_rtx = gen_rtx_PLUS (Pmode, stack_pointer_rtx,
-					 const0_rtx);
+					 GEN_INT (step2));
+
       dwarf = alloc_reg_note (REG_CFA_DEF_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
 
