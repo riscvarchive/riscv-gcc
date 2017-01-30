@@ -3638,18 +3638,6 @@ riscv_memory_move_cost (enum machine_mode mode, reg_class_t rclass, bool in)
 	  + memory_move_secondary_cost (mode, rclass, in));
 }
 
-/* Implement TARGET_SCALAR_MODE_SUPPORTED_P.  */
-
-static bool
-riscv_scalar_mode_supported_p (enum machine_mode mode)
-{
-  if (ALL_FIXED_POINT_MODE_P (mode)
-      && GET_MODE_PRECISION (mode) <= 2 * BITS_PER_WORD)
-    return true;
-
-  return default_scalar_mode_supported_p (mode);
-}
-
 /* Return the number of instructions that can be issued per cycle.  */
 
 static int
@@ -4008,9 +3996,6 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 #define TARGET_FUNCTION_ARG_ADVANCE riscv_function_arg_advance
 #undef TARGET_FUNCTION_ARG_BOUNDARY
 #define TARGET_FUNCTION_ARG_BOUNDARY riscv_function_arg_boundary
-
-#undef TARGET_SCALAR_MODE_SUPPORTED_P
-#define TARGET_SCALAR_MODE_SUPPORTED_P riscv_scalar_mode_supported_p
 
 #ifdef HAVE_AS_TLS
 #undef TARGET_HAVE_TLS
