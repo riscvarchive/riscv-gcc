@@ -455,7 +455,8 @@ static int
 riscv_split_integer_cost (HOST_WIDE_INT val)
 {
   int cost;
-  int32_t loval = val, hival = (val - (int32_t)val) >> 32;
+  unsigned HOST_WIDE_INT loval = sext_hwi (val, 32);
+  unsigned HOST_WIDE_INT hival = sext_hwi ((val - loval) >> 32, 32);
   struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS];
 
   cost = 2 + riscv_build_integer (codes, loval, VOIDmode);
@@ -480,7 +481,8 @@ riscv_integer_cost (HOST_WIDE_INT val)
 static rtx
 riscv_split_integer (HOST_WIDE_INT val, enum machine_mode mode)
 {
-  int32_t loval = val, hival = (val - (int32_t)val) >> 32;
+  unsigned HOST_WIDE_INT loval = sext_hwi (val, 32);
+  unsigned HOST_WIDE_INT hival = sext_hwi ((val - loval) >> 32, 32);
   rtx hi = gen_reg_rtx (mode), lo = gen_reg_rtx (mode);
 
   riscv_move_integer (hi, hi, hival);
@@ -561,19 +563,18 @@ riscv_symbolic_constant_p (rtx x, enum riscv_symbol_type *symbol_type)
   if (offset == const0_rtx)
     return true;
 
-  /* Check whether a nonzero offset is valid for the underlying
-     relocations.  */
+  /* Nonzero offsets are only valid for references that don't use the GOT.  */
   switch (*symbol_type)
     {
     case SYMBOL_ABSOLUTE:
     case SYMBOL_PCREL:
     case SYMBOL_TLS_LE:
-      return (int32_t) INTVAL (offset) == INTVAL (offset);
+      /* GAS rejects offsets outside the range [-2^31, 2^31-1].  */
+      return sext_hwi (INTVAL (offset), 32) == INTVAL (offset);
 
     default:
       return false;
     }
-  gcc_unreachable ();
 }
 
 /* Returns the number of instructions necessary to reference a symbol. */
