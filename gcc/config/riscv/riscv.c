@@ -1955,6 +1955,32 @@ riscv_zero_if_equal (rtx cmp0, rtx cmp1)
 		       cmp0, cmp1, 0, 0, OPTAB_DIRECT);
 }
 
+/* Sign- or zero-extend OP0 and OP1 for integer comparisons.  */
+
+static void
+riscv_extend_comparands (rtx_code code, rtx *op0, rtx *op1)
+{
+  /* Comparisons consider all XLEN bits, so extend sub-XLEN values.  */
+  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (*op0)))
+    {
+      /* It is more profitable to zero-extend QImode values.  */
+      if (unsigned_condition (code) == code && GET_MODE (*op0) == QImode)
+	{
+	  *op0 = gen_rtx_ZERO_EXTEND (word_mode, *op0);
+	  if (CONST_INT_P (*op1))
+	    *op1 = GEN_INT ((uint8_t) INTVAL (*op1));
+	  else
+	    *op1 = gen_rtx_ZERO_EXTEND (word_mode, *op1);
+	}
+      else
+	{
+	  *op0 = gen_rtx_SIGN_EXTEND (word_mode, *op0);
+	  if (*op1 != const0_rtx)
+	    *op1 = gen_rtx_SIGN_EXTEND (word_mode, *op1);
+	}
+    }
+}
+
 /* Convert a comparison into something that can be used in a branch.  On
    entry, *OP0 and *OP1 are the values being compared and *CODE is the code
    used to compare them.  Update them to describe the final comparison.  */
@@ -2003,16 +2029,11 @@ riscv_emit_int_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 	}
     }
 
-  /* The fastest way to branch on sub-XLEN values is usually to sign-extend
-     them.  It is cheaper than zero-extension and is often eliminated.  */
-  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (*op0)))
-    {
-      *op0 = force_reg (word_mode, gen_rtx_SIGN_EXTEND (word_mode, *op0));
-      *op1 = gen_rtx_SIGN_EXTEND (word_mode, *op1);
-    }
+  riscv_extend_comparands (*code, op0, op1);
 
+  *op0 = force_reg (word_mode, *op0);
   if (*op1 != const0_rtx)
-    *op1 = force_reg (GET_MODE (*op0), *op1);
+    *op1 = force_reg (word_mode, *op1);
 }
 
 /* Like riscv_emit_int_compare, but for floating-point comparisons.  */
@@ -2103,13 +2124,8 @@ riscv_emit_float_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 void
 riscv_expand_int_scc (rtx target, enum rtx_code code, rtx op0, rtx op1)
 {
-  /* Sign-extend 32-bit values to XLEN.  */
-  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (op0)))
-    {
-      op0 = force_reg (word_mode, gen_rtx_SIGN_EXTEND (word_mode, op0));
-      if (op1 != const0_rtx)
-	op1 = gen_rtx_SIGN_EXTEND (word_mode, op1);
-    }
+  riscv_extend_comparands (code, &op0, &op1);
+  op0 = force_reg (word_mode, op0);
 
   if (code == EQ || code == NE)
     {
