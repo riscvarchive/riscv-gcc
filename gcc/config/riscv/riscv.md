@@ -97,7 +97,7 @@
   (const_string "unknown"))
 
 ;; Main data type used by the insn
-(define_attr "mode" "unknown,none,QI,HI,SI,DI,TI,SF,DF,TF,FPSW"
+(define_attr "mode" "unknown,none,QI,HI,SI,DI,TI,SF,DF,TF"
   (const_string "unknown"))
 
 ;; True if the main data type is twice the size of a word.
@@ -394,7 +394,7 @@
   [(set (match_operand:ANYF 0 "register_operand" "=f")
 	(plus:ANYF (match_operand:ANYF 1 "register_operand" "f")
 		   (match_operand:ANYF 2 "register_operand" "f")))]
-  ""
+  "TARGET_HARD_FLOAT"
   "fadd.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fadd")
    (set_attr "mode" "<UNITMODE>")])
@@ -450,7 +450,7 @@
   [(set (match_operand:ANYF 0 "register_operand" "=f")
 	(minus:ANYF (match_operand:ANYF 1 "register_operand" "f")
 		    (match_operand:ANYF 2 "register_operand" "f")))]
-  ""
+  "TARGET_HARD_FLOAT"
   "fsub.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fadd")
    (set_attr "mode" "<UNITMODE>")])
@@ -506,7 +506,7 @@
   [(set (match_operand:ANYF 0 "register_operand" "=f")
 	(mult:ANYF (match_operand:ANYF 1 "register_operand" "f")
 		      (match_operand:ANYF 2 "register_operand" "f")))]
-  ""
+  "TARGET_HARD_FLOAT"
   "fmul.<fmt>\t%0,%1,%2"
   [(set_attr "type" "fmul")
    (set_attr "mode" "<UNITMODE>")])
@@ -635,8 +635,7 @@
 				     operands[1], operands[2]));
   emit_insn (gen_movsi (riscv_subword (operands[0], false), temp));
   DONE;
-}
-  )
+})
 
 (define_insn "<u>mulsi3_highpart"
   [(set (match_operand:SI 0 "register_operand" "=r")
@@ -701,23 +700,23 @@
    (set_attr "mode" "SI")])
 
 (define_insn "<optab>di3"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(any_div:SI (match_operand:SI 1 "register_operand" "r")
-		    (match_operand:SI 2 "register_operand" "r")))]
-  "TARGET_DIV"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(any_div:DI (match_operand:DI 1 "register_operand" "r")
+		    (match_operand:DI 2 "register_operand" "r")))]
+  "TARGET_DIV && TARGET_64BIT"
   "<insn>\t%0,%1,%2"
   [(set_attr "type" "idiv")
-   (set_attr "mode" "SI")])
+   (set_attr "mode" "DI")])
 
 (define_insn "*<optab>si3_extended"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(sign_extend:DI
 	    (any_div:SI (match_operand:SI 1 "register_operand" "r")
 			(match_operand:SI 2 "register_operand" "r"))))]
-  "TARGET_MUL && TARGET_64BIT"
+  "TARGET_DIV && TARGET_64BIT"
   "<insn>w\t%0,%1,%2"
   [(set_attr "type" "idiv")
-   (set_attr "mode" "SI")])
+   (set_attr "mode" "DI")])
 
 (define_insn "div<mode>3"
   [(set (match_operand:ANYF 0 "register_operand" "=f")
@@ -1549,7 +1548,7 @@
 			(match_operand:ANYF 2 "register_operand")])
 		      (label_ref (match_operand 3 ""))
 		      (pc)))]
-  ""
+  "TARGET_HARD_FLOAT"
 {
   riscv_expand_conditional_branch (operands[3], GET_CODE (operands[0]),
 				   operands[1], operands[2]);
@@ -1638,7 +1637,7 @@
 	(match_operator:SI 1 "fp_scc_comparison"
 	 [(match_operand:ANYF 2 "register_operand")
 	  (match_operand:ANYF 3 "register_operand")]))]
-  ""
+  "TARGET_HARD_FLOAT"
 {
   riscv_expand_float_scc (operands[0], GET_CODE (operands[1]), operands[2],
 			  operands[3]);
