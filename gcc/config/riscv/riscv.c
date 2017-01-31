@@ -1535,8 +1535,6 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
     case GEU:
     case EQ:
     case NE:
-    case UNORDERED:
-    case LTGT:
       /* Branch comparisons have VOIDmode, so use the first operand's
 	 mode instead.  */
       mode = GET_MODE (XEXP (x, 0));
@@ -1544,6 +1542,29 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 	*total = tune_info->fp_add[mode == DFmode];
       else
 	*total = riscv_binary_cost (x, 1, 3);
+      return false;
+
+    case UNORDERED:
+    case ORDERED:
+      /* (FEQ(A, A) & FEQ(B, B)) compared against 0.  */
+      mode = GET_MODE (XEXP (x, 0));
+      *total = tune_info->fp_add[mode == DFmode] + COSTS_N_INSNS (2);
+      return false;
+
+    case UNEQ:
+    case LTGT:
+      /* (FEQ(A, A) & FEQ(B, B)) compared against FEQ(A, B).  */
+      mode = GET_MODE (XEXP (x, 0));
+      *total = tune_info->fp_add[mode == DFmode] + COSTS_N_INSNS (3);
+      return false;
+
+    case UNGE:
+    case UNGT:
+    case UNLE:
+    case UNLT:
+      /* FLT or FLE, but guarded by an FFLAGS read and write.  */
+      mode = GET_MODE (XEXP (x, 0));
+      *total = tune_info->fp_add[mode == DFmode] + COSTS_N_INSNS (4);
       return false;
 
     case MINUS:
