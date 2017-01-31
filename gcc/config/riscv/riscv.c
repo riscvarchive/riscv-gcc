@@ -1581,7 +1581,7 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
     case NEG:
       {
 	rtx op = XEXP (x, 0);
-	if (GET_CODE (op) == FMA)
+	if (GET_CODE (op) == FMA && !HONOR_SIGNED_ZEROS (mode))
 	  {
 	    *total = (tune_info->fp_mul[mode == DFmode]
 		      + set_src_cost (XEXP (op, 0), mode, speed)
