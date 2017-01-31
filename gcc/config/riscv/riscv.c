@@ -3930,13 +3930,13 @@ riscv_trampoline_init (rtx m_tramp, tree fndecl, rtx chain_value)
       unsigned HOST_WIDE_INT lui_hi_chain_code, lui_hi_func_code;
       unsigned HOST_WIDE_INT lo_chain_code, lo_func_code;
 
-      rtx uimm_mask = force_reg (SImode, gen_int_mode (UIMM_MASK, SImode));
+      rtx uimm_mask = force_reg (SImode, gen_int_mode (-IMM_REACH, SImode));
 
       /* 0xfff.  */
       rtx imm12_mask = gen_reg_rtx (SImode);
       emit_insn (gen_one_cmplsi2 (imm12_mask, uimm_mask));
 
-      rtx fixup_value = force_reg (SImode, gen_int_mode (0x800, SImode));
+      rtx fixup_value = force_reg (SImode, gen_int_mode (IMM_REACH/2, SImode));
 
       /* Gen lui t2, hi(chain).  */
       rtx hi_chain = riscv_force_binary (SImode, PLUS, chain_value,

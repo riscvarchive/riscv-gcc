@@ -898,7 +898,6 @@ extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 #define SHIFT_RS1 15
 #define SHIFT_IMM 20
 #define IMM_BITS 12
-#define UIMM_MASK 0xfffff000lu
 
 #define IMM_REACH (1LL << IMM_BITS)
 #define CONST_HIGH_PART(VALUE) (((VALUE) + (IMM_REACH/2)) & ~(IMM_REACH-1))
