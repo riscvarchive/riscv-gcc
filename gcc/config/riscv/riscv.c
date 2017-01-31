@@ -2911,28 +2911,6 @@ riscv_elf_select_rtx_section (enum machine_mode mode, rtx x,
   return s;
 }
 
-/* Implement TARGET_ASM_OUTPUT_DWARF_DTPREL.  */
-
-static void ATTRIBUTE_UNUSED
-riscv_output_dwarf_dtprel (FILE *file, int size, rtx x)
-{
-  switch (size)
-    {
-    case 4:
-      fputs ("\t.dtprelword\t", file);
-      break;
-
-    case 8:
-      fputs ("\t.dtpreldword\t", file);
-      break;
-
-    default:
-      gcc_unreachable ();
-    }
-  output_addr_const (file, x);
-  fputs ("+0x800", file);
-}
-
 /* Make the last instruction frame-related and note that it performs
    the operation described by FRAME_PATTERN.  */
 
@@ -3997,6 +3975,7 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 #undef TARGET_FUNCTION_ARG_BOUNDARY
 #define TARGET_FUNCTION_ARG_BOUNDARY riscv_function_arg_boundary
 
+/* The generic ELF target does not always have TLS support.  */
 #ifdef HAVE_AS_TLS
 #undef TARGET_HAVE_TLS
 #define TARGET_HAVE_TLS true
@@ -4010,11 +3989,6 @@ riscv_cannot_copy_insn_p (rtx_insn *insn)
 
 #undef TARGET_USE_BLOCKS_FOR_CONSTANT_P
 #define TARGET_USE_BLOCKS_FOR_CONSTANT_P hook_bool_mode_const_rtx_true
-
-#ifdef HAVE_AS_DTPRELWORD
-#undef TARGET_ASM_OUTPUT_DWARF_DTPREL
-#define TARGET_ASM_OUTPUT_DWARF_DTPREL riscv_output_dwarf_dtprel
-#endif
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P	riscv_legitimate_address_p
