@@ -24,6 +24,12 @@ along with GCC; see the file COPYING3.  If not see
 
 #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux-riscv" XLEN_SPEC "-" ABI_SPEC ".so.1"
 
+/* Because RISC-V only has word-sized atomics, it requries libatomic where
+   others do not.  So link libatomic by default, as needed.  */
+#undef LIB_SPEC
+#define LIB_SPEC GNU_USER_TARGET_LIB_SPEC \
+  " " LD_AS_NEEDED_OPTION " -latomic " LD_NO_AS_NEEDED_OPTION \
+
 #define LINK_SPEC "\
 -melf" XLEN_SPEC "lriscv \
 %{shared} \
