@@ -2212,14 +2212,20 @@ riscv_flatten_aggregate_field (const_tree type,
   switch (TREE_CODE (type))
     {
     case RECORD_TYPE:
+     /* Can't handle incomplete types nor sizes that are not fixed.  */
+     if (!COMPLETE_TYPE_P (type)
+	 || TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST
+	 || !tree_fits_uhwi_p (TYPE_SIZE (type)))
+       return -1;
+
       for (tree f = TYPE_FIELDS (type); f; f = DECL_CHAIN (f))
 	if (TREE_CODE (f) == FIELD_DECL)
 	  {
 	    if (!TYPE_P (TREE_TYPE (f)))
 	      return -1;
 
-	    n = riscv_flatten_aggregate_field (TREE_TYPE (f), fields, n,
-					       offset + int_byte_position (f));
+	    HOST_WIDE_INT pos = offset + int_byte_position (f);
+	    n = riscv_flatten_aggregate_field (TREE_TYPE (f), fields, n, pos);
 	    if (n < 0)
 	      return -1;
 	  }
