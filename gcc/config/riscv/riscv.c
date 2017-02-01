@@ -2175,11 +2175,7 @@ riscv_function_arg_boundary (enum machine_mode mode, const_tree type)
   else
     alignment = type ? TYPE_ALIGN (type) : GET_MODE_ALIGNMENT (mode);
 
-  if (alignment < PARM_BOUNDARY)
-    alignment = PARM_BOUNDARY;
-  if (alignment > STACK_BOUNDARY)
-    alignment = STACK_BOUNDARY;
-  return alignment;
+  return MIN (STACK_BOUNDARY, MAX (PARM_BOUNDARY, alignment));
 }
 
 /* If MODE represents an argument that can be passed or returned in
@@ -2416,6 +2412,7 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
   unsigned num_bytes, num_words;
   unsigned fpr_base = return_p ? FP_RETURN : FP_ARG_FIRST;
   unsigned gpr_base = return_p ? GP_RETURN : GP_ARG_FIRST;
+  unsigned alignment = riscv_function_arg_boundary (mode, type);
 
   memset (info, 0, sizeof (*info));
   info->gpr_offset = cum->num_gprs;
@@ -2487,8 +2484,8 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
   num_bytes = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode);
   num_words = (num_bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
-  /* Doubleword-aligned arguments start on an even register boundary.  */
-  if (num_bytes && riscv_function_arg_boundary (mode, type) > BITS_PER_WORD)
+  /* Doubleword-aligned varargs start on an even register boundary.  */
+  if (!named && num_bytes != 0 && alignment > BITS_PER_WORD)
     info->gpr_offset += info->gpr_offset & 1;
 
   /* Partition the argument between registers and stack.  */
@@ -3567,38 +3564,38 @@ riscv_register_move_cost (enum machine_mode mode,
 bool
 riscv_hard_regno_mode_ok_p (unsigned int regno, enum machine_mode mode)
 {
-  unsigned int size = GET_MODE_SIZE (mode);
+  unsigned int nregs = riscv_hard_regno_nregs (regno, mode);
 
   if (GP_REG_P (regno))
     {
-      if (size <= UNITS_PER_WORD)
-	return true;
-
-      /* Double-word values must be even-register-aligned.  */
-      if (size <= 2 * UNITS_PER_WORD)
-	return regno % 2 == 0;
-
-      /* For RV32, treat CDImode like two doublewords, but forbid allocating
-	 them in x30, since they need 4 consecutive registers.  */
-      if (size <= 4 * UNITS_PER_WORD)
-	return regno % 2 == 0 && GP_REG_P (regno + 2);
+      if (!GP_REG_P (regno + nregs - 1))
+	return false;
     }
-
-  if (FP_REG_P (regno))
+  else if (FP_REG_P (regno))
     {
-      unsigned max_size = UNITS_PER_FP_REG;
+      if (!FP_REG_P (regno + nregs - 1))
+	return false;
+
+      if (GET_MODE_CLASS (mode) != MODE_FLOAT
+	  && GET_MODE_CLASS (mode) != MODE_COMPLEX_FLOAT)
+	return false;
 
       /* Only use callee-saved registers if a potential callee is guaranteed
 	 to spill the requisite width.  */
-      if (UNITS_PER_FP_ARG < UNITS_PER_FP_REG && !call_used_regs[regno])
-	max_size = UNITS_PER_FP_ARG;
-
-      if (GET_MODE_CLASS (mode) == MODE_FLOAT
-	  || GET_MODE_CLASS (mode) == MODE_COMPLEX_FLOAT)
-	return GET_MODE_UNIT_SIZE (mode) <= max_size;
+      if (GET_MODE_UNIT_SIZE (mode) > UNITS_PER_FP_REG
+	  || (!call_used_regs[regno]
+	      && GET_MODE_UNIT_SIZE (mode) > UNITS_PER_FP_ARG))
+	return false;
     }
+  else
+    return false;
 
-  return false;
+  /* Require same callee-savedness for all registers.  */
+  for (unsigned i = 1; i < nregs; i++)
+    if (call_used_regs[regno] != call_used_regs[regno + i])
+      return false;
+
+  return true;
 }
 
 /* Implement HARD_REGNO_NREGS.  */
