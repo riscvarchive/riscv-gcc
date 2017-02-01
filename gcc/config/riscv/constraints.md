@@ -64,8 +64,12 @@
 (define_constraint "S"
   "@internal
    A constant call address."
-  (and (match_operand 0 "call_insn_operand")
-       (match_test "CONSTANT_P (op)")))
+  (match_operand 0 "absolute_symbolic_operand"))
+
+(define_constraint "U"
+  "@internal
+   A PLT-indirect call address."
+  (match_operand 0 "plt_symbolic_operand"))
 
 (define_constraint "T"
   "@internal

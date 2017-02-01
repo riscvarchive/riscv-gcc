@@ -1156,16 +1156,17 @@ static GTY(()) rtx riscv_tls_symbol;
 static rtx_insn *
 riscv_call_tls_get_addr (rtx sym, rtx result)
 {
-  rtx a0 = gen_rtx_REG (Pmode, GP_ARG_FIRST);
+  rtx a0 = gen_rtx_REG (Pmode, GP_ARG_FIRST), func;
   rtx_insn *insn;
 
   if (!riscv_tls_symbol)
     riscv_tls_symbol = init_one_libfunc ("__tls_get_addr");
+  func = gen_rtx_MEM (FUNCTION_MODE, riscv_tls_symbol);
 
   start_sequence ();
 
   emit_insn (riscv_got_load_tls_gd (a0, sym));
-  insn = riscv_expand_call (false, result, riscv_tls_symbol, const0_rtx);
+  insn = emit_call_insn (gen_call_value (result, func, const0_rtx, NULL));
   RTL_CONST_CALL_P (insn) = 1;
   use_reg (&CALL_INSN_FUNCTION_USAGE (insn), a0);
   insn = get_insns ();
@@ -2661,65 +2662,18 @@ riscv_va_start (tree valist, rtx nextarg)
   std_expand_builtin_va_start (valist, nextarg);
 }
 
-/* Expand a call of type TYPE.  RESULT is where the result will go (null
-   for "call"s and "sibcall"s), ADDR is the address of the function,
-   ARGS_SIZE is the size of the arguments and AUX is the value passed
-   to us by riscv_function_arg.  Return the call itself.  */
+/* Make ADDR suitable for use as a call or sibcall target.  */
 
-rtx_insn *
-riscv_expand_call (bool sibcall_p, rtx result, rtx addr, rtx args_size)
+rtx
+riscv_legitimize_call_address (rtx addr)
 {
-  rtx pattern;
-
   if (!call_insn_operand (addr, VOIDmode))
     {
       rtx reg = RISCV_PROLOGUE_TEMP (Pmode);
       riscv_emit_move (reg, addr);
-      addr = reg;
+      return reg;
     }
-
-  if (result == 0)
-    {
-      rtx (*fn) (rtx, rtx);
-
-      if (sibcall_p)
-	fn = gen_sibcall_internal;
-      else
-	fn = gen_call_internal;
-
-      pattern = fn (addr, args_size);
-    }
-  else if (GET_CODE (result) == PARALLEL && XVECLEN (result, 0) == 2)
-    {
-      /* Handle return values created by riscv_pass_fpr_pair.  */
-      rtx (*fn) (rtx, rtx, rtx, rtx);
-      rtx reg1, reg2;
-
-      if (sibcall_p)
-	fn = gen_sibcall_value_multiple_internal;
-      else
-	fn = gen_call_value_multiple_internal;
-
-      reg1 = XEXP (XVECEXP (result, 0, 0), 0);
-      reg2 = XEXP (XVECEXP (result, 0, 1), 0);
-      pattern = fn (reg1, addr, args_size, reg2);
-    }
-  else
-    {
-      rtx (*fn) (rtx, rtx, rtx);
-
-      if (sibcall_p)
-	fn = gen_sibcall_value_internal;
-      else
-	fn = gen_call_value_internal;
-
-      /* Handle return values created by riscv_pass_fpr_single.  */
-      if (GET_CODE (result) == PARALLEL && XVECLEN (result, 0) == 1)
-	result = XEXP (XVECEXP (result, 0, 0), 0);
-      pattern = fn (result, addr, args_size);
-    }
-
-  return emit_call_insn (pattern);
+  return addr;
 }
 
 /* Print symbolic operand OP, which is part of a HIGH or LO_SUM
@@ -3728,7 +3682,6 @@ riscv_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
 {
   rtx this_rtx, temp1, temp2, fnaddr;
   rtx_insn *insn;
-  bool use_sibcall_p;
 
   /* Pretend to be a post-reload pass while generating rtl.  */
   reload_completed = 1;
@@ -3737,8 +3690,7 @@ riscv_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
   emit_note (NOTE_INSN_PROLOGUE_END);
 
   /* Determine if we can use a sibcall to call FUNCTION directly.  */
-  fnaddr = XEXP (DECL_RTL (function), 0);
-  use_sibcall_p = absolute_symbolic_operand (fnaddr, Pmode);
+  fnaddr = gen_rtx_MEM (FUNCTION_MODE, XEXP (DECL_RTL (function), 0));
 
   /* We need two temporary registers in some cases.  */
   temp1 = gen_rtx_REG (Pmode, RISCV_PROLOGUE_TEMP_REGNUM);
@@ -3778,18 +3730,9 @@ riscv_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
       emit_insn (gen_add3_insn (this_rtx, this_rtx, temp1));
     }
 
-  /* Jump to the target function.  Use a sibcall if direct jumps are
-     allowed, otherwise load the address into a register first.  */
-  if (use_sibcall_p)
-    {
-      insn = emit_call_insn (gen_sibcall_internal (fnaddr, const0_rtx));
-      SIBLING_CALL_P (insn) = 1;
-    }
-  else
-    {
-      riscv_emit_move (temp1, fnaddr);
-      emit_jump_insn (gen_indirect_jump (temp1));
-    }
+  /* Jump to the target function.  */
+  insn = emit_call_insn (gen_sibcall (fnaddr, const0_rtx, NULL, const0_rtx));
+  SIBLING_CALL_P (insn) = 1;
 
   /* Run just enough of rest_of_compilation.  This sequence was
      "borrowed" from alpha.c.  */

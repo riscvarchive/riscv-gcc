@@ -1906,16 +1906,6 @@
 ;;
 ;;  ....................
 
-;; Sibling calls.  All these patterns use jump instructions.
-
-;; call_insn_operand will only accept constant
-;; addresses if a direct jump is acceptable.  Since the 'S' constraint
-;; is defined in terms of call_insn_operand, the same is true of the
-;; constraints.
-
-;; When we use an indirect jump, we need a register that will be
-;; preserved by the epilogue (constraint j).
-
 (define_expand "sibcall"
   [(parallel [(call (match_operand 0 "")
 		    (match_operand 1 ""))
@@ -1923,17 +1913,19 @@
 	      (use (match_operand 3 ""))])]	;; struct_value_size_rtx
   ""
 {
-  riscv_expand_call (true, NULL_RTX, XEXP (operands[0], 0), operands[1]);
+  rtx target = riscv_legitimize_call_address (XEXP (operands[0], 0));
+  emit_call_insn (gen_sibcall_internal (target, operands[1]));
   DONE;
 })
 
 (define_insn "sibcall_internal"
-  [(call (mem:SI (match_operand 0 "call_insn_operand" "j,S"))
+  [(call (mem:SI (match_operand 0 "call_insn_operand" "j,S,U"))
 	 (match_operand 1 "" ""))]
   "SIBLING_CALL_P (insn)"
-  { return REG_P (operands[0]) ? "jr\t%0"
-	   : absolute_symbolic_operand (operands[0], VOIDmode) ? "tail\t%0"
-	   : "tail\t%0@plt"; }
+  "@
+   jr\t%0
+   tail\t%0
+   tail\t%0@plt"
   [(set_attr "type" "call")])
 
 (define_expand "sibcall_value"
@@ -1943,31 +1935,20 @@
 	      (use (match_operand 3 ""))])]		;; next_arg_reg
   ""
 {
-  riscv_expand_call (true, operands[0], XEXP (operands[1], 0), operands[2]);
+  rtx target = riscv_legitimize_call_address (XEXP (operands[1], 0));
+  emit_call_insn (gen_sibcall_value_internal (operands[0], target, operands[2]));
   DONE;
 })
 
 (define_insn "sibcall_value_internal"
-  [(set (match_operand 0 "register_operand" "")
-	(call (mem:SI (match_operand 1 "call_insn_operand" "j,S"))
+  [(set (match_operand 0 "" "")
+	(call (mem:SI (match_operand 1 "call_insn_operand" "j,S,U"))
 	      (match_operand 2 "" "")))]
   "SIBLING_CALL_P (insn)"
-  { return REG_P (operands[1]) ? "jr\t%1"
-	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "tail\t%1"
-	   : "tail\t%1@plt"; }
-  [(set_attr "type" "call")])
-
-(define_insn "sibcall_value_multiple_internal"
-  [(set (match_operand 0 "register_operand" "")
-	(call (mem:SI (match_operand 1 "call_insn_operand" "j,S"))
-	      (match_operand 2 "" "")))
-   (set (match_operand 3 "register_operand" "")
-	(call (mem:SI (match_dup 1))
-	      (match_dup 2)))]
-  "SIBLING_CALL_P (insn)"
-  { return REG_P (operands[1]) ? "jr\t%1"
-	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "tail\t%1"
-	   : "tail\t%1@plt"; }
+  "@
+   jr\t%1
+   tail\t%1
+   tail\t%1@plt"
   [(set_attr "type" "call")])
 
 (define_expand "call"
@@ -1977,18 +1958,20 @@
 	      (use (match_operand 3 ""))])]	;; struct_value_size_rtx
   ""
 {
-  riscv_expand_call (false, NULL_RTX, XEXP (operands[0], 0), operands[1]);
+  rtx target = riscv_legitimize_call_address (XEXP (operands[0], 0));
+  emit_call_insn (gen_call_internal (target, operands[1]));
   DONE;
 })
 
 (define_insn "call_internal"
-  [(call (mem:SI (match_operand 0 "call_insn_operand" "l,S"))
+  [(call (mem:SI (match_operand 0 "call_insn_operand" "l,S,U"))
 	 (match_operand 1 "" ""))
    (clobber (reg:SI RETURN_ADDR_REGNUM))]
   ""
-  { return REG_P (operands[0]) ? "jalr\t%0"
-	   : absolute_symbolic_operand (operands[0], VOIDmode) ? "call\t%0"
-	   : "call\t%0@plt"; }
+  "@
+   jalr\t%0
+   call\t%0
+   call\t%0@plt"
   [(set_attr "type" "call")])
 
 (define_expand "call_value"
@@ -1998,33 +1981,21 @@
 	      (use (match_operand 3 ""))])]		;; next_arg_reg
   ""
 {
-  riscv_expand_call (false, operands[0], XEXP (operands[1], 0), operands[2]);
+  rtx target = riscv_legitimize_call_address (XEXP (operands[1], 0));
+  emit_call_insn (gen_call_value_internal (operands[0], target, operands[2]));
   DONE;
 })
 
 (define_insn "call_value_internal"
-  [(set (match_operand 0 "register_operand" "")
-	(call (mem:SI (match_operand 1 "call_insn_operand" "l,S"))
+  [(set (match_operand 0 "" "")
+	(call (mem:SI (match_operand 1 "call_insn_operand" "l,S,U"))
 	      (match_operand 2 "" "")))
    (clobber (reg:SI RETURN_ADDR_REGNUM))]
   ""
-  { return REG_P (operands[1]) ? "jalr\t%1"
-	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "call\t%1"
-	   : "call\t%1@plt"; }
-  [(set_attr "type" "call")])
-
-(define_insn "call_value_multiple_internal"
-  [(set (match_operand 0 "register_operand" "")
-	(call (mem:SI (match_operand 1 "call_insn_operand" "l,S"))
-	      (match_operand 2 "" "")))
-   (set (match_operand 3 "register_operand" "")
-	(call (mem:SI (match_dup 1))
-	      (match_dup 2)))
-   (clobber (reg:SI RETURN_ADDR_REGNUM))]
-  ""
-  { return REG_P (operands[1]) ? "jalr\t%1"
-	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "call\t%1"
-	   : "call\t%1@plt"; }
+  "@
+   jalr\t%1
+   call\t%1
+   call\t%1@plt"
   [(set_attr "type" "call")])
 
 ;; Call subroutine returning any type.

@@ -60,7 +60,7 @@ extern void riscv_expand_int_scc (rtx, enum rtx_code, rtx, rtx);
 extern void riscv_expand_float_scc (rtx, enum rtx_code, rtx, rtx);
 extern void riscv_expand_conditional_branch (rtx, enum rtx_code, rtx, rtx);
 #endif
-extern rtx_insn *riscv_expand_call (bool, rtx, rtx, rtx);
+extern rtx riscv_legitimize_call_address (rtx);
 extern void riscv_set_return_address (rtx, rtx);
 extern bool riscv_expand_block_move (rtx, rtx, rtx);
 extern rtx riscv_return_addr (int, rtx);
