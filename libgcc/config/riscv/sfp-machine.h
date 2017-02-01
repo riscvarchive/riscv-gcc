@@ -94,8 +94,7 @@ typedef int __gcc_CMPtype __attribute__ ((mode (__libgcc_cmp_return__)));
     R##_c = FP_CLS_NAN;				\
   } while (0)
 
-#define _FP_DECL_EX		int _frm;
-
+#define _FP_DECL_EX		int _frm __attribute__ ((unused));
 #define FP_ROUNDMODE		_frm
 
 #define FP_RND_NEAREST		0x0
