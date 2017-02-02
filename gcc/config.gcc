@@ -2022,12 +2022,12 @@ microblaze*-*-elf)
         ;;
 riscv*-*-linux*)
 	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
-	tmake_file="${tmake_file} riscv/t-riscv"
 	case "x${enable_multilib}" in
 	xno) ;;
 	xyes) tmake_file="${tmake_file} riscv/t-linux-multilib" ;;
 	*) echo "Unknown value for enable_multilib"; exit 1
 	esac
+	tmake_file="${tmake_file} riscv/t-riscv riscv/t-linux"
 	gnu_ld=yes
 	gas=yes
 	# Force .init_array support.  The configure script cannot always
@@ -2036,12 +2036,12 @@ riscv*-*-linux*)
 	;;
 riscv*-*-elf*)
 	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
-	tmake_file="${tmake_file} riscv/t-riscv"
 	case "x${enable_multilib}" in
 	xno) ;;
 	xyes) tmake_file="${tmake_file} riscv/t-elf-multilib" ;;
 	*) echo "Unknown value for enable_multilib"; exit 1
 	esac
+	tmake_file="${tmake_file} riscv/t-riscv"
 	gnu_ld=yes
 	gas=yes
 	# Force .init_array support.  The configure script cannot always
