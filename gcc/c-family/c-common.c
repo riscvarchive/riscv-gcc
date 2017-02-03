@@ -6106,11 +6106,11 @@ c_parse_error (const char *gmsgid, enum cpp_ttype token_type,
       message = NULL;
     }
   else
-    error (gmsgid);
+    error ("%s", gmsgid);
 
   if (message)
     {
-      error (message);
+      error ("%s", message);
       free (message);
     }
 #undef catenate_messages

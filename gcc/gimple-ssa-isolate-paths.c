@@ -515,9 +515,12 @@ find_explicit_erroneous_behavior (void)
 			msg = N_("function may return address of "
 				 "local variable");
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
 		      if (warning_at (gimple_location (stmt),
 				      OPT_Wreturn_local_addr, msg))
 			inform (DECL_SOURCE_LOCATION(valbase), "declared here");
+#pragma GCC diagnostic pop
 		      tree zero = build_zero_cst (TREE_TYPE (val));
 		      gimple_return_set_retval (return_stmt, zero);
 		      update_stmt (stmt);

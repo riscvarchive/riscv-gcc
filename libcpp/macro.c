@@ -3102,7 +3102,10 @@ create_iso_definition (cpp_reader *pfile, cpp_macro *macro)
 	     function-like macros, but not at the end.  */
 	  if (following_paste_op)
 	    {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
 	      cpp_error (pfile, CPP_DL_ERROR, paste_op_error_msg);
+#pragma GCC diagnostic pop
 	      return false;
 	    }
 	  break;
@@ -3115,7 +3118,10 @@ create_iso_definition (cpp_reader *pfile, cpp_macro *macro)
 	     function-like macros, but not at the beginning.  */
 	  if (macro->count == 1)
 	    {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
 	      cpp_error (pfile, CPP_DL_ERROR, paste_op_error_msg);
+#pragma GCC diagnostic pop
 	      return false;
 	    }
 

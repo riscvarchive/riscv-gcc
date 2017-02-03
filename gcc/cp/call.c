@@ -6243,14 +6243,19 @@ build_op_delete_call (enum tree_code code, tree addr, tree size,
 	     -Wc++14-compat.  */
 	  else if (!flag_sized_deallocation)
 	    {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
 	      if ((complain & tf_warning)
 		  && warning (OPT_Wc__14_compat, msg1))
 		inform (DECL_SOURCE_LOCATION (fn), msg2, fn);
+#pragma GCC diagnostic pop
 	      goto ok;
 	    }
 
 	  if (complain & tf_warning_or_error)
 	    {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
 	      if (permerror (input_location, msg1))
 		{
 		  /* Only mention C++14 for namespace-scope delete.  */
@@ -6261,6 +6266,7 @@ build_op_delete_call (enum tree_code code, tree addr, tree size,
 			    "%qD is a usual (non-placement) deallocation "
 			    "function", fn);
 		}
+#pragma GCC diagnostic pop
 	    }
 	  else
 	    return error_mark_node;

@@ -87,7 +87,10 @@ get_int (void)
 {
   int x;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
   scanf (" %d", &x);
+#pragma GCC diagnostic pop
   return x;
 }
 

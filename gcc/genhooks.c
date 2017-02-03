@@ -127,8 +127,11 @@ emit_documentation (const char *in_fname)
       perror ("");
       fatal ("Couldn't open input file");
     }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
   while (fscanf (f, "%*[^@]"), buf[0] = '\0',
 	 fscanf (f, "@%5[^ \n]", buf) != EOF)
+#pragma GCC diagnostic pop
     {
       void **p;
       struct s_hook *shp;
@@ -136,7 +139,10 @@ emit_documentation (const char *in_fname)
       if (strcmp (buf, "hook") != 0)
 	continue;
       buf[0] = '\0';
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
       fscanf (f, "%999s", buf);
+#pragma GCC diagnostic pop
       shp = XNEW (struct s_hook);
       shp->name = upstrdup (buf);
       shp->pos = -1;
@@ -189,13 +195,19 @@ emit_documentation (const char *in_fname)
 	  continue;
 	}
       buf[0] = '\0';
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
       fscanf (f, "%5[^ \n]", buf);
+#pragma GCC diagnostic pop
       if (strcmp (buf, "hook") != 0)
 	{
 	  printf ("@%s", buf);
 	  continue;
 	}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
       fscanf (f, "%999s", buf);
+#pragma GCC diagnostic pop
       sh.name = name = upstrdup (buf);
       shp = (struct s_hook *) htab_find (start_hooks, &sh);
       if (!shp || shp->pos < 0)

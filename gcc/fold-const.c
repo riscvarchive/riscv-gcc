@@ -300,7 +300,10 @@ fold_overflow_warning (const char* gmsgid, enum warn_strict_overflow_code wc)
 	}
     }
   else if (issue_strict_overflow_warning (wc))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
     warning (OPT_Wstrict_overflow, gmsgid);
+#pragma GCC diagnostic pop
 }
 
 /* Return true if the built-in mathematical function specified by CODE

@@ -499,7 +499,11 @@ brig_init (void)
 	  else
 	    part++;
 	  char *modname2;
-	  asprintf (&modname2, "%s_%s", modname, part);
+	  if (asprintf (&modname2, "%s_%s", modname, part) == -1)
+	    {
+	      perror("Unable to asprintf");
+	      abort();
+	    }
 	  free (modname);
 	  modname = modname2;
 	}

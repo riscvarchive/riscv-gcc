@@ -89,7 +89,8 @@ dump_probability (int value)
     return "[0.01%]";
 
   char *buf;
-  asprintf (&buf, "[%.2f%%]", fvalue);
+  if (asprintf (&buf, "[%.2f%%]", fvalue) != 1)
+    return nullptr;
   const char *ret = xstrdup_for_dump (buf);
   free (buf);
 

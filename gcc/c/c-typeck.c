@@ -3527,7 +3527,7 @@ convert_arguments (location_t loc, vec<location_t> arg_loc, tree typelist,
       else if ((invalid_func_diag =
 		targetm.calls.invalid_arg_for_unprototyped_fn (typelist, fundecl, val)))
 	{
-	  error (invalid_func_diag);
+	  error ("%s", invalid_func_diag);
 	  return -1;
 	}
       else if (TREE_CODE (val) == ADDR_EXPR && reject_gcc_builtin (val))
@@ -4182,7 +4182,10 @@ build_unary_op (location_t location, enum tree_code code, tree xarg,
   if ((invalid_op_diag
        = targetm.invalid_unary_op (code, TREE_TYPE (xarg))))
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
       error_at (location, invalid_op_diag);
+#pragma GCC diagnostic pop
       return error_mark_node;
     }
 
@@ -6025,7 +6028,10 @@ error_init (location_t loc, const char *gmsgid)
   char *ofwhat;
 
   /* The gmsgid may be a format string with %< and %>. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
   error_at (loc, gmsgid);
+#pragma GCC diagnostic pop
   ofwhat = print_spelling ((char *) alloca (spelling_length () + 1));
   if (*ofwhat)
     inform (loc, "(near initialization for %qs)", ofwhat);
@@ -6048,7 +6054,10 @@ pedwarn_init (location_t loc, int opt, const char *gmsgid)
   source_location exploc = expansion_point_location_if_in_system_header (loc);
 
   /* The gmsgid may be a format string with %< and %>. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
   warned = pedwarn (exploc, opt, gmsgid);
+#pragma GCC diagnostic pop
   ofwhat = print_spelling ((char *) alloca (spelling_length () + 1));
   if (*ofwhat && warned)
     inform (exploc, "(near initialization for %qs)", ofwhat);
@@ -6072,7 +6081,10 @@ warning_init (location_t loc, int opt, const char *gmsgid)
   source_location exploc = expansion_point_location_if_in_system_header (loc);
 
   /* The gmsgid may be a format string with %< and %>. */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
   warned = warning_at (exploc, opt, gmsgid);
+#pragma GCC diagnostic pop
   ofwhat = print_spelling ((char *) alloca (spelling_length () + 1));
   if (*ofwhat && warned)
     inform (exploc, "(near initialization for %qs)", ofwhat);
@@ -10860,7 +10872,10 @@ build_binary_op (location_t location, enum tree_code code,
   if ((invalid_op_diag
        = targetm.invalid_binary_op (code, type0, type1)))
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
       error_at (location, invalid_op_diag);
+#pragma GCC diagnostic pop
       return error_mark_node;
     }
 

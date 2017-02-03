@@ -3093,7 +3093,7 @@ execute (void)
       if (errmsg != NULL)
 	{
 	  if (err == 0)
-	    fatal_error (input_location, errmsg);
+	    fatal_error (input_location, "%s", errmsg);
 	  else
 	    {
 	      errno = err;
@@ -6792,7 +6792,7 @@ run_attempt (const char **new_argv, const char *out_temp,
   if (errmsg != NULL)
     {
       if (err == 0)
-	fatal_error (input_location, errmsg);
+	fatal_error (input_location, "%s", errmsg);
       else
 	{
 	  errno = err;
@@ -6858,13 +6858,17 @@ do_report_bug (const char **new_argv, const int nargs,
   int fd = open (*out_file, O_RDWR | O_APPEND);
   if (fd < 0)
     return;
-  write (fd, "\n//", 3);
+  if (write (fd, "\n//", 3) != 3)
+    perror("Unable to write");
   for (i = 0; i < nargs; i++)
     {
-      write (fd, " ", 1);
-      write (fd, new_argv[i], strlen (new_argv[i]));
+      if (write (fd, " ", 1) != 1)
+	perror("Unable to write");
+      if (write (fd, new_argv[i], strlen (new_argv[i])) < (ssize_t) strlen (new_argv[i]))
+	perror("Unable to write");
     }
-  write (fd, "\n\n", 2);
+  if (write (fd, "\n\n", 2) != 2)
+    perror("Unable to write");
   close (fd);
   new_argv[nargs] = "-E";
   new_argv[nargs + 1] = NULL;
@@ -9594,7 +9598,8 @@ get_random_number (void)
   fd = open ("/dev/urandom", O_RDONLY); 
   if (fd >= 0)
     {
-      read (fd, &ret, sizeof (HOST_WIDE_INT));
+      if (read (fd, &ret, sizeof (HOST_WIDE_INT)) != sizeof (HOST_WIDE_INT))
+	ret = 0;
       close (fd);
       if (ret)
         return ret;
