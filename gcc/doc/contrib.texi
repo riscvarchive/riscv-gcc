@@ -174,7 +174,7 @@ for an 8-bit architecture.
 
 @item
 Kito Cheng for his work on the RISC-V port, including bringing up the test
-suite and maintiance.
+suite and maintenance.
 
 @item
 Scott Christley for his Objective-C contributions.
