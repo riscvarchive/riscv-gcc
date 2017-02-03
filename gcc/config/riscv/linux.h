@@ -27,8 +27,12 @@ along with GCC; see the file COPYING3.  If not see
 /* Because RISC-V only has word-sized atomics, it requries libatomic where
    others do not.  So link libatomic by default, as needed.  */
 #undef LIB_SPEC
+#ifdef LD_AS_NEEDED_OPTION
 #define LIB_SPEC GNU_USER_TARGET_LIB_SPEC \
   " %{pthread:" LD_AS_NEEDED_OPTION " -latomic " LD_NO_AS_NEEDED_OPTION "}" \
+#else
+#define LIB_SPEC GNU_USER_TARGET_LIB_SPEC " -latomic "
+#endif
 
 #define LINK_SPEC "\
 -melf" XLEN_SPEC "lriscv \
