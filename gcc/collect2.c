@@ -2370,7 +2370,10 @@ scan_prog_file (const char *prog_name, scanpass which_pass,
 	  fatal_error (input_location, "%s: %m", _(errmsg));
 	}
       else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
 	fatal_error (input_location, errmsg);
+#pragma GCC diagnostic pop
     }
 
   int_handler  = (void (*) (int)) signal (SIGINT,  SIG_IGN);

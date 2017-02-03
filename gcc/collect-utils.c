@@ -192,7 +192,7 @@ collect_execute (const char *prog, char **argv, const char *outname,
 	  fatal_error (input_location, "%s: %m", _(errmsg));
 	}
       else
-	fatal_error (input_location, errmsg);
+	fatal_error (input_location, "%s", errmsg);
     }
 
   free (response_arg);

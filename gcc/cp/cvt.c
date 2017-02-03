@@ -683,7 +683,7 @@ ocp_convert (tree type, tree expr, int convtype, int flags,
        = targetm.invalid_conversion (TREE_TYPE (expr), type)))
     {
       if (complain & tf_error)
-	error (invalid_conv_diag);
+	error ("%s", invalid_conv_diag);
       return error_mark_node;
     }
 

@@ -75,7 +75,7 @@ convert (tree type, tree expr)
   if ((invalid_conv_diag
        = targetm.invalid_conversion (TREE_TYPE (expr), type)))
     {
-      error (invalid_conv_diag);
+      error ("%s", invalid_conv_diag);
       return error_mark_node;
     }
 

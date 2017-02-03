@@ -2208,12 +2208,16 @@ warn_for_restrict (unsigned param_pos, vec<tree, va_gc> *args)
 	richloc.add_range (EXPR_LOCATION (arg), false);
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#pragma GCC diagnostic ignored "-Wformat-extra-args"
   warning_at_rich_loc_n (&richloc, OPT_Wrestrict, arg_positions_len,
 			 "passing argument %i to restrict-qualified parameter"
 			 " aliases with argument %Z",
 			 "passing argument %i to restrict-qualified parameter"
 			 " aliases with arguments %Z",
 			 param_pos + 1, arg_positions, arg_positions_len);
+#pragma GCC diagnostic pop
 
   free (arg_positions);
 }

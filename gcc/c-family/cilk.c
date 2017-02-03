@@ -1432,13 +1432,19 @@ check_no_cilk (tree expr, const char *array_msgid, const char *spawn_msgid,
   if (contains_array_notation_expr (expr))
     {
       loc = get_error_location (expr, loc);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
       error_at (loc, array_msgid);
+#pragma GCC diagnostic pop
       return true;
     }
   if (walk_tree (&expr, contains_cilk_spawn_stmt_walker, NULL, NULL))
     {
       loc = get_error_location (expr, loc);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
       error_at (loc, spawn_msgid);
+#pragma GCC diagnostic pop
       return true;
     }
   return false;

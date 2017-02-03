@@ -765,12 +765,15 @@ cpp_classify_number (cpp_reader *pfile, const cpp_token *token,
 				? N_("use of C++11 long long integer constant")
 		                : N_("use of C99 long long integer constant");
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
 	  if (CPP_OPTION (pfile, c99))
             cpp_warning_with_line (pfile, CPP_W_LONG_LONG, virtual_location,
 				   0, message);
           else
             cpp_pedwarning_with_line (pfile, CPP_W_LONG_LONG,
 				      virtual_location, 0, message);
+#pragma GCC diagnostic pop
         }
 
       result |= CPP_N_INTEGER;

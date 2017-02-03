@@ -4402,6 +4402,8 @@ omp_simple_builtin::generate (gimple *stmt, hsa_bb *hbb)
 {
   if (m_sorry)
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
       if (m_warning_message)
 	HSA_SORRY_AT (gimple_location (stmt), m_warning_message);
       else
@@ -4411,6 +4413,7 @@ omp_simple_builtin::generate (gimple *stmt, hsa_bb *hbb)
     }
   else if (m_warning_message != NULL)
     warning_at (gimple_location (stmt), OPT_Whsa, m_warning_message);
+#pragma GCC diagnostic pop
 
   if (m_return_value != NULL)
     {

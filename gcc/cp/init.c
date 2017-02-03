@@ -2781,8 +2781,11 @@ build_new_1 (vec<tree, va_gc> **placement, tree type, tree nelts,
 	  else
 	    msg = ("non-constant array new length must be specified "
 		   "without parentheses around the type-id");
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
 	  pedwarn (EXPR_LOC_OR_LOC (outer_nelts, input_location),
 		   OPT_Wvla, msg);
+#pragma GCC diagnostic pop
 	}
       else
 	return error_mark_node;

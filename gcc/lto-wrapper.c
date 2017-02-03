@@ -909,7 +909,11 @@ find_and_merge_options (int fd, off_t file_offset, const char *prefix,
 
   lseek (fd, file_offset + offset, SEEK_SET);
   data = (char *)xmalloc (length);
-  read (fd, data, length);
+  if (read (fd, data, length) < 0)
+    {
+      perror("Unable to read LTO section");
+      error("Unable to read LTO section");
+    }
   fopts = data;
   do
     {

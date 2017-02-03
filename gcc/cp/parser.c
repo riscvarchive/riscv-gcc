@@ -2932,7 +2932,7 @@ cp_parser_check_type_definition (cp_parser* parser)
     {
       /* Don't use `%s' to print the string, because quotations (`%<', `%>')
 	 in the message need to be interpreted.  */
-      error (parser->type_definition_forbidden_message);
+      error ("%s", parser->type_definition_forbidden_message);
       return false;
     }
   return true;

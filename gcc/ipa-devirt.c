@@ -1018,7 +1018,10 @@ warn_odr (tree t1, tree t2, tree st1, tree st2,
     }
   else
     return;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-security"
   inform (DECL_SOURCE_LOCATION (decl2), reason);
+#pragma GCC diagnostic pop
 
   if (warned)
     *warned = true;

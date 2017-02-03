@@ -1863,9 +1863,12 @@ lto_resolution_read (splay_tree file_ids, FILE *resolution, lto_file *file)
 
   name_len = strlen (file->filename);
   obj_name = XNEWVEC (char, name_len + 1);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
   fscanf (resolution, " ");   /* Read white space. */
 
   fread (obj_name, sizeof (char), name_len, resolution);
+#pragma GCC diagnostic pop
   obj_name[name_len] = '\0';
   if (filename_cmp (obj_name, file->filename) != 0)
     internal_error ("unexpected file name %s in linker resolution file. "
@@ -1885,7 +1888,10 @@ lto_resolution_read (splay_tree file_ids, FILE *resolution, lto_file *file)
 
   free (obj_name);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
   fscanf (resolution, "%u", &num_symbols);
+#pragma GCC diagnostic pop
 
   for (i = 0; i < num_symbols; i++)
     {

@@ -16569,7 +16569,7 @@ tsubst_copy_and_build (tree t,
 				     &error_msg,
 				     input_location);
 	if (error_msg)
-	  error (error_msg);
+	  error ("%s", error_msg);
 	if (!function_p && identifier_p (decl))
 	  {
 	    if (complain & tf_error)

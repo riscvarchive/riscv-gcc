@@ -4212,7 +4212,7 @@ cp_build_binary_op (location_t location,
        = targetm.invalid_binary_op (code, type0, type1)))
     {
       if (complain & tf_error)
-	error (invalid_op_diag);
+	error ("%s", invalid_op_diag);
       return error_mark_node;
     }
 
@@ -5872,7 +5872,7 @@ cp_build_unary_op (enum tree_code code, tree xarg, bool noconvert,
 				   TREE_TYPE (xarg))))
     {
       if (complain & tf_error)
-	error (invalid_op_diag);
+	error ("%s", invalid_op_diag);
       return error_mark_node;
     }
 
