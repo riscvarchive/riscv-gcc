@@ -29,7 +29,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef LIB_SPEC
 #ifdef LD_AS_NEEDED_OPTION
 #define LIB_SPEC GNU_USER_TARGET_LIB_SPEC \
-  " %{pthread:" LD_AS_NEEDED_OPTION " -latomic " LD_NO_AS_NEEDED_OPTION "}" \
+  " %{pthread:" LD_AS_NEEDED_OPTION " -latomic " LD_NO_AS_NEEDED_OPTION "}"
 #else
 #define LIB_SPEC GNU_USER_TARGET_LIB_SPEC " -latomic "
 #endif
