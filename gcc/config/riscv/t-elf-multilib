@@ -1,2 +1,0 @@
-# For the time being, Linux and Newlib have the same multilib settings.
-include $(srcdir)/config/riscv/t-linux-multilib
