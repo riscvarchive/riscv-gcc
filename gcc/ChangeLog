@@ -1,3 +1,10 @@
+2017-03-13  Palmer Dabbelt  <palmer@dabbelt.com
+
+	* config/riscv/riscv.c (riscv_print_operand): Use "fence
+        rwio,wo".
+        * config/riscv/sync.mc (mem_thread_fence_1): Use "fence
+        rwio,rwio".
+
 2017-02-08  Segher Boessenkool  <segher@kernel.crashing.org>
 
 	PR translation/79397
