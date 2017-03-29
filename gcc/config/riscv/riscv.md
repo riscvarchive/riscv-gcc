@@ -244,9 +244,6 @@
 ;; QImode values so we can force zero-extension.
 (define_mode_iterator BR [(QI "TARGET_64BIT") SI (DI "TARGET_64BIT")])
 
-;; 32-bit moves for which we provide move patterns.
-(define_mode_iterator MOVE32 [SI])
-
 ;; 64-bit modes for which we provide move patterns.
 (define_mode_iterator MOVE64 [DI DF])
 
@@ -258,9 +255,6 @@
 
 ;; Iterator for QImode extension patterns.
 (define_mode_iterator SUPERQI [HI SI (DI "TARGET_64BIT")])
-
-;; Iterator for hardware integer modes narrower than XLEN.
-(define_mode_iterator SUBX [QI HI (SI "TARGET_64BIT")])
 
 ;; Iterator for hardware-supported integer modes.
 (define_mode_iterator ANYI [QI HI SI (DI "TARGET_64BIT")])
@@ -1264,8 +1258,8 @@
 ;; 32-bit Integer moves
 
 (define_expand "mov<mode>"
-  [(set (match_operand:MOVE32 0 "")
-	(match_operand:MOVE32 1 ""))]
+  [(set (match_operand:SI 0 "")
+	(match_operand:SI 1 ""))]
   ""
 {
   if (riscv_legitimize_move (<MODE>mode, operands[0], operands[1]))
