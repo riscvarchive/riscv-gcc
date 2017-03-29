@@ -1,3 +1,7 @@
+2017-05-04  Kito Cheng  <kito.cheng@gmail.com>
+
+	* config/riscv/riscv.md: Unify indentation.
+
 2017-05-04  Richard Sandiford  <richard.sandiford@linaro.org>
 
 	* tree-ssa-loop-manip.c (niter_for_unrolled_loop): Add commentary
