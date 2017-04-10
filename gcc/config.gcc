@@ -2018,10 +2018,14 @@ microblaze*-*-elf)
 	tmake_file="${tmake_file} microblaze/t-microblaze"
         ;;
 riscv*-*-linux*)
+	case "${target}" in
+	riscv32-*) riscv_xlen=32 ;;
+	riscv64-*) riscv_xlen=64 ;;
+	esac
 	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h"
 	case "x${enable_multilib}" in
 	xno) ;;
-	xyes) tmake_file="${tmake_file} riscv/t-linux-multilib" ;;
+	xyes) tmake_file="${tmake_file} riscv/t-linux-multilib${riscv_xlen}" ;;
 	*) echo "Unknown value for enable_multilib"; exit 1
 	esac
 	tmake_file="${tmake_file} riscv/t-riscv riscv/t-linux"
@@ -2032,10 +2036,14 @@ riscv*-*-linux*)
 	gcc_cv_initfini_array=yes
 	;;
 riscv*-*-elf*)
+	case "${target}" in
+	riscv32-*) riscv_xlen=32 ;;
+	riscv64-*) riscv_xlen=64 ;;
+	esac
 	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
 	case "x${enable_multilib}" in
 	xno) ;;
-	xyes) tmake_file="${tmake_file} riscv/t-elf-multilib" ;;
+	xyes) tmake_file="${tmake_file} riscv/t-elf-multilib${riscv_xlen}" ;;
 	*) echo "Unknown value for enable_multilib"; exit 1
 	esac
 	tmake_file="${tmake_file} riscv/t-riscv"

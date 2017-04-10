@@ -1,3 +1,10 @@
+2017-04-28  Palmer Dabbelt  <palmer@dabbelt.com>
+
+	* config/riscv/t-elf-multilib32: New file.
+	* config/riscv/t-linux-multilib32: Likewise
+	* config.gcc: Select between the 32-bit and 64-bit multilib
+	configurations based on the target XLEN.
+
 2017-04-28  Jan Hubicka  <hubicka@ucw.cz>
 
 	* ipa-cp.c (perform_estimation_of_a_value): Turn time to sreal.
