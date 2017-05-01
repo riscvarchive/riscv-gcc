@@ -66,6 +66,7 @@
   [(RETURN_ADDR_REGNUM		1)
    (T0_REGNUM			5)
    (T1_REGNUM			6)
+   (T6_REGNUM			31)
    (S0_REGNUM			8)
    (S1_REGNUM			9)
    (S2_REGNUM			18)
