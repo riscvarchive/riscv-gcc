@@ -2786,6 +2786,11 @@ riscv_block_move_loop (rtx dest, rtx src, HOST_WIDE_INT length,
   /* Mop up any left-over bytes.  */
   if (leftover)
     riscv_block_move_straight (dest, src, leftover);
+  else
+    /* Emit an nop to prevent gcc_assert fail in commit_one_edge_insertion,
+       Ya, it's workaround due to we don't known what's the assertion mean,
+       it's just disallow last instruciton can't be a jump insn.  */
+    emit_insn (gen_nop ());
 }
 
 /* Expand a movmemsi instruction, which copies LENGTH bytes from
