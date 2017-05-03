@@ -1385,6 +1385,16 @@ riscv_legitimize_move (enum machine_mode mode, rtx dest, rtx src)
       return true;
     }
 
+  if (MEM_P (dest) && USE_LOAD_ADDRESS_MACRO (XEXP (dest, 0)))
+    {
+      XEXP (dest, 0) = force_reg (Pmode, XEXP (dest, 0));
+    }
+
+  if (MEM_P (src) && USE_LOAD_ADDRESS_MACRO (XEXP (src, 0)))
+    {
+      XEXP (src, 0) = force_reg (Pmode, XEXP (src, 0));
+    }
+
   return false;
 }
 
