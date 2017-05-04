@@ -648,7 +648,10 @@ typedef struct {
 	 || ((GET_CODE (sym) == CONST)					\
 	     && SYMBOL_REF_P (XEXP (XEXP (sym, 0),0))			\
 	     && SYMBOL_REF_LOCAL_P (XEXP (XEXP (sym, 0),0)))))		\
-     || riscv_cmodel == CM_MEDANY))
+     || (riscv_cmodel == CM_MEDANY					\
+	 && (SYMBOL_REF_P (sym)						\
+	     || (GET_CODE (sym) == CONST				\
+		 && SYMBOL_REF_P (XEXP (XEXP (sym, 0),0)))))))
 
 /* Define this as 1 if `char' should by default be signed; else as 0.  */
 #define DEFAULT_SIGNED_CHAR 0
