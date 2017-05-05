@@ -1,8 +1,0 @@
-(function "test_bb_index"
-  (insn-chain
-    (block 42
-      (edge-from entry (flags "FALLTHRU"))
-      (edge-to exit (flags "FALLTHRU"))
-    ) ;; block 42
-  ) ;; insn-chain
-) ;; function
