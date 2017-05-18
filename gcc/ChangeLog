@@ -1,3 +1,8 @@
+2017-05-18  Andrew Waterman  <andrew@sifive.com>
+
+	* config/riscv/riscv.c (riscv_option_override): Conditionally set
+	TARGET_STRICT_ALIGN based upon -mtune argument.
+
 2017-05-12  Kito Cheng  <kito.cheng@gmail.com>
 
 	* config/riscv/riscv.c (riscv_legitimize_move): Handle
