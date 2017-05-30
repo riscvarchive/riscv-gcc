@@ -3,4 +3,5 @@ LIB2ADD += $(srcdir)/config/riscv/save-restore.S \
 	   $(srcdir)/config/riscv/multi3.S \
 	   $(srcdir)/config/riscv/div.S \
 	   $(srcdir)/config/riscv/atomic.c \
+	   $(srcdir)/config/riscv/bswapdi2.S \
 
