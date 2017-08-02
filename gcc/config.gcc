@@ -4035,7 +4035,7 @@ case "${target}" in
 
 		# Infer arch from --with-arch, --target, and --with-abi.
 		case "${with_arch}" in
-		rv32i* | rv32g* | rv64i* | rv64g*)
+		rv32e* | rv32i* | rv32g* | rv64i* | rv64g*)
 			# OK.
 			;;
 		"")
@@ -4047,7 +4047,7 @@ case "${target}" in
 			esac
 			;;
 		*)
-			echo "--with-arch=${with_arch} is not supported.  The argument must begin with rv32i, rv32g, rv64i, or rv64g." 1>&2
+			echo "--with-arch=${with_arch} is not supported.  The argument must begin with rv32e, rv32i, rv32g, rv64i, or rv64g." 1>&2
 			exit 1
 			;;
 		esac
