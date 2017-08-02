@@ -1,3 +1,9 @@
+2017-08-02  Kito Cheng  <kito.cheng@gmail.com>
+
+	* longlong.h [__riscv] (__umulsidi3): Define.
+	[__riscv] (umul_ppmm) Likewise.
+	[__riscv] (__muluw3) Likewise.
+
 2017-10-23  David Malcolm  <dmalcolm@redhat.com>
 
 	* unique-ptr.h: Make include of <memory> conditional on C++11 or
