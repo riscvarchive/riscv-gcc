@@ -77,6 +77,26 @@ riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
 	    }
 	}
     }
+  else if (*p == 'e')
+    {
+      p++;
+
+      *flags |= MASK_RVE;
+
+      if (*flags & MASK_64BIT)
+	{
+	  error ("RV64E is not a valid base ISA");
+	  return;
+	}
+
+      *flags &= ~MASK_MUL;
+      if (*p == 'm')
+	*flags |= MASK_MUL, p++;
+
+      *flags &= ~MASK_ATOMIC;
+      if (*p == 'a')
+	*flags |= MASK_ATOMIC, p++;
+    }
   else
     {
       error_at (loc, "-march=%s: invalid ISA string", isa);

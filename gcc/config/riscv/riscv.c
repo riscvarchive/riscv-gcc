@@ -3036,7 +3036,15 @@ riscv_compute_frame_info (void)
 
       /* Only use save/restore routines if they don't alter the stack size.  */
       if (RISCV_STACK_ALIGN (num_save_restore * UNITS_PER_WORD) == x_save_size)
-	frame->save_libcall_adjustment = x_save_size;
+	{
+	  if (TARGET_RVE && riscv_use_save_libcall (frame))
+	    {
+	      /* Libcall saves/restores 3 registers at once, so we need
+		 allocate 12 bytes for callee-saved register.  */
+	      x_save_size = 3 * UNITS_PER_WORD;
+	    }
+	  frame->save_libcall_adjustment = x_save_size;
+	}
 
       offset += x_save_size;
     }
@@ -3790,6 +3798,17 @@ riscv_option_override (void)
 static void
 riscv_conditional_register_usage (void)
 {
+  /* We have only x0~x15 on RV32E.  */
+  if (TARGET_RVE)
+    {
+      int r;
+      for (r = 16; r <= 31; r++)
+	{
+	  fixed_regs[r] = 1;
+	  call_used_regs[r] = call_really_used_regs[r] = 1;
+	}
+    }
+
   if (!TARGET_HARD_FLOAT)
     {
       for (int regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
