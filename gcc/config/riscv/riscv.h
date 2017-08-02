@@ -256,7 +256,7 @@ along with GCC; see the file COPYING3.  If not see
 /* Internal macros to classify an ISA register's type.  */
 
 #define GP_REG_FIRST 0
-#define GP_REG_LAST  31
+#define GP_REG_LAST  (TARGET_RVE ? 15 : 31)
 #define GP_REG_NUM   (GP_REG_LAST - GP_REG_FIRST + 1)
 
 #define FP_REG_FIRST 32
@@ -486,7 +486,7 @@ enum reg_class
 #define GP_RETURN GP_ARG_FIRST
 #define FP_RETURN (UNITS_PER_FP_ARG == 0 ? GP_RETURN : FP_ARG_FIRST)
 
-#define MAX_ARGS_IN_REGISTERS 8
+#define MAX_ARGS_IN_REGISTERS (TARGET_RVE ? 6 : 8)
 
 /* Symbolic macros for the first/last argument registers.  */
 
@@ -534,8 +534,10 @@ typedef struct {
 
 #define EPILOGUE_USES(REGNO)	((REGNO) == RETURN_ADDR_REGNUM)
 
-/* ABI requires 16-byte alignment, even on RV32. */
-#define RISCV_STACK_ALIGN(LOC) (((LOC) + 15) & -16)
+/* ABI requires 16-byte alignment, even on RV32,
+   but 4-byte alignment for RVE.  */
+#define RISCV_STACK_ALIGN(LOC) \
+  (((LOC) + (BIGGEST_ALIGNMENT / 8) - 1) & -(BIGGEST_ALIGNMENT / 8))
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,
    the stack pointer does not matter.  The value is tested only in

@@ -1,3 +1,7 @@
+2017-08-03  Kito Cheng  <kito.cheng@gmail.com>
+
+	* testsuite/gcc.dg/stack-usage-1.c: Support for rv32e.
+
 2017-11-06  Jeff Law  <law@redhat.com>
 
 	* gcc.target/i386/stack-check-12.c: Revert to initial version.  Then..
@@ -10065,8 +10069,8 @@
 
 2017-05-08  Wilco Dijkstra  <wdijkstr@arm.com>
 
-	* gcc.dg/vect/vect-44.c: Add -fno-vect-cost-model.
-	* gcc.dg/vect/vect-50.c: Likewise.
+	* testsuite/gcc.dg/vect/vect-44.c: Add -fno-vect-cost-model.
+	* gcc/testsuite/gcc.dg/vect/vect-50.c: Likewise.
 
 2017-05-07  Jeff Law  <law@redhat.com>
 
@@ -10800,7 +10804,7 @@
 	* gcc.dg/tree-ssa/vrp35.c: Disable EVRP.
 	* gcc.dg/tree-ssa/vrp36.c: Likewise.
 	* gcc.dg/tree-ssa/pr49039.c: Likewise.
-
+ 
 2017-04-27  Marek Polacek  <polacek@redhat.com>
 
 	PR sanitizer/80349

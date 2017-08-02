@@ -1,3 +1,20 @@
+2017-08-03  Kito Cheng  <kito.cheng@gmail.com>
+	    Monk Chiang  <sh.chiang04@gmail.com>
+
+	* common/config/riscv/riscv-common.c (riscv_parse_arch_string):
+	Support parsing rv32e*.
+	* config.gcc (riscv*-*-elf*): Support rv32e*.
+	* config/riscv/riscv-c.c (riscv_cpu_cpp_builtins): Define
+	__riscv_32e for rv32e*.
+	* config/riscv/riscv.c (riscv_compute_frame_info): Support rv32e.
+	(riscv_conditional_register_usage): Ditto.
+	* config/riscv/riscv.h (BIGGEST_ALIGNMENT): Ditto.
+	(GP_REG_LAST): Ditto.
+	(STACK_BOUNDARY): Ditto.
+	(MAX_ARGS_IN_REGISTERS): Ditto.
+	(RISCV_STACK_ALIGN): Ditto.
+	* config/riscv/riscv.opt (RVE): Add RVE mask.
+
 2017-11-06  James Bowman  <james.bowman@ftdichip.com>
 
 	* gcc/dwarf2out.c (modified_type_die): Retain ADDR_SPACE

@@ -1,4 +1,10 @@
 2017-08-03  Kito Cheng <kito.cheng@gmail.com>
+	    Monk Chiang  <sh.chiang04@gmail.com>
+
+	* config.host: Support rv32e.
+	* config/riscv/save-restore.S: Support rv32e.
+
+2017-08-03  Kito Cheng <kito.cheng@gmail.com>
 
 	* config/riscv/t-elf: Use multi3.c instead of multi3.S.
 	* config/riscv/multi3.c: New file.
