@@ -656,7 +656,7 @@ typedef struct {
 #define MOVE_MAX UNITS_PER_WORD
 #define MAX_MOVE_MAX 8
 
-#define SLOW_BYTE_ACCESS 0
+#define SLOW_BYTE_ACCESS 1
 
 #define SHIFT_COUNT_TRUNCATED 1
 
