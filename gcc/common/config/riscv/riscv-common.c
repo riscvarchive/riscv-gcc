@@ -87,7 +87,7 @@ riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
   if (*p == 'c')
     *flags |= MASK_RVC, p++;
 
-  if (*p)
+  if (*p && *p != 'x')
     {
       error_at (loc, "-march=%s: unsupported ISA substring %qs", isa, p);
       return;
