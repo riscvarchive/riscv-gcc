@@ -1524,6 +1524,20 @@
   [(set_attr "type" "shift")
    (set_attr "mode" "SI")])
 
+(define_insn "*lshrsi3_zero_extend"
+  [(set (match_operand:DI                   0 "register_operand" "=r")
+	(zero_extend:DI
+	    (lshiftrt:SI (match_operand:SI 1 "register_operand" " r")
+			  (match_operand:SI 2 "const_int_operand"))))]
+  "TARGET_64BIT && (INTVAL (operands[2]) & 0x1f) > 0"
+{
+  operands[2] = GEN_INT (INTVAL (operands[2]) & 0x1f);
+
+  return "srlw\t%0,%1,%2";
+}
+  [(set_attr "type" "shift")
+   (set_attr "mode" "SI")])
+
 ;;
 ;;  ....................
 ;;
