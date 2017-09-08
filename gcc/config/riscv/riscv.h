@@ -123,8 +123,14 @@ along with GCC; see the file COPYING3.  If not see
 /* Allocation boundary (in *bits*) for the code of a function.  */
 #define FUNCTION_BOUNDARY (TARGET_RVC ? 16 : 32)
 
+/* The smallest supported stack boundary the calling convention supports.  */
+#define MIN_STACK_BOUNDARY (TARGET_RVE ? BITS_PER_WORD : 2 * BITS_PER_WORD)
+
+/* The ABI stack alignment.  */
+#define ABI_STACK_BOUNDARY (TARGET_RVE ? BITS_PER_WORD : 128)
+
 /* There is no point aligning anything to a rounder boundary than this.  */
-#define BIGGEST_ALIGNMENT (TARGET_RVE ? 32 : 128)
+#define BIGGEST_ALIGNMENT STACK_BOUNDARY
 
 /* The user-level ISA permits unaligned accesses, but they are not required
    of the privileged architecture.  */
@@ -513,7 +519,7 @@ enum reg_class
    `crtl->outgoing_args_size'.  */
 #define OUTGOING_REG_PARM_STACK_SPACE(FNTYPE) 1
 
-#define STACK_BOUNDARY (TARGET_RVE ? 32 : 128)
+#define STACK_BOUNDARY riscv_stack_boundary
 
 /* Symbolic macros for the registers used to return integer and floating
    point values.  */
@@ -868,6 +874,7 @@ while (0)
 extern const enum reg_class riscv_regno_to_class[];
 extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 extern bool riscv_slow_unaligned_access;
+extern unsigned riscv_stack_boundary;
 #endif
 
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL) \
