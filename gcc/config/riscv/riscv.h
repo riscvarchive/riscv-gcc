@@ -124,7 +124,7 @@ along with GCC; see the file COPYING3.  If not see
 #define FUNCTION_BOUNDARY (TARGET_RVC ? 16 : 32)
 
 /* There is no point aligning anything to a rounder boundary than this.  */
-#define BIGGEST_ALIGNMENT (TARGET_RVE ? BITS_PER_WORD : (2 * BITS_PER_WORD))
+#define BIGGEST_ALIGNMENT (TARGET_RVE ? 32 : 128)
 
 /* The user-level ISA permits unaligned accesses, but they are not required
    of the privileged architecture.  */
@@ -513,7 +513,7 @@ enum reg_class
    `crtl->outgoing_args_size'.  */
 #define OUTGOING_REG_PARM_STACK_SPACE(FNTYPE) 1
 
-#define STACK_BOUNDARY BIGGEST_ALIGNMENT
+#define STACK_BOUNDARY (TARGET_RVE ? 32 : 128)
 
 /* Symbolic macros for the registers used to return integer and floating
    point values.  */
