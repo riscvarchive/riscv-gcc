@@ -2828,8 +2828,21 @@ riscv_expand_block_move (rtx dest, rtx src, rtx length)
 	}
       else if (optimize && align >= BITS_PER_WORD)
 	{
-	  riscv_block_move_loop (dest, src, INTVAL (length),
-				 RISCV_MAX_MOVE_BYTES_PER_LOOP_ITER / factor);
+	  unsigned min_iter_words
+	    = RISCV_MAX_MOVE_BYTES_PER_LOOP_ITER / UNITS_PER_WORD;
+	  unsigned iter_words = min_iter_words;
+	  HOST_WIDE_INT bytes = INTVAL (length), words = bytes / UNITS_PER_WORD;
+
+	  /* Lengthen the loop body if it shortens the tail.  */
+	  for (unsigned i = min_iter_words; i < min_iter_words * 2 - 1; i++)
+	    {
+	      unsigned cur_cost = iter_words + words % iter_words;
+	      unsigned new_cost = i + words % i;
+	      if (new_cost <= cur_cost)
+		iter_words = i;
+	    }
+
+	  riscv_block_move_loop (dest, src, bytes, iter_words * UNITS_PER_WORD);
 	  return true;
 	}
     }
