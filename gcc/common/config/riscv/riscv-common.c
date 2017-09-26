@@ -52,6 +52,11 @@ riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
       *flags |= MASK_ATOMIC;
       *flags |= MASK_HARD_FLOAT;
       *flags |= MASK_DOUBLE_FLOAT;
+      if (*p == 'q')
+	{
+	  *flags |= MASK_QUAD_FLOAT;
+	  p++;
+	}
     }
   else if (*p == 'i')
     {
@@ -74,6 +79,11 @@ riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
 	    {
 	      *flags |= MASK_DOUBLE_FLOAT;
 	      p++;
+	      if (*p == 'q')
+		{
+		  *flags |= MASK_QUAD_FLOAT;
+		  p++;
+		}
 	    }
 	}
     }

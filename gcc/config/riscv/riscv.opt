@@ -59,6 +59,9 @@ Enum(abi_type) String(lp64f) Value(ABI_LP64F)
 EnumValue
 Enum(abi_type) String(lp64d) Value(ABI_LP64D)
 
+EnumValue
+Enum(abi_type) String(lp64q) Value(ABI_LP64Q)
+
 mfdiv
 Target Report Mask(FDIV)
 Use hardware floating-point divide and square root instructions.
@@ -115,6 +118,8 @@ Mask(ATOMIC)
 Mask(HARD_FLOAT)
 
 Mask(DOUBLE_FLOAT)
+
+Mask(QUAD_FLOAT)
 
 Mask(RVC)
 
