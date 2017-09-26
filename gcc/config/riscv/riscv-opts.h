@@ -27,7 +27,8 @@ enum riscv_abi_type {
   ABI_ILP32D,
   ABI_LP64,
   ABI_LP64F,
-  ABI_LP64D
+  ABI_LP64D,
+  ABI_LP64Q
 };
 extern enum riscv_abi_type riscv_abi;
 

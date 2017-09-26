@@ -867,7 +867,7 @@ riscv_load_store_insns (rtx mem, rtx_insn *insn)
   else if (GET_MODE_BITSIZE (mode) == 64)
     {
       set = single_set (insn);
-      if (set && !riscv_split_64bit_move_p (SET_DEST (set), SET_SRC (set)))
+      if (set && !riscv_split_move_p (SET_DEST (set), SET_SRC (set)))
 	might_split_p = false;
     }
 
@@ -1651,11 +1651,13 @@ riscv_address_cost (rtx addr, machine_mode mode,
 rtx
 riscv_subword (rtx op, bool high_p)
 {
-  unsigned int byte = high_p ? UNITS_PER_WORD : 0;
+  unsigned int byte;
   machine_mode mode = GET_MODE (op);
 
   if (mode == VOIDmode)
     mode = TARGET_64BIT ? TImode : DImode;
+
+  byte = high_p ? (GET_MODE_SIZE (mode) / 2) : 0;
 
   if (MEM_P (op))
     return adjust_address (op, word_mode, byte);
@@ -1666,17 +1668,20 @@ riscv_subword (rtx op, bool high_p)
   return simplify_gen_subreg (word_mode, op, mode, byte);
 }
 
-/* Return true if a 64-bit move from SRC to DEST should be split into two.  */
+/* Return true if move from SRC to DEST should be split into two.  */
 
 bool
-riscv_split_64bit_move_p (rtx dest, rtx src)
+riscv_split_move_p (rtx dest, rtx src)
 {
-  if (TARGET_64BIT)
+  enum machine_mode mode;
+  mode = GET_MODE (dest);
+
+  if (GET_MODE_SIZE (mode) <= UNITS_PER_WORD)
     return false;
 
   /* Allow FPR <-> FPR and FPR <-> MEM moves, and permit the special case
      of zeroing an FPR with FCVT.D.W.  */
-  if (TARGET_DOUBLE_FLOAT
+  if ((GET_MODE_SIZE (mode) <= UNITS_PER_FP_REG)
       && ((FP_REG_RTX_P (src) && FP_REG_RTX_P (dest))
 	  || (FP_REG_RTX_P (dest) && MEM_P (src))
 	  || (FP_REG_RTX_P (src) && MEM_P (dest))
@@ -1687,7 +1692,7 @@ riscv_split_64bit_move_p (rtx dest, rtx src)
 }
 
 /* Split a doubleword move from SRC to DEST.  On 32-bit targets,
-   this function handles 64-bit moves for which riscv_split_64bit_move_p
+   this function handles 64-bit moves for which riscv_split_move_p
    holds.  For 64-bit targets, this function handles 128-bit moves.  */
 
 void
@@ -1718,20 +1723,23 @@ riscv_output_move (rtx dest, rtx src)
 {
   enum rtx_code dest_code, src_code;
   machine_mode mode;
-  bool dbl_p;
 
   dest_code = GET_CODE (dest);
   src_code = GET_CODE (src);
   mode = GET_MODE (dest);
-  dbl_p = (GET_MODE_SIZE (mode) == 8);
 
-  if (dbl_p && riscv_split_64bit_move_p (dest, src))
+  if (riscv_split_move_p (dest, src))
     return "#";
 
   if (dest_code == REG && GP_REG_P (REGNO (dest)))
     {
       if (src_code == REG && FP_REG_P (REGNO (src)))
-	return dbl_p ? "fmv.x.d\t%0,%1" : "fmv.x.s\t%0,%1";
+	switch (GET_MODE_SIZE (mode))
+	  {
+	  case 4:  return "fmv.x.s\t%0,%1";
+	  case 8:  return "fmv.x.d\t%0,%1";
+	  case 16: return "fmv.x.q\t%0,%1";
+	  }
 
       if (src_code == MEM)
 	switch (GET_MODE_SIZE (mode))
@@ -1767,13 +1775,39 @@ riscv_output_move (rtx dest, rtx src)
 
 	  if (FP_REG_P (REGNO (dest)))
 	    {
-	      if (!dbl_p)
-		return "fmv.s.x\t%0,%z1";
-	      if (TARGET_64BIT)
-		return "fmv.d.x\t%0,%z1";
-	      /* in RV32, we can emulate fmv.d.x %0, x0 using fcvt.d.w */
-	      gcc_assert (src == CONST0_RTX (mode));
-	      return "fcvt.d.w\t%0,x0";
+	      switch (GET_MODE_SIZE (mode))
+		{
+		case 4:
+		  return "fmv.s.x\t%0,%z1";
+		case 8:
+		  if (TARGET_64BIT)
+		    return "fmv.d.x\t%0,%z1";
+		  else
+		    {
+		      /* In RV32, we can emulate fmv.d.x %0, x0 using
+			 fcvt.d.w.  */
+		      gcc_assert (src == CONST0_RTX (mode));
+		      return "fcvt.d.w\t%0,x0";
+		    }
+		case 16:
+		  {
+		    gcc_assert (src == CONST0_RTX (mode));
+		    if (TARGET_64BIT)
+		      {
+			/* In RV64, we can emulate fmv.q.x %0, x0 using
+			   fcvt.d.x.  */
+			return "fmv.d.x\t%0,x0";
+		      }
+		    else
+		      {
+			/* In RV32, we can emulate fmv.d.x %0, x0 using
+			   fcvt.d.w.  */
+			gcc_assert (src == CONST0_RTX (mode));
+			return "fcvt.d.w\t%0,x0";
+		      }
+
+		  }
+		}
 	    }
 	}
       if (dest_code == MEM)
@@ -1788,15 +1822,31 @@ riscv_output_move (rtx dest, rtx src)
   if (src_code == REG && FP_REG_P (REGNO (src)))
     {
       if (dest_code == REG && FP_REG_P (REGNO (dest)))
-	return dbl_p ? "fmv.d\t%0,%1" : "fmv.s\t%0,%1";
+	switch (GET_MODE_SIZE (mode))
+	  {
+	  case 4:  return "fmv.s\t%0,%1";
+	  case 8:  return "fmv.d\t%0,%1";
+	  case 16: return "fmv.q\t%0,%1";
+	  }
 
       if (dest_code == MEM)
-	return dbl_p ? "fsd\t%1,%0" : "fsw\t%1,%0";
+	switch (GET_MODE_SIZE (mode))
+	  {
+	  case 4:  return "fsw\t%1,%0";
+	  case 8:  return "fsd\t%1,%0";
+	  case 16: return "fsq\t%1,%0";
+	  }
+
     }
   if (dest_code == REG && FP_REG_P (REGNO (dest)))
     {
       if (src_code == MEM)
-	return dbl_p ? "fld\t%0,%1" : "flw\t%0,%1";
+	switch (GET_MODE_SIZE (mode))
+	  {
+	  case 4:  return "flw\t%0,%1";
+	  case 8:  return "fld\t%0,%1";
+	  case 16: return "flq\t%0,%1";
+	  }
     }
   gcc_unreachable ();
 }
@@ -2054,6 +2104,10 @@ riscv_emit_float_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 	emit_insn (gen_f##CMP##_quietdfdi4 (*op0, cmp_op0, cmp_op1));	\
       else if (GET_MODE (cmp_op0) == DFmode)				\
 	emit_insn (gen_f##CMP##_quietdfsi4 (*op0, cmp_op0, cmp_op1));	\
+      else if (GET_MODE (cmp_op0) == TFmode && TARGET_64BIT)		\
+	emit_insn (gen_f##CMP##_quiettfdi4 (*op0, cmp_op0, cmp_op1));	\
+      else if (GET_MODE (cmp_op0) == TFmode)				\
+	emit_insn (gen_f##CMP##_quiettfsi4 (*op0, cmp_op0, cmp_op1));	\
       else								\
 	gcc_unreachable ();						\
       *op1 = const0_rtx;						\
@@ -3189,7 +3243,10 @@ riscv_for_each_saved_reg (HOST_WIDE_INT sp_offset, riscv_save_restore_fn fn)
   for (int regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
     if (BITSET_P (cfun->machine->frame.fmask, regno - FP_REG_FIRST))
       {
-	machine_mode mode = TARGET_DOUBLE_FLOAT ? DFmode : SFmode;
+	machine_mode mode =
+	  (TARGET_QUAD_FLOAT
+	   ? TFmode
+	   : (TARGET_DOUBLE_FLOAT ? DFmode : SFmode));
 
 	riscv_save_restore_reg (mode, regno, offset, fn);
 	offset -= GET_MODE_SIZE (mode);

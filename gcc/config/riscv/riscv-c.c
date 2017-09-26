@@ -76,6 +76,10 @@ riscv_cpu_cpp_builtins (cpp_reader *pfile)
     case ABI_LP64D:
       builtin_define ("__riscv_float_abi_double");
       break;
+
+    case ABI_LP64Q:
+      builtin_define ("__riscv_float_abi_quad");
+      break;
     }
   
   switch (riscv_cmodel)

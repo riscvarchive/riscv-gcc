@@ -4024,6 +4024,7 @@ case "${target}" in
 			case "${with_abi}" in
 			ilp32 | ilp32f | ilp32d) with_arch="rv32gc" ;;
 			lp64 | lp64f | lp64d) with_arch="rv64gc" ;;
+			lp64q) with_arch="rv64gqc" ;;
 			*) with_arch="rv${xlen}gc" ;;
 			esac
 			;;
@@ -4037,12 +4038,13 @@ case "${target}" in
 		# pick a default based on the ISA, preferring soft-float
 		# unless the D extension is present.
 		case "${with_abi}" in
-		ilp32 | ilp32f | ilp32d | lp64 | lp64f | lp64d)
+		ilp32 | ilp32f | ilp32d | lp64 | lp64f | lp64d | lp64q)
 			;;
 		"")
 			case "${with_arch}" in
 			rv32*d* | rv32g*) with_abi=ilp32d ;;
 			rv32*) with_abi=ilp32 ;;
+			rv64*q* ) with_abi=lp64q ;;
 			rv64*d* | rv64g*) with_abi=lp64d ;;
 			rv64*) with_abi=lp64 ;;
 			esac
@@ -4060,7 +4062,8 @@ case "${target}" in
 		| ilp32d,rv32*d* | ilp32d,rv32g* \
 		| lp64,rv64* \
 		| lp64f,rv64*f* | lp64f,rv64g* \
-		| lp64d,rv64*d* | lp64d,rv64g*)
+		| lp64d,rv64*d* | lp64d,rv64g* \
+		| lp64q,rv64*q* )
 			;;
 		*)
 			echo "--with-abi=${with_abi} is not supported for ISA ${with_arch}" 1>&2

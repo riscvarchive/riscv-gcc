@@ -99,12 +99,16 @@ along with GCC; see the file COPYING3.  If not see
 #endif
 
 /* The `Q' extension is not yet supported.  */
-#define UNITS_PER_FP_REG (TARGET_DOUBLE_FLOAT ? 8 : 4)
+#define UNITS_PER_FP_REG (TARGET_QUAD_FLOAT ? 16 : (TARGET_DOUBLE_FLOAT ? 8 : 4))
 
 /* The largest type that can be passed in floating-point registers.  */
 #define UNITS_PER_FP_ARG					\
   (riscv_abi == ABI_ILP32 || riscv_abi == ABI_LP64 ? 0 :	\
-   riscv_abi == ABI_ILP32F || riscv_abi == ABI_LP64F ? 4 : 8)	\
+   riscv_abi == ABI_ILP32F || riscv_abi == ABI_LP64F ? 4 :     \
+   riscv_abi == ABI_ILP32D || riscv_abi == ABI_LP64D ? 8 : 16)
+
+#define TARGET_HAVE_DOUBLE_FLOAT (TARGET_DOUBLE_FLOAT || TARGET_QUAD_FLOAT)
+#define TARGET_HAVE_QUAD_FLOAT TARGET_QUAD_FLOAT
 
 /* Set the sizes of the core types.  */
 #define SHORT_TYPE_SIZE 16

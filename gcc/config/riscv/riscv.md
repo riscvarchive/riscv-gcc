@@ -270,24 +270,25 @@
 
 ;; Iterator for hardware-supported floating-point modes.
 (define_mode_iterator ANYF [(SF "TARGET_HARD_FLOAT")
-			    (DF "TARGET_DOUBLE_FLOAT")])
+			    (DF "TARGET_HAVE_DOUBLE_FLOAT")
+			    (TF "TARGET_HAVE_QUAD_FLOAT")])
 
 ;; This attribute gives the length suffix for a sign- or zero-extension
 ;; instruction.
 (define_mode_attr size [(QI "b") (HI "h")])
 
 ;; Mode attributes for loads.
-(define_mode_attr load [(QI "lb") (HI "lh") (SI "lw") (DI "ld") (SF "flw") (DF "fld")])
+(define_mode_attr load [(QI "lb") (HI "lh") (SI "lw") (DI "ld") (SF "flw") (DF "fld") (TF "flq")])
 
 ;; Instruction names for stores.
-(define_mode_attr store [(QI "sb") (HI "sh") (SI "sw") (DI "sd") (SF "fsw") (DF "fsd")])
+(define_mode_attr store [(QI "sb") (HI "sh") (SI "sw") (DI "sd") (SF "fsw") (DF "fsd") (TF "fsq")])
 
 ;; This attribute gives the best constraint to use for registers of
 ;; a given mode.
 (define_mode_attr reg [(SI "d") (DI "d") (CC "d")])
 
 ;; This attribute gives the format suffix for floating-point operations.
-(define_mode_attr fmt [(SF "s") (DF "d")])
+(define_mode_attr fmt [(SF "s") (DF "d") (TF "q")])
 
 ;; This attribute gives the integer suffix for floating-point conversions.
 (define_mode_attr ifmt [(SI "w") (DI "l")])
@@ -297,7 +298,7 @@
 
 ;; This attribute gives the upper-case mode name for one unit of a
 ;; floating-point mode.
-(define_mode_attr UNITMODE [(SF "SF") (DF "DF")])
+(define_mode_attr UNITMODE [(SF "SF") (DF "DF") (TF "TF")])
 
 ;; This attribute gives the integer mode that has half the size of
 ;; the controlling mode.
@@ -968,10 +969,26 @@
   [(set (match_operand:SF     0 "register_operand" "=f")
 	(float_truncate:SF
 	    (match_operand:DF 1 "register_operand" " f")))]
-  "TARGET_DOUBLE_FLOAT"
+  "TARGET_HAVE_DOUBLE_FLOAT"
   "fcvt.s.d\t%0,%1"
   [(set_attr "type" "fcvt")
    (set_attr "mode" "SF")])
+
+(define_insn "trunctfsf2"
+  [(set (match_operand:SF 0 "register_operand" "=f")
+        (float_truncate:SF (match_operand:TF 1 "register_operand" "f")))]
+  "TARGET_HAVE_QUAD_FLOAT"
+  "fcvt.s.q\t%0,%1"
+  [(set_attr "type"     "fcvt")
+   (set_attr "mode"     "SF")])
+
+(define_insn "trunctfdf2"
+  [(set (match_operand:DF 0 "register_operand" "=f")
+        (float_truncate:DF (match_operand:TF 1 "register_operand" "f")))]
+  "TARGET_HAVE_QUAD_FLOAT"
+  "fcvt.d.q\t%0,%1"
+  [(set_attr "type"     "fcvt")
+   (set_attr "mode"     "DF")])
 
 ;;
 ;;  ....................
@@ -1072,10 +1089,26 @@
   [(set (match_operand:DF     0 "register_operand" "=f")
 	(float_extend:DF
 	    (match_operand:SF 1 "register_operand" " f")))]
-  "TARGET_DOUBLE_FLOAT"
+  "TARGET_HAVE_DOUBLE_FLOAT"
   "fcvt.d.s\t%0,%1"
   [(set_attr "type" "fcvt")
    (set_attr "mode" "DF")])
+
+(define_insn "extendsftf2"
+  [(set (match_operand:TF 0 "register_operand" "=f")
+        (float_extend:TF (match_operand:SF 1 "register_operand" "f")))]
+  "TARGET_HAVE_QUAD_FLOAT"
+  "fcvt.q.s\t%0,%1"
+  [(set_attr "type"     "fcvt")
+   (set_attr "mode"     "TF")])
+
+(define_insn "extenddftf2"
+  [(set (match_operand:TF 0 "register_operand" "=f")
+        (float_extend:TF (match_operand:DF 1 "register_operand" "f")))]
+  "TARGET_HAVE_QUAD_FLOAT"
+  "fcvt.q.d\t%0,%1"
+  [(set_attr "type"     "fcvt")
+   (set_attr "mode"     "TF")])
 
 ;;
 ;;  ....................
@@ -1397,7 +1430,7 @@
 (define_insn "*movdf_hardfloat_rv32"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=f,f,f,m,m,  *r,*r,*m")
 	(match_operand:DF 1 "move_operand"         " f,G,m,f,G,*r*G,*m,*r"))]
-  "!TARGET_64BIT && TARGET_DOUBLE_FLOAT
+  "!TARGET_64BIT && TARGET_HAVE_DOUBLE_FLOAT
    && (register_operand (operands[0], DFmode)
        || reg_or_0_operand (operands[1], DFmode))"
   { return riscv_output_move (operands[0], operands[1]); }
@@ -1407,7 +1440,7 @@
 (define_insn "*movdf_hardfloat_rv64"
   [(set (match_operand:DF 0 "nonimmediate_operand" "=f,f,f,m,m,*f,*r,  *r,*r,*m")
 	(match_operand:DF 1 "move_operand"         " f,G,m,f,G,*r,*f,*r*G,*m,*r"))]
-  "TARGET_64BIT && TARGET_DOUBLE_FLOAT
+  "TARGET_64BIT && TARGET_HAVE_DOUBLE_FLOAT
    && (register_operand (operands[0], DFmode)
        || reg_or_0_operand (operands[1], DFmode))"
   { return riscv_output_move (operands[0], operands[1]); }
@@ -1417,7 +1450,7 @@
 (define_insn "*movdf_softfloat"
   [(set (match_operand:DF 0 "nonimmediate_operand" "= r,r, m")
 	(match_operand:DF 1 "move_operand"         " rG,m,rG"))]
-  "!TARGET_DOUBLE_FLOAT
+  "!TARGET_HAVE_DOUBLE_FLOAT
    && (register_operand (operands[0], DFmode)
        || reg_or_0_operand (operands[1], DFmode))"
   { return riscv_output_move (operands[0], operands[1]); }
@@ -1428,7 +1461,40 @@
   [(set (match_operand:MOVE64 0 "nonimmediate_operand")
 	(match_operand:MOVE64 1 "move_operand"))]
   "reload_completed
-   && riscv_split_64bit_move_p (operands[0], operands[1])"
+   && riscv_split_move_p (operands[0], operands[1])"
+  [(const_int 0)]
+{
+  riscv_split_doubleword_move (operands[0], operands[1]);
+  DONE;
+})
+
+;; 128-bit floating point moves
+(define_expand "movtf"
+  [(set (match_operand:TF 0 "")
+        (match_operand:TF 1 ""))]
+  "TARGET_HAVE_QUAD_FLOAT"
+{
+  if (riscv_legitimize_move (TFmode, operands[0], operands[1]))
+    DONE;
+})
+
+;; In RV64, we lack fmv.x.q and fmv.q.x.  Go through memory instead.
+;; (However, we can still use fcvt.q.w to zero a floating-point register.)
+(define_insn "*movtf_hardfloat_rv64"
+  [(set (match_operand:TF 0 "nonimmediate_operand" "=f,f,f,m,m,  *r,*r,*m")
+        (match_operand:TF 1 "move_operand"         " f,G,m,f,G,*r*G,*m,*r"))]
+  "TARGET_64BIT && TARGET_HAVE_QUAD_FLOAT
+   && (register_operand (operands[0], TFmode)
+       || reg_or_0_operand (operands[1], TFmode))"
+  { return riscv_output_move (operands[0], operands[1]); }
+  [(set_attr "move_type" "fmove,mtc,fpload,fpstore,store,move,load,store")
+   (set_attr "mode" "TF")])
+
+(define_split
+  [(set (match_operand:TF 0 "nonimmediate_operand")
+        (match_operand:TF 1 "move_operand"))]
+  "reload_completed
+   && riscv_split_move_p (operands[0], operands[1])"
   [(const_int 0)]
 {
   riscv_split_doubleword_move (operands[0], operands[1]);
