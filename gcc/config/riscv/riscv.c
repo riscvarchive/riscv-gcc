@@ -1578,6 +1578,9 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
     case MULT:
       if (float_mode_p)
 	*total = tune_info->fp_mul[mode == DFmode];
+      else if (!TARGET_MUL)
+	/* Estimate the cost of a library call.  */
+	*total = COSTS_N_INSNS (speed ? 32 : 6);
       else if (GET_MODE_SIZE (mode) > UNITS_PER_WORD)
 	*total = 3 * tune_info->int_mul[0] + COSTS_N_INSNS (2);
       else if (!speed)
@@ -1598,6 +1601,9 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 
     case UDIV:
     case UMOD:
+      if (!TARGET_DIV)
+	/* Estimate the cost of a library call.  */
+	*total = COSTS_N_INSNS (speed ? 32 : 6);
       if (speed)
 	*total = tune_info->int_div[mode == DImode];
       else
