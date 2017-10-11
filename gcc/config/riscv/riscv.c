@@ -2808,6 +2808,8 @@ riscv_block_move_loop (rtx dest, rtx src, HOST_WIDE_INT length,
   /* Mop up any left-over bytes.  */
   if (leftover)
     riscv_block_move_straight (dest, src, leftover);
+  else
+    emit_insn(gen_nop ());
 }
 
 /* Expand a movmemsi instruction, which copies LENGTH bytes from
