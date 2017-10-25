@@ -55,3 +55,5 @@ along with GCC; see the file COPYING3.  If not see
       %{rdynamic:-export-dynamic} \
       -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
     %{static:-static}}"
+
+#define CPP_SPEC "%{pthread:-D_REENTRANT}"
