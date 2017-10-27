@@ -1,3 +1,8 @@
+2017-10-27  Palmer Dabbelt  <palmer@dabbelt.com>
+
+	PR target/82717
+	* doc/invoke.texi (RISC-V) <-mabi>: Correct and improve.
+
 2017-10-25  Palmer Dabbelt  <palmer@dabbelt.com>
 
 	* config/riscv/riscv.md (ZERO_EXTEND_LOAD): Define.
