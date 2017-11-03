@@ -1,3 +1,9 @@
+2017-11-04  Chih-Mao Chen <pkmx.tw@gmail.com>
+
+	* config/riscv/div.S: Set symbol type to function.
+	* config/riscv/muldi3.S: Likewise.
+	* config/riscv/multi3.S: Likewise.
+
 2017-05-02  Release Manager
 
 	* GCC 7.1.0 released.

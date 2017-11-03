@@ -32,6 +32,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #endif
 
   .globl __multi3
+  .type  __multi3, @function
 __multi3:
 
 #if __riscv_xlen == 32

@@ -34,6 +34,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 # define __moddi3 __modsi3
 #else
   .globl __udivsi3
+  .type  __udivsi3, @function
 __udivsi3:
   /* Compute __udivdi3(a0 << 32, a1 << 32); cast result to uint32_t.  */
   sll    a0, a0, 32
@@ -44,6 +45,7 @@ __udivsi3:
   jr     t0
 
   .globl __umodsi3
+  .type  __umodsi3, @function
 __umodsi3:
   /* Compute __udivdi3((uint32_t)a0, (uint32_t)a1); cast a1 to uint32_t.  */
   sll    a0, a0, 32
@@ -56,9 +58,11 @@ __umodsi3:
   jr     t0
 
   .globl __modsi3
+  .type  __modsi3, @function
   __modsi3 = __moddi3
 
   .globl __divsi3
+  .type  __divsi3, @function
 __divsi3:
   /* Check for special case of INT_MIN/-1. Otherwise, fall into __divdi3.  */
   li    t0, -1
@@ -66,12 +70,14 @@ __divsi3:
 #endif
 
   .globl __divdi3
+  .type  __divdi3, @function
 __divdi3:
   bltz  a0, .L10
   bltz  a1, .L11
   /* Since the quotient is positive, fall into __udivdi3.  */
 
   .globl __udivdi3
+  .type  __udivdi3, @function
 __udivdi3:
   mv    a2, a1
   mv    a1, a0
@@ -98,6 +104,7 @@ __udivdi3:
   ret
 
   .globl __umoddi3
+  .type  __umoddi3, @function
 __umoddi3:
   /* Call __udivdi3(a0, a1), then return the remainder, which is in a1.  */
   move  t0, ra
@@ -120,6 +127,7 @@ __umoddi3:
   jr    t0
 
   .globl __moddi3
+  .type  __moddi3, @function
 __moddi3:
   move   t0, ra
   bltz   a1, .L31
