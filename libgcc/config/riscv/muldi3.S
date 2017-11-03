@@ -32,6 +32,7 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #endif
 
   .globl __muldi3
+  .type  __muldi3, @function
 __muldi3:
   mv     a2, a0
   li     a0, 0
