@@ -3799,9 +3799,19 @@ riscv_option_override (void)
 
   /* Use -mtune's setting for slow_unaligned_access, even when optimizing
      for size.  For architectures that trap and emulate unaligned accesses,
+<<<<<<< HEAD
      the performance cost is too great, even for -Os.  */
   riscv_slow_unaligned_access = (cpu->tune_info->slow_unaligned_access
 				 || TARGET_STRICT_ALIGN);
+=======
+     the performance cost is too great, even for -Os.  Similarly, if
+     -m[no-]strict-align is left unspecified, heed -mtune's advice.  */
+  riscv_slow_unaligned_access = (cpu->tune_info->slow_unaligned_access
+				 || TARGET_STRICT_ALIGN);
+  if ((target_flags_explicit & MASK_STRICT_ALIGN) == 0
+      && cpu->tune_info->slow_unaligned_access)
+    target_flags |= MASK_STRICT_ALIGN;
+>>>>>>> 43906e418fe2... RISC-V: If -m[no-]strict-align is not passed, assume its value from -mtune
 
   /* If the user hasn't specified a branch cost, use the processor's
      default.  */
