@@ -1,1 +1,0 @@
-/* Test file for cpp option -remap test */
