@@ -1,6 +1,0 @@
-      IMPLICIT NONE
-
-!$ACC PARALLEL
-!$ACC END PARALLEL
-
-      END
