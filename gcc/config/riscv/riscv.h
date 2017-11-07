@@ -832,7 +832,7 @@ while (0)
    case, movmem or libcall is more efficient.  */
 
 #define MOVE_RATIO(speed)						\
-  (!STRICT_ALIGNMENT && riscv_slow_unaligned_access ? 1 :		\
+  (!STRICT_ALIGNMENT && riscv_slow_unaligned_access_p ? 1 :		\
    (speed) ? RISCV_MAX_MOVE_BYTES_PER_LOOP_ITER / UNITS_PER_WORD :	\
    CLEAR_RATIO (speed) / 2)
 
@@ -849,8 +849,7 @@ while (0)
 
 #ifndef USED_FOR_TARGET
 extern const enum reg_class riscv_regno_to_class[];
-extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
-extern bool riscv_slow_unaligned_access;
+extern bool riscv_slow_unaligned_access_p;
 extern unsigned riscv_stack_boundary;
 #endif
 
