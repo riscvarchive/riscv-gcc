@@ -55,3 +55,7 @@ along with GCC; see the file COPYING3.  If not see
       %{rdynamic:-export-dynamic} \
       -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
     %{static:-static}}"
+
+/* Defined by the ABI */
+#define WCHAR_TYPE			"unsigned int"
+#define WCHAR_TYPE_SIZE                 32
