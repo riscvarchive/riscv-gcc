@@ -102,9 +102,11 @@ along with GCC; see the file COPYING3.  If not see
 #define UNITS_PER_FP_REG (TARGET_DOUBLE_FLOAT ? 8 : 4)
 
 /* The largest type that can be passed in floating-point registers.  */
-#define UNITS_PER_FP_ARG					\
-  (riscv_abi == ABI_ILP32 || riscv_abi == ABI_LP64 ? 0 :	\
-   riscv_abi == ABI_ILP32F || riscv_abi == ABI_LP64F ? 4 : 8)	\
+#define UNITS_PER_FP_ARG						\
+  ((riscv_abi == ABI_ILP32 || riscv_abi == ABI_ILP32E			\
+    || riscv_abi == ABI_LP64)						\
+   ? 0 									\
+   : ((riscv_abi == ABI_ILP32F || riscv_abi == ABI_LP64F) ? 4 : 8))
 
 /* Set the sizes of the core types.  */
 #define SHORT_TYPE_SIZE 16
@@ -862,6 +864,7 @@ extern unsigned riscv_stack_boundary;
 
 #define ABI_SPEC \
   "%{mabi=ilp32:ilp32}" \
+  "%{mabi=ilp32e:ilp32e}" \
   "%{mabi=ilp32f:ilp32f}" \
   "%{mabi=ilp32d:ilp32d}" \
   "%{mabi=lp64:lp64}" \

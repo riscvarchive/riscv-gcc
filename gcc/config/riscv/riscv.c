@@ -3998,6 +3998,9 @@ riscv_option_override (void)
     error ("requested ABI requires -march to subsume the %qc extension",
 	   UNITS_PER_FP_ARG > 8 ? 'Q' : (UNITS_PER_FP_ARG > 4 ? 'D' : 'F'));
 
+  if (TARGET_RVE && riscv_abi != ABI_ILP32E)
+    error ("rv32e requires ilp32e ABI");
+
   /* We do not yet support ILP32 on RV64.  */
   if (BITS_PER_WORD != POINTER_SIZE)
     error ("ABI requires -march=rv%d", POINTER_SIZE);
@@ -4025,12 +4028,14 @@ riscv_conditional_register_usage (void)
   /* We have only x0~x15 on RV32E.  */
   if (TARGET_RVE)
     {
-      int r;
-      for (r = 16; r <= 31; r++)
-	{
-	  fixed_regs[r] = 1;
-	  call_used_regs[r] = call_really_used_regs[r] = 1;
-	}
+      for (int r = 16; r <= 31; r++)
+	fixed_regs[r] = 1;
+    }
+
+  if (riscv_abi == ABI_ILP32E)
+    {
+      for (int r = 16; r <= 31; r++)
+	call_used_regs[r] = 1;
     }
 
   if (!TARGET_HARD_FLOAT)
