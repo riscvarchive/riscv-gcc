@@ -2710,7 +2710,7 @@ static bool
 riscv_allocate_stack_slots_for_args ()
 {
   /* Naked functions should not allocate stack slots for arguments.  */
-  return riscv_naked_function_p (current_function_decl);
+  return !riscv_naked_function_p (current_function_decl);
 }
 
 /* Implement TARGET_WARN_FUNC_RETURN.  */
@@ -2719,7 +2719,7 @@ riscv_warn_func_return (tree decl)
 {
   /* Naked functions are implemented entirely in assembly, including the
      return sequence, so suppress warnings about this.  */
-  return riscv_naked_function_p (decl);
+  return !riscv_naked_function_p (decl);
 }
 
 /* Implement TARGET_EXPAND_BUILTIN_VA_START.  */
