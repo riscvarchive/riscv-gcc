@@ -1,4 +1,4 @@
-/* Definitions for rtems targeting a v850 using ELF.
+/* Definitions for hcos targeting a riscv using ELF.
    Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
@@ -28,7 +28,6 @@
   do						\
     {						\
       builtin_define( "__elf_hcos__" );		\
-      builtin_assert( "system=rtems" );		\
     }						\
   while (0)
 
