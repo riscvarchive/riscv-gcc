@@ -227,10 +227,6 @@ case "$host" in
     AC_DEFINE(HAVE_BROKEN_POSIX_SEMAPHORES, 1,
 	Define if the POSIX Semaphores do not work on your system.)
     ;;
-  riscv-unknown-elf*)
-    AC_DEFINE(HAVE_BROKEN_POSIX_SEMAPHORES, 1,
-	Define if the POSIX Semaphores do not work on your system.)
-    ;;
 esac
 
 # RTEMS specific checks
