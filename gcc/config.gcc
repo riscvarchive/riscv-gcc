@@ -2033,6 +2033,7 @@ riscv*-*-linux*)
 	;;
 riscv*-*-elf* | riscv*-*-rtems*)
 	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
+	extra_options="$extra_options gnu-user.opt"
 	case "x${enable_multilib}" in
 	xno) ;;
 	xyes) tmake_file="${tmake_file} riscv/t-elf-multilib" ;;
