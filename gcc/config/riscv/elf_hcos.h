@@ -31,3 +31,6 @@
       builtin_assert( "system=rtems" );		\
     }						\
   while (0)
+
+#undef LIB_SPEC
+#define LIB_SPEC "%{pthread:-lpthread} --start-group -lc -lgloss --end-group"

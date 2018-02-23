@@ -2033,7 +2033,6 @@ riscv*-*-linux*)
 	;;
 riscv*-*-elf* | riscv*-*-rtems* | riscv*-*-elf_hcos)
 	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
-	extra_options="$extra_options gnu-user.opt"
 	case "x${enable_multilib}" in
 	xno) ;;
 	xyes) tmake_file="${tmake_file} riscv/t-elf-multilib" ;;
@@ -2050,10 +2049,12 @@ riscv*-*-elf* | riscv*-*-rtems* | riscv*-*-elf_hcos)
 	  tm_file="${tm_file} rtems.h riscv/rtems.h"
 	  ;;
 	riscv*-*-elf_hcos*)
+	  extra_options="$extra_options gnu-user.opt"
 	  tm_file="${tm_file} riscv/elf_hcos.h"
-	;;
+          ;;
 	esac
 	;;
+	
 mips*-*-netbsd*)			# NetBSD/mips, either endian.
 	target_cpu_default="MASK_ABICALLS"
 	tm_file="elfos.h ${tm_file} mips/elf.h netbsd.h netbsd-elf.h mips/netbsd.h"

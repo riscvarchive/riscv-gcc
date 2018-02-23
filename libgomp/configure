@@ -15575,8 +15575,8 @@ case "$host" in
   *-darwin*)
 
 $as_echo "#define HAVE_BROKEN_POSIX_SEMAPHORES 1" >>confdefs.h
-    ;;
 
+    ;;
 esac
 
 # RTEMS specific checks
