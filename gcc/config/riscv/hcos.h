@@ -27,7 +27,7 @@
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
-      builtin_define( "__elf_hcos__" );		\
+      builtin_define( "__hcos__" );		\
     }						\
   while (0)
 
