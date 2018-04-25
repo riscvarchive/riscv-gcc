@@ -25,7 +25,8 @@
 #include <stdint.h>
 #include <sys/ucontext.h>
 
-#define LI_A7_8B 0x08b00893
+#define LI_A7_55 0x05500893
+#define LI_A7_AA 0x0aa00893
 #define ECALL    0x00000073
 
 #define MD_FALLBACK_FRAME_STATE_FOR riscv_fallback_frame_state
@@ -53,14 +54,21 @@ riscv_fallback_frame_state (struct _Unwind_Context *context,
 
   /* A signal frame will have a return address pointing to
      __default_sa_restorer. This code is hardwired as:
-
+     
+     Use a magic number here, Don't depends on the __NR_rt_sigreturn.
+     0x05500893		li	a7,0x55
+     0x0aa00893		li	a7,0xaa
+     0x05500893		li	a7,0x55
+     0x0aa00893		li	a7,0xaa
+ 
      0x08b00893		li	a7,0x8b
      0x00000073		ecall
 
      Note, the PC might only have 2-byte alignment.
    */
-  if (pc[0] != (uint16_t)LI_A7_8B || pc[1] != (uint16_t)(LI_A7_8B >> 16)
-      || pc[2] != (uint16_t)ECALL || pc[3] != (uint16_t)(ECALL >> 16))
+  /* I think you need have a more strict check here. Only pc[1] and pc[3] check is too cheap */
+  if (pc[0] != (uint16_t)LI_A7_55 || pc[1] != (uint16_t)(LI_A7_55 >> 16)
+      || pc[2] != (uint16_t)LI_A7_AA || pc[3] != (uint16_t)(LI_A7_AA >> 16))
     return _URC_END_OF_STACK;
 
   rt_ = context->cfa;
