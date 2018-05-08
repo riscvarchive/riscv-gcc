@@ -1,3 +1,9 @@
+2018-05-08  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/linux.h (MUSL_ABI_SUFFIX): Delete unnecessary backslash.
+	(LD_EMUL_SUFFIX): New.
+	(LINK_SPEC): Use it.
+
 2019-02-22  Release Manager
 
 	* GCC 8.3.0 released.
