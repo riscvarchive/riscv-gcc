@@ -1,3 +1,7 @@
+2018-05-18  Kito Cheng  <kito.cheng@gmail.com>
+
+	* gcc.dg/stack-usage-1.c: Add support for rv32e.
+
 2018-05-17  Jim Wilson  <jimw@sifive.com>
 
 	* gcc.target/riscv/switch-qi.c: New.
