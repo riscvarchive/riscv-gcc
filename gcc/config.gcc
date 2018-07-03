@@ -2073,10 +2073,17 @@ riscv*-*-linux*)
 	;;
 riscv*-*-elf* | riscv*-*-rtems*)
 	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
-	case "x${enable_multilib}" in
-	xno) ;;
-	xyes) tmake_file="${tmake_file} riscv/t-elf-multilib" ;;
-	*) echo "Unknown value for enable_multilib"; exit 1
+	case ${target} in
+	*-*-rtems*)
+	  tm_file="${tm_file} rtems.h riscv/rtems.h"
+	  tmake_file="${tmake_file} riscv/t-rtems"
+	  ;;
+	*)
+	  case "x${enable_multilib}" in
+	  xno) ;;
+	  xyes) tmake_file="${tmake_file} riscv/t-elf-multilib" ;;
+	  *) echo "Unknown value for enable_multilib"; exit 1
+	  esac
 	esac
 	tmake_file="${tmake_file} riscv/t-riscv"
 	gnu_ld=yes
@@ -2084,11 +2091,6 @@ riscv*-*-elf* | riscv*-*-rtems*)
 	# Force .init_array support.  The configure script cannot always
 	# automatically detect that GAS supports it, yet we require it.
 	gcc_cv_initfini_array=yes
-	case ${target} in
-	riscv*-*-rtems*)
-	  tm_file="${tm_file} rtems.h riscv/rtems.h"
-	  ;;
-	esac
 	;;
 riscv*-*-freebsd*)
 	tm_file="${tm_file} elfos.h ${fbsd_tm_file} riscv/freebsd.h"
@@ -4078,19 +4080,20 @@ case "${target}" in
 
 		# Infer arch from --with-arch, --target, and --with-abi.
 		case "${with_arch}" in
-		rv32i* | rv32g* | rv64i* | rv64g*)
+		rv32e* | rv32i* | rv32g* | rv64i* | rv64g*)
 			# OK.
 			;;
 		"")
 			# Infer XLEN, but otherwise assume GC.
 			case "${with_abi}" in
+			ilp32e) with_arch="rv32e" ;;
 			ilp32 | ilp32f | ilp32d) with_arch="rv32gc" ;;
 			lp64 | lp64f | lp64d) with_arch="rv64gc" ;;
 			*) with_arch="rv${xlen}gc" ;;
 			esac
 			;;
 		*)
-			echo "--with-arch=${with_arch} is not supported.  The argument must begin with rv32i, rv32g, rv64i, or rv64g." 1>&2
+			echo "--with-arch=${with_arch} is not supported.  The argument must begin with rv32e, rv32i, rv32g, rv64i, or rv64g." 1>&2
 			exit 1
 			;;
 		esac
@@ -4099,11 +4102,12 @@ case "${target}" in
 		# pick a default based on the ISA, preferring soft-float
 		# unless the D extension is present.
 		case "${with_abi}" in
-		ilp32 | ilp32f | ilp32d | lp64 | lp64f | lp64d)
+		ilp32 | ilp32e | ilp32f | ilp32d | lp64 | lp64f | lp64d)
 			;;
 		"")
 			case "${with_arch}" in
 			rv32*d* | rv32g*) with_abi=ilp32d ;;
+			rv32e*) with_abi=ilp32e ;;
 			rv32*) with_abi=ilp32 ;;
 			rv64*d* | rv64g*) with_abi=lp64d ;;
 			rv64*) with_abi=lp64 ;;
@@ -4117,7 +4121,7 @@ case "${target}" in
 
 		# Make sure ABI and ISA are compatible.
 		case "${with_abi},${with_arch}" in
-		ilp32,rv32* \
+		ilp32,rv32* | ilp32e,rv32e* \
 		| ilp32f,rv32*f* | ilp32f,rv32g* \
 		| ilp32d,rv32*d* | ilp32d,rv32g* \
 		| lp64,rv64* \
@@ -4129,6 +4133,58 @@ case "${target}" in
 			exit 1
 			;;
 		esac
+
+		# Handle --with-multilib-list.
+		if test "x${with_multilib_list}" != xdefault; then
+			tm_file="${tm_file} riscv/withmultilib.h"
+			tmake_file="${tmake_file} riscv/t-withmultilib"
+
+			case ${with_multilib_list} in
+			ilp32 | ilp32f | ilp32d \
+			| lp64 | lp64f | lp64d )
+				TM_MULTILIB_CONFIG="${with_arch},${with_multilib_list}"
+				;;
+			*)
+				echo "--with-multilib-list=${with_multilib_list} not supported."
+				exit 1
+			esac
+
+			# Define macros to select the default multilib.
+			case ${with_arch} in
+			rv32gc)
+				tm_defines="${tm_defines} TARGET_MLIB_ARCH=1"
+				;;
+			rv64gc)
+				tm_defines="${tm_defines} TARGET_MLIB_ARCH=2"
+				;;
+			*)
+				echo "unsupported --with-arch for --with-multilib-list"
+				exit 1
+			esac
+			case ${with_abi} in
+			ilp32)
+				tm_defines="${tm_defines} TARGET_MLIB_ABI=1"
+				;;
+			ilp32f)
+				tm_defines="${tm_defines} TARGET_MLIB_ABI=2"
+				;;
+			ilp32d)
+				tm_defines="${tm_defines} TARGET_MLIB_ABI=3"
+				;;
+			lp64)
+				tm_defines="${tm_defines} TARGET_MLIB_ABI=4"
+				;;
+			lp64f)
+				tm_defines="${tm_defines} TARGET_MLIB_ABI=5"
+				;;
+			lp64d)
+				tm_defines="${tm_defines} TARGET_MLIB_ABI=6"
+				;;
+			*)
+				echo "unsupported --with-abi for --with-multilib"
+				exit 1
+			esac
+		fi
 		;;
 
 	mips*-*-*)

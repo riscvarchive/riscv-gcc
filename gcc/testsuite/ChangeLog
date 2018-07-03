@@ -1,3 +1,37 @@
+2018-07-02  Jim Wilson  <jimw@sifive.com>
+
+	* gcc.target/riscv/interrupt-debug.c: New.
+
+2018-06-30  Jim Wilson  <jimw@sifive.com>
+
+	* gcc.target/riscv/shift-shift-1.c: New.
+	* gcc.target/riscv/shift-shift-2.c: New.
+	* gcc.target/riscv/shift-shift-3.c: New.
+
+2018-06-06  Jim Wilson  <jimw@sifive.com>
+
+	* gcc.target/riscv/interrupt-5.c (sub3): Add new test.
+	* gcc.target/riscv/interrupt-mmode.c: New.
+	* gcc.target/riscv/interrupt-smode.c: New.
+	* gcc.target/riscv/interrupt-umode.c: New.
+
+2018-05-25  Jim Wilson  <jimw@sifive.com>
+
+	* gcc.target/riscv/interrupt-1.c: New.
+	* gcc.target/riscv/interrupt-2.c: New.
+	* gcc.target/riscv/interrupt-3.c: New.
+	* gcc.target/riscv/interrupt-4.c: New.
+	* gcc.target/riscv/interrupt-5.c: New.
+
+2018-05-18  Kito Cheng  <kito.cheng@gmail.com>
+
+	* gcc.dg/stack-usage-1.c: Add support for rv32e.
+
+2018-05-17  Jim Wilson  <jimw@sifive.com>
+
+	* gcc.target/riscv/switch-qi.c: New.
+	* gcc.target/riscv/switch-si.c: New.
+
 2018-05-02  Release Manager
 
 	* GCC 8.1.0 released.

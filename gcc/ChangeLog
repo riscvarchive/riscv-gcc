@@ -1,3 +1,140 @@
+2018-07-02  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv.c (riscv_expand_epilogue): Use emit_jump_insn
+	instead of emit_insn for interrupt returns.
+	* config/riscv/riscv.md (riscv_met): Add (return) to rtl.
+	(riscv_sret, riscv_uret): Likewise.
+
+2018-06-30  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/predicates.md (p2m1_shift_operand): New.
+	(high_mask_shift_operand): New.
+	* config/riscv/riscv.md (lshrsi3_zero_extend_3+1): New combiner
+	pattern using p2m1_shift_operand.
+	(lshsi3_zero_extend_3+2): New combiner pattern using
+	high_mask_shift_operand.
+
+2018-06-15  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* config.gcc (riscv*-*-elf* | riscv*-*-rtems*): Use custom
+	multilibs for *-*-rtems*.
+	* config/riscv/t-rtems: New file.
+
+2018-06-06  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv.c (enum riscv_privilege_levels): New.
+	(struct machine_function): New field interrupt_mode.
+	(riscv_handle_type_attribute): New function.  Add forward declaration.
+	(riscv_attribute_table) <interrupt>: Use riscv_handle_type_attribute.
+	(riscv_expand_epilogue): Check interrupt_mode field.
+	(riscv_set_current_function): Check interrupt attribute args and
+	set interrupt_mode field.
+	* config/riscv/riscv.md (UNSPECV_SRET, UNSPECV_URET): New.
+	(riscv_sret, riscv_uret): New.
+	* doc/extend.texi (RISC-V Function Attributes) <interrupt>: Document
+	new arguments to interrupt attribute.
+
+2018-06-04  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv-protos.h (riscv_expand_epilogue): Change bool arg
+	to int.
+	* config/riscv/riscv.c (riscv_for_each_saved_reg): New args epilogue
+	and maybe_eh_return.  Change regno to unsigned int.  Use new args to
+	handle EH_RETURN_DATA_REGNO registers properly.
+	(riscv_expand_prologue): Pass new args to riscv_for_each_saved_reg.
+	(riscv_expand_epilogue): Update comment.  Change argument name and
+	type.  Update code to use new name and type.  Pass new args to
+	riscv_for_each_saved_reg.  Only use EH_RETURN_STACKADJ_RTX when
+	EXCEPTION_RETURN.
+	* config/riscv/riscv.md (NORMAL_RETURN): New.
+	(SIBCALL_RETURN, EXCEPTION_RETURN): New.
+	(epilogue, sibcall_epilogue): Update riscv_expand_epilogue arg.
+	(eh_return): Call gen_eh_return_internal and emit barrier.
+	(eh_return_internal): Call riscv_expand_epilogue.
+
+2018-05-29  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv.c (riscv_interrupt_type): Fix comment typo.
+
+2018-05-25  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv-protos.h (riscv_epilogue_uses): New.
+	* config/riscv/riscv.c (struct machine_function): Add
+	interrupt_handler_p and attribute_checked_p fields.
+	(riscv_attribute_table): Add interrupt.
+	(riscv_interrupt_type_p): New.
+	(riscv_save_reg_p): Save extra regs for interrupt handler.
+	(riscv_use_save_libcall): Return false  for interrupt handler.
+	(riscv_first_stack_step): Add forward declaration.
+	(riscv_compute_frame_info): New local interrupt_save_t1.  Set it
+	for interrupt handler with large frame.  Use it for saved reg list.
+	(riscv_expand_prologue): Move flag_stack_usage_info support to
+	eliminate duplication.
+	(riscv_expand_epilogue): Generate mret for interrupt handler.
+	(riscv_epilogue_uses): New.
+	(riscv_can_use_return_insn): Return false for interrupt handler.
+	(riscv_function_ok_for_sibcall): Likewise.
+	(riscv_set_current_function): Add interrupt handler support.
+	* config/riscv/riscv.h (EPILOGUE_USES): Call riscv_epilogue_uses.
+	* config/riscv/riscv.md (UNSPECV_MRET): New.
+	(GP_REGNUM): New.
+	(riscv_frflags, riscv_fsflags): Use tab after opcode.
+	(riscv_mret): New.
+	* doc/extend.texi (RISC-V Function Attributes) <interrupt>: New.
+
+2018-05-18  Kito Cheng  <kito.cheng@gmail.com>
+	    Monk Chiang  <sh.chiang04@gmail.com>
+	    Jim Wilson <jimw@sifive.com>
+
+	* common/config/riscv/riscv-common.c (riscv_parse_arch_string):
+	Add support to parse rv32e*.  Clear MASK_RVE for rv32i and rv64i.
+	* config.gcc (riscv*-*-*): Add support for rv32e* and ilp32e.
+	* config/riscv/riscv-c.c (riscv_cpu_cpp_builtins): Define
+	__riscv_32e when TARGET_RVE.  Handle ABI_ILP32E as soft-float ABI.
+	* config/riscv/riscv-opts.h (riscv_abi_type): Add ABI_ILP32E.
+	* config/riscv/riscv.c (riscv_compute_frame_info): When TARGET_RVE,
+	compute save_libcall_adjustment properly.
+	(riscv_option_override): Call error if TARGET_RVE and not ABI_ILP32E.
+	(riscv_conditional_register_usage): Handle TARGET_RVE and ABI_ILP32E.
+	* config/riscv/riscv.h (UNITS_PER_FP_ARG): Handle ABI_ILP32E.
+	(STACK_BOUNDARY, ABI_STACK_BOUNDARY): Handle TARGET_RVE.
+	(GP_REG_LAST, MAX_ARGS_IN_REGISTERS): Likewise.
+	(ABI_SPEC): Handle mabi=ilp32e.
+	* config/riscv/riscv.opt (abi_type): Add ABI_ILP32E.
+	(RVE): Add RVE mask.
+	* doc/invoke.texi (RISC-V options) <-mabi>: Add ilp32e info.
+	<-march>: Add rv32e as an example.
+
+2018-05-17  Jim Wilson  <jimw@sifive.com>
+
+	* expr.c (do_tablejump): When converting index to Pmode, if we have a
+	sign extended promoted subreg, and the range does not have the sign bit
+	set, then do a sign extend.
+
+	* config/riscv/riscv.c (riscv_extend_comparands): In unsigned QImode
+	test, check for sign extended subreg and/or constant operands, and
+	do a sign extend in that case.
+
+2018-05-16  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv.md (<optab>si3_mask, <optab>si3_mask_1): Prepend
+	asterisk to name.
+	(<optab>di3_mask, <optab>di3_mask_1): Likewise.
+
+2018-05-09  Jim Wilson  <jimw@sifive.com>
+
+	PR target/84797
+	* config.gcc (riscv*-*-*): Handle --with-multilib-list.
+	* config/riscv/t-withmultilib: New.
+	* config/riscv/withmultilib.h: New.
+	* doc/install.texi: Document RISC-V --with-multilib-list support.
+
+2018-05-08  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/linux.h (MUSL_ABI_SUFFIX): Delete unnecessary backslash.
+	(LD_EMUL_SUFFIX): New.
+	(LINK_SPEC): Use it.
+
 2018-05-02  Release Manager
 
 	* GCC 8.1.0 released.
