@@ -1,3 +1,7 @@
+2018-07-05  Jim Wilson  <jimw@sifive.com>
+
+	* config.gcc (riscv*-*-*): When setting xlen, handle riscv-*.
+
 2018-07-02  Jim Wilson  <jimw@sifive.com>
 
 	* config/riscv/riscv.c (riscv_expand_epilogue): Use emit_jump_insn
