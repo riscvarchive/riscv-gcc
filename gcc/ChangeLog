@@ -1,3 +1,10 @@
+2018-09-24  Jim Wilson  <jimw@sifive.com>
+
+	PR target/87391
+	* config/riscv/riscv.h (STACK_BOUNDARY): Test riscv_abi == ABI_ILP32E
+	not TARGET_RVE.
+	(ABI_STACK_BOUNDARY, MAX_ARGS_IN_REGISTERS): Likewise.
+
 2018-07-14  Jim Wilson  <jimw@sifive.com>
 
 	* config/riscv/linux.h (TARGET_ASM_FILE_END): New.
