@@ -1,5 +1,10 @@
 2018-09-26  Jim Wilson  <jimw@sifive.com>
 
+	* config/riscv/riscv.md (subsi3_extended2): Add J constraint.
+	(negdi2, negsi2, negsi2_extended, negsi2_extended2): New.
+
+2018-09-26  Jim Wilson  <jimw@sifive.com>
+
 	* config/riscv/riscv.h (FUNCTION_ARG_REGNO_P): Fix comment.
 
 2018-09-25  Jim Wilson  <jimw@sifive.com>
