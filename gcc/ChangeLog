@@ -1,3 +1,36 @@
+2018-10-05  Andrew Waterman  <andrew@sifive.com>
+	    Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv.md (f<quiet_pattern>_quiet<ANYF:mode><X:mode>4):
+	Add define_expand.  Add ! HONOR_SNANS check to current pattern.  Add
+	new pattern using HONOR_SNANS that emits one extra instruction.
+
+2018-10-03  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv-c.c (riscv_cpu_cpp_builtins): For ABI_ILP32E,
+	also define __riscv_abi_rve.  Delete trailing white space.
+
+2018-09-26  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv.md (subsi3_extended2): Add J constraint.
+	(negdi2, negsi2, negsi2_extended, negsi2_extended2): New.
+
+2018-09-26  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv.h (FUNCTION_ARG_REGNO_P): Fix comment.
+
+2018-09-25  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/riscv.c (riscv_split_symbol): Mark auipc label as weak
+	when target symbol is weak.
+
+2018-09-24  Jim Wilson  <jimw@sifive.com>
+
+	PR target/87391
+	* config/riscv/riscv.h (STACK_BOUNDARY): Test riscv_abi == ABI_ILP32E
+	not TARGET_RVE.
+	(ABI_STACK_BOUNDARY, MAX_ARGS_IN_REGISTERS): Likewise.
+
 2018-07-14  Jim Wilson  <jimw@sifive.com>
 
 	* config/riscv/linux.h (TARGET_ASM_FILE_END): New.
