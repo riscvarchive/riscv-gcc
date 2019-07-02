@@ -127,3 +127,5 @@ Mask(DOUBLE_FLOAT)
 Mask(RVC)
 
 Mask(RVE)
+
+Mask(VECTOR)
