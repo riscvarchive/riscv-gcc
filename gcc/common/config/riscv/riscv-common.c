@@ -517,7 +517,7 @@ riscv_subset_list::parse (const char *arch, location_t loc)
     {
       error_at (loc, "-march=%s: unexpected ISA string at end: %<%s%>",
                arch, p);
-      return NULL;
+      goto fail;
     }
 
   return subset_list;
