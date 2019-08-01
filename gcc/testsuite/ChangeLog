@@ -1,3 +1,7 @@
+2019-08-01  Kito Cheng  <kito.cheng@sifive.com>
+
+	* gcc.target/riscv/attribute-10.c: Fix testcase on rv64.
+
 2019-07-31  Maxim Blinov  <maxim.blinov@embecosm.com>
 
 	* gcc.target/riscv/attribute-10.c: New test.
