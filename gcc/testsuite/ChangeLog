@@ -1,3 +1,7 @@
+2019-08-05  Kito Cheng  <kito.cheng@sifive.com>
+
+	* gcc.target/riscv/promote-type-for-libcall.c: New.
+
 2019-08-01  Kito Cheng  <kito.cheng@sifive.com>
 
 	* gcc.target/riscv/attribute-10.c: Fix testcase on rv64.
