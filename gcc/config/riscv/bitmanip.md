@@ -167,7 +167,7 @@
 	(and:X (match_operand:X 1 "register_operand" "r")
 	       (match_operand 2 "not_single_bit_mask_operand" "i")))]
   "TARGET_BITMANIP"
-  "sbclri\t%0,%1,%S2"
+  "sbclri\t%0,%1,%T2"
   [(set_attr "type" "bitmanip")])
 
 (define_insn "*sbclrw"
