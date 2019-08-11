@@ -118,6 +118,8 @@ Mask(64BIT)
 
 Mask(MUL)
 
+Mask(BITMANIP)
+
 Mask(ATOMIC)
 
 Mask(HARD_FLOAT)

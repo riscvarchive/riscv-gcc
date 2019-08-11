@@ -84,6 +84,7 @@ struct riscv_builtin_description {
   unsigned int (*avail) (void);
 };
 
+AVAIL (bitmanip64, TARGET_64BIT && TARGET_BITMANIP)
 AVAIL (hard_float, TARGET_HARD_FLOAT)
 
 /* Construct a riscv_builtin_description from the given arguments.
@@ -118,6 +119,7 @@ AVAIL (hard_float, TARGET_HARD_FLOAT)
 /* Argument types.  */
 #define RISCV_ATYPE_VOID void_type_node
 #define RISCV_ATYPE_USI unsigned_intSI_type_node
+#define RISCV_ATYPE_SI intSI_type_node
 
 /* RISCV_FTYPE_ATYPESN takes N RISCV_FTYPES-like type codes and lists
    their associated RISCV_ATYPEs.  */
@@ -125,6 +127,7 @@ AVAIL (hard_float, TARGET_HARD_FLOAT)
   RISCV_ATYPE_##A, RISCV_ATYPE_##B
 
 static const struct riscv_builtin_description riscv_builtins[] = {
+  DIRECT_BUILTIN (pcntw, RISCV_SI_FTYPE_SI, bitmanip64),
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE_VOID, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
 };
