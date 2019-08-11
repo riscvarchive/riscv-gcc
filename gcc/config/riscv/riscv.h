@@ -461,6 +461,18 @@ enum reg_class
   (((VALUE) | ((1UL<<31) - IMM_REACH)) == ((1UL<<31) - IMM_REACH)	\
    || ((VALUE) | ((1UL<<31) - IMM_REACH)) + IMM_REACH == 0)
 
+/* The following macros use B extension instructions to load constants.  */
+
+/* If this is a negative 32-bit value zero-extended to 64-bits, then we
+   can load it with addiwu if it is close enough to -1.  */
+#define ZERO_EXTENDED_SMALL_OPERAND(VALUE) \
+  (((VALUE & 0xffffffff) == VALUE) && (VALUE & 0x80000000)		\
+   && SMALL_OPERAND (VALUE | (0xffffffffUL << 32)))
+
+/* If this is a single bit mask, then we can load it with sbseti.  */
+#define SINGLE_BIT_MASK_OPERAND(VALUE) \
+  (pow2p_hwi (VALUE))
+
 /* Stack layout; function entry, exit and calling.  */
 
 #define STACK_GROWS_DOWNWARD 1
@@ -679,6 +691,13 @@ typedef struct {
 #define TARGET_SFB_ALU (riscv_microarchitecture == sifive_7)
 
 #define LOGICAL_OP_NON_SHORT_CIRCUIT 0
+
+/* Configure CLZ/CTZ behavior. */
+
+#define CLZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) \
+  ((VALUE) = GET_MODE_UNIT_BITSIZE (MODE), 2)
+#define CTZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) \
+  ((VALUE) = GET_MODE_UNIT_BITSIZE (MODE), 2)
 
 /* Control the assembler format that we output.  */
 
