@@ -575,6 +575,10 @@ riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
   if (subset_list->lookup ("c"))
     *flags |= MASK_RVC;
 
+  *flags &= ~MASK_BITMANIP;
+  if (subset_list->lookup ("b"))
+    *flags |= MASK_BITMANIP;
+
   if (current_subset_list)
     delete current_subset_list;
 
