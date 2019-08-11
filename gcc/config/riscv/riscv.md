@@ -1048,7 +1048,8 @@
 
 (define_expand "zero_extendsidi2"
   [(set (match_operand:DI 0 "register_operand")
-	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand")))])
+	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand")))]
+  "TARGET_64BIT")
 
 (define_insn_and_split "*zero_extendsidi2_internal"
   [(set (match_operand:DI     0 "register_operand"     "=r,r")

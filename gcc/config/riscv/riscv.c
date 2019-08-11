@@ -374,6 +374,27 @@ riscv_build_integer_1 (struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS],
       return 1;
     }
 
+  /* ??? Maybe there are also other bitmanip instructions useful for loading
+     constants?  */
+  if (TARGET_64BIT && TARGET_BITMANIP)
+    {
+      if (ZERO_EXTENDED_SMALL_OPERAND (value))
+	{
+	  /* Simply ADDIWU.  */
+	  codes[0].code = UNKNOWN;
+	  codes[0].value = value;
+	  return 1;
+	}
+      else if (SINGLE_BIT_MASK_OPERAND (value))
+	{
+	  /* Simply SBSET.  */
+	  codes[0].code = UNKNOWN;
+	  codes[0].value = value;
+	  return 1;
+	}
+      /* ??? Can use slo/sro to load constants.  */
+    }
+
   /* End with ADDI.  When constructing HImode constants, do not generate any
      intermediate value that is not itself a valid HImode constant.  The
      XORI case below will handle those remaining HImode constants.  */
@@ -1629,8 +1650,17 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 
     case ZERO_EXTRACT:
       /* This is an SImode shift.  */
-      if (outer_code == SET && (INTVAL (XEXP (x, 2)) > 0)
+      if (outer_code == SET && GET_CODE (XEXP (x, 2)) == CONST_INT
+	  && (INTVAL (XEXP (x, 2)) > 0) && GET_CODE (XEXP (x, 1)) == CONST_INT
 	  && (INTVAL (XEXP (x, 1)) + INTVAL (XEXP (x, 2)) == 32))
+	{
+	  *total = COSTS_N_INSNS (SINGLE_SHIFT_COST);
+	  return true;
+	}
+      /* This is an sbext.  */
+      if (TARGET_BITMANIP && outer_code == SET
+	  && GET_CODE (XEXP (x, 1)) == CONST_INT
+	  && INTVAL (XEXP (x, 1)) == 1)
 	{
 	  *total = COSTS_N_INSNS (SINGLE_SHIFT_COST);
 	  return true;
@@ -1913,7 +1943,21 @@ riscv_output_move (rtx dest, rtx src)
 	  }
 
       if (src_code == CONST_INT)
-	return "li\t%0,%1";
+	{
+	  if (SMALL_OPERAND (INTVAL (src)) || LUI_OPERAND (INTVAL (src)))
+	    return "li\t%0,%1";
+
+	  if (TARGET_BITMANIP && TARGET_64BIT)
+	    {
+	      if (ZERO_EXTENDED_SMALL_OPERAND (INTVAL (src)))
+		return "addiwu\t%0,zero,%s1";
+	      if (SINGLE_BIT_MASK_OPERAND (INTVAL (src)))
+		return "sbseti\t%0,zero,%S1";
+	    }
+
+	  /* Should never reach here.  */
+	  abort ();
+	}
 
       if (src_code == HIGH)
 	return "lui\t%0,%h1";
@@ -3247,7 +3291,9 @@ riscv_memmodel_needs_release_fence (enum memmodel model)
    'A'	Print the atomic operation suffix for memory model OP.
    'F'	Print a FENCE if the memory model requires a release.
    'z'	Print x0 if OP is zero, otherwise print OP normally.
-   'i'	Print i if the operand is not a register.  */
+   'i'	Print i if the operand is not a register.
+   's'  Sign-extend a 32-bit constant value to 64-bits then print.
+   'S'  Print shift-index of single-bit mask OP.  */
 
 static void
 riscv_print_operand (FILE *file, rtx op, int letter)
@@ -3287,6 +3333,20 @@ riscv_print_operand (FILE *file, rtx op, int letter)
         fputs ("i", file);
       break;
 
+    case 's':
+      {
+	rtx newop = GEN_INT (INTVAL (op) | 0xffffffffUL << 32);
+	output_addr_const (file, newop);
+	break;
+      }
+
+    case 'S':
+      {
+	rtx newop = GEN_INT (ctz_hwi (INTVAL (op)));
+	output_addr_const (file, newop);
+	break;
+      }
+	
     default:
       switch (code)
 	{

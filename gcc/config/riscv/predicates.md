@@ -76,7 +76,10 @@
 
   /* Otherwise check whether the constant can be loaded in a single
      instruction.  */
-  return !LUI_OPERAND (INTVAL (op)) && !SMALL_OPERAND (INTVAL (op));
+  return (!LUI_OPERAND (INTVAL (op)) && !SMALL_OPERAND (INTVAL (op))
+	  && !(TARGET_64BIT && TARGET_BITMANIP
+	       && (ZERO_EXTENDED_SMALL_OPERAND (INTVAL (op))
+		   || SINGLE_BIT_MASK_OPERAND (INTVAL (op)))));
 })
 
 (define_predicate "p2m1_shift_operand"
@@ -206,3 +209,22 @@
 
 (define_predicate "fp_branch_comparison"
   (match_code "unordered,ordered,unlt,unge,unle,ungt,uneq,ltgt,ne,eq,lt,le,gt,ge"))
+
+;; Predicates for the B extension.
+(define_predicate "single_bit_mask_operand"
+  (match_code "const_int")
+{
+  int val = pow2p_hwi (INTVAL (op));
+  if (val != -1)
+    return true;
+  return false;
+})
+
+(define_predicate "not_single_bit_mask_operand"
+  (match_code "const_int")
+{
+  int val = pow2p_hwi (~INTVAL (op));
+  if (val != -1)
+    return true;
+  return false;
+})
