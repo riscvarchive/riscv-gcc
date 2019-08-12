@@ -520,6 +520,7 @@ pru-*-*)
 	;;
 riscv*)
 	cpu_type=riscv
+	extra_headers="rvintrin.h"
 	extra_objs="riscv-builtins.o riscv-c.o"
 	d_target_objs="riscv-d.o"
 	;;
