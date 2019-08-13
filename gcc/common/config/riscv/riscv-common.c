@@ -33,6 +33,61 @@ along with GCC; see the file COPYING3.  If not see
 
 #define RISCV_DONT_CARE_VERSION -1
 
+/* ISA extension name class. E.g. "zbb" corresponds to RV_ISA_CLASS_Z,
+   "xargs" corresponds to RV_ISA_CLASS_X, etc.  */
+
+typedef enum riscv_isa_ext_class
+  {
+   RV_ISA_CLASS_UNKNOWN,
+   RV_ISA_CLASS_X,
+   RV_ISA_CLASS_S,
+   RV_ISA_CLASS_SX,
+   RV_ISA_CLASS_Z
+  } riscv_isa_ext_class_t;
+
+/* Classify the argument 'arch' into one of riscv_isa_ext_class_t.  */
+
+static riscv_isa_ext_class_t
+riscv_get_prefix_class (const char *arch)
+{
+  switch (*arch)
+    {
+    case 's':
+      if (strlen (arch) > 1 && arch[1] == 'x')
+	return RV_ISA_CLASS_SX;
+      else
+	return RV_ISA_CLASS_S;
+
+    case 'x': return RV_ISA_CLASS_X;
+    case 'z': return RV_ISA_CLASS_Z;
+    default: return RV_ISA_CLASS_UNKNOWN;
+    }
+}
+
+/* Structure describing parameters to use when parsing a particular
+   riscv_isa_ext_class_t. One of these should be provided for each
+   possible class, except RV_ISA_CLASS_UNKNOWN.  */
+
+typedef struct riscv_parse_config
+{
+  /* Class of the extension. */
+  riscv_isa_ext_class_t ext_class;
+
+  /* Lower-case prefix string for error printing
+     and internal parser usage, e.g. "sx", "z".  */
+  const char *prefix_lower;
+
+  /* Upper-case prefix string for error printing,
+     e.g. "SX". Used as "Error: SX extension ..."  */
+  const char *prefix_upper;
+
+  /* Predicate which is used for checking whether
+     this is a "known" extension. For 'x' and 'sx',
+     it always returns true (since they are by
+     definition non-standard and cannot be known.  */
+  int (*ext_valid_p) (const char *);
+} riscv_parse_config_t;
+
 /* Subset info.  */
 struct riscv_subset_t
 {
@@ -70,8 +125,8 @@ private:
 
   const char *parse_std_ext (const char *);
 
-  const char *parse_sv_or_non_std_ext (const char *, const char *,
-				       const char *);
+  const char *parse_prefixed_ext (const char *p,
+				  const riscv_parse_config_t *config);
 
 public:
   ~riscv_subset_list ();
@@ -357,7 +412,7 @@ riscv_subset_list::parse_std_ext (const char *p)
     {
       char subset[2] = {0, 0};
 
-      if (*p == 'x' || *p == 's')
+      if (*p == 'x' || *p == 's' || *p == 'z')
 	break;
 
       if (*p == '_')
@@ -399,24 +454,20 @@ riscv_subset_list::parse_std_ext (const char *p)
   return p;
 }
 
-/* Parsing function for non-standard and supervisor extensions.
-
-   Return Value:
-     Points to the end of extensions.
-
-   Arguments:
-     `p`: Current parsing position.
-     `ext_type`: What kind of extensions, 'x', 's' or 'sx'.
-     `ext_type_str`: Full name for kind of extension.  */
+/* Parse a generic prefixed extension.
+   march: The full architecture string as passed in by "-march=...".
+   p: Point from which to start parsing the -march string.
+   config: What class of extensions to parse, predicate funcs,
+   and strings to use in error reporting.  */
 
 const char *
-riscv_subset_list::parse_sv_or_non_std_ext (const char *p,
-					    const char *ext_type,
-					    const char *ext_type_str)
+riscv_subset_list::parse_prefixed_ext (const char *p,
+				       const riscv_parse_config_t *config)
 {
   unsigned major_version = 0;
   unsigned minor_version = 0;
-  size_t ext_type_len = strlen (ext_type);
+  const char *last_name;
+  riscv_isa_ext_class_t ext_class;
 
   while (*p)
     {
@@ -426,12 +477,9 @@ riscv_subset_list::parse_sv_or_non_std_ext (const char *p,
 	  continue;
 	}
 
-      if (strncmp (p, ext_type, ext_type_len) != 0)
-	break;
-
-      /* It's non-standard supervisor extension if it prefix with sx.  */
-      if ((ext_type[0] == 's') && (ext_type_len == 1)
-	  && (*(p + 1) == 'x'))
+      /* Assert that the current extension specifier matches our parsing class.  */
+      ext_class = riscv_get_prefix_class (p);
+      if (ext_class != config->ext_class)
 	break;
 
       char *subset = xstrdup (p);
@@ -441,13 +489,49 @@ riscv_subset_list::parse_sv_or_non_std_ext (const char *p,
       while (*++q != '\0' && *q != '_' && !ISDIGIT (*q))
 	;
 
-      end_of_version
-	= parsing_subset_version (q, &major_version, &minor_version,
-				  /* default_major_version= */ 2,
-				  /* default_minor_version= */ 0,
-				  /* std_ext_p= */ FALSE);
+      end_of_version = parsing_subset_version (q, &major_version, &minor_version,
+					       /* default_major_version= */ 2,
+					       /* default_minor_version= */ 0,
+					       /* std_ext_p= */ false);
 
       *q = '\0';
+
+      /* Check that the name is valid.
+	 For 'x', anything goes but it cannot simply be 'x'.
+	 For 'z', it must be known from a list and also cannot simply be 'z'.
+	 For 's', it must be known from a list and also *can* simply be 's'.
+	 For 'sx', see 'x'.  */
+
+      /* Check that the extension name is well-formed.  */
+      if (!config->ext_valid_p (subset))
+	{
+	  error_at (m_loc, "%<-march=%s%>: Invalid or unknown %s ISA extension: %qs",
+		    m_arch, config->prefix_upper, subset);
+	  free (subset);
+	  return NULL;
+	}
+
+      /* Check that the last item is not the same as this.  */
+      last_name = m_tail->name.c_str();
+
+      if (!strcasecmp (last_name, subset))
+	{
+	  error_at (m_loc, "%<-march=%s%>: Duplicate %s ISA extension: %qs",
+		    m_arch, config->prefix_upper, subset);
+	  free (subset);
+	  return NULL;
+	}
+
+      /* Check that we are in alphabetical order within the subset.  */
+      if (!strncasecmp (last_name, config->prefix_lower, 1)
+	  && strcasecmp (last_name, subset) > 0)
+	{
+	  error_at (m_loc, "%<-march=%s%>: %s ISA extension not in alphabetical order: "
+		    "%qs must come before %qs.",
+		    m_arch, config->prefix_upper, subset, last_name);
+	  free (subset);
+	  return NULL;
+	}
 
       add (subset, major_version, minor_version);
       free (subset);
@@ -455,14 +539,164 @@ riscv_subset_list::parse_sv_or_non_std_ext (const char *p,
 
       if (*p != '\0' && *p != '_')
 	{
-	  error_at (m_loc, "%<-march=%s%>: %s must separate with _",
-		    m_arch, ext_type_str);
+	  error_at (m_loc, "%<-march=%s%>: %qs must seperate with _",
+		    m_arch, config->prefix_lower);
 	  return NULL;
 	}
     }
 
   return p;
 }
+
+#define RISCV_STD_Z_EXT_COUNT 9
+
+const char * const riscv_std_z_ext_strtab[RISCV_STD_Z_EXT_COUNT] =
+  {
+   "zbb", "zbc", "zbe", "zbf", "zbm", "zbp", "zbr", "zbs", "zbt"
+  };
+
+#define RISCV_STD_S_EXT_COUNT 0
+
+const char * const riscv_std_s_ext_strtab[RISCV_STD_S_EXT_COUNT] =
+  {
+
+  };
+
+/* Find the index corresponding to the z-extension
+   name `ext'. If not found, return -1.  */
+
+int
+riscv_std_z_ext_index (const char *ext)
+{
+  int i;
+
+  for (i = 0; i < RISCV_STD_Z_EXT_COUNT; ++i)
+    {
+      if (!strcasecmp (ext, riscv_std_z_ext_strtab[i]))
+	return i;
+    }
+
+  return -1;
+}
+
+/* Predicator function for x-prefixed extensions.
+   Anything goes, except the literal 'x'.  */
+
+static int
+riscv_ext_x_valid_p (const char *arg)
+{
+  if (!strcasecmp (arg, "x"))
+    return 0;
+
+  return 1;
+}
+
+/* Predicator functions for z-prefixed extensions.
+   Only known z-extensions are permitted.  */
+
+static int
+riscv_ext_z_valid_p (const char *arg)
+{
+  const size_t tabsize = ARRAY_SIZE (riscv_std_z_ext_strtab);
+
+  for (size_t i = 0; i < tabsize; ++i)
+    {
+      if (!strcasecmp (arg, riscv_std_z_ext_strtab[i]))
+	return 1;
+    }
+
+  return 0;
+}
+
+/* Predicator function for 's' prefixed extensions.
+   Must be either literal 's', or a known s-prefixed extension.  */
+
+static int
+riscv_ext_s_valid_p (const char *arg)
+{
+  const size_t tabsize = ARRAY_SIZE (riscv_std_s_ext_strtab);
+
+  if (strlen (arg) == 1 && *arg == 's')
+    return 1;
+
+  for (size_t i = 0; i < tabsize; ++i)
+    {
+      if (!strcasecmp (arg, riscv_std_s_ext_strtab[i]))
+	return 1;
+    }
+
+  return 0;
+}
+
+/* Predicator function for 'sx' prefixed extensions.
+   Anything goes, except the literal 'sx'.  */
+
+static int
+riscv_ext_sx_valid_p (const char *arg)
+{
+  if (!strcasecmp (arg, "sx"))
+    return 0;
+
+  return 1;
+}
+
+/* Bitmanip-specific parsing.  */
+#define RISCV_BITMANIP_Z_EXT_COUNT 9
+
+const char * const *
+riscv_bitmanip_z_ext_strtab (void)
+{
+  static const char * const strtab[RISCV_BITMANIP_Z_EXT_COUNT] =
+    {
+     "zbb", "zbc", "zbe", "zbf",
+     "zbm", "zbp", "zbr", "zbs",
+     "zbt"
+    };
+
+  return strtab;
+}
+
+/* Returns true if we have atleast one "zbX" bitmanip ISA subset selector
+   present in the `-march` directive, and false otherwise. */
+
+static int
+riscv_have_bitmanip_z_ext_string_p (riscv_subset_list *subset_list)
+{
+  const char * const * ext_tab = riscv_bitmanip_z_ext_strtab ();
+
+  for (int i = 0; i < RISCV_BITMANIP_Z_EXT_COUNT; ++i)
+    if (subset_list->lookup (ext_tab[i]))
+      return 1;
+
+  return 0;
+}
+
+/* Check if any of the bitmanip ISA subset selectors are set,
+   and if so set the appropriate bit in the `x->riscv_bitmanip_flags` mask. */
+
+static void
+riscv_set_bitmanip_z_ext_flags (struct gcc_options *opts,
+				riscv_subset_list *subset_list)
+{
+  const char * const * ext_tab = riscv_bitmanip_z_ext_strtab ();
+
+  for (int i = 0; i < RISCV_BITMANIP_Z_EXT_COUNT; ++i)
+    {
+      if (subset_list->lookup (ext_tab[i]))
+	opts->x_riscv_bitmanip_subset_flags |= (1U << i);
+    }
+}
+
+/* Parsing order that is needed for bitmanip.  */
+
+static const riscv_parse_config_t parse_config[] =
+{
+   {RV_ISA_CLASS_S, "s", "S", riscv_ext_s_valid_p},
+   {RV_ISA_CLASS_SX, "sx", "SX", riscv_ext_sx_valid_p},
+   {RV_ISA_CLASS_Z, "z", "Z", riscv_ext_z_valid_p},
+   {RV_ISA_CLASS_X, "x", "X", riscv_ext_x_valid_p},
+   {RV_ISA_CLASS_UNKNOWN, NULL, NULL, NULL}
+};
 
 /* Parsing arch string to subset list, return NULL if parsing failed.  */
 
@@ -494,24 +728,14 @@ riscv_subset_list::parse (const char *arch, location_t loc)
   if (p == NULL)
     goto fail;
 
-  /* Parsing non-standard extension.  */
-  p = subset_list->parse_sv_or_non_std_ext (p, "x", "non-standard extension");
+  /* Parse the different classes of extensions in the specified order.  */
 
-  if (p == NULL)
-    goto fail;
+  for (size_t i = 0; i < ARRAY_SIZE (parse_config); ++i) {
+    p = subset_list->parse_prefixed_ext (p, &parse_config[i]);
 
-  /* Parsing supervisor extension.  */
-  p = subset_list->parse_sv_or_non_std_ext (p, "s", "supervisor extension");
-
-  if (p == NULL)
-    goto fail;
-
-  /* Parsing non-standard supervisor extension.  */
-  p = subset_list->parse_sv_or_non_std_ext
-    (p, "sx", "non-standard supervisor extension");
-
-  if (p == NULL)
-    goto fail;
+    if (p == NULL)
+      goto fail;
+  }
 
   if (*p != '\0')
     {
@@ -540,10 +764,18 @@ riscv_arch_str ()
    dependent mask bits, in case more than one -march string is passed.  */
 
 static void
-riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
+riscv_parse_arch_string (const char *isa, struct gcc_options *opts, location_t loc)
 {
   riscv_subset_list *subset_list;
+
+  /* Standard ISA flags.  */
+  int *flags = &opts->x_target_flags;
+
+  /* Bitmanip ISA Z-extension flags.  */
+  long int *bitmanip_flags = &opts->x_riscv_bitmanip_subset_flags;
+
   subset_list = riscv_subset_list::parse (isa, loc);
+
   if (!subset_list)
     return;
 
@@ -576,8 +808,26 @@ riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
     *flags |= MASK_RVC;
 
   *flags &= ~MASK_BITMANIP;
+  *bitmanip_flags = 0;
   if (subset_list->lookup ("b"))
-    *flags |= MASK_BITMANIP;
+    {
+      *flags |= MASK_BITMANIP;
+
+      /* The below subset selection may change.  */
+      *bitmanip_flags |= OPTION_MASK_ZBB;
+      *bitmanip_flags |= OPTION_MASK_ZBC;
+      *bitmanip_flags |= OPTION_MASK_ZBE;
+      *bitmanip_flags &= ~OPTION_MASK_ZBF;
+      *bitmanip_flags |= OPTION_MASK_ZBM;
+      *bitmanip_flags |= OPTION_MASK_ZBP;
+      *bitmanip_flags |= OPTION_MASK_ZBR;
+      *bitmanip_flags |= OPTION_MASK_ZBS;
+      *bitmanip_flags &= ~OPTION_MASK_ZBT;
+    }
+
+  /* Handle specific bitmanip ISA extensions.  */
+  if (riscv_have_bitmanip_z_ext_string_p (subset_list))
+    riscv_set_bitmanip_z_ext_flags (opts, subset_list);
 
   if (current_subset_list)
     delete current_subset_list;
@@ -596,7 +846,7 @@ riscv_handle_option (struct gcc_options *opts,
   switch (decoded->opt_index)
     {
     case OPT_march_:
-      riscv_parse_arch_string (decoded->arg, &opts->x_target_flags, loc);
+      riscv_parse_arch_string (decoded->arg, opts, loc);
       return true;
 
     default:

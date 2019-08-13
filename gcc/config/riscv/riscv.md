@@ -1055,7 +1055,7 @@
   [(set (match_operand:DI     0 "register_operand"     "=r,r")
 	(zero_extend:DI
 	    (match_operand:SI 1 "nonimmediate_operand" " r,m")))]
-  "TARGET_64BIT && !TARGET_BITMANIP"
+  "TARGET_64BIT && !(TARGET_ZBB || TARGET_ZBP)"
   "@
    #
    lwu\t%0,%1"
@@ -1078,7 +1078,7 @@
   [(set (match_operand:GPR    0 "register_operand"     "=r,r")
 	(zero_extend:GPR
 	    (match_operand:HI 1 "nonimmediate_operand" " r,m")))]
-  "!TARGET_BITMANIP"
+  "!(TARGET_ZBB || TARGET_ZBP)"
   "@
    #
    lhu\t%0,%1"

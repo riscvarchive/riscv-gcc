@@ -21,6 +21,12 @@
 HeaderInclude
 config/riscv/riscv-opts.h
 
+Variable
+HOST_WIDE_INT riscv_subset_flags = 0
+
+Variable
+HOST_WIDE_INT riscv_bitmanip_subset_flags = 0
+
 mbranch-cost=
 Target RejectNegative Joined UInteger Var(riscv_branch_cost)
 -mbranch-cost=N	Set the cost of branches to roughly N instructions.

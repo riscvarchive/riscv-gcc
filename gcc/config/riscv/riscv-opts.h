@@ -51,4 +51,54 @@ enum riscv_align_data {
   riscv_align_data_type_natural
 };
 
+/* Define subset flag positions. Alphabetical order is important.
+   I've left the "OPTION_MASK_" prefixes in the hope that these
+   can be moved to riscv.opt at some point. */
+
+/* Flags for the general extension subsets. */
+#define OPTION_MASK_ZAM (1 << 0)
+#define OPTION_MASK_ZIFENCEI (1 << 1)
+#define OPTION_MASK_ZTSO (1 << 2)
+
+/* Flags for the Bitmanip extension subsets. */
+#define OPTION_MASK_ZBB (1 << 0)
+#define OPTION_MASK_ZBC (1 << 1)
+#define OPTION_MASK_ZBE (1 << 2)
+#define OPTION_MASK_ZBF (1 << 3)
+#define OPTION_MASK_ZBM (1 << 4)
+#define OPTION_MASK_ZBP (1 << 5)
+#define OPTION_MASK_ZBR (1 << 6)
+#define OPTION_MASK_ZBS (1 << 7)
+#define OPTION_MASK_ZBT (1 << 8)
+
+/* Flag predicates for the general extension subsets. */
+#define TARGET_ZAM ((riscv_subset_flags & OPTION_MASK_ZAM) != 0)
+#define TARGET_ZAM_P(riscv_subset_flags) (((riscv_subset_flags) & OPTION_MASK_ZAM) != 0)
+
+#define TARGET_ZIFENCEI ((riscv_subset_flags & OPTION_MASK_ZIFENCEI) != 0)
+#define TARGET_ZIFENCEI_P(riscv_subset_flags) (((riscv_subset_flags) & OPTION_MASK_ZIFENCEI) != 0)
+
+#define TARGET_ZTSO ((riscv_subset_flags & OPTION_MASK_ZTSO) != 0)
+#define TARGET_ZTSO_P(riscv_subset_flags) (((riscv_subset_flags) & OPTION_MASK_ZTSO) != 0)
+
+/* Flag predicates for the bitmanip extension subsets. */
+#define TARGET_ZBB ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBB) != 0)
+#define TARGET_ZBB_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBB) != 0)
+#define TARGET_ZBC ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBC) != 0)
+#define TARGET_ZBC_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBC) != 0)
+#define TARGET_ZBE ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBE) != 0)
+#define TARGET_ZBE_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBE) != 0)
+#define TARGET_ZBF ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBF) != 0)
+#define TARGET_ZBF_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBF) != 0)
+#define TARGET_ZBM ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBM) != 0)
+#define TARGET_ZBM_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBM) != 0)
+#define TARGET_ZBP ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBP) != 0)
+#define TARGET_ZBP_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBP) != 0)
+#define TARGET_ZBR ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBR) != 0)
+#define TARGET_ZBR_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBR) != 0)
+#define TARGET_ZBS ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBS) != 0)
+#define TARGET_ZBS_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBS) != 0)
+#define TARGET_ZBT ((riscv_bitmanip_subset_flags & OPTION_MASK_ZBT) != 0)
+#define TARGET_ZBT_P(riscv_bitmanip_subset_flags) (((riscv_bitmanip_subset_flags) & OPTION_MASK_ZBT) != 0)
+
 #endif /* ! GCC_RISCV_OPTS_H */
