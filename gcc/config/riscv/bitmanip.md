@@ -260,6 +260,16 @@
   "ror%i2\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
+(define_expand "riscv_rolw"
+  [(match_operand:SI 0 "register_operand" "=r")
+   (match_operand:SI 1 "register_operand" "r")
+   (match_operand:SI 2 "register_operand" "r")]
+  "TARGET_BITMANIP && TARGET_64BIT"
+{
+  emit_insn (gen_rotlsi3 (operands[0], operands[1], operands[2]));
+  DONE;
+})
+
 (define_insn "rotlsi3"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(rotate:SI (match_operand:SI 1 "register_operand" "r")
@@ -274,6 +284,14 @@
 		   (match_operand:DI 2 "register_operand" "r")))]
   "TARGET_BITMANIP"
   "rol\t%0,%1,%2"
+  [(set_attr "type" "bitmanip")])
+
+(define_insn "rotlsi3_sext"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(sign_extend:DI (rotate:SI (match_operand:SI 1 "register_operand" "r")
+				   (match_operand:SI 2 "register_operand" "r"))))]
+  "TARGET_BITMANIP"
+  "rolw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
 ;;; ??? grev
