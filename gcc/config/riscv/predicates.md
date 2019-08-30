@@ -212,19 +212,9 @@
 
 ;; Predicates for the B extension.
 (define_predicate "single_bit_mask_operand"
-  (match_code "const_int")
-{
-  int val = pow2p_hwi (INTVAL (op));
-  if (val != -1)
-    return true;
-  return false;
-})
+  (and (match_code "const_int")
+       (match_test "pow2p_hwi (INTVAL (op))")))
 
 (define_predicate "not_single_bit_mask_operand"
-  (match_code "const_int")
-{
-  int val = pow2p_hwi (~INTVAL (op));
-  if (val != -1)
-    return true;
-  return false;
-})
+  (and (match_code "const_int")
+       (match_test "pow2p_hwi (~INTVAL (op))")))
