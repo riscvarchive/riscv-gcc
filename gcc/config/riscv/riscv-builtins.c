@@ -37,9 +37,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "expr.h"
 #include "langhooks.h"
 
+/* We don't want the PTR definition from ansi-decl.h.  */
+#undef PTR
+
 /* Macros to create an enumeration identifier for a function prototype.  */
 #define RISCV_FTYPE_NAME0(A) RISCV_##A##_FTYPE
 #define RISCV_FTYPE_NAME1(A, B) RISCV_##A##_FTYPE_##B
+#define RISCV_FTYPE_NAME2(A, B, C) RISCV_##A##_FTYPE_##B##_##C
+#define RISCV_FTYPE_NAME3(A, B, C, D) RISCV_##A##_FTYPE_##B##_##C##_##D
 
 /* Classifies the prototype of a built-in function.  */
 enum riscv_function_type {
@@ -86,6 +91,7 @@ struct riscv_builtin_description {
 };
 
 AVAIL (hard_float, TARGET_HARD_FLOAT)
+AVAIL (vector, TARGET_VECTOR)
 
 /* Construct a riscv_builtin_description from the given arguments.
 
@@ -114,11 +120,80 @@ AVAIL (hard_float, TARGET_HARD_FLOAT)
    and AVAIL are as for RISCV_BUILTIN.  */
 #define DIRECT_NO_TARGET_BUILTIN(INSN, FUNCTION_TYPE, AVAIL)		\
   RISCV_BUILTIN (INSN, #INSN, RISCV_BUILTIN_DIRECT_NO_TARGET,		\
-		FUNCTION_TYPE, AVAIL)
+		 FUNCTION_TYPE, AVAIL)
 
 /* Argument types.  */
 #define RISCV_ATYPE_VOID void_type_node
 #define RISCV_ATYPE_USI unsigned_intSI_type_node
+#define RISCV_ATYPE_SI intSI_type_node
+#define RISCV_ATYPE_DI intDI_type_node
+#define RISCV_ATYPE_C_F_PTR const_float_ptr_type_node
+#define RISCV_ATYPE_F_PTR float_ptr_type_node
+#define RISCV_ATYPE_V2SFM8 rvvfloat32m8_t_node
+#define RISCV_ATYPE_C_HF_PTR const_float16_ptr_type_node
+#define RISCV_ATYPE_HF_PTR float16_ptr_type_node
+#define RISCV_ATYPE_V4HFM4 rvvfloat16m4_t_node
+#define RISCV_ATYPE_C_HF const_float16_type_node
+
+/* Helper type nodes for vector support.  */
+tree const_float_ptr_type_node;
+tree float16_ptr_type_node;
+tree const_float16_type_node;
+tree const_float16_ptr_type_node;
+
+/* Vector type nodes.  */
+tree rvvint8m1_t_node;
+tree rvvint8m2_t_node;
+tree rvvint8m4_t_node;
+tree rvvint8m8_t_node;
+tree rvvint16m1_t_node;
+tree rvvint16m2_t_node;
+tree rvvint16m4_t_node;
+tree rvvint16m8_t_node;
+tree rvvint32m1_t_node;
+tree rvvint32m2_t_node;
+tree rvvint32m4_t_node;
+tree rvvint32m8_t_node;
+tree rvvint64m1_t_node;
+tree rvvint64m2_t_node;
+tree rvvint64m4_t_node;
+tree rvvint64m8_t_node;
+
+tree rvvuint8m1_t_node;
+tree rvvuint8m2_t_node;
+tree rvvuint8m4_t_node;
+tree rvvuint8m8_t_node;
+tree rvvuint16m1_t_node;
+tree rvvuint16m2_t_node;
+tree rvvuint16m4_t_node;
+tree rvvuint16m8_t_node;
+tree rvvuint32m1_t_node;
+tree rvvuint32m2_t_node;
+tree rvvuint32m4_t_node;
+tree rvvuint32m8_t_node;
+tree rvvuint64m1_t_node;
+tree rvvuint64m2_t_node;
+tree rvvuint64m4_t_node;
+tree rvvuint64m8_t_node;
+
+tree rvvfloat16m1_t_node;
+tree rvvfloat16m2_t_node;
+tree rvvfloat16m4_t_node;
+tree rvvfloat16m8_t_node;
+tree rvvfloat32m1_t_node;
+tree rvvfloat32m2_t_node;
+tree rvvfloat32m4_t_node;
+tree rvvfloat32m8_t_node;
+tree rvvfloat64m1_t_node;
+tree rvvfloat64m2_t_node;
+tree rvvfloat64m4_t_node;
+tree rvvfloat64m8_t_node;
+
+/* ??? There needs to be 16 of these not 4.  */
+tree rvvboolm1_t_node;
+tree rvvboolm2_t_node;
+tree rvvboolm4_t_node;
+tree rvvboolm8_t_node;
 
 /* RISCV_FTYPE_ATYPESN takes N RISCV_FTYPES-like type codes and lists
    their associated RISCV_ATYPEs.  */
@@ -126,10 +201,50 @@ AVAIL (hard_float, TARGET_HARD_FLOAT)
   RISCV_ATYPE_##A
 #define RISCV_FTYPE_ATYPES1(A, B) \
   RISCV_ATYPE_##A, RISCV_ATYPE_##B
+#define RISCV_FTYPE_ATYPES2(A, B, C) \
+  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C
+#define RISCV_FTYPE_ATYPES3(A, B, C, D)	\
+  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D
+
+/* An iterator to call a macro with every supported E and M value.  */
+#define _RVVEANDM(MACRO)	\
+  MACRO (8, 1)			\
+  MACRO (8, 2)			\
+  MACRO (8, 4)			\
+  MACRO (8, 8)			\
+  MACRO (16, 1)			\
+  MACRO (16, 2)			\
+  MACRO (16, 4)			\
+  MACRO (16, 8)			\
+  MACRO (32, 1)			\
+  MACRO (32, 2)			\
+  MACRO (32, 4)			\
+  MACRO (32, 8)			\
+  MACRO (64, 1)			\
+  MACRO (64, 2)			\
+  MACRO (64, 4)			\
+  MACRO (64, 8)
+
+#define SETVL_BUILTINS(E, M) \
+  DIRECT_BUILTIN (vsetvl##E##m##M##_si, RISCV_SI_FTYPE_SI, vector),	\
+  DIRECT_BUILTIN (vsetvl##E##m##M##_di, RISCV_DI_FTYPE_DI, vector),
 
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
+
+  _RVVEANDM (SETVL_BUILTINS)
+
+  DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_V2SFM8_FTYPE_V4HFM4_V4HFM4, vector),
+  DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_V2SFM8_FTYPE_V4HFM4_C_HF,
+		  vector),
+
+  DIRECT_BUILTIN (vfwmaddfloat16m4, RISCV_V2SFM8_FTYPE_V4HFM4_V4HFM4_V2SFM8,
+		  vector),
+  DIRECT_BUILTIN (vfwmsubfloat16m4, RISCV_V2SFM8_FTYPE_V4HFM4_V4HFM4_V2SFM8,
+		  vector),
+  DIRECT_BUILTIN (vfwmaddfloat16m4_scalar, RISCV_V2SFM8_FTYPE_V4HFM4_C_HF_V2SFM8,
+		  vector),
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the
@@ -171,7 +286,25 @@ riscv_build_function_type (enum riscv_function_type type)
   return types[(int) type];
 }
 
+/* Create a builtin vector type with a name.  Taking care not to give
+   the canonical type a name.  */
+
+static tree
+riscv_vector_type (const char *name, tree elt_type, enum machine_mode mode)
+{
+  tree result = build_vector_type_for_mode (elt_type, mode);
+
+  /* Copy so we don't give the canonical type a name.  */
+  result = build_variant_type_copy (result);
+
+  add_builtin_type (name, result);
+
+  return result;
+}
+
 /* Implement TARGET_INIT_BUILTINS.  */
+
+/* ??? Use register_builtin_types hook instead of add_builtin_type?  */
 
 void
 riscv_init_builtins (void)
@@ -182,6 +315,149 @@ riscv_init_builtins (void)
   TYPE_PRECISION (fp16_type_node) = 16;
   layout_type (fp16_type_node);
   (*lang_hooks.types.register_builtin_type) (fp16_type_node, "__fp16");
+
+  if (TARGET_VECTOR)
+    {
+      /* These types exist only for the ld/st intrinsics.  */
+      const_float_ptr_type_node
+	= build_pointer_type (build_type_variant (float_type_node, 1, 0));
+      float16_ptr_type_node = build_pointer_type (float16_type_node);
+      const_float16_type_node = build_type_variant (float16_type_node, 1, 0);
+      const_float16_ptr_type_node
+	= build_pointer_type (const_float16_type_node);
+
+      /* _Float16 is C specific.  So we need a language independent type for
+	 half floats.  Use __fp16 same as the arm/aarch64 ports.  */
+      fp16_type_node = make_node (REAL_TYPE);
+      TYPE_PRECISION (fp16_type_node) = 16;
+      layout_type (fp16_type_node);
+      add_builtin_type ("__fp16", fp16_type_node);
+
+      rvvint8m1_t_node
+	= riscv_vector_type ("rvvint8m1_t", intQI_type_node, VNx16QImode);
+      rvvint8m2_t_node
+	= riscv_vector_type ("rvvint8m2_t", intQI_type_node, VNx32QImode);
+      rvvint8m4_t_node
+	= riscv_vector_type ("rvvint8m4_t", intQI_type_node, VNx64QImode);
+      rvvint8m8_t_node
+	= riscv_vector_type ("rvvint8m8_t", intQI_type_node, VNx128QImode);
+
+      rvvint16m1_t_node
+	= riscv_vector_type ("rvvint16m1_t", intHI_type_node, VNx8HImode);
+      rvvint16m2_t_node
+	= riscv_vector_type ("rvvint16m2_t", intHI_type_node, VNx16HImode);
+      rvvint16m4_t_node
+	= riscv_vector_type ("rvvint16m4_t", intHI_type_node, VNx32HImode);
+      rvvint16m8_t_node
+	= riscv_vector_type ("rvvint16m8_t", intHI_type_node, VNx64HImode);
+
+      rvvint32m1_t_node
+	= riscv_vector_type ("rvvint32m1_t", intSI_type_node, VNx4SImode);
+      rvvint32m2_t_node
+	= riscv_vector_type ("rvvint32m2_t", intSI_type_node, VNx8SImode);
+      rvvint32m4_t_node
+	= riscv_vector_type ("rvvint32m4_t", intSI_type_node, VNx16SImode);
+      rvvint32m8_t_node
+	= riscv_vector_type ("rvvint32m8_t", intSI_type_node, VNx32SImode);
+
+      rvvint64m1_t_node
+	= riscv_vector_type ("rvvint64m1_t", intDI_type_node, VNx2DImode);
+      rvvint64m2_t_node
+	= riscv_vector_type ("rvvint64m2_t", intDI_type_node, VNx4DImode);
+      rvvint64m4_t_node
+	= riscv_vector_type ("rvvint64m4_t", intDI_type_node, VNx8DImode);
+      rvvint64m8_t_node
+	= riscv_vector_type ("rvvint64m8_t", intDI_type_node, VNx16DImode);
+
+      rvvuint8m1_t_node
+	= riscv_vector_type ("rvvuint8m1_t", unsigned_intQI_type_node,
+			     VNx16QImode);
+      rvvuint8m2_t_node
+	= riscv_vector_type ("rvvuint8m2_t", unsigned_intQI_type_node,
+			     VNx32QImode);
+      rvvuint8m4_t_node
+	= riscv_vector_type ("rvvuint8m4_t", unsigned_intQI_type_node,
+			     VNx64QImode);
+      rvvuint8m8_t_node
+	= riscv_vector_type ("rvvuint8m8_t", unsigned_intQI_type_node,
+			     VNx128QImode);
+
+      rvvuint16m1_t_node
+	= riscv_vector_type ("rvvuint16m1_t", unsigned_intHI_type_node,
+			     VNx8HImode);
+      rvvuint16m2_t_node
+	= riscv_vector_type ("rvvuint16m2_t", unsigned_intHI_type_node,
+			     VNx16HImode);
+      rvvuint16m4_t_node
+	= riscv_vector_type ("rvvuint16m4_t", unsigned_intHI_type_node,
+			     VNx32HImode);
+      rvvuint16m8_t_node
+	= riscv_vector_type ("rvvuint16m8_t", unsigned_intHI_type_node,
+			     VNx64HImode);
+
+      rvvuint32m1_t_node
+	= riscv_vector_type ("rvvuint32m1_t", unsigned_intSI_type_node,
+			     VNx4SImode);
+      rvvuint32m2_t_node
+	= riscv_vector_type ("rvvuint32m2_t", unsigned_intSI_type_node,
+			     VNx8SImode);
+      rvvuint32m4_t_node
+	= riscv_vector_type ("rvvuint32m4_t", unsigned_intSI_type_node,
+			     VNx16SImode);
+      rvvuint32m8_t_node
+	= riscv_vector_type ("rvvuint32m8_t", unsigned_intSI_type_node,
+			     VNx32SImode);
+
+      rvvuint64m1_t_node
+	= riscv_vector_type ("rvvuint64m1_t", unsigned_intDI_type_node,
+			     VNx2DImode);
+      rvvuint64m2_t_node
+	= riscv_vector_type ("rvvuint64m2_t", unsigned_intDI_type_node,
+			     VNx4DImode);
+      rvvuint64m4_t_node
+	= riscv_vector_type ("rvvuint64m4_t", unsigned_intDI_type_node,
+			     VNx8DImode);
+      rvvuint64m8_t_node
+	= riscv_vector_type ("rvvuint64m8_t", unsigned_intDI_type_node,
+			     VNx16DImode);
+
+      rvvfloat16m1_t_node
+	= riscv_vector_type ("rvvfloat16m1_t", float16_type_node, VNx8HFmode);
+      rvvfloat16m2_t_node
+	= riscv_vector_type ("rvvfloat16m2_t", float16_type_node, VNx16HFmode);
+      rvvfloat16m4_t_node
+	= riscv_vector_type ("rvvfloat16m4_t", float16_type_node, VNx32HFmode);
+      rvvfloat16m8_t_node
+	= riscv_vector_type ("rvvfloat16m8_t", float16_type_node, VNx64HFmode);
+
+      rvvfloat32m1_t_node
+	= riscv_vector_type ("rvvfloat32m1_t", float_type_node, VNx4SFmode);
+      rvvfloat32m2_t_node
+	= riscv_vector_type ("rvvfloat32m2_t", float_type_node, VNx8SFmode);
+      rvvfloat32m4_t_node
+	= riscv_vector_type ("rvvfloat32m4_t", float_type_node, VNx16SFmode);
+      rvvfloat32m8_t_node
+	= riscv_vector_type ("rvvfloat32m8_t", float_type_node, VNx32SFmode);
+
+      rvvfloat64m1_t_node
+	= riscv_vector_type ("rvvfloat64m1_t", double_type_node, VNx2DFmode);
+      rvvfloat64m2_t_node
+	= riscv_vector_type ("rvvfloat64m2_t", double_type_node, VNx4DFmode);
+      rvvfloat64m4_t_node
+	= riscv_vector_type ("rvvfloat64m4_t", double_type_node, VNx8DFmode);
+      rvvfloat64m8_t_node
+	= riscv_vector_type ("rvvfloat64m8_t", double_type_node, VNx16DFmode);
+
+      rvvboolm1_t_node
+	= riscv_vector_type ("rvvboolm1_t", boolean_type_node, VNx1BImode);
+      rvvboolm2_t_node
+	= riscv_vector_type ("rvvboolm2_t", boolean_type_node, VNx2BImode);
+      rvvboolm4_t_node
+	= riscv_vector_type ("rvvboolm4_t", boolean_type_node, VNx4BImode);
+      rvvboolm8_t_node
+	= riscv_vector_type ("rvvboolm8_t", boolean_type_node, VNx8BImode);
+
+    }
 
   for (size_t i = 0; i < ARRAY_SIZE (riscv_builtins); i++)
     {

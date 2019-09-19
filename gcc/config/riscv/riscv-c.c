@@ -105,4 +105,7 @@ riscv_cpu_cpp_builtins (cpp_reader *pfile)
       builtin_define ("__riscv_cmodel_pic");
       break;
     }
+
+  if (TARGET_VECTOR)
+    builtin_define ("__riscv_vector");
 }

@@ -51,4 +51,15 @@ enum riscv_align_data {
   riscv_align_data_type_natural
 };
 
+/* RVV vector register sizes.  */
+enum riscv_rvv_vector_bits_enum {
+  RVV_SCALABLE,
+  RVV_NOT_IMPLEMENTED = RVV_SCALABLE,
+  RVV_64 = 64,
+  RVV_128 = 128,
+  RVV_256 = 256,
+  RVV_512 = 512,
+  RVV_1024 = 1024
+};
+
 #endif /* ! GCC_RISCV_OPTS_H */

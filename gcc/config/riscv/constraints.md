@@ -81,3 +81,29 @@
    A constant @code{move_operand}."
   (and (match_operand 0 "move_operand")
        (match_test "CONSTANT_P (op)")))
+
+;; Vector constraints.
+
+(define_register_constraint "vr" "TARGET_VECTOR ? VECTOR_REGS : NO_REGS"
+  "A vector register (if available).")
+
+;; ??? Not used yet.
+(define_register_constraint "vm" "TARGET_VECTOR ? VECTOR_MASK_REGS : NO_REGS"
+  "A vector mask register (if available).")
+
+(define_constraint "vc"
+  "Any vector duplicate constant."
+  (and (match_code "const_vector")
+       (match_test "const_vec_duplicate_p (op)")))
+
+(define_constraint "vi"
+  "A vector 5-bit signed immediate."
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, -16, 15)")))
+
+;; ??? Not used yet.
+(define_constraint "vj"
+  "A vector 5-bit unsigned immediate."
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 31)")))
+

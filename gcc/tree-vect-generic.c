@@ -52,6 +52,9 @@ static void expand_vector_operations_1 (gimple_stmt_iterator *);
 static unsigned int
 nunits_for_known_piecewise_op (const_tree type)
 {
+  /* ??? */
+  if (!TYPE_VECTOR_SUBPARTS (type).is_constant ())
+    return 0;
   return TYPE_VECTOR_SUBPARTS (type).to_constant ();
 }
 
@@ -281,6 +284,9 @@ expand_vector_piecewise (gimple_stmt_iterator *gsi, elem_op_func f,
   int i;
   location_t loc = gimple_location (gsi_stmt (*gsi));
 
+  if (nunits == 0)
+    return NULL_TREE;
+
   if (ret_type
       || types_compatible_p (gimple_expr_type (gsi_stmt (*gsi)), type))
     warning_at (loc, OPT_Wvector_operation_performance,
@@ -439,6 +445,10 @@ add_rshift (gimple_stmt_iterator *gsi, tree type, tree op0, int *shiftcnts)
   unsigned int i, nunits = nunits_for_known_piecewise_op (type);
   bool scalar_shift = true;
 
+  /* ??? */
+  if (nunits == 0)
+    return NULL_TREE;
+
   for (i = 1; i < nunits; i++)
     {
       if (shiftcnts[i] != shiftcnts[0])
@@ -494,6 +504,10 @@ expand_vector_divmod (gimple_stmt_iterator *gsi, tree type, tree op0,
   unsigned HOST_WIDE_INT mask = GET_MODE_MASK (TYPE_MODE (TREE_TYPE (type)));
   tree cur_op, mulcst, tem;
   optab op;
+
+  /* ??? */
+  if (nunits == 0)
+    return NULL_TREE;
 
   if (prec > HOST_BITS_PER_WIDE_INT)
     return NULL_TREE;
@@ -1000,6 +1014,10 @@ expand_vector_condition (gimple_stmt_iterator *gsi)
 
   /* TODO: try and find a smaller vector type.  */
 
+  int nunits = nunits_for_known_piecewise_op (type);
+  if (nunits == 0)
+    return;
+
   warning_at (loc, OPT_Wvector_operation_performance,
 	      "vector condition will be expanded piecewise");
 
@@ -1017,7 +1035,6 @@ expand_vector_condition (gimple_stmt_iterator *gsi)
       a = gimplify_build1 (gsi, VIEW_CONVERT_EXPR, atype, a);
     }
 
-  int nunits = nunits_for_known_piecewise_op (type);
   vec_alloc (v, nunits);
   for (i = 0; i < nunits; i++)
     {

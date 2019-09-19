@@ -71,7 +71,7 @@
 {
   /* Don't handle multi-word moves this way; we don't want to introduce
      the individual word-mode moves until after reload.  */
-  if (GET_MODE_SIZE (mode) > UNITS_PER_WORD)
+  if (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD)
     return false;
 
   /* Otherwise check whether the constant can be loaded in a single
@@ -212,3 +212,27 @@
 {
   return riscv_gpr_save_operation_p (op);
 })
+
+;; Vector predicates.
+
+(define_predicate "const_vector_int_operand"
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, -16, 15)")))
+
+(define_predicate "vector_arith_operand"
+  (ior (match_operand 0 "const_vector_int_operand")
+       (match_operand 0 "register_operand")))
+
+(define_predicate "vector_move_operand"
+  (ior (match_operand 0 "nonimmediate_operand")
+       (match_test "const_vec_duplicate_p (op)")))
+		  
+;; ??? Not used yet.
+(define_predicate "const_vector_shift_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 31)")))
+
+;; ??? Not used yet.
+(define_predicate "vector_shift_operand"
+  (ior (match_operand 0 "const_vector_shift_operand")
+       (match_operand 0 "register_operand")))
