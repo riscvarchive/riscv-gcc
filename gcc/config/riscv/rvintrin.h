@@ -833,4 +833,165 @@ static inline long _rv_fsl(long rs1, long rs3, long rs2) { return _rv64_fsl(rs1,
 static inline long _rv_fsr(long rs1, long rs3, long rs2) { return _rv64_fsr(rs1, rs3, rs2); }
 #endif
 
+#ifdef RVINTRIN_RV32
+
+#define RVINTRIN_GREV_PSEUDO_OP32(_arg, _name) \
+	static inline long    _rv_   ## _name(long    rs1) { return _rv_grev  (rs1, _arg); } \
+	static inline int32_t _rv32_ ## _name(int32_t rs1) { return _rv32_grev(rs1, _arg); }
+
+#define RVINTRIN_GREV_PSEUDO_OP64(_arg, _name)
+
+#else
+
+#define RVINTRIN_GREV_PSEUDO_OP32(_arg, _name) \
+	static inline int32_t _rv32_ ## _name(int32_t rs1) { return _rv32_grev(rs1, _arg); }
+
+#define RVINTRIN_GREV_PSEUDO_OP64(_arg, _name) \
+	static inline long    _rv_   ## _name(long    rs1) { return _rv_grev  (rs1, _arg); } \
+	static inline int64_t _rv64_ ## _name(int64_t rs1) { return _rv64_grev(rs1, _arg); }
+#endif
+
+RVINTRIN_GREV_PSEUDO_OP32( 1, rev_p)
+RVINTRIN_GREV_PSEUDO_OP32( 2, rev2_n)
+RVINTRIN_GREV_PSEUDO_OP32( 3, rev_n)
+RVINTRIN_GREV_PSEUDO_OP32( 4, rev4_b)
+RVINTRIN_GREV_PSEUDO_OP32( 6, rev2_b)
+RVINTRIN_GREV_PSEUDO_OP32( 7, rev_b)
+RVINTRIN_GREV_PSEUDO_OP32( 8, rev8_h)
+RVINTRIN_GREV_PSEUDO_OP32(12, rev4_h)
+RVINTRIN_GREV_PSEUDO_OP32(14, rev2_h)
+RVINTRIN_GREV_PSEUDO_OP32(15, rev_h)
+RVINTRIN_GREV_PSEUDO_OP32(16, rev16)
+RVINTRIN_GREV_PSEUDO_OP32(24, rev8)
+RVINTRIN_GREV_PSEUDO_OP32(28, rev4)
+RVINTRIN_GREV_PSEUDO_OP32(30, rev2)
+RVINTRIN_GREV_PSEUDO_OP32(31, rev)
+
+RVINTRIN_GREV_PSEUDO_OP64( 1, rev_p)
+RVINTRIN_GREV_PSEUDO_OP64( 2, rev2_n)
+RVINTRIN_GREV_PSEUDO_OP64( 3, rev_n)
+RVINTRIN_GREV_PSEUDO_OP64( 4, rev4_b)
+RVINTRIN_GREV_PSEUDO_OP64( 6, rev2_b)
+RVINTRIN_GREV_PSEUDO_OP64( 7, rev_b)
+RVINTRIN_GREV_PSEUDO_OP64( 8, rev8_h)
+RVINTRIN_GREV_PSEUDO_OP64(12, rev4_h)
+RVINTRIN_GREV_PSEUDO_OP64(14, rev2_h)
+RVINTRIN_GREV_PSEUDO_OP64(15, rev_h)
+RVINTRIN_GREV_PSEUDO_OP64(16, rev16_w)
+RVINTRIN_GREV_PSEUDO_OP64(24, rev8_w)
+RVINTRIN_GREV_PSEUDO_OP64(28, rev4_w)
+RVINTRIN_GREV_PSEUDO_OP64(30, rev2_w)
+RVINTRIN_GREV_PSEUDO_OP64(31, rev_w)
+RVINTRIN_GREV_PSEUDO_OP64(32, rev32)
+RVINTRIN_GREV_PSEUDO_OP64(48, rev16)
+RVINTRIN_GREV_PSEUDO_OP64(56, rev8)
+RVINTRIN_GREV_PSEUDO_OP64(60, rev4)
+RVINTRIN_GREV_PSEUDO_OP64(62, rev2)
+RVINTRIN_GREV_PSEUDO_OP64(63, rev)
+
+#ifdef RVINTRIN_RV32
+
+#define RVINTRIN_GORC_PSEUDO_OP32(_arg, _name) \
+	static inline long    _rv_   ## _name(long    rs1) { return _rv_gorc  (rs1, _arg); } \
+	static inline int32_t _rv32_ ## _name(int32_t rs1) { return _rv32_gorc(rs1, _arg); }
+
+#define RVINTRIN_GORC_PSEUDO_OP64(_arg, _name)
+
+#else
+
+#define RVINTRIN_GORC_PSEUDO_OP32(_arg, _name) \
+	static inline int32_t _rv32_ ## _name(int32_t rs1) { return _rv32_gorc(rs1, _arg); }
+
+#define RVINTRIN_GORC_PSEUDO_OP64(_arg, _name) \
+	static inline long    _rv_   ## _name(long    rs1) { return _rv_gorc  (rs1, _arg); } \
+	static inline int64_t _rv64_ ## _name(int64_t rs1) { return _rv64_gorc(rs1, _arg); }
+#endif
+
+RVINTRIN_GORC_PSEUDO_OP32( 1, orc_p)
+RVINTRIN_GORC_PSEUDO_OP32( 2, orc2_n)
+RVINTRIN_GORC_PSEUDO_OP32( 3, orc_n)
+RVINTRIN_GORC_PSEUDO_OP32( 4, orc4_b)
+RVINTRIN_GORC_PSEUDO_OP32( 6, orc2_b)
+RVINTRIN_GORC_PSEUDO_OP32( 7, orc_b)
+RVINTRIN_GORC_PSEUDO_OP32( 8, orc8_h)
+RVINTRIN_GORC_PSEUDO_OP32(12, orc4_h)
+RVINTRIN_GORC_PSEUDO_OP32(14, orc2_h)
+RVINTRIN_GORC_PSEUDO_OP32(15, orc_h)
+RVINTRIN_GORC_PSEUDO_OP32(16, orc16)
+RVINTRIN_GORC_PSEUDO_OP32(24, orc8)
+RVINTRIN_GORC_PSEUDO_OP32(28, orc4)
+RVINTRIN_GORC_PSEUDO_OP32(30, orc2)
+RVINTRIN_GORC_PSEUDO_OP32(31, orc)
+
+RVINTRIN_GORC_PSEUDO_OP64( 1, orc_p)
+RVINTRIN_GORC_PSEUDO_OP64( 2, orc2_n)
+RVINTRIN_GORC_PSEUDO_OP64( 3, orc_n)
+RVINTRIN_GORC_PSEUDO_OP64( 4, orc4_b)
+RVINTRIN_GORC_PSEUDO_OP64( 6, orc2_b)
+RVINTRIN_GORC_PSEUDO_OP64( 7, orc_b)
+RVINTRIN_GORC_PSEUDO_OP64( 8, orc8_h)
+RVINTRIN_GORC_PSEUDO_OP64(12, orc4_h)
+RVINTRIN_GORC_PSEUDO_OP64(14, orc2_h)
+RVINTRIN_GORC_PSEUDO_OP64(15, orc_h)
+RVINTRIN_GORC_PSEUDO_OP64(16, orc16_w)
+RVINTRIN_GORC_PSEUDO_OP64(24, orc8_w)
+RVINTRIN_GORC_PSEUDO_OP64(28, orc4_w)
+RVINTRIN_GORC_PSEUDO_OP64(30, orc2_w)
+RVINTRIN_GORC_PSEUDO_OP64(31, orc_w)
+RVINTRIN_GORC_PSEUDO_OP64(32, orc32)
+RVINTRIN_GORC_PSEUDO_OP64(48, orc16)
+RVINTRIN_GORC_PSEUDO_OP64(56, orc8)
+RVINTRIN_GORC_PSEUDO_OP64(60, orc4)
+RVINTRIN_GORC_PSEUDO_OP64(62, orc2)
+RVINTRIN_GORC_PSEUDO_OP64(63, orc)
+
+#ifdef RVINTRIN_RV32
+
+#define RVINTRIN_SHFL_PSEUDO_OP32(_arg, _name) \
+	static inline long    _rv_     ## _name(long    rs1) { return _rv_shfl    (rs1, _arg); } \
+	static inline long    _rv_un   ## _name(long    rs1) { return _rv_unshfl  (rs1, _arg); } \
+	static inline int32_t _rv32_un ## _name(int32_t rs1) { return _rv32_shfl  (rs1, _arg); } \
+	static inline int32_t _rv32_   ## _name(int32_t rs1) { return _rv32_unshfl(rs1, _arg); }
+
+#define RVINTRIN_SHFL_PSEUDO_OP64(_arg, _name)
+
+#else
+
+#define RVINTRIN_SHFL_PSEUDO_OP32(_arg, _name)
+
+#define RVINTRIN_SHFL_PSEUDO_OP64(_arg, _name) \
+	static inline long    _rv_     ## _name(long    rs1) { return _rv_shfl    (rs1, _arg); } \
+	static inline long    _rv_un   ## _name(long    rs1) { return _rv_unshfl  (rs1, _arg); } \
+	static inline int64_t _rv64_   ## _name(int64_t rs1) { return _rv64_shfl  (rs1, _arg); } \
+	static inline int64_t _rv64_un ## _name(int64_t rs1) { return _rv64_unshfl(rs1, _arg); }
+
+#endif
+
+RVINTRIN_SHFL_PSEUDO_OP32( 1, zip_n)
+RVINTRIN_SHFL_PSEUDO_OP32( 2, zip2_b)
+RVINTRIN_SHFL_PSEUDO_OP32( 3, zip_b)
+RVINTRIN_SHFL_PSEUDO_OP32( 4, zip4_h)
+RVINTRIN_SHFL_PSEUDO_OP32( 6, zip2_h)
+RVINTRIN_SHFL_PSEUDO_OP32( 7, zip_h)
+RVINTRIN_SHFL_PSEUDO_OP32( 8, zip8)
+RVINTRIN_SHFL_PSEUDO_OP32(12, zip4)
+RVINTRIN_SHFL_PSEUDO_OP32(14, zip2)
+RVINTRIN_SHFL_PSEUDO_OP32(15, zip)
+
+RVINTRIN_SHFL_PSEUDO_OP64( 1, zip_n)
+RVINTRIN_SHFL_PSEUDO_OP64( 2, zip2_b)
+RVINTRIN_SHFL_PSEUDO_OP64( 3, zip_b)
+RVINTRIN_SHFL_PSEUDO_OP64( 4, zip4_h)
+RVINTRIN_SHFL_PSEUDO_OP64( 6, zip2_h)
+RVINTRIN_SHFL_PSEUDO_OP64( 7, zip_h)
+RVINTRIN_SHFL_PSEUDO_OP64( 8, zip8_w)
+RVINTRIN_SHFL_PSEUDO_OP64(12, zip4_w)
+RVINTRIN_SHFL_PSEUDO_OP64(14, zip2_w)
+RVINTRIN_SHFL_PSEUDO_OP64(15, zip_w)
+RVINTRIN_SHFL_PSEUDO_OP64(16, zip16)
+RVINTRIN_SHFL_PSEUDO_OP64(24, zip8)
+RVINTRIN_SHFL_PSEUDO_OP64(28, zip4)
+RVINTRIN_SHFL_PSEUDO_OP64(30, zip2)
+RVINTRIN_SHFL_PSEUDO_OP64(31, zip)
+
 #endif // RVINTRIN_H
