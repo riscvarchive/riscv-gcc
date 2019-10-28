@@ -254,6 +254,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 		  vector),
 
   RISCV_BUILTIN(veccmpltvnx32si, "cmplt_int32m8", RISCV_BUILTIN_DIRECT, RISCV_V4BI_FTYPE_V32SIM8_V32SIM8, vector),
+  RISCV_BUILTIN(addvnx32si3_mask, "add_vv_int32m8_mask", RISCV_BUILTIN_DIRECT,
+		RISCV_V32SIM8_FTYPE_V4BI_V32SIM8_V32SIM8_V32SIM8, vector),
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the

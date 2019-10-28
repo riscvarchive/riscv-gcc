@@ -309,6 +309,20 @@
    (set_attr "mode" "none")])
 
 ;; ??? Needs splitter.
+(define_insn "riscv_add<mode>3_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(if_then_else:VIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	    (plus:VIMODES (match_operand:VIMODES 3 "register_operand" "vr,vr")
+			  (match_operand:VIMODES 4 "vector_arith_operand" "vr,vi"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0,0")))]
+  "TARGET_VECTOR"
+  "vsetvli\tx0,x0,<vemode>,<vmmode>\;vadd.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; ??? Needs splitter.
 (define_insn "sub<mode>3"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(minus:VIMODES (match_operand:VIMODES 1 "register_operand" "vr")
