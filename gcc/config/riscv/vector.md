@@ -214,6 +214,9 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+;; ??? We don't yet support vector float modes with constant immediate
+;; inputs.
+
 (define_insn_and_split "mov<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (set (match_operand:VFMODES 0 "nonimmediate_operand" "=vr,vr, m")
@@ -228,7 +231,6 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-;; ??? Identical to VIMODES pattern above.
 (define_insn "*mov<mode>_nosetvl"
   [(set (match_operand:VFMODES 0 "nonimmediate_operand" "=vr,vr, m")
 	(match_operand:VFMODES 1 "nonimmediate_operand" " vr, m,vr"))
@@ -279,7 +281,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn_and_split "*add<mode>3_scalar"
+(define_insn_and_split "add<mode>3_scalar"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(plus:VIMODES (vec_duplicate:VIMODES
@@ -322,13 +324,118 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-;; ??? Needs splitter.
-(define_insn "sub<mode>3"
+(define_insn_and_split "sub<mode>3"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(minus:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
+		       (match_operand:VIMODES 2 "neg_vector_arith_operand" "vr,vj")))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_dup 0) (minus:VIMODES (match_dup 1) (match_dup 2)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  ""
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_insn "*sub<mode>3_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(minus:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
+		       (match_operand:VIMODES 2 "neg_vector_arith_operand" "vr,vj")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vsub.vv\t%0,%1,%2
+   vadd.vi\t%0,%1,%V2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; ??? No constant immediate subtract, should be converted to an add, but
+;; this is not happening.  Maybe add it to this pattern?
+
+(define_insn_and_split "sub<mode>3_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(minus:VIMODES (match_operand:VIMODES 1 "register_operand" "vr")
+		       (vec_duplicate:VIMODES
+			(match_operand:<VSUBMODE> 2 "register_operand" "r"))))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_dup 0)
+		   (minus:VIMODES (match_dup 1)
+				  (vec_duplicate:VIMODES (match_dup 2))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  ""
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_insn "*sub<mode>3_scalar_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(minus:VIMODES (match_operand:VIMODES 1 "register_operand" "vr")
-		       (match_operand:VIMODES 2 "register_operand" "vr")))]
+		       (vec_duplicate:VIMODES
+			(match_operand:<VSUBMODE> 2 "register_operand" "r"))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vsetvli\tx0,x0,<vemode>,<vmmode>\;vsub.vv\t%0,%1,%2"
+  "vsub.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_insn_and_split "sub<mode>3_reverse"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(minus:VIMODES (match_operand:VIMODES 2 "const_vector_int_operand" "vi")
+		       (match_operand:VIMODES 1 "register_operand" "vr")))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_dup 0)
+		   (minus:VIMODES (match_dup 2)
+				  (match_dup 1)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  ""
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_insn "*sub<mode>3_reverse_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(minus:VIMODES (match_operand:VIMODES 2 "const_vector_int_operand" "vi")
+		       (match_operand:VIMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vrsub.vi\t%0,%1,%v2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_insn_and_split "sub<mode>3_reverse_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(minus:VIMODES (vec_duplicate:VIMODES
+			(match_operand:<VSUBMODE> 2 "register_operand" "r"))
+		       (match_operand:VIMODES 1 "register_operand" "vr")))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_dup 0)
+		   (minus:VIMODES (vec_duplicate:VIMODES (match_dup 2))
+				  (match_dup 1)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  ""
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_insn "*sub<mode>3_reverse_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(minus:VIMODES (vec_duplicate:VIMODES
+			(match_operand:<VSUBMODE> 2 "register_operand" "r"))
+		       (match_operand:VIMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vrsub.vx\t%0,%1,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

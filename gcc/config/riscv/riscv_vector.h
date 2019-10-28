@@ -137,31 +137,70 @@ rvvstfloat##E##m##M (const T *a, rvvfloat##E##m##M##_t b)		\
 _RVVFLOATEANDM (_RVVFLOATLD)
 _RVVFLOATEANDM (_RVVFLOATST)
 
-#if 0
-/* Define the add intrinsics.  */
 /* ??? An intrinsic with sizeless type args that doesn't call a builtin fails
    in ipa because it doesn't handle sizeless types in predicates, as called
-   from will_be_nonconstant_predicate.  */
+   from will_be_nonconstant_predicate.  So all of these must use a builtin.  */
+
+/* Define the add intrinsics.  */
 
 #define _RVVINTADD(E, M, T)						\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvaddint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
 {									\
-  return a + b;								\
+  return __builtin_riscv_vaddint##E##m##M (a, b);			\
 }
 
-#define _RVVINTADDS(E, M, T)						\
+#define _RVVINTADD_SCALAR(E, M, T)					\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvaddsint##E##m##M (rvvint##E##m##M##_t a, T b)			\
+rvvaddint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
 {									\
-  return a + b;								\
+  return __builtin_riscv_vaddint##E##m##M##_scalar (a, b);		\
 }
 
 _RVVINTEANDM (_RVVINTADD)
-_RVVINTEANDM (_RVVINTADDS)
+_RVVINTEANDM (_RVVINTADD_SCALAR)
 
+#define _RVVINTSUB(E, M, T)						\
+__extension__ extern __inline rvvint##E##m##M##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvsubint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
+{									\
+  return __builtin_riscv_vsubint##E##m##M (a, b);			\
+}
+
+#define _RVVINTSUB_SCALAR(E, M, T)					\
+__extension__ extern __inline rvvint##E##m##M##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvsubint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
+{									\
+  return __builtin_riscv_vsubint##E##m##M##_scalar (a, b);		\
+}
+
+_RVVINTEANDM (_RVVINTSUB)
+_RVVINTEANDM (_RVVINTSUB_SCALAR)
+
+#define _RVVINTRSUB(E, M, T)						\
+__extension__ extern __inline rvvint##E##m##M##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvrsubint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
+{									\
+  return __builtin_riscv_vrsubint##E##m##M (a, b);			\
+}
+
+#define _RVVINTRSUB_SCALAR(E, M, T)					\
+__extension__ extern __inline rvvint##E##m##M##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvrsubint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
+{									\
+  return __builtin_riscv_vrsubint##E##m##M##_scalar (a, b);		\
+}
+
+_RVVINTEANDM (_RVVINTRSUB)
+_RVVINTEANDM (_RVVINTRSUB_SCALAR)
+
+#if 0
 #define _RVVFLOATADD(E, M, T)						\
 __extension__ extern __inline rvvfloat##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

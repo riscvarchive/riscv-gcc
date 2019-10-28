@@ -3457,6 +3457,7 @@ riscv_memmodel_needs_release_fence (enum memmodel model)
    'z'	Print x0 if OP is zero, otherwise print OP normally.
    'i'	Print i if the operand is not a register.
    'v'  Print the sole immediate value of a const vec duplicate.
+   'V'  Print the negated sole immediate value of a const vec duplicate.
    'B'  Print a branch condition.  */
 
 static void
@@ -3504,6 +3505,18 @@ riscv_print_operand (FILE *file, rtx op, int letter)
 	  output_operand_lossage ("invalid vector constant");
 	else if (GET_MODE_CLASS (GET_MODE (op)) == MODE_VECTOR_INT)
 	  asm_fprintf (file, "%wd", INTVAL (elt));
+	else
+	  output_operand_lossage ("invalid vector constant");
+      }
+      break;
+
+    case 'V':
+      {
+	rtx elt;
+	if (!const_vec_duplicate_p (op, &elt))
+	  output_operand_lossage ("invalid vector constant");
+	else if (GET_MODE_CLASS (GET_MODE (op)) == MODE_VECTOR_INT)
+	  asm_fprintf (file, "%wd", -INTVAL (elt));
 	else
 	  output_operand_lossage ("invalid vector constant");
       }

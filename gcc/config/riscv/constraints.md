@@ -101,9 +101,13 @@
   (and (match_code "const_vector")
        (match_test "riscv_const_vec_all_same_in_range_p (op, -16, 15)")))
 
-;; ??? Not used yet.
 (define_constraint "vj"
+  "A vector negated 5-bit signed immediate."
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, -15, 16)")))
+
+;; ??? Not used yet.
+(define_constraint "vk"
   "A vector 5-bit unsigned immediate."
   (and (match_code "const_int")
        (match_test "IN_RANGE (INTVAL (op), 0, 31)")))
-

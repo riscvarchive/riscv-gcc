@@ -106,7 +106,7 @@ AVAIL (vector, TARGET_VECTOR)
 
    AVAIL is the name of the availability predicate, without the leading
    riscv_builtin_avail_.  */
-#define RISCV_BUILTIN(INSN, NAME, BUILTIN_TYPE,	FUNCTION_TYPE, AVAIL)	\
+#define RISCV_BUILTIN(INSN, NAME, BUILTIN_TYPE, FUNCTION_TYPE, AVAIL)	\
   { CODE_FOR_riscv_ ## INSN, "__builtin_riscv_" NAME,			\
     BUILTIN_TYPE, FUNCTION_TYPE, riscv_builtin_avail_ ## AVAIL }
 
@@ -123,20 +123,50 @@ AVAIL (vector, TARGET_VECTOR)
   RISCV_BUILTIN (INSN, #INSN, RISCV_BUILTIN_DIRECT_NO_TARGET,		\
 		 FUNCTION_TYPE, AVAIL)
 
+/* Same as above, but for using named patterns in the md file.  It drops the
+   riscv after CODE_FOR_, but it is otherwise the same.  */
+#define RISCV_NAMED(INSN, NAME, BUILTIN_TYPE, FUNCTION_TYPE, AVAIL)	\
+  { CODE_FOR_ ## INSN, "__builtin_riscv_" NAME,			\
+    BUILTIN_TYPE, FUNCTION_TYPE, riscv_builtin_avail_ ## AVAIL }
+
+/* This has an extra NAME argument, as the builtin name and the pattern name
+   are constructed differently.  */
+#define DIRECT_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)			\
+  RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_DIRECT, FUNCTION_TYPE, AVAIL)
+
 /* Argument types.  */
 #define RISCV_ATYPE_VOID void_type_node
 #define RISCV_ATYPE_USI unsigned_intSI_type_node
+#define RISCV_ATYPE_QI intQI_type_node
+#define RISCV_ATYPE_HI intHI_type_node
 #define RISCV_ATYPE_SI intSI_type_node
 #define RISCV_ATYPE_DI intDI_type_node
 #define RISCV_ATYPE_C_F_PTR const_float_ptr_type_node
 #define RISCV_ATYPE_F_PTR float_ptr_type_node
-#define RISCV_ATYPE_V2SFM8 rvvfloat32m8_t_node
+#define RISCV_ATYPE_VF32M8 rvvfloat32m8_t_node
 #define RISCV_ATYPE_C_HF_PTR const_float16_ptr_type_node
 #define RISCV_ATYPE_HF_PTR float16_ptr_type_node
-#define RISCV_ATYPE_V4HFM4 rvvfloat16m4_t_node
+#define RISCV_ATYPE_VF16M4 rvvfloat16m4_t_node
 #define RISCV_ATYPE_C_HF const_float16_type_node
 #define RISCV_ATYPE_V32SIM8 rvvint32m8_t_node
 #define RISCV_ATYPE_V4BI rvvbool4_t_node
+
+#define RISCV_ATYPE_VI8M1 rvvint8m1_t_node
+#define RISCV_ATYPE_VI8M2 rvvint8m2_t_node
+#define RISCV_ATYPE_VI8M4 rvvint8m4_t_node
+#define RISCV_ATYPE_VI8M8 rvvint8m8_t_node
+#define RISCV_ATYPE_VI16M1 rvvint16m1_t_node
+#define RISCV_ATYPE_VI16M2 rvvint16m2_t_node
+#define RISCV_ATYPE_VI16M4 rvvint16m4_t_node
+#define RISCV_ATYPE_VI16M8 rvvint16m8_t_node
+#define RISCV_ATYPE_VI32M1 rvvint32m1_t_node
+#define RISCV_ATYPE_VI32M2 rvvint32m2_t_node
+#define RISCV_ATYPE_VI32M4 rvvint32m4_t_node
+#define RISCV_ATYPE_VI32M8 rvvint32m8_t_node
+#define RISCV_ATYPE_VI64M1 rvvint64m1_t_node
+#define RISCV_ATYPE_VI64M2 rvvint64m2_t_node
+#define RISCV_ATYPE_VI64M4 rvvint64m4_t_node
+#define RISCV_ATYPE_VI64M8 rvvint64m8_t_node
 
 /* Helper type nodes for vector support.  */
 tree const_float_ptr_type_node;
@@ -213,49 +243,80 @@ tree rvvbool64_t_node;
 #define RISCV_FTYPE_ATYPES4(A, B, C, D, E) \
   RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, RISCV_ATYPE_##E
 
-/* An iterator to call a macro with every supported E and M value.  */
-#define _RVVEANDM(MACRO)	\
-  MACRO (8, 1)			\
-  MACRO (8, 2)			\
-  MACRO (8, 4)			\
-  MACRO (8, 8)			\
-  MACRO (16, 1)			\
-  MACRO (16, 2)			\
-  MACRO (16, 4)			\
-  MACRO (16, 8)			\
-  MACRO (32, 1)			\
-  MACRO (32, 2)			\
-  MACRO (32, 4)			\
-  MACRO (32, 8)			\
-  MACRO (64, 1)			\
-  MACRO (64, 2)			\
-  MACRO (64, 4)			\
-  MACRO (64, 8)
+/* An iterator to call a macro with every supported E and M value, along
+   with its corresponding vector and integer modes.  */
+#define _RVV_INT_E_M_MODE(MACRO)	\
+  MACRO (8, 1, vnx16qi, QI)		\
+  MACRO (8, 2, vnx32qi, QI)		\
+  MACRO (8, 4, vnx64qi, QI)		\
+  MACRO (8, 8, vnx128qi, QI)		\
+  MACRO (16, 1, vnx8hi, HI)		\
+  MACRO (16, 2, vnx16hi, HI)		\
+  MACRO (16, 4, vnx32hi, HI)		\
+  MACRO (16, 8, vnx64hi, HI)		\
+  MACRO (32, 1, vnx4si, SI)		\
+  MACRO (32, 2, vnx8si, SI)		\
+  MACRO (32, 4, vnx16si, SI)		\
+  MACRO (32, 8, vnx32si, SI)		\
+  MACRO (64, 1, vnx2di, DI)		\
+  MACRO (64, 2, vnx4di, DI)		\
+  MACRO (64, 4, vnx8di, DI)		\
+  MACRO (64, 8, vnx16di, DI)
 
-#define SETVL_BUILTINS(E, M) \
+#define SETVL_BUILTINS(E, M, MODE, SUBMODE)				\
   DIRECT_BUILTIN (vsetvl##E##m##M##_si, RISCV_SI_FTYPE_SI, vector),	\
   DIRECT_BUILTIN (vsetvl##E##m##M##_di, RISCV_DI_FTYPE_DI, vector),
+
+/* ??? Can't use M for LMUL because of M in RISCV_* type names.  */
+#define VADD_BUILTINS(E, L, MODE, SUBMODE)				\
+  DIRECT_NAMED (add##MODE##3, vaddint##E##m##L,				\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (add##MODE##3_scalar, vaddint##E##m##L##_scalar,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),
+
+#define VSUB_BUILTINS(E, L, MODE, SUBMODE)				\
+  DIRECT_NAMED (sub##MODE##3, vsubint##E##m##L,				\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (sub##MODE##3_scalar, vsubint##E##m##L##_scalar,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),
+
+#define VRSUB_BUILTINS(E, L, MODE, SUBMODE)				\
+  DIRECT_NAMED (sub##MODE##3_reverse, vrsubint##E##m##L,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (sub##MODE##3_reverse_scalar, vrsubint##E##m##L##_scalar,\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),
 
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
 
-  _RVVEANDM (SETVL_BUILTINS)
+  _RVV_INT_E_M_MODE (SETVL_BUILTINS)
 
-  DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_V2SFM8_FTYPE_V4HFM4_V4HFM4, vector),
-  DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_V2SFM8_FTYPE_V4HFM4_C_HF,
-		  vector),
+  _RVV_INT_E_M_MODE (VADD_BUILTINS)
+  _RVV_INT_E_M_MODE (VSUB_BUILTINS)
+  _RVV_INT_E_M_MODE (VRSUB_BUILTINS)
 
-  DIRECT_BUILTIN (vfwmaddfloat16m4, RISCV_V2SFM8_FTYPE_V4HFM4_V4HFM4_V2SFM8,
-		  vector),
-  DIRECT_BUILTIN (vfwmsubfloat16m4, RISCV_V2SFM8_FTYPE_V4HFM4_V4HFM4_V2SFM8,
-		  vector),
-  DIRECT_BUILTIN (vfwmaddfloat16m4_scalar, RISCV_V2SFM8_FTYPE_V4HFM4_C_HF_V2SFM8,
+  DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
+  DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF,
 		  vector),
 
-  RISCV_BUILTIN(veccmpltvnx32si, "cmplt_int32m8", RISCV_BUILTIN_DIRECT, RISCV_V4BI_FTYPE_V32SIM8_V32SIM8, vector),
+  DIRECT_BUILTIN (vfwmaddfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4_VF32M8,
+		  vector),
+  DIRECT_BUILTIN (vfwmsubfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4_VF32M8,
+		  vector),
+  DIRECT_BUILTIN (vfwmaddfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF_VF32M8,
+		  vector),
+
+  RISCV_BUILTIN(veccmpltvnx32si, "cmplt_int32m8",
+		RISCV_BUILTIN_DIRECT, RISCV_V4BI_FTYPE_VI32M8_VI32M8, vector),
   RISCV_BUILTIN(addvnx32si3_mask, "add_vv_int32m8_mask", RISCV_BUILTIN_DIRECT,
-		RISCV_V32SIM8_FTYPE_V4BI_V32SIM8_V32SIM8_V32SIM8, vector),
+		RISCV_VI32M8_FTYPE_V4BI_VI32M8_VI32M8_VI32M8, vector),
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the

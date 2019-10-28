@@ -9,23 +9,23 @@
 #define VADD(STYPE, VCLASS, EM)                                                \
   void vadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = * (rvv##VCLASS##EM##_t *) x;                                          \
-    vy = * (rvv##VCLASS##EM##_t *) y;                                          \
-    vy = vx + vy;                                                              \
-    vy = vy + z;                                                               \
-    * (rvv##VCLASS##EM##_t *) y = vy;                                          \
-    vx = vx + 1;                                                               \
-    * (rvv##VCLASS##EM##_t *) x = vx;                                          \
+    vx = rvvld##VCLASS##EM(x);                                                 \
+    vy = rvvld##VCLASS##EM(y);                                                 \
+    vy = rvvadd##VCLASS##EM (vx, vy);                                          \
+    vy = rvvadd##VCLASS##EM##_scalar (vy, z);                                  \
+    rvvst##VCLASS##EM(y, vy);                                                  \
+    vx = rvvadd##VCLASS##EM##_scalar (vx, 1);                                  \
+    rvvst##VCLASS##EM(x, vx);                                                  \
   }
 /* Same as above without the immediate add.  */
 #define VADD_NO_IMM(STYPE, VCLASS, EM)                                         \
   void vadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = * (rvv##VCLASS##EM##_t *) x;                                          \
-    vy = * (rvv##VCLASS##EM##_t *) y;                                          \
+    vx = rvvld##VCLASS##EM(x);                                                 \
+    vy = rvvld##VCLASS##EM(y);                                                 \
     vy = vx + vy;                                                              \
     vy = vy + z;                                                               \
-    * (rvv##VCLASS##EM##_t *) y = vy;                                          \
+    rvvst##VCLASS##EM(y, vy);                                                  \
   }
 
 VADD(char, int, 8m1)

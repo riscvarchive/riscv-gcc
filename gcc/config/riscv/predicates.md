@@ -223,6 +223,16 @@
   (ior (match_operand 0 "const_vector_int_operand")
        (match_operand 0 "register_operand")))
 
+;; A negated const_vector_int_operand, for subtract.
+(define_predicate "neg_const_vector_int_operand"
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, -15, 16)")))
+
+;; A negated vector_arith_operand, for subtract.
+(define_predicate "neg_vector_arith_operand"
+  (ior (match_operand 0 "neg_const_vector_int_operand")
+       (match_operand 0 "register_operand")))
+
 (define_predicate "vector_move_operand"
   (ior (match_operand 0 "nonimmediate_operand")
        (match_test "const_vec_duplicate_p (op)")))
