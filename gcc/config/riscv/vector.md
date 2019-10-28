@@ -70,6 +70,15 @@
    (VNx4SF "VNx4BI")   (VNx8SF "VNx8BI")   (VNx16SF "VNx16BI") (VNx32SF "VNx32BI")
    (VNx2DF "VNx2BI")   (VNx4DF "VNx4BI")   (VNx8DF "VNx8BI")   (VNx16DF "VNx16BI")])
 
+(define_mode_attr vmaskmode
+  [(VNx16QI "vnx16bi") (VNx32QI "vnx32bi") (VNx64QI "vnx64bi") (VNx128QI "vnx128bi")
+   (VNx8HI "vnx8bi")   (VNx16HI "vnx16bi") (VNx32HI "vnx32bi") (VNx64HI "vnx64bi")
+   (VNx4SI "vnx4bi")   (VNx8SI "vnx8bi")   (VNx16SI "vnx16bi") (VNx32SI "vnx32bi")
+   (VNx2DI "vnx2bi")   (VNx4DI "vnx4bi")   (VNx8DI "vnx8bi")   (VNx16DI "vnx16bi")
+   (VNx8HF "vnx8bi")   (VNx16HF "vnx16bi") (VNx32HF "vnx32bi") (VNx64HF "vnx64bi")
+   (VNx4SF "vnx4bi")   (VNx8SF "vnx8bi")   (VNx16SF "vnx16bi") (VNx32SF "vnx32bi")
+   (VNx2DF "vnx2bi")   (VNx4DF "vnx4bi")   (VNx8DF "vnx8bi")   (VNx16DF "vnx16bi")])
+
 ;; Map a vector mode to its wider mode.
 ;; ??? Complete the list.
 (define_mode_attr VWMODE [(VNx32HF "VNx32SF")])
@@ -667,6 +676,55 @@
    (set_attr "mode" "none")])
 
 ;; Vector comparison support.
+
+;; XXX: Must expand unsupported comparison type.
+;; Std pattern vec_cmpu and vec_cmpeq might need implement,
+;; but we don't implement auto-vec yet, so may not meaningful yet?
+(define_insn "vec_cmp<mode><vmaskmode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vm")
+	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
+			 [(match_operand:VIMODES 2 "register_operand" "vr")
+			  (match_operand:VIMODES 3 "register_operand" "vr")]))]
+ "TARGET_VECTOR"
+ "vms%B1.vv\t%0,%2,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "vec_cmp<mode><vmaskmode>"
+ [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+  (set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vm")
+	 (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+			 [(match_operand:VFMODES 2 "register_operand" "vr")
+			  (match_operand:VFMODES 3 "register_operand" "vr")]))]
+ "TARGET_VECTOR && TARGET_HARD_FLOAT"
+ "vms%B1.vv\t%0,%2,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "mov<mode>cc"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	  (match_operand:VIMODES 1 "register_operand" "vr")
+	  (match_operand:VIMODES 2 "register_operand" "vr")))]
+ "TARGET_VECTOR"
+ "vmerge.vvm\t%0,%2,%1,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "mov<mode>cc"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(if_then_else:VFMODES
+	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	  (match_operand:VFMODES 1 "register_operand" "vr")
+	  (match_operand:VFMODES 2 "register_operand" "vr")))]
+ "TARGET_VECTOR && TARGET_HARD_FLOAT"
+ "vmerge.vvm\t%0,%2,%1,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
 
 ;; ??? Missing splitters.
 
