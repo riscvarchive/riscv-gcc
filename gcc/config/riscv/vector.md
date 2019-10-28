@@ -237,6 +237,15 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+;; move pattern for vector masking type.
+(define_insn "mov<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vm")
+	(match_operand:VMASKMODES 1 "register_operand"  " vm"))]
+  "TARGET_VECTOR"
+  "vmv.v.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Integer ALU instructions.
 
 (define_insn_and_split "add<mode>3"
