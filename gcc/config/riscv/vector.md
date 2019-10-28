@@ -737,7 +737,7 @@
 
 ;; ??? Missing splitters.
 
-(define_insn "vcond<mode><mode>"
+(define_expand "vcond<mode><mode>"
  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
   (set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(if_then_else:VIMODES
@@ -745,14 +745,17 @@
 			 [(match_operand:VIMODES 4 "register_operand" "vr")
 			  (match_operand:VIMODES 5 "register_operand" "vr")])
 	 (match_operand:VIMODES 1 "register_operand" "vr")
-	 (match_operand:VIMODES 2 "register_operand" "vr")))
-  (clobber (match_scratch:<VCMPEQUIV> 6 "=vm"))]
+	 (match_operand:VIMODES 2 "register_operand" "vr")))]
  "TARGET_VECTOR"
- "vms%B3.vv\t%6,%4,%5\;vmerge.vvm\t%0,%2,%1,%6"
- [(set_attr "type" "vector")
-  (set_attr "mode" "none")])
+{
+  rtx tmp = gen_reg_rtx (<VCMPEQUIV>mode);
+  emit_insn (gen_vec_cmp<mode><vmaskmode> (tmp, operands[3],
+					   operands[4], operands[5]));
+  emit_insn (gen_mov<mode>cc (operands[0], operands[1], operands[2], tmp));
+  DONE;
+})
 
-(define_insn "vcond<mode><mode>"
+(define_expand "vcond<mode><mode>"
  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
   (set (match_operand:VFMODES 0 "register_operand" "=vr")
 	(if_then_else:VFMODES
@@ -760,14 +763,17 @@
 			 [(match_operand:VFMODES 4 "register_operand" "vr")
 			  (match_operand:VFMODES 5 "register_operand" "vr")])
 	 (match_operand:VFMODES 1 "register_operand" "vr")
-	 (match_operand:VFMODES 2 "register_operand" "vr")))
-  (clobber (match_scratch:<VCMPEQUIV> 6 "=vm"))]
+	 (match_operand:VFMODES 2 "register_operand" "vr")))]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
- "vmf%B3.vv\t%6,%4,%5\;vmerge.vvm\t%0,%2,%1,%6"
- [(set_attr "type" "vector")
-  (set_attr "mode" "none")])
+{
+  rtx tmp = gen_reg_rtx (<VCMPEQUIV>mode);
+  emit_insn (gen_vec_cmp<mode><vmaskmode> (tmp, operands[3],
+					   operands[4], operands[5]));
+  emit_insn (gen_mov<mode>cc (operands[0], operands[1], operands[2], tmp));
+  DONE;
+})
 
-(define_insn "vcond<mode><vintequiv>"
+(define_expand "vcond<mode><vintequiv>"
  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
   (set (match_operand:VFMODES 0 "register_operand" "=vr")
 	(if_then_else:VFMODES
@@ -775,14 +781,17 @@
 			 [(match_operand:<VINTEQUIV> 4 "register_operand" "vr")
 			  (match_operand:<VINTEQUIV> 5 "register_operand" "vr")])
 	 (match_operand:VFMODES 1 "register_operand" "vr")
-	 (match_operand:VFMODES 2 "register_operand" "vr")))
-  (clobber (match_scratch:<VCMPEQUIV> 6 "=vm"))]
+	 (match_operand:VFMODES 2 "register_operand" "vr")))]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
- "vms%B3.vv\t%6,%4,%5\;vmerge.vvm\t%0,%2,%1,%6"
- [(set_attr "type" "vector")
-  (set_attr "mode" "none")])
+{
+  rtx tmp = gen_reg_rtx (<VCMPEQUIV>mode);
+  emit_insn (gen_vec_cmp<vintequiv><vmaskmode> (tmp, operands[3],
+					   operands[4], operands[5]));
+  emit_insn (gen_mov<mode>cc (operands[0], operands[1], operands[2], tmp));
+  DONE;
+})
 
-(define_insn "vcond<vintequiv><mode>"
+(define_expand "vcond<vintequiv><mode>"
  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
   (set (match_operand:<VINTEQUIV> 0 "register_operand" "=vr")
 	(if_then_else:<VINTEQUIV>
@@ -790,9 +799,12 @@
 	  [(match_operand:VFMODES 4 "register_operand" "vr")
 	   (match_operand:VFMODES 5 "register_operand" "vr")])
 	 (match_operand:<VINTEQUIV> 1 "register_operand" "vr")
-	 (match_operand:<VINTEQUIV> 2 "register_operand" "vr")))
-  (clobber (match_scratch:<VCMPEQUIV> 6 "=vm"))]
+	 (match_operand:<VINTEQUIV> 2 "register_operand" "vr")))]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
- "vmf%B3.vv\t%6,%4,%5\;vmerge.vvm\t%0,%2,%1,%6"
- [(set_attr "type" "vector")
-  (set_attr "mode" "none")])
+{
+  rtx tmp = gen_reg_rtx (<VCMPEQUIV>mode);
+  emit_insn (gen_vec_cmp<mode><vmaskmode> (tmp, operands[3],
+					   operands[4], operands[5]));
+  emit_insn (gen_mov<vintequiv>cc (operands[0], operands[1], operands[2], tmp));
+  DONE;
+})
