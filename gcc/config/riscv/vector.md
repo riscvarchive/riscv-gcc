@@ -62,20 +62,13 @@
 
 ;; Map a vector int or float mode to a vector compare mode.
 (define_mode_attr VCMPEQUIV
-  [(VNx16QI "VNx1BI") (VNx32QI "VNx2BI")
-   (VNx64QI "VNx4BI") (VNx128QI "VNx8BI")
-   (VNx8HI "VNx1BI") (VNx16HI "VNx2BI")
-   (VNx32HI "VNx4BI") (VNx64HI "VNx8BI")
-   (VNx4SI "VNx1BI") (VNx8SI "VNx2BI")
-   (VNx16SI "VNx4BI") (VNx32SI "VNx8BI")
-   (VNx2DI "VNx1BI") (VNx4DI "VNx2BI")
-   (VNx8DI "VNx4BI") (VNx16DI "VNx8BI")
-   (VNx8HF "VNx1BI") (VNx16HF "VNx2BI")
-   (VNx32HF "VNx4BI") (VNx64HF "VNx8BI")
-   (VNx4SF "VNx1BI") (VNx8SF "VNx2BI")
-   (VNx16SF "VNx4BI") (VNx32SF "VNx8BI")
-   (VNx2DF "VNx1BI") (VNx4DF "VNx2BI")
-   (VNx8DF "VNx4BI") (VNx16DF "VNx8BI")])
+  [(VNx16QI "VNx16BI") (VNx32QI "VNx32BI") (VNx64QI "VNx64BI") (VNx128QI "VNx128BI")
+   (VNx8HI "VNx8BI")   (VNx16HI "VNx16BI") (VNx32HI "VNx32BI") (VNx64HI "VNx64BI")
+   (VNx4SI "VNx4BI")   (VNx8SI "VNx8BI")   (VNx16SI "VNx16BI") (VNx32SI "VNx32BI")
+   (VNx2DI "VNx2BI")   (VNx4DI "VNx4BI")   (VNx8DI "VNx8BI")   (VNx16DI "VNx16BI")
+   (VNx8HF "VNx8BI")   (VNx16HF "VNx16BI") (VNx32HF "VNx32BI") (VNx64HF "VNx64BI")
+   (VNx4SF "VNx4BI")   (VNx8SF "VNx8BI")   (VNx16SF "VNx16BI") (VNx32SF "VNx32BI")
+   (VNx2DF "VNx2BI")   (VNx4DF "VNx4BI")   (VNx8DF "VNx8BI")   (VNx16DF "VNx16BI")])
 
 ;; Map a vector mode to its wider mode.
 ;; ??? Complete the list.

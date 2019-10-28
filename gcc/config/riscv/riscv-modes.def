@@ -58,27 +58,29 @@ RVV_MODES (2, VNx32, VNx16, VNx8, VNx4)
 RVV_MODES (4, VNx64, VNx32, VNx16, VNx8)
 RVV_MODES (8, VNx128, VNx64, VNx32, VNx16)
 
-/* ??? Maybe macroize this?  */
-/* ??? Need 16 mask modes instead of 4.  */
-VECTOR_BOOL_MODE (VNx1BI, 1, 1);
-VECTOR_BOOL_MODE (VNx2BI, 2, 2);
-VECTOR_BOOL_MODE (VNx4BI, 4, 4);
-VECTOR_BOOL_MODE (VNx8BI, 8, 8);
+#define RVV_MASK_MODES(NCOUNT) \
+  VECTOR_BOOL_MODE (VNx ## NCOUNT ## BI, NCOUNT, 16); \
+  ADJUST_NUNITS (VNx ## NCOUNT ## BI, riscv_rvv_chunks * NCOUNT); \
+  ADJUST_BYTESIZE (VNx ## NCOUNT ## BI, riscv_rvv_chunks * 8); \
+  ADJUST_ALIGNMENT (VNx ## NCOUNT ## BI, 1);
 
-ADJUST_NUNITS (VNx1BI, riscv_rvv_chunks);
-ADJUST_NUNITS (VNx2BI, riscv_rvv_chunks * 2);
-ADJUST_NUNITS (VNx4BI, riscv_rvv_chunks * 4);
-ADJUST_NUNITS (VNx8BI, riscv_rvv_chunks * 8);
+/* Mapping table between MLEN and masking type.
+   | Type     | MLEN |
+   | VNx2BI   | 64   |
+   | VNx4BI   | 32   |
+   | VNx8BI   | 16   |
+   | VNx16BI  | 8    |
+   | VNx32BI  | 4    |
+   | VNx64BI  | 2    |
+   | VNx128BI | 1    |  */
 
-ADJUST_BYTESIZE (VNx1BI, riscv_rvv_chunks * 8);
-ADJUST_BYTESIZE (VNx2BI, riscv_rvv_chunks * 8);
-ADJUST_BYTESIZE (VNx4BI, riscv_rvv_chunks * 8);
-ADJUST_BYTESIZE (VNx8BI, riscv_rvv_chunks * 8);
-
-ADJUST_ALIGNMENT (VNx1BI, 1);
-ADJUST_ALIGNMENT (VNx2BI, 1);
-ADJUST_ALIGNMENT (VNx4BI, 1);
-ADJUST_ALIGNMENT (VNx8BI, 1);
+RVV_MASK_MODES(2)
+RVV_MASK_MODES(4)
+RVV_MASK_MODES(8)
+RVV_MASK_MODES(16)
+RVV_MASK_MODES(32)
+RVV_MASK_MODES(64)
+RVV_MASK_MODES(128)
 
 /* A 8-tuple of RVV vectors with the maximum -mrvv-vector-bits= setting.
    Note that this is a limit only on the compile-time sizes of modes;

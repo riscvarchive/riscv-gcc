@@ -189,11 +189,13 @@ tree rvvfloat64m2_t_node;
 tree rvvfloat64m4_t_node;
 tree rvvfloat64m8_t_node;
 
-/* ??? There needs to be 16 of these not 4.  */
-tree rvvboolm1_t_node;
-tree rvvboolm2_t_node;
-tree rvvboolm4_t_node;
-tree rvvboolm8_t_node;
+tree rvvbool1_t_node;
+tree rvvbool2_t_node;
+tree rvvbool4_t_node;
+tree rvvbool8_t_node;
+tree rvvbool16_t_node;
+tree rvvbool32_t_node;
+tree rvvbool64_t_node;
 
 /* RISCV_FTYPE_ATYPESN takes N RISCV_FTYPES-like type codes and lists
    their associated RISCV_ATYPEs.  */
@@ -448,14 +450,20 @@ riscv_init_builtins (void)
       rvvfloat64m8_t_node
 	= riscv_vector_type ("rvvfloat64m8_t", double_type_node, VNx16DFmode);
 
-      rvvboolm1_t_node
-	= riscv_vector_type ("rvvboolm1_t", boolean_type_node, VNx1BImode);
-      rvvboolm2_t_node
-	= riscv_vector_type ("rvvboolm2_t", boolean_type_node, VNx2BImode);
-      rvvboolm4_t_node
-	= riscv_vector_type ("rvvboolm4_t", boolean_type_node, VNx4BImode);
-      rvvboolm8_t_node
-	= riscv_vector_type ("rvvboolm8_t", boolean_type_node, VNx8BImode);
+      rvvbool1_t_node
+	= riscv_vector_type ("rvvbool1_t", boolean_type_node, VNx128BImode);
+      rvvbool2_t_node
+	= riscv_vector_type ("rvvbool2_t", boolean_type_node, VNx64BImode);
+      rvvbool4_t_node
+	= riscv_vector_type ("rvvbool4_t", boolean_type_node, VNx32BImode);
+      rvvbool8_t_node
+	= riscv_vector_type ("rvvbool8_t", boolean_type_node, VNx16BImode);
+      rvvbool16_t_node
+	= riscv_vector_type ("rvvbool16_t", boolean_type_node, VNx8BImode);
+      rvvbool32_t_node
+	= riscv_vector_type ("rvvbool32_t", boolean_type_node, VNx4BImode);
+      rvvbool64_t_node
+	= riscv_vector_type ("rvvbool64_t", boolean_type_node, VNx2BImode);
 
     }
 
