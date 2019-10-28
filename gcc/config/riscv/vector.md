@@ -38,6 +38,10 @@
 			      VNx4SI VNx8SI VNx16SI VNx32SI
 			      VNx2DI VNx4DI VNx8DI VNx16DI])
 
+;; All vector masking modes.
+(define_mode_iterator VMASKMODES [VNx2BI VNx4BI VNx8BI VNx16BI
+				  VNx32BI VNx64BI VNx128BI])
+
 ;; All vector modes supported for widening alu operations.
 ;; ??? Complete the list.
 (define_mode_iterator VFWMODES [VNx32HF])
@@ -807,4 +811,18 @@
 					   operands[4], operands[5]));
   emit_insn (gen_mov<vintequiv>cc (operands[0], operands[1], operands[2], tmp));
   DONE;
+})
+
+;; Adaptor for built-in functions
+
+;; compare functions
+
+(define_expand "riscv_veccmplt<mode>"
+ [(parallel [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+	     (set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vm")
+		 (lt:<VCMPEQUIV>
+		   (match_operand:VIMODES 1 "register_operand" "vr")
+		   (match_operand:VIMODES 2 "register_operand" "vr")))])]
+  "TARGET_VECTOR"
+{
 })

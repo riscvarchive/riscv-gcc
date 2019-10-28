@@ -45,6 +45,7 @@ along with GCC; see the file COPYING3.  If not see
 #define RISCV_FTYPE_NAME1(A, B) RISCV_##A##_FTYPE_##B
 #define RISCV_FTYPE_NAME2(A, B, C) RISCV_##A##_FTYPE_##B##_##C
 #define RISCV_FTYPE_NAME3(A, B, C, D) RISCV_##A##_FTYPE_##B##_##C##_##D
+#define RISCV_FTYPE_NAME4(A, B, C, D, E) RISCV_##A##_FTYPE_##B##_##C##_##D##_##E
 
 /* Classifies the prototype of a built-in function.  */
 enum riscv_function_type {
@@ -134,6 +135,8 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_HF_PTR float16_ptr_type_node
 #define RISCV_ATYPE_V4HFM4 rvvfloat16m4_t_node
 #define RISCV_ATYPE_C_HF const_float16_type_node
+#define RISCV_ATYPE_V32SIM8 rvvint32m8_t_node
+#define RISCV_ATYPE_V4BI rvvbool4_t_node
 
 /* Helper type nodes for vector support.  */
 tree const_float_ptr_type_node;
@@ -207,6 +210,8 @@ tree rvvbool64_t_node;
   RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C
 #define RISCV_FTYPE_ATYPES3(A, B, C, D)	\
   RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D
+#define RISCV_FTYPE_ATYPES4(A, B, C, D, E) \
+  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, RISCV_ATYPE_##E
 
 /* An iterator to call a macro with every supported E and M value.  */
 #define _RVVEANDM(MACRO)	\
@@ -247,6 +252,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 		  vector),
   DIRECT_BUILTIN (vfwmaddfloat16m4_scalar, RISCV_V2SFM8_FTYPE_V4HFM4_C_HF_V2SFM8,
 		  vector),
+
+  RISCV_BUILTIN(veccmpltvnx32si, "cmplt_int32m8", RISCV_BUILTIN_DIRECT, RISCV_V4BI_FTYPE_V32SIM8_V32SIM8, vector),
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the
