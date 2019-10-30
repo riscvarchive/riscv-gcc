@@ -308,10 +308,9 @@ tree rvvbool64_t_node;
   DIRECT_NAMED (OP##MODE, v##OP##int##E##m##L,				\
 		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
-  DIRECT_NAMED (OP##MODE##_mask, v##OP##int##E##m##L##_mask,			\
+  DIRECT_NAMED (OP##MODE##_mask, v##OP##int##E##m##L##_mask,		\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VI##E##M##L##_VI##E##M##L,	\
 		vector),
-
 
 #define ICMP_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
   _ICMP_BUILTINS(E, L, MODE, MLEN, slt)
