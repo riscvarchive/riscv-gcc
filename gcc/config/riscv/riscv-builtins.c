@@ -283,7 +283,10 @@ tree rvvbool64_t_node;
 		vector),						\
   DIRECT_NAMED (add##MODE##3_mask, vaddint##E##m##L##_mask,		\
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
-		vector),
+		vector),						\
+  DIRECT_NAMED (add##MODE##3_scalar_mask, vaddint##E##m##L##_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
+		vector),						\
 
 #define VSUB_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
   DIRECT_NAMED (sub##MODE##3, vsubint##E##m##L,				\
@@ -301,6 +304,18 @@ tree rvvbool64_t_node;
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
 		vector),
 
+#define _ICMP_BUILTINS(E, L, MODE, MLEN, OP)				\
+  DIRECT_NAMED (OP##MODE, v##OP##int##E##m##L,				\
+		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_mask, v##OP##int##E##m##L##_mask,			\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VI##E##M##L##_VI##E##M##L,	\
+		vector),
+
+
+#define ICMP_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
+  _ICMP_BUILTINS(E, L, MODE, MLEN, slt)
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -310,6 +325,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_E_M_MODE (VADD_BUILTINS)
   _RVV_INT_E_M_MODE (VSUB_BUILTINS)
   _RVV_INT_E_M_MODE (VRSUB_BUILTINS)
+
+  _RVV_INT_E_M_MODE (ICMP_BUILTINS)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF,
@@ -321,9 +338,6 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 		  vector),
   DIRECT_BUILTIN (vfwmaddfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF_VF32M8,
 		  vector),
-
-  RISCV_BUILTIN(veccmpltvnx32si, "cmplt_int32m8",
-		RISCV_BUILTIN_DIRECT, RISCV_VB4_FTYPE_VI32M8_VI32M8, vector),
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the

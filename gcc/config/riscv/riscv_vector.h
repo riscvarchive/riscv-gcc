@@ -46,43 +46,43 @@ typedef __fp16 float16_t;
 /* An iterator to call a macro with every supported E and M value for
    integer operations.  */
 #define _RVVINTEANDM(MACRO)					\
-  MACRO (8, 1, char)						\
-  MACRO (8, 2, char)						\
-  MACRO (8, 4, char)						\
-  MACRO (8, 8, char)						\
-  MACRO (16, 1, short)						\
-  MACRO (16, 2, short)						\
-  MACRO (16, 4, short)						\
-  MACRO (16, 8, short)						\
-  MACRO (32, 1, int)						\
-  MACRO (32, 2, int)						\
-  MACRO (32, 4, int)						\
-  MACRO (32, 8, int)						\
-  MACRO (64, 1, long long)					\
-  MACRO (64, 2, long long)					\
-  MACRO (64, 4, long long)					\
-  MACRO (64, 8, long long)
+  MACRO (8, 1, char, 8)						\
+  MACRO (8, 2, char, 4)						\
+  MACRO (8, 4, char, 2)						\
+  MACRO (8, 8, char, 1)						\
+  MACRO (16, 1, short, 16)					\
+  MACRO (16, 2, short, 8)					\
+  MACRO (16, 4, short, 4)					\
+  MACRO (16, 8, short, 2)					\
+  MACRO (32, 1, int, 32)					\
+  MACRO (32, 2, int, 16)					\
+  MACRO (32, 4, int, 8)						\
+  MACRO (32, 8, int, 4)						\
+  MACRO (64, 1, long long, 64)					\
+  MACRO (64, 2, long long, 32)					\
+  MACRO (64, 4, long long, 16)					\
+  MACRO (64, 8, long long, 8)
 
 /* An iterator to call a macro with every supported E and M value for
    float operations.  */
 #define _RVVFLOATEANDM(MACRO)					\
-  MACRO (16, 1, float16_t)					\
-  MACRO (16, 2, float16_t)					\
-  MACRO (16, 4, float16_t)					\
-  MACRO (16, 8, float16_t)					\
-  MACRO (32, 1, float)						\
-  MACRO (32, 2, float)						\
-  MACRO (32, 4, float)						\
-  MACRO (32, 8, float)						\
-  MACRO (64, 1, double)						\
-  MACRO (64, 2, double)						\
-  MACRO (64, 4, double)						\
-  MACRO (64, 8, double)
+  MACRO (16, 1, float16_t, 16)					\
+  MACRO (16, 2, float16_t, 8)					\
+  MACRO (16, 4, float16_t, 4)					\
+  MACRO (16, 8, float16_t, 2)					\
+  MACRO (32, 1, float, 32)					\
+  MACRO (32, 2, float, 16)					\
+  MACRO (32, 4, float, 8)					\
+  MACRO (32, 8, float, 4)					\
+  MACRO (64, 1, double, 64)					\
+  MACRO (64, 2, double, 32)					\
+  MACRO (64, 4, double, 16)					\
+  MACRO (64, 8, double, 8)
 
 /* Define the setvl intrinsics.  Use the int iterator because it is a
    superset of the float one, but ignore the type operand.  */
 
-#define _RVVSETVL(E, M, T)						\
+#define _RVVSETVL(E, M, T, P)						\
 __extension__ extern __inline word_type					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvsetvl##E##m##M (word_type a)						\
@@ -99,7 +99,7 @@ _RVVINTEANDM (_RVVSETVL)
 
 /* Define the ld/st intrinsics.  */
 
-#define _RVVINTLD(E, M, T)						\
+#define _RVVINTLD(E, M, T, P)						\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvldint##E##m##M (const T *a)						\
@@ -107,7 +107,7 @@ rvvldint##E##m##M (const T *a)						\
   return * (rvvint##E##m##M##_t *) a;					\
 }
 
-#define _RVVINTST(E, M, T)						\
+#define _RVVINTST(E, M, T, P)						\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvstint##E##m##M (const T *a, rvvint##E##m##M##_t b)			\
@@ -118,7 +118,7 @@ rvvstint##E##m##M (const T *a, rvvint##E##m##M##_t b)			\
 _RVVINTEANDM (_RVVINTLD)
 _RVVINTEANDM (_RVVINTST)
 
-#define _RVVFLOATLD(E, M, T)						\
+#define _RVVFLOATLD(E, M, T, P)						\
 __extension__ extern __inline rvvfloat##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvldfloat##E##m##M (const T *a)					\
@@ -126,7 +126,7 @@ rvvldfloat##E##m##M (const T *a)					\
   return * (rvvfloat##E##m##M##_t *) a;					\
 }
 
-#define _RVVFLOATST(E, M, T)						\
+#define _RVVFLOATST(E, M, T, P)						\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvstfloat##E##m##M (const T *a, rvvfloat##E##m##M##_t b)		\
@@ -143,18 +143,35 @@ _RVVFLOATEANDM (_RVVFLOATST)
 
 /* Define the add intrinsics.  */
 
-#define _RVVINTADD(E, M, T)						\
+#define _RVVINTADD(E, M, T, P)						\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvaddint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
 {									\
   return __builtin_riscv_vaddint##E##m##M (a, b);			\
+}									\
+__extension__ extern __inline rvvint##E##m##M##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvaddint##E##m##M##_mask (rvvbool##P##_t mask,				\
+			   rvvint##E##m##M##_t maskedoff,		\
+			   rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)\
+{									\
+  return __builtin_riscv_vaddint##E##m##M##_mask (			\
+	  mask, maskedoff, a, b);					\
 }
 
-#define _RVVINTADD_SCALAR(E, M, T)					\
+#define _RVVINTADD_SCALAR(E, M, T, P)					\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvaddint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
+{									\
+  return __builtin_riscv_vaddint##E##m##M##_scalar (a, b);		\
+}									\
+__extension__ extern __inline rvvint##E##m##M##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvaddint##E##m##M##_scalar_mask (rvvbool##P##_t mask,			\
+			          rvvint##E##m##M##_t maskedoff,	\
+				  rvvint##E##m##M##_t a, T b)		\
 {									\
   return __builtin_riscv_vaddint##E##m##M##_scalar (a, b);		\
 }
@@ -162,7 +179,7 @@ rvvaddint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
 _RVVINTEANDM (_RVVINTADD)
 _RVVINTEANDM (_RVVINTADD_SCALAR)
 
-#define _RVVINTSUB(E, M, T)						\
+#define _RVVINTSUB(E, M, T, P)						\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvsubint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
@@ -170,7 +187,7 @@ rvvsubint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
   return __builtin_riscv_vsubint##E##m##M (a, b);			\
 }
 
-#define _RVVINTSUB_SCALAR(E, M, T)					\
+#define _RVVINTSUB_SCALAR(E, M, T, P)					\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvsubint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
@@ -181,7 +198,7 @@ rvvsubint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
 _RVVINTEANDM (_RVVINTSUB)
 _RVVINTEANDM (_RVVINTSUB_SCALAR)
 
-#define _RVVINTRSUB(E, M, T)						\
+#define _RVVINTRSUB(E, M, T, P)						\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvrsubint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
@@ -189,7 +206,7 @@ rvvrsubint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
   return __builtin_riscv_vrsubint##E##m##M (a, b);			\
 }
 
-#define _RVVINTRSUB_SCALAR(E, M, T)					\
+#define _RVVINTRSUB_SCALAR(E, M, T, P)					\
 __extension__ extern __inline rvvint##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvrsubint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
@@ -200,8 +217,29 @@ rvvrsubint##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
 _RVVINTEANDM (_RVVINTRSUB)
 _RVVINTEANDM (_RVVINTRSUB_SCALAR)
 
+#define _RVVINTSLT(E, M, T, P)						\
+__extension__ extern __inline rvvbool##P##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvsltint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
+{									\
+  return __builtin_riscv_vsltint##E##m##M (a, b);			\
+}									\
+__extension__ extern __inline rvvbool##P##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvsltint##E##m##M##_mask (rvvbool##P##_t mask,				\
+			   rvvbool##P##_t maskedoff,			\
+			   rvvint##E##m##M##_t a,			\
+			   rvvint##E##m##M##_t b)			\
+{									\
+  return __builtin_riscv_vsltint##E##m##M##_mask (mask, maskedoff,	\
+						  a, b);		\
+}
+
+_RVVINTEANDM (_RVVINTSLT)
+
+
 #if 0
-#define _RVVFLOATADD(E, M, T)						\
+#define _RVVFLOATADD(E, M, T, P)					\
 __extension__ extern __inline rvvfloat##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvaddfloat##E##m##M (rvvfloat##E##m##M##_t a, rvvfloat##E##m##M##_t b)	\
@@ -209,7 +247,7 @@ rvvaddfloat##E##m##M (rvvfloat##E##m##M##_t a, rvvfloat##E##m##M##_t b)	\
   return a + b;								\
 }
 
-#define _RVVFLOATADDS(E, M, T)						\
+#define _RVVFLOATADDS(E, M, T, P)					\
 __extension__ extern __inline rvvfloat##E##m##M##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvaddsfloat##E##m##M (rvvfloat##E##m##M##_t a, T b)			\

@@ -244,9 +244,10 @@
    (set_attr "mode" "none")])
 
 ;; move pattern for vector masking type.
+;; XXX: we should support load/store for masking type.
 (define_insn "mov<mode>"
-  [(set (match_operand:VMASKMODES 0 "register_operand" "=vm")
-	(match_operand:VMASKMODES 1 "register_operand" " vm"))]
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(match_operand:VMASKMODES 1 "register_operand" " vr"))]
   "TARGET_VECTOR"
   "vmcpy.m\t%0,%1"
   [(set_attr "type" "vector")
@@ -321,6 +322,20 @@
 	  (match_operand:VIMODES 2 "vector_arith_operand" "0,0")))]
   "TARGET_VECTOR"
   "vsetvli\tx0,x0,<vemode>,<vmmode>\;vadd.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_insn "add<mode>3_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (plus:VIMODES (vec_duplicate:VIMODES
+			    (match_operand:<VSUBMODE> 4 "register_operand" "r"))
+			  (match_operand:VIMODES 3 "vector_arith_operand" "vr"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0")))]
+  "TARGET_VECTOR"
+  "vsetvli\tx0,x0,<vemode>,<vmmode>\;vadd.vx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -816,12 +831,26 @@
 ;; but we don't implement auto-vec yet, so may not meaningful yet?
 (define_insn "vec_cmp<mode><vmaskmode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vm")
+   (set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
 	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
 			 [(match_operand:VIMODES 2 "register_operand" "vr")
 			  (match_operand:VIMODES 3 "register_operand" "vr")]))]
  "TARGET_VECTOR"
  "vms%B1.vv\t%0,%2,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "vec_cmp<mode><vmaskmode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+	(if_then_else:<VCMPEQUIV>
+	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm")
+	  (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+	    [(match_operand:VIMODES 2 "register_operand" "vr")
+	     (match_operand:VIMODES 3 "register_operand" "vr")])
+	  (match_operand:<VCMPEQUIV> 4 "register_operand" "0")))]
+ "TARGET_VECTOR"
+ "vms%B1.vv\t%0,%2,%3,%5.t"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
@@ -938,12 +967,25 @@
 
 ;; compare functions
 
-(define_expand "riscv_veccmplt<mode>"
- [(parallel [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-	     (set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vm")
-		 (lt:<VCMPEQUIV>
-		   (match_operand:VIMODES 1 "register_operand" "vr")
-		   (match_operand:VIMODES 2 "register_operand" "vr")))])]
+(define_expand "slt<mode>"
+  [(parallel [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+	      (set (match_operand:<VCMPEQUIV> 0 "register_operand" "")
+		(lt:<VCMPEQUIV>
+		  (match_operand:VIMODES 1 "register_operand" "")
+		  (match_operand:VIMODES 2 "register_operand" "")))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "slt<mode>_mask"
+  [(parallel [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+	      (set (match_operand:<VCMPEQUIV> 0 "register_operand" "")
+		(if_then_else:<VCMPEQUIV>
+		  (match_operand:<VCMPEQUIV> 1 "register_operand" "")
+		  (lt:<VCMPEQUIV>
+		    (match_operand:VIMODES 3 "register_operand" "")
+		    (match_operand:VIMODES 4 "register_operand" ""))
+		  (match_operand:<VCMPEQUIV> 2 "register_operand" "")))])]
   "TARGET_VECTOR"
 {
 })
