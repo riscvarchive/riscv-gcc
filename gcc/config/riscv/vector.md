@@ -311,7 +311,7 @@
    (set_attr "mode" "none")])
 
 ;; ??? Needs splitter.
-(define_insn "riscv_add<mode>3_mask"
+(define_insn "add<mode>3_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
 	(if_then_else:VIMODES

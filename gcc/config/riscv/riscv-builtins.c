@@ -148,8 +148,14 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_HF_PTR float16_ptr_type_node
 #define RISCV_ATYPE_VF16M4 rvvfloat16m4_t_node
 #define RISCV_ATYPE_C_HF const_float16_type_node
-#define RISCV_ATYPE_V32SIM8 rvvint32m8_t_node
-#define RISCV_ATYPE_V4BI rvvbool4_t_node
+
+#define RISCV_ATYPE_VB1 rvvbool1_t_node
+#define RISCV_ATYPE_VB2 rvvbool2_t_node
+#define RISCV_ATYPE_VB4 rvvbool4_t_node
+#define RISCV_ATYPE_VB8 rvvbool8_t_node
+#define RISCV_ATYPE_VB16 rvvbool16_t_node
+#define RISCV_ATYPE_VB32 rvvbool32_t_node
+#define RISCV_ATYPE_VB64 rvvbool64_t_node
 
 #define RISCV_ATYPE_VI8M1 rvvint8m1_t_node
 #define RISCV_ATYPE_VI8M2 rvvint8m2_t_node
@@ -246,37 +252,40 @@ tree rvvbool64_t_node;
 /* An iterator to call a macro with every supported E and M value, along
    with its corresponding vector and integer modes.  */
 #define _RVV_INT_E_M_MODE(MACRO)	\
-  MACRO (8, 1, vnx16qi, QI)		\
-  MACRO (8, 2, vnx32qi, QI)		\
-  MACRO (8, 4, vnx64qi, QI)		\
-  MACRO (8, 8, vnx128qi, QI)		\
-  MACRO (16, 1, vnx8hi, HI)		\
-  MACRO (16, 2, vnx16hi, HI)		\
-  MACRO (16, 4, vnx32hi, HI)		\
-  MACRO (16, 8, vnx64hi, HI)		\
-  MACRO (32, 1, vnx4si, SI)		\
-  MACRO (32, 2, vnx8si, SI)		\
-  MACRO (32, 4, vnx16si, SI)		\
-  MACRO (32, 8, vnx32si, SI)		\
-  MACRO (64, 1, vnx2di, DI)		\
-  MACRO (64, 2, vnx4di, DI)		\
-  MACRO (64, 4, vnx8di, DI)		\
-  MACRO (64, 8, vnx16di, DI)
+  MACRO (8, 1, vnx16qi, QI, 8)		\
+  MACRO (8, 2, vnx32qi, QI, 4)		\
+  MACRO (8, 4, vnx64qi, QI, 2)		\
+  MACRO (8, 8, vnx128qi, QI, 1)		\
+  MACRO (16, 1, vnx8hi, HI, 16)		\
+  MACRO (16, 2, vnx16hi, HI, 8)		\
+  MACRO (16, 4, vnx32hi, HI, 4)		\
+  MACRO (16, 8, vnx64hi, HI, 2)		\
+  MACRO (32, 1, vnx4si, SI, 32)		\
+  MACRO (32, 2, vnx8si, SI, 16)		\
+  MACRO (32, 4, vnx16si, SI, 8)		\
+  MACRO (32, 8, vnx32si, SI, 4)		\
+  MACRO (64, 1, vnx2di, DI, 64)		\
+  MACRO (64, 2, vnx4di, DI, 32)		\
+  MACRO (64, 4, vnx8di, DI, 16)		\
+  MACRO (64, 8, vnx16di, DI, 8)
 
-#define SETVL_BUILTINS(E, M, MODE, SUBMODE)				\
+#define SETVL_BUILTINS(E, M, MODE, SUBMODE, MLEN)			\
   DIRECT_BUILTIN (vsetvl##E##m##M##_si, RISCV_SI_FTYPE_SI, vector),	\
   DIRECT_BUILTIN (vsetvl##E##m##M##_di, RISCV_DI_FTYPE_DI, vector),
 
 /* ??? Can't use M for LMUL because of M in RISCV_* type names.  */
-#define VADD_BUILTINS(E, L, MODE, SUBMODE)				\
+#define VADD_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
   DIRECT_NAMED (add##MODE##3, vaddint##E##m##L,				\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
   DIRECT_NAMED (add##MODE##3_scalar, vaddint##E##m##L##_scalar,		\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (add##MODE##3_mask, vaddint##E##m##L##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
 		vector),
 
-#define VSUB_BUILTINS(E, L, MODE, SUBMODE)				\
+#define VSUB_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
   DIRECT_NAMED (sub##MODE##3, vsubint##E##m##L,				\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
@@ -284,7 +293,7 @@ tree rvvbool64_t_node;
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
 		vector),
 
-#define VRSUB_BUILTINS(E, L, MODE, SUBMODE)				\
+#define VRSUB_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
   DIRECT_NAMED (sub##MODE##3_reverse, vrsubint##E##m##L,		\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
@@ -314,9 +323,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 		  vector),
 
   RISCV_BUILTIN(veccmpltvnx32si, "cmplt_int32m8",
-		RISCV_BUILTIN_DIRECT, RISCV_V4BI_FTYPE_VI32M8_VI32M8, vector),
-  RISCV_BUILTIN(addvnx32si3_mask, "add_vv_int32m8_mask", RISCV_BUILTIN_DIRECT,
-		RISCV_VI32M8_FTYPE_V4BI_VI32M8_VI32M8_VI32M8, vector),
+		RISCV_BUILTIN_DIRECT, RISCV_VB4_FTYPE_VI32M8_VI32M8, vector),
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the
