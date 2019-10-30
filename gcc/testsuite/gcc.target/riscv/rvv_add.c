@@ -3,10 +3,11 @@
 
 #include <riscv_vector.h>
 #include <stddef.h>
+#include "rvv-common.h"
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VADD(STYPE, VCLASS, EM)                                                \
+#define VADD(STYPE, VCLASS, EM, MLEN)                                          \
   void vadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv##VCLASS##EM##_t vx, vy;                                                \
     vx = * (rvv##VCLASS##EM##_t *) x;                                          \
@@ -18,7 +19,7 @@
     * (rvv##VCLASS##EM##_t *) x = vx;                                          \
   }
 /* Same as above without the immediate add.  */
-#define VADD_NO_IMM(STYPE, VCLASS, EM)                                         \
+#define VADD_NO_IMM(STYPE, VCLASS, EM, MLEN)                                   \
   void vadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv##VCLASS##EM##_t vx, vy;                                                \
     vx = * (rvv##VCLASS##EM##_t *) x;                                          \
@@ -28,40 +29,9 @@
     * (rvv##VCLASS##EM##_t *) y = vy;                                          \
   }
 
-VADD(char, int, 8m1)
-VADD(char, int, 8m2)
-VADD(char, int, 8m4)
-VADD(char, int, 8m8)
 
-VADD(short, int, 16m1)
-VADD(short, int, 16m2)
-VADD(short, int, 16m4)
-VADD(short, int, 16m8)
-
-VADD(int, int, 32m1)
-VADD(int, int, 32m2)
-VADD(int, int, 32m4)
-VADD(int, int, 32m8)
-
-VADD(long long, int, 64m1)
-VADD(long long, int, 64m2)
-VADD(long long, int, 64m4)
-VADD(long long, int, 64m8)
-
-VADD_NO_IMM(float16_t, float, 16m1)
-VADD_NO_IMM(float16_t, float, 16m2)
-VADD_NO_IMM(float16_t, float, 16m4)
-VADD_NO_IMM(float16_t, float, 16m8)
-
-VADD_NO_IMM(float, float, 32m1)
-VADD_NO_IMM(float, float, 32m2)
-VADD_NO_IMM(float, float, 32m4)
-VADD_NO_IMM(float, float, 32m8)
-
-VADD_NO_IMM(double, float, 64m1)
-VADD_NO_IMM(double, float, 64m2)
-VADD_NO_IMM(double, float, 64m4)
-VADD_NO_IMM(double, float, 64m8)
+RVV_INT_TEST(VADD)
+RVV_FLOAT_TEST(VADD_NO_IMM)
 
 /* { dg-final { scan-assembler-times "vadd.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vadd.vx" 16 } } */
