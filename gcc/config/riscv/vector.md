@@ -271,21 +271,17 @@
 
 ;; Integer ALU instructions.
 
-(define_insn_and_split "add<mode>3"
+(define_expand "add<mode>3"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
-	(plus:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
-		      (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi")))]
-  "TARGET_VECTOR"
-  "#"
-  "&& 1"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_dup 0) (plus:VIMODES (match_dup 1) (match_dup 2)))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+		   (plus:VIMODES
+		     (match_operand:VIMODES 1 "register_operand" "vr,vr")
+		     (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  ""
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
-   
+  "TARGET_VECTOR"
+{
+})
+
 (define_insn "*add<mode>3_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
 	(plus:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
@@ -298,23 +294,17 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn_and_split "add<mode>3_scalar"
+(define_expand "add<mode>3_scalar"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vr")
-	(plus:VIMODES (vec_duplicate:VIMODES
+   (parallel [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+		   (plus:VIMODES
+		     (vec_duplicate:VIMODES
 		       (match_operand:<VSUBMODE> 2 "register_operand" "r"))
-		      (match_operand:VIMODES 1 "register_operand" "vr")))]
-  "TARGET_VECTOR"
-  "#"
-  "&& 1"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_dup 0)
-		   (plus:VIMODES (vec_duplicate:VIMODES (match_dup 2))
-				 (match_dup 1)))
+		     (match_operand:VIMODES 1 "register_operand" "vr")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  ""
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
+  "TARGET_VECTOR"
+{
+})
 
 (define_insn "*add<mode>3_scalar_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
@@ -327,31 +317,60 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-;; ??? Needs splitter.
-(define_insn "add<mode>3_mask"
+(define_expand "add<mode>3_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
-	(if_then_else:VIMODES
-          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
-	    (plus:VIMODES (match_operand:VIMODES 3 "register_operand" "vr,vr")
-			  (match_operand:VIMODES 4 "vector_arith_operand" "vr,vi"))
-	  (match_operand:VIMODES 2 "vector_arith_operand" "0,0")))]
+   (parallel [(set (match_operand:VIMODES 0 "register_operand" "")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand" "")
+		     (plus:VIMODES (match_operand:VIMODES 3 "register_operand" "")
+				   (match_operand:VIMODES 4 "vector_arith_operand" ""))
+		     (match_operand:VIMODES 2 "vector_arith_operand" "")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
-  "vsetvli\tx0,x0,<vemode>,<vmmode>\;vadd.vv\t%0,%3,%4,%1.t"
+{
+})
+
+(define_insn "add<mode>3_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	  (plus:VIMODES (match_operand:VIMODES 3 "register_operand" "vr,vr")
+			(match_operand:VIMODES 4 "vector_arith_operand" "vr,vi"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0,0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vadd.vv\t%0,%3,%4,%1.t
+   vadd.vi\t%0,%3,%v4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn "add<mode>3_scalar_mask"
+(define_expand "add<mode>3_scalar_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vr")
+   (parallel [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+		     (plus:VIMODES
+		       (vec_duplicate:VIMODES
+			 (match_operand:<VSUBMODE> 4 "register_operand" "r"))
+		       (match_operand:VIMODES 3 "vector_arith_operand" "vr"))
+		     (match_operand:VIMODES 2 "vector_arith_operand" "0")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "add<mode>3_scalar_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(if_then_else:VIMODES
           (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	    (plus:VIMODES (vec_duplicate:VIMODES
 			    (match_operand:<VSUBMODE> 4 "register_operand" "r"))
 			  (match_operand:VIMODES 3 "vector_arith_operand" "vr"))
-	  (match_operand:VIMODES 2 "vector_arith_operand" "0")))]
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vsetvli\tx0,x0,<vemode>,<vmmode>\;vadd.vx\t%0,%3,%4,%1.t"
+  "vadd.vx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
