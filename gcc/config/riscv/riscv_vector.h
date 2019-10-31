@@ -43,119 +43,119 @@
 typedef int word_type __attribute__ ((mode (__word__)));
 typedef __fp16 float16_t;
 
-/* An iterator to call a macro with every supported E and M value for
-   integer operations.  */
-#define _RVVINTEANDM(MACRO)					\
-  MACRO (8, 1, char, 8)						\
-  MACRO (8, 2, char, 4)						\
-  MACRO (8, 4, char, 2)						\
-  MACRO (8, 8, char, 1)						\
-  MACRO (16, 1, short, 16)					\
-  MACRO (16, 2, short, 8)					\
-  MACRO (16, 4, short, 4)					\
-  MACRO (16, 8, short, 2)					\
-  MACRO (32, 1, int, 32)					\
-  MACRO (32, 2, int, 16)					\
-  MACRO (32, 4, int, 8)						\
-  MACRO (32, 8, int, 4)						\
-  MACRO (64, 1, long long, 64)					\
-  MACRO (64, 2, long long, 32)					\
-  MACRO (64, 4, long long, 16)					\
-  MACRO (64, 8, long long, 8)
+/* An iterator to call a macro with every supported SEW, LMUL, MLEN and
+   corresponding scalar modes for integer operations.  */
+#define _RVV_INT_ITERATOR(MACRO)				\
+  MACRO ( 8, 1,  8, char)					\
+  MACRO ( 8, 2,  4, char)					\
+  MACRO ( 8, 4,  2, char)					\
+  MACRO ( 8, 8,  1, char)					\
+  MACRO (16, 1, 16, short)					\
+  MACRO (16, 2,  8, short)					\
+  MACRO (16, 4,  4, short)					\
+  MACRO (16, 8,  2, short)					\
+  MACRO (32, 1, 32, int)					\
+  MACRO (32, 2, 16, int)					\
+  MACRO (32, 4,  8, int)					\
+  MACRO (32, 8,  4, int)					\
+  MACRO (64, 1, 64, long long)					\
+  MACRO (64, 2, 32, long long)					\
+  MACRO (64, 4, 16, long long)					\
+  MACRO (64, 8,  8, long long)
 
-/* An iterator to call a macro with every supported E and M value with extra
-   arguments for integer operations.  */
-#define _RVVINTEANDM_ARG(MACRO, ...)				\
-  MACRO (8, 1, char, 8, __VA_ARGS__)				\
-  MACRO (8, 2, char, 4, __VA_ARGS__)				\
-  MACRO (8, 4, char, 2, __VA_ARGS__)				\
-  MACRO (8, 8, char, 1, __VA_ARGS__)				\
-  MACRO (16, 1, short, 16, __VA_ARGS__)				\
-  MACRO (16, 2, short, 8, __VA_ARGS__)				\
-  MACRO (16, 4, short, 4, __VA_ARGS__)				\
-  MACRO (16, 8, short, 2, __VA_ARGS__)				\
-  MACRO (32, 1, int, 32, __VA_ARGS__)				\
-  MACRO (32, 2, int, 16, __VA_ARGS__)				\
-  MACRO (32, 4, int, 8, __VA_ARGS__)				\
-  MACRO (32, 8, int, 4, __VA_ARGS__)				\
-  MACRO (64, 1, long long, 64, __VA_ARGS__)			\
-  MACRO (64, 2, long long, 32, __VA_ARGS__)			\
-  MACRO (64, 4, long long, 16, __VA_ARGS__)			\
-  MACRO (64, 8, long long, 8, __VA_ARGS__)
+/* An iterator to call a macro with every supported SEW, LMUL, MLEN and
+   corresponding scalar modes with extra arguments for integer operations.  */
+#define _RVV_INT_ITERATOR_ARG(MACRO, ...)			\
+  MACRO ( 8, 1,  8, char, __VA_ARGS__)				\
+  MACRO ( 8, 2,  4, char, __VA_ARGS__)				\
+  MACRO ( 8, 4,  2, char, __VA_ARGS__)				\
+  MACRO ( 8, 8,  1, char, __VA_ARGS__)				\
+  MACRO (16, 1, 16, short, __VA_ARGS__)				\
+  MACRO (16, 2,  8, short, __VA_ARGS__)				\
+  MACRO (16, 4,  4, short, __VA_ARGS__)				\
+  MACRO (16, 8,  2, short, __VA_ARGS__)				\
+  MACRO (32, 1, 32, int, __VA_ARGS__)				\
+  MACRO (32, 2, 16, int, __VA_ARGS__)				\
+  MACRO (32, 4,  8, int, __VA_ARGS__)				\
+  MACRO (32, 8,  4, int, __VA_ARGS__)				\
+  MACRO (64, 1, 64, long long, __VA_ARGS__)			\
+  MACRO (64, 2, 32, long long, __VA_ARGS__)			\
+  MACRO (64, 4, 16, long long, __VA_ARGS__)			\
+  MACRO (64, 8,  8, long long, __VA_ARGS__)
 
-/* An iterator to call a macro with every supported E and M value for
-   float operations.  */
-#define _RVVFLOATEANDM(MACRO)					\
-  MACRO (16, 1, float16_t, 16)					\
-  MACRO (16, 2, float16_t, 8)					\
-  MACRO (16, 4, float16_t, 4)					\
-  MACRO (16, 8, float16_t, 2)					\
-  MACRO (32, 1, float, 32)					\
-  MACRO (32, 2, float, 16)					\
-  MACRO (32, 4, float, 8)					\
-  MACRO (32, 8, float, 4)					\
-  MACRO (64, 1, double, 64)					\
-  MACRO (64, 2, double, 32)					\
-  MACRO (64, 4, double, 16)					\
-  MACRO (64, 8, double, 8)
+/* An iterator to call a macro with every supported SEW, LMUL, MLEN and
+   corresponding scalar modes for float operations.  */
+#define _RVV_FLOAT_ITERATOR(MACRO)				\
+  MACRO (16, 1, 16, float16_t)					\
+  MACRO (16, 2,  8, float16_t)					\
+  MACRO (16, 4,  4, float16_t)					\
+  MACRO (16, 8,  2, float16_t)					\
+  MACRO (32, 1, 32, float)					\
+  MACRO (32, 2, 16, float)					\
+  MACRO (32, 4,  8, float)					\
+  MACRO (32, 8,  4, float)					\
+  MACRO (64, 1, 64, double)					\
+  MACRO (64, 2, 32, double)					\
+  MACRO (64, 4, 16, double)					\
+  MACRO (64, 8,  8, double)
 
 /* Define the setvl intrinsics.  Use the int iterator because it is a
    superset of the float one, but ignore the type operand.  */
 
-#define _RVVSETVL(E, M, T, P)						\
+#define _RVVSETVL(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline word_type					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvsetvl##E##m##M (word_type a)						\
+rvvsetvl##SEW##m##LMUL (word_type a)					\
 {									\
   word_type vl;								\
   if (__riscv_xlen == 32)						\
-    vl = __builtin_riscv_vsetvl##E##m##M##_si (a);			\
+    vl = __builtin_riscv_vsetvl##SEW##m##LMUL##_si (a);			\
   else									\
-    vl = __builtin_riscv_vsetvl##E##m##M##_di (a);			\
+    vl = __builtin_riscv_vsetvl##SEW##m##LMUL##_di (a);			\
   return vl;								\
 }
 
-_RVVINTEANDM (_RVVSETVL)
+_RVV_INT_ITERATOR (_RVVSETVL)
 
 /* Define the ld/st intrinsics.  */
 
-#define _RVVINTLD(E, M, T, P)						\
-__extension__ extern __inline rvvint##E##m##M##_t			\
+#define _RVVINTLD(SEW, LMUL, MLEN, T)					\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvldint##E##m##M (const T *a)						\
+rvvldint##SEW##m##LMUL (const T *a)					\
 {									\
-  return * (rvvint##E##m##M##_t *) a;					\
+  return * (rvvint##SEW##m##LMUL##_t *) a;				\
 }
 
-#define _RVVINTST(E, M, T, P)						\
+#define _RVVINTST(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvstint##E##m##M (const T *a, rvvint##E##m##M##_t b)			\
+rvvstint##SEW##m##LMUL (const T *a, rvvint##SEW##m##LMUL##_t b)		\
 {									\
-  * (rvvint##E##m##M##_t *) a = b;					\
+  * (rvvint##SEW##m##LMUL##_t *) a = b;					\
 }
 
-_RVVINTEANDM (_RVVINTLD)
-_RVVINTEANDM (_RVVINTST)
+_RVV_INT_ITERATOR (_RVVINTLD)
+_RVV_INT_ITERATOR (_RVVINTST)
 
-#define _RVVFLOATLD(E, M, T, P)						\
-__extension__ extern __inline rvvfloat##E##m##M##_t			\
+#define _RVVFLOATLD(SEW, LMUL, MLEN, T)					\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvldfloat##E##m##M (const T *a)					\
+rvvldfloat##SEW##m##LMUL (const T *a)					\
 {									\
-  return * (rvvfloat##E##m##M##_t *) a;					\
+  return * (rvvfloat##SEW##m##LMUL##_t *) a;				\
 }
 
-#define _RVVFLOATST(E, M, T, P)						\
+#define _RVVFLOATST(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvstfloat##E##m##M (const T *a, rvvfloat##E##m##M##_t b)		\
+rvvstfloat##SEW##m##LMUL (const T *a, rvvfloat##SEW##m##LMUL##_t b)	\
 {									\
-  * (rvvfloat##E##m##M##_t *) a = b;					\
+  * (rvvfloat##SEW##m##LMUL##_t *) a = b;				\
 }
 
-_RVVFLOATEANDM (_RVVFLOATLD)
-_RVVFLOATEANDM (_RVVFLOATST)
+_RVV_FLOAT_ITERATOR (_RVVFLOATLD)
+_RVV_FLOAT_ITERATOR (_RVVFLOATST)
 
 /* ??? An intrinsic with sizeless type args that doesn't call a builtin fails
    in ipa because it doesn't handle sizeless types in predicates, as called
@@ -163,101 +163,106 @@ _RVVFLOATEANDM (_RVVFLOATST)
 
 /* Define the add intrinsics.  */
 
-#define _RVV_INT_BIN_OP(E, M, T, P, OP)					\
-__extension__ extern __inline rvvint##E##m##M##_t			\
+#define _RVV_INT_BIN_OP(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv##OP##int##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
+rvv##OP##int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,			\
+			    rvvint##SEW##m##LMUL##_t b)			\
 {									\
-  return __builtin_riscv_v##OP##int##E##m##M (a, b);			\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL (a, b);		\
 }									\
-__extension__ extern __inline rvvint##E##m##M##_t			\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv##OP##int##E##m##M##_mask (rvvbool##P##_t mask,			\
-			   rvvint##E##m##M##_t maskedoff,		\
-			   rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)\
+rvv##OP##int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				   rvvint##SEW##m##LMUL##_t maskedoff,	\
+				   rvvint##SEW##m##LMUL##_t a,		\
+				   rvvint##SEW##m##LMUL##_t b)		\
 {									\
-  return __builtin_riscv_v##OP##int##E##m##M##_mask (			\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_mask (		\
 	  mask, maskedoff, a, b);					\
 }
 
-#define _RVV_INT_BIN_OP_SCALAR(E, M, T, P, OP)				\
-__extension__ extern __inline rvvint##E##m##M##_t			\
+#define _RVV_INT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv##OP##int##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
+rvv##OP##int##SEW##m##LMUL##_scalar (rvvint##SEW##m##LMUL##_t a, T b)	\
 {									\
-  return __builtin_riscv_v##OP##int##E##m##M##_scalar (a, b);		\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
 }									\
-__extension__ extern __inline rvvint##E##m##M##_t			\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv##OP##int##E##m##M##_scalar_mask (rvvbool##P##_t mask,		\
-			          rvvint##E##m##M##_t maskedoff,	\
-				  rvvint##E##m##M##_t a, T b)		\
+rvv##OP##int##SEW##m##LMUL##_scalar_mask (rvvbool##MLEN##_t mask,	\
+			          rvvint##SEW##m##LMUL##_t maskedoff,	\
+				  rvvint##SEW##m##LMUL##_t a, T b)	\
 {									\
-  return __builtin_riscv_v##OP##int##E##m##M##_scalar (a, b);		\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
 }
 
-#define _RVV_INT_BIN_OP_NOMASK(E, M, T, P, OP)				\
-__extension__ extern __inline rvvint##E##m##M##_t			\
+#define _RVV_INT_BIN_OP_NOMASK(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv##OP##int##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
+rvv##OP##int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,			\
+			    rvvint##SEW##m##LMUL##_t b)			\
 {									\
-  return __builtin_riscv_v##OP##int##E##m##M (a, b);			\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL (a, b);		\
 }
 
-#define _RVV_INT_BIN_OP_SCALAR_NOMASK(E, M, T, P, OP)			\
-__extension__ extern __inline rvvint##E##m##M##_t			\
+#define _RVV_INT_BIN_OP_SCALAR_NOMASK(SEW, LMUL, MLEN, T, OP)		\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv##OP##int##E##m##M##_scalar (rvvint##E##m##M##_t a, T b)		\
+rvv##OP##int##SEW##m##LMUL##_scalar (rvvint##SEW##m##LMUL##_t a, T b)	\
 {									\
-  return __builtin_riscv_v##OP##int##E##m##M##_scalar (a, b);		\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
 }
 
-_RVVINTEANDM_ARG (_RVV_INT_BIN_OP, add)
-_RVVINTEANDM_ARG (_RVV_INT_BIN_OP_SCALAR, add)
-_RVVINTEANDM_ARG (_RVV_INT_BIN_OP_NOMASK, sub)
-_RVVINTEANDM_ARG (_RVV_INT_BIN_OP_SCALAR_NOMASK, sub)
-_RVVINTEANDM_ARG (_RVV_INT_BIN_OP_NOMASK, rsub)
-_RVVINTEANDM_ARG (_RVV_INT_BIN_OP_SCALAR_NOMASK, rsub)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, add)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, add)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_NOMASK, sub)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR_NOMASK, sub)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_NOMASK, rsub)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR_NOMASK, rsub)
 
-#define _RVVINTSLT(E, M, T, P)						\
-__extension__ extern __inline rvvbool##P##_t				\
+#define _RVVINTSLT(SEW, LMUL, MLEN, T)					\
+__extension__ extern __inline rvvbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvsltint##E##m##M (rvvint##E##m##M##_t a, rvvint##E##m##M##_t b)	\
+rvvsltint##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,			\
+			 rvvint##SEW##m##LMUL##_t b)			\
 {									\
-  return __builtin_riscv_vsltint##E##m##M (a, b);			\
+  return __builtin_riscv_vsltint##SEW##m##LMUL (a, b);			\
 }									\
-__extension__ extern __inline rvvbool##P##_t				\
+__extension__ extern __inline rvvbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvsltint##E##m##M##_mask (rvvbool##P##_t mask,				\
-			   rvvbool##P##_t maskedoff,			\
-			   rvvint##E##m##M##_t a,			\
-			   rvvint##E##m##M##_t b)			\
+rvvsltint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,			\
+				rvvbool##MLEN##_t maskedoff,		\
+				rvvint##SEW##m##LMUL##_t a,		\
+				rvvint##SEW##m##LMUL##_t b)		\
 {									\
-  return __builtin_riscv_vsltint##E##m##M##_mask (mask, maskedoff,	\
-						  a, b);		\
+  return __builtin_riscv_vsltint##SEW##m##LMUL##_mask (mask, maskedoff,	\
+						       a, b);		\
 }
 
-_RVVINTEANDM (_RVVINTSLT)
+_RVV_INT_ITERATOR (_RVVINTSLT)
 
 #if 0
-#define _RVVFLOATADD(E, M, T, P)					\
-__extension__ extern __inline rvvfloat##E##m##M##_t			\
+#define _RVVFLOATADD(SEW, LMUL, MLEN, T)				\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvaddfloat##E##m##M (rvvfloat##E##m##M##_t a, rvvfloat##E##m##M##_t b)	\
+rvvaddfloat##SEW##m##LMUL (rvvfloat##SEW##m##LMUL##_t a,		\
+			   rvvfloat##SEW##m##LMUL##_t b)		\
 {									\
   return a + b;								\
 }
 
-#define _RVVFLOATADDS(E, M, T, P)					\
-__extension__ extern __inline rvvfloat##E##m##M##_t			\
+#define _RVVFLOATADDS(SEW, LMUL, MLEN, T)				\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvaddsfloat##E##m##M (rvvfloat##E##m##M##_t a, T b)			\
+rvvaddsfloat##SEW##m##LMUL (rvvfloat##SEW##m##LMUL##_t a, T b)		\
 {									\
   return a + b;								\
 }
 
-_RVVFLOATEANDM (_RVVFLOATADD)
-_RVVFLOATEANDM (_RVVFLOATADDS)
+_RVV_FLOAT_ITERATOR (_RVVFLOATADD)
+_RVV_FLOAT_ITERATOR (_RVVFLOATADDS)
 #endif
 
 /* Helpers for FP widening multiply.  */

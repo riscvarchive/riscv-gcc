@@ -249,32 +249,32 @@ tree rvvbool64_t_node;
 #define RISCV_FTYPE_ATYPES4(A, B, C, D, E) \
   RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, RISCV_ATYPE_##E
 
-/* An iterator to call a macro with every supported E and M value, along
-   with its corresponding vector and integer modes.  */
-#define _RVV_INT_E_M_MODE(MACRO)	\
-  MACRO (8, 1, vnx16qi, QI, 8)		\
-  MACRO (8, 2, vnx32qi, QI, 4)		\
-  MACRO (8, 4, vnx64qi, QI, 2)		\
-  MACRO (8, 8, vnx128qi, QI, 1)		\
-  MACRO (16, 1, vnx8hi, HI, 16)		\
-  MACRO (16, 2, vnx16hi, HI, 8)		\
-  MACRO (16, 4, vnx32hi, HI, 4)		\
-  MACRO (16, 8, vnx64hi, HI, 2)		\
-  MACRO (32, 1, vnx4si, SI, 32)		\
-  MACRO (32, 2, vnx8si, SI, 16)		\
-  MACRO (32, 4, vnx16si, SI, 8)		\
-  MACRO (32, 8, vnx32si, SI, 4)		\
-  MACRO (64, 1, vnx2di, DI, 64)		\
-  MACRO (64, 2, vnx4di, DI, 32)		\
-  MACRO (64, 4, vnx8di, DI, 16)		\
-  MACRO (64, 8, vnx16di, DI, 8)
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector and integer modes.  */
+#define _RVV_INT_ITERATOR(MACRO)	\
+  MACRO ( 8, 1,  8, vnx16qi, QI)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI)	\
+  MACRO ( 8, 8,  1,vnx128qi, QI)	\
+  MACRO (16, 1, 16,  vnx8hi, HI)	\
+  MACRO (16, 2,  8, vnx16hi, HI)	\
+  MACRO (16, 4,  4, vnx32hi, HI)	\
+  MACRO (16, 8,  2, vnx64hi, HI)	\
+  MACRO (32, 1, 32,  vnx4si, SI)	\
+  MACRO (32, 2, 16,  vnx8si, SI)	\
+  MACRO (32, 4,  8, vnx16si, SI)	\
+  MACRO (32, 8,  4, vnx32si, SI)	\
+  MACRO (64, 1, 64,  vnx2di, DI)	\
+  MACRO (64, 2, 32,  vnx4di, DI)	\
+  MACRO (64, 4, 16,  vnx8di, DI)	\
+  MACRO (64, 8,  8, vnx16di, DI)
 
-#define SETVL_BUILTINS(E, M, MODE, SUBMODE, MLEN)			\
-  DIRECT_BUILTIN (vsetvl##E##m##M##_si, RISCV_SI_FTYPE_SI, vector),	\
-  DIRECT_BUILTIN (vsetvl##E##m##M##_di, RISCV_DI_FTYPE_DI, vector),
+#define SETVL_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
+  DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
+  DIRECT_BUILTIN (vsetvl##E##m##L##_di, RISCV_DI_FTYPE_DI, vector),
 
 /* ??? Can't use M for LMUL because of M in RISCV_* type names.  */
-#define VADD_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
+#define VADD_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_NAMED (add##MODE##3, vaddint##E##m##L,				\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
@@ -288,7 +288,7 @@ tree rvvbool64_t_node;
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
 		vector),						\
 
-#define VSUB_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
+#define VSUB_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_NAMED (sub##MODE##3, vsubint##E##m##L,				\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
@@ -296,7 +296,7 @@ tree rvvbool64_t_node;
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
 		vector),
 
-#define VRSUB_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
+#define VRSUB_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_NAMED (sub##MODE##3_reverse, vrsubint##E##m##L,		\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
@@ -304,7 +304,7 @@ tree rvvbool64_t_node;
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
 		vector),
 
-#define _ICMP_BUILTINS(E, L, MODE, MLEN, OP)				\
+#define _ICMP_BUILTINS(E, L, MLEN, MODE, OP)				\
   DIRECT_NAMED (OP##MODE, v##OP##int##E##m##L,				\
 		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
@@ -312,20 +312,20 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VI##E##M##L##_VI##E##M##L,	\
 		vector),
 
-#define ICMP_BUILTINS(E, L, MODE, SUBMODE, MLEN)			\
-  _ICMP_BUILTINS(E, L, MODE, MLEN, slt)
+#define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
+  _ICMP_BUILTINS(E, L, MLEN, MODE, slt)
 
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
 
-  _RVV_INT_E_M_MODE (SETVL_BUILTINS)
+  _RVV_INT_ITERATOR (SETVL_BUILTINS)
 
-  _RVV_INT_E_M_MODE (VADD_BUILTINS)
-  _RVV_INT_E_M_MODE (VSUB_BUILTINS)
-  _RVV_INT_E_M_MODE (VRSUB_BUILTINS)
+  _RVV_INT_ITERATOR (VADD_BUILTINS)
+  _RVV_INT_ITERATOR (VSUB_BUILTINS)
+  _RVV_INT_ITERATOR (VRSUB_BUILTINS)
 
-  _RVV_INT_E_M_MODE (ICMP_BUILTINS)
+  _RVV_INT_ITERATOR (ICMP_BUILTINS)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF,
