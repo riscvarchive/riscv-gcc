@@ -269,6 +269,26 @@ tree rvvbool64_t_node;
   MACRO (64, 4, 16,  vnx8di, DI)	\
   MACRO (64, 8,  8, vnx16di, DI)
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes and extra arguments.  */
+#define _RVV_INT_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1,  8, vnx16qi, QI, __VA_ARGS__)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, __VA_ARGS__)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI, __VA_ARGS__)	\
+  MACRO ( 8, 8,  1,vnx128qi, QI, __VA_ARGS__)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hi, HI, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hi, HI, __VA_ARGS__)	\
+  MACRO (16, 8,  2, vnx64hi, HI, __VA_ARGS__)	\
+  MACRO (32, 1, 32,  vnx4si, SI, __VA_ARGS__)	\
+  MACRO (32, 2, 16,  vnx8si, SI, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16si, SI, __VA_ARGS__)	\
+  MACRO (32, 8,  4, vnx32si, SI, __VA_ARGS__)	\
+  MACRO (64, 1, 64,  vnx2di, DI, __VA_ARGS__)	\
+  MACRO (64, 2, 32,  vnx4di, DI, __VA_ARGS__)	\
+  MACRO (64, 4, 16,  vnx8di, DI, __VA_ARGS__)	\
+  MACRO (64, 8,  8, vnx16di, DI, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported MLEN and internal
    type numbering on VNx<N>BI for vector masking modes.  */
 #define _RVV_MASK_ITERATOR(MACRO)	\
@@ -280,42 +300,39 @@ tree rvvbool64_t_node;
   MACRO (32, 4)				\
   MACRO (64, 2)
 
+/* An iterator to call a macro with every supported MLEN and internal
+   type numbering on VNx<N>BI with extra arguments for vector masking modes.  */
+#define _RVV_MASK_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (1, 128, __VA_ARGS__)			\
+  MACRO (2, 64, __VA_ARGS__)			\
+  MACRO (4, 32, __VA_ARGS__)			\
+  MACRO (8, 16, __VA_ARGS__)			\
+  MACRO (16, 8, __VA_ARGS__)			\
+  MACRO (32, 4, __VA_ARGS__)			\
+  MACRO (64, 2, __VA_ARGS__)
+
 #define SETVL_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
   DIRECT_BUILTIN (vsetvl##E##m##L##_di, RISCV_DI_FTYPE_DI, vector),
 
-/* ??? Can't use M for LMUL because of M in RISCV_* type names.  */
-#define VADD_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
-  DIRECT_NAMED (add##MODE##3, vaddint##E##m##L,				\
+#define VINT_BIN_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
-  DIRECT_NAMED (add##MODE##3_scalar, vaddint##E##m##L##_scalar,		\
+  DIRECT_NAMED (OP##MODE##3_scalar, v##OP##int##E##m##L##_scalar,	\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
-		vector),						\
-  DIRECT_NAMED (add##MODE##3_mask, vaddint##E##m##L##_mask,		\
+		vector),
+
+#define VINT_BIN_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  VINT_BIN_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (OP##MODE##3_mask, v##OP##int##E##m##L##_mask,		\
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
 		vector),						\
-  DIRECT_NAMED (add##MODE##3_scalar_mask, vaddint##E##m##L##_scalar_mask,\
+  DIRECT_NAMED (OP##MODE##3_scalar_mask, v##OP##int##E##m##L##_scalar_mask,\
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
-		vector),						\
-
-#define VSUB_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
-  DIRECT_NAMED (sub##MODE##3, vsubint##E##m##L,				\
-		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
-		vector),						\
-  DIRECT_NAMED (sub##MODE##3_scalar, vsubint##E##m##L##_scalar,		\
-		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
 		vector),
 
-#define VRSUB_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
-  DIRECT_NAMED (sub##MODE##3_reverse, vrsubint##E##m##L,		\
-		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
-		vector),						\
-  DIRECT_NAMED (sub##MODE##3_reverse_scalar, vrsubint##E##m##L##_scalar,\
-		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
-		vector),
-
-#define _ICMP_BUILTINS(E, L, MLEN, MODE, OP)				\
+#define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)			\
   DIRECT_NAMED (OP##MODE, v##OP##int##E##m##L,				\
 		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
@@ -323,18 +340,12 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VI##E##M##L##_VI##E##M##L,	\
 		vector),
 
-#define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
-  _ICMP_BUILTINS(E, L, MLEN, MODE, slt)
-
-#define _MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
+#define MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
   DIRECT_NAMED (OP##vnx##N##bi3, v##OP##bool##MLEN,			\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN,		\
 		vector),
 
-#define MASK_LOGICAL_BUILTINS(MLEN, N)					\
-  _MASK_LOGICAL_BUILTINS(MLEN, N, and)
-
-#define _MASK_SCALAR_UNARY_BUILTINS(MLEN, N, OP)			\
+#define MASK_SCALAR_UNARY_BUILTINS(MLEN, N, OP)			\
   DIRECT_NAMED (OP##vnx##N##bi2_si, v##OP##bool##MLEN##_si,		\
 		RISCV_SI_FTYPE_VB##MLEN,				\
 		vector),						\
@@ -348,23 +359,22 @@ tree rvvbool64_t_node;
 		RISCV_DI_FTYPE_VB##MLEN##_VB##MLEN,			\
 		vector),
 
-#define MASK_UNARY_BUILTINS(MLEN, N)					\
-  _MASK_SCALAR_UNARY_BUILTINS(MLEN, N, popc)
-
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
 
   _RVV_INT_ITERATOR (SETVL_BUILTINS)
 
-  _RVV_INT_ITERATOR (VADD_BUILTINS)
-  _RVV_INT_ITERATOR (VSUB_BUILTINS)
-  _RVV_INT_ITERATOR (VRSUB_BUILTINS)
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, add)
+  /* XXX: sub has masked version, but pattern didn't implement yet. */
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, sub)
+  /* XXX: rsub has masked version, but pattern didn't implement yet. */
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, rsub)
 
-  _RVV_INT_ITERATOR (ICMP_BUILTINS)
+  _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, slt)
 
-  _RVV_MASK_ITERATOR (MASK_LOGICAL_BUILTINS)
-  _RVV_MASK_ITERATOR (MASK_UNARY_BUILTINS)
+  _RVV_MASK_ITERATOR_ARG (MASK_LOGICAL_BUILTINS, and)
+  _RVV_MASK_ITERATOR_ARG (MASK_SCALAR_UNARY_BUILTINS, popc)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF,

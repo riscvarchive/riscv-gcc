@@ -433,7 +433,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn_and_split "sub<mode>3_reverse"
+(define_insn_and_split "rsub<mode>3"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(minus:VIMODES (match_operand:VIMODES 2 "const_vector_int_operand" "vi")
@@ -450,7 +450,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn "*sub<mode>3_reverse_nosetvl"
+(define_insn "*rsub<mode>3_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(minus:VIMODES (match_operand:VIMODES 2 "const_vector_int_operand" "vi")
 		       (match_operand:VIMODES 1 "register_operand" "vr")))
@@ -460,7 +460,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn_and_split "sub<mode>3_reverse_scalar"
+(define_insn_and_split "rsub<mode>3_scalar"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(minus:VIMODES (vec_duplicate:VIMODES
@@ -478,7 +478,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn "*sub<mode>3_reverse_scalar_nosetvl"
+(define_insn "*rsub<mode>3_scalar_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(minus:VIMODES (vec_duplicate:VIMODES
 			(match_operand:<VSUBMODE> 2 "register_operand" "r"))
