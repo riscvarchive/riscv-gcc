@@ -1096,6 +1096,29 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
+(define_insn "sbf<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(unspec:VMASKMODES
+	  [(match_operand:VMASKMODES 1 "register_operand" "vr")]
+	  UNSPEC_SBF))]
+ "TARGET_HARD_FLOAT"
+ "vmsbf.m\t%0,%1"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "sbf<mode>_mask"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(if_then_else:VMASKMODES
+	  (match_operand:VMASKMODES 1 "register_operand" "vm")
+	  (unspec:VMASKMODES
+	    [(match_operand:VMASKMODES 3 "register_operand" "vr")]
+	    UNSPEC_SBF)
+	  (match_operand:VMASKMODES 2 "register_operand" "0")))]
+ "TARGET_HARD_FLOAT"
+ "vmsbf.m\t%0,%3,%1.t"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
 ;; Adaptor for built-in functions
 
 ;; compare functions

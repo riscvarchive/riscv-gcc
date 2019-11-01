@@ -306,8 +306,25 @@ rvv##OP##bool##MLEN##_mask (rvvbool##MLEN##_t mask,			\
     return __builtin_riscv_v##OP##bool##MLEN##_di_mask (mask, a);	\
 }									\
 
+#define _RVV_MASK_UNARY_OP(MLEN, OP)					\
+__extension__ extern __inline rvvbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv##OP##bool##MLEN (rvvbool##MLEN##_t a)				\
+{									\
+ return __builtin_riscv_v##OP##bool##MLEN (a);				\
+}									\
+__extension__ extern __inline rvvbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv##OP##bool##MLEN##_mask (rvvbool##MLEN##_t mask,			\
+			    rvvbool##MLEN##_t maskedoff,		\
+			    rvvbool##MLEN##_t a)			\
+{									\
+  return __builtin_riscv_v##OP##bool##MLEN##_mask (mask, maskedoff, a);	\
+}
+
 _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, and)
 _RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP_SCALAR, popc)
+_RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP, sbf)
 
 /* Helpers for FP widening multiply.  */
 

@@ -359,6 +359,14 @@ tree rvvbool64_t_node;
 		RISCV_DI_FTYPE_VB##MLEN##_VB##MLEN,			\
 		vector),
 
+#define MASK_UNARY_BUILTINS(MLEN, N, OP)				\
+  DIRECT_NAMED (OP##vnx##N##bi, v##OP##bool##MLEN,			\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN,			\
+		vector),						\
+  DIRECT_NAMED (OP##vnx##N##bi_mask, v##OP##bool##MLEN##_mask,		\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VB##MLEN,	\
+		vector),						\
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -375,6 +383,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_MASK_ITERATOR_ARG (MASK_LOGICAL_BUILTINS, and)
   _RVV_MASK_ITERATOR_ARG (MASK_SCALAR_UNARY_BUILTINS, popc)
+  _RVV_MASK_ITERATOR_ARG (MASK_UNARY_BUILTINS, sbf)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF,
