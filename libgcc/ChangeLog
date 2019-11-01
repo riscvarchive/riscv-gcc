@@ -1,3 +1,7 @@
+2019-11-01  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/t-softfp32 (softfp_extra): Add FP divide routines
+
 2019-06-27  Ilia Diachkov  <ilia.diachkov@optimitech.com>
 
 	* Makefile.in (USE_TM_CLONE_REGISTRY): New.
