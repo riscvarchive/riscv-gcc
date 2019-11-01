@@ -1075,6 +1075,27 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
+;; Misc Vector Mask-Register Operations
+(define_insn "popc<VMASKMODES:mode>2_<P:mode>"
+  [(set (match_operand:P 0 "register_operand" "=r")
+	(popcount:P
+	  (match_operand:VMASKMODES 1 "register_operand" "vr")))]
+ "TARGET_HARD_FLOAT"
+ "vpopc.m\t%0,%1"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "popc<VMASKMODES:mode>2_<P:mode>_mask"
+  [(set (match_operand:P 0 "register_operand" "=r")
+	(popcount:P
+	  (and:VMASKMODES
+	     (match_operand:VMASKMODES 1 "register_operand" "vm")
+	     (match_operand:VMASKMODES 2 "register_operand" "vr"))))]
+ "TARGET_HARD_FLOAT"
+ "vpopc.m\t%0,%2,%1.t"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
 ;; Adaptor for built-in functions
 
 ;; compare functions

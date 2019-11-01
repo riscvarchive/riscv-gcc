@@ -334,6 +334,23 @@ tree rvvbool64_t_node;
 #define MASK_LOGICAL_BUILTINS(MLEN, N)					\
   _MASK_LOGICAL_BUILTINS(MLEN, N, and)
 
+#define _MASK_SCALAR_UNARY_BUILTINS(MLEN, N, OP)			\
+  DIRECT_NAMED (OP##vnx##N##bi2_si, v##OP##bool##MLEN##_si,		\
+		RISCV_SI_FTYPE_VB##MLEN,				\
+		vector),						\
+  DIRECT_NAMED (OP##vnx##N##bi2_di, v##OP##bool##MLEN##_di,		\
+		RISCV_DI_FTYPE_VB##MLEN,				\
+		vector),						\
+  DIRECT_NAMED (OP##vnx##N##bi2_si_mask, v##OP##bool##MLEN##_si_mask,	\
+		RISCV_SI_FTYPE_VB##MLEN##_VB##MLEN,			\
+		vector),						\
+  DIRECT_NAMED (OP##vnx##N##bi2_di_mask, v##OP##bool##MLEN##_di_mask,	\
+		RISCV_DI_FTYPE_VB##MLEN##_VB##MLEN,			\
+		vector),
+
+#define MASK_UNARY_BUILTINS(MLEN, N)					\
+  _MASK_SCALAR_UNARY_BUILTINS(MLEN, N, popc)
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -347,6 +364,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR (ICMP_BUILTINS)
 
   _RVV_MASK_ITERATOR (MASK_LOGICAL_BUILTINS)
+  _RVV_MASK_ITERATOR (MASK_UNARY_BUILTINS)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF,
