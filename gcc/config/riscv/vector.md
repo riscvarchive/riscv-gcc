@@ -1062,6 +1062,19 @@
   DONE;
 })
 
+;; Vector mask operations
+
+;; Vector Mask-Register Logical Instructions
+
+(define_insn "and<mode>3"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(and:VMASKMODES (match_operand:VMASKMODES 1 "register_operand" "vr")
+			(match_operand:VMASKMODES 2 "register_operand" "vr")))]
+ "TARGET_HARD_FLOAT"
+ "vmand.mm\t%0,%1,%2"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
 ;; Adaptor for built-in functions
 
 ;; compare functions

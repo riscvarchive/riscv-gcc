@@ -99,6 +99,17 @@ typedef __fp16 float16_t;
   MACRO (64, 4, 16, double)					\
   MACRO (64, 8,  8, double)
 
+/* An iterator to call a macro with every supported MLEN for masking
+   operations.  */
+#define _RVV_MASK_ITERATOR(MACRO, ...)				\
+  MACRO ( 1, __VA_ARGS__)					\
+  MACRO ( 2, __VA_ARGS__)					\
+  MACRO ( 4, __VA_ARGS__)					\
+  MACRO ( 8, __VA_ARGS__)					\
+  MACRO (16, __VA_ARGS__)					\
+  MACRO (32, __VA_ARGS__)					\
+  MACRO (64, __VA_ARGS__)					\
+
 /* Define the setvl intrinsics.  Use the int iterator because it is a
    superset of the float one, but ignore the type operand.  */
 
@@ -264,6 +275,17 @@ rvvaddsfloat##SEW##m##LMUL (rvvfloat##SEW##m##LMUL##_t a, T b)		\
 _RVV_FLOAT_ITERATOR (_RVVFLOATADD)
 _RVV_FLOAT_ITERATOR (_RVVFLOATADDS)
 #endif
+
+#define _RVV_MASK_BIN_OP(MLEN, OP)					\
+__extension__ extern __inline rvvbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv##OP##bool##MLEN (rvvbool##MLEN##_t a,				\
+		     rvvbool##MLEN##_t b)				\
+{									\
+  return __builtin_riscv_v##OP##bool##MLEN (a, b);			\
+}									\
+
+_RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, and)
 
 /* Helpers for FP widening multiply.  */
 

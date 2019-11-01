@@ -269,6 +269,17 @@ tree rvvbool64_t_node;
   MACRO (64, 4, 16,  vnx8di, DI)	\
   MACRO (64, 8,  8, vnx16di, DI)
 
+/* An iterator to call a macro with every supported MLEN and internal
+   type numbering on VNx<N>BI for vector masking modes.  */
+#define _RVV_MASK_ITERATOR(MACRO)	\
+  MACRO (1, 128)			\
+  MACRO (2, 64)				\
+  MACRO (4, 32)				\
+  MACRO (8, 16)				\
+  MACRO (16, 8)				\
+  MACRO (32, 4)				\
+  MACRO (64, 2)
+
 #define SETVL_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
   DIRECT_BUILTIN (vsetvl##E##m##L##_di, RISCV_DI_FTYPE_DI, vector),
@@ -315,6 +326,14 @@ tree rvvbool64_t_node;
 #define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   _ICMP_BUILTINS(E, L, MLEN, MODE, slt)
 
+#define _MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
+  DIRECT_NAMED (OP##vnx##N##bi3, v##OP##bool##MLEN,			\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN,		\
+		vector),
+
+#define MASK_LOGICAL_BUILTINS(MLEN, N)					\
+  _MASK_LOGICAL_BUILTINS(MLEN, N, and)
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -326,6 +345,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR (VRSUB_BUILTINS)
 
   _RVV_INT_ITERATOR (ICMP_BUILTINS)
+
+  _RVV_MASK_ITERATOR (MASK_LOGICAL_BUILTINS)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF,
