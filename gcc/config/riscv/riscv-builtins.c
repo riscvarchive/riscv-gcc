@@ -412,6 +412,14 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
+#define VINT_ADC_SBC_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (OP##MODE##4, v##OP##int##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L##_VB##MLEN, \
+		vector),						\
+  DIRECT_NAMED (m##OP##MODE##4, vm##OP##int##E##m##L,			\
+		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L##_VB##MLEN, \
+		vector),
+
 #define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)		\
   DIRECT_NAMED (s##OP##MODE, vs##OP##int##E##m##L,			\
 		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
@@ -499,6 +507,10 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   /* XXX: rsub has masked version, but pattern didn't implement yet. */
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, rsub)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, mul)
+
+  /* XXX: adc/sbc provide scalar version but pattern didn't implement yet.  */
+  /* XXX: adc/sbc need unsigned version of intrinsic function.  */
+  _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, adc)
 
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wadd)
 

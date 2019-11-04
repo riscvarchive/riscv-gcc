@@ -530,6 +530,80 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+;; Vector Integer Add-with-Carry / Subtract-with-Borrow Instructions
+
+(define_expand "adc<mode>4"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (plus:VIMODES
+		     (plus:VIMODES
+		       (match_operand:VIMODES 1 "register_operand")
+		       (match_operand:VIMODES 2 "vector_arith_operand"))
+		     (if_then_else:VIMODES
+		       (match_operand:<VCMPEQUIV> 3 "register_operand")
+		       (vec_duplicate:VIMODES (const_int 1))
+		       (vec_duplicate:VIMODES (const_int 0)))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*adc<mode>4_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(plus:VIMODES
+	  (plus:VIMODES
+	    (match_operand:VIMODES 1 "register_operand" "vr,vr")
+	    (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi"))
+	  (if_then_else:VIMODES
+	    (match_operand:<VCMPEQUIV> 3 "register_operand" "vm,vm")
+	    (vec_duplicate:VIMODES (const_int 1))
+	    (vec_duplicate:VIMODES (const_int 0)))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vadc.vvm\t%0,%1,%2,%3
+   vadc.vim\t%0,%1,%v2,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "madc<mode>4"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (unspec:<VCMPEQUIV>
+		     [(plus:VIMODES
+		        (plus:VIMODES
+			  (match_operand:VIMODES 1 "register_operand")
+			  (match_operand:VIMODES 2 "vector_arith_operand"))
+		        (if_then_else:VIMODES
+			  (match_operand:<VCMPEQUIV> 3 "register_operand")
+			  (vec_duplicate:VIMODES (const_int 1))
+			  (vec_duplicate:VIMODES (const_int 0))))]
+		     UNSPEC_OVERFLOW))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*madc<mode>4_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr,vr")
+	(unspec:<VCMPEQUIV>
+	  [(plus:VIMODES
+	     (plus:VIMODES
+	       (match_operand:VIMODES 1 "register_operand" "vr,vr")
+	       (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi"))
+	     (if_then_else:VIMODES
+	       (match_operand:<VCMPEQUIV> 3 "register_operand" "vm,vm")
+	       (vec_duplicate:VIMODES (const_int 1))
+	       (vec_duplicate:VIMODES (const_int 0))))]
+	  UNSPEC_OVERFLOW))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vmadc.vvm\t%0,%1,%2,%3
+   vmadc.vim\t%0,%1,%v2,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Floating point ALU instructions.
 
 (define_insn_and_split "add<mode>3"

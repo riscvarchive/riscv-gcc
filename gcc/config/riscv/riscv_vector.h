@@ -317,6 +317,26 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR_NOMASK, rsub)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, mul)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, mul)
 
+#define _RVV_INT_ADC_SBC_OP(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_##OP##int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,		\
+			     rvvint##SEW##m##LMUL##_t b,		\
+			     rvvbool##MLEN##_t carryin)			\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL (a, b, carryin);	\
+}									\
+__extension__ extern __inline rvvbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_m##OP##int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,		\
+			      rvvint##SEW##m##LMUL##_t b,		\
+			      rvvbool##MLEN##_t carryin)		\
+{									\
+  return __builtin_riscv_vm##OP##int##SEW##m##LMUL (a, b, carryin);	\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_ADC_SBC_OP, adc)
+
 #define _RVV_WINT_ADD_SUB(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
 __extension__ extern __inline rvvint##WSEW##m##WLMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

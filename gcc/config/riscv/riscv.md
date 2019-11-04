@@ -49,6 +49,7 @@
   ;; Vector unspecs.
   UNSPEC_SBF
   UNSPEC_REDUC
+  UNSPEC_OVERFLOW
 ])
 
 (define_c_enum "unspecv" [
