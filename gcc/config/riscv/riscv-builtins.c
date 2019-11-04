@@ -80,6 +80,38 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 4, 16,  vnx8di, DI, __VA_ARGS__)	\
   MACRO (64, 8,  8, vnx16di, DI, __VA_ARGS__)
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
+   corresponding widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
+#define _RVV_WINT_ITERATOR(MACRO, ...)			\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8si, SI)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI)	\
+  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI)	\
+  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4di, DI)	\
+  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI)	\
+  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
+   corresponding widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
+#define _RVV_WINT_ITERATOR_ARG(MACRO, ...)				\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI, __VA_ARGS__)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI, __VA_ARGS__)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI, __VA_ARGS__)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8si, SI, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI, __VA_ARGS__)	\
+  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4di, DI, __VA_ARGS__)	\
+  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported MLEN and internal
    type numbering on VNx<N>BI for vector masking modes.  */
 #define _RVV_MASK_ITERATOR(MACRO)	\
@@ -236,6 +268,23 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_VI64M4 rvvint64m4_t_node
 #define RISCV_ATYPE_VI64M8 rvvint64m8_t_node
 
+#define RISCV_ATYPE_VUI8M1 rvvuint8m1_t_node
+#define RISCV_ATYPE_VUI8M2 rvvuint8m2_t_node
+#define RISCV_ATYPE_VUI8M4 rvvuint8m4_t_node
+#define RISCV_ATYPE_VUI8M8 rvvuint8m8_t_node
+#define RISCV_ATYPE_VUI16M1 rvvuint16m1_t_node
+#define RISCV_ATYPE_VUI16M2 rvvuint16m2_t_node
+#define RISCV_ATYPE_VUI16M4 rvvuint16m4_t_node
+#define RISCV_ATYPE_VUI16M8 rvvuint16m8_t_node
+#define RISCV_ATYPE_VUI32M1 rvvuint32m1_t_node
+#define RISCV_ATYPE_VUI32M2 rvvuint32m2_t_node
+#define RISCV_ATYPE_VUI32M4 rvvuint32m4_t_node
+#define RISCV_ATYPE_VUI32M8 rvvuint32m8_t_node
+#define RISCV_ATYPE_VUI64M1 rvvuint64m1_t_node
+#define RISCV_ATYPE_VUI64M2 rvvuint64m2_t_node
+#define RISCV_ATYPE_VUI64M4 rvvuint64m4_t_node
+#define RISCV_ATYPE_VUI64M8 rvvuint64m8_t_node
+
 /* Helper type nodes for vector support.  */
 tree const_float_ptr_type_node;
 tree float16_ptr_type_node;
@@ -367,6 +416,21 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VB##MLEN,	\
 		vector),						\
 
+#define VINT_WIDENING_ADD_SUB_BUILTINS(SEW, LMUL, MLEN, VMODE, SDEMODE,	\
+				       WSEW, WLMUL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (OP##VMODE##_vv, v##OP##_vv_int##SEW##m##LMUL,		\
+		RISCV_VI##WSEW##M##WLMUL##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL,\
+		vector),						\
+  DIRECT_NAMED (OP##u##VMODE##_vv, v##OP##u_vv_uint##SEW##m##LMUL,	\
+		RISCV_VUI##WSEW##M##WLMUL##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv, v##OP##_wv_int##SEW##m##LMUL,		\
+		RISCV_VI##WSEW##M##WLMUL##_FTYPE_VI##WSEW##M##WLMUL##_VI##SEW##M##LMUL,\
+		vector),						\
+  DIRECT_NAMED (OP##u##VMODE##_wv, v##OP##u_wv_uint##SEW##m##LMUL,	\
+		RISCV_VUI##WSEW##M##WLMUL##_FTYPE_VUI##WSEW##M##WLMUL##_VUI##SEW##M##LMUL,\
+		vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -378,6 +442,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, sub)
   /* XXX: rsub has masked version, but pattern didn't implement yet. */
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, rsub)
+
+  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wadd)
 
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, slt)
 
