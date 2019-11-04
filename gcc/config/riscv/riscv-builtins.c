@@ -40,6 +40,68 @@ along with GCC; see the file COPYING3.  If not see
 /* We don't want the PTR definition from ansi-decl.h.  */
 #undef PTR
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector and integer modes.  */
+#define _RVV_INT_ITERATOR(MACRO)	\
+  MACRO ( 8, 1,  8, vnx16qi, QI)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI)	\
+  MACRO ( 8, 8,  1,vnx128qi, QI)	\
+  MACRO (16, 1, 16,  vnx8hi, HI)	\
+  MACRO (16, 2,  8, vnx16hi, HI)	\
+  MACRO (16, 4,  4, vnx32hi, HI)	\
+  MACRO (16, 8,  2, vnx64hi, HI)	\
+  MACRO (32, 1, 32,  vnx4si, SI)	\
+  MACRO (32, 2, 16,  vnx8si, SI)	\
+  MACRO (32, 4,  8, vnx16si, SI)	\
+  MACRO (32, 8,  4, vnx32si, SI)	\
+  MACRO (64, 1, 64,  vnx2di, DI)	\
+  MACRO (64, 2, 32,  vnx4di, DI)	\
+  MACRO (64, 4, 16,  vnx8di, DI)	\
+  MACRO (64, 8,  8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes and extra arguments.  */
+#define _RVV_INT_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1,  8, vnx16qi, QI, __VA_ARGS__)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, __VA_ARGS__)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI, __VA_ARGS__)	\
+  MACRO ( 8, 8,  1,vnx128qi, QI, __VA_ARGS__)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hi, HI, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hi, HI, __VA_ARGS__)	\
+  MACRO (16, 8,  2, vnx64hi, HI, __VA_ARGS__)	\
+  MACRO (32, 1, 32,  vnx4si, SI, __VA_ARGS__)	\
+  MACRO (32, 2, 16,  vnx8si, SI, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16si, SI, __VA_ARGS__)	\
+  MACRO (32, 8,  4, vnx32si, SI, __VA_ARGS__)	\
+  MACRO (64, 1, 64,  vnx2di, DI, __VA_ARGS__)	\
+  MACRO (64, 2, 32,  vnx4di, DI, __VA_ARGS__)	\
+  MACRO (64, 4, 16,  vnx8di, DI, __VA_ARGS__)	\
+  MACRO (64, 8,  8, vnx16di, DI, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported MLEN and internal
+   type numbering on VNx<N>BI for vector masking modes.  */
+#define _RVV_MASK_ITERATOR(MACRO)	\
+  MACRO (1, 128)			\
+  MACRO (2, 64)				\
+  MACRO (4, 32)				\
+  MACRO (8, 16)				\
+  MACRO (16, 8)				\
+  MACRO (32, 4)				\
+  MACRO (64, 2)
+
+/* An iterator to call a macro with every supported MLEN and internal
+   type numbering on VNx<N>BI with extra arguments for vector masking modes.  */
+#define _RVV_MASK_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (1, 128, __VA_ARGS__)			\
+  MACRO (2, 64, __VA_ARGS__)			\
+  MACRO (4, 32, __VA_ARGS__)			\
+  MACRO (8, 16, __VA_ARGS__)			\
+  MACRO (16, 8, __VA_ARGS__)			\
+  MACRO (32, 4, __VA_ARGS__)			\
+  MACRO (64, 2, __VA_ARGS__)
+
 /* Macros to create an enumeration identifier for a function prototype.  */
 #define RISCV_FTYPE_NAME0(A) RISCV_##A##_FTYPE
 #define RISCV_FTYPE_NAME1(A, B) RISCV_##A##_FTYPE_##B
@@ -248,68 +310,6 @@ tree rvvbool64_t_node;
   RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D
 #define RISCV_FTYPE_ATYPES4(A, B, C, D, E) \
   RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, RISCV_ATYPE_##E
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector and integer modes.  */
-#define _RVV_INT_ITERATOR(MACRO)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI)	\
-  MACRO ( 8, 8,  1,vnx128qi, QI)	\
-  MACRO (16, 1, 16,  vnx8hi, HI)	\
-  MACRO (16, 2,  8, vnx16hi, HI)	\
-  MACRO (16, 4,  4, vnx32hi, HI)	\
-  MACRO (16, 8,  2, vnx64hi, HI)	\
-  MACRO (32, 1, 32,  vnx4si, SI)	\
-  MACRO (32, 2, 16,  vnx8si, SI)	\
-  MACRO (32, 4,  8, vnx16si, SI)	\
-  MACRO (32, 8,  4, vnx32si, SI)	\
-  MACRO (64, 1, 64,  vnx2di, DI)	\
-  MACRO (64, 2, 32,  vnx4di, DI)	\
-  MACRO (64, 4, 16,  vnx8di, DI)	\
-  MACRO (64, 8,  8, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes and extra arguments.  */
-#define _RVV_INT_ITERATOR_ARG(MACRO, ...)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 8,  1,vnx128qi, QI, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hi, HI, __VA_ARGS__)	\
-  MACRO (16, 8,  2, vnx64hi, HI, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4si, SI, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8si, SI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16si, SI, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32si, SI, __VA_ARGS__)	\
-  MACRO (64, 1, 64,  vnx2di, DI, __VA_ARGS__)	\
-  MACRO (64, 2, 32,  vnx4di, DI, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16di, DI, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported MLEN and internal
-   type numbering on VNx<N>BI for vector masking modes.  */
-#define _RVV_MASK_ITERATOR(MACRO)	\
-  MACRO (1, 128)			\
-  MACRO (2, 64)				\
-  MACRO (4, 32)				\
-  MACRO (8, 16)				\
-  MACRO (16, 8)				\
-  MACRO (32, 4)				\
-  MACRO (64, 2)
-
-/* An iterator to call a macro with every supported MLEN and internal
-   type numbering on VNx<N>BI with extra arguments for vector masking modes.  */
-#define _RVV_MASK_ITERATOR_ARG(MACRO, ...)	\
-  MACRO (1, 128, __VA_ARGS__)			\
-  MACRO (2, 64, __VA_ARGS__)			\
-  MACRO (4, 32, __VA_ARGS__)			\
-  MACRO (8, 16, __VA_ARGS__)			\
-  MACRO (16, 8, __VA_ARGS__)			\
-  MACRO (32, 4, __VA_ARGS__)			\
-  MACRO (64, 2, __VA_ARGS__)
 
 #define SETVL_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
