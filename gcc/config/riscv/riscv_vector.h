@@ -295,26 +295,43 @@ rvv##OP##u_wv_uint##SEW##m##LMUL (rvvuint##WSEW##m##WLMUL##_t a,	\
 
 _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wadd)
 
-#define _RVVINTSLT(SEW, LMUL, MLEN, T)					\
+#define _RVVINTCMP(SEW, LMUL, MLEN, T, OP, OPU)				\
 __extension__ extern __inline rvvbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvsltint##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,			\
-			 rvvint##SEW##m##LMUL##_t b)			\
+rvvs##OP##int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,		\
+			     rvvint##SEW##m##LMUL##_t b)		\
 {									\
-  return __builtin_riscv_vsltint##SEW##m##LMUL (a, b);			\
+  return __builtin_riscv_vs##OP##int##SEW##m##LMUL (a, b);		\
 }									\
 __extension__ extern __inline rvvbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvsltint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,			\
-				rvvbool##MLEN##_t maskedoff,		\
-				rvvint##SEW##m##LMUL##_t a,		\
-				rvvint##SEW##m##LMUL##_t b)		\
+rvvs##OPU##uint##SEW##m##LMUL (rvvuint##SEW##m##LMUL##_t a,		\
+			       rvvuint##SEW##m##LMUL##_t b)		\
 {									\
-  return __builtin_riscv_vsltint##SEW##m##LMUL##_mask (mask, maskedoff,	\
-						       a, b);		\
+  return __builtin_riscv_vs##OPU##uint##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline rvvbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvs##OP##int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				    rvvbool##MLEN##_t maskedoff,	\
+				    rvvint##SEW##m##LMUL##_t a,		\
+				    rvvint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_vs##OP##int##SEW##m##LMUL##_mask (mask, maskedoff, \
+							   a, b);	\
+}									\
+__extension__ extern __inline rvvbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvvs##OPU##uint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				      rvvbool##MLEN##_t maskedoff,	\
+				      rvvuint##SEW##m##LMUL##_t a,	\
+				      rvvuint##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_vs##OPU##uint##SEW##m##LMUL##_mask (mask, maskedoff, \
+							     a, b);	\
 }
 
-_RVV_INT_ITERATOR (_RVVINTSLT)
+_RVV_INT_ITERATOR_ARG (_RVVINTCMP, lt, ltu)
 
 #if 0
 #define _RVVFLOATADD(SEW, LMUL, MLEN, T)				\
@@ -427,6 +444,52 @@ rvvwmaddfloat16m4_scalar (rvvfloat16m4_t a, const float16_t b,
 {
   return __builtin_riscv_vfwmaddfloat16m4_scalar (a, b, c);
 }
+
+/* Reductions.  */
+
+#define _RVV_REDUC_OP(SEW, LMUL, MLEN, T, OP, OPU)			\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_red##OP##_vv_int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,		\
+				    rvvint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_red##OPU##_vv_uint##SEW##m##LMUL (rvvuint##SEW##m##LMUL##_t a,	\
+				      rvvuint##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL (a, b);	\
+}									\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_red##OP##_vv_int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
+					   rvvint##SEW##m##LMUL##_t maskedoff,\
+					   rvvint##SEW##m##LMUL##_t a,	\
+					   rvvint##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL##_mask (mask,maskedoff,\
+							     a, b);	\
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_red##OPU##_vv_uint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
+					     rvvuint##SEW##m##LMUL##_t maskedoff, \
+					     rvvuint##SEW##m##LMUL##_t a, \
+					     rvvuint##SEW##m##LMUL##_t b) \
+{									\
+  return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL##_mask (mask,	\
+								 maskedoff, \
+								 a, b);	\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, sum, sum)
+_RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, max, maxu)
+_RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, min, minu)
+_RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, and, and)
+_RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, or, or)
+_RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, xor, xor)
 
 #endif
 #endif

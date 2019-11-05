@@ -46,8 +46,9 @@
   ;; Stack tie
   UNSPEC_TIE
 
-  ;; Vector mask unspecs.
+  ;; Vector unspecs.
   UNSPEC_SBF
+  UNSPEC_REDUC
 ])
 
 (define_c_enum "unspecv" [

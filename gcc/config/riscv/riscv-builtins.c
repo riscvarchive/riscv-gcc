@@ -381,12 +381,18 @@ tree rvvbool64_t_node;
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
 		vector),
 
-#define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)			\
-  DIRECT_NAMED (OP##MODE, v##OP##int##E##m##L,				\
+#define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)		\
+  DIRECT_NAMED (s##OP##MODE, vs##OP##int##E##m##L,			\
 		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
-  DIRECT_NAMED (OP##MODE##_mask, v##OP##int##E##m##L##_mask,		\
+  DIRECT_NAMED (s##OPU##MODE, vs##OPU##uint##E##m##L,			\
+		RISCV_VB##MLEN##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (s##OP##MODE##_mask, vs##OP##int##E##m##L##_mask,	\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VI##E##M##L##_VI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (s##OPU##MODE##_mask, vs##OPU##uint##E##m##L##_mask,	\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L, \
 		vector),
 
 #define MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
@@ -431,6 +437,20 @@ tree rvvbool64_t_node;
 		RISCV_VUI##WSEW##M##WLMUL##_FTYPE_VUI##WSEW##M##WLMUL##_VUI##SEW##M##LMUL,\
 		vector),
 
+#define VINT_REDUC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
+  DIRECT_NAMED (reduc_##OP##MODE, reduc_##OP##int##E##m##L,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (reduc_##OPU##MODE, reduc_##OPU##uint##E##m##L,		\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (reduc_##OP##MODE##_mask, reduc_##OP##int##E##m##L##_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L, \
+		vector),						\
+  DIRECT_NAMED (reduc_##OPU##MODE##_mask, reduc_##OPU##uint##E##m##L##_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L, \
+		vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -445,11 +465,18 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wadd)
 
-  _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, slt)
+  _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, lt, ltu)
 
   _RVV_MASK_ITERATOR_ARG (MASK_LOGICAL_BUILTINS, and)
   _RVV_MASK_ITERATOR_ARG (MASK_SCALAR_UNARY_BUILTINS, popc)
   _RVV_MASK_ITERATOR_ARG (MASK_UNARY_BUILTINS, sbf)
+
+  _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, sum, sum)
+  _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, max, maxu)
+  _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, min, minu)
+  _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, and, and)
+  _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, or, or)
+  _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, xor, xor)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_C_HF,

@@ -174,6 +174,14 @@
    (VNx4SF "m1") (VNx8SF "m2") (VNx16SF "m4") (VNx32SF "m8")
    (VNx2DF "m1") (VNx4DF "m2") (VNx8DF "m4") (VNx16DF "m8")])
 
+;; Operations valid for integer reductions.
+(define_code_iterator any_reduc [plus umax smax umin smin and ior xor])
+
+;; <reduc> expands to the name of the reduction that implements a
+;; particular code.
+(define_code_attr reduc [(plus "sum") (umax "maxu") (smax "max") (umin "minu")
+			 (smin "min") (and "and") (ior "or") (xor "xor")])
+
 ;; Vsetvl instructions.
 
 ;; These use VIMODES because only the SEW and LMUL matter.  The int/float
@@ -1188,10 +1196,10 @@
 
 ;; compare functions
 
-(define_expand "slt<mode>"
+(define_expand "slt<u><mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
-		(lt:<VCMPEQUIV>
+		(any_lt:<VCMPEQUIV>
 		  (match_operand:VIMODES 1 "register_operand")
 		  (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
@@ -1199,12 +1207,12 @@
 {
 })
 
-(define_expand "slt<mode>_mask"
+(define_expand "slt<u><mode>_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
 		(if_then_else:<VCMPEQUIV>
 		  (match_operand:<VCMPEQUIV> 1 "register_operand")
-		  (lt:<VCMPEQUIV>
+		  (any_lt:<VCMPEQUIV>
 		    (match_operand:VIMODES 3 "register_operand")
 		    (match_operand:VIMODES 4 "register_operand"))
 		  (match_operand:<VCMPEQUIV> 2 "register_operand")))
@@ -1212,3 +1220,63 @@
   "TARGET_VECTOR"
 {
 })
+
+;; Integer Reduction instructions.
+
+(define_expand "reduc_<reduc><mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		    [(any_reduc:VIMODES
+		      (match_operand:VIMODES 1 "register_operand")
+		      (match_operand:VIMODES 2 "register_operand"))]
+		    UNSPEC_REDUC))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+}) 
+
+(define_insn "*reduc_<reduc><mode>_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(unspec:VIMODES
+	 [(any_reduc:VIMODES
+	   (match_operand:VIMODES 1 "register_operand" "vr")
+	   (match_operand:VIMODES 2 "register_operand" "vr"))]
+	 UNSPEC_REDUC))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vred<reduc>.vs\t%0,%2,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "reduc_<reduc><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		    (match_operand:<VCMPEQUIV> 1 "register_operand")
+		    (unspec:VIMODES
+		     [(any_reduc:VIMODES
+		       (match_operand:VIMODES 2 "register_operand")
+		       (match_operand:VIMODES 3 "register_operand"))]
+		     UNSPEC_REDUC)
+		    (match_operand:VIMODES 4 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+}) 
+
+(define_insn "*reduc_<reduc><mode>_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+	 (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	 (unspec:VIMODES
+	  [(any_reduc:VIMODES
+	    (match_operand:VIMODES 2 "register_operand" "vr")
+	    (match_operand:VIMODES 3 "register_operand" "vr"))]
+	  UNSPEC_REDUC)
+	 (match_operand:VIMODES 4 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vred<reduc>.vs\t%0,%3,%2,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])

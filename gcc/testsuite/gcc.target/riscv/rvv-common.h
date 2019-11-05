@@ -20,6 +20,24 @@
   MACRO(long long, int, 64m4, 16)	\
   MACRO(long long, int, 64m8,  8)
 
+#define RVV_UINT_TEST(MACRO)			\
+  MACRO(unsigned      char, uint,  8m1,  8)	\
+  MACRO(unsigned      char, uint,  8m2,  4)	\
+  MACRO(unsigned      char, uint,  8m4,  2)	\
+  MACRO(unsigned      char, uint,  8m8,  1)	\
+  MACRO(unsigned     short, uint, 16m1, 16)	\
+  MACRO(unsigned     short, uint, 16m2,  8)	\
+  MACRO(unsigned     short, uint, 16m4,  4)	\
+  MACRO(unsigned     short, uint, 16m8,  2)	\
+  MACRO(unsigned       int, uint, 32m1, 32)	\
+  MACRO(unsigned       int, uint, 32m2, 16)	\
+  MACRO(unsigned       int, uint, 32m4,  8)	\
+  MACRO(unsigned       int, uint, 32m8,  4)	\
+  MACRO(unsigned long long, uint, 64m1, 64)	\
+  MACRO(unsigned long long, uint, 64m2, 32)	\
+  MACRO(unsigned long long, uint, 64m4, 16)	\
+  MACRO(unsigned long long, uint, 64m8,  8)
+
 #define RVV_WINT_TEST(MACRO)				\
   MACRO(     char, int,  8m1,  8,     short, 16m2)	\
   MACRO(     char, int,  8m2,  4,     short, 16m4)	\
