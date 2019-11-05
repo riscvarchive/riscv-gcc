@@ -106,6 +106,16 @@
   (and (match_code "const_vector")
        (match_test "riscv_const_vec_all_same_in_range_p (op, -15, 16)")))
 
+(define_constraint "v0"
+  "A vector with constant zero."
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, 0, 0)")))
+
+(define_constraint "v1"
+  "A vector with constant all bit set."
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, 1, 1)")))
+
 ;; ??? Not used yet.
 (define_constraint "vk"
   "A vector 5-bit unsigned immediate."

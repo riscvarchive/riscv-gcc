@@ -300,10 +300,13 @@
 ;; move pattern for vector masking type.
 ;; XXX: we should support load/store for masking type.
 (define_insn "mov<mode>"
-  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
-	(match_operand:VMASKMODES 1 "register_operand" " vr"))]
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr,vr,vr")
+	(match_operand:VMASKMODES 1 "vector_move_operand" " vr,v0,v1"))]
   "TARGET_VECTOR"
-  "vmcpy.m\t%0,%1"
+  "@
+   vmcpy.m\t%0,%1
+   vmclr.m\t%0
+   vmset.m\t%0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -1197,6 +1200,28 @@
 })
 
 ;; Vector mask operations
+
+(define_expand "clr<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand")
+	(match_dup 1))]
+  "TARGET_VECTOR"
+{
+  /* Using gen function instead of write (const_vector [(const_int 0)]) because,
+     emit-rtl.c:gen_rtx_CONST_VECTOR will check the number of elements is same
+     as NUNIT of mode.  */
+  operands[1] = gen_const_vec_duplicate (<MODE>mode, const0_rtx);
+})
+
+(define_expand "set<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand")
+	(match_dup 1))]
+  "TARGET_VECTOR"
+{
+  /* Using gen function instead of write (const_vector [(const_int 0)]) because,
+     emit-rtl.c:gen_rtx_CONST_VECTOR will check the number of elements is same
+     as NUNIT of mode.  */
+  operands[1] = gen_const_vec_duplicate (<MODE>mode, const1_rtx);
+})
 
 ;; Vector Mask-Register Logical Instructions
 

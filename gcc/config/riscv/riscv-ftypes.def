@@ -29,6 +29,11 @@ along with GCC; see the file COPYING3.  If not see
    Invoke _RVV_INT_ITERATOR and _RVV_MASK_ITERATOR with DEF_RISCV_FTYPE to
    create bunch of prototype used by RISC-V vector built-in functions.  */
 
+#define DEF_NULLARY_VECTOR_MASKING_FTYPE(MLEN, N)	\
+  DEF_RISCV_FTYPE (0, (VB##MLEN))
+
+_RVV_MASK_ITERATOR(DEF_NULLARY_VECTOR_MASKING_FTYPE)
+
 DEF_RISCV_FTYPE (0, (USI))
 DEF_RISCV_FTYPE (1, (VOID, USI))
 
