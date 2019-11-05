@@ -85,7 +85,7 @@ along with GCC; see the file COPYING3.  If not see
    corresponding widening vector type and extra arguments.
 
    MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
-#define _RVV_WINT_ITERATOR(MACRO, ...)			\
+#define _RVV_WINT_ITERATOR(MACRO)			\
   MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI)	\
   MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI)	\
   MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI)	\
