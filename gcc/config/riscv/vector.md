@@ -645,20 +645,16 @@
 
 ;; Integer multiply instructions.
 
-(define_insn_and_split "mul<mode>3"
+(define_expand "mul<mode>3"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vr")
-	(mult:VIMODES (match_operand:VIMODES 1 "register_operand" "vr")
-		      (match_operand:VIMODES 2 "register_operand" "vr")))]
-  "TARGET_VECTOR"
-  "#"
-  "&& 1"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_dup 0) (mult:VIMODES (match_dup 1) (match_dup 2)))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (mult:VIMODES
+		     (match_operand:VIMODES 1 "register_operand")
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  ""
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
+  "TARGET_VECTOR"
+{
+})
 
 (define_insn "*mul<mode>3_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
@@ -670,33 +666,26 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-;; ??? The constant is pulled out of the loop before it can be used here.
-(define_insn_and_split "*mul<mode>3_scalar"
+(define_expand "mul<mode>3_scalar"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vr")
-	(mult:VIMODES (vec_duplicate:VIMODES
-		       (match_operand:<VSUBMODE> 1 "register_operand" "r"))
-		      (match_operand:VIMODES 2 "register_operand" "vr")))]
-  "TARGET_VECTOR"
-  "#"
-  "&& 1"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_dup 0) (mult:VIMODES
-				  (vec_duplicate:VIMODES (match_dup 1))
-				  (match_dup 2)))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (mult:VIMODES
+		     (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand"))
+		     (match_operand:VIMODES 1 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  ""
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
+  "TARGET_VECTOR"
+{
+})
 
 (define_insn "*mul<mode>3_scalar_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(mult:VIMODES (vec_duplicate:VIMODES
-		       (match_operand:<VSUBMODE> 1 "register_operand" "r"))
-		      (match_operand:VIMODES 2 "register_operand" "vr")))
+		       (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+		      (match_operand:VIMODES 1 "register_operand" "vr")))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vmul.vx\t%0,%2,%1"
+  "vmul.vx\t%0,%1,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

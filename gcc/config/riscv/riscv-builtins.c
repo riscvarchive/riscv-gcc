@@ -493,6 +493,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, sub)
   /* XXX: rsub has masked version, but pattern didn't implement yet. */
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, rsub)
+  /* XXX: mul has masked version, but pattern didn't implement yet. */
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, mul)
 
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wadd)
 
