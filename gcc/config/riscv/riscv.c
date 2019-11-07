@@ -5560,7 +5560,9 @@ riscv_vector_alignment (const_tree type)
   if (TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST)
     return 64;
 
-  HOST_WIDE_INT align = tree_to_shwi (TYPE_SIZE (type));
+  /* Don't assume that TYPE_SIZE fits in a HOST_WIDE_INT.  */
+  HOST_WIDE_INT align
+    = wi::umin (wi::to_wide (TYPE_SIZE (type)), 128).to_uhwi ();
   /* The selftest option tests V8HImode, so we have to be able to handle
      that here.  It becomes TImode, which requires TImode alignment.  */
   if (VECTOR_MODE_P (TYPE_MODE (type)))
