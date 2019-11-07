@@ -61,6 +61,22 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 8,  8, vnx16di, DI)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   except LMUL1, along with its corresponding vector and integer modes.  */
+#define _RVV_INT_ITERATOR_NOTM1(MACRO)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI)	\
+  MACRO ( 8, 8,  1,vnx128qi, QI)	\
+  MACRO (16, 2,  8, vnx16hi, HI)	\
+  MACRO (16, 4,  4, vnx32hi, HI)	\
+  MACRO (16, 8,  2, vnx64hi, HI)	\
+  MACRO (32, 2, 16,  vnx8si, SI)	\
+  MACRO (32, 4,  8, vnx16si, SI)	\
+  MACRO (32, 8,  4, vnx32si, SI)	\
+  MACRO (64, 2, 32,  vnx4di, DI)	\
+  MACRO (64, 4, 16,  vnx8di, DI)	\
+  MACRO (64, 8,  8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer modes and extra arguments.  */
 #define _RVV_INT_ITERATOR_ARG(MACRO, ...)	\
   MACRO ( 8, 1,  8, vnx16qi, QI, __VA_ARGS__)	\
@@ -439,16 +455,16 @@ tree rvvbool64_t_node;
 
 #define VINT_REDUC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
   DIRECT_NAMED (reduc_##OP##MODE, reduc_##OP##int##E##m##L,		\
-		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
+		RISCV_VI##E##M1_FTYPE_VI##E##M1_VI##E##M##L,		\
 		vector),						\
   DIRECT_NAMED (reduc_##OPU##MODE, reduc_##OPU##uint##E##m##L,		\
-		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		RISCV_VUI##E##M1_FTYPE_VUI##E##M1_VUI##E##M##L,		\
 		vector),						\
-  DIRECT_NAMED (reduc_##OP##MODE##_mask, reduc_##OP##int##E##m##L##_mask,\
-		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L, \
+  DIRECT_NAMED (reduc_##OP##MODE##_mask, reduc_##OP##int##E##m##L##_mask, \
+		RISCV_VI##E##M1_FTYPE_VB##MLEN##_VI##E##M1_VI##E##M1_VI##E##M##L, \
 		vector),						\
   DIRECT_NAMED (reduc_##OPU##MODE##_mask, reduc_##OPU##uint##E##m##L##_mask,\
-		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L, \
+		RISCV_VUI##E##M1_FTYPE_VB##MLEN##_VUI##E##M1_VUI##E##M1_VUI##E##M##L, \
 		vector),
 
 static const struct riscv_builtin_description riscv_builtins[] = {

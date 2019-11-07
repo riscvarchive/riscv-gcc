@@ -448,36 +448,36 @@ rvvwmaddfloat16m4_scalar (rvvfloat16m4_t a, const float16_t b,
 /* Reductions.  */
 
 #define _RVV_REDUC_OP(SEW, LMUL, MLEN, T, OP, OPU)			\
-__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
+__extension__ extern __inline rvvint##SEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_red##OP##_vv_int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,		\
-				    rvvint##SEW##m##LMUL##_t b)		\
+rvv_red##OP##_vv_int##SEW##m##LMUL (rvvint##SEW##m1_t a,		\
+			       rvvint##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL (a, b);		\
 }									\
-__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__extension__ extern __inline rvvuint##SEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_red##OPU##_vv_uint##SEW##m##LMUL (rvvuint##SEW##m##LMUL##_t a,	\
-				      rvvuint##SEW##m##LMUL##_t b)	\
+rvv_red##OPU##_vv_uint##SEW##m##LMUL (rvvuint##SEW##m1_t a,		\
+				 rvvuint##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL (a, b);	\
 }									\
-__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
+__extension__ extern __inline rvvint##SEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_red##OP##_vv_int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
-					   rvvint##SEW##m##LMUL##_t maskedoff,\
-					   rvvint##SEW##m##LMUL##_t a,	\
-					   rvvint##SEW##m##LMUL##_t b)	\
+				    rvvint##SEW##m1_t maskedoff,	\
+				    rvvint##SEW##m1_t a,		\
+				    rvvint##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL##_mask (mask,maskedoff,\
 							     a, b);	\
 }									\
-__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__extension__ extern __inline rvvuint##SEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_red##OPU##_vv_uint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
-					     rvvuint##SEW##m##LMUL##_t maskedoff, \
-					     rvvuint##SEW##m##LMUL##_t a, \
-					     rvvuint##SEW##m##LMUL##_t b) \
+				      rvvuint##SEW##m1_t maskedoff,	\
+				      rvvuint##SEW##m1_t a,		\
+				      rvvuint##SEW##m##LMUL##_t b)	\
 {									\
   return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL##_mask (mask,	\
 								 maskedoff, \

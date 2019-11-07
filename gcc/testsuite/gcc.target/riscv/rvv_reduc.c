@@ -7,35 +7,37 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VREDUC(STYPE, VCLASS, EM, MLEN)					\
+#define VREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    rvv##VCLASS##EM##_t vx, vy;						\
-    vx = rvvld##VCLASS##EM (x);						\
+    rvv##VCLASS##EMONE##_t vx;						\
+    rvv##VCLASS##EM##_t vy;						\
+    vx = rvvld##VCLASS##EMONE (x);					\
     vy = rvvld##VCLASS##EM (y);						\
-    vy = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redmax_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redmin_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redand_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redor_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redxor_vv_##VCLASS##EM (vx, vy);				\
-    rvvst##VCLASS##EM (y, vy);						\
+    vx = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redmax_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redmin_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redand_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redor_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redxor_vv_##VCLASS##EM (vx, vy);				\
+    rvvst##VCLASS##EMONE (x, vx);					\
   }
-#define VREDUCU(STYPE, VCLASS, EM, MLEN)				\
+#define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    rvv##VCLASS##EM##_t vx, vy;						\
-    vx = rvvld##VCLASS##EM (x);						\
+    rvv##VCLASS##EMONE##_t vx;						\
+    rvv##VCLASS##EM##_t vy;						\
+    vx = rvvld##VCLASS##EMONE (x);					\
     vy = rvvld##VCLASS##EM (y);						\
-    vy = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redmaxu_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redminu_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redand_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redor_vv_##VCLASS##EM (vx, vy);				\
-    vy = rvv_redxor_vv_##VCLASS##EM (vx, vy);				\
-    rvvst##VCLASS##EM (y, vy);						\
+    vx = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redmaxu_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redminu_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redand_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redor_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redxor_vv_##VCLASS##EM (vx, vy);				\
+    rvvst##VCLASS##EMONE (x, vx);					\
   }
 
-RVV_INT_TEST(VREDUC)
-RVV_UINT_TEST(VREDUCU)
+RVV_INT_REDUC_TEST(VREDUC)
+RVV_UINT_REDUC_TEST(VREDUCU)
 //RVV_FLOAT_TEST(VREDUC)
 
 /* { dg-final { scan-assembler-times "vredsum.vs" 32 } } */
