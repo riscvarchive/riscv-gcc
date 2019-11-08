@@ -18,8 +18,8 @@
   }
 
 #define VWADDU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                           \
-  void vwaddu##VCLASS##EM(size_t n, unsigned WSTYPE *x, unsigned STYPE *y,     \
-                         unsigned WSTYPE *z) {                                 \
+  void vwaddu##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y,                       \
+                          WSTYPE *z) {                                         \
     rvvu##VCLASS##EM##_t vy;                                                   \
     rvvu##VCLASS##WEM##_t vx, vz;                                              \
     vx = rvvldu##VCLASS##WEM(x);                                               \

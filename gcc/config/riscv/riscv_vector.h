@@ -27,6 +27,8 @@
 #ifndef _GCC_RISCV_VECTOR_H
 #define _GCC_RISCV_VECTOR_H 1
 
+#include <stdint.h>
+
 #ifndef __riscv_vector
 #error "Vector intrinsics require the vector extension."
 #else
@@ -45,43 +47,43 @@ typedef __fp16 float16_t;
 
 /* An iterator to call a macro with every supported SEW, LMUL, MLEN and
    corresponding scalar modes for integer operations.  */
-#define _RVV_INT_ITERATOR(MACRO)				\
-  MACRO ( 8, 1,  8, char)					\
-  MACRO ( 8, 2,  4, char)					\
-  MACRO ( 8, 4,  2, char)					\
-  MACRO ( 8, 8,  1, char)					\
-  MACRO (16, 1, 16, short)					\
-  MACRO (16, 2,  8, short)					\
-  MACRO (16, 4,  4, short)					\
-  MACRO (16, 8,  2, short)					\
-  MACRO (32, 1, 32, int)					\
-  MACRO (32, 2, 16, int)					\
-  MACRO (32, 4,  8, int)					\
-  MACRO (32, 8,  4, int)					\
-  MACRO (64, 1, 64, long long)					\
-  MACRO (64, 2, 32, long long)					\
-  MACRO (64, 4, 16, long long)					\
-  MACRO (64, 8,  8, long long)
+#define _RVV_INT_ITERATOR(MACRO)	\
+  MACRO ( 8, 1,  8,  int8_t)		\
+  MACRO ( 8, 2,  4,  int8_t)		\
+  MACRO ( 8, 4,  2,  int8_t)		\
+  MACRO ( 8, 8,  1,  int8_t)		\
+  MACRO (16, 1, 16, int16_t)		\
+  MACRO (16, 2,  8, int16_t)		\
+  MACRO (16, 4,  4, int16_t)		\
+  MACRO (16, 8,  2, int16_t)		\
+  MACRO (32, 1, 32, int32_t)		\
+  MACRO (32, 2, 16, int32_t)		\
+  MACRO (32, 4,  8, int32_t)		\
+  MACRO (32, 8,  4, int32_t)		\
+  MACRO (64, 1, 64, int64_t)		\
+  MACRO (64, 2, 32, int64_t)		\
+  MACRO (64, 4, 16, int64_t)		\
+  MACRO (64, 8,  8, int64_t)
 
 /* An iterator to call a macro with every supported SEW, LMUL, MLEN and
    corresponding scalar modes with extra arguments for integer operations.  */
-#define _RVV_INT_ITERATOR_ARG(MACRO, ...)			\
-  MACRO ( 8, 1,  8, char, __VA_ARGS__)				\
-  MACRO ( 8, 2,  4, char, __VA_ARGS__)				\
-  MACRO ( 8, 4,  2, char, __VA_ARGS__)				\
-  MACRO ( 8, 8,  1, char, __VA_ARGS__)				\
-  MACRO (16, 1, 16, short, __VA_ARGS__)				\
-  MACRO (16, 2,  8, short, __VA_ARGS__)				\
-  MACRO (16, 4,  4, short, __VA_ARGS__)				\
-  MACRO (16, 8,  2, short, __VA_ARGS__)				\
-  MACRO (32, 1, 32, int, __VA_ARGS__)				\
-  MACRO (32, 2, 16, int, __VA_ARGS__)				\
-  MACRO (32, 4,  8, int, __VA_ARGS__)				\
-  MACRO (32, 8,  4, int, __VA_ARGS__)				\
-  MACRO (64, 1, 64, long long, __VA_ARGS__)			\
-  MACRO (64, 2, 32, long long, __VA_ARGS__)			\
-  MACRO (64, 4, 16, long long, __VA_ARGS__)			\
-  MACRO (64, 8,  8, long long, __VA_ARGS__)
+#define _RVV_INT_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1,  8,  int8_t, __VA_ARGS__)	\
+  MACRO ( 8, 2,  4,  int8_t, __VA_ARGS__)	\
+  MACRO ( 8, 4,  2,  int8_t, __VA_ARGS__)	\
+  MACRO ( 8, 8,  1,  int8_t, __VA_ARGS__)	\
+  MACRO (16, 1, 16, int16_t, __VA_ARGS__)	\
+  MACRO (16, 2,  8, int16_t, __VA_ARGS__)	\
+  MACRO (16, 4,  4, int16_t, __VA_ARGS__)	\
+  MACRO (16, 8,  2, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 32, int32_t, __VA_ARGS__)	\
+  MACRO (32, 2, 16, int32_t, __VA_ARGS__)	\
+  MACRO (32, 4,  8, int32_t, __VA_ARGS__)	\
+  MACRO (32, 8,  4, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 64, int64_t, __VA_ARGS__)	\
+  MACRO (64, 2, 32, int64_t, __VA_ARGS__)	\
+  MACRO (64, 4, 16, int64_t, __VA_ARGS__)	\
+  MACRO (64, 8,  8, int64_t, __VA_ARGS__)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, scalar modes, info for
@@ -89,15 +91,15 @@ typedef __fp16 float16_t;
 
    MACRO (SEW, LMUL, MLEN, TYPE, WSEW, WLMUL, WTYPE)  */
 #define _RVV_WINT_ITERATOR_ARG(MACRO, ...)			\
-  MACRO ( 8, 1,  8,  char, 16, 2, short, __VA_ARGS__)		\
-  MACRO ( 8, 2,  4,  char, 16, 4, short, __VA_ARGS__)		\
-  MACRO ( 8, 4,  2,  char, 16, 8, short, __VA_ARGS__)		\
-  MACRO (16, 1, 16, short, 32, 2, int, __VA_ARGS__)		\
-  MACRO (16, 2,  8, short, 32, 4, int,__VA_ARGS__)		\
-  MACRO (16, 4,  4, short, 32, 8, int, __VA_ARGS__)		\
-  MACRO (32, 1, 32,   int, 64, 2, long long, __VA_ARGS__)		\
-  MACRO (32, 2, 16,   int, 64, 4, long long, __VA_ARGS__)		\
-  MACRO (32, 4,  8,   int, 64, 8, long long, __VA_ARGS__)
+  MACRO ( 8, 1,  8,  int8_t, 16, 2, int16_t, __VA_ARGS__)		\
+  MACRO ( 8, 2,  4,  int8_t, 16, 4, int16_t, __VA_ARGS__)		\
+  MACRO ( 8, 4,  2,  int8_t, 16, 8, int16_t, __VA_ARGS__)		\
+  MACRO (16, 1, 16, int16_t, 32, 2, int32_t, __VA_ARGS__)		\
+  MACRO (16, 2,  8, int16_t, 32, 4, int32_t, __VA_ARGS__)		\
+  MACRO (16, 4,  4, int16_t, 32, 8, int32_t, __VA_ARGS__)		\
+  MACRO (32, 1, 32, int32_t, 64, 2, int64_t, __VA_ARGS__)		\
+  MACRO (32, 2, 16, int32_t, 64, 4, int64_t, __VA_ARGS__)		\
+  MACRO (32, 4,  8, int32_t, 64, 8, int64_t, __VA_ARGS__)
 
 /* An iterator to call a macro with every supported SEW, LMUL, MLEN and
    corresponding scalar modes for float operations.  */
@@ -249,7 +251,7 @@ rvv##OP##int##SEW##m##LMUL##_scalar (rvvint##SEW##m##LMUL##_t a,	\
 __extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv##OP##uint##SEW##m##LMUL##_scalar (rvvuint##SEW##m##LMUL##_t a,	\
-				      unsigned T b)			\
+				      uint##SEW##_t b)			\
 {									\
   return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
 }									\
@@ -267,7 +269,7 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv##OP##uint##SEW##m##LMUL##_scalar_mask (rvvbool##MLEN##_t mask,	\
 					   rvvuint##SEW##m##LMUL##_t maskedoff,	\
 					   rvvuint##SEW##m##LMUL##_t a,	\
-					   unsigned T b)		\
+					   uint##SEW##_t b)		\
 {									\
   return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
 }
@@ -299,7 +301,7 @@ rvv##OP##int##SEW##m##LMUL##_scalar (rvvint##SEW##m##LMUL##_t a,	\
 __extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv##OP##uint##SEW##m##LMUL##_scalar (rvvuint##SEW##m##LMUL##_t a,	\
-				      unsigned T b)			\
+				      u##T b)				\
 {									\
   return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
 }									\
