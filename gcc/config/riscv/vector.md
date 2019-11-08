@@ -689,6 +689,62 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+(define_expand "mul<mode>3_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (mult:VIMODES (match_operand:VIMODES 3 "register_operand")
+				   (match_operand:VIMODES 4 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "mul<mode>3_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (mult:VIMODES (match_operand:VIMODES 3 "register_operand" "vr")
+			(match_operand:VIMODES 4 "vector_arith_operand" "vr"))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmul.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "mul<mode>3_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (mult:VIMODES
+		       (vec_duplicate:VIMODES
+			 (match_operand:<VSUBMODE> 4 "register_operand"))
+		       (match_operand:VIMODES 3 "register_operand"))
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "mul<mode>3_scalar_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (mult:VIMODES (vec_duplicate:VIMODES
+			    (match_operand:<VSUBMODE> 4 "register_operand" "r"))
+			  (match_operand:VIMODES 3 "register_operand" "vr"))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmul.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+
 ;; FP multiply instructions.
 
 (define_insn_and_split "mul<mode>3"
