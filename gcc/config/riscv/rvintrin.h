@@ -55,32 +55,44 @@
 #endif
 
 #ifdef RVINTRIN_RV32
-static inline int32_t _rv32_clz (int32_t rs1) { int32_t rd; __asm__ ("clz   %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
-static inline int32_t _rv32_ctz (int32_t rs1) { int32_t rd; __asm__ ("ctz   %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
-static inline int32_t _rv32_pcnt(int32_t rs1) { int32_t rd; __asm__ ("pcnt  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_clz   (int32_t rs1) { int32_t rd; __asm__ ("clz     %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_ctz   (int32_t rs1) { int32_t rd; __asm__ ("ctz     %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_pcnt  (int32_t rs1) { int32_t rd; __asm__ ("pcnt    %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_sext_b(int32_t rs1) { int32_t rd; __asm__ ("sext.b  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_sext_h(int32_t rs1) { int32_t rd; __asm__ ("sext.h  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
 #endif
 
 #ifdef RVINTRIN_RV64
-static inline int32_t _rv32_clz (int32_t rs1) { int32_t rd; __asm__ ("clzw  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
-static inline int32_t _rv32_ctz (int32_t rs1) { int32_t rd; __asm__ ("ctzw  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
-static inline int32_t _rv32_pcnt(int32_t rs1) { int32_t rd; __asm__ ("pcntw %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_clz   (int32_t rs1) { int32_t rd; __asm__ ("clzw    %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_ctz   (int32_t rs1) { int32_t rd; __asm__ ("ctzw    %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_pcnt  (int32_t rs1) { int32_t rd; __asm__ ("pcntw   %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_sext_b(int32_t rs1) { int32_t rd; __asm__ ("sext.b  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv32_sext_h(int32_t rs1) { int32_t rd; __asm__ ("sext.h  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
 
-static inline int64_t _rv64_clz (int64_t rs1) { int64_t rd; __asm__ ("clz   %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
-static inline int64_t _rv64_ctz (int64_t rs1) { int64_t rd; __asm__ ("ctz   %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
-static inline int64_t _rv64_pcnt(int64_t rs1) { int64_t rd; __asm__ ("pcnt  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int64_t _rv64_clz   (int64_t rs1) { int64_t rd; __asm__ ("clz     %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int64_t _rv64_ctz   (int64_t rs1) { int64_t rd; __asm__ ("ctz     %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int64_t _rv64_pcnt  (int64_t rs1) { int64_t rd; __asm__ ("pcnt    %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv64_sext_b(int32_t rs1) { int32_t rd; __asm__ ("sext.b  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
+static inline int32_t _rv64_sext_h(int32_t rs1) { int32_t rd; __asm__ ("sext.h  %0, %1" : "=r"(rd) : "r"(rs1)); return rd; }
 #endif
 
 #ifdef RVINTRIN_RV32
-static inline int32_t _rv32_pack(int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("pack  %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int32_t _rv32_bfp (int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("bfp   %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_pack (int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("pack  %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_packu(int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("packu %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_packh(int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("packh %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_bfp  (int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("bfp   %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
 #endif
 
 #ifdef RVINTRIN_RV64
-static inline int32_t _rv32_pack(int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("packw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int32_t _rv32_bfp (int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("bfpw  %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_pack (int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("packw  %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_packu(int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("packuw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_packh(int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("packh  %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_bfp  (int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("bfpw   %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
 
-static inline int64_t _rv64_pack(int64_t rs1, int64_t rs2) { int64_t rd; __asm__ ("pack  %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int64_t _rv64_bfp (int64_t rs1, int64_t rs2) { int64_t rd; __asm__ ("bfp   %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int64_t _rv64_pack (int64_t rs1, int64_t rs2) { int64_t rd; __asm__ ("pack  %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int64_t _rv64_packu(int64_t rs1, int64_t rs2) { int64_t rd; __asm__ ("packu %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int64_t _rv64_packh(int64_t rs1, int64_t rs2) { int64_t rd; __asm__ ("packh %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int64_t _rv64_bfp  (int64_t rs1, int64_t rs2) { int64_t rd; __asm__ ("bfp   %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
 #endif
 
 static inline int32_t _rv32_min (int32_t rs1, int32_t rs2) { int32_t rd; __asm__ ("min  %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
@@ -339,8 +351,20 @@ static inline int32_t _rv32_pcnt(int32_t rs1) { return __builtin_popcount(rs1); 
 static inline int64_t _rv64_pcnt(int64_t rs1) { return __builtin_popcountll(rs1); }
 #endif
 
+static inline int32_t _rv32_sext_b(int32_t rs1) { return rs1 << (32-8) >> (32-8); }
+static inline int64_t _rv64_sext_b(int64_t rs1) { return rs1 << (64-8) >> (64-8); }
+
+static inline int32_t _rv32_sext_h(int32_t rs1) { return rs1 << (32-16) >> (32-16); }
+static inline int64_t _rv64_sext_h(int64_t rs1) { return rs1 << (64-16) >> (64-16); }
+
 static inline int32_t _rv32_pack(int32_t rs1, int32_t rs2) { return (rs1 & 0x0000ffff)   | (rs2 << 16); }
 static inline int64_t _rv64_pack(int64_t rs1, int64_t rs2) { return (rs1 & 0xffffffffLL) | (rs2 << 32); }
+
+static inline int32_t _rv32_packu(int32_t rs1, int32_t rs2) { return ((rs1 >> 16) & 0x0000ffff)   | (rs2 >> 16 << 16); }
+static inline int64_t _rv64_packu(int64_t rs1, int64_t rs2) { return ((rs1 >> 32) & 0xffffffffLL) | (rs2 >> 32 << 32); }
+
+static inline int32_t _rv32_packh(int32_t rs1, int32_t rs2) { return (rs1 & 0xff) | ((rs2 & 0xff) << 8); }
+static inline int64_t _rv64_packh(int64_t rs1, int64_t rs2) { return (rs1 & 0xff) | ((rs2 & 0xff) << 8); }
 
 static inline int32_t _rv32_min (int32_t rs1, int32_t rs2) { return rs1 < rs2 ? rs1 : rs2; }
 static inline int32_t _rv32_minu(int32_t rs1, int32_t rs2) { return (uint32_t)rs1 < (uint32_t)rs2 ? rs1 : rs2; }
@@ -372,12 +396,13 @@ static inline int32_t _rv32_ror    (int32_t rs1, int32_t rs2) { return _rv32_srl
 
 static inline int32_t _rv32_bfp(int32_t rs1, int32_t rs2)
 {
-        int len = (rs2 >> 24) & 15;
-        int off = (rs2 >> 16) & 31;
-        len = len ? len : 16;
-        uint32_t mask = _rv32_rol(_rv32_slo(0, len), off);
-        uint32_t data = _rv32_rol(rs2, off);
-        return (data & mask) | (rs1 & ~mask);
+	uint32_t cfg = rs2 >> 16;
+	int len = (cfg >> 8) & 15;
+	int off = cfg & 31;
+	len = len ? len : 16;
+	uint32_t mask = _rv32_slo(0, len) << off;
+	uint32_t data = rs2 << off;
+	return (data & mask) | (rs1 & ~mask);
 }
 
 static inline int32_t _rv32_grev(int32_t rs1, int32_t rs2)
@@ -447,12 +472,15 @@ static inline int64_t _rv64_ror    (int64_t rs1, int64_t rs2) { return _rv64_srl
 
 static inline int64_t _rv64_bfp(int64_t rs1, int64_t rs2)
 {
-        int len = (rs2 >> 24) & 15;
-        int off = (rs2 >> 16) & 63;
-        len = len ? len : 16;
-        uint64_t mask = _rv64_rol(_rv64_slo(0, len), off);
-        uint64_t data = _rv64_rol(rs2, off);
-        return (data & mask) | (rs1 & ~mask);
+	uint64_t cfg = (uint64_t)rs2 >> 32;
+	if ((cfg >> 30) == 2)
+		cfg = cfg >> 16;
+	int len = (cfg >> 8) & 31;
+	int off = cfg & 63;
+	len = len ? len : 32;
+	uint64_t mask = _rv64_slo(0, len) << off;
+	uint64_t data = rs2 << off;
+	return (data & mask) | (rs1 & ~mask);
 }
 
 static inline int64_t _rv64_grev(int64_t rs1, int64_t rs2)
@@ -759,11 +787,15 @@ static inline long _rv_xnor(long rs1, long rs2) { return rs1 ^ ~rs2; }
 #endif // RVINTRIN_EMULATE
 
 #ifdef RVINTRIN_RV32
-static inline long _rv_clz  (long rs1) { return _rv32_clz (rs1); }
-static inline long _rv_ctz  (long rs1) { return _rv32_ctz (rs1); }
-static inline long _rv_pcnt (long rs1) { return _rv32_pcnt(rs1); }
+static inline long _rv_clz    (long rs1) { return _rv32_clz   (rs1); }
+static inline long _rv_ctz    (long rs1) { return _rv32_ctz   (rs1); }
+static inline long _rv_pcnt   (long rs1) { return _rv32_pcnt  (rs1); }
+static inline long _rv_sext_b (long rs1) { return _rv32_sext_b(rs1); }
+static inline long _rv_sext_h (long rs1) { return _rv32_sext_h(rs1); }
 
 static inline long _rv_pack   (long rs1, long rs2) { return _rv32_pack   (rs1, rs2); }
+static inline long _rv_packu  (long rs1, long rs2) { return _rv32_packu  (rs1, rs2); }
+static inline long _rv_packh  (long rs1, long rs2) { return _rv32_packh  (rs1, rs2); }
 static inline long _rv_bfp    (long rs1, long rs2) { return _rv32_bfp    (rs1, rs2); }
 static inline long _rv_min    (long rs1, long rs2) { return _rv32_min    (rs1, rs2); }
 static inline long _rv_minu   (long rs1, long rs2) { return _rv32_minu   (rs1, rs2); }
@@ -798,9 +830,13 @@ static inline long _rv_fsr(long rs1, long rs3, long rs2) { return _rv32_fsr(rs1,
 static inline long _rv_clz     (long rs1) { return _rv64_clz     (rs1); }
 static inline long _rv_ctz     (long rs1) { return _rv64_ctz     (rs1); }
 static inline long _rv_pcnt    (long rs1) { return _rv64_pcnt    (rs1); }
+static inline long _rv_sext_b  (long rs1) { return _rv64_sext_b  (rs1); }
+static inline long _rv_sext_h  (long rs1) { return _rv64_sext_h  (rs1); }
 static inline long _rv_bmatflip(long rs1) { return _rv64_bmatflip(rs1); }
 
 static inline long _rv_pack   (long rs1, long rs2) { return _rv64_pack   (rs1, rs2); }
+static inline long _rv_packu  (long rs1, long rs2) { return _rv64_packu  (rs1, rs2); }
+static inline long _rv_packh  (long rs1, long rs2) { return _rv64_packh  (rs1, rs2); }
 static inline long _rv_bfp    (long rs1, long rs2) { return _rv64_bfp    (rs1, rs2); }
 static inline long _rv_min    (long rs1, long rs2) { return _rv64_min    (rs1, rs2); }
 static inline long _rv_minu   (long rs1, long rs2) { return _rv64_minu   (rs1, rs2); }
