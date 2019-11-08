@@ -362,7 +362,7 @@
 		     (match_operand:<VCMPEQUIV> 1 "register_operand")
 		     (plus:VIMODES (match_operand:VIMODES 3 "register_operand")
 				   (match_operand:VIMODES 4 "vector_arith_operand"))
-		     (match_operand:VIMODES 2 "vector_arith_operand")))
+		     (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
@@ -374,7 +374,7 @@
 	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
 	  (plus:VIMODES (match_operand:VIMODES 3 "register_operand" "vr,vr")
 			(match_operand:VIMODES 4 "vector_arith_operand" "vr,vi"))
-	  (match_operand:VIMODES 2 "vector_arith_operand" "0,0")))
+	  (match_operand:VIMODES 2 "register_operand" "0,0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "@
@@ -391,8 +391,8 @@
 		     (plus:VIMODES
 		       (vec_duplicate:VIMODES
 			 (match_operand:<VSUBMODE> 4 "register_operand"))
-		       (match_operand:VIMODES 3 "vector_arith_operand"))
-		     (match_operand:VIMODES 2 "vector_arith_operand")))
+		       (match_operand:VIMODES 3 "register_operand"))
+		     (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
@@ -404,8 +404,8 @@
           (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	    (plus:VIMODES (vec_duplicate:VIMODES
 			    (match_operand:<VSUBMODE> 4 "register_operand" "r"))
-			  (match_operand:VIMODES 3 "vector_arith_operand" "vr"))
-	  (match_operand:VIMODES 2 "vector_arith_operand" "0")))
+			  (match_operand:VIMODES 3 "register_operand" "vr"))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vadd.vx\t%0,%3,%4,%1.t"
