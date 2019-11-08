@@ -7,13 +7,13 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VADD(STYPE, VCLASS, EM, MLEN)                                          \
+#define VADD(STYPE, VCLASS, EM, MLEN, CMP)				       \
   void vadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv##VCLASS##EM##_t vx, vy;                                                \
     rvvbool##MLEN##_t mask;                                                    \
     vx = rvvld##VCLASS##EM(x);                                                 \
     vy = rvvld##VCLASS##EM(y);                                                 \
-    mask = rvvslt##VCLASS##EM(vx, vy);                                         \
+    mask = rvv##CMP##VCLASS##EM(vx, vy);                                       \
     vy = rvvadd##VCLASS##EM##_mask (mask, vy, vx, vy);                         \
     vy = rvvadd##VCLASS##EM##_scalar_mask (mask, vy, vy, z);                   \
     rvvst##VCLASS##EM(y, vy);                                                  \
@@ -31,11 +31,12 @@
     rvvst##VCLASS##EM(y, vy);                                                  \
   }
 
-RVV_INT_TEST(VADD)
+RVV_INT_MASKED_TEST(VADD)
+RVV_UINT_MASKED_TEST(VADD)
 RVV_FLOAT_TEST(VADD_NO_IMM)
 
-/* { dg-final { scan-assembler-times "vadd.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vadd.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vadd.vi" 16 } } */
+/* { dg-final { scan-assembler-times "vadd.vv" 32 } } */
+/* { dg-final { scan-assembler-times "vadd.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vadd.vi" 32 } } */
 /* { dg-final { scan-assembler-times "vfadd.vv" 12 } } */
 /* { dg-final { scan-assembler-times "vfadd.vf" 12 } } */

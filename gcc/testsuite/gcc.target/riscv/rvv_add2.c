@@ -30,10 +30,11 @@
   }
 
 RVV_INT_TEST(VADD)
+RVV_UINT_TEST(VADD)
 RVV_FLOAT_TEST(VADD_NO_IMM)
 
-/* { dg-final { scan-assembler-times "vadd.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vadd.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vadd.vi" 16 } } */
+/* { dg-final { scan-assembler-times "vadd.vv" 32 } } */
+/* { dg-final { scan-assembler-times "vadd.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vadd.vi" 32 } } */
 /* { dg-final { scan-assembler-times "vfadd.vv" 12 } } */
 /* { dg-final { scan-assembler-times "vfadd.vf" 12 } } */

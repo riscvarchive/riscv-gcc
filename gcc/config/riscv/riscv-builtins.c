@@ -246,7 +246,10 @@ AVAIL (vector, TARGET_VECTOR)
 
 /* Argument types.  */
 #define RISCV_ATYPE_VOID void_type_node
+#define RISCV_ATYPE_UQI unsigned_intQI_type_node
+#define RISCV_ATYPE_UHI unsigned_intHI_type_node
 #define RISCV_ATYPE_USI unsigned_intSI_type_node
+#define RISCV_ATYPE_UDI unsigned_intDI_type_node
 #define RISCV_ATYPE_QI intQI_type_node
 #define RISCV_ATYPE_HI intHI_type_node
 #define RISCV_ATYPE_SI intSI_type_node
@@ -384,8 +387,14 @@ tree rvvbool64_t_node;
   DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
+  DIRECT_NAMED (OP##MODE##3, v##OP##uint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
   DIRECT_NAMED (OP##MODE##3_scalar, v##OP##int##E##m##L##_scalar,	\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_scalar, v##OP##uint##E##m##L##_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
 		vector),
 
 #define VINT_BIN_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
@@ -393,8 +402,14 @@ tree rvvbool64_t_node;
   DIRECT_NAMED (OP##MODE##3_mask, v##OP##int##E##m##L##_mask,		\
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
 		vector),						\
+  DIRECT_NAMED (OP##MODE##3_mask, v##OP##uint##E##m##L##_mask,		\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
   DIRECT_NAMED (OP##MODE##3_scalar_mask, v##OP##int##E##m##L##_scalar_mask,\
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_scalar_mask, v##OP##uint##E##m##L##_scalar_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
 #define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)		\

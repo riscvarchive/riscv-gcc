@@ -210,6 +210,13 @@ rvv##OP##int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,			\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL (a, b);		\
 }									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv##OP##uint##SEW##m##LMUL (rvvuint##SEW##m##LMUL##_t a,		\
+			     rvvuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL (a, b);		\
+}									\
 __extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv##OP##int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
@@ -219,22 +226,50 @@ rvv##OP##int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL##_mask (		\
 	  mask, maskedoff, a, b);					\
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv##OP##uint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				    rvvuint##SEW##m##LMUL##_t maskedoff, \
+				    rvvuint##SEW##m##LMUL##_t a,	\
+				    rvvuint##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a, b);					\
 }
 
 #define _RVV_INT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv##OP##int##SEW##m##LMUL##_scalar (rvvint##SEW##m##LMUL##_t a, T b)	\
+rvv##OP##int##SEW##m##LMUL##_scalar (rvvint##SEW##m##LMUL##_t a,	\
+				     T b)				\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv##OP##uint##SEW##m##LMUL##_scalar (rvvuint##SEW##m##LMUL##_t a,	\
+				      unsigned T b)			\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
 }									\
 __extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv##OP##int##SEW##m##LMUL##_scalar_mask (rvvbool##MLEN##_t mask,	\
-			          rvvint##SEW##m##LMUL##_t maskedoff,	\
-				  rvvint##SEW##m##LMUL##_t a, T b)	\
+					  rvvint##SEW##m##LMUL##_t maskedoff, \
+					  rvvint##SEW##m##LMUL##_t a,	\
+					  T b)				\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv##OP##uint##SEW##m##LMUL##_scalar_mask (rvvbool##MLEN##_t mask,	\
+					   rvvuint##SEW##m##LMUL##_t maskedoff,	\
+					   rvvuint##SEW##m##LMUL##_t a,	\
+					   unsigned T b)		\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
 }
 
 #define _RVV_INT_BIN_OP_NOMASK(SEW, LMUL, MLEN, T, OP)			\
@@ -244,15 +279,30 @@ rvv##OP##int##SEW##m##LMUL (rvvint##SEW##m##LMUL##_t a,			\
 			    rvvint##SEW##m##LMUL##_t b)			\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+  rvv##OP##uint##SEW##m##LMUL (rvvuint##SEW##m##LMUL##_t a,		\
+			       rvvuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL (a, b);		\
 }
 
 #define _RVV_INT_BIN_OP_SCALAR_NOMASK(SEW, LMUL, MLEN, T, OP)		\
 __extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv##OP##int##SEW##m##LMUL##_scalar (rvvint##SEW##m##LMUL##_t a, T b)	\
+rvv##OP##int##SEW##m##LMUL##_scalar (rvvint##SEW##m##LMUL##_t a,	\
+				     T b)				\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
-}
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv##OP##uint##SEW##m##LMUL##_scalar (rvvuint##SEW##m##LMUL##_t a,	\
+				      unsigned T b)			\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
+}									\
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, add)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, add)

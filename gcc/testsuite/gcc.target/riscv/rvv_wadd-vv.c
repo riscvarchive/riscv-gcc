@@ -29,7 +29,7 @@
   }
 
 RVV_WINT_TEST(VWADD)
-RVV_WINT_TEST(VWADDU)
+RVV_WUINT_TEST(VWADDU)
 
 /* { dg-final { scan-assembler-times "vwadd.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwaddu.vv" 9 } } */

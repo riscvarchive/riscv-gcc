@@ -41,14 +41,16 @@
   }
 
 RVV_INT_TEST(VSUB)
+RVV_UINT_TEST(VSUB)
 RVV_INT_TEST(VRSUB)
+RVV_UINT_TEST(VRSUB)
 RVV_FLOAT_TEST(VSUB_NO_IMM)
 
-/* { dg-final { scan-assembler-times "vsub.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vsub.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vadd.vi" 16 } } */
+/* { dg-final { scan-assembler-times "vsub.vv" 32 } } */
+/* { dg-final { scan-assembler-times "vsub.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vadd.vi" 32 } } */
 /* { dg-final { scan-assembler-times "vfsub.vv" 24 } } */
 /* ??? Not implemented yet.  */
 /* { dg-final { scan-assembler-times "vfsub.vf" 0 } } */
-/* { dg-final { scan-assembler-times "vrsub.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vrsub.vi" 16 } } */
+/* { dg-final { scan-assembler-times "vrsub.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vrsub.vi" 32 } } */
