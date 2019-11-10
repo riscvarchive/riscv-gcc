@@ -650,7 +650,7 @@
    (parallel [(set (match_operand:VIMODES 0 "register_operand")
 		   (mult:VIMODES
 		     (match_operand:VIMODES 1 "register_operand")
-		     (match_operand:VIMODES 2 "vector_arith_operand")))
+		     (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
@@ -695,7 +695,7 @@
 		   (if_then_else:VIMODES
 		     (match_operand:<VCMPEQUIV> 1 "register_operand")
 		     (mult:VIMODES (match_operand:VIMODES 3 "register_operand")
-				   (match_operand:VIMODES 4 "vector_arith_operand"))
+				   (match_operand:VIMODES 4 "register_operand"))
 		     (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
@@ -707,7 +707,7 @@
 	(if_then_else:VIMODES
 	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	  (mult:VIMODES (match_operand:VIMODES 3 "register_operand" "vr")
-			(match_operand:VIMODES 4 "vector_arith_operand" "vr"))
+			(match_operand:VIMODES 4 "register_operand" "vr"))
 	  (match_operand:VIMODES 2 "register_operand" "0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
@@ -743,7 +743,6 @@
   "vmul.vx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
-
 
 ;; FP multiply instructions.
 

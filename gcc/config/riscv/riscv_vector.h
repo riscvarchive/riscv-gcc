@@ -262,7 +262,8 @@ rvv##OP##int##SEW##m##LMUL##_scalar_mask (rvvbool##MLEN##_t mask,	\
 					  rvvint##SEW##m##LMUL##_t a,	\
 					  T b)				\
 {									\
-  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar_mask (	\
+      mask, maskedoff, a, b);						\
 }									\
 __extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -271,7 +272,8 @@ rvv##OP##uint##SEW##m##LMUL##_scalar_mask (rvvbool##MLEN##_t mask,	\
 					   rvvuint##SEW##m##LMUL##_t a,	\
 					   uint##SEW##_t b)		\
 {									\
-  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar_mask (	\
+      mask, maskedoff, a, b);						\
 }
 
 #define _RVV_INT_BIN_OP_NOMASK(SEW, LMUL, MLEN, T, OP)			\

@@ -18,7 +18,7 @@
   }
 
 RVV_INT_TEST(VMUL)
-// explicit float intrinsis have not finished
+// explicit float intrinsics have not finished
 // RVV_FLOAT_TEST(VMUL)
 
 /* { dg-final { scan-assembler-times "vmul.vv" 16 } } */

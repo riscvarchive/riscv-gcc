@@ -14,16 +14,16 @@
     vx = rvvld##VCLASS##EM(x);                                                 \
     vy = rvvld##VCLASS##EM(y);                                                 \
     mask = rvvslt##VCLASS##EM(vx, vy);                                         \
-    vy = rvvmul##VCLASS##EM##_mask (mask, vy, vx, vy);                         \
-    vy = rvvmul##VCLASS##EM##_scalar_mask (mask, vy, vy, z);                   \
+    vy = rvvmul##VCLASS##EM##_mask(mask, vy, vx, vy);                          \
+    vy = rvvmul##VCLASS##EM##_scalar_mask(mask, vy, vy, z);                    \
     rvvst##VCLASS##EM(y, vy);                                                  \
-    vx = rvvmul##VCLASS##EM##_scalar_mask (mask, vy, vx, 1);                   \
+    vx = rvvmul##VCLASS##EM##_scalar_mask(mask, vy, vx, 11);                   \
     rvvst##VCLASS##EM(x, vx);                                                  \
   }
 
 RVV_INT_TEST(VMUL)
-// float intrinsis have not finished
+// float intrinsics have not finished
 // RVV_FLOAT_TEST(VMUL_NO_IMM)
 
 /* { dg-final { scan-assembler-times "vmul.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmul.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vmul.vx" 32 } } */
