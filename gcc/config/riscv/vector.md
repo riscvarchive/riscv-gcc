@@ -781,6 +781,375 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+;; Logical instructions
+
+(define_expand "and<mode>3"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (and:VIMODES
+		     (match_operand:VIMODES 1 "register_operand")
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*and<mode>3_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(and:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
+		      (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vand.vv\t%0,%1,%2
+   vand.vi\t%0,%1,%v2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "and<mode>3_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (and:VIMODES
+		     (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand"))
+		     (match_operand:VIMODES 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*and<mode>3_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(and:VIMODES (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+		      (match_operand:VIMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vand.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "and<mode>3_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (and:VIMODES (match_operand:VIMODES 3 "register_operand")
+				   (match_operand:VIMODES 4 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "and<mode>3_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	  (and:VIMODES (match_operand:VIMODES 3 "register_operand" "vr,vr")
+			(match_operand:VIMODES 4 "vector_arith_operand" "vr,vi"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0,0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vand.vv\t%0,%3,%4,%1.t
+   vand.vi\t%0,%3,%v4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "and<mode>3_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (and:VIMODES
+		       (vec_duplicate:VIMODES
+			 (match_operand:<VSUBMODE> 4 "register_operand"))
+		       (match_operand:VIMODES 3 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "and<mode>3_scalar_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (and:VIMODES (vec_duplicate:VIMODES
+			    (match_operand:<VSUBMODE> 4 "register_operand" "r"))
+			  (match_operand:VIMODES 3 "vector_arith_operand" "vr"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vand.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "ior<mode>3"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (ior:VIMODES
+		     (match_operand:VIMODES 1 "register_operand")
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{})
+
+(define_expand "or<mode>3"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (ior:VIMODES
+		     (match_operand:VIMODES 1 "register_operand")
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_ior<mode>3 (operands[0], operands[1], operands[2]));
+  DONE;
+})
+
+(define_insn "*ior<mode>3_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(ior:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
+		      (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vor.vv\t%0,%1,%2
+   vor.vi\t%0,%1,%v2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "ior<mode>3_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (ior:VIMODES
+		     (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand"))
+		     (match_operand:VIMODES 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "or<mode>3_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (ior:VIMODES
+		     (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand"))
+		     (match_operand:VIMODES 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_ior<mode>3_scalar (operands[0], operands[1], operands[2]));
+  DONE;
+})
+
+(define_insn "*ior<mode>3_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(ior:VIMODES (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+		      (match_operand:VIMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vor.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "ior<mode>3_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (ior:VIMODES (match_operand:VIMODES 3 "register_operand")
+				   (match_operand:VIMODES 4 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "or<mode>3_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (ior:VIMODES (match_operand:VIMODES 3 "register_operand")
+				   (match_operand:VIMODES 4 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_ior<mode>3_mask (operands[0], operands[1], operands[2], operands[3], operands[4]));
+  DONE;
+})
+
+(define_insn "ior<mode>3_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	  (ior:VIMODES (match_operand:VIMODES 3 "register_operand" "vr,vr")
+			(match_operand:VIMODES 4 "vector_arith_operand" "vr,vi"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0,0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vor.vv\t%0,%3,%4,%1.t
+   vor.vi\t%0,%3,%v4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "ior<mode>3_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (ior:VIMODES
+		       (vec_duplicate:VIMODES
+			 (match_operand:<VSUBMODE> 4 "register_operand"))
+		       (match_operand:VIMODES 3 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "or<mode>3_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (ior:VIMODES
+		       (vec_duplicate:VIMODES
+			 (match_operand:<VSUBMODE> 4 "register_operand"))
+		       (match_operand:VIMODES 3 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_ior<mode>3_scalar_mask (operands[0], operands[1], operands[2], operands[3], operands[4]));
+  DONE;
+})
+
+(define_insn "ior<mode>3_scalar_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (ior:VIMODES (vec_duplicate:VIMODES
+			    (match_operand:<VSUBMODE> 4 "register_operand" "r"))
+			  (match_operand:VIMODES 3 "vector_arith_operand" "vr"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vor.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "xor<mode>3"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (xor:VIMODES
+		     (match_operand:VIMODES 1 "register_operand")
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*xor<mode>3_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(xor:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
+		      (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vxor.vv\t%0,%1,%2
+   vxor.vi\t%0,%1,%v2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "xor<mode>3_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (xor:VIMODES
+		     (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand"))
+		     (match_operand:VIMODES 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*xor<mode>3_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(xor:VIMODES (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+		      (match_operand:VIMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vxor.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "xor<mode>3_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (xor:VIMODES (match_operand:VIMODES 3 "register_operand")
+				   (match_operand:VIMODES 4 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "xor<mode>3_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	  (xor:VIMODES (match_operand:VIMODES 3 "register_operand" "vr,vr")
+			(match_operand:VIMODES 4 "vector_arith_operand" "vr,vi"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0,0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vxor.vv\t%0,%3,%4,%1.t
+   vxor.vi\t%0,%3,%v4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "xor<mode>3_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (xor:VIMODES
+		       (vec_duplicate:VIMODES
+			 (match_operand:<VSUBMODE> 4 "register_operand"))
+		       (match_operand:VIMODES 3 "vector_arith_operand"))
+		     (match_operand:VIMODES 2 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "xor<mode>3_scalar_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (xor:VIMODES (vec_duplicate:VIMODES
+			    (match_operand:<VSUBMODE> 4 "register_operand" "r"))
+			  (match_operand:VIMODES 3 "vector_arith_operand" "vr"))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vxor.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Vector Integer Add-with-Carry / Subtract-with-Borrow Instructions
 
 (define_expand "adc<mode>4"
