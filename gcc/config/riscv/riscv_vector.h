@@ -151,29 +151,124 @@ _RVV_INT_ITERATOR (_RVVSETVL)
 #define _RVVINTLD(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvldint##SEW##m##LMUL (const T *a)					\
+rvvldint##SEW##m##LMUL (const int##SEW##_t *a)				\
 {									\
   return * (rvvint##SEW##m##LMUL##_t *) a;				\
 }									\
 __extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvlduint##SEW##m##LMUL (const T *a)					\
+rvvlduint##SEW##m##LMUL (const uint##SEW##_t *a)			\
 {									\
   return * (rvvuint##SEW##m##LMUL##_t *) a;				\
-}
+}									\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_lse_int##SEW##m##LMUL (const int##SEW##_t *a, word_type stride)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlseint##SEW##m##LMUL##_si (a, stride);	\
+  else									\
+    return __builtin_riscv_vlseint##SEW##m##LMUL##_di (a, stride);	\
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_lse_uint##SEW##m##LMUL (const uint##SEW##_t *a, word_type stride)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlseuint##SEW##m##LMUL##_si (a, stride);	\
+  else									\
+    return __builtin_riscv_vlseuint##SEW##m##LMUL##_di (a, stride);	\
+}									\
+__extension__ extern __inline rvvint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_lse_int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				  rvvint##SEW##m##LMUL##_t maskedoff,	\
+				  const int##SEW##_t *a,		\
+				  word_type stride)			\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlseint##SEW##m##LMUL##_si_mask (		\
+	     mask, maskedoff, a, stride);				\
+  else									\
+    return __builtin_riscv_vlseint##SEW##m##LMUL##_di_mask (		\
+	     mask, maskedoff, a, stride);				\
+}									\
+__extension__ extern __inline rvvuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_lse_uint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				   rvvuint##SEW##m##LMUL##_t maskedoff,	\
+				   const uint##SEW##_t *a,		\
+				   word_type stride)			\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlseuint##SEW##m##LMUL##_si_mask (		\
+	     mask, maskedoff, a, stride);				\
+  else									\
+    return __builtin_riscv_vlseuint##SEW##m##LMUL##_di_mask (		\
+	     mask, maskedoff, a, stride);				\
+}									\
 
 #define _RVVINTST(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvstint##SEW##m##LMUL (const T *a, rvvint##SEW##m##LMUL##_t b)		\
+rvvstint##SEW##m##LMUL (const int##SEW##_t *a,				\
+			rvvint##SEW##m##LMUL##_t b)			\
 {									\
   * (rvvint##SEW##m##LMUL##_t *) a = b;					\
 }									\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvstuint##SEW##m##LMUL (const T *a, rvvuint##SEW##m##LMUL##_t b)	\
+rvvstuint##SEW##m##LMUL (const uint##SEW##_t *a, rvvuint##SEW##m##LMUL##_t b)\
 {									\
   * (rvvuint##SEW##m##LMUL##_t *) a = b;				\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_sse_int##SEW##m##LMUL (const int##SEW##_t *a, word_type stride,	\
+			  rvvint##SEW##m##LMUL##_t b)			\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vsseint##SEW##m##LMUL##_si (b, a, stride);		\
+  else									\
+    __builtin_riscv_vsseint##SEW##m##LMUL##_di (b, a, stride);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_sse_uint##SEW##m##LMUL (const uint##SEW##_t *a, word_type stride,	\
+			    rvvuint##SEW##m##LMUL##_t b)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vsseuint##SEW##m##LMUL##_si (b, a, stride);		\
+  else									\
+    __builtin_riscv_vsseuint##SEW##m##LMUL##_di (b, a, stride);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_sse_int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				  const int##SEW##_t *a,		\
+				  word_type stride,			\
+				  rvvint##SEW##m##LMUL##_t b)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vsseint##SEW##m##LMUL##_si_mask (mask, b,		\
+						     a, stride);	\
+  else									\
+    __builtin_riscv_vsseint##SEW##m##LMUL##_di_mask (mask, b,		\
+						     a, stride);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_sse_uint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				   const uint##SEW##_t *a,		\
+				   word_type stride,			\
+				   rvvuint##SEW##m##LMUL##_t b)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vsseuint##SEW##m##LMUL##_si_mask (mask, b,		\
+						      a, stride);	\
+  else									\
+    __builtin_riscv_vsseuint##SEW##m##LMUL##_di_mask (mask, b,		\
+						      a, stride);	\
 }
 
 _RVV_INT_ITERATOR (_RVVINTLD)
@@ -185,6 +280,28 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvldfloat##SEW##m##LMUL (const T *a)					\
 {									\
   return * (rvvfloat##SEW##m##LMUL##_t *) a;				\
+}									\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_lse_float##SEW##m##LMUL (const T *a, word_type stride)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlsefloat##SEW##m##LMUL##_si (a, stride);	\
+  else									\
+    return __builtin_riscv_vlsefloat##SEW##m##LMUL##_di (a, stride);	\
+}									\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_lse_float##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				    rvvfloat##SEW##m##LMUL##_t maskedoff,\
+				    const T *a, word_type stride)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlsefloat##SEW##m##LMUL##_si_mask (		\
+	     mask, maskedoff, a, stride);				\
+  else									\
+    return __builtin_riscv_vlsefloat##SEW##m##LMUL##_di_mask (		\
+	     mask, maskedoff, a, stride);				\
 }
 
 #define _RVVFLOATST(SEW, LMUL, MLEN, T)					\
@@ -193,7 +310,31 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvvstfloat##SEW##m##LMUL (const T *a, rvvfloat##SEW##m##LMUL##_t b)	\
 {									\
   * (rvvfloat##SEW##m##LMUL##_t *) a = b;				\
+}									\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_sse_float##SEW##m##LMUL (const T *a, word_type stride,		\
+			     rvvfloat##SEW##m##LMUL##_t b)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vssefloat##SEW##m##LMUL##_si (b, a, stride);	\
+  else									\
+    __builtin_riscv_vssefloat##SEW##m##LMUL##_di (b, a, stride);	\
+}									\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_sse_float##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
+				    const T *a, word_type stride,	\
+				    rvvfloat##SEW##m##LMUL##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vssefloat##SEW##m##LMUL##_si_mask (mask, b,		\
+						       a, stride);	\
+  else									\
+    __builtin_riscv_vssefloat##SEW##m##LMUL##_di_mask (mask, b,		\
+						       a, stride);	\
 }
+
 
 _RVV_FLOAT_ITERATOR (_RVVFLOATLD)
 _RVV_FLOAT_ITERATOR (_RVVFLOATST)

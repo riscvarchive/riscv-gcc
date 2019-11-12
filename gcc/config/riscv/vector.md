@@ -225,6 +225,120 @@
 
 ;; Load/store instructions.
 
+;; Vector Strided Instructions
+
+(define_expand "vlse<VMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec:VMODES
+		     [(match_operand:P 1 "register_operand")
+		      (match_operand:P 2 "register_operand")
+		      (mem:BLK (scratch))]
+		     UNSPEC_STRIDED_LOAD))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vlse<VMODES:mode>_<P:mode>_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec:VMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:P 2 "register_operand" "r")
+	   (mem:BLK (scratch))]
+	  UNSPEC_STRIDED_LOAD))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlse.v\t%0,(%1),%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vlse<VMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (if_then_else:VMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VMODES
+		       [(match_operand:P 3 "register_operand")
+		        (match_operand:P 4 "register_operand")
+		        (mem:BLK (scratch))]
+		       UNSPEC_STRIDED_LOAD)
+		     (match_operand:VMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vlse<VMODES:mode>_<P:mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(if_then_else:VMODES
+	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	  (unspec:VMODES
+	    [(match_operand:P 1 "register_operand" "r")
+	     (match_operand:P 2 "register_operand" "r")
+	     (mem:BLK (scratch))]
+	    UNSPEC_STRIDED_LOAD)
+	  (match_operand:VMODES 4 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlse.v\t%0,(%1),%2,%3.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vsse<VMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+		   (unspec:BLK
+		     [(match_operand:VMODES 0 "register_operand")
+		      (match_operand:P 1 "register_operand")
+		      (match_operand:P 2 "register_operand")]
+		     UNSPEC_STRIDED_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vsse<VMODES:mode>_<P:mode>_nosetvl"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:VMODES 0 "register_operand" "=vr")
+	   (match_operand:P 1 "register_operand" "r")
+	   (match_operand:P 2 "register_operand" "r")]
+	  UNSPEC_STRIDED_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vsse.v\t%0,(%1),%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vsse<VMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+		   (unspec:BLK
+		     [(match_operand:<VCMPEQUIV> 0 "register_operand")
+		      (match_operand:VMODES 1 "register_operand")
+		      (match_operand:P 2 "register_operand")
+		      (match_operand:P 3 "register_operand")]
+		     UNSPEC_STRIDED_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vsse<VMODES:mode>_<P:mode>_mask_nosetvl"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	   (match_operand:VMODES 0 "register_operand" "=vr")
+	   (match_operand:P 1 "register_operand" "r")
+	   (match_operand:P 2 "register_operand" "r")]
+	  UNSPEC_STRIDED_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vsse.v\t%0,(%1),%2,%3.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Move instructions.
 
 ;; ??? We need the m constraints here only if we want load/store to work
