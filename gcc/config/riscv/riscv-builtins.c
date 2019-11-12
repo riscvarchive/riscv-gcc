@@ -137,7 +137,7 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI, __VA_ARGS__)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector and float modes.  */
+   along with its corresponding vector and floating point modes.  */
 #define _RVV_FLOAT_ITERATOR(MACRO)	\
   MACRO (16, 1, 16,  vnx8hf, HF)	\
   MACRO (16, 2,  8, vnx16hf, HF)	\
@@ -151,6 +151,37 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 2, 32,  vnx4df, DF)	\
   MACRO (64, 4, 16,  vnx8df, DF)	\
   MACRO (64, 8,  8, vnx16df, DF)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   except LMUL1, along with its corresponding vector and floating point
+   modes.  */
+#define _RVV_FLOAT_ITERATOR_NOTM1(MACRO)	\
+  MACRO (16, 2,  8, vnx16hf, HF)		\
+  MACRO (16, 4,  4, vnx32hf, HF)		\
+  MACRO (16, 8,  2, vnx64hf, HF)		\
+  MACRO (32, 2, 16,  vnx8sf, SF)		\
+  MACRO (32, 4,  8, vnx16sf, SF)		\
+  MACRO (32, 8,  4, vnx32sf, SF)		\
+  MACRO (64, 2, 32,  vnx4df, DF)		\
+  MACRO (64, 4, 16,  vnx8df, DF)		\
+  MACRO (64, 8,  8, vnx16df, DF)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating point modes and extra
+   arguments.  */
+#define _RVV_FLOAT_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 16,  vnx8hf, HF, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hf, HF, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hf, HF, __VA_ARGS__)	\
+  MACRO (16, 8,  2, vnx64hf, HF, __VA_ARGS__)	\
+  MACRO (32, 1, 32,  vnx4sf, SF, __VA_ARGS__)	\
+  MACRO (32, 2, 16,  vnx8sf, SF, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16sf, SF, __VA_ARGS__)	\
+  MACRO (32, 8,  4, vnx32sf, SF, __VA_ARGS__)	\
+  MACRO (64, 1, 64,  vnx2df, DF, __VA_ARGS__)	\
+  MACRO (64, 2, 32,  vnx4df, DF, __VA_ARGS__)	\
+  MACRO (64, 4, 16,  vnx8df, DF, __VA_ARGS__)	\
+  MACRO (64, 8,  8, vnx16df, DF, __VA_ARGS__)
 
 /* An iterator to call a macro with every supported MLEN and internal
    type numbering on VNx<N>BI for vector masking modes.  */
@@ -649,6 +680,14 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M1_FTYPE_VB##MLEN##_VUI##E##M1_VUI##E##M1_VUI##E##M##L, \
 		vector),
 
+#define VFLOAT_REDUC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (reduc_##OP##MODE, freduc_##OP##float##E##m##L,		\
+		RISCV_VF##E##M1_FTYPE_VF##E##M1_VF##E##M##L,		\
+		vector),						\
+  DIRECT_NAMED (reduc_##OP##MODE##_mask, freduc_##OP##float##E##m##L##_mask, \
+		RISCV_VF##E##M1_FTYPE_VB##MLEN##_VF##E##M1_VF##E##M1_VF##E##M##L, \
+		vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -685,6 +724,11 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, and, and)
   _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, or, or)
   _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, xor, xor)
+
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, sum)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, osum)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, max)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, min)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_HF,

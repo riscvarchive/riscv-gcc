@@ -117,6 +117,22 @@ typedef __fp16 float16_t;
   MACRO (64, 4, 16, double)					\
   MACRO (64, 8,  8, double)
 
+/* An iterator to call a macro with every supported SEW, LMUL, MLEN and
+   corresponding scalar modes with extra arguments for float operations.  */
+#define _RVV_FLOAT_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 16, float16_t, __VA_ARGS__)	\
+  MACRO (16, 2,  8, float16_t, __VA_ARGS__)	\
+  MACRO (16, 4,  4, float16_t, __VA_ARGS__)	\
+  MACRO (16, 8,  2, float16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 32,     float, __VA_ARGS__)	\
+  MACRO (32, 2, 16,     float, __VA_ARGS__)	\
+  MACRO (32, 4,  8,     float, __VA_ARGS__)	\
+  MACRO (32, 8,  4,     float, __VA_ARGS__)	\
+  MACRO (64, 1, 64,    double, __VA_ARGS__)	\
+  MACRO (64, 2, 32,    double, __VA_ARGS__)	\
+  MACRO (64, 4, 16,    double, __VA_ARGS__)	\
+  MACRO (64, 8,  8,    double, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported MLEN for masking
    operations.  */
 #define _RVV_MASK_ITERATOR(MACRO, ...)				\
@@ -718,5 +734,28 @@ _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, and, and)
 _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, or, or)
 _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, xor, xor)
 
+#define _RVV_FREDUC_OP(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline rvvfloat##SEW##m1_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_fred##OP##_vv_float##SEW##m##LMUL (rvvfloat##SEW##m1_t a,		\
+				       rvvfloat##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_freduc_##OP##float##SEW##m##LMUL (a, b);	\
+}									\
+__extension__ extern __inline rvvfloat##SEW##m1_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_fred##OP##_vv_float##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
+				    rvvfloat##SEW##m1_t maskedoff,	\
+				    rvvfloat##SEW##m1_t a,		\
+				    rvvfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_freduc_##OP##float##SEW##m##LMUL##_mask (mask,maskedoff,\
+							     a, b);	\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, sum)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, osum)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, max)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, min)
 #endif
 #endif

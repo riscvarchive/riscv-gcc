@@ -148,3 +148,17 @@
   MACRO(uint64_t, uint, 64m2, 64m1, 32)	\
   MACRO(uint64_t, uint, 64m4, 64m1, 16)	\
   MACRO(uint64_t, uint, 64m8, 64m1,  8)
+
+#define RVV_FLOAT_REDUC_TEST(MACRO)		\
+  MACRO(float16_t, float, 16m1, 16m1, 16)	\
+  MACRO(float16_t, float, 16m2, 16m1,  8)	\
+  MACRO(float16_t, float, 16m4, 16m1,  4)	\
+  MACRO(float16_t, float, 16m8, 16m1,  2)	\
+  MACRO(    float, float, 32m1, 32m1, 32)	\
+  MACRO(    float, float, 32m2, 32m1, 16)	\
+  MACRO(    float, float, 32m4, 32m1,  8)	\
+  MACRO(    float, float, 32m8, 32m1,  4)	\
+  MACRO(   double, float, 64m1, 64m1, 64)	\
+  MACRO(   double, float, 64m2, 64m1, 32)	\
+  MACRO(   double, float, 64m4, 64m1, 16)	\
+  MACRO(   double, float, 64m8, 64m1,  8)

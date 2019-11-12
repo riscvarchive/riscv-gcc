@@ -194,6 +194,9 @@
 ;; Operations valid for integer reductions.
 (define_code_iterator any_reduc [plus umax smax umin smin and ior xor])
 
+;; Operations valid for floating-point reductions.
+(define_code_iterator any_freduc [plus smax smin])
+
 ;; <reduc> expands to the name of the reduction that implements a
 ;; particular code.
 (define_code_attr reduc [(plus "sum") (umax "maxu") (smax "max") (umin "minu")
@@ -1556,5 +1559,131 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vred<reduc>.vs\t%0,%4,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Floating Point Reduction instructions.
+
+(define_expand "reduc_<reduc><mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<V1MODES> 0 "register_operand")
+		   (unspec:<V1MODES>
+		    [(any_freduc:VFMODES
+		      (vec_duplicate:VFMODES
+		       (match_operand:<V1MODES> 1 "register_operand"))
+		      (match_operand:VFMODES 2 "register_operand"))]
+		    UNSPEC_REDUC))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "*reduc_<reduc><mode>_nosetvl"
+  [(set (match_operand:<V1MODES> 0 "register_operand" "=vr")
+	(unspec:<V1MODES>
+	 [(any_freduc:VFMODES
+	   (vec_duplicate:VFMODES
+	    (match_operand:<V1MODES> 1 "register_operand" "vr"))
+	   (match_operand:VFMODES 2 "register_operand" "vr"))]
+	 UNSPEC_REDUC))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vfred<reduc>.vs\t%0,%2,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "reduc_<reduc><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<V1MODES> 0 "register_operand")
+		   (if_then_else:<V1MODES>
+		    (match_operand:<VCMPEQUIV> 1 "register_operand")
+		    (unspec:<V1MODES>
+		     [(any_reduc:VFMODES
+		       (vec_duplicate:VFMODES
+			(match_operand:<V1MODES> 3 "register_operand"))
+		       (match_operand:VFMODES 4 "register_operand"))]
+		     UNSPEC_REDUC)
+		    (match_operand:<V1MODES> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*reduc_<reduc><mode>_mask_nosetvl"
+  [(set (match_operand:<V1MODES> 0 "register_operand" "=vr")
+	(if_then_else:<V1MODES>
+	 (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	 (unspec:<V1MODES>
+	  [(any_reduc:VFMODES
+	    (vec_duplicate:VFMODES
+	     (match_operand:<V1MODES> 3 "register_operand" "vr"))
+	    (match_operand:VFMODES 4 "register_operand" "vr"))]
+	  UNSPEC_REDUC)
+	 (match_operand:<V1MODES> 2 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vfred<reduc>.vs\t%0,%4,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "reduc_osum<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<V1MODES> 0 "register_operand")
+		   (unspec:<V1MODES>
+		    [(plus:VFMODES
+		      (vec_duplicate:VFMODES
+		       (match_operand:<V1MODES> 1 "register_operand"))
+		      (match_operand:VFMODES 2 "register_operand"))]
+		    UNSPEC_ORDERED_REDUC))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "*reduc_osum<mode>_nosetvl"
+  [(set (match_operand:<V1MODES> 0 "register_operand" "=vr")
+	(unspec:<V1MODES>
+	 [(plus:VFMODES
+	   (vec_duplicate:VFMODES
+	    (match_operand:<V1MODES> 1 "register_operand" "vr"))
+	   (match_operand:VFMODES 2 "register_operand" "vr"))]
+	 UNSPEC_ORDERED_REDUC))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vfredosum.vs\t%0,%2,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "reduc_osum<mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<V1MODES> 0 "register_operand")
+		   (if_then_else:<V1MODES>
+		    (match_operand:<VCMPEQUIV> 1 "register_operand")
+		    (unspec:<V1MODES>
+		     [(plus:VFMODES
+		       (vec_duplicate:VFMODES
+			(match_operand:<V1MODES> 3 "register_operand"))
+		       (match_operand:VFMODES 4 "register_operand"))]
+		     UNSPEC_ORDERED_REDUC)
+		    (match_operand:<V1MODES> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*reduc_osum<mode>_mask_nosetvl"
+  [(set (match_operand:<V1MODES> 0 "register_operand" "=vr")
+	(if_then_else:<V1MODES>
+	 (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	 (unspec:<V1MODES>
+	  [(plus:VFMODES
+	    (vec_duplicate:VFMODES
+	     (match_operand:<V1MODES> 3 "register_operand" "vr"))
+	    (match_operand:VFMODES 4 "register_operand" "vr"))]
+	  UNSPEC_ORDERED_REDUC)
+	 (match_operand:<V1MODES> 2 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vfredosum.vs\t%0,%4,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
