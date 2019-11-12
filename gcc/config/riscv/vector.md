@@ -291,7 +291,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "@
-   vfmv.v.v\t%0,%1
+   vmv.v.v\t%0,%1
    vle.v\t%0,%1
    vse.v\t%1,%0"
   [(set_attr "type" "vector")
