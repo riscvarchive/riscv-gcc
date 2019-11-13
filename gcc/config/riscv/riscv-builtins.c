@@ -121,6 +121,19 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   except LMUL1, along with its corresponding vector, integer modes, and
+   info for corresponding widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
+#define _RVV_WINT_ITERATOR_NOTM1(MACRO)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI)	\
+  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI)	\
+  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI)	\
+  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer modes, and info for
    corresponding widening vector type and extra arguments.
 
@@ -680,6 +693,21 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M1_FTYPE_VB##MLEN##_VUI##E##M1_VUI##E##M1_VUI##E##M##L, \
 		vector),
 
+#define VINT_WREDUC_OP_BUILTINS(SEW, LMUL, MLEN, VMODE, SDEMODE,	\
+				WSEW, WLMUL, WVMODE, WSMODE, OP, OPU)	\
+  DIRECT_NAMED (wreduc_##OP##VMODE, wreduc_##OP##int##SEW##m##LMUL,	\
+		RISCV_VI##WSEW##M1_FTYPE_VI##WSEW##M1_VI##SEW##M##LMUL,	\
+		vector),						\
+  DIRECT_NAMED (wreduc_##OPU##VMODE, wreduc_##OPU##uint##SEW##m##LMUL,	\
+		RISCV_VUI##WSEW##M1_FTYPE_VUI##WSEW##M1_VUI##SEW##M##LMUL,	\
+		vector),						\
+  DIRECT_NAMED (wreduc_##OP##VMODE##_mask, wreduc_##OP##int##SEW##m##LMUL##_mask, \
+		RISCV_VI##WSEW##M1_FTYPE_VB##MLEN##_VI##WSEW##M1_VI##WSEW##M1_VI##SEW##M##LMUL, \
+		vector),						\
+  DIRECT_NAMED (wreduc_##OPU##VMODE##_mask, wreduc_##OPU##uint##SEW##m##LMUL##_mask,\
+		RISCV_VUI##WSEW##M1_FTYPE_VB##MLEN##_VUI##WSEW##M1_VUI##WSEW##M1_VUI##SEW##M##LMUL, \
+		vector),
+
 #define VFLOAT_REDUC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
   DIRECT_NAMED (reduc_##OP##MODE, freduc_##OP##float##E##m##L,		\
 		RISCV_VF##E##M1_FTYPE_VF##E##M1_VF##E##M##L,		\
@@ -729,6 +757,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, osum)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, max)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, min)
+
+  _RVV_WINT_ITERATOR_ARG (VINT_WREDUC_OP_BUILTINS, sum, sumu)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_HF,

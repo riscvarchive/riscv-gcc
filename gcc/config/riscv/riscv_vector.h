@@ -90,7 +90,7 @@ typedef __fp16 float16_t;
    corresponding widening vector type and extra arguments.
 
    MACRO (SEW, LMUL, MLEN, TYPE, WSEW, WLMUL, WTYPE)  */
-#define _RVV_WINT_ITERATOR_ARG(MACRO, ...)			\
+#define _RVV_WINT_ITERATOR_ARG(MACRO, ...)				\
   MACRO ( 8, 1,  8,  int8_t, 16, 2, int16_t, __VA_ARGS__)		\
   MACRO ( 8, 2,  4,  int8_t, 16, 4, int16_t, __VA_ARGS__)		\
   MACRO ( 8, 4,  2,  int8_t, 16, 8, int16_t, __VA_ARGS__)		\
@@ -733,6 +733,45 @@ _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, min, minu)
 _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, and, and)
 _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, or, or)
 _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, xor, xor)
+
+#define _RVV_WREDUC_OP(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP, OPU)	\
+__extension__ extern __inline rvvint##WSEW##m1_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_wred##OP##_wv_int##SEW##m##LMUL (rvvint##WSEW##m1_t a,		\
+				     rvvint##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_wreduc_##OP##int##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline rvvuint##WSEW##m1_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_wred##OPU##_wv_uint##SEW##m##LMUL (rvvuint##WSEW##m1_t a,		\
+				       rvvuint##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_wreduc_##OPU##uint##SEW##m##LMUL (a, b);	\
+}									\
+__extension__ extern __inline rvvint##WSEW##m1_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_wred##OP##_wv_int##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
+				    rvvint##WSEW##m1_t maskedoff,	\
+				    rvvint##WSEW##m1_t a,		\
+				    rvvint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_wreduc_##OP##int##SEW##m##LMUL##_mask (mask,maskedoff,\
+							     a, b);	\
+}									\
+__extension__ extern __inline rvvuint##WSEW##m1_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_wred##OPU##_wv_uint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
+				      rvvuint##WSEW##m1_t maskedoff,	\
+				      rvvuint##WSEW##m1_t a,		\
+				      rvvuint##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_wreduc_##OPU##uint##SEW##m##LMUL##_mask (mask,	\
+								 maskedoff, \
+								 a, b);	\
+}
+
+_RVV_WINT_ITERATOR_ARG (_RVV_WREDUC_OP, sum, sumu)
 
 #define _RVV_FREDUC_OP(SEW, LMUL, MLEN, T, OP)				\
 __extension__ extern __inline rvvfloat##SEW##m1_t			\
