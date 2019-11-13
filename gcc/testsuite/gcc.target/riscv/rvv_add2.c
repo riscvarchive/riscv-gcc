@@ -24,8 +24,8 @@
     rvv##VCLASS##EM##_t vx, vy;                                                \
     vx = rvvld##VCLASS##EM(x);                                                 \
     vy = rvvld##VCLASS##EM(y);                                                 \
-    vy = vx + vy;                                                              \
-    vy = vy + z;                                                               \
+    vy = rvv_add_vv_##VCLASS##EM (vx, vy);                                     \
+    vy = rvv_add_vs_##VCLASS##EM (vy, z);                                      \
     rvvst##VCLASS##EM(y, vy);                                                  \
   }
 

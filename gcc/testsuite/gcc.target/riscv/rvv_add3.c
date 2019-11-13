@@ -24,10 +24,12 @@
 #define VADD_NO_IMM(STYPE, VCLASS, EM, MLEN)                                   \
   void vadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv##VCLASS##EM##_t vx, vy;                                                \
+    rvvbool##MLEN##_t mask;                                                    \
     vx = rvvld##VCLASS##EM(x);                                                 \
     vy = rvvld##VCLASS##EM(y);                                                 \
-    vy = vx + vy;                                                              \
-    vy = vy + z;                                                               \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vy = rvv_add_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
+    vy = rvv_add_vs_##VCLASS##EM##_mask (mask, vy, vy, z);                     \
     rvvst##VCLASS##EM(y, vy);                                                  \
   }
 

@@ -579,27 +579,48 @@ rvvs##OPU##uint##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,		\
 
 _RVV_INT_ITERATOR_ARG (_RVVINTCMP, lt, ltu)
 
-#if 0
-#define _RVVFLOATADD(SEW, LMUL, MLEN, T)				\
+#define _RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
 __extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvaddfloat##SEW##m##LMUL (rvvfloat##SEW##m##LMUL##_t a,		\
-			   rvvfloat##SEW##m##LMUL##_t b)		\
+rvv_##OP##_vs_float##SEW##m##LMUL (rvvfloat##SEW##m##LMUL##_t a,	\
+				   T b)					\
 {									\
-  return a + b;								\
-}
-
-#define _RVVFLOATADDS(SEW, LMUL, MLEN, T)				\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL##_scalar (a, b);	\
+}									\
 __extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvvaddsfloat##SEW##m##LMUL (rvvfloat##SEW##m##LMUL##_t a, T b)		\
+rvv_##OP##_vs_float##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
+					  rvvfloat##SEW##m##LMUL##_t maskedoff, \
+					  rvvfloat##SEW##m##LMUL##_t a, \
+					  T b)			\
 {									\
-  return a + b;								\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL##_scalar_mask (	\
+      mask, maskedoff, a, b);						\
 }
 
-_RVV_FLOAT_ITERATOR (_RVVFLOATADD)
-_RVV_FLOAT_ITERATOR (_RVVFLOATADDS)
-#endif
+#define _RVV_FLOAT_BIN_OP(SEW, LMUL, MLEN, T, OP)			\
+_RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_##OP##_vv_float##SEW##m##LMUL (rvvfloat##SEW##m##LMUL##_t a,	\
+			      rvvfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline rvvfloat##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_##OP##_vv_float##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
+				       rvvfloat##SEW##m##LMUL##_t maskedoff, \
+				       rvvfloat##SEW##m##LMUL##_t a,	\
+				       rvvfloat##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL##_mask (		\
+      mask, maskedoff, a, b);						\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, add)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, sub)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rsub)
 
 #define _RVV_MASK_NULLARY_OP(MLEN, OP)					\
 __extension__ extern __inline rvvbool##MLEN##_t				\
