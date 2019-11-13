@@ -454,7 +454,8 @@ tree rvvbool64_t_node;
 #define RISCV_FTYPE_ATYPES3(A, B, C, D)	\
   RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D
 #define RISCV_FTYPE_ATYPES4(A, B, C, D, E) \
-  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, RISCV_ATYPE_##E
+  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, \
+  RISCV_ATYPE_##E
 
 #define SETVL_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
@@ -485,28 +486,28 @@ tree rvvbool64_t_node;
   DIRECT_NAMED (vlse##MODE##_di_mask, vlseuint##E##m##L##_di_mask,	\
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR_DI, \
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vsseint##E##m##L##_si,			\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vsseint##E##m##L##_si,	\
 		RISCV_VOID_FTYPE_VI##E##M##L##_C_##SUBMODE##_PTR_SI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vsseint##E##m##L##_di,			\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vsseint##E##m##L##_di,	\
 		RISCV_VOID_FTYPE_VI##E##M##L##_C_##SUBMODE##_PTR_DI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vsseuint##E##m##L##_si,		\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vsseuint##E##m##L##_si,	\
 		RISCV_VOID_FTYPE_VUI##E##M##L##_C_U##SUBMODE##_PTR_SI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vsseuint##E##m##L##_di,		\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vsseuint##E##m##L##_di,	\
 		RISCV_VOID_FTYPE_VUI##E##M##L##_C_U##SUBMODE##_PTR_DI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vsseint##E##m##L##_si_mask,			\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vsseint##E##m##L##_si_mask,	\
 		RISCV_VOID_FTYPE_VB##MLEN##_VI##E##M##L##_C_##SUBMODE##_PTR_SI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vsseint##E##m##L##_di_mask,			\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vsseint##E##m##L##_di_mask,	\
 		RISCV_VOID_FTYPE_VB##MLEN##_VI##E##M##L##_C_##SUBMODE##_PTR_DI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vsseuint##E##m##L##_si_mask,		\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vsseuint##E##m##L##_si_mask,	\
 		RISCV_VOID_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR_SI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vsseuint##E##m##L##_di_mask,		\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vsseuint##E##m##L##_di_mask,	\
 		RISCV_VOID_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR_DI,	\
 		vector),
 
@@ -523,16 +524,16 @@ tree rvvbool64_t_node;
   DIRECT_NAMED (vlse##MODE##_di_mask, vlsefloat##E##m##L##_di_mask,	\
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR_DI, \
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vssefloat##E##m##L##_si,		\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vssefloat##E##m##L##_si,	\
 		RISCV_VOID_FTYPE_VF##E##M##L##_C_##SUBMODE##_PTR_SI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vssefloat##E##m##L##_di,		\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vssefloat##E##m##L##_di,	\
 		RISCV_VOID_FTYPE_VF##E##M##L##_C_##SUBMODE##_PTR_DI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vssefloat##E##m##L##_si_mask,		\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vssefloat##E##m##L##_si_mask,	\
 		RISCV_VOID_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR_SI,	\
 		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vssefloat##E##m##L##_di_mask,		\
+  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vssefloat##E##m##L##_di_mask,	\
 		RISCV_VOID_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR_DI,	\
 		vector),
 
@@ -592,7 +593,7 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN,		\
 		vector),
 
-#define MASK_SCALAR_UNARY_BUILTINS(MLEN, N, OP)			\
+#define MASK_SCALAR_UNARY_BUILTINS(MLEN, N, OP)				\
   DIRECT_NAMED (OP##vnx##N##bi2_si, v##OP##bool##MLEN##_si,		\
 		RISCV_SI_FTYPE_VB##MLEN,				\
 		vector),						\
