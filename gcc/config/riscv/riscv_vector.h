@@ -133,6 +133,19 @@ typedef __fp16 float16_t;
   MACRO (64, 4, 16,    double, __VA_ARGS__)	\
   MACRO (64, 8,  8,    double, __VA_ARGS__)
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, scalar modes, info for
+   corresponding widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, TYPE, WSEW, WLMUL, WTYPE)  */
+#define _RVV_WFLOAT_ITERATOR_ARG(MACRO, ...)				\
+  MACRO (16, 1, 16, float16_t, 32, 2,  float, __VA_ARGS__)		\
+  MACRO (16, 2,  8, float16_t, 32, 4,  float, __VA_ARGS__)		\
+  MACRO (16, 4,  4, float16_t, 32, 8,  float, __VA_ARGS__)		\
+  MACRO (32, 1, 32,     float, 64, 2, double, __VA_ARGS__)		\
+  MACRO (32, 2, 16,     float, 64, 4, double, __VA_ARGS__)		\
+  MACRO (32, 4,  8,     float, 64, 8, double, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported MLEN for masking
    operations.  */
 #define _RVV_MASK_ITERATOR(MACRO, ...)				\
@@ -796,5 +809,27 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, sum)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, osum)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, max)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, min)
+
+#define _RVV_FWREDUC_OP(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+__extension__ extern __inline rvvfloat##WSEW##m1_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_fwred##OP##_wv_float##SEW##m##LMUL (rvvfloat##WSEW##m1_t a,		\
+					rvvfloat##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL (a, b);	\
+}									\
+__extension__ extern __inline rvvfloat##WSEW##m1_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_fwred##OP##_wv_float##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
+				    rvvfloat##WSEW##m1_t maskedoff,	\
+				    rvvfloat##WSEW##m1_t a,		\
+				    rvvfloat##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL##_mask (mask,maskedoff,\
+							     a, b);	\
+}									\
+
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, sum)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, osum)
 #endif
 #endif

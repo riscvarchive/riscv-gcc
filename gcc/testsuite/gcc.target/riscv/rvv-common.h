@@ -184,3 +184,12 @@
   MACRO(   double, float, 64m2, 64m1, 32)	\
   MACRO(   double, float, 64m4, 64m1, 16)	\
   MACRO(   double, float, 64m8, 64m1,  8)
+
+#define RVV_WFLOAT_REDUC_TEST(MACRO)			\
+  MACRO(float16_t, float, 16m1,  16,  float, 32m1)	\
+  MACRO(float16_t, float, 16m2,   8,  float, 32m1)	\
+  MACRO(float16_t, float, 16m4,   4,  float, 32m1)	\
+  MACRO(    float, float, 32m1,  32, double, 64m1)	\
+  MACRO(    float, float, 32m2,  16, double, 64m1)	\
+  MACRO(    float, float, 32m4,   8, double, 64m1)
+

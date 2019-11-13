@@ -27,8 +27,21 @@
     rvvst##VCLASS##WEMONE (x, vx);					\
   }
 
+#define VFWREDUC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
+  void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y) {		\
+    rvv##VCLASS##WEMONE##_t vx;						\
+    rvv##VCLASS##EM##_t vy;						\
+    vx = rvvld##VCLASS##WEMONE (x);					\
+    vy = rvvld##VCLASS##EM (y);						\
+    vx = rvv_fwredsum_wv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_fwredosum_wv_##VCLASS##EM (vx, vy);			\
+    rvvst##VCLASS##WEMONE (x, vx);					\
+  }
+
 RVV_WINT_REDUC_TEST(VWREDUC)
 RVV_WUINT_REDUC_TEST(VWREDUCU)
+RVV_WFLOAT_REDUC_TEST(VFWREDUC)
 
 /* { dg-final { scan-assembler-times "vwredsum.vs" 9 } } */
 /* { dg-final { scan-assembler-times "vwredsumu.vs" 9 } } */
+/* { dg-final { scan-assembler-times "vfwredsum.vs" 6 } } */

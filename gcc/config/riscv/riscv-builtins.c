@@ -196,6 +196,32 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 4, 16,  vnx8df, DF, __VA_ARGS__)	\
   MACRO (64, 8,  8, vnx16df, DF, __VA_ARGS__)
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating point modes, and info for
+   corresponding widening vector type.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
+#define _RVV_WFLOAT_ITERATOR(MACRO)			\
+  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8sf, SF)	\
+  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16sf, SF)	\
+  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32sf, SF)	\
+  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4df, DF)	\
+  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8df, DF)	\
+  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16df, DF)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating point modes, and info for
+   corresponding widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
+#define _RVV_WFLOAT_ITERATOR_ARG(MACRO, ...)				\
+  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8sf, SF, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16sf, SF, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32sf, SF, __VA_ARGS__)	\
+  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4df, DF, __VA_ARGS__)	\
+  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8df, DF, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16df, DF, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported MLEN and internal
    type numbering on VNx<N>BI for vector masking modes.  */
 #define _RVV_MASK_ITERATOR(MACRO)	\
@@ -716,6 +742,15 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M1_FTYPE_VB##MLEN##_VF##E##M1_VF##E##M1_VF##E##M##L, \
 		vector),
 
+#define VFLOAT_WREDUC_OP_BUILTINS(SEW, LMUL, MLEN, VMODE, SDEMODE,	\
+				  WSEW, WLMUL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (wreduc_##OP##VMODE, fwreduc_##OP##float##SEW##m##LMUL,	\
+		RISCV_VF##WSEW##M1_FTYPE_VF##WSEW##M1_VF##SEW##M##LMUL,	\
+		vector),						\
+  DIRECT_NAMED (wreduc_##OP##VMODE##_mask, fwreduc_##OP##float##SEW##m##LMUL##_mask, \
+		RISCV_VF##WSEW##M1_FTYPE_VB##MLEN##_VF##WSEW##M1_VF##WSEW##M1_VF##SEW##M##LMUL, \
+		vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -759,6 +794,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, min)
 
   _RVV_WINT_ITERATOR_ARG (VINT_WREDUC_OP_BUILTINS, sum, sumu)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WREDUC_OP_BUILTINS, sum)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WREDUC_OP_BUILTINS, osum)
 
   DIRECT_BUILTIN (vfwmulfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4, vector),
   DIRECT_BUILTIN (vfwmulfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_HF,
