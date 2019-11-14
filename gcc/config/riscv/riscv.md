@@ -410,6 +410,7 @@
 (define_code_attr optab [(ashift "ashl")
 			 (ashiftrt "ashr")
 			 (lshiftrt "lshr")
+			 (mult "mul")
 			 (div "div")
 			 (mod "mod")
 			 (udiv "udiv")

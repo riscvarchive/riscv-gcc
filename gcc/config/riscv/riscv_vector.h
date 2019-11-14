@@ -621,6 +621,9 @@ rvv_##OP##_vv_float##SEW##m##LMUL##_mask (rvvbool##MLEN##_t mask,	\
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, add)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, sub)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rsub)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, mul)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, div)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rdiv)
 
 #define _RVV_MASK_NULLARY_OP(MLEN, OP)					\
 __extension__ extern __inline rvvbool##MLEN##_t				\
