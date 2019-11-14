@@ -213,7 +213,7 @@
 (define_code_iterator any_freduc [plus smax smin])
 
 ;; Commutative operation valid for floating-point.
-(define_code_iterator any_fcomop [plus mult])
+(define_code_iterator any_fcomop [plus mult smax smin])
 
 ;; Non-commutative operation valid for floating-point.
 (define_code_iterator any_fnoncomop [minus div])

@@ -625,6 +625,9 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, mul)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, div)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rdiv)
 
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, max)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, min)
+
 #define _RVV_MASK_NULLARY_OP(MLEN, OP)					\
 __extension__ extern __inline rvvbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
