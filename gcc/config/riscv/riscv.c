@@ -4671,7 +4671,9 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
     }
   else if (VECT_REG_P (regno) || regno == VTYPE_REGNUM || regno == VL_REGNUM)
     {
-      /* Assume every valid mode fits in vector registers.  */ 
+      /* Assume only vector modes fit in vector registers.  */
+      if (!VECTOR_MODE_P (mode))
+	return false;
     }
   else
     return false;
