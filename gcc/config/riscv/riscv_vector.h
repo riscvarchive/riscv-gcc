@@ -856,5 +856,11 @@ rvv_fwred##OP##_wv_float##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
 
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, sum)
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, osum)
+
+/* riscv_vector_asm.h contain the inline asm version of intrinsic function,
+   it will removed once we implement all intrinsic function in built-in function
+   way . */
+#include <riscv_vector_asm.h>
+
 #endif
 #endif

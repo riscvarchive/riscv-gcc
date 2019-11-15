@@ -1,0 +1,66 @@
+/* { dg-do compile } */
+/* { dg-options "-O2 -march=rv32gcv -mabi=ilp32f" } */
+
+#include <riscv_vector.h>
+#include <stddef.h>
+#include "rvv-common.h"
+
+/* Takes the scalar type STYPE, vector class VCLASS (int or float), and
+   the e and m value.  */
+#define VWADDSUB(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                     \
+  void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {            \
+    rvv_##VCLASS##EM##_t vx, vy;                                               \
+    rvv_##VCLASS##WEM##_t vz;                                                  \
+    rvv_bool##MLEN##_t mask;                                                   \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vy = rvv_le_##VCLASS##EM(y);                                               \
+    vz = rvv_le_##VCLASS##WEM(z);                                              \
+    vz = rvv_w##OP##_vv_##VCLASS##EM (vx, vy);                                 \
+    rvv_se_##VCLASS##WEM(z, vz);                                               \
+  }                                                                            \
+  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {         \
+    rvv_##VCLASS##EM##_t vx, vy;                                               \
+    rvv_##VCLASS##WEM##_t vz;                                                  \
+    rvv_bool##MLEN##_t mask;                                                   \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vz = rvv_le_##VCLASS##WEM(z);                                              \
+    vz = rvv_w##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);                 \
+    rvv_se_##VCLASS##WEM(z, vz);                                               \
+  }
+
+#define VWADDSUBU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                    \
+  void v##OP##u##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {         \
+    rvv_u##VCLASS##EM##_t vx, vy;                                              \
+    rvv_u##VCLASS##WEM##_t vz;                                                 \
+    rvv_bool##MLEN##_t mask;                                                   \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vx = rvv_le_u##VCLASS##EM(x);                                              \
+    vy = rvv_le_u##VCLASS##EM(y);                                              \
+    vz = rvv_le_u##VCLASS##WEM(z);                                             \
+    vz = rvv_w##OP##u_vv_u##VCLASS##EM (vx, vy);                               \
+    rvv_se_u##VCLASS##WEM(z, vz);                                              \
+  }                                                                            \
+  void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
+    rvv_u##VCLASS##EM##_t vx, vy;                                              \
+    rvv_u##VCLASS##WEM##_t vz;                                                 \
+    rvv_bool##MLEN##_t mask;                                                   \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vx = rvv_le_u##VCLASS##EM(x);                                              \
+    vz = rvv_le_u##VCLASS##WEM(z);                                             \
+    vz = rvv_w##OP##u_vs_u##VCLASS##EM##_mask (mask, vz, vx, y);               \
+    rvv_se_u##VCLASS##WEM(z, vz);                                              \
+  }
+
+
+
+RVV_WINT_TEST_ARG(VWADDSUB, add)
+RVV_WUINT_TEST_ARG(VWADDSUBU, add)
+RVV_WINT_TEST_ARG(VWADDSUB, sub)
+RVV_WUINT_TEST_ARG(VWADDSUBU, sub)
+
+/* { dg-final { scan-assembler-times "vwadd.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwaddu.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwadd.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vwaddu.vx" 9 } } */
