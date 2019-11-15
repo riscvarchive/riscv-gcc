@@ -859,14 +859,12 @@ riscv_vector_type (const char *name, tree elt_type, enum machine_mode mode)
   /* Copy so we don't give the canonical type a name.  */
   result = build_variant_type_copy (result);
 
-  add_builtin_type (name, result);
+  (*lang_hooks.types.register_builtin_type) (result, name);
 
   return result;
 }
 
 /* Implement TARGET_INIT_BUILTINS.  */
-
-/* ??? Use register_builtin_types hook instead of add_builtin_type?  */
 
 void
 riscv_init_builtins (void)
