@@ -12,13 +12,13 @@
     rvv##VCLASS##EM##_t vx, vy;                                                \
     rvvbool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
+    vx = rvv_le_##VCLASS##EM(x);                                                 \
+    vy = rvv_le_##VCLASS##EM(y);                                                 \
     vy = rvvsub##VCLASS##EM##_mask (mask, vx, vx, vy);                         \
     vy = rvvsub##VCLASS##EM##_scalar_mask (mask, vx, vy, z);                   \
-    rvvst##VCLASS##EM(y, vy);                                                  \
+    rvv_se_##VCLASS##EM(y, vy);                                                  \
     vx = rvvsub##VCLASS##EM##_scalar_mask (mask, vx, vx, 1);                   \
-    rvvst##VCLASS##EM(x, vx);                                                  \
+    rvv_se_##VCLASS##EM(x, vx);                                                  \
   }
 /* Same as above without the immediate sub.  */
 #define VSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                   \
@@ -26,11 +26,11 @@
     rvv##VCLASS##EM##_t vx, vy;                                                \
     rvvbool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
+    vx = rvv_le_##VCLASS##EM(x);                                                 \
+    vy = rvv_le_##VCLASS##EM(y);                                                 \
     vy = rvv_sub_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);                    \
     vy = rvv_sub_vs_##VCLASS##EM##_mask (mask, vx, vy, z);                     \
-    rvvst##VCLASS##EM(y, vy);                                                  \
+    rvv_se_##VCLASS##EM(y, vy);                                                  \
   }
 /* Same for reverse subtract.  */
 #define VRSUB(STYPE, VCLASS, EM, MLEN)                                         \
@@ -38,12 +38,12 @@
     rvv##VCLASS##EM##_t vx, vy;                                                \
     rvvbool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
+    vx = rvv_le_##VCLASS##EM(x);                                                 \
+    vy = rvv_le_##VCLASS##EM(y);                                                 \
     vy = rvvrsub##VCLASS##EM##_scalar_mask (mask, vx, vy, z);                  \
-    rvvst##VCLASS##EM(y, vy);                                                  \
+    rvv_se_##VCLASS##EM(y, vy);                                                  \
     vx = rvvrsub##VCLASS##EM##_scalar_mask (mask, vx, vx, 1);                  \
-    rvvst##VCLASS##EM(x, vx);                                                  \
+    rvv_se_##VCLASS##EM(x, vx);                                                  \
   }
 /* Same as above without the immediate for reverse subtract.  */
 #define VRSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                  \
@@ -51,10 +51,10 @@
     rvvbool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
     rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
+    vx = rvv_le_##VCLASS##EM(x);                                                 \
+    vy = rvv_le_##VCLASS##EM(y);                                                 \
     vy = rvv_rsub_vs_##VCLASS##EM##_mask (mask, vx, vy, z);                    \
-    rvvst##VCLASS##EM(y, vy);                                                  \
+    rvv_se_##VCLASS##EM(y, vy);                                                  \
   }
 
 /*

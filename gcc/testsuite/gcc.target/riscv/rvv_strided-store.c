@@ -12,8 +12,8 @@
                                STYPE *y, STYPE z) {                            \
     rvv##VCLASS##EM##_t vx, vy, vz;                                            \
     rvvbool##MLEN##_t mask;                                                    \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = vx + vy;                                                              \
     rvv_sse_##VCLASS##EM(x, stride, vz);                                       \
   }

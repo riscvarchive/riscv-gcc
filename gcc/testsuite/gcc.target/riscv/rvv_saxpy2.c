@@ -10,12 +10,12 @@ void saxpy_2(size_t n, const float a, const float *x, float *y) {
   rvvfloat32m8_t vx, vy;
 
   for (; (l = rvvsetvl32m8(n)) > 0; n -= l) {
-    vx = rvvldfloat32m8(x);
+    vx = rvv_le_float32m8(x);
     x += l;
-    vy = rvvldfloat32m8(y);
+    vy = rvv_le_float32m8(y);
     // vfmsac.vv
     vy = a * vx - vy;
-    rvvstfloat32m8(y, vy);
+    rvv_se_float32m8(y, vy);
     y += l;
   }
 }

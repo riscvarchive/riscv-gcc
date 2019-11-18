@@ -12,37 +12,37 @@
     rvv##VCLASS##WEMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy, vz;						\
     rvvbool##MLEN##_t mask;						\
-    vx = rvvld##VCLASS##WEMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
-    vz = rvvld##VCLASS##EM (z);						\
-    mask = rvvslt##VCLASS##EM (vy, vz);					\
+    vx = rvv_le_##VCLASS##WEMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
+    vz = rvv_le_##VCLASS##EM (z);					\
+    mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
     vx = rvv_wredsum_wv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
-    rvvst##VCLASS##WEMONE (x, vx);					\
+    rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 #define VWREDUCU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
     rvv##VCLASS##WEMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy, vz;						\
     rvvbool##MLEN##_t mask;						\
-    vx = rvvld##VCLASS##WEMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
-    vz = rvvld##VCLASS##EM (z);						\
-    mask = rvvsltu##VCLASS##EM (vy, vz);				\
+    vx = rvv_le_##VCLASS##WEMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
+    vz = rvv_le_##VCLASS##EM (z);					\
+    mask = rvv_sltu_vv_##VCLASS##EM (vy, vz);				\
     vx = rvv_wredsumu_wv_##VCLASS##EM##_mask (mask, vx, vx, vy);	\
-    rvvst##VCLASS##WEMONE (x, vx);					\
+    rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 #define VFWREDUC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
     rvv##VCLASS##WEMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy, vz;						\
     rvvbool##MLEN##_t mask;						\
-    vx = rvvld##VCLASS##WEMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
-    vz = rvvld##VCLASS##EM (z);						\
+    vx = rvv_le_##VCLASS##WEMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
+    vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_mset_bool##MLEN ();					\
     vx = rvv_fwredsum_wv_##VCLASS##EM##_mask (mask, vx, vx, vy);	\
     vx = rvv_fwredosum_wv_##VCLASS##EM##_mask (mask, vx, vx, vy);	\
-    rvvst##VCLASS##WEMONE (x, vx);					\
+    rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 
 RVV_WINT_REDUC_TEST(VWREDUC)

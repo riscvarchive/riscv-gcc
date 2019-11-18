@@ -12,49 +12,49 @@
     rvv##VCLASS##EMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy, vz;						\
     rvvbool##MLEN##_t mask;						\
-    vx = rvvld##VCLASS##EMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
-    vz = rvvld##VCLASS##EM (z);						\
-    mask = rvvslt##VCLASS##EM (vy, vz);					\
+    vx = rvv_le_##VCLASS##EMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
+    vz = rvv_le_##VCLASS##EM (z);					\
+    mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
     vx = rvv_redsum_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redmax_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redmin_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redand_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redor_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redxor_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
-    rvvst##VCLASS##EMONE (x, vx);					\
+    rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 #define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
     rvv##VCLASS##EMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy, vz;						\
     rvvbool##MLEN##_t mask;						\
-    vx = rvvld##VCLASS##EMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
-    vz = rvvld##VCLASS##EM (z);						\
-    mask = rvvsltu##VCLASS##EM (vy, vz);				\
+    vx = rvv_le_##VCLASS##EMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
+    vz = rvv_le_##VCLASS##EM (z);					\
+    mask = rvv_sltu_vv_##VCLASS##EM (vy, vz);				\
     vx = rvv_redsum_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redmaxu_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redminu_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redand_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redor_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_redxor_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
-    rvvst##VCLASS##EMONE (x, vx);					\
+    rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 #define VFREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
     rvv##VCLASS##EMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy, vz;						\
     rvvbool##MLEN##_t mask;						\
-    vx = rvvld##VCLASS##EMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
-    vz = rvvld##VCLASS##EM (z);						\
+    vx = rvv_le_##VCLASS##EMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
+    vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_mset_bool##MLEN ();					\
     vx = rvv_fredsum_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_fredosum_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);	\
     vx = rvv_fredmax_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
     vx = rvv_fredmin_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
-    rvvst##VCLASS##EMONE (x, vx);					\
+    rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 
 RVV_INT_REDUC_TEST(VREDUC)

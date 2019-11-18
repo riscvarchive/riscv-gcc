@@ -10,12 +10,12 @@
 #define VDIV(STYPE, VCLASS, EM, MLEN)                                          \
   void vmul##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
+    vx = rvv_le_##VCLASS##EM(x);                                                 \
+    vy = rvv_le_##VCLASS##EM(y);                                                 \
     vy = rvv_div_vv_##VCLASS##EM(vx, vy);                                      \
     vy = rvv_div_vs_##VCLASS##EM (vy, z);                                      \
     vy = rvv_rdiv_vs_##VCLASS##EM (vy, z);                                     \
-    rvvst##VCLASS##EM(y, vy);                                                  \
+    rvv_se_##VCLASS##EM(y, vy);                                                  \
   }
 
 /* integer intrinsics have not finished */

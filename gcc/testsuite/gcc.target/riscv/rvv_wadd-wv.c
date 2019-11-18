@@ -11,10 +11,10 @@
   void vwadd##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z) {           \
     rvv##VCLASS##EM##_t vy;                                                    \
     rvv##VCLASS##WEM##_t vx, vz;                                               \
-    vx = rvvld##VCLASS##WEM(x);                                                \
-    vy = rvvld##VCLASS##EM(y);                                                 \
-    vz = rvvwadd_wv_##VCLASS##EM (vx, vy);                                     \
-    rvvst##VCLASS##WEM(z, vz);                                                 \
+    vx = rvv_le_##VCLASS##WEM(x);                                              \
+    vy = rvv_le_##VCLASS##EM(y);                                               \
+    vz = rvv_wadd_wv_##VCLASS##EM (vx, vy);                                    \
+    rvv_se_##VCLASS##WEM(z, vz);                                                 \
   }
 
 #define VWADDU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                           \
@@ -22,10 +22,10 @@
                           WSTYPE *z) {                                         \
     rvvu##VCLASS##EM##_t vy;                                                   \
     rvvu##VCLASS##WEM##_t vx, vz;                                              \
-    vx = rvvldu##VCLASS##WEM(x);                                               \
-    vy = rvvldu##VCLASS##EM(y);                                                \
-    vz = rvvwaddu_wv_u##VCLASS##EM (vx, vy);                                   \
-    rvvstu##VCLASS##WEM(z, vz);                                                \
+    vx = rvv_le_u##VCLASS##WEM(x);                                             \
+    vy = rvv_le_u##VCLASS##EM(y);                                              \
+    vz = rvv_waddu_wv_u##VCLASS##EM (vx, vy);                                  \
+    rvv_se_u##VCLASS##WEM(z, vz);                                                \
   }
 
 RVV_WINT_TEST(VWADD)

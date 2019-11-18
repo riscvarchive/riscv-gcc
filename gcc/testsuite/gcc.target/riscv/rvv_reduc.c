@@ -11,42 +11,42 @@
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
     rvv##VCLASS##EMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy;						\
-    vx = rvvld##VCLASS##EMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
+    vx = rvv_le_##VCLASS##EMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redmax_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redmin_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redand_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redor_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redxor_vv_##VCLASS##EM (vx, vy);				\
-    rvvst##VCLASS##EMONE (x, vx);					\
+    rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 #define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
     rvv##VCLASS##EMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy;						\
-    vx = rvvld##VCLASS##EMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
+    vx = rvv_le_##VCLASS##EMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redmaxu_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redminu_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redand_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redor_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_redxor_vv_##VCLASS##EM (vx, vy);				\
-    rvvst##VCLASS##EMONE (x, vx);					\
+    rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 
 #define VFREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
     rvv##VCLASS##EMONE##_t vx;						\
     rvv##VCLASS##EM##_t vy;						\
-    vx = rvvld##VCLASS##EMONE (x);					\
-    vy = rvvld##VCLASS##EM (y);						\
+    vx = rvv_le_##VCLASS##EMONE (x);					\
+    vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_fredsum_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_fredosum_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_fredmax_vv_##VCLASS##EM (vx, vy);				\
     vx = rvv_fredmin_vv_##VCLASS##EM (vx, vy);				\
-    rvvst##VCLASS##EMONE (x, vx);					\
+    rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 
 RVV_INT_REDUC_TEST(VREDUC)

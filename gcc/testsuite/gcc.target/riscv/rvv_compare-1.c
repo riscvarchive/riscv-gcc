@@ -11,22 +11,22 @@
   void vlt##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {                \
     rvv##VCLASS##EM##_t vx, vy;                                                \
     rvvbool##MLEN##_t mask;                                                    \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
-    mask = rvvslt##VCLASS##EM(vx, vy);                                         \
-    vx = rvvadd##VCLASS##EM##_mask (mask, vy, vx, vy);                         \
-    rvvst##VCLASS##EM(x, vx);                                                  \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vy = rvv_le_##VCLASS##EM(y);                                               \
+    mask = rvv_slt_vv_##VCLASS##EM(vx, vy);                                    \
+    vx = rvv_add_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
+    rvv_se_##VCLASS##EM(x, vx);                                                  \
   }
 
 #define VSLTU(STYPE, VCLASS, EM, MLEN)                                         \
   void vlt##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {                \
     rvv##VCLASS##EM##_t vx, vy;                                                \
     rvvbool##MLEN##_t mask;                                                    \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
-    mask = rvvsltu##VCLASS##EM(vx, vy);                                        \
-    vx = rvvadd##VCLASS##EM##_mask (mask, vy, vx, vy);                         \
-    rvvst##VCLASS##EM(x, vx);                                                  \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vy = rvv_le_##VCLASS##EM(y);                                               \
+    mask = rvv_sltu_vv_##VCLASS##EM(vx, vy);                                   \
+    vx = rvv_add_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
+    rvv_se_##VCLASS##EM(x, vx);                                                  \
   }
 
 RVV_INT_TEST(VSLT)

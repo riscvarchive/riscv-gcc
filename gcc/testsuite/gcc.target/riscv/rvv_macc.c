@@ -10,20 +10,20 @@
 #define VMACC(STYPE, VCLASS, EM, MLEN)                                         \
   void vmacc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {             \
     rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
-    vz = rvvld##VCLASS##EM(z);                                                 \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vy = rvv_le_##VCLASS##EM(y);                                               \
+    vz = rvv_le_##VCLASS##EM(z);                                               \
     vz = vx * vy + vz;                                                         \
-    rvvst##VCLASS##EM(z, vz);                                                  \
+    rvv_se_##VCLASS##EM(z, vz);                                                  \
   }
 
 #define VMACC_IMM(STYPE, VCLASS, EM, MLEN)                                     \
   void vmacc##VCLASS##EM##_imm(size_t n, STYPE x, STYPE *y, STYPE *z) {        \
     rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    vy = rvvld##VCLASS##EM(y);                                                 \
-    vz = rvvld##VCLASS##EM(z);                                                 \
+    vy = rvv_le_##VCLASS##EM(y);                                               \
+    vz = rvv_le_##VCLASS##EM(z);                                               \
     vz = x * vy + vz;                                                          \
-    rvvst##VCLASS##EM(z, vz);                                                  \
+    rvv_se_##VCLASS##EM(z, vz);                                                  \
   }
 
 #if 0

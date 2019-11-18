@@ -13,10 +13,10 @@
     rvv##VCLASS##EM##_t vx, vy, vz;                                            \
     rvvbool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
-    vy = rvvld##VCLASS##EM(y);                                                 \
+    vy = rvv_le_##VCLASS##EM(y);                                               \
     vx = rvv_lse_##VCLASS##EM##_mask(mask, vy, x, stride);                     \
     vz = vx + vy;                                                              \
-    rvvst##VCLASS##EM(x, vz);                                                  \
+    rvv_se_##VCLASS##EM(x, vz);                                                  \
   }
 
 RVV_INT_TEST(VSLOADSTORE)

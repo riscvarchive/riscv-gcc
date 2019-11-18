@@ -12,10 +12,10 @@
     rvv##VCLASS##EM##_t vx, vy;                                                \
     rvvbool##MLEN##_t mask0;                                                   \
     rvvbool##MLEN##_t rv;                                                      \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
+    vx = rvv_le_##VCLASS##EM(x);                                                 \
+    vy = rvv_le_##VCLASS##EM(y);                                                 \
     mask0 = rvv_mclr_bool##MLEN ();                                            \
-    vy = rvvadd##VCLASS##EM##_mask (mask0, vy, vx, vy);                        \
+    vy = rvv_add_vv_##VCLASS##EM##_mask (mask0, vy, vx, vy);                   \
     * (rvv##VCLASS##EM##_t *) y = vy;                                          \
   }
 
