@@ -9,7 +9,7 @@
    the e and m value.  */
 #define VDIV(STYPE, VCLASS, EM, MLEN)                                          \
   void vdiv##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vy = vx / vy;                                                              \

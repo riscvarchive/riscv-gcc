@@ -9,9 +9,9 @@
    the e and m value.  */
 #define VREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
-    rvv##VCLASS##EMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy, vz;						\
-    rvvbool##MLEN##_t mask;						\
+    rvv_##VCLASS##EMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy, vz;						\
+    rvv_bool##MLEN##_t mask;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
@@ -26,9 +26,9 @@
   }
 #define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
-    rvv##VCLASS##EMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy, vz;						\
-    rvvbool##MLEN##_t mask;						\
+    rvv_##VCLASS##EMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy, vz;						\
+    rvv_bool##MLEN##_t mask;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
@@ -43,9 +43,9 @@
   }
 #define VFREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
-    rvv##VCLASS##EMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy, vz;						\
-    rvvbool##MLEN##_t mask;						\
+    rvv_##VCLASS##EMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy, vz;						\
+    rvv_bool##MLEN##_t mask;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\

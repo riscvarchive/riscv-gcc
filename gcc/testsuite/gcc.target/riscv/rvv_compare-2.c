@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VSLT(STYPE, VCLASS, EM, MLEN)                                          \
   void vlt##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {               \
-    rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvvbool##MLEN##_t mask;                                                    \
+    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    rvv_bool##MLEN##_t mask;                                                    \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \
@@ -22,8 +22,8 @@
 
 #define VSLTU(STYPE, VCLASS, EM, MLEN)                                         \
   void vltu##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {              \
-    rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvvbool##MLEN##_t mask;                                                    \
+    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    rvv_bool##MLEN##_t mask;                                                    \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \

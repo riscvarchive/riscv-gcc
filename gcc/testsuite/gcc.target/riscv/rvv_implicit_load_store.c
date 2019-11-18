@@ -8,7 +8,7 @@
    the e and m value.  */
 #define TEST(STYPE, VCLASS, EM)                                                \
   void vadd##VCLASS##EM(STYPE *x, STYPE *y) {                                  \
-    *(rvv##VCLASS##EM##_t *)y = *(rvv##VCLASS##EM##_t *)x;                     \
+    *(rvv_##VCLASS##EM##_t *)y = *(rvv_##VCLASS##EM##_t *)x;                     \
   }
 
 TEST(char, int, 8m1)

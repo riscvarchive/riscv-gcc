@@ -10,8 +10,8 @@
 #define VSLOADSTORE(STYPE, VCLASS, EM, MLEN)                                   \
   void vsloadstore##VCLASS##EM(size_t n, long stride, STYPE *x,                \
                                STYPE *y, STYPE z) {                            \
-    rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvvbool##MLEN##_t mask;                                                    \
+    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    rvv_bool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vx = rvv_lse_##VCLASS##EM##_mask(mask, vy, x, stride);                     \

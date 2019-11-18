@@ -9,22 +9,22 @@
    the e and m value.  */
 #define VRSUB(STYPE, VCLASS, EM, MLEN)                                         \
   void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = * (rvv##VCLASS##EM##_t *) x;                                          \
-    vy = * (rvv##VCLASS##EM##_t *) y;                                          \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
+    vx = * (rvv_##VCLASS##EM##_t *) x;                                          \
+    vy = * (rvv_##VCLASS##EM##_t *) y;                                          \
     vy = z - vy;                                                               \
-    * (rvv##VCLASS##EM##_t *) y = vy;                                          \
+    * (rvv_##VCLASS##EM##_t *) y = vy;                                          \
     vx = 1 - vx;                                                               \
-    * (rvv##VCLASS##EM##_t *) x = vx;                                          \
+    * (rvv_##VCLASS##EM##_t *) x = vx;                                          \
   }
 /* Same as above without the immediate for reverse subtract.  */
 #define VRSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                  \
   void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = * (rvv##VCLASS##EM##_t *) x;                                          \
-    vy = * (rvv##VCLASS##EM##_t *) y;                                          \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
+    vx = * (rvv_##VCLASS##EM##_t *) x;                                          \
+    vy = * (rvv_##VCLASS##EM##_t *) y;                                          \
     vy = z - vy;                                                               \
-    * (rvv##VCLASS##EM##_t *) y = vy;                                          \
+    * (rvv_##VCLASS##EM##_t *) y = vy;                                          \
   }
 
 

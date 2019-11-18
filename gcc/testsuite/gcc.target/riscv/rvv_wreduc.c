@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VWREDUC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y) {		\
-    rvv##VCLASS##WEMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy;						\
+    rvv_##VCLASS##WEMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_wredsum_wv_##VCLASS##EM (vx, vy);				\
@@ -19,8 +19,8 @@
 
 #define VWREDUCU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y) {		\
-    rvv##VCLASS##WEMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy;						\
+    rvv_##VCLASS##WEMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_wredsumu_wv_##VCLASS##EM (vx, vy);				\
@@ -29,8 +29,8 @@
 
 #define VFWREDUC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y) {		\
-    rvv##VCLASS##WEMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy;						\
+    rvv_##VCLASS##WEMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_fwredsum_wv_##VCLASS##EM (vx, vy);				\

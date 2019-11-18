@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VSUB(STYPE, VCLASS, EM, MLEN)                                          \
   void vsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    rvvbool##MLEN##_t mask;                                                    \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
+    rvv_bool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
@@ -23,8 +23,8 @@
 /* Same as above without the immediate sub.  */
 #define VSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                   \
   void vsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    rvvbool##MLEN##_t mask;                                                    \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
+    rvv_bool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
@@ -35,8 +35,8 @@
 /* Same for reverse subtract.  */
 #define VRSUB(STYPE, VCLASS, EM, MLEN)                                         \
   void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    rvvbool##MLEN##_t mask;                                                    \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
+    rvv_bool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
@@ -48,9 +48,9 @@
 /* Same as above without the immediate for reverse subtract.  */
 #define VRSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                  \
   void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
-    rvvbool##MLEN##_t mask;                                                    \
+    rvv_bool##MLEN##_t mask;                                                    \
     mask = rvv_mset_bool##MLEN ();                                             \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
     vy = rvv_rsub_vs_##VCLASS##EM##_mask (mask, vx, vy, z);                    \

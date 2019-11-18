@@ -7,17 +7,17 @@ void sub1(size_t n, const float*x, float*y, int*z, int a, int b)
 {
     size_t l;
 
-    rvvfloat32m8_t vx, vy;
-    rvvint32m8_t vz;
+    rvv_float32m8_t vx, vy;
+    rvv_int32m8_t vz;
 
     for ( ; (l = rvvsetvl32m8(n)) > 0; n -= l)
     {
-        vx = * (rvvfloat32m8_t *) x;
+        vx = * (rvv_float32m8_t *) x;
         x += l;
-        vy = * (rvvfloat32m8_t *) y;
+        vy = * (rvv_float32m8_t *) y;
         y += l;
         vz = (vx < vy ? a : b);
-        * (rvvint32m8_t *) z = vz;
+        * (rvv_int32m8_t *) z = vz;
         z += l;
     }
 }
@@ -26,17 +26,17 @@ void sub2(size_t n, const float*x, float*y, float *z)
 {
     size_t l;
 
-    rvvfloat32m8_t vx, vy;
-    rvvfloat32m8_t vz;
+    rvv_float32m8_t vx, vy;
+    rvv_float32m8_t vz;
 
     for ( ; (l = rvvsetvl32m8(n)) > 0; n -= l)
     {
-        vx = * (rvvfloat32m8_t *) x;
+        vx = * (rvv_float32m8_t *) x;
         x += l;
-        vy = * (rvvfloat32m8_t *) y;
+        vy = * (rvv_float32m8_t *) y;
         y += l;
         vz = (vx < vy ? vx : vy);
-        * (rvvfloat32m8_t *) z = vz;
+        * (rvv_float32m8_t *) z = vz;
         z += l;
     }
 }
@@ -45,17 +45,17 @@ void sub3(size_t n, const int*x, int*y, int *z)
 {
     size_t l;
 
-    rvvint32m8_t vx, vy;
-    rvvint32m8_t vz;
+    rvv_int32m8_t vx, vy;
+    rvv_int32m8_t vz;
 
     for ( ; (l = rvvsetvl32m8(n)) > 0; n -= l)
     {
-        vx = * (rvvint32m8_t *) x;
+        vx = * (rvv_int32m8_t *) x;
         x += l;
-        vy = * (rvvint32m8_t *) y;
+        vy = * (rvv_int32m8_t *) y;
         y += l;
         vz = (vx < vy ? vx : vy);
-        * (rvvint32m8_t *) z = vz;
+        * (rvv_int32m8_t *) z = vz;
         z += l;
     }
 }
@@ -64,17 +64,17 @@ void sub4(size_t n, const int*x, int*y, float *z, float a, float b)
 {
     size_t l;
 
-    rvvint32m8_t vx, vy;
-    rvvfloat32m8_t vz;
+    rvv_int32m8_t vx, vy;
+    rvv_float32m8_t vz;
 
     for ( ; (l = rvvsetvl32m8(n)) > 0; n -= l)
     {
-        vx = * (rvvint32m8_t *) x;
+        vx = * (rvv_int32m8_t *) x;
         x += l;
-        vy = * (rvvint32m8_t *) y;
+        vy = * (rvv_int32m8_t *) y;
         y += l;
         vz = (vx < vy ? a : b);
-        * (rvvfloat32m8_t *) z = vz;
+        * (rvv_float32m8_t *) z = vz;
         z += l;
     }
 }

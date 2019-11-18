@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VPOPC(STYPE, VCLASS, EM, MLEN)                                         \
   long vpopc##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y) {                    \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    rvvbool##MLEN##_t mask1;                                                   \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
+    rvv_bool##MLEN##_t mask1;                                                   \
     long rv;                                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
@@ -19,8 +19,8 @@
     return rv;                                                                 \
   }                                                                            \
   long vpopc##VCLASS##EM##2_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {     \
-    rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvvbool##MLEN##_t mask1, mask2;                                            \
+    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    rvv_bool##MLEN##_t mask1, mask2;                                            \
     long rv;                                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
@@ -31,8 +31,8 @@
     return rv;                                                                 \
   }                                                                            \
   long vpopc##VCLASS##EM##2_mask_opt(size_t n, STYPE *x, STYPE *y, STYPE *z) { \
-    rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvvbool##MLEN##_t mask1, mask2, mask3;                                     \
+    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    rvv_bool##MLEN##_t mask1, mask2, mask3;                                     \
     long rv;                                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \

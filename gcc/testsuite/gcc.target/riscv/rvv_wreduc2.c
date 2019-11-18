@@ -9,9 +9,9 @@
    the e and m value.  */
 #define VWREDUC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
-    rvv##VCLASS##WEMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy, vz;						\
-    rvvbool##MLEN##_t mask;						\
+    rvv_##VCLASS##WEMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy, vz;						\
+    rvv_bool##MLEN##_t mask;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
@@ -21,9 +21,9 @@
   }
 #define VWREDUCU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
-    rvv##VCLASS##WEMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy, vz;						\
-    rvvbool##MLEN##_t mask;						\
+    rvv_##VCLASS##WEMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy, vz;						\
+    rvv_bool##MLEN##_t mask;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
@@ -33,9 +33,9 @@
   }
 #define VFWREDUC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
-    rvv##VCLASS##WEMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy, vz;						\
-    rvvbool##MLEN##_t mask;						\
+    rvv_##VCLASS##WEMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy, vz;						\
+    rvv_bool##MLEN##_t mask;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\

@@ -351,7 +351,7 @@
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       STYPE *y, STYPE z)\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vy = rvv_##OP##_vv_##VCLASS##EM (vx, vy);			\
@@ -363,7 +363,7 @@
   void rvv##OP##VCLASS##EM##_v_nomask_operator_test(		\
 	 size_t n, STYPE *x, STYPE *y, STYPE z)			\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vy = vx OPERATOR vy;					\
@@ -375,8 +375,8 @@
   void rvv##OP##VCLASS##EM##_v_mask_builtin_test(		\
 	 size_t n, STYPE *x, STYPE *y, STYPE z)			\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
-    rvvbool##MLEN##_t mask;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
+    rvv_bool##MLEN##_t mask;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_mset_bool##MLEN ();				\
@@ -388,7 +388,7 @@
   void rvv##OP##VCLASS##EM##_s_nomask_builtin_test(size_t n, STYPE *x,\
 					       STYPE *y, STYPE z)\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vy = rvv_##OP##_vs_##VCLASS##EM (vx, z);			\
@@ -400,7 +400,7 @@
   void rvv##OP##VCLASS##EM##_s_nomask_operator_test(size_t n, STYPE *x,\
 						STYPE *y, STYPE z)\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vy = vx OPERATOR z;						\
@@ -412,8 +412,8 @@
   void rvv##OP##VCLASS##EM##_s_mask_builtin_test(size_t n, STYPE *x,\
 					     STYPE *y, STYPE z)	\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
-    rvvbool##MLEN##_t mask;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
+    rvv_bool##MLEN##_t mask;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_mset_bool##MLEN ();				\
@@ -426,7 +426,7 @@
   void rvv##OP##VCLASS##EM##_i_nomask_builtin_test(size_t n, STYPE *x,\
 					       STYPE *y, STYPE z)\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vy = rvv_##OP##_vs_##VCLASS##EM (vx, 11);			\
@@ -438,7 +438,7 @@
   void rvv##OP##VCLASS##EM##_i_nomask_operator_test(size_t n, STYPE *x,\
 					        STYPE *y, STYPE z)\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vy = vx OPERATOR 11;					\
@@ -450,8 +450,8 @@
   void rvv##OP##VCLASS##EM##_i_mask_builtin_test(size_t n, STYPE *x,\
 					     STYPE *y, STYPE z)	\
   {								\
-    rvv##VCLASS##EM##_t vx, vy;					\
-    rvvbool##MLEN##_t mask;					\
+    rvv_##VCLASS##EM##_t vx, vy;					\
+    rvv_bool##MLEN##_t mask;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_mset_bool##MLEN ();				\

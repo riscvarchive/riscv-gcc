@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VMAND(STYPE, VCLASS, EM, MLEN)                                         \
   void vmand##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {             \
-    rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvvbool##MLEN##_t mask1, mask2, mask3;                                     \
+    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    rvv_bool##MLEN##_t mask1, mask2, mask3;                                     \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
     vz = rvv_le_##VCLASS##EM(z);                                                 \
@@ -21,8 +21,8 @@
     rvv_se_##VCLASS##EM(x, vx);                                                  \
   }                                                                            \
   void vmand##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {          \
-    rvv##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvvbool##MLEN##_t mask1, mask2, mask3;                                     \
+    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    rvv_bool##MLEN##_t mask1, mask2, mask3;                                     \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
     vz = rvv_le_##VCLASS##EM(z);                                                 \

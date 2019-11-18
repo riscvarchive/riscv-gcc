@@ -9,7 +9,7 @@
    the e and m value.  */
 #define VMAXMIN(STYPE, VCLASS, EM, MLEN)                                       \
   void vmaxmin##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {            \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
     vy = rvv_max_vv_##VCLASS##EM (vx, vy);                                     \

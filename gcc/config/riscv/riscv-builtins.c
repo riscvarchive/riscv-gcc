@@ -954,134 +954,134 @@ riscv_init_builtins (void)
       _SCALAR_INT_ITERATOR(DEFINE_SCALAR_PTR_TYPE_NODE);
 
       rvvint8m1_t_node
-	= riscv_vector_type ("rvvint8m1_t", intQI_type_node, VNx16QImode);
+	= riscv_vector_type ("rvv_int8m1_t", intQI_type_node, VNx16QImode);
       rvvint8m2_t_node
-	= riscv_vector_type ("rvvint8m2_t", intQI_type_node, VNx32QImode);
+	= riscv_vector_type ("rvv_int8m2_t", intQI_type_node, VNx32QImode);
       rvvint8m4_t_node
-	= riscv_vector_type ("rvvint8m4_t", intQI_type_node, VNx64QImode);
+	= riscv_vector_type ("rvv_int8m4_t", intQI_type_node, VNx64QImode);
       rvvint8m8_t_node
-	= riscv_vector_type ("rvvint8m8_t", intQI_type_node, VNx128QImode);
+	= riscv_vector_type ("rvv_int8m8_t", intQI_type_node, VNx128QImode);
 
       rvvint16m1_t_node
-	= riscv_vector_type ("rvvint16m1_t", intHI_type_node, VNx8HImode);
+	= riscv_vector_type ("rvv_int16m1_t", intHI_type_node, VNx8HImode);
       rvvint16m2_t_node
-	= riscv_vector_type ("rvvint16m2_t", intHI_type_node, VNx16HImode);
+	= riscv_vector_type ("rvv_int16m2_t", intHI_type_node, VNx16HImode);
       rvvint16m4_t_node
-	= riscv_vector_type ("rvvint16m4_t", intHI_type_node, VNx32HImode);
+	= riscv_vector_type ("rvv_int16m4_t", intHI_type_node, VNx32HImode);
       rvvint16m8_t_node
-	= riscv_vector_type ("rvvint16m8_t", intHI_type_node, VNx64HImode);
+	= riscv_vector_type ("rvv_int16m8_t", intHI_type_node, VNx64HImode);
 
       rvvint32m1_t_node
-	= riscv_vector_type ("rvvint32m1_t", intSI_type_node, VNx4SImode);
+	= riscv_vector_type ("rvv_int32m1_t", intSI_type_node, VNx4SImode);
       rvvint32m2_t_node
-	= riscv_vector_type ("rvvint32m2_t", intSI_type_node, VNx8SImode);
+	= riscv_vector_type ("rvv_int32m2_t", intSI_type_node, VNx8SImode);
       rvvint32m4_t_node
-	= riscv_vector_type ("rvvint32m4_t", intSI_type_node, VNx16SImode);
+	= riscv_vector_type ("rvv_int32m4_t", intSI_type_node, VNx16SImode);
       rvvint32m8_t_node
-	= riscv_vector_type ("rvvint32m8_t", intSI_type_node, VNx32SImode);
+	= riscv_vector_type ("rvv_int32m8_t", intSI_type_node, VNx32SImode);
 
       rvvint64m1_t_node
-	= riscv_vector_type ("rvvint64m1_t", intDI_type_node, VNx2DImode);
+	= riscv_vector_type ("rvv_int64m1_t", intDI_type_node, VNx2DImode);
       rvvint64m2_t_node
-	= riscv_vector_type ("rvvint64m2_t", intDI_type_node, VNx4DImode);
+	= riscv_vector_type ("rvv_int64m2_t", intDI_type_node, VNx4DImode);
       rvvint64m4_t_node
-	= riscv_vector_type ("rvvint64m4_t", intDI_type_node, VNx8DImode);
+	= riscv_vector_type ("rvv_int64m4_t", intDI_type_node, VNx8DImode);
       rvvint64m8_t_node
-	= riscv_vector_type ("rvvint64m8_t", intDI_type_node, VNx16DImode);
+	= riscv_vector_type ("rvv_int64m8_t", intDI_type_node, VNx16DImode);
 
       rvvuint8m1_t_node
-	= riscv_vector_type ("rvvuint8m1_t", unsigned_intQI_type_node,
+	= riscv_vector_type ("rvv_uint8m1_t", unsigned_intQI_type_node,
 			     VNx16QImode);
       rvvuint8m2_t_node
-	= riscv_vector_type ("rvvuint8m2_t", unsigned_intQI_type_node,
+	= riscv_vector_type ("rvv_uint8m2_t", unsigned_intQI_type_node,
 			     VNx32QImode);
       rvvuint8m4_t_node
-	= riscv_vector_type ("rvvuint8m4_t", unsigned_intQI_type_node,
+	= riscv_vector_type ("rvv_uint8m4_t", unsigned_intQI_type_node,
 			     VNx64QImode);
       rvvuint8m8_t_node
-	= riscv_vector_type ("rvvuint8m8_t", unsigned_intQI_type_node,
+	= riscv_vector_type ("rvv_uint8m8_t", unsigned_intQI_type_node,
 			     VNx128QImode);
 
       rvvuint16m1_t_node
-	= riscv_vector_type ("rvvuint16m1_t", unsigned_intHI_type_node,
+	= riscv_vector_type ("rvv_uint16m1_t", unsigned_intHI_type_node,
 			     VNx8HImode);
       rvvuint16m2_t_node
-	= riscv_vector_type ("rvvuint16m2_t", unsigned_intHI_type_node,
+	= riscv_vector_type ("rvv_uint16m2_t", unsigned_intHI_type_node,
 			     VNx16HImode);
       rvvuint16m4_t_node
-	= riscv_vector_type ("rvvuint16m4_t", unsigned_intHI_type_node,
+	= riscv_vector_type ("rvv_uint16m4_t", unsigned_intHI_type_node,
 			     VNx32HImode);
       rvvuint16m8_t_node
-	= riscv_vector_type ("rvvuint16m8_t", unsigned_intHI_type_node,
+	= riscv_vector_type ("rvv_uint16m8_t", unsigned_intHI_type_node,
 			     VNx64HImode);
 
       rvvuint32m1_t_node
-	= riscv_vector_type ("rvvuint32m1_t", unsigned_intSI_type_node,
+	= riscv_vector_type ("rvv_uint32m1_t", unsigned_intSI_type_node,
 			     VNx4SImode);
       rvvuint32m2_t_node
-	= riscv_vector_type ("rvvuint32m2_t", unsigned_intSI_type_node,
+	= riscv_vector_type ("rvv_uint32m2_t", unsigned_intSI_type_node,
 			     VNx8SImode);
       rvvuint32m4_t_node
-	= riscv_vector_type ("rvvuint32m4_t", unsigned_intSI_type_node,
+	= riscv_vector_type ("rvv_uint32m4_t", unsigned_intSI_type_node,
 			     VNx16SImode);
       rvvuint32m8_t_node
-	= riscv_vector_type ("rvvuint32m8_t", unsigned_intSI_type_node,
+	= riscv_vector_type ("rvv_uint32m8_t", unsigned_intSI_type_node,
 			     VNx32SImode);
 
       rvvuint64m1_t_node
-	= riscv_vector_type ("rvvuint64m1_t", unsigned_intDI_type_node,
+	= riscv_vector_type ("rvv_uint64m1_t", unsigned_intDI_type_node,
 			     VNx2DImode);
       rvvuint64m2_t_node
-	= riscv_vector_type ("rvvuint64m2_t", unsigned_intDI_type_node,
+	= riscv_vector_type ("rvv_uint64m2_t", unsigned_intDI_type_node,
 			     VNx4DImode);
       rvvuint64m4_t_node
-	= riscv_vector_type ("rvvuint64m4_t", unsigned_intDI_type_node,
+	= riscv_vector_type ("rvv_uint64m4_t", unsigned_intDI_type_node,
 			     VNx8DImode);
       rvvuint64m8_t_node
-	= riscv_vector_type ("rvvuint64m8_t", unsigned_intDI_type_node,
+	= riscv_vector_type ("rvv_uint64m8_t", unsigned_intDI_type_node,
 			     VNx16DImode);
 
       rvvfloat16m1_t_node
-	= riscv_vector_type ("rvvfloat16m1_t", float16_type_node, VNx8HFmode);
+	= riscv_vector_type ("rvv_float16m1_t", float16_type_node, VNx8HFmode);
       rvvfloat16m2_t_node
-	= riscv_vector_type ("rvvfloat16m2_t", float16_type_node, VNx16HFmode);
+	= riscv_vector_type ("rvv_float16m2_t", float16_type_node, VNx16HFmode);
       rvvfloat16m4_t_node
-	= riscv_vector_type ("rvvfloat16m4_t", float16_type_node, VNx32HFmode);
+	= riscv_vector_type ("rvv_float16m4_t", float16_type_node, VNx32HFmode);
       rvvfloat16m8_t_node
-	= riscv_vector_type ("rvvfloat16m8_t", float16_type_node, VNx64HFmode);
+	= riscv_vector_type ("rvv_float16m8_t", float16_type_node, VNx64HFmode);
 
       rvvfloat32m1_t_node
-	= riscv_vector_type ("rvvfloat32m1_t", float_type_node, VNx4SFmode);
+	= riscv_vector_type ("rvv_float32m1_t", float_type_node, VNx4SFmode);
       rvvfloat32m2_t_node
-	= riscv_vector_type ("rvvfloat32m2_t", float_type_node, VNx8SFmode);
+	= riscv_vector_type ("rvv_float32m2_t", float_type_node, VNx8SFmode);
       rvvfloat32m4_t_node
-	= riscv_vector_type ("rvvfloat32m4_t", float_type_node, VNx16SFmode);
+	= riscv_vector_type ("rvv_float32m4_t", float_type_node, VNx16SFmode);
       rvvfloat32m8_t_node
-	= riscv_vector_type ("rvvfloat32m8_t", float_type_node, VNx32SFmode);
+	= riscv_vector_type ("rvv_float32m8_t", float_type_node, VNx32SFmode);
 
       rvvfloat64m1_t_node
-	= riscv_vector_type ("rvvfloat64m1_t", double_type_node, VNx2DFmode);
+	= riscv_vector_type ("rvv_float64m1_t", double_type_node, VNx2DFmode);
       rvvfloat64m2_t_node
-	= riscv_vector_type ("rvvfloat64m2_t", double_type_node, VNx4DFmode);
+	= riscv_vector_type ("rvv_float64m2_t", double_type_node, VNx4DFmode);
       rvvfloat64m4_t_node
-	= riscv_vector_type ("rvvfloat64m4_t", double_type_node, VNx8DFmode);
+	= riscv_vector_type ("rvv_float64m4_t", double_type_node, VNx8DFmode);
       rvvfloat64m8_t_node
-	= riscv_vector_type ("rvvfloat64m8_t", double_type_node, VNx16DFmode);
+	= riscv_vector_type ("rvv_float64m8_t", double_type_node, VNx16DFmode);
 
       rvvbool1_t_node
-	= riscv_vector_type ("rvvbool1_t", boolean_type_node, VNx128BImode);
+	= riscv_vector_type ("rvv_bool1_t", boolean_type_node, VNx128BImode);
       rvvbool2_t_node
-	= riscv_vector_type ("rvvbool2_t", boolean_type_node, VNx64BImode);
+	= riscv_vector_type ("rvv_bool2_t", boolean_type_node, VNx64BImode);
       rvvbool4_t_node
-	= riscv_vector_type ("rvvbool4_t", boolean_type_node, VNx32BImode);
+	= riscv_vector_type ("rvv_bool4_t", boolean_type_node, VNx32BImode);
       rvvbool8_t_node
-	= riscv_vector_type ("rvvbool8_t", boolean_type_node, VNx16BImode);
+	= riscv_vector_type ("rvv_bool8_t", boolean_type_node, VNx16BImode);
       rvvbool16_t_node
-	= riscv_vector_type ("rvvbool16_t", boolean_type_node, VNx8BImode);
+	= riscv_vector_type ("rvv_bool16_t", boolean_type_node, VNx8BImode);
       rvvbool32_t_node
-	= riscv_vector_type ("rvvbool32_t", boolean_type_node, VNx4BImode);
+	= riscv_vector_type ("rvv_bool32_t", boolean_type_node, VNx4BImode);
       rvvbool64_t_node
-	= riscv_vector_type ("rvvbool64_t", boolean_type_node, VNx2BImode);
+	= riscv_vector_type ("rvv_bool64_t", boolean_type_node, VNx2BImode);
 
     }
 

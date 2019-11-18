@@ -9,14 +9,14 @@
    the e and m value.  */
 #define VSET(STYPE, VCLASS, EM, MLEN)                                          \
   void vsbf##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {                        \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    rvvbool##MLEN##_t mask0;                                                   \
-    rvvbool##MLEN##_t rv;                                                      \
+    rvv_##VCLASS##EM##_t vx, vy;                                                \
+    rvv_bool##MLEN##_t mask0;                                                   \
+    rvv_bool##MLEN##_t rv;                                                      \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
     mask0 = rvv_mset_bool##MLEN ();                                            \
     vy = rvv_add_vv_##VCLASS##EM##_mask (mask0, vy, vx, vy);                   \
-    * (rvv##VCLASS##EM##_t *) y = vy;                                          \
+    * (rvv_##VCLASS##EM##_t *) y = vy;                                          \
   }
 
 RVV_INT_TEST(VSET)

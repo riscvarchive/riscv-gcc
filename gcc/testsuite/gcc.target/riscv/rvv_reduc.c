@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    rvv##VCLASS##EMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy;						\
+    rvv_##VCLASS##EMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
@@ -23,8 +23,8 @@
   }
 #define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    rvv##VCLASS##EMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy;						\
+    rvv_##VCLASS##EMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
@@ -38,8 +38,8 @@
 
 #define VFREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    rvv##VCLASS##EMONE##_t vx;						\
-    rvv##VCLASS##EM##_t vy;						\
+    rvv_##VCLASS##EMONE##_t vx;						\
+    rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_fredsum_vv_##VCLASS##EM (vx, vy);				\
