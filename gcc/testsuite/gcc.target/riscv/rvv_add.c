@@ -5,34 +5,9 @@
 #include <stddef.h>
 #include "rvv-common.h"
 
-/* Takes the scalar type STYPE, vector class VCLASS (int or float), and
-   the e and m value.  */
-#define VADD(STYPE, VCLASS, EM, MLEN)                                          \
-  void vadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = * (rvv##VCLASS##EM##_t *) x;                                          \
-    vy = * (rvv##VCLASS##EM##_t *) y;                                          \
-    vy = vx + vy;                                                              \
-    vy = vy + z;                                                               \
-    * (rvv##VCLASS##EM##_t *) y = vy;                                          \
-    vx = vx + 1;                                                               \
-    * (rvv##VCLASS##EM##_t *) x = vx;                                          \
-  }
-/* Same as above without the immediate add.  */
-#define VADD_NO_IMM(STYPE, VCLASS, EM, MLEN)                                   \
-  void vadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = * (rvv##VCLASS##EM##_t *) x;                                          \
-    vy = * (rvv##VCLASS##EM##_t *) y;                                          \
-    vy = vx + vy;                                                              \
-    vy = vy + z;                                                               \
-    * (rvv##VCLASS##EM##_t *) y = vy;                                          \
-  }
-
-
-RVV_INT_TEST(VADD)
-RVV_UINT_TEST(VADD)
-RVV_FLOAT_TEST(VADD_NO_IMM)
+RVV_INT_TEST_ARG(RVV_BIN_OPERATOR_VEC_SCALAR_IMM_TEST, add, +)
+RVV_UINT_TEST_ARG(RVV_BIN_OPERATOR_VEC_SCALAR_IMM_TEST, add, +)
+RVV_FLOAT_TEST_ARG(RVV_BIN_OPERATOR_VEC_SCALAR_TEST, add, +)
 
 /* { dg-final { scan-assembler-times "vadd.vv" 32 } } */
 /* { dg-final { scan-assembler-times "vadd.vx" 32 } } */
