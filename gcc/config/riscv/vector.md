@@ -786,7 +786,7 @@
 		       (match_operand:VFMODES 4 "register_operand"))
 		     (match_operand:VFMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
 {
 })
 
@@ -799,7 +799,7 @@
 	    (match_operand:VFMODES 4 "register_operand" "vr"))
 	  (match_operand:VFMODES 2 "register_operand" "0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "vf<optab>.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -839,7 +839,7 @@
 		       (match_operand:VFMODES 3 "register_operand"))
 		     (match_operand:VFMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
 {
 })
 
@@ -893,7 +893,7 @@
 			 (match_operand:<VSUBMODE> 4 "register_operand")))
 		     (match_operand:VFMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
 {
 })
 
@@ -907,7 +907,7 @@
 		(match_operand:<VSUBMODE> 4 "register_operand" "f")))
 	  (match_operand:VFMODES 2 "register_operand" "0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "vf<optab>.vf\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -947,7 +947,7 @@
 		       (match_operand:VFMODES 3 "register_operand"))
 		     (match_operand:VFMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
 {
 })
 
@@ -961,7 +961,7 @@
 	      (match_operand:VFMODES 3 "register_operand" "vr"))
 	  (match_operand:VFMODES 2 "register_operand" "0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "vfr<optab>.vf\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
