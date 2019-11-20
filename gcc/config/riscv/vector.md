@@ -218,6 +218,9 @@
 ;; Non-commutative operation valid for floating-point.
 (define_code_iterator any_fnoncomop [minus div])
 
+;; All operation valid for floating-point.
+(define_code_iterator any_fop [plus mult smax smin minus div])
+
 ;; <reduc> expands to the name of the reduction that implements a
 ;; particular code.
 (define_code_attr reduc [(plus "sum") (umax "maxu") (smax "max") (umin "minu")
@@ -754,7 +757,7 @@
 (define_expand "<optab><mode>3"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VFMODES 0 "register_operand")
-		   (any_fcomop:VFMODES
+		   (any_fop:VFMODES
 		     (match_operand:VFMODES 1 "register_operand")
 		     (match_operand:VFMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
@@ -764,7 +767,7 @@
 
 (define_insn "*<optab><mode>3_nosetvl"
   [(set (match_operand:VFMODES 0 "register_operand" "=vr")
-	(any_fcomop:VFMODES
+	(any_fop:VFMODES
 	  (match_operand:VFMODES 1 "register_operand" "vr")
 	  (match_operand:VFMODES 2 "register_operand" "vr")))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
@@ -778,7 +781,7 @@
    (parallel [(set (match_operand:VFMODES 0 "register_operand")
 		   (if_then_else:VFMODES
 		     (match_operand:<VCMPEQUIV> 1 "register_operand")
-		     (any_fcomop:VFMODES
+		     (any_fop:VFMODES
 		       (match_operand:VFMODES 3 "register_operand")
 		       (match_operand:VFMODES 4 "register_operand"))
 		     (match_operand:VFMODES 2 "register_operand")))
@@ -791,7 +794,7 @@
   [(set (match_operand:VFMODES 0 "register_operand" "=vr")
 	(if_then_else:VFMODES
 	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
-	  (any_fcomop:VFMODES
+	  (any_fop:VFMODES
 	    (match_operand:VFMODES 3 "register_operand" "vr")
 	    (match_operand:VFMODES 4 "register_operand" "vr"))
 	  (match_operand:VFMODES 2 "register_operand" "0")))
@@ -850,58 +853,8 @@
 	      (match_operand:VFMODES 3 "register_operand" "vr"))
 	  (match_operand:VFMODES 2 "register_operand" "0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "vf<optab>.vf\t%0,%3,%4,%1.t"
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
-
-(define_expand "<optab><mode>3"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_operand:VFMODES 0 "register_operand")
-		   (any_fnoncomop:VFMODES
-		     (match_operand:VFMODES 1 "register_operand")
-		     (match_operand:VFMODES 2 "register_operand")))
-	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR && TARGET_HARD_FLOAT"
-{
-})
-
-(define_insn "*<optab><mode>3_nosetvl"
-  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
-	(any_fnoncomop:VFMODES
-	  (match_operand:VFMODES 1 "register_operand" "vr")
-	  (match_operand:VFMODES 2 "register_operand" "vr")))
-   (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vf<optab>.vv\t%0,%1,%2"
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
-
-(define_expand "<optab><mode>3_mask"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_operand:VFMODES 0 "register_operand")
-		   (if_then_else:VFMODES
-		     (match_operand:<VCMPEQUIV> 1 "register_operand")
-		     (any_fnoncomop:VFMODES
-		       (match_operand:VFMODES 3 "register_operand")
-		       (match_operand:VFMODES 4 "register_operand"))
-		     (match_operand:VFMODES 2 "register_operand")))
-	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR"
-{
-})
-
-(define_insn "<optab><mode>3_mask_nosetvl"
-  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
-	(if_then_else:VFMODES
-	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
-	  (any_fnoncomop:VFMODES
-	    (match_operand:VFMODES 3 "register_operand" "vr")
-	    (match_operand:VFMODES 4 "register_operand" "vr"))
-	  (match_operand:VFMODES 2 "register_operand" "0")))
-    (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR"
-  "vf<optab>.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
