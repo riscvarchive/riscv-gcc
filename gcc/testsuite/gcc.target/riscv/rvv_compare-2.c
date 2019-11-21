@@ -51,10 +51,24 @@
   VCOMPARE_VV (STYPE, VCLASS, EM, MLEN, OP)			\
   VCOMPARE_VX (STYPE, VCLASS, EM, MLEN, OP)
 
+#define TEST_COMPARE_VX_VI(STYPE, VCLASS, EM, MLEN, OP)		\
+  VCOMPARE_VX (STYPE, VCLASS, EM, MLEN, OP)			\
+  VCOMPARE_VI (STYPE, VCLASS, EM, MLEN, OP)
+
 #define TEST_COMPARE_VV_VX_VI(STYPE, VCLASS, EM, MLEN, OP)	\
   TEST_COMPARE_VV_VX(STYPE, VCLASS, EM, MLEN, OP)		\
   VCOMPARE_VI (STYPE, VCLASS, EM, MLEN, OP)
 
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, seq)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, seq)
+/* { dg-final { scan-assembler-times "vmseq.vv" 32 } } */
+/* { dg-final { scan-assembler-times "vmseq.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vmseq.vi" 32 } } */
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sne)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sne)
+/* { dg-final { scan-assembler-times "vmsne.vv" 32 } } */
+/* { dg-final { scan-assembler-times "vmsne.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vmsne.vi" 32 } } */
 RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX, slt)
 /* { dg-final { scan-assembler-times "vmslt.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmslt.vx" 16 } } */
@@ -69,3 +83,9 @@ RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sleu)
 /* { dg-final { scan-assembler-times "vmsleu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsleu.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsleu.vi" 16 } } */
+RVV_INT_TEST_ARG(TEST_COMPARE_VX_VI, sgt)
+/* { dg-final { scan-assembler-times "vmsgt.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vmsgt.vi" 16 } } */
+RVV_UINT_TEST_ARG(TEST_COMPARE_VX_VI, sgtu)
+/* { dg-final { scan-assembler-times "vmsgtu.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vmsgtu.vi" 16 } } */

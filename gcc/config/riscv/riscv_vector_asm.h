@@ -380,9 +380,12 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, rem, remu)
   _RVV_ASM_INT_CMP_VV(SEW, LMUL, MLEN, T, OP, OPU)		\
   _RVV_ASM_INT_CMP_VXI(SEW, LMUL, MLEN, T, OP, OPU)
 
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, eq, eq)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ne, ne)
 /* vv version of lt/ltu implemented in .md.  */
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_VX, lt, ltu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, le, leu)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_VXI, gt, gtu)
 
 /* Template function for widening integer vector-vector operation.  */
 #define _RVV_ASM_WINT_BIN_OP_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
