@@ -1538,6 +1538,14 @@
   operands[1] = gen_const_vec_duplicate (<MODE>mode, const1_rtx);
 })
 
+(define_insn "not<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(not:VMASKMODES (match_operand:VMASKMODES 1 "register_operand" "vr")))]
+  "TARGET_VECTOR"
+  "vmnot.m\t%0,%1"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
 ;; Vector Mask-Register Logical Instructions
 
 (define_insn "and<mode>3"

@@ -700,10 +700,13 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE,					\
 		vector),
 
-#define MASK_UNARY_BUILTINS(MLEN, N, OP)				\
+#define UNMAKED_MASK_UNARY_BUILTINS(MLEN, N, OP)			\
   DIRECT_NAMED (OP##vnx##N##bi, v##OP##bool##MLEN,			\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN,			\
 		vector),						\
+
+#define MASK_UNARY_BUILTINS(MLEN, N, OP)				\
+  UNMAKED_MASK_UNARY_BUILTINS(MLEN, N, OP)				\
   DIRECT_NAMED (OP##vnx##N##bi_mask, v##OP##bool##MLEN##_mask,		\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VB##MLEN,	\
 		vector),						\
@@ -806,6 +809,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, clr)
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, set)
   _RVV_MASK_ITERATOR_ARG (MASK_UNARY_BUILTINS, sbf)
+  _RVV_MASK_ITERATOR_ARG (UNMAKED_MASK_UNARY_BUILTINS, not)
   _RVV_MASK_ITERATOR_ARG (MASK_LOGICAL_BUILTINS, and)
   _RVV_MASK_ITERATOR_ARG (MASK_SCALAR_UNARY_BUILTINS, popc)
 
