@@ -240,6 +240,12 @@
 ;; "o" when doing an ordered operation.
 (define_int_attr o [(UNSPEC_REDUC "") (UNSPEC_ORDERED_REDUC "o")])
 
+;; Iterator and attributes for misc mask instructions.
+(define_int_iterator MISC_MASK_OP [UNSPEC_SBF UNSPEC_SIF UNSPEC_SOF])
+
+(define_int_attr misc_maskop [(UNSPEC_SBF "sbf") (UNSPEC_SIF "sif")
+			      (UNSPEC_SOF "sof")])
+
 ;; Vsetvl instructions.
 
 ;; These use VIMODES because only the SEW and LMUL matter.  The int/float
@@ -1618,26 +1624,86 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
-(define_insn "sbf<mode>"
-  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
-	(unspec:VMASKMODES
+(define_insn "first<VMASKMODES:mode>2_<P:mode>"
+  [(set (match_operand:P 0 "register_operand" "=r")
+	(unspec:P
 	  [(match_operand:VMASKMODES 1 "register_operand" "vr")]
-	  UNSPEC_SBF))]
+	  UNSPEC_FIRST))]
  "TARGET_VECTOR"
- "vmsbf.m\t%0,%1"
+ "vfirst.m\t%0,%1"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
-(define_insn "sbf<mode>_mask"
+(define_insn "first<VMASKMODES:mode>2_<P:mode>_mask"
+  [(set (match_operand:P 0 "register_operand" "=r")
+	(unspec:P
+	  [(match_operand:VMASKMODES 1 "register_operand" "vm")
+	   (match_operand:VMASKMODES 2 "register_operand" "vr")]
+	  UNSPEC_FIRST))]
+ "TARGET_VECTOR"
+ "vfirst.m\t%0,%2,%1.t"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "iota<mode>2"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(unspec:VIMODES
+	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vr")]
+	  UNSPEC_IOTA))]
+ "TARGET_VECTOR"
+ "viota.m\t%0,%1"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "iota<mode>2_mask"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(unspec:VIMODES
+	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vr")]
+	  UNSPEC_FIRST))]
+ "TARGET_VECTOR"
+ "viota.m\t%0,%2,%1.t"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "vid<mode>"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(unspec:VIMODES [(const_int 0)] UNSPEC_VID))]
+ "TARGET_VECTOR"
+ "vid.v\t%0"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "vid<mode>_mask"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(unspec:VIMODES
+	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")]
+	  UNSPEC_VID))]
+ "TARGET_VECTOR"
+ "vid.v\t%0,%1.t"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "<misc_maskop><mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(unspec:VMASKMODES
+	  [(match_operand:VMASKMODES 1 "register_operand" "vr")]
+	  MISC_MASK_OP))]
+ "TARGET_VECTOR"
+ "vm<misc_maskop>.m\t%0,%1"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "<misc_maskop><mode>_mask"
   [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
 	(if_then_else:VMASKMODES
 	  (match_operand:VMASKMODES 1 "register_operand" "vm")
 	  (unspec:VMASKMODES
 	    [(match_operand:VMASKMODES 3 "register_operand" "vr")]
-	    UNSPEC_SBF)
+	    MISC_MASK_OP)
 	  (match_operand:VMASKMODES 2 "register_operand" "0")))]
  "TARGET_VECTOR"
- "vmsbf.m\t%0,%3,%1.t"
+ "vm<misc_maskop>.m\t%0,%3,%1.t"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 

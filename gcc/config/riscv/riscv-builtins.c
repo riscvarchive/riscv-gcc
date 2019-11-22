@@ -711,6 +711,34 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VB##MLEN,	\
 		vector),						\
 
+#define IOTA_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
+  DIRECT_NAMED (iota##MODE##2, viotaint##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN,			\
+		vector),						\
+  DIRECT_NAMED (iota##MODE##2, viotauint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN,			\
+		vector),						\
+  DIRECT_NAMED (iota##MODE##2_mask, viotaint##E##m##L##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VB##MLEN,		\
+		vector),						\
+  DIRECT_NAMED (iota##MODE##2_mask, viotauint##E##m##L##_mask,		\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VB##MLEN,		\
+		vector),
+
+#define VID_BUILTINS(E, L, MLEN, MODE, SUBMODE)				\
+  DIRECT_NAMED (vid##MODE, vidint##E##m##L,				\
+		RISCV_VI##E##M##L##_FTYPE,				\
+		vector),						\
+  DIRECT_NAMED (vid##MODE, viduint##E##m##L,				\
+		RISCV_VUI##E##M##L##_FTYPE,				\
+		vector),						\
+  DIRECT_NAMED (vid##MODE##_mask, vidint##E##m##L##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN,			\
+		vector),						\
+  DIRECT_NAMED (vid##MODE##_mask, viduint##E##m##L##_mask,		\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN,			\
+		vector),
+
 #define VINT_WIDENING_ADD_SUB_BUILTINS(SEW, LMUL, MLEN, VMODE, SDEMODE,	\
 				       WSEW, WLMUL, WVMODE, WSMODE, OP)	\
   DIRECT_NAMED (OP##VMODE##_vv, v##OP##_vv_int##SEW##m##LMUL,		\
@@ -809,6 +837,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, clr)
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, set)
   _RVV_MASK_ITERATOR_ARG (MASK_UNARY_BUILTINS, sbf)
+  _RVV_MASK_ITERATOR_ARG (MASK_UNARY_BUILTINS, sof)
+  _RVV_MASK_ITERATOR_ARG (MASK_UNARY_BUILTINS, sif)
   _RVV_MASK_ITERATOR_ARG (UNMAKED_MASK_UNARY_BUILTINS, not)
   _RVV_MASK_ITERATOR_ARG (MASK_LOGICAL_BUILTINS, and)
   _RVV_MASK_ITERATOR_ARG (MASK_LOGICAL_BUILTINS, xor)
@@ -819,6 +849,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_MASK_ITERATOR_ARG (MASK_LOGICAL_BUILTINS, andnot)
   _RVV_MASK_ITERATOR_ARG (MASK_LOGICAL_BUILTINS, ornot)
   _RVV_MASK_ITERATOR_ARG (MASK_SCALAR_UNARY_BUILTINS, popc)
+  _RVV_MASK_ITERATOR_ARG (MASK_SCALAR_UNARY_BUILTINS, first)
+  _RVV_INT_ITERATOR (IOTA_BUILTINS)
+  _RVV_INT_ITERATOR (VID_BUILTINS)
 
   _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, sum, sum)
   _RVV_INT_ITERATOR_ARG (VINT_REDUC_OP_BUILTINS, max, maxu)

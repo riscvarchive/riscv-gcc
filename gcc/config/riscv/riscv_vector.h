@@ -688,7 +688,10 @@ rvv_##OP##_m_bool##MLEN##_mask (rvv_bool##MLEN##_t mask,		\
 _RVV_MASK_ITERATOR (_RVV_MASK_NULLARY_OP, clr)
 _RVV_MASK_ITERATOR (_RVV_MASK_NULLARY_OP, set)
 _RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP_SCALAR, popc)
+_RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP_SCALAR, first)
 _RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP, sbf)
+_RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP, sof)
+_RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP, sif)
 _RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP_NOMASK, not)
 _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, and)
 _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, or)
@@ -698,6 +701,65 @@ _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, nor)
 _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, xnor)
 _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, andnot)
 _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, ornot)
+
+#define _RVV_IOTA(SEW, LMUL, MLEN, T)					\
+__extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_iota_m_int##SEW##m##LMUL (rvv_bool##MLEN##_t a)			\
+{									\
+  return __builtin_riscv_viotaint##SEW##m##LMUL (a);			\
+}									\
+__extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_iota_m_int##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,		\
+				     rvv_bool##MLEN##_t a)		\
+{									\
+  return __builtin_riscv_viotaint##SEW##m##LMUL##_mask (mask, a);	\
+}									\
+__extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_iota_m_uint##SEW##m##LMUL (rvv_bool##MLEN##_t a)			\
+{									\
+  return __builtin_riscv_viotauint##SEW##m##LMUL (a);			\
+}									\
+__extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_iota_m_uint##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,		\
+				      rvv_bool##MLEN##_t a)		\
+{									\
+  return __builtin_riscv_viotauint##SEW##m##LMUL##_mask (mask, a);	\
+}
+
+_RVV_INT_ITERATOR (_RVV_IOTA)
+
+#define _RVV_VID(SEW, LMUL, MLEN, T)					\
+__extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_vid_int##SEW##m##LMUL ()						\
+{									\
+  return __builtin_riscv_vidint##SEW##m##LMUL ();			\
+}									\
+__extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_vid_int##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask)		\
+{									\
+  return __builtin_riscv_vidint##SEW##m##LMUL##_mask (mask);		\
+}									\
+__extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_vid_uint##SEW##m##LMUL ()						\
+{									\
+  return __builtin_riscv_viduint##SEW##m##LMUL ();			\
+}									\
+__extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_vid_uint##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask)		\
+{									\
+  return __builtin_riscv_viduint##SEW##m##LMUL##_mask (mask);		\
+}
+
+
+_RVV_INT_ITERATOR (_RVV_VID)
 
 /* Helpers for FP widening multiply.  */
 #if 0
