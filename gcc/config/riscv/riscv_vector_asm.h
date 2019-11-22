@@ -635,5 +635,44 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmadd)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, msub)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsub)
 
+/* Template function for floating-point vector-vector and vector-sclar
+   comparison operation.  */
+#define _RVV_ASM_FLOAT_CMP_VV(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmf" #OP ".vv",					\
+    /* FUNC_NAME */rvv_f##OP##_vv_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+#define _RVV_ASM_FLOAT_CMP_VF(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmf" #OP ".vf",					\
+    /* FUNC_NAME */rvv_f##OP##_vs_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"f")
+
+#define _RVV_ASM_FLOAT_CMP(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_FLOAT_CMP_VV(SEW, LMUL, MLEN, T, OP)				\
+  _RVV_ASM_FLOAT_CMP_VF(SEW, LMUL, MLEN, T, OP)
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, eq)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, ne)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, lt)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, le)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP_VF, gt)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP_VF, ge)
+
 #endif
 #endif
