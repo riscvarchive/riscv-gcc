@@ -489,3 +489,94 @@
   RVV_BIN_OPERATOR_VEC_SCALAR_TEST(STYPE, VCLASS, EM, MLEN, OP,		\
 				   OPERATOR)				\
   RVV_BIN_OPERATOR_IMM_TEST(STYPE, VCLASS, EM, MLEN, OP, OPERATOR)
+
+#define RVV_TER_BUILTIN_VEC_TEST(STYPE, VCLASS,	EM, MLEN, OP)		\
+  void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,	\
+						   STYPE *y, STYPE *z)	\
+  {									\
+    rvv_##VCLASS##EM##_t vx, vy, vz;					\
+    vx = rvv_le_##VCLASS##EM(x);					\
+    vy = rvv_le_##VCLASS##EM(y);					\
+    vz = rvv_le_##VCLASS##EM(z);					\
+    vz = rvv_##OP##_vv_##VCLASS##EM (vx, vy, vz);			\
+    rvv_se_##VCLASS##EM(z, vz);						\
+  }
+
+#define RVV_TER_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASS,			\
+					EM, MLEN, OP)			\
+  void rvv##OP##VCLASS##EM##_v_mask_builtin_test(			\
+	 size_t n, STYPE *x, STYPE *y, STYPE z)				\
+  {									\
+    rvv_##VCLASS##EM##_t vx, vy;					\
+    rvv_bool##MLEN##_t mask;						\
+    vx = rvv_le_##VCLASS##EM(x);					\
+    vy = rvv_le_##VCLASS##EM(y);					\
+    mask = rvv_mset_bool##MLEN ();					\
+    vy = rvv_##OP##_vv_##VCLASS##EM##_mask (mask, vy, vy, vx, vy);	\
+    rvv_se_##VCLASS##EM(y, vy);						\
+  }
+
+#define RVV_TER_BUILTIN_SCALAR_TEST(STYPE, VCLASS, EM, MLEN, OP)\
+  void rvv##OP##VCLASS##EM##_s_nomask_builtin_test(size_t n, STYPE *x,\
+					       STYPE *y, STYPE z)\
+  {								\
+    rvv_##VCLASS##EM##_t vx, vy;				\
+    vx = rvv_le_##VCLASS##EM(x);				\
+    vy = rvv_le_##VCLASS##EM(y);				\
+    vy = rvv_##OP##_vs_##VCLASS##EM (vy, vx, z);		\
+    rvv_se_##VCLASS##EM(y, vy);					\
+  }
+
+#define RVV_TER_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASS,	\
+					   EM, MLEN, OP)	\
+  void rvv##OP##VCLASS##EM##_s_mask_builtin_test(size_t n, STYPE *x,\
+					     STYPE *y, STYPE z)	\
+  {								\
+    rvv_##VCLASS##EM##_t vx, vy;				\
+    rvv_bool##MLEN##_t mask;					\
+    vx = rvv_le_##VCLASS##EM(x);				\
+    vy = rvv_le_##VCLASS##EM(y);				\
+    mask = rvv_mset_bool##MLEN ();				\
+    vy = rvv_##OP##_vs_##VCLASS##EM##_mask (mask, vy, vy, vx, z);\
+    rvv_se_##VCLASS##EM(y, vy);					\
+  }
+
+#define RVV_MAC_BUILTIN_SCALAR_TEST(STYPE, VCLASS, EM, MLEN, OP)\
+  void rvv##OP##VCLASS##EM##_s_nomask_builtin_test(size_t n, STYPE *x,\
+					       STYPE *y, STYPE z)\
+  {								\
+    rvv_##VCLASS##EM##_t vx, vy;				\
+    vx = rvv_le_##VCLASS##EM(x);				\
+    vy = rvv_le_##VCLASS##EM(y);				\
+    vy = rvv_##OP##_vs_##VCLASS##EM (vy, z, vx);		\
+    rvv_se_##VCLASS##EM(y, vy);					\
+  }
+
+#define RVV_MAC_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASS,	\
+					   EM, MLEN, OP)	\
+  void rvv##OP##VCLASS##EM##_s_mask_builtin_test(size_t n, STYPE *x,\
+					     STYPE *y, STYPE z)	\
+  {								\
+    rvv_##VCLASS##EM##_t vx, vy;				\
+    rvv_bool##MLEN##_t mask;					\
+    vx = rvv_le_##VCLASS##EM(x);				\
+    vy = rvv_le_##VCLASS##EM(y);				\
+    mask = rvv_mset_bool##MLEN ();				\
+    vy = rvv_##OP##_vs_##VCLASS##EM##_mask (mask, vy, vy, z, vx);\
+    rvv_se_##VCLASS##EM(y, vy);					\
+  }
+
+
+#define RVV_TER_BUILTIN_VEC_SCALAR_MASKED_TEST(STYPE, VCLASS,		\
+					       EM, MLEN, OP)		\
+  RVV_TER_BUILTIN_VEC_TEST(STYPE, VCLASS, EM, MLEN, OP)			\
+  RVV_TER_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASS, EM, MLEN, OP)		\
+  RVV_TER_BUILTIN_SCALAR_TEST(STYPE, VCLASS, EM, MLEN, OP)		\
+  RVV_TER_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASS, EM, MLEN, OP)
+
+#define RVV_MAC_BUILTIN_VEC_SCALAR_MASKED_TEST(STYPE, VCLASS,		\
+					       EM, MLEN, OP)		\
+  RVV_TER_BUILTIN_VEC_TEST(STYPE, VCLASS, EM, MLEN, OP)			\
+  RVV_TER_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASS, EM, MLEN, OP)		\
+  RVV_MAC_BUILTIN_SCALAR_TEST(STYPE, VCLASS, EM, MLEN, OP)		\
+  RVV_MAC_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASS, EM, MLEN, OP)

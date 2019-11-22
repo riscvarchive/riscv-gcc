@@ -169,6 +169,53 @@ FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff, 			\
   return rv;								\
 }									\
 
+/* Intrinsic function template for mac instructions,
+   operand 0 as input and output operand.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 0.
+   OP2_TYPE: Type of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP2_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_MAC_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,		\
+				 MASK_TYPE,				\
+				 OP0_TYPE, OP1_TYPE, OP2_TYPE, 		\
+				 OP1_CONSTRANT,				\
+				 OP2_CONSTRANT)				\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP0_TYPE op0, OP1_TYPE a, OP2_TYPE b)			\
+{									\
+  OP0_TYPE rv;								\
+  asm volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		ASM_OP " %0, %1, %2"					\
+		: "=vr" (rv)						\
+		: OP1_CONSTRANT (a), OP2_CONSTRANT (b),			\
+		  "0" (op0)						\
+		: "vtype");						\
+  return rv;								\
+}									\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
+		  OP0_TYPE op0, OP1_TYPE a, OP2_TYPE b)			\
+{									\
+  OP0_TYPE rv;								\
+  asm volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t":::"vtype");	\
+  asm volatile ("vmerge.vvm %0, %1, %2, %3"				\
+		: "=vr"(rv)						\
+		: "vr"(op0), "vr" (maskedoff), "vm"(mask));		\
+  asm volatile (ASM_OP " %0, %1, %2, %3.t"				\
+		: "+vr" (rv)						\
+		: OP1_CONSTRANT (a), OP2_CONSTRANT (b),			\
+		  "vm" (mask));						\
+  return rv;								\
+}
+
 /* Template function for binary integer vector-scalar operation with immediate
    variant.  */
 #define _RVV_ASM_INT_BIN_OP_SCALAR_WITH_IMM_CHECK(SEW, LMUL, MLEN, T,	\
@@ -337,6 +384,63 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, mulh, mulhu)
     /* OP2_CONSTRANT */"vr")
 
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_MULHSU_OP, mulhsu)
+
+/* Template function for single-width integer vector-vector multiply-add
+   operation.  */
+#define _RVV_ASM_INT_MAC_VV(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vv",						\
+    /* FUNC_NAME */rvv_##OP##_vv_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vv",						\
+    /* FUNC_NAME */rvv_##OP##_vv_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+/* Template function for single-width integer vector-scalar multiply-add
+   operation.  */
+#define _RVV_ASM_INT_MAC_VX(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vx",						\
+    /* FUNC_NAME */rvv_##OP##_vs_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */int##SEW##_t,						\
+    /* OP2_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_CONSTRANT */"r",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vx",						\
+    /* FUNC_NAME */rvv_##OP##_vs_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */uint##SEW##_t,					\
+    /* OP2_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_CONSTRANT */"r",						\
+    /* OP2_CONSTRANT */"vr")
+
+#define _RVV_ASM_INT_MAC(SEW, LMUL, MLEN, T, OP)	\
+  _RVV_ASM_INT_MAC_VV(SEW, LMUL, MLEN, T, OP)		\
+  _RVV_ASM_INT_MAC_VX(SEW, LMUL, MLEN, T, OP)
+
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, macc)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, nmsac)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, madd)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, nmsub)
 
 /* Template function for integer vector-vector comparison operation.  */
 #define _RVV_ASM_INT_CMP_VV(SEW, LMUL, MLEN, T, OP, OPU)		\
