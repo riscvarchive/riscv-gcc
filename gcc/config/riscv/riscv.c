@@ -750,6 +750,10 @@ riscv_valid_offset_p (rtx x, machine_mode mode)
   if (!const_arith_operand (x, Pmode))
     return false;
 
+  /* Vector load/store disallow any offset.  */
+  if (TARGET_VECTOR && VECTOR_MODE_P (mode))
+    return false;
+
   /* We may need to split multiword moves, so make sure that every word
      is accessible.  */
   if (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD
@@ -855,6 +859,9 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
 	      && riscv_valid_offset_p (info->offset, mode));
 
     case LO_SUM:
+      /* Vector load/store disallow LO_SUM.  */
+      if (TARGET_VECTOR && VECTOR_MODE_P (mode))
+	return false;
       info->type = ADDRESS_LO_SUM;
       info->reg = XEXP (x, 0);
       info->offset = XEXP (x, 1);
