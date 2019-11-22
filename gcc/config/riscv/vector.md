@@ -221,10 +221,17 @@
 ;; All operation valid for floating-point.
 (define_code_iterator any_fop [plus mult smax smin minus div])
 
+;; All operation valid for <op>not instruction in mask-register logical.
+(define_code_iterator any_opnot [and ior])
+
 ;; <reduc> expands to the name of the reduction that implements a
 ;; particular code.
 (define_code_attr reduc [(plus "sum") (umax "maxu") (smax "max") (umin "minu")
 			 (smin "min") (and "and") (ior "or") (xor "xor")])
+
+;; <invmaskop> expand to the name of the insn that inversed binary bit-wise
+;; operation for mask type.
+(define_code_attr invmaskop [(and "nand") (ior "nor") (xor "xnor")])
 
 ;; Iterator and attributes for widening floating-point reduction instructions.
 (define_int_iterator WFREDUC_REDUC [UNSPEC_REDUC UNSPEC_ORDERED_REDUC])
@@ -1548,14 +1555,47 @@
 
 ;; Vector Mask-Register Logical Instructions
 
-(define_insn "and<mode>3"
+(define_insn "<optab><mode>3"
   [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
-	(and:VMASKMODES (match_operand:VMASKMODES 1 "register_operand" "vr")
-			(match_operand:VMASKMODES 2 "register_operand" "vr")))]
+	(any_bitwise:VMASKMODES
+	  (match_operand:VMASKMODES 1 "register_operand" "vr")
+	  (match_operand:VMASKMODES 2 "register_operand" "vr")))]
  "TARGET_VECTOR"
- "vmand.mm\t%0,%1,%2"
+ "vm<insn>.mm\t%0,%1,%2"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
+
+(define_insn "<invmaskop><mode>3"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(not
+	  (any_bitwise:VMASKMODES
+	    (match_operand:VMASKMODES 1 "register_operand" "vr")
+	    (match_operand:VMASKMODES 2 "register_operand" "vr"))))]
+ "TARGET_VECTOR"
+ "vm<invmaskop>.mm\t%0,%1,%2"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "<insn>not<mode>3"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(any_opnot:VMASKMODES
+	  (match_operand:VMASKMODES 1 "register_operand" "vr")
+	  (not:VMASKMODES
+	    (match_operand:VMASKMODES 2 "register_operand" "vr"))))]
+ "TARGET_VECTOR"
+ "vm<insn>not.mm\t%0,%1,%2"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+;; Adapter for built-in function.
+(define_expand "or<mode>3"
+  [(set (match_operand:VMASKMODES 0 "register_operand")
+	(ior:VMASKMODES
+	  (match_operand:VMASKMODES 1 "register_operand")
+	  (match_operand:VMASKMODES 2 "register_operand")))]
+ "TARGET_VECTOR"
+{
+})
 
 ;; Misc Vector Mask-Register Operations
 (define_insn "popc<VMASKMODES:mode>2_<P:mode>"
