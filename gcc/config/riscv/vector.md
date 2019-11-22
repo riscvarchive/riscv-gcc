@@ -1544,7 +1544,7 @@
   [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
 	(and:VMASKMODES (match_operand:VMASKMODES 1 "register_operand" "vr")
 			(match_operand:VMASKMODES 2 "register_operand" "vr")))]
- "TARGET_HARD_FLOAT"
+ "TARGET_VECTOR"
  "vmand.mm\t%0,%1,%2"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
@@ -1554,7 +1554,7 @@
   [(set (match_operand:P 0 "register_operand" "=r")
 	(popcount:P
 	  (match_operand:VMASKMODES 1 "register_operand" "vr")))]
- "TARGET_HARD_FLOAT"
+ "TARGET_VECTOR"
  "vpopc.m\t%0,%1"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
@@ -1565,7 +1565,7 @@
 	  (and:VMASKMODES
 	     (match_operand:VMASKMODES 1 "register_operand" "vm")
 	     (match_operand:VMASKMODES 2 "register_operand" "vr"))))]
- "TARGET_HARD_FLOAT"
+ "TARGET_VECTOR"
  "vpopc.m\t%0,%2,%1.t"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
@@ -1575,7 +1575,7 @@
 	(unspec:VMASKMODES
 	  [(match_operand:VMASKMODES 1 "register_operand" "vr")]
 	  UNSPEC_SBF))]
- "TARGET_HARD_FLOAT"
+ "TARGET_VECTOR"
  "vmsbf.m\t%0,%1"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
@@ -1588,7 +1588,7 @@
 	    [(match_operand:VMASKMODES 3 "register_operand" "vr")]
 	    UNSPEC_SBF)
 	  (match_operand:VMASKMODES 2 "register_operand" "0")))]
- "TARGET_HARD_FLOAT"
+ "TARGET_VECTOR"
  "vmsbf.m\t%0,%3,%1.t"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
