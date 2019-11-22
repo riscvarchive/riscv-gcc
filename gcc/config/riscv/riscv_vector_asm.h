@@ -34,6 +34,11 @@
 
 /* INLINE ASM VERSION OF INTRINSIC FUNCTION.  */
 
+/* Uitl type for easier expand floating point functions.  */
+#define _RVV_F16_TYPE float16_t
+#define _RVV_F32_TYPE float
+#define _RVV_F64_TYPE double
+
 /* Predicate function for signed immediate value.  */
 #define _RVV_ASM_INT_SIMM_CHK(SEW, IMM) \
   (__builtin_constant_p (b) &&		\
@@ -596,6 +601,39 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_VXI, gt, gtu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, sub, subu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, sub, subu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, add, addu)
+
+/* Template function for single-width floating point vector-vector and
+   vector-scalar multiply-add operation.  */
+#define _RVV_ASM_FLOAT_MAC(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".vv",						\
+    /* FUNC_NAME */rvv_##OP##_vv_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".vf",						\
+    /* FUNC_NAME */rvv_##OP##_vs_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */_RVV_F##SEW##_TYPE,					\
+    /* OP2_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_CONSTRANT */"f",						\
+    /* OP2_CONSTRANT */"vr")
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, macc)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmacc)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, msac)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsac)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, madd)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmadd)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, msub)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsub)
 
 #endif
 #endif
