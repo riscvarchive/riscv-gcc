@@ -29,6 +29,10 @@
 
 #include <stdint.h>
 
+#ifndef __OPTIMIZE__
+#error "Vector intrinsics require enable optimization, e.g. -O"
+#endif
+
 #ifndef __riscv_vector
 #error "Vector intrinsics require the vector extension."
 #else
