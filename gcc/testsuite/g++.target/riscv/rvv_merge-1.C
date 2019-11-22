@@ -10,7 +10,7 @@ void sub1(size_t n, const float*x, float*y, int*z, int a, int b)
     rvv_float32m8_t vx, vy;
     rvv_int32m8_t vz;
 
-    for ( ; (l = rvvsetvl32m8(n)) > 0; n -= l)
+    for ( ; (l = rvv_setvl32m8(n)) > 0; n -= l)
     {
         vx = * (rvv_float32m8_t *) x;
         x += l;
@@ -29,7 +29,7 @@ void sub2(size_t n, const float*x, float*y, float *z)
     rvv_float32m8_t vx, vy;
     rvv_float32m8_t vz;
 
-    for ( ; (l = rvvsetvl32m8(n)) > 0; n -= l)
+    for ( ; (l = rvv_setvl32m8(n)) > 0; n -= l)
     {
         vx = * (rvv_float32m8_t *) x;
         x += l;
@@ -48,7 +48,7 @@ void sub3(size_t n, const int*x, int*y, int *z)
     rvv_int32m8_t vx, vy;
     rvv_int32m8_t vz;
 
-    for ( ; (l = rvvsetvl32m8(n)) > 0; n -= l)
+    for ( ; (l = rvv_setvl32m8(n)) > 0; n -= l)
     {
         vx = * (rvv_int32m8_t *) x;
         x += l;
@@ -67,7 +67,7 @@ void sub4(size_t n, const int*x, int*y, float *z, float a, float b)
     rvv_int32m8_t vx, vy;
     rvv_float32m8_t vz;
 
-    for ( ; (l = rvvsetvl32m8(n)) > 0; n -= l)
+    for ( ; (l = rvv_setvl32m8(n)) > 0; n -= l)
     {
         vx = * (rvv_int32m8_t *) x;
         x += l;

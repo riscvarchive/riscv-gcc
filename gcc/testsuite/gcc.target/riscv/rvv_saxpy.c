@@ -9,7 +9,7 @@ void saxpy(size_t n, const float a, const float *x, float *y) {
 
   rvv_float32m8_t vx, vy;
 
-  for (; (l = rvvsetvl32m8(n)) > 0; n -= l) {
+  for (; (l = rvv_setvl32m8(n)) > 0; n -= l) {
     vx = rvv_le_float32m8(x);
     x += l;
     vy = rvv_le_float32m8(y);

@@ -10,7 +10,7 @@ void wsaxpy(size_t n, const float16_t a, const float16_t *x, float *y) {
   rvv_float16m4_t vx;
   rvv_float32m8_t vy;
 
-  for (; (l = rvvsetvl16m4(n)) > 0; n -= l) {
+  for (; (l = rvv_setvl16m4(n)) > 0; n -= l) {
     vx = rvv_le_float16m4(x); /* setvl x0, x0, e16, m4; vlde.v vx, (xx) */
     x += l;
     vy = rvv_le_float32m8(y); /* setvl x0, x0, e32, m8; vlde.v vy, (xy) */
