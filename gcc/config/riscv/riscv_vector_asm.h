@@ -447,6 +447,48 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, nmsac)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, madd)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, nmsub)
 
+/* Template function for widening integer vector-vector multiply-add
+   operation.  */
+#define _RVV_ASM_INT_WMAC_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
+			     ASM_OP, FUNC_NAME_OP, OP0U, OP1U, OP2U)	\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #ASM_OP ".vv",					\
+    /* FUNC_NAME */rvv_##FUNC_NAME_OP##_vv_##OP0U##int##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_##OP0U##int##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_##OP1U##int##SEW##m##LMUL##_t,			\
+    /* OP2_TYPE */rvv_##OP2U##int##SEW##m##LMUL##_t,			\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+/* Template function for widening integer vector-scalar multiply-add
+   operation.  */
+#define _RVV_ASM_INT_WMAC_VX(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
+			     ASM_OP, FUNC_NAME_OP, OP0U, OP1U, OP2U)	\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #ASM_OP ".vx",					\
+    /* FUNC_NAME */rvv_##FUNC_NAME_OP##_vs_##OP0U##int##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_##OP0U##int##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */OP1U##int##SEW##_t,					\
+    /* OP2_TYPE */rvv_##OP2U##int##SEW##m##LMUL##_t,			\
+    /* OP1_CONSTRANT */"r",						\
+    /* OP2_CONSTRANT */"vr")						\
+
+#define _RVV_ASM_INT_WMAC(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,		\
+			  ASM_OP, FUNC_NAME_OP, OP0U, OP1U, OP2U)	\
+  _RVV_ASM_INT_WMAC_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,		\
+		       ASM_OP, FUNC_NAME_OP, OP0U, OP1U, OP2U)		\
+  _RVV_ASM_INT_WMAC_VX(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,		\
+		       ASM_OP, FUNC_NAME_OP, OP0U, OP1U, OP2U)
+
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,      wmacc,   wmacc,  ,  ,  )
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,     wmaccu,   wmacc, u, u, u)
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,    wmaccsu, wmaccsu,  ,  , u)
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, wmaccus, wmaccus,  , u,  )
+
 /* Template function for integer vector-vector comparison operation.  */
 #define _RVV_ASM_INT_CMP_VV(SEW, LMUL, MLEN, T, OP, OPU)		\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
