@@ -52,3 +52,7 @@ RVV_WUINT_TEST_ARG(VWADDSUBU, sub)
 /* { dg-final { scan-assembler-times "vwaddu.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwadd.vx" 9 } } */
 /* { dg-final { scan-assembler-times "vwaddu.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vwsub.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwsubu.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwsub.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vwsubu.vx" 9 } } */
