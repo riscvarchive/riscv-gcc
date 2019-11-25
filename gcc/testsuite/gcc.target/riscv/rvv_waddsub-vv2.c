@@ -60,6 +60,9 @@ RVV_WUINT_TEST_ARG(VWADDSUBU, add)
 RVV_WINT_TEST_ARG(VWADDSUB, sub)
 RVV_WUINT_TEST_ARG(VWADDSUBU, sub)
 
+RVV_WFLOAT_TEST_ARG(VWADDSUB, add)
+RVV_WFLOAT_TEST_ARG(VWADDSUB, sub)
+
 /* { dg-final { scan-assembler-times "vwadd.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwaddu.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwadd.vx" 9 } } */
@@ -68,3 +71,7 @@ RVV_WUINT_TEST_ARG(VWADDSUBU, sub)
 /* { dg-final { scan-assembler-times "vwsubu.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwsub.vx" 9 } } */
 /* { dg-final { scan-assembler-times "vwsubu.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vfwadd.vv" 6 } } */
+/* { dg-final { scan-assembler-times "vfwadd.vf" 6 } } */
+/* { dg-final { scan-assembler-times "vfwsub.vv" 6 } } */
+/* { dg-final { scan-assembler-times "vfwsub.vf" 6 } } */

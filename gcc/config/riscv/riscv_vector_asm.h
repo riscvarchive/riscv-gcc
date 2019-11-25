@@ -640,6 +640,86 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnj)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjn)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
 
+/* Template function for widening floating point vector-vector operation.  */
+#define _RVV_ASM_WFLOAT_BIN_OP_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
+				  OP)					\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".vv",						\
+    /* FUNC_NAME */rvv_##OP##_vv_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+/* Template function for widening floating point vector-scalar operation.  */
+#define _RVV_ASM_WFLOAT_BIN_OP_VF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
+				  OP)					\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".vf",						\
+    /* FUNC_NAME */rvv_##OP##_vs_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"f")
+
+#define _RVV_ASM_WFLOAT_BIN_OP_VV_VF(SEW, LMUL, MLEN, T, WSEW, WLMUL,	\
+				     WT, OP)				\
+  _RVV_ASM_WFLOAT_BIN_OP_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+  _RVV_ASM_WFLOAT_BIN_OP_VF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)
+
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wadd)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wsub)
+
+/* Template function for widening floating point vector-vector operation,
+   operand 1 is widening type.  */
+#define _RVV_ASM_WFLOAT_BIN_OP_WV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
+				  OP)					\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".wv",						\
+    /* FUNC_NAME */rvv_##OP##_wv_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP2_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+/* Template function for widening floating point vector-scalar operation,
+   operand 1 is widening type.  */
+#define _RVV_ASM_WFLOAT_BIN_OP_WF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
+				  OP)					\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".wf",						\
+    /* FUNC_NAME */rvv_##OP##_ws_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"f")
+
+/* Template function for widening floating point vector-vector and
+   vector-scalaroperation, operand 1 is widening type.  */
+#define _RVV_ASM_WFLOAT_BIN_OP_WV_WF(SEW, LMUL, MLEN, T, WSEW, WLMUL,	\
+				     WT, OP)				\
+  _RVV_ASM_WFLOAT_BIN_OP_WV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+  _RVV_ASM_WFLOAT_BIN_OP_WF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)
+
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_WV_WF, wadd)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_WV_WF, wsub)
+
 /* Template function for single-width floating point vector-vector and
    vector-scalar multiply-add operation.  */
 #define _RVV_ASM_FLOAT_MAC(SEW, LMUL, MLEN, T, OP)			\

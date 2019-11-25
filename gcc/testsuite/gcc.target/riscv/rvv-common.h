@@ -186,6 +186,22 @@
   MACRO(   double, float, 64m4, 16, __VA_ARGS__)	\
   MACRO(   double, float, 64m8,  8, __VA_ARGS__)
 
+#define RVV_WFLOAT_TEST(MACRO)				\
+  MACRO(float16_t, float, 16m1,  16,  float, 32m2)	\
+  MACRO(float16_t, float, 16m2,   8,  float, 32m4)	\
+  MACRO(float16_t, float, 16m4,   4,  float, 32m8)	\
+  MACRO(    float, float, 32m1,  32, double, 64m2)	\
+  MACRO(    float, float, 32m2,  16, double, 64m4)	\
+  MACRO(    float, float, 32m4,   8, double, 64m8)
+
+#define RVV_WFLOAT_TEST_ARG(MACRO, ...)				\
+  MACRO(float16_t, float, 16m1,  16,  float, 32m2, __VA_ARGS__)	\
+  MACRO(float16_t, float, 16m2,   8,  float, 32m4, __VA_ARGS__)	\
+  MACRO(float16_t, float, 16m4,   4,  float, 32m8, __VA_ARGS__)	\
+  MACRO(    float, float, 32m1,  32, double, 64m2, __VA_ARGS__)	\
+  MACRO(    float, float, 32m2,  16, double, 64m4, __VA_ARGS__)	\
+  MACRO(    float, float, 32m4,   8, double, 64m8, __VA_ARGS__)
+
 #define RVV_INT_REDUC_TEST(MACRO)	\
   MACRO( int8_t, int,  8m1,  8m1, 8)	\
   MACRO( int8_t, int,  8m2,  8m1, 4)	\
