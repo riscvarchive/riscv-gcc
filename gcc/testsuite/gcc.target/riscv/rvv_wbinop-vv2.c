@@ -16,7 +16,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##WEM(z);                                              \
-    vz = rvv_w##OP##_vv_##VCLASS##EM (vx, vy);                                 \
+    vz = rvv_w##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                \
     rvv_se_##VCLASS##WEM(z, vz);                                               \
   }                                                                            \
   void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {         \
@@ -39,7 +39,7 @@
     vx = rvv_le_u##VCLASS##EM(x);                                              \
     vy = rvv_le_u##VCLASS##EM(y);                                              \
     vz = rvv_le_u##VCLASS##WEM(z);                                             \
-    vz = rvv_w##OP##u_vv_u##VCLASS##EM (vx, vy);                               \
+    vz = rvv_w##OP##u_vv_u##VCLASS##EM##_mask (mask, vz, vx, vy);              \
     rvv_se_u##VCLASS##WEM(z, vz);                                              \
   }                                                                            \
   void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
@@ -53,12 +53,61 @@
     rvv_se_u##VCLASS##WEM(z, vz);                                              \
   }
 
-
+#define VWMULSU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                      \
+  void v##OP##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z) {         \
+    rvv_##VCLASS##EM##_t vx;                                                   \
+    rvv_u##VCLASS##EM##_t vy;                                                  \
+    rvv_##VCLASS##WEM##_t vz;                                                  \
+    rvv_bool##MLEN##_t mask;                                                   \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vy = rvv_le_u##VCLASS##EM(y);                                              \
+    vz = rvv_le_##VCLASS##WEM(z);                                              \
+    vz = rvv_w##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                \
+    rvv_se_##VCLASS##WEM(z, vz);                                               \
+  }                                                                            \
+  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z) {      \
+    rvv_##VCLASS##EM##_t vx;                                                   \
+    rvv_u##VCLASS##EM##_t vy;                                                  \
+    rvv_##VCLASS##WEM##_t vz;                                                  \
+    rvv_bool##MLEN##_t mask;                                                   \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vz = rvv_le_##VCLASS##WEM(z);                                              \
+    vz = rvv_w##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);                 \
+    rvv_se_##VCLASS##WEM(z, vz);                                               \
+  }                                                                            \
+  void v##OP##u##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, u##WSTYPE *z) {   \
+    rvv_##VCLASS##EM##_t vx;                                                   \
+    rvv_u##VCLASS##EM##_t vy;                                                  \
+    rvv_u##VCLASS##WEM##_t vz;                                                 \
+    rvv_bool##MLEN##_t mask;                                                   \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vy = rvv_le_u##VCLASS##EM(y);                                              \
+    vz = rvv_le_u##VCLASS##WEM(z);                                             \
+    vz = rvv_w##OP##_vv_u##VCLASS##EM##_mask (mask, vz, vx, vy);               \
+    rvv_se_u##VCLASS##WEM(z, vz);                                              \
+  }                                                                            \
+  void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, u##WSTYPE *z) {\
+    rvv_##VCLASS##EM##_t vx;                                                   \
+    rvv_u##VCLASS##EM##_t vy;                                                  \
+    rvv_u##VCLASS##WEM##_t vz;                                                 \
+    rvv_bool##MLEN##_t mask;                                                   \
+    mask = rvv_mset_bool##MLEN ();                                             \
+    vx = rvv_le_##VCLASS##EM(x);                                               \
+    vz = rvv_le_u##VCLASS##WEM(z);                                             \
+    vz = rvv_w##OP##_vs_u##VCLASS##EM##_mask (mask, vz, vx, y);                \
+    rvv_se_u##VCLASS##WEM(z, vz);                                              \
+  }
 
 RVV_WINT_TEST_ARG(VWADDSUB, add)
 RVV_WUINT_TEST_ARG(VWADDSUBU, add)
 RVV_WINT_TEST_ARG(VWADDSUB, sub)
 RVV_WUINT_TEST_ARG(VWADDSUBU, sub)
+RVV_WINT_TEST_ARG(VWADDSUB, mul)
+RVV_WUINT_TEST_ARG(VWADDSUBU, mul)
+RVV_WINT_TEST_ARG(VWMULSU, mulsu)
 
 RVV_WFLOAT_TEST_ARG(VWADDSUB, add)
 RVV_WFLOAT_TEST_ARG(VWADDSUB, sub)
@@ -72,6 +121,12 @@ RVV_WFLOAT_TEST_ARG(VWADDSUB, mul)
 /* { dg-final { scan-assembler-times "vwsubu.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwsub.vx" 9 } } */
 /* { dg-final { scan-assembler-times "vwsubu.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vwmul.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwmulu.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwmul.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vwmulu.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vwmulsu.vv" 18 } } */
+/* { dg-final { scan-assembler-times "vwmulsu.vx" 18 } } */
 /* { dg-final { scan-assembler-times "vfwadd.vv" 6 } } */
 /* { dg-final { scan-assembler-times "vfwadd.vf" 6 } } */
 /* { dg-final { scan-assembler-times "vfwsub.vv" 6 } } */

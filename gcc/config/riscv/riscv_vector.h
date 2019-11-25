@@ -507,6 +507,7 @@ rvv_m##OP##_vv_int##SEW##m##LMUL (rvv_int##SEW##m##LMUL##_t a,		\
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_ADC_SBC_OP, adc)
 
+#if 0
 #define _RVV_WINT_ADD_SUB(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
 __extension__ extern __inline rvv_int##WSEW##m##WLMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -538,6 +539,7 @@ rvv_##OP##u_wv_uint##SEW##m##LMUL (rvv_uint##WSEW##m##WLMUL##_t a,	\
 }
 
 _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wadd)
+#endif
 
 #define _RVVINTCMP(SEW, LMUL, MLEN, T, OP, OPU)				\
 __extension__ extern __inline rvv_bool##MLEN##_t			\

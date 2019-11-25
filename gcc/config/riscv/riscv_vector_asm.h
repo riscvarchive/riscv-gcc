@@ -601,6 +601,58 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_VXI, gt, gtu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, sub, subu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, sub, subu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, add, addu)
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, add, addu)
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, mul, mulu)
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
+
+/* Template function for vwmulsu.v[v|x] instructions.  */
+#define _RVV_ASM_WMULSU(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vw" #OP ".vv",						\
+    /* FUNC_NAME */rvv_w##OP##_vv_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##WSEW##m##WLMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vw" #OP ".vv",						\
+    /* FUNC_NAME */rvv_w##OP##_vv_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##WSEW##m##WLMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vw" #OP ".vx",						\
+    /* FUNC_NAME */rvv_w##OP##_vs_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##WSEW##m##WLMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */uint##SEW##_t,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r")						\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vw" #OP ".vx",						\
+    /* FUNC_NAME */rvv_w##OP##_vs_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##WSEW##m##WLMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */uint##SEW##_t,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r")
+
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
 
 /* Template function for widening integer vector-vector operation,
    operand 1 is widening type.  */
@@ -658,6 +710,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, add, addu)
 
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WV, sub, subu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, sub, subu)
+_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WV, add, addu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
 
 /* Template function for binary floating point vector-scalar operation.  */
