@@ -602,6 +602,44 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, sub, subu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, sub, subu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, add, addu)
 
+/* Template function for binary floating point vector-scalar operation.  */
+#define _RVV_ASM_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".vf",						\
+    /* FUNC_NAME */rvv_##OP##_vs_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"f")
+
+/* Template function for binary floating point vector-vector operation.  */
+#define _RVV_ASM_FLOAT_BIN_OP_VEC(SEW, LMUL, MLEN, T, OP)		\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".vv",						\
+    /* FUNC_NAME */rvv_##OP##_vv_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+/* Template function for binary floating point vector-vector and vector-scalar
+   operation.  */
+#define _RVV_ASM_FLOAT_BIN_OP(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_FLOAT_BIN_OP_VEC(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnj)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjn)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
+
 /* Template function for single-width floating point vector-vector and
    vector-scalar multiply-add operation.  */
 #define _RVV_ASM_FLOAT_MAC(SEW, LMUL, MLEN, T, OP)			\
