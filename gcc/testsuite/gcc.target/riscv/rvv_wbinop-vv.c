@@ -11,22 +11,16 @@
   void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {            \
     rvv_##VCLASS##EM##_t vx, vy;                                               \
     rvv_##VCLASS##WEM##_t vz;                                                  \
-    rvv_bool##MLEN##_t mask;                                                   \
-    mask = rvv_mset_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
-    vz = rvv_le_##VCLASS##WEM(z);                                              \
     vz = rvv_w##OP##_vv_##VCLASS##EM (vx, vy);                                 \
     rvv_se_##VCLASS##WEM(z, vz);                                               \
   }                                                                            \
   void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {         \
     rvv_##VCLASS##EM##_t vx, vy;                                               \
     rvv_##VCLASS##WEM##_t vz;                                                  \
-    rvv_bool##MLEN##_t mask;                                                   \
-    mask = rvv_mset_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                               \
-    vz = rvv_le_##VCLASS##WEM(z);                                              \
-    vz = rvv_w##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);                 \
+    vz = rvv_w##OP##_vs_##VCLASS##EM (vx, y);                                  \
     rvv_se_##VCLASS##WEM(z, vz);                                               \
   }
 
@@ -34,22 +28,16 @@
   void v##OP##u##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {         \
     rvv_u##VCLASS##EM##_t vx, vy;                                              \
     rvv_u##VCLASS##WEM##_t vz;                                                 \
-    rvv_bool##MLEN##_t mask;                                                   \
-    mask = rvv_mset_bool##MLEN ();                                             \
     vx = rvv_le_u##VCLASS##EM(x);                                              \
     vy = rvv_le_u##VCLASS##EM(y);                                              \
-    vz = rvv_le_u##VCLASS##WEM(z);                                             \
     vz = rvv_w##OP##u_vv_u##VCLASS##EM (vx, vy);                               \
     rvv_se_u##VCLASS##WEM(z, vz);                                              \
   }                                                                            \
   void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
     rvv_u##VCLASS##EM##_t vx, vy;                                              \
     rvv_u##VCLASS##WEM##_t vz;                                                 \
-    rvv_bool##MLEN##_t mask;                                                   \
-    mask = rvv_mset_bool##MLEN ();                                             \
     vx = rvv_le_u##VCLASS##EM(x);                                              \
-    vz = rvv_le_u##VCLASS##WEM(z);                                             \
-    vz = rvv_w##OP##u_vs_u##VCLASS##EM##_mask (mask, vz, vx, y);               \
+    vz = rvv_w##OP##u_vs_u##VCLASS##EM (vx, y);                                \
     rvv_se_u##VCLASS##WEM(z, vz);                                              \
   }
 
@@ -62,6 +50,7 @@ RVV_WUINT_TEST_ARG(VWADDSUBU, sub)
 
 RVV_WFLOAT_TEST_ARG(VWADDSUB, add)
 RVV_WFLOAT_TEST_ARG(VWADDSUB, sub)
+RVV_WFLOAT_TEST_ARG(VWADDSUB, mul)
 
 /* { dg-final { scan-assembler-times "vwadd.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwaddu.vv" 9 } } */
@@ -75,3 +64,5 @@ RVV_WFLOAT_TEST_ARG(VWADDSUB, sub)
 /* { dg-final { scan-assembler-times "vfwadd.vf" 6 } } */
 /* { dg-final { scan-assembler-times "vfwsub.vv" 6 } } */
 /* { dg-final { scan-assembler-times "vfwsub.vf" 6 } } */
+/* { dg-final { scan-assembler-times "vfwmul.vv" 6 } } */
+/* { dg-final { scan-assembler-times "vfwmul.vf" 6 } } */

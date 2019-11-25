@@ -687,7 +687,7 @@ _RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP, sbf)
 _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, and)
 
 /* Helpers for FP widening multiply.  */
-
+#if 0
 __extension__ extern __inline rvv_float32m8_t
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
 rvv_wmul_vv_float16m4 (rvv_float16m4_t a, rvv_float16m4_t b)
@@ -701,7 +701,7 @@ rvv_wmul_vs_float16m4 (rvv_float16m4_t a, const float16_t b)
 {
   return __builtin_riscv_vfwmulfloat16m4_scalar (a, b);
 }
-
+#endif
 /* Helpers for FP widening multiply accumulate.  */
 
 __extension__ extern __inline rvv_float32m8_t

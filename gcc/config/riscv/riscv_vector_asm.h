@@ -735,6 +735,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
 
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wadd)
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wsub)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wmul)
 
 /* Template function for widening floating point vector-vector operation,
    operand 1 is widening type.  */
