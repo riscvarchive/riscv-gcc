@@ -658,8 +658,38 @@ tree rvvbool64_t_node;
   DIRECT_NAMED (OP##MODE##4, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L##_VB##MLEN, \
 		vector),						\
-  DIRECT_NAMED (m##OP##MODE##4, vm##OP##int##E##m##L,			\
+  DIRECT_NAMED (m##OP##MODE##4m, vm##OP##mint##E##m##L,			\
 		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L##_VB##MLEN, \
+		vector),						\
+  DIRECT_NAMED (m##OP##MODE##4, vm##OP##int##E##m##L,			\
+		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_VI##E##M##L, 	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##4_scalar, v##OP##int##E##m##L##_scalar,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE##_VB##MLEN, \
+		vector),						\
+  DIRECT_NAMED (m##OP##MODE##4m_scalar, vm##OP##mint##E##m##L##_scalar,	\
+		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_##SUBMODE##_VB##MLEN, \
+		vector),						\
+  DIRECT_NAMED (m##OP##MODE##4_scalar, vm##OP##int##E##m##L##_scalar,	\
+		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_##SUBMODE, 	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##4, v##OP##uint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L##_VB##MLEN, \
+		vector),						\
+  DIRECT_NAMED (m##OP##MODE##4m, vm##OP##muint##E##m##L,		\
+		RISCV_VB##MLEN##_FTYPE_VUI##E##M##L##_VUI##E##M##L##_VB##MLEN, \
+		vector),						\
+  DIRECT_NAMED (m##OP##MODE##4, vm##OP##uint##E##m##L,			\
+		RISCV_VB##MLEN##_FTYPE_VUI##E##M##L##_VUI##E##M##L, 	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##4_scalar, v##OP##uint##E##m##L##_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE##_VB##MLEN, \
+		vector),						\
+  DIRECT_NAMED (m##OP##MODE##4m_scalar, vm##OP##muint##E##m##L##_scalar,\
+		RISCV_VB##MLEN##_FTYPE_VUI##E##M##L##_U##SUBMODE##_VB##MLEN, \
+		vector),						\
+  DIRECT_NAMED (m##OP##MODE##4_scalar, vm##OP##uint##E##m##L##_scalar,	\
+		RISCV_VB##MLEN##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
 		vector),
 
 #define ICMP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)		\
@@ -816,9 +846,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, rsub)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, mul)
 
-  /* XXX: adc/sbc provide scalar version but pattern didn't implement yet.  */
-  /* XXX: adc/sbc need unsigned version of intrinsic function.  */
   _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, adc)
+  _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, sbc)
 
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wadd)
 

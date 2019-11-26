@@ -727,7 +727,41 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "madc<mode>4"
+(define_expand "adc<mode>4_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (plus:VIMODES
+		     (plus:VIMODES
+		       (vec_duplicate:VIMODES
+		         (match_operand:<VSUBMODE> 2 "register_operand"))
+		       (match_operand:VIMODES 1 "register_operand"))
+		     (if_then_else:VIMODES
+		       (match_operand:<VCMPEQUIV> 3 "register_operand")
+		       (vec_duplicate:VIMODES (const_int 1))
+		       (vec_duplicate:VIMODES (const_int 0)))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*adc<mode>4_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(plus:VIMODES
+	  (plus:VIMODES
+	    (vec_duplicate:VIMODES
+	      (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+	    (match_operand:VIMODES 1 "register_operand" "vr"))
+	  (if_then_else:VIMODES
+	    (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	    (vec_duplicate:VIMODES (const_int 1))
+	    (vec_duplicate:VIMODES (const_int 0)))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vadc.vxm\t%0,%1,%2,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "madc<mode>4m"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
 		   (unspec:<VCMPEQUIV>
@@ -745,7 +779,7 @@
 {
 })
 
-(define_insn "*madc<mode>4_nosetvl"
+(define_insn "*madc<mode>4m_nosetvl"
   [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr,vr")
 	(unspec:<VCMPEQUIV>
 	  [(plus:VIMODES
@@ -764,6 +798,295 @@
    vmadc.vim\t%0,%1,%v2,%3"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+(define_expand "madc<mode>4m_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (unspec:<VCMPEQUIV>
+		     [(plus:VIMODES
+		        (plus:VIMODES
+			  (vec_duplicate:VIMODES
+			    (match_operand:<VSUBMODE> 2 "register_operand"))
+			  (match_operand:VIMODES 1 "register_operand"))
+		        (if_then_else:VIMODES
+			  (match_operand:<VCMPEQUIV> 3 "register_operand")
+			  (vec_duplicate:VIMODES (const_int 1))
+			  (vec_duplicate:VIMODES (const_int 0))))]
+		     UNSPEC_OVERFLOW))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*madc<mode>4m_scalar_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+	(unspec:<VCMPEQUIV>
+	  [(plus:VIMODES
+	     (plus:VIMODES
+	       (vec_duplicate:VIMODES
+		 (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+	       (match_operand:VIMODES 1 "register_operand" "vr"))
+	     (if_then_else:VIMODES
+	       (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	       (vec_duplicate:VIMODES (const_int 1))
+	       (vec_duplicate:VIMODES (const_int 0))))]
+	  UNSPEC_OVERFLOW))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmadc.vxm\t%0,%1,%2,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "madc<mode>4"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (unspec:<VCMPEQUIV>
+		     [(plus:VIMODES
+			(match_operand:VIMODES 1 "register_operand")
+			(match_operand:VIMODES 2 "vector_arith_operand"))]
+		     UNSPEC_OVERFLOW))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*madc<mode>4_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr,vr")
+	(unspec:<VCMPEQUIV>
+	  [(plus:VIMODES
+	     (match_operand:VIMODES 1 "register_operand" "vr,vr")
+	     (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi"))]
+	  UNSPEC_OVERFLOW))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vmadc.vv\t%0,%1,%2
+   vmadc.vi\t%0,%1,%v2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "madc<mode>4_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (unspec:<VCMPEQUIV>
+		     [(plus:VIMODES
+			(vec_duplicate:VIMODES
+			  (match_operand:<VSUBMODE> 2 "register_operand"))
+			(match_operand:VIMODES 1 "register_operand"))]
+		     UNSPEC_OVERFLOW))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*madc<mode>4_scalar_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+	(unspec:<VCMPEQUIV>
+	  [(plus:VIMODES
+	     (vec_duplicate:VIMODES
+	       (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+	     (match_operand:VIMODES 1 "register_operand" "vr"))]
+	  UNSPEC_OVERFLOW))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmadc.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "sbc<mode>4"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (minus:VIMODES
+		     (minus:VIMODES
+		       (match_operand:VIMODES 1 "register_operand")
+		       (match_operand:VIMODES 2 "vector_arith_operand"))
+		     (if_then_else:VIMODES
+		       (match_operand:<VCMPEQUIV> 3 "register_operand")
+		       (vec_duplicate:VIMODES (const_int 1))
+		       (vec_duplicate:VIMODES (const_int 0)))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*sbc<mode>4_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(minus:VIMODES
+	  (minus:VIMODES
+	    (match_operand:VIMODES 1 "register_operand" "vr")
+	    (match_operand:VIMODES 2 "register_operand" "vr"))
+	  (if_then_else:VIMODES
+	    (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	    (vec_duplicate:VIMODES (const_int 1))
+	    (vec_duplicate:VIMODES (const_int 0)))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vsbc.vvm\t%0,%1,%2,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "sbc<mode>4_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (minus:VIMODES
+		     (minus:VIMODES
+		       (match_operand:VIMODES 1 "register_operand")
+		       (vec_duplicate:VIMODES
+		         (match_operand:<VSUBMODE> 2 "register_operand")))
+		     (if_then_else:VIMODES
+		       (match_operand:<VCMPEQUIV> 3 "register_operand")
+		       (vec_duplicate:VIMODES (const_int 1))
+		       (vec_duplicate:VIMODES (const_int 0)))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*sbc<mode>4_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(minus:VIMODES
+	  (minus:VIMODES
+	    (match_operand:VIMODES 1 "register_operand" "vr")
+	    (vec_duplicate:VIMODES
+	      (match_operand:<VSUBMODE> 2 "register_operand" "r")))
+	  (if_then_else:VIMODES
+	    (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	    (vec_duplicate:VIMODES (const_int 1))
+	    (vec_duplicate:VIMODES (const_int 0)))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vsbc.vxm\t%0,%1,%2,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "msbc<mode>4m"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (unspec:<VCMPEQUIV>
+		     [(minus:VIMODES
+		        (minus:VIMODES
+			  (match_operand:VIMODES 1 "register_operand")
+			  (match_operand:VIMODES 2 "vector_arith_operand"))
+		        (if_then_else:VIMODES
+			  (match_operand:<VCMPEQUIV> 3 "register_operand")
+			  (vec_duplicate:VIMODES (const_int 1))
+			  (vec_duplicate:VIMODES (const_int 0))))]
+		     UNSPEC_OVERFLOW))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*msbc<mode>4m_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+	(unspec:<VCMPEQUIV>
+	  [(minus:VIMODES
+	     (minus:VIMODES
+	       (match_operand:VIMODES 1 "register_operand" "vr")
+	       (match_operand:VIMODES 2 "register_operand" "vr"))
+	     (if_then_else:VIMODES
+	       (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	       (vec_duplicate:VIMODES (const_int 1))
+	       (vec_duplicate:VIMODES (const_int 0))))]
+	  UNSPEC_OVERFLOW))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmsbc.vvm\t%0,%1,%2,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "msbc<mode>4m_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (unspec:<VCMPEQUIV>
+		     [(minus:VIMODES
+		        (minus:VIMODES
+			  (match_operand:VIMODES 1 "register_operand")
+			  (vec_duplicate:VIMODES
+			    (match_operand:<VSUBMODE> 2 "register_operand")))
+		        (if_then_else:VIMODES
+			  (match_operand:<VCMPEQUIV> 3 "register_operand")
+			  (vec_duplicate:VIMODES (const_int 1))
+			  (vec_duplicate:VIMODES (const_int 0))))]
+		     UNSPEC_OVERFLOW))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*msbc<mode>4m_scalar_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+	(unspec:<VCMPEQUIV>
+	  [(minus:VIMODES
+	     (minus:VIMODES
+	       (match_operand:VIMODES 1 "register_operand" "vr")
+	       (vec_duplicate:VIMODES
+		 (match_operand:<VSUBMODE> 2 "register_operand" "r")))
+	     (if_then_else:VIMODES
+	       (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	       (vec_duplicate:VIMODES (const_int 1))
+	       (vec_duplicate:VIMODES (const_int 0))))]
+	  UNSPEC_OVERFLOW))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmsbc.vxm\t%0,%1,%2,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "msbc<mode>4"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (unspec:<VCMPEQUIV>
+		     [(minus:VIMODES
+			(match_operand:VIMODES 1 "register_operand")
+			(match_operand:VIMODES 2 "register_operand"))]
+		     UNSPEC_OVERFLOW))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*madc<mode>4_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+	(unspec:<VCMPEQUIV>
+	  [(minus:VIMODES
+	     (match_operand:VIMODES 1 "register_operand" "vr")
+	     (match_operand:VIMODES 2 "register_operand" "vr"))]
+	  UNSPEC_OVERFLOW))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmsbc.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "msbc<mode>4_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (unspec:<VCMPEQUIV>
+		     [(minus:VIMODES
+			(match_operand:VIMODES 1 "register_operand")
+			(vec_duplicate:VIMODES
+			  (match_operand:<VSUBMODE> 2 "register_operand")))]
+		     UNSPEC_OVERFLOW))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*msbc<mode>4_scalar_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+	(unspec:<VCMPEQUIV>
+	  [(minus:VIMODES
+	     (match_operand:VIMODES 1 "register_operand" "vr")
+	     (vec_duplicate:VIMODES
+	       (match_operand:<VSUBMODE> 2 "register_operand" "r")))]
+	  UNSPEC_OVERFLOW))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmsbc.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 
 ;; Floating point ALU instructions (add/sub/rsub/mul/div/rdiv).
 
