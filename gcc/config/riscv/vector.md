@@ -395,9 +395,9 @@
 ;; to ensure that the scratch operand has been allocated a reg first.
 (define_insn_and_split "mov<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr, m,vr")
-	(match_operand:VIMODES 1 "vector_move_operand"  " vr, m,vr,vc"))
-   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,r"))]
+   (set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr,vr, m,vr")
+	(match_operand:VIMODES 1 "vector_move_operand"  " vr,vi, m,vr,vc"))
+   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,X,r"))]
   "TARGET_VECTOR"
   "#"
   "&& 1 && (reload_completed || GET_CODE (operands[1]) != CONST_VECTOR)"
@@ -418,12 +418,13 @@
    (set_attr "mode" "none")])
 
 (define_insn "*mov<mode>_nosetvl"
-  [(set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr, m")
-	(match_operand:VIMODES 1 "vector_move_operand"  " vr, m,vr"))
+  [(set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr,vr, m")
+	(match_operand:VIMODES 1 "vector_move_operand"  " vr,vi, m,vr"))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "@
    vmv.v.v\t%0,%1
+   vmv.v.i\t%0,%1
    vle.v\t%0,%1
    vse.v\t%1,%0"
   [(set_attr "type" "vector")
