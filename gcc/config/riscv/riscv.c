@@ -5446,6 +5446,66 @@ riscv_mangle_type (const_tree type)
   if (TREE_CODE (type) == REAL_TYPE && TYPE_PRECISION (type) == 16)
     return "Dh";
 
+  /* Mangle all vector type for vector extension.  */
+  /* XXX: Revise this later, we don't write down this into spec yet.  */
+  if (TARGET_VECTOR && VECTOR_MODE_P (TYPE_MODE (type)))
+    switch (TYPE_MODE (type))
+      {
+      case E_VNx16QImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint8m1_t" : "_rvv_int8m1_t";
+      case E_VNx32QImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint8m2_t" : "_rvv_int8m2_t";
+      case E_VNx64QImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint8m4_t" : "_rvv_int8m4_t";
+      case E_VNx128QImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint8m8_t" : "_rvv_int8m8_t";
+      case E_VNx8HImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint16m1_t" : "_rvv_int16m1_t";
+      case E_VNx16HImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint16m2_t" : "_rvv_int16m2_t";
+      case E_VNx32HImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint16m4_t" : "_rvv_int16m4_t";
+      case E_VNx64HImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint16m8_t" : "_rvv_int16m8_t";
+      case E_VNx4SImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint32m1_t" : "_rvv_int32m1_t";
+      case E_VNx8SImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint32m2_t" : "_rvv_int32m2_t";
+      case E_VNx16SImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint32m4_t" : "_rvv_int32m4_t";
+      case E_VNx32SImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint32m8_t" : "_rvv_int32m8_t";
+      case E_VNx2DImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint64m1_t" : "_rvv_int64m1_t";
+      case E_VNx4DImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint64m2_t" : "_rvv_int64m2_t";
+      case E_VNx8DImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint64m4_t" : "_rvv_int64m4_t";
+      case E_VNx16DImode:
+	return TYPE_UNSIGNED(type) ? "_rvv_uint64m8_t" : "_rvv_int64m8_t";
+      case E_VNx8HFmode:   return "_rvv_float16m1_t";
+      case E_VNx16HFmode:  return "_rvv_float16m2_t";
+      case E_VNx32HFmode:  return "_rvv_float16m4_t";
+      case E_VNx64HFmode:  return "_rvv_float16m8_t";
+      case E_VNx4SFmode:   return "_rvv_float32m1_t";
+      case E_VNx8SFmode:   return "_rvv_float32m2_t";
+      case E_VNx16SFmode:  return "_rvv_float32m4_t";
+      case E_VNx32SFmode:  return "_rvv_float32m8_t";
+      case E_VNx2DFmode:   return "_rvv_float64m1_t";
+      case E_VNx4DFmode:   return "_rvv_float64m2_t";
+      case E_VNx8DFmode:   return "_rvv_float64m4_t";
+      case E_VNx16DFmode:  return "_rvv_float64m8_t";
+      case E_VNx2BImode:   return "_rvv_bool64_t";
+      case E_VNx4BImode:   return "_rvv_bool32_t";
+      case E_VNx8BImode:   return "_rvv_bool16_t";
+      case E_VNx16BImode:  return "_rvv_bool8_t";
+      case E_VNx32BImode:  return "_rvv_bool4_t";
+      case E_VNx64BImode:  return "_rvv_bool2_t";
+      case E_VNx128BImode: return "_rvv_bool1_t";
+      default:
+	break;
+      }
+
   /* Use the default mangling.  */
   return NULL;
 }
