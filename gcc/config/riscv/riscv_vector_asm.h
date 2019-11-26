@@ -1168,5 +1168,32 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, le)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP_VF, gt)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP_VF, ge)
 
+#define _RVV_ASM_MERGE_FLOAT_OP(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_MERGE_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmerge.vvm",						\
+    /* FUNC_NAME */rvv_merge_vv_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_MERGE_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfmerge.vfm",						\
+    /* FUNC_NAME */rvv_merge_vs_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"f")
+
+_RVV_FLOAT_ITERATOR (_RVV_ASM_MERGE_FLOAT_OP)
+
+
 #endif
 #endif
