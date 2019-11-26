@@ -82,6 +82,24 @@
 		    "vm" (mask), "0" (maskedoff)			\
 		  : "vtype")
 
+/* Inline asm template for merge operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP2_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_MERGE_ASM_TEMPLATE(SEW, LMUL, ASM_OP,			\
+				    OP0_CONSTRANT,			\
+				    OP1_CONSTRANT,			\
+				    OP2_CONSTRANT)			\
+    asm volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		  ASM_OP " %0, %1,%2, %3"				\
+		  : OP0_CONSTRANT (rv)					\
+		  : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
+		    "vm" (mask)						\
+		  : "vtype")
+
 /* Binary intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -220,6 +238,70 @@ FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
 		  "vm" (mask));						\
   return rv;								\
 }
+
+/* Merge intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP2_TYPE: Type of operand 2.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP1_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_MERGE_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,		\
+				MASK_TYPE,				\
+				OP0_TYPE, OP1_TYPE, OP2_TYPE,  		\
+				OP0_CONSTRANT,				\
+				OP1_CONSTRANT,				\
+				OP2_CONSTRANT)				\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_MERGE_ASM_TEMPLATE(						\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT); 			\
+  return rv;								\
+}
+
+/* Merge intrinsic function template, but support immediate version.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   IMM_ASM_OP: opcode for immediate variant, e.g. vadd.vi
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP2_TYPE: Type of operand 2.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP1_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_MERGE_IMM_TEMPLATE(SEW, LMUL, ASM_OP, IMM_ASM_OP,	\
+				    FUNC_NAME,	MASK_TYPE,		\
+				    OP0_TYPE, OP1_TYPE, OP2_TYPE,	\
+				    OP0_CONSTRANT,			\
+				    OP1_CONSTRANT,			\
+				    OP2_CONSTRANT)			\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
+{									\
+  OP0_TYPE rv;								\
+  if (_RVV_ASM_INT_SIMM_CHK(SEW, b))					\
+    _RVV_ASM_MERGE_ASM_TEMPLATE(					\
+      SEW, LMUL, IMM_ASM_OP,						\
+      OP0_CONSTRANT, OP1_CONSTRANT, "i");				\
+  else									\
+    _RVV_ASM_MERGE_ASM_TEMPLATE(					\
+      SEW, LMUL, ASM_OP,						\
+      OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT); 			\
+  return rv;								\
+}									\
 
 /* Template function for binary integer vector-scalar operation with immediate
    variant.  */
@@ -844,6 +926,56 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
 
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nsrl, nsrl)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nsra, nsra)
+
+#define _RVV_ASM_MERGE_INT_OP(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_MERGE_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmerge.vvm",						\
+    /* FUNC_NAME */rvv_merge_vv_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_MERGE_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmerge.vxm",						\
+    /* IMM_ASM_OP */"vmerge.vim",					\
+    /* FUNC_NAME */rvv_merge_vs_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */int##SEW##_t,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r")						\
+  _RVV_ASM_MERGE_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmerge.vvm",						\
+    /* FUNC_NAME */rvv_merge_vv_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_MERGE_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmerge.vxm",						\
+    /* IMM_ASM_OP */"vmerge.vim",					\
+    /* FUNC_NAME */rvv_merge_vs_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */uint##SEW##_t,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r")
+
+_RVV_INT_ITERATOR (_RVV_ASM_MERGE_INT_OP)
 
 /* Template function for binary floating point vector-scalar operation.  */
 #define _RVV_ASM_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
