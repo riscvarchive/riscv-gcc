@@ -571,6 +571,11 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,     wmaccu,   wmacc, u, u, u)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,    wmaccsu, wmaccsu,  ,  , u)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, wmaccus, wmaccus,  , u,  )
 
+_RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,      qmacc,   qmacc,  ,  ,  )
+_RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,     qmaccu,   qmacc, u, u, u)
+_RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,    qmaccsu, qmaccsu,  ,  , u)
+_RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,  , u,  )
+
 /* Template function for integer vector-vector comparison operation.  */
 #define _RVV_ASM_INT_CMP_VV(SEW, LMUL, MLEN, T, OP, OPU)		\
   _RVV_ASM_BIN_OP_TEMPLATE(						\

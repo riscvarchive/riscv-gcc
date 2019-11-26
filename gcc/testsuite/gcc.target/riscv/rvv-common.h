@@ -158,6 +158,12 @@
   MACRO(uint32_t, int, 32m2, 16, uint64_t, 64m4, __VA_ARGS__)	\
   MACRO(uint32_t, int, 32m4,  8, uint64_t, 64m8, __VA_ARGS__)
 
+#define RVV_QINT_TEST_ARG(MACRO, ...)				\
+  MACRO( int8_t, int,  8m1,  8, int32_t, 32m4, __VA_ARGS__)	\
+  MACRO( int8_t, int,  8m2,  4, int32_t, 32m8, __VA_ARGS__)	\
+  MACRO(int16_t, int, 16m1, 16, int64_t, 64m4, __VA_ARGS__)	\
+  MACRO(int16_t, int, 16m2,  8, int64_t, 64m8, __VA_ARGS__)	\
+
 #define RVV_FLOAT_TEST(MACRO)     	\
   MACRO(float16_t, float, 16m1, 16)	\
   MACRO(float16_t, float, 16m2,  8)	\

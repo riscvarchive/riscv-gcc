@@ -105,6 +105,17 @@ typedef __fp16 float16_t;
   MACRO (32, 2, 16, int32_t, 64, 4, int64_t, __VA_ARGS__)		\
   MACRO (32, 4,  8, int32_t, 64, 8, int64_t, __VA_ARGS__)
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, scalar modes, info for
+   corresponding 4 times widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, TYPE, WSEW, WLMUL, WTYPE)  */
+#define _RVV_QINT_ITERATOR_ARG(MACRO, ...)				\
+  MACRO ( 8, 1,  8,  int8_t, 32, 4, int32_t, __VA_ARGS__)		\
+  MACRO ( 8, 2,  4,  int8_t, 32, 8, int32_t, __VA_ARGS__)		\
+  MACRO (16, 1, 16, int16_t, 64, 4, int64_t, __VA_ARGS__)		\
+  MACRO (16, 2,  8, int16_t, 64, 8, int64_t, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported SEW, LMUL, MLEN and
    corresponding scalar modes for float operations.  */
 #define _RVV_FLOAT_ITERATOR(MACRO)				\
