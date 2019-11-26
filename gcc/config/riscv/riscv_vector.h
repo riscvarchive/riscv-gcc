@@ -163,7 +163,7 @@ typedef __fp16 float16_t;
 #define _RVVSETVL(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline word_type					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_setvl##SEW##m##LMUL (word_type a)					\
+rvv_setvl_##SEW##m##LMUL (word_type a)					\
 {									\
   word_type vl;								\
   if (__riscv_xlen == 32)						\
