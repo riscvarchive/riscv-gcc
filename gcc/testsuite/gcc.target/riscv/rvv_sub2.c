@@ -57,8 +57,8 @@ RVV_FLOAT_TEST(VSUB_NO_IMM)
 RVV_FLOAT_TEST(VRSUB_NO_IMM)
 
 /* { dg-final { scan-assembler-times "vsub.vv" 32 } } */
-/* { dg-final { scan-assembler-times "vsub.vx" 32 } } */
-/* { dg-final { scan-assembler-times "vadd.vi" 32 } } */
+/* sub only provide scalar version.  */
+/* { dg-final { scan-assembler-times "vsub.vx" 64 } } */
 /* { dg-final { scan-assembler-times "vfsub.vv" 12 } } */
 /* { dg-final { scan-assembler-times "vfsub.vf" 12 } } */
 /* { dg-final { scan-assembler-times "vrsub.vx" 32 } } */
