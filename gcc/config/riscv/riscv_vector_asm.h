@@ -1223,6 +1223,43 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP_VF, ge)
 
 _RVV_FLOAT_ITERATOR (_RVV_ASM_MERGE_FLOAT_OP)
 
+/* Template function for widening floating point vector-vector multiply-add
+   operation.  */
+#define _RVV_ASM_FLOAT_WMAC_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".vv",						\
+    /* FUNC_NAME */rvv_##OP##_vv_##float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_##float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_##float##SEW##m##LMUL##_t,			\
+    /* OP2_TYPE */rvv_##float##SEW##m##LMUL##_t,			\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+/* Template function for widening floating point vector-scalar multiply-add
+   operation.  */
+#define _RVV_ASM_FLOAT_WMAC_VF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+  _RVV_ASM_MAC_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vf" #OP ".vf",						\
+    /* FUNC_NAME */rvv_##OP##_vs_##float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_##float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */_RVV_F##SEW##_TYPE,					\
+    /* OP2_TYPE */rvv_##float##SEW##m##LMUL##_t,			\
+    /* OP1_CONSTRANT */"f",						\
+    /* OP2_CONSTRANT */"vr")						\
+
+
+#define _RVV_ASM_FLOAT_WMAC(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+  _RVV_ASM_FLOAT_WMAC_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+  _RVV_ASM_FLOAT_WMAC_VF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)
+
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_WMAC, wmacc)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_WMAC, wnmacc)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_WMAC, wmsac)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_WMAC, wnmsac)
 
 #endif
 #endif
