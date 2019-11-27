@@ -437,6 +437,9 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, mulh, mulhu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU_WITH_IMM_VER, sadd, saddu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, ssub, ssubu)
 
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU_WITH_IMM_VER, aadd, aaddu)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, asub, asubu)
+
 /* Template function for vmulhsu.vv and vmulhsu.vx.  */
 #define _RVV_ASM_MULHSU_OP(SEW, LMUL, MLEN, T, OP)			\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
