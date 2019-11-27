@@ -11,6 +11,10 @@ RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, sra)
 RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, sra)
 RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, srl)
 RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, srl)
+RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, ssra)
+RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, ssra)
+RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, ssrl)
+RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, ssrl)
 
 /* { dg-final { scan-assembler-times "vsll.vv" 32 } } */
 /* { dg-final { scan-assembler-times "vsll.vx" 32 } } */
@@ -18,3 +22,7 @@ RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, srl)
 /* { dg-final { scan-assembler-times "vsra.vx" 32 } } */
 /* { dg-final { scan-assembler-times "vsrl.vv" 32 } } */
 /* { dg-final { scan-assembler-times "vsrl.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vssra.vv" 32 } } */
+/* { dg-final { scan-assembler-times "vssra.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vssrl.vv" 32 } } */
+/* { dg-final { scan-assembler-times "vssrl.vx" 32 } } */
