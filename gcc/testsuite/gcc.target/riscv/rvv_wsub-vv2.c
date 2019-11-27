@@ -21,17 +21,17 @@
   }
 
 #define VWSUBU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                           \
-  void vwaddu##VCLASS##EM(size_t n, STYPE *x, STYPE *y,                        \
+  void vwadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y,                        \
                           WSTYPE *z) {                                         \
-    rvv_u##VCLASS##EM##_t vx, vy;                                              \
-    rvv_u##VCLASS##WEM##_t vz;                                                 \
+    rvv_##VCLASS##EM##_t vx, vy;                                              \
+    rvv_##VCLASS##WEM##_t vz;                                                 \
     rvv_bool##MLEN##_t mask;                                                   \
-    vx = rvv_le_u##VCLASS##EM(x);                                              \
-    vy = rvv_le_u##VCLASS##EM(y);                                              \
-    vz = rvv_le_u##VCLASS##WEM(z);                                             \
+    vx = rvv_le_##VCLASS##EM(x);                                              \
+    vy = rvv_le_##VCLASS##EM(y);                                              \
+    vz = rvv_le_##VCLASS##WEM(z);                                             \
     mask = rvv_mset_bool##MLEN ();                                             \
-    vz = rvv_wsubu_vv_u##VCLASS##EM##_mask (mask, vz, vx, vy);                 \
-    rvv_se_u##VCLASS##WEM(z, vz);                                              \
+    vz = rvv_wsubu_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                 \
+    rvv_se_##VCLASS##WEM(z, vz);                                              \
   }
 
 RVV_WINT_TEST(VWSUB)

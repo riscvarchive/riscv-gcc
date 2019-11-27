@@ -136,27 +136,27 @@
 
 /* The unsigned is added in the macro that we call.  */
 #define RVV_WUINT_TEST(MACRO)				\
-  MACRO( uint8_t, int,  8m1,  8, uint16_t, 16m2)	\
-  MACRO( uint8_t, int,  8m2,  4, uint16_t, 16m4)	\
-  MACRO( uint8_t, int,  8m4,  2, uint16_t, 16m8)	\
-  MACRO(uint16_t, int, 16m1, 16, uint32_t, 32m2)	\
-  MACRO(uint16_t, int, 16m2,  8, uint32_t, 32m4)	\
-  MACRO(uint16_t, int, 16m4,  4, uint32_t, 32m8)	\
-  MACRO(uint32_t, int, 32m1, 32, uint64_t, 64m2)	\
-  MACRO(uint32_t, int, 32m2, 16, uint64_t, 64m4)	\
-  MACRO(uint32_t, int, 32m4,  8, uint64_t, 64m8)
+  MACRO( uint8_t, uint,  8m1,  8, uint16_t, 16m2)	\
+  MACRO( uint8_t, uint,  8m2,  4, uint16_t, 16m4)	\
+  MACRO( uint8_t, uint,  8m4,  2, uint16_t, 16m8)	\
+  MACRO(uint16_t, uint, 16m1, 16, uint32_t, 32m2)	\
+  MACRO(uint16_t, uint, 16m2,  8, uint32_t, 32m4)	\
+  MACRO(uint16_t, uint, 16m4,  4, uint32_t, 32m8)	\
+  MACRO(uint32_t, uint, 32m1, 32, uint64_t, 64m2)	\
+  MACRO(uint32_t, uint, 32m2, 16, uint64_t, 64m4)	\
+  MACRO(uint32_t, uint, 32m4,  8, uint64_t, 64m8)
 
 /* The unsigned is added in the macro that we call.  */
 #define RVV_WUINT_TEST_ARG(MACRO, ...)				\
-  MACRO( uint8_t, int,  8m1,  8, uint16_t, 16m2, __VA_ARGS__)	\
-  MACRO( uint8_t, int,  8m2,  4, uint16_t, 16m4, __VA_ARGS__)	\
-  MACRO( uint8_t, int,  8m4,  2, uint16_t, 16m8, __VA_ARGS__)	\
-  MACRO(uint16_t, int, 16m1, 16, uint32_t, 32m2, __VA_ARGS__)	\
-  MACRO(uint16_t, int, 16m2,  8, uint32_t, 32m4, __VA_ARGS__)	\
-  MACRO(uint16_t, int, 16m4,  4, uint32_t, 32m8, __VA_ARGS__)	\
-  MACRO(uint32_t, int, 32m1, 32, uint64_t, 64m2, __VA_ARGS__)	\
-  MACRO(uint32_t, int, 32m2, 16, uint64_t, 64m4, __VA_ARGS__)	\
-  MACRO(uint32_t, int, 32m4,  8, uint64_t, 64m8, __VA_ARGS__)
+  MACRO( uint8_t, uint,  8m1,  8, uint16_t, 16m2, __VA_ARGS__)	\
+  MACRO( uint8_t, uint,  8m2,  4, uint16_t, 16m4, __VA_ARGS__)	\
+  MACRO( uint8_t, uint,  8m4,  2, uint16_t, 16m8, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, 16m1, 16, uint32_t, 32m2, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, 16m2,  8, uint32_t, 32m4, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, 16m4,  4, uint32_t, 32m8, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, 32m1, 32, uint64_t, 64m2, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, 32m2, 16, uint64_t, 64m4, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, 32m4,  8, uint64_t, 64m8, __VA_ARGS__)
 
 #define RVV_QINT_TEST_ARG(MACRO, ...)				\
   MACRO( int8_t, int,  8m1,  8, int32_t, 32m4, __VA_ARGS__)	\
