@@ -310,7 +310,7 @@ FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
   _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"v" #OP ".vx",						\
-    /* IMM_ASM_OP */"v" #OPU ".vi",					\
+    /* IMM_ASM_OP */"v" #OP ".vi",					\
     /* FUNC_NAME */rvv_##OP##_vs_int##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
@@ -400,7 +400,7 @@ FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
 /* Template function for binary integer vector-vector, vector-scalar and
    vector-signed-immediate operation.  */
 #define _RVV_ASM_INT_BIN_OP_WITH_IMM_VER(SEW, LMUL, MLEN, T, OP)	\
-  _RVV_ASM_INT_BIN_OP_SCALAR_WITH_IMM_CHECK(SEW, LMUL, MLEN, T, OP, OP,	\
+  _RVV_ASM_INT_BIN_OP_SCALAR_WITH_IMM_CHECK(SEW, LMUL, MLEN, T, OP, OP,\
 		 			    _RVV_ASM_INT_SIMM_CHK)	\
   _RVV_ASM_INT_BIN_OP_VEC(SEW, LMUL, MLEN, T, OP, OP)
 
@@ -411,11 +411,19 @@ FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
 		 			    _RVV_ASM_INT_UIMM_CHK)	\
   _RVV_ASM_INT_BIN_OP_VEC(SEW, LMUL, MLEN, T, OP, OP)
 
+/* Template function for binary integer vector-vector, vector-scalar and
+   vector-signed-immediate operation.  */
+#define _RVV_ASM_INT_BIN_OP_OPU_WITH_IMM_VER(SEW, LMUL, MLEN, T, OP, OPU)\
+  _RVV_ASM_INT_BIN_OP_SCALAR_WITH_IMM_CHECK(SEW, LMUL, MLEN, T, OP, OPU,\
+					    _RVV_ASM_INT_SIMM_CHK)	\
+  _RVV_ASM_INT_BIN_OP_VEC(SEW, LMUL, MLEN, T, OP, OPU)
+
+
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP, sub)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR_WITH_IMM_CHECK, rsub, rsub,
 		       _RVV_ASM_INT_SIMM_CHK)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_IMM_VER, and)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_IMM_VER, or)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_IMM_VER,  or)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_IMM_VER, xor)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_UIMM_VER, sll)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_UIMM_VER, sra)
@@ -425,6 +433,9 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, max, maxu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, div, divu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, rem, remu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, mulh, mulhu)
+
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU_WITH_IMM_VER, sadd, saddu)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, ssub, ssubu)
 
 /* Template function for vmulhsu.vv and vmulhsu.vx.  */
 #define _RVV_ASM_MULHSU_OP(SEW, LMUL, MLEN, T, OP)			\
