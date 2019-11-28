@@ -1303,6 +1303,53 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+;; Vector Floating-Point Square-Root Instruction
+(define_expand "sqrt<mode>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (sqrt:VFMODES
+		     (match_operand:VFMODES 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "*sqrt<mode>2_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(sqrt:VFMODES
+	  (match_operand:VFMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfsqrt.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "sqrt<mode>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (if_then_else:VFMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (sqrt:VFMODES
+		       (match_operand:VFMODES 3 "register_operand"))
+		     (match_operand:VFMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "*sqrt<mode>2_mask_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(if_then_else:VFMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (sqrt:VFMODES
+	    (match_operand:VFMODES 3 "register_operand" "vr"))
+	  (match_operand:VFMODES 2 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfsqrt.v\t%0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Vector Widening Integer Add/Subtract
 
 (define_expand "wadd<u><mode>_vv"

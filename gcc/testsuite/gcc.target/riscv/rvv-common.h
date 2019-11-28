@@ -369,6 +369,30 @@
   MACRO(    float, float, 32m2,  16, double, 64m1, __VA_ARGS__)	\
   MACRO(    float, float, 32m4,   8, double, 64m1, __VA_ARGS__)
 
+#define RVV_UNARY_BUILTIN_VEC_TEST(STYPE, VCLASS,	EM, MLEN, OP)	\
+  void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
+					       STYPE *y, STYPE z)\
+  {								\
+    rvv_##VCLASS##EM##_t vx, vy;				\
+    vx = rvv_le_##VCLASS##EM(x);				\
+    vy = rvv_##OP##_vv_##VCLASS##EM (vx);			\
+    rvv_se_##VCLASS##EM(y, vy);					\
+  }
+
+#define RVV_UNARY_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASS,	\
+					  EM, MLEN, OP)		\
+  void rvv##OP##VCLASS##EM##_v_mask_builtin_test(		\
+	 size_t n, STYPE *x, STYPE *y, STYPE z)			\
+  {								\
+    rvv_##VCLASS##EM##_t vx, vy;				\
+    rvv_bool##MLEN##_t mask;					\
+    vx = rvv_le_##VCLASS##EM(x);				\
+    vy = rvv_le_##VCLASS##EM(y);				\
+    mask = rvv_mset_bool##MLEN ();				\
+    vy = rvv_##OP##_vv_##VCLASS##EM##_mask (mask, vy, vx);	\
+    rvv_se_##VCLASS##EM(y, vy);					\
+  }
+
 #define RVV_BIN_BUILTIN_VEC_TEST(STYPE, VCLASS,	EM, MLEN, OP)	\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       STYPE *y, STYPE z)\

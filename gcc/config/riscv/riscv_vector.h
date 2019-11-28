@@ -725,6 +725,26 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rdiv)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, max)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, min)
 
+#define _RVV_FLOAT_UNARY_OP(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline rvv_float##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_##OP##_vv_float##SEW##m##LMUL (rvv_float##SEW##m##LMUL##_t a)	\
+{									\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL (a);		\
+}									\
+__extension__ extern __inline rvv_float##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_##OP##_vv_float##SEW##m##LMUL##_mask (				\
+  rvv_bool##MLEN##_t mask,						\
+  rvv_float##SEW##m##LMUL##_t maskedoff, 				\
+  rvv_float##SEW##m##LMUL##_t a)					\
+{									\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL##_mask (		\
+      mask, maskedoff, a);						\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, sqrt)
+
 #define _RVV_MASK_NULLARY_OP(MLEN, OP)					\
 __extension__ extern __inline rvv_bool##MLEN##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
