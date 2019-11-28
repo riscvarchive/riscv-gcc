@@ -531,81 +531,43 @@ tree rvvbool64_t_node;
   DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
   DIRECT_BUILTIN (vsetvl##E##m##L##_di, RISCV_DI_FTYPE_DI, vector),
 
+#define _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,	\
+					  PNAME, PMODE, SUBTYPE, VCLASS)\
+  DIRECT_NAMED (							\
+    vlse##MODE##_##PNAME, vlse##SUBTYPE##E##m##L##_##PNAME,		\
+    RISCV_##VCLASS##E##M##L##_FTYPE_C_##SUBMODE##_PTR_##PMODE,		\
+    vector),								\
+  DIRECT_NAMED (							\
+    vlse##MODE##_##PNAME##_mask,					\
+    vlse##SUBTYPE##E##m##L##_##PNAME##_mask,				\
+    RISCV_##VCLASS##E##M##L##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_C_##SUBMODE##_PTR_##PMODE, \
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vsse##MODE##_##PNAME,						\
+    vsse##SUBTYPE##E##m##L##_##PNAME,					\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##_C_##SUBMODE##_PTR_##PMODE,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vsse##MODE##_##PNAME##_mask,					\
+    vsse##SUBTYPE##E##m##L##_##PNAME##_mask,				\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_C_##SUBMODE##_PTR_##PMODE,\
+    vector),								\
+
 #define VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE)	\
-  DIRECT_NAMED (vlse##MODE##_si, vlseint##E##m##L##_si,			\
-		RISCV_VI##E##M##L##_FTYPE_C_##SUBMODE##_PTR_SI,		\
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_di, vlseint##E##m##L##_di,			\
-		RISCV_VI##E##M##L##_FTYPE_C_##SUBMODE##_PTR_DI,		\
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_si, vlseuint##E##m##L##_si,		\
-		RISCV_VUI##E##M##L##_FTYPE_C_U##SUBMODE##_PTR_SI,	\
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_di, vlseuint##E##m##L##_di,		\
-		RISCV_VUI##E##M##L##_FTYPE_C_U##SUBMODE##_PTR_DI,	\
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_si_mask, vlseint##E##m##L##_si_mask,	\
-		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_C_##SUBMODE##_PTR_SI, \
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_di_mask, vlseint##E##m##L##_di_mask,	\
-		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_C_##SUBMODE##_PTR_DI, \
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_si_mask, vlseuint##E##m##L##_si_mask,	\
-		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR_SI, \
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_di_mask, vlseuint##E##m##L##_di_mask,	\
-		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR_DI, \
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vsseint##E##m##L##_si,	\
-		RISCV_VOID_FTYPE_VI##E##M##L##_C_##SUBMODE##_PTR_SI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vsseint##E##m##L##_di,	\
-		RISCV_VOID_FTYPE_VI##E##M##L##_C_##SUBMODE##_PTR_DI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vsseuint##E##m##L##_si,	\
-		RISCV_VOID_FTYPE_VUI##E##M##L##_C_U##SUBMODE##_PTR_SI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vsseuint##E##m##L##_di,	\
-		RISCV_VOID_FTYPE_VUI##E##M##L##_C_U##SUBMODE##_PTR_DI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vsseint##E##m##L##_si_mask,	\
-		RISCV_VOID_FTYPE_VB##MLEN##_VI##E##M##L##_C_##SUBMODE##_PTR_SI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vsseint##E##m##L##_di_mask,	\
-		RISCV_VOID_FTYPE_VB##MLEN##_VI##E##M##L##_C_##SUBMODE##_PTR_DI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vsseuint##E##m##L##_si_mask,	\
-		RISCV_VOID_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR_SI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vsseuint##E##m##L##_di_mask,	\
-		RISCV_VOID_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR_DI,	\
-		vector),
+  _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, si, SI,	\
+				    int, VI)				\
+  _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,	\
+				    int, VI)				\
+  _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, U##SUBMODE, si, SI,\
+				    uint, VUI)\
+  _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, U##SUBMODE, di, DI,\
+				    uint, VUI)
 
 #define VFLOAT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE)	\
-  DIRECT_NAMED (vlse##MODE##_si, vlsefloat##E##m##L##_si,		\
-		RISCV_VF##E##M##L##_FTYPE_C_##SUBMODE##_PTR_SI,		\
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_di, vlsefloat##E##m##L##_di,		\
-		RISCV_VF##E##M##L##_FTYPE_C_##SUBMODE##_PTR_DI,		\
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_si_mask, vlsefloat##E##m##L##_si_mask,	\
-		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR_SI, \
-		vector),						\
-  DIRECT_NAMED (vlse##MODE##_di_mask, vlsefloat##E##m##L##_di_mask,	\
-		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR_DI, \
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si, vssefloat##E##m##L##_si,	\
-		RISCV_VOID_FTYPE_VF##E##M##L##_C_##SUBMODE##_PTR_SI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di, vssefloat##E##m##L##_di,	\
-		RISCV_VOID_FTYPE_VF##E##M##L##_C_##SUBMODE##_PTR_DI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_si_mask, vssefloat##E##m##L##_si_mask,	\
-		RISCV_VOID_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR_SI,	\
-		vector),						\
-  DIRECT_NAMED_NO_TARGET (vsse##MODE##_di_mask, vssefloat##E##m##L##_di_mask,	\
-		RISCV_VOID_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR_DI,	\
-		vector),
+  _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, si, SI,	\
+				    float, VF)				\
+  _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,	\
+				    float, VF)	\
 
 #define VINT_BIN_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
   DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
