@@ -47,6 +47,37 @@
 #define _RVV_ASM_INT_UIMM_CHK(SEW, IMM) \
   (__builtin_constant_p (b) && (((IMM) >= 0) && ((IMM) <= 31)))
 
+/* Unmasked inline asm template for unary operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_UNARY_OP_ASM_TEMPLATE(SEW, LMUL, ASM_OP,		\
+				       OP0_CONSTRANT,			\
+				       OP1_CONSTRANT)			\
+    asm volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		  ASM_OP " %0, %1"					\
+		  : OP0_CONSTRANT (rv)					\
+		  : OP1_CONSTRANT (a)					\
+		  : "vtype")
+
+/* Masked inline asm template for unary operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_UNARY_OP_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+					      OP0_CONSTRANT,		\
+					      OP1_CONSTRANT)		\
+    asm volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		  ASM_OP " %0, %1, %2.t"				\
+		  : OP0_CONSTRANT (rv)					\
+		  : OP1_CONSTRANT (a),					\
+		    "vm" (mask), "0" (maskedoff)			\
+		  : "vtype")
+
 /* Unmasked inline asm template.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -99,6 +130,43 @@
 		  : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
 		    "vm" (mask)						\
 		  : "vtype")
+
+/* UNARY intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_UNARY_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+				   MASK_TYPE,				\
+				   OP0_TYPE, OP1_TYPE,	 		\
+				   OP0_CONSTRANT,			\
+				   OP1_CONSTRANT)			\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a)							\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_UNARY_OP_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}									\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
+		  OP1_TYPE a)						\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_UNARY_OP_MASKED_ASM_TEMPLATE(				\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}
 
 /* Binary intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64
@@ -1005,6 +1073,19 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     /* OP2_CONSTRANT */"r")
 
 _RVV_INT_ITERATOR (_RVV_ASM_MERGE_INT_OP)
+
+#define _RVV_FCLASS(SEW, LMUL, MLEN, T)					\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfclass.v",						\
+    /* FUNC_NAME */rvv_class_v_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_FLOAT_ITERATOR (_RVV_FCLASS)
 
 /* Template function for binary floating point vector-scalar operation.  */
 #define _RVV_ASM_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
