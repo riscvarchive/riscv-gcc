@@ -1087,6 +1087,46 @@ _RVV_INT_ITERATOR (_RVV_ASM_MERGE_INT_OP)
 
 _RVV_FLOAT_ITERATOR (_RVV_FCLASS)
 
+#define _RVV_FCVT(SEW, LMUL, MLEN, T)					\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfcvt.xu.f.v",						\
+    /* FUNC_NAME */rvv_cvt_f##SEW##toui##SEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfcvt.x.f.v",						\
+    /* FUNC_NAME */rvv_cvt_f##SEW##toi##SEW##_v_##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfcvt.f.xu.v",						\
+    /* FUNC_NAME */rvv_cvt_ui##SEW##tof##SEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfcvt.f.x.v",						\
+    /* FUNC_NAME */rvv_cvt_i##SEW##tof##SEW##_v_##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_FLOAT_ITERATOR (_RVV_FCVT)
+
 /* Template function for binary floating point vector-scalar operation.  */
 #define _RVV_ASM_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
