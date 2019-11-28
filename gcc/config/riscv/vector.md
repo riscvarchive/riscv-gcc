@@ -272,6 +272,75 @@
 
 ;; Load/store instructions.
 
+;; Vector Unit-Stride Instructions
+
+(define_expand "vle<VMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (mem:VMODES (match_operand:P 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "vle<VMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (if_then_else:VMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (mem:VMODES
+		       (match_operand:P 3 "register_operand"))
+		     (match_operand:VMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vle<VMODES:mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(if_then_else:VMODES
+	  (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")
+	  (match_operand:VMODES 1 "memory_operand" "m")
+	  (match_operand:VMODES 3 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vle.v\t%0,%1,%2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vse<VMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:VMODES (match_operand:P 0 "register_operand"))
+		   (match_operand:VMODES 1 "register_operand"))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "vse<VMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:VMODES (match_operand:P 2 "register_operand"))
+		   (unspec:VMODES
+		     [(match_operand:<VCMPEQUIV> 0 "register_operand")
+		      (match_operand:VMODES 1 "register_operand")]
+		     UNSPEC_MASKED_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vse<VMODES:mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "memory_operand" "=m")
+	(unspec:VMODES
+	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	   (match_operand:VMODES 2 "register_operand" "vr")]
+	  UNSPEC_MASKED_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vse.v\t%2,%0,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Vector Strided Instructions
 
 (define_expand "vlse<VMODES:mode>_<P:mode>"

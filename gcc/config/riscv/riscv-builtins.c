@@ -531,6 +531,44 @@ tree rvvbool64_t_node;
   DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
   DIRECT_BUILTIN (vsetvl##E##m##L##_di, RISCV_DI_FTYPE_DI, vector),
 
+#define _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
+				  PNAME, PMODE, SUBTYPE, VCLASS)	\
+  DIRECT_NAMED (							\
+    vle##MODE##_##PNAME, vle##SUBTYPE##E##m##L##_##PNAME,		\
+    RISCV_##VCLASS##E##M##L##_FTYPE_C_##SUBMODE##_PTR,			\
+    vector),								\
+  DIRECT_NAMED (							\
+    vle##MODE##_##PNAME##_mask,						\
+    vle##SUBTYPE##E##m##L##_##PNAME##_mask,				\
+    RISCV_##VCLASS##E##M##L##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_C_##SUBMODE##_PTR, \
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vse##MODE##_##PNAME,						\
+    vse##SUBTYPE##E##m##L##_##PNAME,					\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##_C_##SUBMODE##_PTR,		\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vse##MODE##_##PNAME##_mask,						\
+    vse##SUBTYPE##E##m##L##_##PNAME##_mask,				\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_C_##SUBMODE##_PTR,	\
+    vector),
+
+#define VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE)		\
+  _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, si, SI,		\
+			    int, VI)					\
+  _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,		\
+			    int, VI)					\
+  _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, U##SUBMODE, si, SI,	\
+			    uint, VUI)					\
+  _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, U##SUBMODE, di, DI,	\
+			    uint, VUI)
+
+#define VFLOAT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE)		\
+  _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, si, SI,		\
+			    float, VF)					\
+  _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,		\
+			    float, VF)
+
 #define _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,	\
 					  PNAME, PMODE, SUBTYPE, VCLASS)\
   DIRECT_NAMED (							\
@@ -559,7 +597,7 @@ tree rvvbool64_t_node;
   _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,	\
 				    int, VI)				\
   _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, U##SUBMODE, si, SI,\
-				    uint, VUI)\
+				    uint, VUI)				\
   _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, U##SUBMODE, di, DI,\
 				    uint, VUI)
 
@@ -567,7 +605,7 @@ tree rvvbool64_t_node;
   _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, si, SI,	\
 				    float, VF)				\
   _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,	\
-				    float, VF)	\
+				    float, VF)
 
 #define VINT_BIN_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
   DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
@@ -808,6 +846,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_INT_ITERATOR (VINT_STRIDED_LOAD_STORE_BUILTINS)
   _RVV_FLOAT_ITERATOR (VFLOAT_STRIDED_LOAD_STORE_BUILTINS)
+
+  _RVV_INT_ITERATOR (VINT_LOAD_STORE_BUILTINS)
+  _RVV_FLOAT_ITERATOR (VFLOAT_LOAD_STORE_BUILTINS)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, add)
   /* XXX: sub has masked version, but pattern didn't implement yet. */
