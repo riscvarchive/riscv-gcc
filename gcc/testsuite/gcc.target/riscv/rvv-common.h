@@ -239,7 +239,7 @@
   MACRO(   double, float, 64m4, 16, int64_t, int, 64)	\
   MACRO(   double, float, 64m8,  8, int64_t, int, 64)
 
-#define RVV_FLOAT_WCVT_INT_TEST(MACRO)	\
+#define RVV_FLOAT_WNCVT_INT_TEST(MACRO)	\
   MACRO(16m1, 32m2, 16, 16, 32)		\
   MACRO(16m2, 32m4,  8, 16, 32)		\
   MACRO(16m4, 32m8,  4, 16, 32)		\

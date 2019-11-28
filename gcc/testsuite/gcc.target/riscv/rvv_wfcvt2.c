@@ -69,7 +69,7 @@
 
 
 
-RVV_FLOAT_WCVT_INT_TEST(RVV_WFCVT_TEST)
+RVV_FLOAT_WNCVT_INT_TEST(RVV_WFCVT_TEST)
 
 /* { dg-final { scan-assembler-times "vfwcvt.xu.f.v" 6 } } */
 /* { dg-final { scan-assembler-times "vfwcvt.x.f.v" 6 } } */
