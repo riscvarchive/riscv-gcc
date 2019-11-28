@@ -1944,7 +1944,7 @@
 
 (define_insn "<invmaskop><mode>3"
   [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
-	(not
+	(not:VMASKMODES
 	  (any_bitwise:VMASKMODES
 	    (match_operand:VMASKMODES 1 "register_operand" "vr")
 	    (match_operand:VMASKMODES 2 "register_operand" "vr"))))]
