@@ -691,7 +691,7 @@
     rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##WEM(x);					\
     vy = rvv_le_##VCLASS##EM(y);					\
-    vy = rvv_##OP##_wv_##VCLASS##EM (vx, vy);				\
+    vy = rvv_##OP##_wv_##VCLASS##WEM (vx, vy);				\
     rvv_se_##VCLASS##EM(y, vy);						\
   }
 
@@ -706,7 +706,7 @@
     vx = rvv_le_##VCLASS##WEM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_mset_bool##MLEN ();				\
-    vy = rvv_##OP##_wv_##VCLASS##EM##_mask (mask, vy, vx, vy);	\
+    vy = rvv_##OP##_wv_##VCLASS##WEM##_mask (mask, vy, vx, vy);	\
     rvv_se_##VCLASS##EM(y, vy);					\
   }
 
@@ -719,7 +719,7 @@
     rvv_##VCLASS##EM##_t vy;					\
     vx = rvv_le_##VCLASS##WEM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
-    vy = rvv_##OP##_ws_##VCLASS##EM (vx, z);			\
+    vy = rvv_##OP##_ws_##VCLASS##WEM (vx, z);			\
     rvv_se_##VCLASS##EM(y, vy);					\
   }
 
@@ -734,7 +734,7 @@
     vx = rvv_le_##VCLASS##WEM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_mset_bool##MLEN ();				\
-    vy = rvv_##OP##_ws_##VCLASS##EM##_mask (mask, vy, vx, z);	\
+    vy = rvv_##OP##_ws_##VCLASS##WEM##_mask (mask, vy, vx, z);	\
     rvv_se_##VCLASS##EM(y, vy);					\
   }
 
@@ -747,7 +747,7 @@
     rvv_##VCLASS##EM##_t vy;					\
     vx = rvv_le_##VCLASS##WEM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
-    vy = rvv_##OP##_ws_##VCLASS##EM (vx, 11);			\
+    vy = rvv_##OP##_ws_##VCLASS##WEM (vx, 11);			\
     rvv_se_##VCLASS##EM(y, vy);					\
   }
 
@@ -762,7 +762,7 @@
     vx = rvv_le_##VCLASS##WEM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_mset_bool##MLEN ();				\
-    vy = rvv_##OP##_ws_##VCLASS##EM##_mask (mask, vy, vx, 11);	\
+    vy = rvv_##OP##_ws_##VCLASS##WEM##_mask (mask, vy, vx, 11);	\
     rvv_se_##VCLASS##EM(y, vy);					\
   }
 
