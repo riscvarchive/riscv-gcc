@@ -1127,6 +1127,55 @@ _RVV_FLOAT_ITERATOR (_RVV_FCLASS)
 
 _RVV_FLOAT_ITERATOR (_RVV_FCVT)
 
+#define _RVV_FWCVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)			\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfwcvt.xu.f.v",					\
+    /* FUNC_NAME */rvv_wcvt_f##SEW##toui##WSEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##WSEW##m##WLMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfwcvt.x.f.v",						\
+    /* FUNC_NAME */rvv_wcvt_f##SEW##toi##WSEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##WSEW##m##WLMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfwcvt.f.xu.v",					\
+    /* FUNC_NAME */rvv_wcvt_ui##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfwcvt.f.x.v",						\
+    /* FUNC_NAME */rvv_wcvt_i##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfwcvt.f.f.v",						\
+    /* FUNC_NAME */rvv_wcvt_f##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##WSEW##m##WLMUL##_t,			\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
+
 /* Template function for binary floating point vector-scalar operation.  */
 #define _RVV_ASM_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
