@@ -16,7 +16,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = vx + vy;                                                              \
-    rvv_sse_##VCLASS##EM##_mask(mask, x, stride, vz);                          \
+    rvv_sse_##VCLASS##EM##_mask(x, stride, mask, vz);                          \
   }
 
 RVV_INT_TEST(VSLOADSTORE)

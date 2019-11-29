@@ -301,9 +301,9 @@ rvv_sse_uint##SEW##m##LMUL (const uint##SEW##_t *a, word_type stride,	\
 }									\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_sse_int##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,		\
-				  const int##SEW##_t *a,		\
+rvv_sse_int##SEW##m##LMUL##_mask (const int##SEW##_t *a,		\
 				  word_type stride,			\
+				  rvv_bool##MLEN##_t mask,		\
 				  rvv_int##SEW##m##LMUL##_t b)		\
 {									\
   if (__riscv_xlen == 32)						\
@@ -315,9 +315,9 @@ rvv_sse_int##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,		\
 }									\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_sse_uint##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,		\
-				   const uint##SEW##_t *a,		\
+rvv_sse_uint##SEW##m##LMUL##_mask (const uint##SEW##_t *a,		\
 				   word_type stride,			\
+				   rvv_bool##MLEN##_t mask,		\
 				   rvv_uint##SEW##m##LMUL##_t b)	\
 {									\
   if (__riscv_xlen == 32)						\
@@ -380,8 +380,8 @@ rvv_sse_float##SEW##m##LMUL (const T *a, word_type stride,		\
 }									\
 __extension__ extern __inline rvv_float##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_sse_float##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,		\
-				    const T *a, word_type stride,	\
+rvv_sse_float##SEW##m##LMUL##_mask (const T *a, word_type stride,	\
+				    rvv_bool##MLEN##_t mask,		\
 				    rvv_float##SEW##m##LMUL##_t b)	\
 {									\
   if (__riscv_xlen == 32)						\
