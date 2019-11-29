@@ -657,6 +657,63 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_LOAD)
 
 _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_STORE)
 
+#define _RVV_ASM_FF_LOAD(SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)	\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vl" #NTYPE_LETTER "ff.v",				\
+    /* FUNC_NAME */rvv_l##NTYPE_LETTER##ff_int##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const int##NSEW##_t *,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vl" #NTYPE_LETTER "uff.v",				\
+    /* FUNC_NAME */rvv_l##NTYPE_LETTER##ff_uint##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const uint##NSEW##_t *,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")
+
+_RVV_INT_LOAD_ITERATOR (_RVV_ASM_FF_LOAD)
+
+#define _RVV_ASM_INT_E_FF_LOAD(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vleff.v",						\
+    /* FUNC_NAME */rvv_leff_int##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const int##SEW##_t *,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vleff.v",						\
+    /* FUNC_NAME */rvv_leff_uint##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const uint##SEW##_t *,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")
+
+_RVV_INT_ITERATOR (_RVV_ASM_INT_E_FF_LOAD)
+
+#define _RVV_ASM_FLOAT_E_FF_LOAD(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vleff.v",						\
+    /* FUNC_NAME */rvv_leff_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const _RVV_F##SEW##_TYPE *,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")
+
+_RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_E_FF_LOAD)
+
 /* Template function for binary integer vector-scalar operation with immediate
    variant.  */
 #define _RVV_ASM_INT_BIN_OP_SCALAR_WITH_IMM_CHECK(SEW, LMUL, MLEN, T,	\
