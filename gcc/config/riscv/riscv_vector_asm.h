@@ -142,6 +142,72 @@
 		        "vm" (mask)					\
 		      : "vtype", "memory")
 
+/* Unmasked inline asm template for indexed load instructions.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_INDEXED_LOAD_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+					   OP0_CONSTRANT,	\
+					   OP1_CONSTRANT)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"	\
+		      ASM_OP " %0, %1, %2"			\
+		      : OP0_CONSTRANT (rv)			\
+		      : OP1_CONSTRANT (a),			\
+			"vr" (index)				\
+		      : "vtype", "memory")
+
+/* Masked inline asm template for indexed load instructions.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_INDEXED_LOAD_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+						  OP0_CONSTRANT,	\
+						  OP1_CONSTRANT)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		      ASM_OP " %0, %1, %2, %3.t"			\
+		      : OP0_CONSTRANT (rv)				\
+		      : OP1_CONSTRANT (a),				\
+		        "vr" (index),					\
+		        "vm" (mask), "0"(maskedoff)			\
+		      : "vtype", "memory")
+
+/* Unmasked inline asm template for indexed store instructions.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_INDEXED_STORE_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+					    OP0_CONSTRANT,	\
+					    OP1_CONSTRANT)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"	\
+		      ASM_OP " %1, %0, %2"			\
+		      : OP0_CONSTRANT (addr)			\
+		      : OP1_CONSTRANT (a),			\
+			"vr" (index)				\
+		      : "vtype", "memory")
+
+/* Masked inline asm template for indexed store instructions.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_INDEXED_STORE_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+						   OP0_CONSTRANT,	\
+						   OP1_CONSTRANT)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		      ASM_OP " %1, %0, %2, %3.t"			\
+		      : OP0_CONSTRANT (addr)				\
+		      : OP1_CONSTRANT (a),				\
+		        "vr" (index),					\
+		        "vm" (mask)					\
+		      : "vtype", "memory")
+
 
 /* Unmasked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
@@ -325,6 +391,78 @@ FUNC_NAME##_mask (OP0_TYPE addr, word_type stride,			\
 		  MASK_TYPE mask, OP1_TYPE a)				\
 {									\
   _RVV_ASM_STRIDED_STORE_MASKED_ASM_TEMPLATE(				\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+}
+
+/* Indexed load intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   INDEX_TYPE: Type of index operand.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_INDEXED_LOAD_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+				       MASK_TYPE,			\
+				       OP0_TYPE, OP1_TYPE, INDEX_TYPE,	\
+				       OP0_CONSTRANT,			\
+				       OP1_CONSTRANT)			\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a, INDEX_TYPE index)				\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_INDEXED_LOAD_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}									\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff, OP1_TYPE a,	\
+		  INDEX_TYPE index)					\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_INDEXED_LOAD_MASKED_ASM_TEMPLATE(				\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}
+
+/* Indexed store intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   INDEX_TYPE: Type of index operand.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_INDEXED_STORE_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+					MASK_TYPE,			\
+					OP0_TYPE, OP1_TYPE, INDEX_TYPE,	\
+					OP0_CONSTRANT,			\
+					OP1_CONSTRANT)			\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP0_TYPE addr, INDEX_TYPE index, OP1_TYPE a)			\
+{									\
+  _RVV_ASM_INDEXED_STORE_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (OP0_TYPE addr, INDEX_TYPE index,			\
+		  MASK_TYPE mask, OP1_TYPE a)				\
+{									\
+  _RVV_ASM_INDEXED_STORE_MASKED_ASM_TEMPLATE(				\
     SEW, LMUL, ASM_OP,							\
     OP0_CONSTRANT, OP1_CONSTRANT); 					\
 }
@@ -656,6 +794,180 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_LOAD)
     /* OP1_CONSTRANT */"vr")
 
 _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_STORE)
+
+#define _RVV_ASM_INDEXED_LOAD(SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)\
+  _RVV_ASM_INDEXED_LOAD_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vlx" #NTYPE_LETTER ".v",				\
+    /* FUNC_NAME */rvv_lx##NTYPE_LETTER##_int##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const int##NSEW##_t *,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")						\
+  _RVV_ASM_INDEXED_LOAD_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vlx" #NTYPE_LETTER "u.v",				\
+    /* FUNC_NAME */rvv_lx##NTYPE_LETTER##_uint##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const uint##NSEW##_t *,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")
+
+_RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_LOAD)
+
+#define _RVV_ASM_INT_INDEXED_LOAD(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_INDEXED_LOAD_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vlxe.v",						\
+    /* FUNC_NAME */rvv_lxe_int##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const int##SEW##_t *,					\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")						\
+  _RVV_ASM_INDEXED_LOAD_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vlxe.v",						\
+    /* FUNC_NAME */rvv_lxe_uint##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const uint##SEW##_t *,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")
+
+_RVV_INT_ITERATOR (_RVV_ASM_INT_INDEXED_LOAD)
+
+#define _RVV_ASM_FLOAT_INDEXED_LOAD(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_INDEXED_LOAD_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vlxe.v",						\
+    /* FUNC_NAME */rvv_lxe_float##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const _RVV_F##SEW##_TYPE *,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")
+
+_RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
+
+#define _RVV_ASM_INDEXED_STORE(SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsx" #NTYPE_LETTER ".v",				\
+    /* FUNC_NAME */rvv_sx##NTYPE_LETTER##_int##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const int##NSEW##_t *,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsx" #NTYPE_LETTER ".v",				\
+    /* FUNC_NAME */rvv_sx##NTYPE_LETTER##_uint##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const uint##NSEW##_t *,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsux" #NTYPE_LETTER ".v",				\
+    /* FUNC_NAME */rvv_sux##NTYPE_LETTER##_int##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const int##NSEW##_t *,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsux" #NTYPE_LETTER ".v",				\
+    /* FUNC_NAME */rvv_sux##NTYPE_LETTER##_uint##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const uint##NSEW##_t *,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
+
+#define _RVV_ASM_INT_INDEXED_STORE(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsxe.v",						\
+    /* FUNC_NAME */rvv_sxe_int##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const int##SEW##_t *,					\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsxe.v",						\
+    /* FUNC_NAME */rvv_sxe_uint##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const uint##SEW##_t *,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsuxe.v",						\
+    /* FUNC_NAME */rvv_suxe_int##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const int##SEW##_t *,					\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsuxe.v",						\
+    /* FUNC_NAME */rvv_suxe_uint##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const uint##SEW##_t *,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_INT_ITERATOR (_RVV_ASM_INT_INDEXED_STORE)
+
+#define _RVV_ASM_FLOAT_INDEXED_STORE(SEW, LMUL, MLEN, T)		\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsxe.v",						\
+    /* FUNC_NAME */rvv_sxe_float##SEW##m##LMUL,				\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const _RVV_F##SEW##_TYPE *,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vsuxe.v",						\
+    /* FUNC_NAME */rvv_suxe_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */const _RVV_F##SEW##_TYPE *,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* INDEX_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_STORE)
 
 #define _RVV_ASM_FF_LOAD(SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)	\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
