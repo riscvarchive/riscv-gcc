@@ -19,8 +19,31 @@
     rvv_se_##VCLASS##EM##_mask(x, mask, vz);                                   \
   }
 
+#define VUSSTORE(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
+  void vstore##EM##NTYPE_LETTER(size_t n, long stride, STYPE *x,          \
+                               NSTYPE *y, STYPE z) {                      \
+    rvv_int##EM##_t vx, vy, vz;                                           \
+    rvv_bool##MLEN##_t mask;                                              \
+    mask = rvv_mset_bool##MLEN ();                                        \
+    vx = rvv_le_int##EM(x);                                               \
+    rvv_s##NTYPE_LETTER##_int##EM##_mask(y, mask, vx);                    \
+  }                                                                       \
+  void vustore##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,      \
+                                u##NSTYPE *y, STYPE z) {                  \
+    rvv_uint##EM##_t vx, vy, vz;                                          \
+    rvv_bool##MLEN##_t mask;                                              \
+    mask = rvv_mset_bool##MLEN ();                                        \
+    vx = rvv_le_uint##EM(x);                                              \
+    rvv_s##NTYPE_LETTER##_uint##EM##_mask(y, mask, vx);                   \
+  }
+
+RVV_INT_LOAD_TEST(VUSSTORE)
+
 RVV_INT_TEST(VSLOADSTORE)
 RVV_UINT_TEST(VSLOADSTORE)
 RVV_FLOAT_TEST(VSLOADSTORE)
 
-/* { dg-final { scan-assembler-times "vse\.v" 44 } } */
+/* { dg-final { scan-assembler-times "vse.v\t" 44 } } */
+/* { dg-final { scan-assembler-times "vsb.v" 24 } } */
+/* { dg-final { scan-assembler-times "vsh.v" 16 } } */
+/* { dg-final { scan-assembler-times "vsw.v" 8 } } */

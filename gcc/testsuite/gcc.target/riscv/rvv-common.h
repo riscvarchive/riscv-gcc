@@ -424,6 +424,32 @@
   MACRO(    float, float, 32m2,  16, double, 64m1, __VA_ARGS__)	\
   MACRO(    float, float, 32m4,   8, double, 64m1, __VA_ARGS__)
 
+#define RVV_INT_LOAD_TEST(MACRO)	\
+  MACRO (16m1, 16, int16_t,  int8_t, b)	\
+  MACRO (16m2,  8, int16_t,  int8_t, b)	\
+  MACRO (16m4,  4, int16_t,  int8_t, b)	\
+  MACRO (16m8,  2, int16_t,  int8_t, b)	\
+  MACRO (32m1, 32, int32_t,  int8_t, b)	\
+  MACRO (32m2, 16, int32_t,  int8_t, b)	\
+  MACRO (32m4,  8, int32_t,  int8_t, b)	\
+  MACRO (32m8,  4, int32_t,  int8_t, b)	\
+  MACRO (32m1, 32, int32_t, int16_t, h)	\
+  MACRO (32m2, 16, int32_t, int16_t, h)	\
+  MACRO (32m4,  8, int32_t, int16_t, h)	\
+  MACRO (32m8,  4, int32_t, int16_t, h)	\
+  MACRO (64m1, 64, int64_t,  int8_t, b)	\
+  MACRO (64m2, 32, int64_t,  int8_t, b)	\
+  MACRO (64m4, 16, int64_t,  int8_t, b)	\
+  MACRO (64m8,  8, int64_t,  int8_t, b)	\
+  MACRO (64m1, 64, int64_t, int16_t, h)	\
+  MACRO (64m2, 32, int64_t, int16_t, h)	\
+  MACRO (64m4, 16, int64_t, int16_t, h)	\
+  MACRO (64m8,  8, int64_t, int16_t, h)	\
+  MACRO (64m1, 64, int64_t, int32_t, w)	\
+  MACRO (64m2, 32, int64_t, int32_t, w)	\
+  MACRO (64m4, 16, int64_t, int32_t, w)	\
+  MACRO (64m8,  8, int64_t, int32_t, w)
+ 
 #define RVV_UNARY_BUILTIN_VEC_TEST(STYPE, VCLASS,	EM, MLEN, OP)	\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       STYPE *y, STYPE z)\

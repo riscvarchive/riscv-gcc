@@ -91,6 +91,37 @@ typedef __fp16 float16_t;
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, scalar modes, info for
+   all corresponding widening vector type.
+
+   MACRO (SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)  */
+#define _RVV_INT_LOAD_ITERATOR(MACRO)	\
+  MACRO (16, 1, 16, int16_t,  8, b)	\
+  MACRO (16, 2,  8, int16_t,  8, b)	\
+  MACRO (16, 4,  4, int16_t,  8, b)	\
+  MACRO (16, 8,  2, int16_t,  8, b)	\
+  MACRO (32, 1, 32, int32_t,  8, b)	\
+  MACRO (32, 2, 16, int32_t,  8, b)	\
+  MACRO (32, 4,  8, int32_t,  8, b)	\
+  MACRO (32, 8,  4, int32_t,  8, b)	\
+  MACRO (32, 1, 32, int32_t, 16, h)	\
+  MACRO (32, 2, 16, int32_t, 16, h)	\
+  MACRO (32, 4,  8, int32_t, 16, h)	\
+  MACRO (32, 8,  4, int32_t, 16, h)	\
+  MACRO (64, 1, 64, int64_t,  8, b)	\
+  MACRO (64, 2, 32, int64_t,  8, b)	\
+  MACRO (64, 4, 16, int64_t,  8, b)	\
+  MACRO (64, 8,  8, int64_t,  8, b)	\
+  MACRO (64, 1, 64, int64_t, 16, h)	\
+  MACRO (64, 2, 32, int64_t, 16, h)	\
+  MACRO (64, 4, 16, int64_t, 16, h)	\
+  MACRO (64, 8,  8, int64_t, 16, h)	\
+  MACRO (64, 1, 64, int64_t, 32, w)	\
+  MACRO (64, 2, 32, int64_t, 32, w)	\
+  MACRO (64, 4, 16, int64_t, 32, w)	\
+  MACRO (64, 8,  8, int64_t, 32, w)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, scalar modes, info for
    corresponding widening vector type and extra arguments.
 
    MACRO (SEW, LMUL, MLEN, TYPE, WSEW, WLMUL, WTYPE)  */
