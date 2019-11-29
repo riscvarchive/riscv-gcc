@@ -78,6 +78,71 @@
 		        "vm" (mask)					\
 		      : "vtype", "memory")
 
+/* Unmasked inline asm template for strided load instructions.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_STRIDED_LOAD_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+					   OP0_CONSTRANT,	\
+					   OP1_CONSTRANT)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"	\
+		      ASM_OP " %0, %1, %2"			\
+		      : OP0_CONSTRANT (rv)			\
+		      : OP1_CONSTRANT (a),			\
+			"r" (stride)				\
+		      : "vtype", "memory")
+
+/* Masked inline asm template for store instructions.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_STRIDED_LOAD_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+						  OP0_CONSTRANT,	\
+						  OP1_CONSTRANT)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		      ASM_OP " %0, %1, %2, %3.t"			\
+		      : OP0_CONSTRANT (rv)				\
+		      : OP1_CONSTRANT (a),				\
+		        "r" (stride),					\
+		        "vm" (mask), "0"(maskedoff)			\
+		      : "vtype", "memory")
+
+/* Unmasked inline asm template for strided store instructions.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_STRIDED_STORE_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+					    OP0_CONSTRANT,	\
+					    OP1_CONSTRANT)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"	\
+		      ASM_OP " %1, %0, %2"			\
+		      : OP0_CONSTRANT (addr)			\
+		      : OP1_CONSTRANT (a), "r"(stride)		\
+		      : "vtype", "memory")
+
+/* Masked inline asm template for strided store instructions.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_STRIDED_STORE_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+						   OP0_CONSTRANT,	\
+						   OP1_CONSTRANT)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		      ASM_OP " %1, %0, %2, %3.t"			\
+		      : OP0_CONSTRANT (addr)				\
+		      : OP1_CONSTRANT (a), "r"(stride),			\
+		        "vm" (mask)					\
+		      : "vtype", "memory")
+
+
 /* Unmasked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -185,11 +250,81 @@ FUNC_NAME (OP0_TYPE addr, OP1_TYPE a)					\
     SEW, LMUL, ASM_OP,							\
     OP0_CONSTRANT, OP1_CONSTRANT); 					\
 }									\
-__extension__ extern __inline OP0_TYPE					\
+__extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 FUNC_NAME##_mask (OP0_TYPE addr, MASK_TYPE mask, OP1_TYPE a)		\
 {									\
   _RVV_ASM_STORE_MASKED_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+}
+
+/* Strided load intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_STRIDED_LOAD_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+				       MASK_TYPE,			\
+				       OP0_TYPE, OP1_TYPE,		\
+				       OP0_CONSTRANT,			\
+				       OP1_CONSTRANT)			\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a, word_type stride)				\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_STRIDED_LOAD_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}									\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff, OP1_TYPE a,	\
+		  word_type stride)					\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_STRIDED_LOAD_MASKED_ASM_TEMPLATE(				\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}
+
+/* Strided store intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_STRIDED_STORE_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+					MASK_TYPE,			\
+					OP0_TYPE, OP1_TYPE,		\
+					OP0_CONSTRANT,			\
+					OP1_CONSTRANT)			\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP0_TYPE addr, word_type stride, OP1_TYPE a)			\
+{									\
+  _RVV_ASM_STRIDED_STORE_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (OP0_TYPE addr, word_type stride,			\
+		  MASK_TYPE mask, OP1_TYPE a)				\
+{									\
+  _RVV_ASM_STRIDED_STORE_MASKED_ASM_TEMPLATE(				\
     SEW, LMUL, ASM_OP,							\
     OP0_CONSTRANT, OP1_CONSTRANT); 					\
 }
@@ -441,7 +576,7 @@ FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
     /* FUNC_NAME */rvv_l##NTYPE_LETTER##_int##SEW##m##LMUL,		\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */int##NSEW##_t *,					\
+    /* OP1_TYPE */const int##NSEW##_t *,				\
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"A")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
@@ -450,7 +585,7 @@ FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
     /* FUNC_NAME */rvv_l##NTYPE_LETTER##_uint##SEW##m##LMUL,		\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */uint##NSEW##_t *,					\
+    /* OP1_TYPE */const uint##NSEW##_t *,				\
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"A")
 
@@ -477,6 +612,50 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_LOAD)
     /* OP1_CONSTRANT */"vr")
 
 _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STORE)
+
+#define _RVV_ASM_STRIDED_LOAD(SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)\
+  _RVV_ASM_STRIDED_LOAD_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vls" #NTYPE_LETTER ".v",				\
+    /* FUNC_NAME */rvv_ls##NTYPE_LETTER##_int##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const int##NSEW##_t *,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")						\
+  _RVV_ASM_STRIDED_LOAD_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vls" #NTYPE_LETTER "u.v",				\
+    /* FUNC_NAME */rvv_ls##NTYPE_LETTER##_uint##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */const uint##NSEW##_t *,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"A")
+
+_RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_LOAD)
+
+#define _RVV_ASM_STRIDED_STORE(SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)\
+  _RVV_ASM_STRIDED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vss" #NTYPE_LETTER ".v",				\
+    /* FUNC_NAME */rvv_ss##NTYPE_LETTER##_int##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */int##NSEW##_t *,					\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_STRIDED_STORE_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vss" #NTYPE_LETTER ".v",				\
+    /* FUNC_NAME */rvv_ss##NTYPE_LETTER##_uint##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */uint##NSEW##_t *,					\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=A",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_STORE)
 
 /* Template function for binary integer vector-scalar operation with immediate
    variant.  */

@@ -10,16 +10,43 @@
 #define VSLOADSTORE(STYPE, VCLASS, EM, MLEN)                                   \
   void vsloadstore##VCLASS##EM(size_t n, long stride, STYPE *x,                \
                                STYPE *y, STYPE z) {                            \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvv_bool##MLEN##_t mask;                                                    \
+    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
+    rvv_bool##MLEN##_t mask;                                                   \
     vx = rvv_lse_##VCLASS##EM(x, stride);                                      \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = vx + vy;                                                              \
-    rvv_se_##VCLASS##EM(x, vz);                                                  \
+    rvv_se_##VCLASS##EM(x, vz);                                                \
   }
+
+#define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
+  void vload##EM##NTYPE_LETTER(size_t n, long stride, STYPE *x,           \
+                               NSTYPE *y, STYPE z) {                      \
+    rvv_int##EM##_t vx, vy, vz;                                           \
+    rvv_bool##MLEN##_t mask;                                              \
+    vx = rvv_ls##NTYPE_LETTER##_int##EM(y, n);                            \
+    rvv_se_int##EM(x, vx);                                                \
+  }                                                                       \
+  void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
+                                u##NSTYPE *y, STYPE z) {                  \
+    rvv_uint##EM##_t vx, vy, vz;                                          \
+    rvv_bool##MLEN##_t mask;                                              \
+    vx = rvv_ls##NTYPE_LETTER##_uint##EM(y, n);                           \
+    rvv_se_uint##EM(x, vx);                                               \
+  }
+
+
+
+RVV_INT_LOAD_TEST(VUSLOAD)
 
 RVV_INT_TEST(VSLOADSTORE)
 RVV_UINT_TEST(VSLOADSTORE)
 RVV_FLOAT_TEST(VSLOADSTORE)
 
 /* { dg-final { scan-assembler-times "vlse.v" 44 } } */
+/* { dg-final { scan-assembler-times "vlsb.v" 12 } } */
+/* { dg-final { scan-assembler-times "vlsbu.v" 12 } } */
+/* { dg-final { scan-assembler-times "vlsh.v" 8 } } */
+/* { dg-final { scan-assembler-times "vlshu.v" 8 } } */
+/* { dg-final { scan-assembler-times "vlsw.v" 4 } } */
+/* { dg-final { scan-assembler-times "vlswu.v" 4 } } */
+

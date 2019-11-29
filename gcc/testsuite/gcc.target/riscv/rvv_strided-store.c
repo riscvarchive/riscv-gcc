@@ -18,8 +18,31 @@
     rvv_sse_##VCLASS##EM(x, stride, vz);                                       \
   }
 
+#define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
+  void vload##EM##NTYPE_LETTER(size_t n, long stride, STYPE *x,           \
+                               NSTYPE *y, STYPE z) {                      \
+    rvv_int##EM##_t vx, vy, vz;                                           \
+    rvv_bool##MLEN##_t mask;                                              \
+    vx = rvv_le_int##EM(x);                                               \
+    rvv_ss##NTYPE_LETTER##_int##EM(y, stride, vx);                        \
+  }                                                                       \
+  void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
+                                u##NSTYPE *y, STYPE z) {                  \
+    rvv_uint##EM##_t vx, vy, vz;                                          \
+    rvv_bool##MLEN##_t mask;                                              \
+    vx = rvv_le_uint##EM(x);                                              \
+    rvv_ss##NTYPE_LETTER##_uint##EM(y, stride, vx);                       \
+  }
+
+
+
+RVV_INT_LOAD_TEST(VUSLOAD)
+
 RVV_INT_TEST(VSLOADSTORE)
 RVV_UINT_TEST(VSLOADSTORE)
 RVV_FLOAT_TEST(VSLOADSTORE)
 
 /* { dg-final { scan-assembler-times "vsse.v" 44 } } */
+/* { dg-final { scan-assembler-times "vssb.v" 24 } } */
+/* { dg-final { scan-assembler-times "vssh.v" 16 } } */
+/* { dg-final { scan-assembler-times "vssw.v" 8 } } */
