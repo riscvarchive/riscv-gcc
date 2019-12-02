@@ -208,6 +208,50 @@
 		        "vm" (mask)					\
 		      : "vtype", "memory")
 
+/* Unmasked inline asm template for AMO instructions with WD=1.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...  */
+#define _RVV_ASM_AMO_WD_ASM_TEMPLATE(SEW, LMUL, ASM_OP)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"	\
+		      ASM_OP " %1, %0, %3, %2"			\
+		      : "=A" (addr), "=vr"(rv)			\
+		      : "1" (a), "vr"(b)			\
+		      : "vtype", "memory")
+
+/* Masked inline asm template for AMO instructions with WD=1.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...  */
+#define _RVV_ASM_AMO_WD_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"	\
+		      ASM_OP " %1, %0, %3, %2, %4.t"		\
+		      : "=A" (addr), "=vr"(rv)			\
+		      : "1" (a), "vr"(b), "vm"(mask)		\
+		      : "vtype", "memory")
+
+/* Unmasked inline asm template for AMO instructions with WD=0.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...  */
+#define _RVV_ASM_AMO_ASM_TEMPLATE(SEW, LMUL, ASM_OP)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"	\
+		      ASM_OP " x0, %0, %2, %1"			\
+		      : "=A" (addr)				\
+		      : "vr" (a), "vr"(b)			\
+		      : "vtype", "memory")
+
+/* Masked inline asm template for AMO instructions with WD=0.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...  */
+#define _RVV_ASM_AMO_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP)	\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"	\
+		      ASM_OP " x0, %0, %2, %1, %3.t"		\
+		      : "=A" (addr)				\
+		      : "vr" (a), "vr"(b), "vm"(mask)		\
+		      : "vtype", "memory")
+
 /* Inline asm template for vmv.v.x/vfmv.v.f.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -479,6 +523,62 @@ FUNC_NAME##_mask (OP0_TYPE addr, INDEX_TYPE index,			\
   _RVV_ASM_INDEXED_STORE_MASKED_ASM_TEMPLATE(				\
     SEW, LMUL, ASM_OP,							\
     OP0_CONSTRANT, OP1_CONSTRANT); 					\
+}
+
+/* AMO intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.  */
+#define _RVV_ASM_AMO_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+			      MASK_TYPE,			\
+			      OP0_TYPE, OP1_TYPE)		\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP0_TYPE addr, OP1_TYPE a, OP1_TYPE b)			\
+{									\
+  _RVV_ASM_AMO_ASM_TEMPLATE(						\
+    SEW, LMUL, ASM_OP);							\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (OP0_TYPE addr, MASK_TYPE mask, OP1_TYPE a, OP1_TYPE b)\
+{									\
+  _RVV_ASM_AMO_MASKED_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP);							\
+}
+
+/* AMO with WD intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.  */
+#define _RVV_ASM_AMO_WD_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,		\
+				 MASK_TYPE,				\
+				 OP0_TYPE, OP1_TYPE)			\
+__extension__ extern __inline OP1_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP0_TYPE addr, OP1_TYPE a, OP1_TYPE b)			\
+{									\
+  OP1_TYPE rv;								\
+  _RVV_ASM_AMO_WD_ASM_TEMPLATE(						\
+    SEW, LMUL, ASM_OP);							\
+  return rv;								\
+}									\
+__extension__ extern __inline OP1_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (OP0_TYPE addr, MASK_TYPE mask, OP1_TYPE a, OP1_TYPE b)\
+{									\
+  OP1_TYPE rv;								\
+  _RVV_ASM_AMO_WD_MASKED_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP);							\
+  return rv;								\
 }
 
 /* Intrinsic function template for  vmv.v.x/vfmv.v.f.
@@ -2457,6 +2557,63 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_COMPRESS)
     /* OP2_CONSTRANT */"vr")
 
 _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_COMPRESS)
+
+/* Template function for integer AMO operation.  */
+#define _RVV_INT_AMO_TEMPLATE(SEW, LMUL, MLEN, T, OP, OPU)		\
+  _RVV_ASM_AMO_WD_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vamo" #OP "e.v",					\
+    /* FUNC_NAME */rvv_amo##OP##_wd_v_int##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */int##SEW##_t *,					\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t)				\
+  _RVV_ASM_AMO_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vamo" #OP "e.v",					\
+    /* FUNC_NAME */rvv_amo##OP##_v_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */int##SEW##_t *,					\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t)				\
+  _RVV_ASM_AMO_WD_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vamo" #OPU "e.v",					\
+    /* FUNC_NAME */rvv_amo##OP##_wd_v_uint##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */uint##SEW##_t *,					\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t)				\
+  _RVV_ASM_AMO_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vamo" #OPU "e.v",					\
+    /* FUNC_NAME */rvv_amo##OP##_v_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */uint##SEW##_t *,					\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t)
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, swap, swap)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, add, add)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, xor, xor)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, or, or)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, and, and)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, min, minu)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, max, maxu)
+
+#define _RVV_AMO_FLOAT_TEMPLATE(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_AMO_WD_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vamo" #OP "e.v",					\
+    /* FUNC_NAME */rvv_amo##OP##_wd_v_float##SEW##m##LMUL,		\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */_RVV_F##SEW##_TYPE *,					\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t)				\
+  _RVV_ASM_AMO_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vamo" #OP "e.v",					\
+    /* FUNC_NAME */rvv_amo##OP##_v_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */_RVV_F##SEW##_TYPE *,					\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t)
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_AMO_FLOAT_TEMPLATE, swap)
 
 #endif
 #endif
