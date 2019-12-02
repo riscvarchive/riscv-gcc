@@ -2257,5 +2257,62 @@ _RVV_INT_ITERATOR (_RVV_MV_XS_SX)
 
 _RVV_FLOAT_ITERATOR (_RVV_MV_FS_SF)
 
+/* Vector Slideup Instructions.  */
+
+/* Template function for integer slideup/slidedown operation.  */
+#define _RVV_ASM_INT_SLIDEUP_SLIDEDOWN(SEW, LMUL, MLEN, T, OP)		\
+  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vx",						\
+    /* IMM_ASM_OP */"v" #OP ".vi",					\
+    /* FUNC_NAME */rvv_##OP##_vs_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */word_type,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r",						\
+    _RVV_ASM_INT_UIMM_CHK)						\
+  /* vopu.vs */								\
+  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vx",						\
+    /* IMM_ASM_OP */"v" #OP ".vi",					\
+    /* FUNC_NAME */rvv_##OP##_vs_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */word_type,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r",						\
+    _RVV_ASM_INT_UIMM_CHK)
+
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SLIDEUP_SLIDEDOWN, slideup)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SLIDEUP_SLIDEDOWN, slidedown)
+
+/* Template function for floating point slideup/slidedown operation.  */
+#define _RVV_ASM_FLOAT_SLIDEUP_SLIDEDOWN(SEW, LMUL, MLEN, T, OP)	\
+  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vx",						\
+    /* IMM_ASM_OP */"v" #OP ".vi",					\
+    /* FUNC_NAME */rvv_##OP##_vs_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */word_type,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r",						\
+    _RVV_ASM_INT_UIMM_CHK)
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_SLIDEUP_SLIDEDOWN, slideup)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_SLIDEUP_SLIDEDOWN, slidedown)
+
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1up, slide1up)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1down, slide1down)
+
 #endif
 #endif
