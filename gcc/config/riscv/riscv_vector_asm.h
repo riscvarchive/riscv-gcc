@@ -559,6 +559,33 @@ FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
   return rv;								\
 }
 
+/* Unmasked binary intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP2_TYPE: Type of operand 2.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP2_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+					  OP0_TYPE, OP1_TYPE, OP2_TYPE, \
+					  OP0_CONSTRANT,		\
+					  OP1_CONSTRANT,		\
+					  OP2_CONSTRANT)		\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a, OP2_TYPE b)					\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_BIN_OP_ASM_TEMPLATE(						\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT); 			\
+  return rv;								\
+}
+
 /* Binary intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -577,16 +604,11 @@ FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
 				 OP0_CONSTRANT,				\
 				 OP1_CONSTRANT,				\
 				 OP2_CONSTRANT)				\
-__extension__ extern __inline OP0_TYPE					\
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-FUNC_NAME (OP1_TYPE a, OP2_TYPE b)					\
-{									\
-  OP0_TYPE rv;								\
-  _RVV_ASM_BIN_OP_ASM_TEMPLATE(						\
-    SEW, LMUL, ASM_OP,							\
-    OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT); 			\
-  return rv;								\
-}									\
+  _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+				    OP0_TYPE, OP1_TYPE, OP2_TYPE,	\
+				    OP0_CONSTRANT,			\
+				    OP1_CONSTRANT,			\
+				    OP2_CONSTRANT)			\
 __extension__ extern __inline OP0_TYPE					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
@@ -2395,6 +2417,46 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_RGATHER)
     _RVV_ASM_INT_UIMM_CHK)
 
 _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_RGATHER)
+
+/* Template function for integer compress operation.  */
+#define _RVV_ASM_INT_COMPRESS(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vcompress.vm",						\
+    /* FUNC_NAME */rvv_compress_vm_int##SEW##m##LMUL,			\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vcompress.vm",						\
+    /* FUNC_NAME */rvv_compress_vm_uint##SEW##m##LMUL,			\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+_RVV_INT_ITERATOR (_RVV_ASM_INT_COMPRESS)
+
+/* Template function for floating point compress operation.  */
+#define _RVV_ASM_FLOAT_COMPRESS(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(					\
+    SEW, LMUL,								\
+    /* ASM_OP */"vcompress.vm",						\
+    /* FUNC_NAME */rvv_compress_vm_float##SEW##m##LMUL,			\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
+_RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_COMPRESS)
 
 #endif
 #endif
