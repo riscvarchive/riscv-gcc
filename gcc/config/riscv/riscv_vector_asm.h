@@ -2314,5 +2314,87 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_SLIDEUP_SLIDEDOWN, slidedown)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1up, slide1up)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1down, slide1down)
 
+/* Template function for integer rgather operation.  */
+#define _RVV_ASM_INT_RGATHER(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vrgather.vv",						\
+    /* FUNC_NAME */rvv_rgather_vv_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vrgather.vv",						\
+    /* FUNC_NAME */rvv_rgather_vv_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vrgather.vx",						\
+    /* IMM_ASM_OP */"vrgather.vi",					\
+    /* FUNC_NAME */rvv_rgather_vs_int##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */word_type,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r",						\
+    _RVV_ASM_INT_UIMM_CHK)						\
+  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vrgather.vx",						\
+    /* IMM_ASM_OP */"vrgather.vi",					\
+    /* FUNC_NAME */rvv_rgather_vs_uint##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */word_type,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r",						\
+    _RVV_ASM_INT_UIMM_CHK)
+
+_RVV_INT_ITERATOR (_RVV_ASM_INT_RGATHER)
+
+/* Template function for floating point rgather operation.  */
+#define _RVV_ASM_FLOAT_RGATHER(SEW, LMUL, MLEN, T)			\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vrgather.vv",						\
+    /* FUNC_NAME */rvv_rgather_vv_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vrgather.vx",						\
+    /* IMM_ASM_OP */"vrgather.vi",					\
+    /* FUNC_NAME */rvv_rgather_vs_float##SEW##m##LMUL,			\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */word_type,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r",						\
+    _RVV_ASM_INT_UIMM_CHK)
+
+_RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_RGATHER)
+
 #endif
 #endif
