@@ -27,7 +27,7 @@
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
-    mask = rvv_sltu_vv_##VCLASS##EM (vy, vz);				\
+    mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
     vx = rvv_wredsumu_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
     rvv_se_##VCLASS##WEMONE (x, vx);					\
   }

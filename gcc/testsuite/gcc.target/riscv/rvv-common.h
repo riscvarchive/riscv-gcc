@@ -136,22 +136,22 @@
   MACRO(uint64_t, uint, 64m8,  8, __VA_ARGS__)
 
 #define RVV_UINT_MASKED_TEST(MACRO)	\
-  MACRO( uint8_t, uint,  8m1,  8, sltu)	\
-  MACRO( uint8_t, uint,  8m2,  4, sltu)	\
-  MACRO( uint8_t, uint,  8m4,  2, sltu)	\
-  MACRO( uint8_t, uint,  8m8,  1, sltu)	\
-  MACRO(uint16_t, uint, 16m1, 16, sltu)	\
-  MACRO(uint16_t, uint, 16m2,  8, sltu)	\
-  MACRO(uint16_t, uint, 16m4,  4, sltu)	\
-  MACRO(uint16_t, uint, 16m8,  2, sltu)	\
-  MACRO(uint32_t, uint, 32m1, 32, sltu)	\
-  MACRO(uint32_t, uint, 32m2, 16, sltu)	\
-  MACRO(uint32_t, uint, 32m4,  8, sltu)	\
-  MACRO(uint32_t, uint, 32m8,  4, sltu)	\
-  MACRO(uint64_t, uint, 64m1, 64, sltu)	\
-  MACRO(uint64_t, uint, 64m2, 32, sltu)	\
-  MACRO(uint64_t, uint, 64m4, 16, sltu)	\
-  MACRO(uint64_t, uint, 64m8,  8, sltu)
+  MACRO( uint8_t, uint,  8m1,  8, slt)	\
+  MACRO( uint8_t, uint,  8m2,  4, slt)	\
+  MACRO( uint8_t, uint,  8m4,  2, slt)	\
+  MACRO( uint8_t, uint,  8m8,  1, slt)	\
+  MACRO(uint16_t, uint, 16m1, 16, slt)	\
+  MACRO(uint16_t, uint, 16m2,  8, slt)	\
+  MACRO(uint16_t, uint, 16m4,  4, slt)	\
+  MACRO(uint16_t, uint, 16m8,  2, slt)	\
+  MACRO(uint32_t, uint, 32m1, 32, slt)	\
+  MACRO(uint32_t, uint, 32m2, 16, slt)	\
+  MACRO(uint32_t, uint, 32m4,  8, slt)	\
+  MACRO(uint32_t, uint, 32m8,  4, slt)	\
+  MACRO(uint64_t, uint, 64m1, 64, slt)	\
+  MACRO(uint64_t, uint, 64m2, 32, slt)	\
+  MACRO(uint64_t, uint, 64m4, 16, slt)	\
+  MACRO(uint64_t, uint, 64m8,  8, slt)
 
 #define RVV_WINT_TEST(MACRO)			\
   MACRO( int8_t, int,  8m1,  8, int16_t, 16m2)	\

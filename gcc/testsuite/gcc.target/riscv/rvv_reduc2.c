@@ -32,7 +32,7 @@
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
-    mask = rvv_sltu_vv_##VCLASS##EM (vy, vz);				\
+    mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
     vx = rvv_redsum_vs_##VCLASS##EM##_mask  (mask, vy, vx);		\
     vx = rvv_redmaxu_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
     vx = rvv_redminu_vs_##VCLASS##EM##_mask (mask, vy, vx);		\

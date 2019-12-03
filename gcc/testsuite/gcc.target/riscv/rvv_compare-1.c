@@ -65,20 +65,20 @@ RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sne)
 RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX, slt)
 /* { dg-final { scan-assembler-times "vmslt.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmslt.vx" 16 } } */
-RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX, sltu)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX, slt)
 /* { dg-final { scan-assembler-times "vmsltu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsltu.vx" 16 } } */
 RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sle)
 /* { dg-final { scan-assembler-times "vmsle.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsle.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsle.vi" 16 } } */
-RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sleu)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sle)
 /* { dg-final { scan-assembler-times "vmsleu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsleu.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsleu.vi" 16 } } */
 RVV_INT_TEST_ARG(TEST_COMPARE_VX_VI, sgt)
 /* { dg-final { scan-assembler-times "vmsgt.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsgt.vi" 16 } } */
-RVV_UINT_TEST_ARG(TEST_COMPARE_VX_VI, sgtu)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VX_VI, sgt)
 /* { dg-final { scan-assembler-times "vmsgtu.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsgtu.vi" 16 } } */

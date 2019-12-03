@@ -1514,7 +1514,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,  , u,  )
   _RVV_ASM_BIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vms" #OPU ".vv",					\
-    /* FUNC_NAME */rvv_s##OPU##_vv_uint##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_s##OP##_vv_uint##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_bool##MLEN##_t,					\
     /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
@@ -1539,7 +1539,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,  , u,  )
   _RVV_ASM_BIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vms" #OPU ".vx",					\
-    /* FUNC_NAME */rvv_s##OPU##_vs_uint##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_s##OP##_vs_uint##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_bool##MLEN##_t,					\
     /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
@@ -1568,7 +1568,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,  , u,  )
     SEW, LMUL,								\
     /* ASM_OP */"vms" #OPU ".vx",					\
     /* IMM_ASM_OP */"vms" #OPU ".vi",					\
-    /* FUNC_NAME */rvv_s##OPU##_vs_uint##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_s##OP##_vs_uint##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_bool##MLEN##_t,					\
     /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
