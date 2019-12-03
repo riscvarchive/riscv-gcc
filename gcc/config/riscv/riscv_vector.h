@@ -1061,37 +1061,34 @@ rvv_wmadd_vs_float16m4 (rvv_float16m4_t a, const float16_t b,
 #define _RVV_REDUC_OP(SEW, LMUL, MLEN, T, OP, OPU)			\
 __extension__ extern __inline rvv_int##SEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_red##OP##_vv_int##SEW##m##LMUL (rvv_int##SEW##m1_t a,		\
+rvv_red##OP##_vs_int##SEW##m##LMUL (rvv_int##SEW##m1_t a,		\
 			       rvv_int##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL (a, b);		\
 }									\
 __extension__ extern __inline rvv_uint##SEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_red##OPU##_vv_uint##SEW##m##LMUL (rvv_uint##SEW##m1_t a,		\
+rvv_red##OPU##_vs_uint##SEW##m##LMUL (rvv_uint##SEW##m1_t a,		\
 				 rvv_uint##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL (a, b);	\
 }									\
 __extension__ extern __inline rvv_int##SEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_red##OP##_vv_int##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
-				    rvv_int##SEW##m1_t maskedoff,	\
+rvv_red##OP##_vs_int##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
 				    rvv_int##SEW##m1_t a,		\
 				    rvv_int##SEW##m##LMUL##_t b)	\
 {									\
-  return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL##_mask (mask,maskedoff,\
-							     a, b);	\
+  return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL##_mask (mask,	\
+							       a, b);	\
 }									\
 __extension__ extern __inline rvv_uint##SEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_red##OPU##_vv_uint##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
-				      rvv_uint##SEW##m1_t maskedoff,	\
+rvv_red##OPU##_vs_uint##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
 				      rvv_uint##SEW##m1_t a,		\
 				      rvv_uint##SEW##m##LMUL##_t b)	\
 {									\
   return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL##_mask (mask,	\
-								 maskedoff, \
 								 a, b);	\
 }
 
@@ -1120,22 +1117,19 @@ rvv_wred##OPU##_wv_uint##SEW##m##LMUL (rvv_uint##WSEW##m1_t a,		\
 __extension__ extern __inline rvv_int##WSEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_wred##OP##_wv_int##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
-				    rvv_int##WSEW##m1_t maskedoff,	\
 				    rvv_int##WSEW##m1_t a,		\
-				    rvv_int##SEW##m##LMUL##_t b)		\
+				    rvv_int##SEW##m##LMUL##_t b)	\
 {									\
-  return __builtin_riscv_wreduc_##OP##int##SEW##m##LMUL##_mask (mask,maskedoff,\
+  return __builtin_riscv_wreduc_##OP##int##SEW##m##LMUL##_mask (mask,	\
 							     a, b);	\
 }									\
 __extension__ extern __inline rvv_uint##WSEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_wred##OPU##_wv_uint##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
-				      rvv_uint##WSEW##m1_t maskedoff,	\
 				      rvv_uint##WSEW##m1_t a,		\
 				      rvv_uint##SEW##m##LMUL##_t b)	\
 {									\
   return __builtin_riscv_wreduc_##OPU##uint##SEW##m##LMUL##_mask (mask,	\
-								 maskedoff, \
 								 a, b);	\
 }
 
@@ -1152,11 +1146,10 @@ rvv_fred##OP##_vv_float##SEW##m##LMUL (rvv_float##SEW##m1_t a,		\
 __extension__ extern __inline rvv_float##SEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_fred##OP##_vv_float##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
-				    rvv_float##SEW##m1_t maskedoff,	\
 				    rvv_float##SEW##m1_t a,		\
 				    rvv_float##SEW##m##LMUL##_t b)		\
 {									\
-  return __builtin_riscv_freduc_##OP##float##SEW##m##LMUL##_mask (mask,maskedoff,\
+  return __builtin_riscv_freduc_##OP##float##SEW##m##LMUL##_mask (mask,\
 							     a, b);	\
 }
 
@@ -1176,11 +1169,10 @@ rvv_fwred##OP##_wv_float##SEW##m##LMUL (rvv_float##WSEW##m1_t a,		\
 __extension__ extern __inline rvv_float##WSEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_fwred##OP##_wv_float##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,	\
-				    rvv_float##WSEW##m1_t maskedoff,	\
 				    rvv_float##WSEW##m1_t a,		\
 				    rvv_float##SEW##m##LMUL##_t b)	\
 {									\
-  return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL##_mask (mask,maskedoff,\
+  return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL##_mask (mask,\
 							     a, b);	\
 }									\
 

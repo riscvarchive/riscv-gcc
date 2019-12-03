@@ -16,7 +16,7 @@
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
-    vx = rvv_wredsum_wv_##VCLASS##EM##_mask (mask, vx, vx, vy);		\
+    vx = rvv_wredsum_wv_##VCLASS##EM##_mask (mask, vx, vy);		\
     rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 #define VWREDUCU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
@@ -28,7 +28,7 @@
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_sltu_vv_##VCLASS##EM (vy, vz);				\
-    vx = rvv_wredsumu_wv_##VCLASS##EM##_mask (mask, vx, vx, vy);	\
+    vx = rvv_wredsumu_wv_##VCLASS##EM##_mask (mask, vx, vy);	\
     rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 #define VFWREDUC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
@@ -40,8 +40,8 @@
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_mset_bool##MLEN ();					\
-    vx = rvv_fwredsum_wv_##VCLASS##EM##_mask (mask, vx, vx, vy);	\
-    vx = rvv_fwredosum_wv_##VCLASS##EM##_mask (mask, vx, vx, vy);	\
+    vx = rvv_fwredsum_wv_##VCLASS##EM##_mask (mask, vx, vy);	\
+    vx = rvv_fwredosum_wv_##VCLASS##EM##_mask (mask, vx, vy);	\
     rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 
