@@ -16,12 +16,12 @@
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
-    vx = rvv_redsum_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redmax_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redmin_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redand_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redor_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redxor_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redsum_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redmax_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redmin_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redand_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redor_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redxor_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
     rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 #define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
@@ -33,12 +33,12 @@
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_sltu_vv_##VCLASS##EM (vy, vz);				\
-    vx = rvv_redsum_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redmaxu_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redminu_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redand_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redor_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_redxor_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redsum_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redmaxu_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redminu_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redand_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redor_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redxor_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
     rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 #define VFREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
@@ -50,10 +50,10 @@
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_mset_bool##MLEN ();					\
-    vx = rvv_fredsum_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_fredosum_vv_##VCLASS##EM##_mask (mask, vx, vy);	\
-    vx = rvv_fredmax_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
-    vx = rvv_fredmin_vv_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redsum_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redosum_vs_##VCLASS##EM##_mask (mask, vx, vy);	\
+    vx = rvv_redmax_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
+    vx = rvv_redmin_vs_##VCLASS##EM##_mask (mask, vx, vy);		\
     rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 

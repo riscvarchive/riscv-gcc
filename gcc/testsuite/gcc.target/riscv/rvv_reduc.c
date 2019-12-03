@@ -13,12 +13,12 @@
     rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
-    vx = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redmax_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redmin_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redand_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redor_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redxor_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redsum_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redmax_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redmin_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redand_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redor_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redxor_vs_##VCLASS##EM (vx, vy);				\
     rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 #define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
@@ -27,12 +27,12 @@
     rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
-    vx = rvv_redsum_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redmaxu_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redminu_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redand_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redor_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_redxor_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redsum_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redmaxu_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redminu_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redand_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redor_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redxor_vs_##VCLASS##EM (vx, vy);				\
     rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 
@@ -42,10 +42,10 @@
     rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
-    vx = rvv_fredsum_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_fredosum_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_fredmax_vv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_fredmin_vv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redsum_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redosum_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redmax_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_redmin_vs_##VCLASS##EM (vx, vy);				\
     rvv_se_##VCLASS##EMONE (x, vx);					\
   }
 

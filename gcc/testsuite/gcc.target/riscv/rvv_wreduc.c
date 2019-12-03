@@ -13,7 +13,7 @@
     rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
-    vx = rvv_wredsum_wv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_wredsum_vs_##VCLASS##EM (vx, vy);				\
     rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 
@@ -23,7 +23,7 @@
     rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
-    vx = rvv_wredsumu_wv_##VCLASS##EM (vx, vy);				\
+    vx = rvv_wredsumu_vs_##VCLASS##EM (vx, vy);				\
     rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 
@@ -33,8 +33,8 @@
     rvv_##VCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
-    vx = rvv_fwredsum_wv_##VCLASS##EM (vx, vy);				\
-    vx = rvv_fwredosum_wv_##VCLASS##EM (vx, vy);			\
+    vx = rvv_wredsum_vs_##VCLASS##EM (vx, vy);				\
+    vx = rvv_wredosum_vs_##VCLASS##EM (vx, vy);			\
     rvv_se_##VCLASS##WEMONE (x, vx);					\
   }
 
