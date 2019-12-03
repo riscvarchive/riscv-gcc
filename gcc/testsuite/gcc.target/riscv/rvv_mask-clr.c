@@ -14,7 +14,7 @@
     rvv_bool##MLEN##_t rv;                                                      \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
-    mask0 = rvv_mclr_bool##MLEN ();                                            \
+    mask0 = rvv_clr_bool##MLEN ();                                            \
     vy = rvv_add_vv_##VCLASS##EM##_mask (mask0, vy, vx, vy);                   \
     * (rvv_##VCLASS##EM##_t *) y = vy;                                          \
   }

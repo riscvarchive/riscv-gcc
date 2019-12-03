@@ -886,7 +886,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, sqrt)
 #define _RVV_MASK_NULLARY_OP(MLEN, OP)					\
 __extension__ extern __inline rvv_bool##MLEN##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_m##OP##_bool##MLEN ()						\
+rvv_##OP##_bool##MLEN ()						\
 {									\
   return __builtin_riscv_v##OP##bool##MLEN ();				\
 }

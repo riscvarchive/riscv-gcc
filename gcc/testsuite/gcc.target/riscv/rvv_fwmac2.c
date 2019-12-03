@@ -15,7 +15,7 @@
     rvv_##VCLASS##EM##_t vop2;						\
     rvv_##VCLASS##WEM##_t vop0, vmo;					\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vop0 = rvv_le_##VCLASS##WEM(op0);					\
     vmo = rvv_le_##VCLASS##WEM(mo);					\
     vop1 = rvv_le_##VCLASS##EM(op1);					\
@@ -32,7 +32,7 @@
     rvv_##VCLASS##EM##_t vop2;						\
     rvv_##VCLASS##WEM##_t vop0, vmo;					\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vop0 = rvv_le_##VCLASS##WEM(op0);					\
     vmo = rvv_le_##VCLASS##WEM(mo);					\
     vop2 = rvv_le_##VCLASS##EM(op2);					\

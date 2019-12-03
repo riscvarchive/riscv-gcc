@@ -13,7 +13,7 @@
     rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
     rvv_uint##EM##_t vindex;                                              \
     rvv_bool##MLEN##_t mask;                                                    \
-    mask = rvv_mset_bool##MLEN ();                                             \
+    mask = rvv_set_bool##MLEN ();                                             \
     vindex = rvv_le_uint##EM(index);                                      \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
@@ -41,7 +41,7 @@
     rvv_int##EM##_t vx, vy, vz;                                           \
     rvv_bool##MLEN##_t mask;                                              \
     rvv_uint##EM##_t vindex;                                         \
-    mask = rvv_mset_bool##MLEN ();                                             \
+    mask = rvv_set_bool##MLEN ();                                             \
     vindex = rvv_le_uint##EM(index);                                 \
     vx = rvv_le_int##EM(x);                                               \
     rvv_sx##NTYPE_LETTER##_int##EM##_mask(y, vindex, mask, vx);                        \
@@ -50,7 +50,7 @@
                                 u##NSTYPE *y, STYPE z, u##STYPE *index) {                  \
     rvv_uint##EM##_t vx, vy, vz;                                          \
     rvv_bool##MLEN##_t mask;                                              \
-    mask = rvv_mset_bool##MLEN ();                                             \
+    mask = rvv_set_bool##MLEN ();                                             \
     rvv_uint##EM##_t vindex;                                         \
     vindex = rvv_le_uint##EM(index);                                 \
     vx = rvv_le_uint##EM(x);                                              \

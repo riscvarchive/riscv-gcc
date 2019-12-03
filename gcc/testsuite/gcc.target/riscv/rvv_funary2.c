@@ -12,7 +12,7 @@
     rvv_##VCLASS##EM##_t vx;						\
     rvv_##IVCLASS##EM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_le_##IVCLASS##EM(y);					\
     vy = rvv_##OP##_v_##VCLASS##EM##_mask (mask, vy, vx);		\

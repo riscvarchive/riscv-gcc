@@ -49,7 +49,7 @@
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_redsum_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
     vx = rvv_redosum_vs_##VCLASS##EM##_mask(mask, vy, vx);		\
     vx = rvv_redmax_vs_##VCLASS##EM##_mask (mask, vy, vx);		\

@@ -11,7 +11,7 @@
   void vsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv_##VCLASS##EM##_t vx, vy;                                               \
     rvv_bool##MLEN##_t mask;                                                   \
-    mask = rvv_mset_bool##MLEN ();                                             \
+    mask = rvv_set_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vy = rvv_sub_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);                    \
@@ -25,7 +25,7 @@
   void vsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     rvv_##VCLASS##EM##_t vx, vy;                                               \
     rvv_bool##MLEN##_t mask;                                                   \
-    mask = rvv_mset_bool##MLEN ();                                             \
+    mask = rvv_set_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vy = rvv_sub_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);                    \
@@ -37,7 +37,7 @@
   void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
     rvv_##VCLASS##EM##_t vx, vy;                                               \
     rvv_bool##MLEN##_t mask;                                                   \
-    mask = rvv_mset_bool##MLEN ();                                             \
+    mask = rvv_set_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vy = rvv_rsub_vs_##VCLASS##EM##_mask (mask, vx, vy, z);                    \
@@ -49,7 +49,7 @@
 #define VRSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                  \
   void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
     rvv_bool##MLEN##_t mask;                                                    \
-    mask = rvv_mset_bool##MLEN ();                                             \
+    mask = rvv_set_bool##MLEN ();                                             \
     rvv_##VCLASS##EM##_t vx, vy;                                                \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \

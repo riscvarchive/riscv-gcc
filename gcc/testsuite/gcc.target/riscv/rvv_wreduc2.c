@@ -39,7 +39,7 @@
     vx = rvv_le_##VCLASS##WEMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vz = rvv_le_##VCLASS##EM (z);					\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_wredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
     vx = rvv_wredosum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
     rvv_se_##VCLASS##WEMONE (x, vx);					\

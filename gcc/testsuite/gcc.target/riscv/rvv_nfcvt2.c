@@ -12,7 +12,7 @@
     rvv_float##WEM##_t vx;						\
     rvv_int##EM##_t vy;							\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##WEM(x);						\
     vy = rvv_le_int##EM(y);						\
     vy = rvv_ncvt_f##WSEW##toi##SEW##_w_##WEM##_mask (mask, vy, vx);		\
@@ -24,7 +24,7 @@
     rvv_float##WEM##_t vx;						\
     rvv_uint##EM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##WEM(x);						\
     vy = rvv_le_uint##EM(y);						\
     vy = rvv_ncvt_f##WSEW##toui##SEW##_w_##WEM##_mask (mask, vy, vx);		\
@@ -36,7 +36,7 @@
     rvv_float##EM##_t vx;						\
     rvv_int##WEM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vy = rvv_le_int##WEM(y);						\
     vx = rvv_le_float##EM(x);						\
     vx = rvv_ncvt_i##WSEW##tof##SEW##_w_##WEM##_mask (mask, vx, vy);		\
@@ -48,7 +48,7 @@
     rvv_float##EM##_t vx;						\
     rvv_uint##WEM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vy = rvv_le_uint##WEM(y);						\
     vx = rvv_le_float##EM(x);						\
     vx = rvv_ncvt_ui##WSEW##tof##SEW##_w_##WEM##_mask (mask, vx, vy);		\
@@ -60,7 +60,7 @@
     rvv_float##EM##_t vx;						\
     rvv_float##WEM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vy = rvv_le_float##WEM(y);						\
     vx = rvv_le_float##EM(x);						\
     vx = rvv_ncvt_f##WSEW##tof##SEW##_w_##WEM##_mask (mask, vx, vy);		\
@@ -72,7 +72,7 @@
     rvv_float##EM##_t vx;						\
     rvv_float##WEM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vy = rvv_le_float##WEM(y);						\
     vx = rvv_le_float##EM(x);						\
     vx = rvv_ncvt_rod_f##WSEW##tof##SEW##_w_##WEM##_mask (mask, vx, vy);	\

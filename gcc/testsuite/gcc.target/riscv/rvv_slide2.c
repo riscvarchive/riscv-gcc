@@ -9,7 +9,7 @@
   void test_slideup_sx##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
     rvv_##VCLASS##EM##_t vx, vy;				\
     rvv_bool##MLEN##_t mask;					\
-    mask = rvv_mset_bool##MLEN ();				\
+    mask = rvv_set_bool##MLEN ();				\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vx = rvv_slideup_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\
@@ -18,7 +18,7 @@
   void test_slidedown_sx##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
     rvv_##VCLASS##EM##_t vx, vy;				\
     rvv_bool##MLEN##_t mask;					\
-    mask = rvv_mset_bool##MLEN ();				\
+    mask = rvv_set_bool##MLEN ();				\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vx = rvv_slidedown_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\
@@ -27,7 +27,7 @@
   void test_slideup_si##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
     rvv_##VCLASS##EM##_t vx, vy;				\
     rvv_bool##MLEN##_t mask;					\
-    mask = rvv_mset_bool##MLEN ();				\
+    mask = rvv_set_bool##MLEN ();				\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vx = rvv_slideup_vs_##VCLASS##EM##_mask(mask, vy, vx, 11);	\
@@ -36,7 +36,7 @@
   void test_slidedown_si##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
     rvv_##VCLASS##EM##_t vx, vy;				\
     rvv_bool##MLEN##_t mask;					\
-    mask = rvv_mset_bool##MLEN ();				\
+    mask = rvv_set_bool##MLEN ();				\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vx = rvv_slidedown_vs_##VCLASS##EM##_mask(mask, vy, vx, 11);\
@@ -48,7 +48,7 @@
   void test_slide1up_sx##VCLASS##EM (STYPE *x, STYPE *y, STYPE s) {	\
     rvv_##VCLASS##EM##_t vx, vy;					\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_le_##VCLASS##EM(y);					\
     vx = rvv_slide1up_vs_##VCLASS##EM##_mask(mask, vy, vx, s);		\
@@ -57,7 +57,7 @@
   void test_slide1down_sx##VCLASS##EM (STYPE *x, STYPE *y, STYPE s) {	\
     rvv_##VCLASS##EM##_t vx, vy;					\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_le_##VCLASS##EM(y);					\
     vx = rvv_slide1down_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\

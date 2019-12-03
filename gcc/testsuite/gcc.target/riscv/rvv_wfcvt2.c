@@ -12,7 +12,7 @@
     rvv_float##EM##_t vx;						\
     rvv_int##WEM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##EM(x);						\
     vy = rvv_le_int##WEM(y);						\
     vy = rvv_wcvt_f##SEW##toi##WSEW##_v_##EM##_mask (mask, vy, vx);	\
@@ -24,7 +24,7 @@
     rvv_float##EM##_t vx;						\
     rvv_uint##WEM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##EM(x);						\
     vy = rvv_le_uint##WEM(y);						\
     vy = rvv_wcvt_f##SEW##toui##WSEW##_v_##EM##_mask (mask, vy, vx);	\
@@ -36,7 +36,7 @@
     rvv_float##WEM##_t vx;						\
     rvv_int##EM##_t vy;							\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##WEM(x);						\
     vy = rvv_le_int##EM(y);						\
     vx = rvv_wcvt_i##SEW##tof##WSEW##_v_##EM##_mask (mask, vx, vy);	\
@@ -48,7 +48,7 @@
     rvv_float##WEM##_t vx;						\
     rvv_uint##EM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##WEM(x);						\
     vy = rvv_le_uint##EM(y);						\
     vx = rvv_wcvt_ui##SEW##tof##WSEW##_v_##EM##_mask (mask, vx, vy);	\
@@ -60,7 +60,7 @@
     rvv_float##WEM##_t vx;						\
     rvv_float##EM##_t vy;						\
     rvv_bool##MLEN##_t mask;						\
-    mask = rvv_mset_bool##MLEN ();					\
+    mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##WEM(x);						\
     vy = rvv_le_float##EM(y);						\
     vx = rvv_wcvt_f##SEW##tof##WSEW##_v_##EM##_mask (mask, vx, vy);	\
