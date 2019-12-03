@@ -110,7 +110,7 @@
 
 RVV_INT_TEST(VPOPC)
 RVV_INT_TEST(VFIRST)
-RVV_INT_TEST(VIOTA)
+RVV_UINT_TEST(VIOTA)
 RVV_INT_TEST(VID)
 
 /* { dg-final { scan-assembler-times "vpopc.m" 48 } } */

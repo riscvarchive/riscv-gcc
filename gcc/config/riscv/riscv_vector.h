@@ -958,19 +958,6 @@ _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, andnot)
 _RVV_MASK_ITERATOR (_RVV_MASK_BIN_OP, ornot)
 
 #define _RVV_IOTA(SEW, LMUL, MLEN, T)					\
-__extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_iota_m_int##SEW##m##LMUL (rvv_bool##MLEN##_t a)			\
-{									\
-  return __builtin_riscv_viotaint##SEW##m##LMUL (a);			\
-}									\
-__extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_iota_m_int##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,		\
-				     rvv_bool##MLEN##_t a)		\
-{									\
-  return __builtin_riscv_viotaint##SEW##m##LMUL##_mask (mask, a);	\
-}									\
 __extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_iota_m_uint##SEW##m##LMUL (rvv_bool##MLEN##_t a)			\
