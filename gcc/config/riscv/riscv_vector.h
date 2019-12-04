@@ -230,6 +230,12 @@ rvv_setvl_##SEW##m##LMUL (word_type a)					\
   else									\
     vl = __builtin_riscv_vsetvl##SEW##m##LMUL##_di (a);			\
   return vl;								\
+}									\
+__extension__ extern __inline word_type					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_setvlmax_##SEW##m##LMUL ()						\
+{									\
+  return rvv_setvl_##SEW##m##LMUL (-1);					\
 }
 
 _RVV_INT_ITERATOR (_RVVSETVL)
