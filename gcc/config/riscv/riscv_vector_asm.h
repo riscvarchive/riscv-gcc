@@ -2687,5 +2687,17 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, max, maxu)
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_AMO_FLOAT_TEMPLATE, swap)
 
+__extension__ extern __inline word_type
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
+rvv_readvl ()
+{
+  word_type rv;
+  __asm__ volatile ("csrr %0, vl"
+		    : "=r" (rv)
+		    :
+		    : "vl");
+  return rv;
+}
+
 #endif
 #endif
