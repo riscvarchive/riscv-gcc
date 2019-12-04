@@ -267,6 +267,21 @@
 		      : "0"(a), OP1_CONSTRANT (b)			\
 		      : "vtype")
 
+/* Inline asm template for splat.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_SPLAT_ASM_TEMPLATE(SEW, LMUL, ASM_OP,			\
+				    OP0_CONSTRANT,			\
+				    OP1_CONSTRANT)			\
+    __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"		\
+		      ASM_OP " %0, %1"					\
+		      : OP0_CONSTRANT (rv)				\
+		      : OP1_CONSTRANT (a)				\
+		      : "vtype")
+
 /* Unmasked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -604,6 +619,31 @@ FUNC_NAME (OP0_TYPE a, OP1_TYPE b)					\
     OP0_CONSTRANT, OP1_CONSTRANT); 					\
   return rv;								\
 }
+
+/* Intrinsic function template for splat.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_SPLAT_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,		\
+				OP0_TYPE, OP1_TYPE,			\
+				OP0_CONSTRANT,				\
+				OP1_CONSTRANT)				\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a)							\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_SPLAT_ASM_TEMPLATE(						\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}
+
 
 /* Unmasked unary intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64
@@ -2378,6 +2418,38 @@ _RVV_INT_ITERATOR (_RVV_MV_XS_SX)
     /* OP1_CONSTRANT */"f")
 
 _RVV_FLOAT_ITERATOR (_RVV_MV_FS_SF)
+
+#define _RVV_INT_SPLAT(SEW, LMUL, MLEN, T)				\
+  _RVV_ASM_SPLAT_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmv.v.x",						\
+    /* FUNC_NAME */rvv_splat_s_int##SEW##m##LMUL,			\
+    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */int##SEW##_t,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"r")						\
+  _RVV_ASM_SPLAT_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vmv.v.x",						\
+    /* FUNC_NAME */rvv_splat_s_uint##SEW##m##LMUL,			\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */uint##SEW##_t,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"r")
+
+_RVV_INT_ITERATOR (_RVV_INT_SPLAT)
+
+#define _RVV_FLOAT_SPLAT(SEW, LMUL, MLEN, T)				\
+  _RVV_ASM_SPLAT_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vfmv.v.f",						\
+    /* FUNC_NAME */rvv_splat_s_float##SEW##m##LMUL,			\
+    /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */_RVV_F##SEW##_TYPE,					\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"f")
+
+_RVV_FLOAT_ITERATOR (_RVV_FLOAT_SPLAT)
 
 /* Vector Slideup Instructions.  */
 
