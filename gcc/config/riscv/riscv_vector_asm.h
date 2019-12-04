@@ -2241,7 +2241,7 @@ _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_WV_WF, wsub)
   _RVV_ASM_MAC_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vf" #OP ".vf",						\
-    /* FUNC_NAME */rvv_##OP##_vs_float##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_##OP##_sv_float##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */_RVV_F##SEW##_TYPE,					\
