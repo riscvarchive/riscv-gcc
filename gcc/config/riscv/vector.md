@@ -501,18 +501,27 @@
 
 ;; ??? We don't yet support vector float modes with constant immediate
 ;; inputs.
-
 (define_insn_and_split "mov<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VFMODES 0 "nonimmediate_operand" "=vr,vr, m")
-	(match_operand:VFMODES 1 "nonimmediate_operand" " vr, m,vr"))]
-  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+   (set (match_operand:VFMODES 0 "nonimmediate_operand" "=vr,vr,vr, m,vr")
+	(match_operand:VFMODES 1 "vector_move_operand"  " vr,vi, m,vr,vc"))
+   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,X,r"))]
+  "TARGET_VECTOR"
   "#"
-  "&& 1"
+  "&& 1 && (reload_completed || GET_CODE (operands[1]) != CONST_VECTOR)"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_dup 0) (match_dup 1))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  ""
+{
+  /* If we have a const vector, then we have to load it's value into the
+     scratch reg, and then create a vec_duplicate of it.  */
+  if (const_vec_duplicate_p (operands[1], &operands[3]))
+    {
+      emit_move_insn (operands[2], operands[3]);
+      operands[1] = gen_rtx_VEC_DUPLICATE (GET_MODE (operands[1]),
+					   operands[2]);
+    }
+}
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -1741,9 +1750,9 @@
 
 (define_insn_and_split "vec_duplicate<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VFMODES 0 "register_operand" "=vr")
+   (set (match_operand:VFMODES 0 "register_operand" "=vr,*vr")
 	(vec_duplicate:VFMODES
-	 (match_operand:<VSUBMODE> 1 "register_operand" "f")))]
+	 (match_operand:<VSUBMODE> 1 "register_operand" "f,r")))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "#"
   "&& 1"
@@ -1755,12 +1764,14 @@
    (set_attr "mode" "none")])
 
 (define_insn "vec_duplicate<mode>_nosetvl"
-  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr,*vr")
 	(vec_duplicate:VFMODES
-	 (match_operand:<VSUBMODE> 1 "register_operand" "f")))
+	 (match_operand:<VSUBMODE> 1 "register_operand" "f,r")))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vfmv.v.f\t%0,%1"
+  "@
+   vfmv.v.f\t%0,%1
+   vmv.v.x\t%0,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
