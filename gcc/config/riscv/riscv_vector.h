@@ -240,6 +240,23 @@ rvv_setvlmax_##SEW##m##LMUL ()						\
 
 _RVV_INT_ITERATOR (_RVVSETVL)
 
+
+#define _RVV_INT_VEC_MOVE(SEW, LMUL, MLEN, T)				\
+__extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_copy_v_int##SEW##m##LMUL (rvv_int##SEW##m##LMUL##_t a)		\
+{									\
+  return a;								\
+}									\
+__extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_copy_v_uint##SEW##m##LMUL (rvv_uint##SEW##m##LMUL##_t a)		\
+{									\
+  return a;								\
+}
+
+_RVV_INT_ITERATOR (_RVV_INT_VEC_MOVE)
+
 /* Define the ld/st intrinsics.  */
 
 #define _RVVINTLD(SEW, LMUL, MLEN, T)					\
@@ -431,6 +448,16 @@ rvv_sse_uint##SEW##m##LMUL##_mask (const uint##SEW##_t *a,		\
 
 _RVV_INT_ITERATOR (_RVVINTLD)
 _RVV_INT_ITERATOR (_RVVINTST)
+
+#define _RVV_FLOAT_VEC_MOVE(SEW, LMUL, MLEN, T)				\
+__extension__ extern __inline rvv_float##SEW##m##LMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+rvv_copy_v_float##SEW##m##LMUL (rvv_float##SEW##m##LMUL##_t a)		\
+{									\
+  return a;								\
+}
+
+_RVV_FLOAT_ITERATOR (_RVV_FLOAT_VEC_MOVE)
 
 #define _RVVFLOATLD(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline rvv_float##SEW##m##LMUL##_t		\
