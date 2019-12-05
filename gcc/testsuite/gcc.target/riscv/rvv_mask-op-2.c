@@ -94,7 +94,7 @@
 #define VID(STYPE, VCLASS, EM, MLEN)                                           \
   void vid##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y) {                      \
     rvv_##VCLASS##EM##_t vy;                                                   \
-    vy = rvv_vid_##VCLASS##EM ();                                              \
+    vy = rvv_id_##VCLASS##EM ();                                              \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void vid##VCLASS##EM##2_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {       \
@@ -103,7 +103,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
-    vy = rvv_vid_##VCLASS##EM##_mask(mask1);                                   \
+    vy = rvv_id_##VCLASS##EM##_mask(mask1);                                   \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
 
