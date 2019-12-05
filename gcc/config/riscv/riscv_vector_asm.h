@@ -641,7 +641,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsub)
   _RVV_ASM_BIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vmf" #OP ".vv",					\
-    /* FUNC_NAME */rvv_f##OP##_vv_float##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_##OP##_vv_float##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_bool##MLEN##_t,					\
     /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
@@ -654,7 +654,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsub)
   _RVV_ASM_BIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vmf" #OP ".vf",					\
-    /* FUNC_NAME */rvv_f##OP##_vs_float##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_##OP##_vs_float##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_bool##MLEN##_t,					\
     /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\

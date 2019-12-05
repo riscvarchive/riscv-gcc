@@ -13,7 +13,7 @@
     rvv_bool##MLEN##_t mask;                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
-    mask = rvv_f##OP##_vv_##VCLASS##EM(vx, vy);                                \
+    mask = rvv_##OP##_vv_##VCLASS##EM(vx, vy);                                \
     vx = rvv_add_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
     rvv_se_##VCLASS##EM(x, vx);                                                \
   }
@@ -24,7 +24,7 @@
     rvv_bool##MLEN##_t mask;                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
-    mask = rvv_f##OP##_vs_##VCLASS##EM(vx, z);                                 \
+    mask = rvv_##OP##_vs_##VCLASS##EM(vx, z);                                 \
     vx = rvv_add_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
     rvv_se_##VCLASS##EM(x, vx);                                                \
   }
