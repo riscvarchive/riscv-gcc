@@ -36,7 +36,7 @@ int foo_rvv(float64_t *x, float64_t *y, int n) {
      vec_x = rvv_le_float64m1(x);
      mask = rvv_ne_vs_float64m1(vec_x, 0.0);
      vec_y = rvv_le_float64m1_mask(mask, vec_zero /*maskoffed*/, y);
-     vec_t = rvv_macc_vv_float64m1_mask(mask, vec_t/*maskoffed*/, vec_x, vec_y, vec_t);
+     vec_t = rvv_macc_vv_float64m1_mask(mask, vec_x, vec_y, vec_t);
      count = count + rvv_popc_m_bool64(mask);
      n-=vl;
      x+=vl;

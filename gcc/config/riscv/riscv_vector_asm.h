@@ -845,19 +845,15 @@ FUNC_NAME (OP0_TYPE op0, OP1_TYPE a, OP2_TYPE b)			\
 }									\
 __extension__ extern __inline OP0_TYPE					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
+FUNC_NAME##_mask (MASK_TYPE mask,					\
 		  OP0_TYPE op0, OP1_TYPE a, OP2_TYPE b)			\
 {									\
-  OP0_TYPE rv;								\
   __asm__ volatile ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t":::"vtype");\
-  __asm__ volatile ("vmerge.vvm %0, %1, %2, %3"				\
-		    : "=vr"(rv)						\
-		    : "vr"(op0), "vr" (maskedoff), "vm"(mask));		\
   __asm__ volatile (ASM_OP " %0, %1, %2, %3.t"				\
-		    : "+vr" (rv)					\
+		    : "+vr" (op0)					\
 		    : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
 		      "vm" (mask));					\
-  return rv;								\
+  return op0;								\
 }
 
 /* Merge intrinsic function template.
