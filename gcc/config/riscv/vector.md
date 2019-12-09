@@ -476,7 +476,8 @@
 {
   /* If we have a const vector, then we have to load it's value into the
      scratch reg, and then create a vec_duplicate of it.  */
-  if (const_vec_duplicate_p (operands[1], &operands[3]))
+  if (!satisfies_constraint_vi (operands[1]) &&
+      const_vec_duplicate_p (operands[1], &operands[3]))
     {
       emit_move_insn (operands[2], operands[3]);
       operands[1] = gen_rtx_VEC_DUPLICATE (GET_MODE (operands[1]),

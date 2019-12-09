@@ -3549,6 +3549,20 @@ riscv_print_operand (FILE *file, rtx op, int letter)
 	    output_address (mode, XEXP (op, 0));
 	  break;
 
+	case CONST_VECTOR:
+	  {
+	    rtx imm;
+
+	    if (!const_vec_duplicate_p (op, &imm)) {
+	      output_operand_lossage ("invalid immediate value for vector");
+	      break;
+	    }
+
+	    gcc_assert (CONST_INT_P (imm));
+	    asm_fprintf (file, "%wd", INTVAL (imm));
+	    break;
+	  }
+
 	default:
 	  if (letter == 'z' && op == CONST0_RTX (GET_MODE (op)))
 	    fputs (reg_names[GP_REG_FIRST], file);
