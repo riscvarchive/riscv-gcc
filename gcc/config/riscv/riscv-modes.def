@@ -32,8 +32,8 @@ ADJUST_FLOAT_FORMAT (HF, &ieee_half_format);
    strictly necessary to set the alignment here, since the default would
    be clamped to BIGGEST_ALIGNMENT anyhow, but it seems clearer.  */
 #define RVV_MODES(NVECS, VB, VH, VS, VD) \
-  VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS); \
-  VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 16 * NVECS); \
+  VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS, 0); \
+  VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 16 * NVECS, 0); \
   \
   ADJUST_NUNITS (VB##QI, riscv_rvv_chunks * NVECS * 8); \
   ADJUST_NUNITS (VH##HI, riscv_rvv_chunks * NVECS * 4); \
