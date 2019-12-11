@@ -94,7 +94,7 @@
 #define VID(STYPE, VCLASS, EM, MLEN)                                           \
   void vid##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y) {                      \
     rvv_##VCLASS##EM##_t vy;                                                   \
-    vy = rvv_id_##VCLASS##EM ();                                              \
+    vy = rvv_id_##EM ();                                                       \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void vid##VCLASS##EM##2_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {       \
@@ -103,7 +103,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
-    vy = rvv_id_##VCLASS##EM##_mask(mask1);                                   \
+    vy = rvv_id_##EM##_mask(mask1);                                            \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
 
@@ -111,7 +111,7 @@
 RVV_INT_TEST(VPOPC)
 RVV_INT_TEST(VFIRST)
 RVV_UINT_TEST(VIOTA)
-RVV_INT_TEST(VID)
+RVV_UINT_TEST(VID)
 
 /* { dg-final { scan-assembler-times "vpopc.m" 48 } } */
 /* { dg-final { scan-assembler-not "vmand" } } */
