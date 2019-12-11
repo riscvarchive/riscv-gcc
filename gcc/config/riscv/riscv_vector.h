@@ -264,25 +264,13 @@ __extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_le_int##SEW##m##LMUL (const int##SEW##_t *a)			\
 {									\
-  /* return * (rvv_int##SEW##m##LMUL##_t *) a;*/			\
-  if (__riscv_xlen == 32)						\
-    return __builtin_riscv_vleint##SEW##m##LMUL##_si (			\
-	     a);							\
-  else									\
-    return __builtin_riscv_vleint##SEW##m##LMUL##_di (			\
-	     a);							\
+  return * (rvv_int##SEW##m##LMUL##_t *) a;				\
 }									\
 __extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_le_uint##SEW##m##LMUL (const uint##SEW##_t *a)			\
 {									\
-  /*return * (rvv_uint##SEW##m##LMUL##_t *) a;*/			\
-  if (__riscv_xlen == 32)						\
-    return __builtin_riscv_vleuint##SEW##m##LMUL##_si (			\
-	     a);							\
-  else									\
-    return __builtin_riscv_vleuint##SEW##m##LMUL##_di (			\
-	     a);							\
+  return * (rvv_uint##SEW##m##LMUL##_t *) a;				\
 }									\
 __extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -464,13 +452,7 @@ __extension__ extern __inline rvv_float##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 rvv_le_float##SEW##m##LMUL (const T *a)				\
 {									\
-  /*return * (rvv_float##SEW##m##LMUL##_t *) a;*/			\
-  if (__riscv_xlen == 32)						\
-    return __builtin_riscv_vlefloat##SEW##m##LMUL##_si (		\
-	     a);							\
-  else									\
-    return __builtin_riscv_vlefloat##SEW##m##LMUL##_di (		\
-	     a);							\
+  return * (rvv_float##SEW##m##LMUL##_t *) a;				\
 }									\
 __extension__ extern __inline rvv_float##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
