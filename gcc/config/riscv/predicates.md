@@ -141,6 +141,9 @@
     case CONST_INT:
       return !splittable_const_int_operand (op, mode);
 
+    case CONST_POLY_INT:
+      return satisfies_constraint_vp (op);
+
     case CONST:
     case SYMBOL_REF:
     case LABEL_REF:
@@ -214,6 +217,9 @@
 })
 
 ;; Vector predicates.
+
+(define_predicate "const_poly_int_operand"
+  (match_code "const_poly_int"))
 
 (define_predicate "const_vector_int_operand"
   (and (match_code "const_vector")

@@ -2623,3 +2623,13 @@
 				  <MODE>mode, 0)));
   DONE;
 })
+
+(define_expand "read_vlenb"
+  [(match_operand 0 "register_operand")]
+  "TARGET_VECTOR"
+{
+  rtx imm = gen_int_mode (UNITS_PER_V_REG, Pmode);
+    emit_move_insn (operands[0], imm);
+  DONE;
+})
+

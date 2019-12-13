@@ -119,6 +119,12 @@
   (and (match_code "const_vector")
        (match_test "riscv_const_vec_all_same_in_range_p (op, 1, 1)")))
 
+(define_constraint "vp"
+  "POLY_INT"
+  (and (match_code "const_poly_int")
+       (match_test "CONST_POLY_INT_COEFFS (op)[0] == UNITS_PER_V_REG.coeffs[0]")))
+
+
 ;; ??? Not used yet.
 (define_constraint "vk"
   "A vector 5-bit unsigned immediate."
