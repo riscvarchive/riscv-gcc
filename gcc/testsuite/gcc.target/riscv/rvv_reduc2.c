@@ -34,8 +34,8 @@
     vz = rvv_le_##VCLASS##EM (z);					\
     mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
     vx = rvv_redsum_vs_##VCLASS##EM##_mask  (mask, vy, vx);		\
-    vx = rvv_redmaxu_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
-    vx = rvv_redminu_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
+    vx = rvv_redmax_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
+    vx = rvv_redmin_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
     vx = rvv_redand_vs_##VCLASS##EM##_mask  (mask, vy, vx);		\
     vx = rvv_redor_vs_##VCLASS##EM##_mask   (mask, vy, vx);		\
     vx = rvv_redxor_vs_##VCLASS##EM##_mask  (mask, vy, vx);		\

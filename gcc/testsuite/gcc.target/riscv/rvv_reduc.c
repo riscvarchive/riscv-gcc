@@ -28,8 +28,8 @@
     vx = rvv_le_##VCLASS##EMONE (x);					\
     vy = rvv_le_##VCLASS##EM (y);					\
     vx = rvv_redsum_vs_##VCLASS##EM (vy, vx);				\
-    vx = rvv_redmaxu_vs_##VCLASS##EM(vy, vx);				\
-    vx = rvv_redminu_vs_##VCLASS##EM(vy, vx);				\
+    vx = rvv_redmax_vs_##VCLASS##EM(vy, vx);				\
+    vx = rvv_redmin_vs_##VCLASS##EM(vy, vx);				\
     vx = rvv_redand_vs_##VCLASS##EM (vy, vx);				\
     vx = rvv_redor_vs_##VCLASS##EM  (vy, vx);				\
     vx = rvv_redxor_vs_##VCLASS##EM (vy, vx);				\
