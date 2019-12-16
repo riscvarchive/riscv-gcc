@@ -1949,7 +1949,7 @@ _RVV_INT_ITERATOR (_RVV_ASM_MERGE_INT_OP)
     /* ASM_OP */"vfclass.v",						\
     /* FUNC_NAME */rvv_class_v_float##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
-    /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"vr")

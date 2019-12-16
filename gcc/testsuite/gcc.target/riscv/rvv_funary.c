@@ -7,13 +7,13 @@
 
 #define RVV_FCLASS_TEST(STYPE, VCLASS, EM, MLEN, ISTYPE, IVCLASS,  OP)	\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,	\
-					       ISTYPE *y, STYPE z)	\
+					       u##ISTYPE *y, STYPE z)	\
   {									\
     rvv_##VCLASS##EM##_t vx;						\
-    rvv_##IVCLASS##EM##_t vy;						\
+    rvv_u##IVCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_##OP##_v_##VCLASS##EM (vx);				\
-    rvv_se_##IVCLASS##EM(y, vy);					\
+    rvv_se_u##IVCLASS##EM(y, vy);					\
   }
 
 RVV_FLOAT_INT_TEST_ARG(RVV_FCLASS_TEST, class)
