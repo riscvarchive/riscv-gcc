@@ -1007,6 +1007,16 @@ rvv_id_##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,			\
 
 _RVV_INT_ITERATOR (_RVV_VID)
 
+#define _RVV_MASK_MOVE(MLEN, OP)                                       \
+__extension__ extern __inline rvv_bool##MLEN##_t                       \
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))    \
+rvv_cpy_m_bool##MLEN (rvv_bool##MLEN##_t a)                            \
+{                                                                      \
+  return a;                                                            \
+}
+
+_RVV_MASK_ITERATOR (_RVV_MASK_MOVE,)
+
 /* Helpers for FP widening multiply.  */
 #if 0
 __extension__ extern __inline rvv_float32m8_t
