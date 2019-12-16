@@ -14,7 +14,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     carryin = rvv_set_bool##MLEN ();                                          \
-    vy = rvv_adc_vv_##VCLASS##EM (vx, vy, carryin);                            \
+    vy = rvv_adc_vvm_##VCLASS##EM (vx, vy, carryin);                            \
     rvv_se_##VCLASS##EM(y, vy);                                                  \
   }
 

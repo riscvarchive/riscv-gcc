@@ -14,7 +14,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     carryout = rvv_##OP##_vv_##VCLASS##EM (vx, vy);                            \
-    vy = rvv_adc_vv_##VCLASS##EM (vx, vy, carryout);                           \
+    vy = rvv_adc_vvm_##VCLASS##EM (vx, vy, carryout);                          \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void v##OP##VCLASS##EM##_scalar(size_t n, STYPE *x, STYPE *y, STYPE z) {     \
@@ -23,7 +23,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     carryout = rvv_##OP##_vs_##VCLASS##EM (vx,  z);                            \
-    vy = rvv_adc_vv_##VCLASS##EM (vx, vy, carryout);                           \
+    vy = rvv_adc_vvm_##VCLASS##EM (vx, vy, carryout);                          \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void v##OP##VCLASS##EM##_imm(size_t n, STYPE *x, STYPE *y, STYPE z) {        \
@@ -32,7 +32,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     carryout = rvv_##OP##_vs_##VCLASS##EM (vx, 11);                            \
-    vy = rvv_adc_vv_##VCLASS##EM (vx, vy, carryout);                           \
+    vy = rvv_adc_vvm_##VCLASS##EM (vx, vy, carryout);                          \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }
 

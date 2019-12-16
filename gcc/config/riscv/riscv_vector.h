@@ -661,9 +661,9 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, mul)
 #define _RVV_INT_ADC_SBC_OP(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_##OP##_vv_int##SEW##m##LMUL (rvv_int##SEW##m##LMUL##_t a,		\
-				 rvv_int##SEW##m##LMUL##_t b,		\
-				 rvv_bool##MLEN##_t carryin)		\
+rvv_##OP##_vvm_int##SEW##m##LMUL (rvv_int##SEW##m##LMUL##_t a,		\
+				  rvv_int##SEW##m##LMUL##_t b,		\
+				  rvv_bool##MLEN##_t carryin)		\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL (a, b, carryin);	\
 }									\
@@ -684,9 +684,9 @@ rvv_m##OP##_vv_int##SEW##m##LMUL (rvv_int##SEW##m##LMUL##_t a,		\
 }									\
 __extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_##OP##_vv_uint##SEW##m##LMUL (rvv_uint##SEW##m##LMUL##_t a,		\
-				  rvv_uint##SEW##m##LMUL##_t b,		\
-				  rvv_bool##MLEN##_t carryin)		\
+rvv_##OP##_vvm_uint##SEW##m##LMUL (rvv_uint##SEW##m##LMUL##_t a,	\
+				   rvv_uint##SEW##m##LMUL##_t b,	\
+				   rvv_bool##MLEN##_t carryin)		\
 {									\
   return __builtin_riscv_v##OP##uint##SEW##m##LMUL (a, b, carryin);	\
 }									\
@@ -707,9 +707,9 @@ rvv_m##OP##_vv_uint##SEW##m##LMUL (rvv_uint##SEW##m##LMUL##_t a,	\
 }									\
 __extension__ extern __inline rvv_int##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_##OP##_vs_int##SEW##m##LMUL (rvv_int##SEW##m##LMUL##_t a,		\
-				 int##SEW##_t b,			\
-				 rvv_bool##MLEN##_t carryin)		\
+rvv_##OP##_vsm_int##SEW##m##LMUL (rvv_int##SEW##m##LMUL##_t a,		\
+				  int##SEW##_t b,			\
+				  rvv_bool##MLEN##_t carryin)		\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b, carryin);\
 }									\
@@ -730,9 +730,9 @@ rvv_m##OP##_vs_int##SEW##m##LMUL (rvv_int##SEW##m##LMUL##_t a,		\
 }									\
 __extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_##OP##_vs_uint##SEW##m##LMUL (rvv_uint##SEW##m##LMUL##_t a,		\
-				  uint##SEW##_t b,			\
-				  rvv_bool##MLEN##_t carryin)		\
+rvv_##OP##_vsm_uint##SEW##m##LMUL (rvv_uint##SEW##m##LMUL##_t a,	\
+				   uint##SEW##_t b,			\
+				   rvv_bool##MLEN##_t carryin)		\
 {									\
   return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b, carryin);\
 }									\

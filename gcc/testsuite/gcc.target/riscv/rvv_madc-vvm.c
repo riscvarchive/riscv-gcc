@@ -15,7 +15,7 @@
     vy = rvv_le_##VCLASS##EM(y);                                               \
     carryin = rvv_set_bool##MLEN ();                                          \
     carryout = rvv_##OP##_vvm_##VCLASS##EM (vx, vy, carryin);                  \
-    vy = rvv_adc_vv_##VCLASS##EM (vx, vy, carryout);                           \
+    vy = rvv_adc_vvm_##VCLASS##EM (vx, vy, carryout);                           \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE *y, STYPE z) {          \
@@ -25,7 +25,7 @@
     vy = rvv_le_##VCLASS##EM(y);                                               \
     carryin = rvv_set_bool##MLEN ();                                          \
     carryout = rvv_##OP##_vsm_##VCLASS##EM (vx, z, carryin);                   \
-    vy = rvv_adc_vv_##VCLASS##EM (vx, vy, carryout);                           \
+    vy = rvv_adc_vvm_##VCLASS##EM (vx, vy, carryout);                           \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void v##OP##VCLASS##EM##_i(size_t n, STYPE *x, STYPE *y, STYPE z) {          \
@@ -35,7 +35,7 @@
     vy = rvv_le_##VCLASS##EM(y);                                               \
     carryin = rvv_set_bool##MLEN ();                                          \
     carryout = rvv_##OP##_vsm_##VCLASS##EM (vx, 11, carryin);                  \
-    vy = rvv_adc_vv_##VCLASS##EM (vx, vy, carryout);                           \
+    vy = rvv_adc_vvm_##VCLASS##EM (vx, vy, carryout);                           \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }
 
