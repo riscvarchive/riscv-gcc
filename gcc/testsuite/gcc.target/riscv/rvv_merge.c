@@ -14,7 +14,7 @@
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_set_bool##MLEN ();				\
-    vy = rvv_merge_vv_##VCLASS##EM (mask, vx, vy);		\
+    vy = rvv_merge_vv_##VCLASS##EM##_mask (mask, vx, vy);	\
     rvv_se_##VCLASS##EM(y, vy);					\
   }								\
   void rvv##VCLASS##EM##_s_builtin_test(size_t n, STYPE *x, 	\
@@ -25,7 +25,7 @@
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_set_bool##MLEN ();				\
-    vy = rvv_merge_vs_##VCLASS##EM (mask, vx, z);		\
+    vy = rvv_merge_vs_##VCLASS##EM##_mask (mask, vx, z);	\
     rvv_se_##VCLASS##EM(y, vy);					\
   }								\
   void rvv##VCLASS##EM##_i_builtin_test(size_t n, STYPE *x, 	\
@@ -36,7 +36,7 @@
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_set_bool##MLEN ();				\
-    vy = rvv_merge_vs_##VCLASS##EM (mask, vx, 11);		\
+    vy = rvv_merge_vs_##VCLASS##EM##_mask (mask, vx, 11);	\
     rvv_se_##VCLASS##EM(y, vy);					\
   }
 

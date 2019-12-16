@@ -1896,7 +1896,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
   _RVV_ASM_MERGE_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vmerge.vvm",						\
-    /* FUNC_NAME */rvv_merge_vv_int##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_merge_vv_int##SEW##m##LMUL##_mask,		\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
@@ -1908,7 +1908,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     SEW, LMUL,								\
     /* ASM_OP */"vmerge.vxm",						\
     /* IMM_ASM_OP */"vmerge.vim",					\
-    /* FUNC_NAME */rvv_merge_vs_int##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_merge_vs_int##SEW##m##LMUL##_mask,		\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_int##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
@@ -1919,7 +1919,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
   _RVV_ASM_MERGE_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vmerge.vvm",						\
-    /* FUNC_NAME */rvv_merge_vv_uint##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_merge_vv_uint##SEW##m##LMUL##_mask,		\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
@@ -1931,7 +1931,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     SEW, LMUL,								\
     /* ASM_OP */"vmerge.vxm",						\
     /* IMM_ASM_OP */"vmerge.vim",					\
-    /* FUNC_NAME */rvv_merge_vs_uint##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_merge_vs_uint##SEW##m##LMUL##_mask,		\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
@@ -2290,14 +2290,14 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, eq)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, ne)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, lt)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, le)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP_VF, gt)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP_VF, ge)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, gt)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, ge)
 
 #define _RVV_ASM_MERGE_FLOAT_OP(SEW, LMUL, MLEN, T)			\
   _RVV_ASM_MERGE_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vmerge.vvm",						\
-    /* FUNC_NAME */rvv_merge_vv_float##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_merge_vv_float##SEW##m##LMUL##_mask,		\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
@@ -2308,7 +2308,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP_VF, ge)
   _RVV_ASM_MERGE_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfmerge.vfm",						\
-    /* FUNC_NAME */rvv_merge_vs_float##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_merge_vs_float##SEW##m##LMUL##_mask,		\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_float##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */rvv_float##SEW##m##LMUL##_t,				\
