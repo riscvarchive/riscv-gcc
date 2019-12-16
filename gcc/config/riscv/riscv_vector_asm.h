@@ -1629,9 +1629,10 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,  , u,  )
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, eq, eq)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ne, ne)
 /* vv version of lt/ltu implemented in .md.  */
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_VX, lt, ltu)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_VXI, lt, ltu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, le, leu)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_VXI, gt, gtu)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, gt, gtu)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
 
 /* Template function for widening integer vector-vector operation.  */
 #define _RVV_ASM_WINT_BIN_OP_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
