@@ -4696,10 +4696,29 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	      && GET_MODE_UNIT_SIZE (mode) > UNITS_PER_FP_ARG))
 	return false;
     }
-  else if (VECT_REG_P (regno) || regno == VTYPE_REGNUM || regno == VL_REGNUM)
-    {
+  else if (VECT_REG_P (regno))
+   {
+      if (!VECT_REG_P (regno + nregs -1))
+	return false;
+
       /* Assume only vector modes fit in vector registers.  */
       if (!VECTOR_MODE_P (mode))
+	return false;
+
+      /* Check alignment requirement for vector mode.  */
+      /* TODO: We might have mode with non-power-of-2 nregs for segment
+	       load store in future.  */
+      if ((regno & (nregs - 1)) != 0)
+	return false;
+    }
+  else if (regno == VTYPE_REGNUM || regno == VL_REGNUM)
+   {
+      /* Assume only vector modes fit in vector registers.  */
+      if (!VECTOR_MODE_P (mode))
+	return false;
+
+      /* Never hold value using more than 1 reg for VL and VTYPE.  */
+      if (nregs != 1)
 	return false;
     }
   else
