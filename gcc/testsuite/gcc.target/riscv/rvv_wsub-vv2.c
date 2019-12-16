@@ -30,7 +30,7 @@
     vy = rvv_le_##VCLASS##EM(y);                                              \
     vz = rvv_le_##VCLASS##WEM(z);                                             \
     mask = rvv_set_bool##MLEN ();                                             \
-    vz = rvv_wsubu_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                 \
+    vz = rvv_wsub_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                 \
     rvv_se_##VCLASS##WEM(z, vz);                                              \
   }
 

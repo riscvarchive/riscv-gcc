@@ -30,14 +30,14 @@
     rvv_##VCLASS##WEM##_t vz;                                                 \
     vx = rvv_le_##VCLASS##EM(x);                                              \
     vy = rvv_le_##VCLASS##EM(y);                                              \
-    vz = rvv_w##OP##u_vv_##VCLASS##EM (vx, vy);                               \
+    vz = rvv_w##OP##_vv_##VCLASS##EM (vx, vy);                                \
     rvv_se_##VCLASS##WEM(z, vz);                                              \
   }                                                                            \
   void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
     rvv_##VCLASS##EM##_t vx, vy;                                              \
     rvv_##VCLASS##WEM##_t vz;                                                 \
     vx = rvv_le_##VCLASS##EM(x);                                              \
-    vz = rvv_w##OP##u_vs_##VCLASS##EM (vx, y);                                \
+    vz = rvv_w##OP##_vs_##VCLASS##EM (vx, y);                                \
     rvv_se_##VCLASS##WEM(z, vz);                                              \
   }
 

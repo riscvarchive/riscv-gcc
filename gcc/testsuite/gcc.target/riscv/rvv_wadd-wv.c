@@ -24,7 +24,7 @@
     rvv_##VCLASS##WEM##_t vx, vz;                                              \
     vx = rvv_le_##VCLASS##WEM(x);                                              \
     vy = rvv_le_##VCLASS##EM(y);                                               \
-    vz = rvv_waddu_wv_##VCLASS##EM (vx, vy);                                   \
+    vz = rvv_wadd_wv_##VCLASS##EM (vx, vy);                                    \
     rvv_se_##VCLASS##WEM(z, vz);                                               \
   }
 

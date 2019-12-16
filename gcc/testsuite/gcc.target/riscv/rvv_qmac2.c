@@ -39,7 +39,7 @@
     vop0 = rvv_le_##OP0U##VCLASS##WEM(op0);                                    \
     vmo = rvv_le_##OP0U##VCLASS##WEM(mo);                                      \
     vop2 = rvv_le_##OP2U##VCLASS##EM(op2);                                     \
-    vop0 = rvv_##OP##_vs_##OP0U##VCLASS##EM##_mask (mask, vop0, op1, vop2);    \
+    vop0 = rvv_##OP##_sv_##OP0U##VCLASS##EM##_mask (mask, vop0, op1, vop2);    \
     rvv_se_##OP0U##VCLASS##WEM(op0, vop0);                                     \
   }
 

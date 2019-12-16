@@ -39,7 +39,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                              \
     vy = rvv_le_##VCLASS##EM(y);                                              \
     vz = rvv_le_##VCLASS##WEM(z);                                             \
-    vz = rvv_w##OP##u_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);              \
+    vz = rvv_w##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);              \
     rvv_se_##VCLASS##WEM(z, vz);                                              \
   }                                                                            \
   void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
@@ -49,7 +49,7 @@
     mask = rvv_set_bool##MLEN ();                                             \
     vx = rvv_le_##VCLASS##EM(x);                                              \
     vz = rvv_le_##VCLASS##WEM(z);                                             \
-    vz = rvv_w##OP##u_vs_##VCLASS##EM##_mask (mask, vz, vx, y);               \
+    vz = rvv_w##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);               \
     rvv_se_##VCLASS##WEM(z, vz);                                              \
   }
 
