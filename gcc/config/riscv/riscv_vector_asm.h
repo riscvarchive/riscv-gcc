@@ -1509,7 +1509,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, nmsub)
   _RVV_ASM_MAC_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"v" #ASM_OP ".vx",					\
-    /* FUNC_NAME */rvv_##FUNC_NAME_OP##_vs_##OP0U##int##SEW##m##LMUL,	\
+    /* FUNC_NAME */rvv_##FUNC_NAME_OP##_sv_##OP0U##int##SEW##m##LMUL,	\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_##OP0U##int##WSEW##m##WLMUL##_t,			\
     /* OP1_TYPE */OP1U##int##SEW##_t,					\
@@ -2339,7 +2339,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_MERGE_FLOAT_OP)
   _RVV_ASM_MAC_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vf" #OP ".vf",						\
-    /* FUNC_NAME */rvv_##OP##_vs_##float##SEW##m##LMUL,			\
+    /* FUNC_NAME */rvv_##OP##_sv_##float##SEW##m##LMUL,			\
     /* MASK_TYPE */rvv_bool##MLEN##_t,					\
     /* OP0_TYPE */rvv_##float##WSEW##m##WLMUL##_t,			\
     /* OP1_TYPE */_RVV_F##SEW##_TYPE,					\

@@ -27,7 +27,7 @@
     rvv_##VCLASS##WEM##_t vop0;						\
     vop0 = rvv_le_##VCLASS##WEM(op0);					\
     vop2 = rvv_le_##VCLASS##EM(op2);					\
-    vop0 = rvv_##OP##_vs_##VCLASS##EM (vop0, op1, vop2);		\
+    vop0 = rvv_##OP##_sv_##VCLASS##EM (vop0, op1, vop2);		\
     rvv_se_##VCLASS##WEM(op0, vop0);					\
   }
 
