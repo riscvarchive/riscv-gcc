@@ -65,7 +65,7 @@ size_t compact_non_zero(size_t n, const int32_t* in, const int32_t* out) {
     int32_t non_zeros_count = rvv_popc_m_bool4(non_zeros_mask);
     count += non_zeros_count;
     rvv_uint32m8_t offset;
-    offset = rvv_iota_m_uint32m8(non_zeros_mask);
+    offset = rvv_iota_m_32m8(non_zeros_mask);
     // example:
     // mask is           1,1,0,1
     // offset is         2,1,1,0

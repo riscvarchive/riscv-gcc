@@ -76,7 +76,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
-    vy = rvv_iota_m_##VCLASS##EM (mask1);                                      \
+    vy = rvv_iota_m_##EM (mask1);                                              \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void viota##VCLASS##EM##2_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {    \
@@ -87,7 +87,7 @@
     vz = rvv_le_##VCLASS##EM(z);                                               \
     mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
     mask2 = rvv_slt_vv_##VCLASS##EM(vx, vz);                                   \
-    vy = rvv_iota_m_##VCLASS##EM##_mask(mask1, mask2);                         \
+    vy = rvv_iota_m_##EM##_mask(mask1, mask2);                                 \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
 
