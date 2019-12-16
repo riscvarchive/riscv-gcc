@@ -764,17 +764,11 @@ tree rvvbool64_t_node;
 		vector),
 
 #define VID_BUILTINS(E, L, MLEN, MODE, SUBMODE)				\
-  DIRECT_NAMED (vid##MODE, vidint##E##m##L,				\
-		RISCV_VI##E##M##L##_FTYPE,				\
-		vector),						\
   DIRECT_NAMED (vid##MODE, viduint##E##m##L,				\
 		RISCV_VUI##E##M##L##_FTYPE,				\
 		vector),						\
-  DIRECT_NAMED (vid##MODE##_mask, vidint##E##m##L##_mask,		\
-		RISCV_VI##E##M##L##_FTYPE_VB##MLEN,			\
-		vector),						\
   DIRECT_NAMED (vid##MODE##_mask, viduint##E##m##L##_mask,		\
-		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN,			\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L,	\
 		vector),
 
 #define VINT_WIDENING_ADD_SUB_BUILTINS(SEW, LMUL, MLEN, VMODE, SDEMODE,	\

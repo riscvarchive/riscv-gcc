@@ -2129,7 +2129,8 @@
 (define_insn "vid<mode>_mask"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(unspec:VIMODES
-	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")]
+	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	   (match_operand:VIMODES 2 "register_operand" "0")]
 	  UNSPEC_VID))]
  "TARGET_VECTOR"
  "vid.v\t%0,%1.t"

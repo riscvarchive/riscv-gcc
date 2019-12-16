@@ -998,9 +998,10 @@ rvv_id_##SEW##m##LMUL ()						\
 }									\
 __extension__ extern __inline rvv_uint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-rvv_id_##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask)		\
+rvv_id_##SEW##m##LMUL##_mask (rvv_bool##MLEN##_t mask,			\
+			      rvv_uint##SEW##m##LMUL##_t maskedoff)	\
 {									\
-  return __builtin_riscv_viduint##SEW##m##LMUL##_mask (mask);		\
+  return __builtin_riscv_viduint##SEW##m##LMUL##_mask (mask, maskedoff);\
 }
 
 

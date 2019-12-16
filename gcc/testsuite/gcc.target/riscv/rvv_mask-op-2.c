@@ -103,7 +103,7 @@
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
-    vy = rvv_id_##EM##_mask(mask1);                                            \
+    vy = rvv_id_##EM##_mask(mask1, vy);                                        \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
 

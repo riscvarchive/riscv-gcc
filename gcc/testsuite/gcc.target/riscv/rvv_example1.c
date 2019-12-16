@@ -23,7 +23,7 @@ void foo1(double *a, double *b, double *c, int n) {
   rvv_uint32m1_t vec_i;
   // set VLMAX and init vector arrary
   rvv_setvlmax_64m2();
-  vec_i = rvv_id_uint32m1();
+  vec_i = rvv_id_32m1();
   for (; vl = rvv_setvl_64m2(n);) {
     vec_n_double = rvv_wcvt_ui32tof64_v_32m1(vec_i);
     vec_b = rvv_le_float64m2(b);
