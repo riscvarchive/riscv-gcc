@@ -4637,6 +4637,12 @@ riscv_vector_mode (machine_mode mode)
 static unsigned int
 riscv_hard_regno_nregs (unsigned int regno, machine_mode mode)
 {
+  /* mode for VL or VTYPE are just a marker, not holding value,
+     so it always consume one register.  */
+  if (riscv_vector_mode (mode) &&
+      (regno == VL_REGNUM || regno == VTYPE_REGNUM))
+    return 1;
+
   /* riscv_hard_regno_mode_ok calls here first, so we must accept vector
      modes in any register, but the result won't be used for non-vector
      registers.  */
