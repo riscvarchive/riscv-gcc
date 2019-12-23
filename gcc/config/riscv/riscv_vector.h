@@ -122,6 +122,22 @@ typedef __fp16 float16_t;
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, scalar modes, info for
+   corresponding widening vector type.
+
+   MACRO (SEW, LMUL, MLEN, TYPE, WSEW, WLMUL, WTYPE)  */
+#define _RVV_WINT_ITERATOR(MACRO)			\
+  MACRO ( 8, 1,  8,  int8_t, 16, 2, int16_t)		\
+  MACRO ( 8, 2,  4,  int8_t, 16, 4, int16_t)		\
+  MACRO ( 8, 4,  2,  int8_t, 16, 8, int16_t)		\
+  MACRO (16, 1, 16, int16_t, 32, 2, int32_t)		\
+  MACRO (16, 2,  8, int16_t, 32, 4, int32_t)		\
+  MACRO (16, 4,  4, int16_t, 32, 8, int32_t)		\
+  MACRO (32, 1, 32, int32_t, 64, 2, int64_t)		\
+  MACRO (32, 2, 16, int32_t, 64, 4, int64_t)		\
+  MACRO (32, 4,  8, int32_t, 64, 8, int64_t)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, scalar modes, info for
    corresponding widening vector type and extra arguments.
 
    MACRO (SEW, LMUL, MLEN, TYPE, WSEW, WLMUL, WTYPE)  */

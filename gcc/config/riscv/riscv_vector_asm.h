@@ -1693,6 +1693,28 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, add, addu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, mul, mulu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
 
+#define _RVV_ASM_WCVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)		\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vwcvt.x.x.v",						\
+    /* FUNC_NAME */rvv_wcvt_i##SEW##toi##WSEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_int##WSEW##m##WLMUL##_t,				\
+    /* OP1_TYPE */rvv_int##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vwcvtu.x.x.v",						\
+    /* FUNC_NAME */rvv_wcvt_ui##SEW##toui##WSEW##_v_##SEW##m##LMUL,	\
+    /* MASK_TYPE */rvv_bool##MLEN##_t,					\
+    /* OP0_TYPE */rvv_uint##WSEW##m##WLMUL##_t,				\
+    /* OP1_TYPE */rvv_uint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
+
 /* Template function for vwmulsu.v[v|x] instructions.  */
 #define _RVV_ASM_WMULSU(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
   _RVV_ASM_BIN_OP_TEMPLATE(						\

@@ -289,6 +289,17 @@
   MACRO(   double, float, 64m4, 16, int64_t, int, 64)	\
   MACRO(   double, float, 64m8,  8, int64_t, int, 64)
 
+#define RVV_INT_WNCVT_INT_TEST(MACRO)	\
+  MACRO( 8m1, 16m2,  8,  8, 16)		\
+  MACRO( 8m2, 16m4,  4,  8, 16)		\
+  MACRO( 8m4, 16m8,  2,  8, 16)		\
+  MACRO(16m1, 32m2, 16, 16, 32)		\
+  MACRO(16m2, 32m4,  8, 16, 32)		\
+  MACRO(16m4, 32m8,  4, 16, 32)		\
+  MACRO(32m1, 64m2, 32, 32, 64)		\
+  MACRO(32m2, 64m4, 16, 32, 64)		\
+  MACRO(32m4, 64m8,  8, 32, 64)
+
 #define RVV_FLOAT_WNCVT_INT_TEST(MACRO)	\
   MACRO(16m1, 32m2, 16, 16, 32)		\
   MACRO(16m2, 32m4,  8, 16, 32)		\
