@@ -10,8 +10,8 @@
 #define VSLOADSTORE(STYPE, VCLASS, EM, MLEN)                                   \
   void vsloadstore##VCLASS##EM(size_t n, long stride, STYPE *x,                \
                                STYPE *y, STYPE z) {                            \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask;                                                   \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask;                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_leff_##VCLASS##EM(y);                                             \
     vz = vx + vy;                                                              \
@@ -21,15 +21,15 @@
 #define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
   void vload##EM##NTYPE_LETTER(size_t n, long stride, STYPE *x,           \
                                NSTYPE *y, STYPE z) {                      \
-    rvv_int##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask;                                              \
+    vint##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask;                                              \
     vx = rvv_l##NTYPE_LETTER##ff_int##EM(y);                              \
     rvv_se_int##EM(x, vx);                                                \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z) {                  \
-    rvv_uint##EM##_t vx, vy, vz;                                          \
-    rvv_bool##MLEN##_t mask;                                              \
+    vuint##EM##_t vx, vy, vz;                                          \
+    vbool##MLEN##_t mask;                                              \
     vx = rvv_l##NTYPE_LETTER##ff_uint##EM(y);                             \
     rvv_se_uint##EM(x, vx);                                               \
   }

@@ -37,7 +37,7 @@ void segmm_nn(size_t size_n, size_t size_m, size_t size_k,
               size_t ldc) {
   int i, j, k;
   size_t vl;
-  rvv_float64m1_t vec_c;
+  vfloat64m1_t vec_c;
   for (int i = 0; i < size_m; ++i) {
     j = size_n;
     const double *bnp = b;
@@ -45,13 +45,13 @@ void segmm_nn(size_t size_n, size_t size_m, size_t size_k,
     for (; vl = rvv_setvl_64m1(j);) {
       const double *akp = a;
       const double *bkp = bnp;
-      vec_c = *(rvv_float64m1_t *)cnp;
+      vec_c = *(vfloat64m1_t *)cnp;
       for (k = 0; k < size_k; ++k) {
-        vec_c = rvv_macc_sv_float64m1(vec_c, *akp, *(rvv_float64m1_t *)bkp);
+        vec_c = rvv_macc_sv_float64m1(vec_c, *akp, *(vfloat64m1_t *)bkp);
         bkp += ldb;
         akp++;
       }
-      *(rvv_float64m1_t *)cnp = vec_c;
+      *(vfloat64m1_t *)cnp = vec_c;
       j -= vl;
       cnp += vl;
       bnp += vl;

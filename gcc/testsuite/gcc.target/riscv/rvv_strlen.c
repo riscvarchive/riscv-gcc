@@ -40,10 +40,10 @@ size_t strlen(const char *str) {
   int32_t first_set = -1;
   while (first_set < 0) {
     rvv_setvlmax_8m1(); // setvm max
-    rvv_int8m1_t value;
+    vint8m1_t value;
     value = rvv_leff_int8m1(str);
     size_t vl = rvv_readvl();
-    rvv_bool8_t cmp;
+    vbool8_t cmp;
     cmp = rvv_seq_vs_int8m1(value, 0);
     first_set = rvv_first_m_bool8(cmp); /* reutrn -1 mean not found */
     str += vl;

@@ -13,10 +13,10 @@
                                                  OP2U##STYPE *op2,             \
                                                  OP0U##WSTYPE * mo,            \
                                                  OP0U##WSTYPE * op0) {         \
-    rvv_##OP1U##VCLASS##EM##_t vop1;                                           \
-    rvv_##OP2U##VCLASS##EM##_t vop2;                                           \
-    rvv_##OP0U##VCLASS##WEM##_t vop0, vmo;                                     \
-    rvv_bool##MLEN##_t mask;                                                   \
+    v##OP1U##VCLASS##EM##_t vop1;                                           \
+    v##OP2U##VCLASS##EM##_t vop2;                                           \
+    v##OP0U##VCLASS##WEM##_t vop0, vmo;                                     \
+    vbool##MLEN##_t mask;                                                   \
     mask = rvv_set_bool##MLEN ();                                             \
     vop0 = rvv_le_##OP0U##VCLASS##WEM(op0);                                    \
     vmo = rvv_le_##OP0U##VCLASS##WEM(mo);                                      \
@@ -32,9 +32,9 @@
                                                  OP2U##STYPE *op2,             \
                                                  OP0U##WSTYPE * mo,            \
                                                  OP0U##WSTYPE * op0) {         \
-    rvv_##OP2U##VCLASS##EM##_t vop2;                                           \
-    rvv_##OP0U##VCLASS##WEM##_t vop0, vmo;                                     \
-    rvv_bool##MLEN##_t mask;                                                   \
+    v##OP2U##VCLASS##EM##_t vop2;                                           \
+    v##OP0U##VCLASS##WEM##_t vop0, vmo;                                     \
+    vbool##MLEN##_t mask;                                                   \
     mask = rvv_set_bool##MLEN ();                                             \
     vop0 = rvv_le_##OP0U##VCLASS##WEM(op0);                                    \
     vmo = rvv_le_##OP0U##VCLASS##WEM(mo);                                      \

@@ -9,7 +9,7 @@
    the e and m value.  */
 #define TEST(STYPE, VCLASS, EM, MLEN)                                          \
   void vadd##VCLASS##EM(STYPE *x, STYPE *y) {                                  \
-    rvv_##VCLASS##EM##_t vx;                                                    \
+    v##VCLASS##EM##_t vx;                                                    \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     rvv_se_##VCLASS##EM(y, vx);                                                  \
   }

@@ -9,7 +9,7 @@
    the e and m value.  */
 #define VMACC(STYPE, VCLASS, EM, MLEN)                                         \
   void vmacc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {             \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    v##VCLASS##EM##_t vx, vy, vz;                                            \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \
@@ -19,7 +19,7 @@
 
 #define VMACC_IMM(STYPE, VCLASS, EM, MLEN)                                     \
   void vmacc##VCLASS##EM##_imm(size_t n, STYPE x, STYPE *y, STYPE *z) {        \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
+    v##VCLASS##EM##_t vx, vy, vz;                                            \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \
     vz = x * vy + vz;                                                          \

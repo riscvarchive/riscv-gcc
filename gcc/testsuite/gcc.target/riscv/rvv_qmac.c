@@ -12,9 +12,9 @@
                                                  OP1U##STYPE *op1,             \
                                                  OP2U##STYPE *op2,             \
                                                  OP0U##WSTYPE * op0) {         \
-    rvv_##OP1U##VCLASS##EM##_t vop1;                                           \
-    rvv_##OP2U##VCLASS##EM##_t vop2;                                           \
-    rvv_##OP0U##VCLASS##WEM##_t vop0;                                          \
+    v##OP1U##VCLASS##EM##_t vop1;                                           \
+    v##OP2U##VCLASS##EM##_t vop2;                                           \
+    v##OP0U##VCLASS##WEM##_t vop0;                                          \
     vop0 = rvv_le_##OP0U##VCLASS##WEM(op0);                                    \
     vop1 = rvv_le_##OP1U##VCLASS##EM(op1);                                     \
     vop2 = rvv_le_##OP2U##VCLASS##EM(op2);                                     \
@@ -27,8 +27,8 @@
                                                  OP1U##STYPE  op1,             \
                                                  OP2U##STYPE *op2,             \
                                                  OP0U##WSTYPE * op0) {         \
-    rvv_##OP2U##VCLASS##EM##_t vop2;                                           \
-    rvv_##OP0U##VCLASS##WEM##_t vop0;                                          \
+    v##OP2U##VCLASS##EM##_t vop2;                                           \
+    v##OP0U##VCLASS##WEM##_t vop0;                                          \
     vop0 = rvv_le_##OP0U##VCLASS##WEM(op0);                                    \
     vop2 = rvv_le_##OP2U##VCLASS##EM(op2);                                     \
     vop0 = rvv_##OP##_sv_##OP0U##VCLASS##EM (vop0, op1, vop2);                 \

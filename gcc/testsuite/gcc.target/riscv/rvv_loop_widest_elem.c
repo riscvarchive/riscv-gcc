@@ -33,7 +33,7 @@ loop:
 void foo(int16_t *a1, int32_t *a2, int32_t x10, int n) {
   size_t vl;
   for (; vl = rvv_setvl_32m8(n);) {
-    rvv_int32m8_t v8;
+    vint32m8_t v8;
     v8 = rvv_lh_int32m8(a1);
     v8 = v8 * x10;
     v8 = rvv_sra_vs_int32m8(v8, 3);

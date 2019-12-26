@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VWADD(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                            \
   void vwadd##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z) {           \
-    rvv_##VCLASS##EM##_t vy;                                                   \
-    rvv_##VCLASS##WEM##_t vx, vz;                                              \
+    v##VCLASS##EM##_t vy;                                                   \
+    v##VCLASS##WEM##_t vx, vz;                                              \
     vx = rvv_le_##VCLASS##WEM(x);                                              \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_wadd_wv_##VCLASS##EM (vx, vy);                                    \
@@ -20,8 +20,8 @@
 #define VWADDU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                           \
   void vwaddu##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y,                       \
                           WSTYPE *z) {                                         \
-    rvv_##VCLASS##EM##_t vy;                                                   \
-    rvv_##VCLASS##WEM##_t vx, vz;                                              \
+    v##VCLASS##EM##_t vy;                                                   \
+    v##VCLASS##WEM##_t vx, vz;                                              \
     vx = rvv_le_##VCLASS##WEM(x);                                              \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_wadd_wv_##VCLASS##EM (vx, vy);                                    \

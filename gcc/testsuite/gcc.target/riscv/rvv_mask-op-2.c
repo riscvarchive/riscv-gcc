@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VPOPC(STYPE, VCLASS, EM, MLEN)                                         \
   long vpopc##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y) {                    \
-    rvv_##VCLASS##EM##_t vx, vy;                                                \
-    rvv_bool##MLEN##_t mask1;                                                   \
+    v##VCLASS##EM##_t vx, vy;                                                \
+    vbool##MLEN##_t mask1;                                                   \
     long rv;                                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
@@ -19,8 +19,8 @@
     return rv;                                                                 \
   }                                                                            \
   long vpopc##VCLASS##EM##2_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {     \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvv_bool##MLEN##_t mask1, mask2;                                            \
+    v##VCLASS##EM##_t vx, vy, vz;                                            \
+    vbool##MLEN##_t mask1, mask2;                                            \
     long rv;                                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
@@ -31,8 +31,8 @@
     return rv;                                                                 \
   }                                                                            \
   long vpopc##VCLASS##EM##2_mask_opt(size_t n, STYPE *x, STYPE *y, STYPE *z) { \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                            \
-    rvv_bool##MLEN##_t mask1, mask2, mask3;                                     \
+    v##VCLASS##EM##_t vx, vy, vz;                                            \
+    vbool##MLEN##_t mask1, mask2, mask3;                                     \
     long rv;                                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                                 \
     vy = rvv_le_##VCLASS##EM(y);                                                 \
@@ -47,8 +47,8 @@
 
 #define VFIRST(STYPE, VCLASS, EM, MLEN)                                        \
   long vfirst##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y) {                   \
-    rvv_##VCLASS##EM##_t vx, vy;                                               \
-    rvv_bool##MLEN##_t mask1;                                                  \
+    v##VCLASS##EM##_t vx, vy;                                               \
+    vbool##MLEN##_t mask1;                                                  \
     long rv;                                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
@@ -57,8 +57,8 @@
     return rv;                                                                 \
   }                                                                            \
   long vfirst##VCLASS##EM##2_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {    \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask1, mask2;                                           \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask1, mask2;                                           \
     long rv;                                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
@@ -71,8 +71,8 @@
 
 #define VIOTA(STYPE, VCLASS, EM, MLEN)                                         \
   void viota##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y) {                    \
-    rvv_##VCLASS##EM##_t vx, vy;                                               \
-    rvv_bool##MLEN##_t mask1;                                                  \
+    v##VCLASS##EM##_t vx, vy;                                               \
+    vbool##MLEN##_t mask1;                                                  \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
@@ -80,8 +80,8 @@
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void viota##VCLASS##EM##2_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {    \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask1, mask2;                                           \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask1, mask2;                                           \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \
@@ -93,13 +93,13 @@
 
 #define VID(STYPE, VCLASS, EM, MLEN)                                           \
   void vid##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y) {                      \
-    rvv_##VCLASS##EM##_t vy;                                                   \
+    v##VCLASS##EM##_t vy;                                                   \
     vy = rvv_id_##EM ();                                                       \
     rvv_se_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void vid##VCLASS##EM##2_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {       \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask1, mask2;                                           \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask1, mask2;                                           \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \

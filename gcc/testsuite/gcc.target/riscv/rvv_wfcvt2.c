@@ -9,9 +9,9 @@
   void rvvcvtfi##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
 					       int##WSEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
-    rvv_float##EM##_t vx;						\
-    rvv_int##WEM##_t vy;						\
-    rvv_bool##MLEN##_t mask;						\
+    vfloat##EM##_t vx;						\
+    vint##WEM##_t vy;						\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##EM(x);						\
     vy = rvv_le_int##WEM(y);						\
@@ -21,9 +21,9 @@
   void rvvcvtfui##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
 						u##int##WSEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
-    rvv_float##EM##_t vx;						\
-    rvv_uint##WEM##_t vy;						\
-    rvv_bool##MLEN##_t mask;						\
+    vfloat##EM##_t vx;						\
+    vuint##WEM##_t vy;						\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##EM(x);						\
     vy = rvv_le_uint##WEM(y);						\
@@ -33,9 +33,9 @@
   void rvvcvtif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
 					       int##SEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
-    rvv_float##WEM##_t vx;						\
-    rvv_int##EM##_t vy;							\
-    rvv_bool##MLEN##_t mask;						\
+    vfloat##WEM##_t vx;						\
+    vint##EM##_t vy;							\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##WEM(x);						\
     vy = rvv_le_int##EM(y);						\
@@ -45,9 +45,9 @@
   void rvvcvtuif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
 						u##int##SEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
-    rvv_float##WEM##_t vx;						\
-    rvv_uint##EM##_t vy;						\
-    rvv_bool##MLEN##_t mask;						\
+    vfloat##WEM##_t vx;						\
+    vuint##EM##_t vy;						\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##WEM(x);						\
     vy = rvv_le_uint##EM(y);						\
@@ -57,9 +57,9 @@
   void rvvcvtff##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
 						_RVV_F##SEW##_TYPE *y, _RVV_F##SEW##_TYPE z)	\
   {									\
-    rvv_float##WEM##_t vx;						\
-    rvv_float##EM##_t vy;						\
-    rvv_bool##MLEN##_t mask;						\
+    vfloat##WEM##_t vx;						\
+    vfloat##EM##_t vy;						\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_float##WEM(x);						\
     vy = rvv_le_float##EM(y);						\

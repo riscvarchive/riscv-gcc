@@ -9,9 +9,9 @@
    the e and m value.  */
 #define VWSUB(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                            \
   void vwadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {            \
-    rvv_##VCLASS##EM##_t vx, vy;                                               \
-    rvv_##VCLASS##WEM##_t vz;                                                  \
-    rvv_bool##MLEN##_t mask;                                                   \
+    v##VCLASS##EM##_t vx, vy;                                               \
+    v##VCLASS##WEM##_t vz;                                                  \
+    vbool##MLEN##_t mask;                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##WEM(z);                                              \
@@ -23,9 +23,9 @@
 #define VWSUBU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                           \
   void vwadd##VCLASS##EM(size_t n, STYPE *x, STYPE *y,                        \
                           WSTYPE *z) {                                         \
-    rvv_##VCLASS##EM##_t vx, vy;                                              \
-    rvv_##VCLASS##WEM##_t vz;                                                 \
-    rvv_bool##MLEN##_t mask;                                                   \
+    v##VCLASS##EM##_t vx, vy;                                              \
+    v##VCLASS##WEM##_t vz;                                                 \
+    vbool##MLEN##_t mask;                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                              \
     vy = rvv_le_##VCLASS##EM(y);                                              \
     vz = rvv_le_##VCLASS##WEM(z);                                             \

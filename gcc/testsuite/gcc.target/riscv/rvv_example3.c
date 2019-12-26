@@ -21,8 +21,8 @@ for (i = 0; i < n; i++) {
 */
 
 void foo2(double *a, double *b, double *c, int n) {
-  rvv_float64m1_t vec_n, vec_a, vec_b;
-  rvv_bool64_t mask;
+  vfloat64m1_t vec_n, vec_a, vec_b;
+  vbool64_t mask;
   // set VLMAX and init vector arrary
   rvv_setvlmax_64m1();
   vec_n = rvv_splat_s_float64m1((double)n);
@@ -33,7 +33,7 @@ void foo2(double *a, double *b, double *c, int n) {
     vec_b = rvv_le_float64m1(b);
     mask = rvv_ne_vs_float64m1(vec_a, 0.0);
     vec_b = rvv_div_vv_float64m1_mask(mask, vec_n /*maskedoff*/, vec_b, vec_a);
-    *(rvv_float64m1_t *)b = vec_b;
+    *(vfloat64m1_t *)b = vec_b;
     n -= vl;
     a += vl;
     b += vl;

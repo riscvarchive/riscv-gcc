@@ -9,8 +9,8 @@
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,	\
 					       u##ISTYPE *y, STYPE z)	\
   {									\
-    rvv_##VCLASS##EM##_t vx;						\
-    rvv_u##IVCLASS##EM##_t vy;						\
+    v##VCLASS##EM##_t vx;						\
+    vu##IVCLASS##EM##_t vy;						\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_##OP##_v_##VCLASS##EM (vx);				\
     rvv_se_u##IVCLASS##EM(y, vy);					\

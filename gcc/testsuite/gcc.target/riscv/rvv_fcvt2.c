@@ -9,9 +9,9 @@
   void rvvcvtfi##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       ISTYPE *y, STYPE z)	\
   {									\
-    rvv_##VCLASS##EM##_t vx;						\
-    rvv_##IVCLASS##EM##_t vy;						\
-    rvv_bool##MLEN##_t mask;						\
+    v##VCLASS##EM##_t vx;						\
+    v##IVCLASS##EM##_t vy;						\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_le_##IVCLASS##EM(y);					\
@@ -21,9 +21,9 @@
   void rvvcvtfui##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 						u##ISTYPE *y, STYPE z)	\
   {									\
-    rvv_##VCLASS##EM##_t vx;						\
-    rvv_u##IVCLASS##EM##_t vy;						\
-    rvv_bool##MLEN##_t mask;						\
+    v##VCLASS##EM##_t vx;						\
+    vu##IVCLASS##EM##_t vy;						\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_le_u##IVCLASS##EM(y);					\
@@ -33,9 +33,9 @@
   void rvvcvtif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       ISTYPE *y, STYPE z)	\
   {									\
-    rvv_##VCLASS##EM##_t vx;						\
-    rvv_##IVCLASS##EM##_t vy;						\
-    rvv_bool##MLEN##_t mask;						\
+    v##VCLASS##EM##_t vx;						\
+    v##IVCLASS##EM##_t vy;						\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_le_##IVCLASS##EM(y);					\
@@ -45,9 +45,9 @@
   void rvvcvtuif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 						u##ISTYPE *y, STYPE z)	\
   {									\
-    rvv_##VCLASS##EM##_t vx;						\
-    rvv_u##IVCLASS##EM##_t vy;						\
-    rvv_bool##MLEN##_t mask;						\
+    v##VCLASS##EM##_t vx;						\
+    vu##IVCLASS##EM##_t vy;						\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vx = rvv_le_##VCLASS##EM(x);					\
     vy = rvv_le_u##IVCLASS##EM(y);					\

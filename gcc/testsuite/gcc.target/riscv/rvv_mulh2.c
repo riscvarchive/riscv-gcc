@@ -9,9 +9,9 @@
   void rvvmulhsu##VCLASS##EM##_svv(size_t n, STYPE *x,		\
 				 u##STYPE *y, STYPE z)		\
   {								\
-    rvv_##VCLASS##EM##_t vx;					\
-    rvv_u##VCLASS##EM##_t vy;					\
-    rvv_bool##MLEN##_t mask;					\
+    v##VCLASS##EM##_t vx;					\
+    vu##VCLASS##EM##_t vy;					\
+    vbool##MLEN##_t mask;					\
     mask = rvv_set_bool##MLEN ();				\
     vx = rvv_le_int##EM(x);					\
     vy = rvv_le_uint##EM(y);					\
@@ -21,9 +21,9 @@
   void rvvmulhsu##VCLASS##EM##_uvv(size_t n, STYPE *x,		\
 				 u##STYPE *y, STYPE z)		\
   {								\
-    rvv_##VCLASS##EM##_t vx;					\
-    rvv_u##VCLASS##EM##_t vy;					\
-    rvv_bool##MLEN##_t mask;					\
+    v##VCLASS##EM##_t vx;					\
+    vu##VCLASS##EM##_t vy;					\
+    vbool##MLEN##_t mask;					\
     mask = rvv_set_bool##MLEN ();				\
     vx = rvv_le_int##EM(x);					\
     vy = rvv_le_uint##EM(y);					\
@@ -33,9 +33,9 @@
   void rvvmulhsu##VCLASS##EM##_svx(size_t n, STYPE *x,		\
 				 u##STYPE *y, STYPE z)		\
   {								\
-    rvv_##VCLASS##EM##_t vx;					\
-    rvv_u##VCLASS##EM##_t vy;					\
-    rvv_bool##MLEN##_t mask;					\
+    v##VCLASS##EM##_t vx;					\
+    vu##VCLASS##EM##_t vy;					\
+    vbool##MLEN##_t mask;					\
     mask = rvv_set_bool##MLEN ();				\
     vx = rvv_le_int##EM(x);					\
     vy = rvv_le_uint##EM(y);					\
@@ -45,9 +45,9 @@
   void rvvmulhsu##VCLASS##EM##_uvx(size_t n, STYPE *x,		\
 				 u##STYPE *y, u##STYPE z)	\
   {								\
-    rvv_##VCLASS##EM##_t vx;					\
-    rvv_u##VCLASS##EM##_t vy;					\
-    rvv_bool##MLEN##_t mask;					\
+    v##VCLASS##EM##_t vx;					\
+    vu##VCLASS##EM##_t vy;					\
+    vbool##MLEN##_t mask;					\
     mask = rvv_set_bool##MLEN ();				\
     vx = rvv_le_int##EM(x);					\
     vy = rvv_le_uint##EM(y);					\

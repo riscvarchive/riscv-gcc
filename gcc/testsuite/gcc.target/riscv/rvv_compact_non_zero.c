@@ -58,13 +58,13 @@ size_t compact_non_zero(size_t n, const int32_t* in, const int32_t* out) {
   size_t count = 0;
   size_t vl;
   for (; vl = rvv_setvl_32m8(n);) {
-    rvv_int32m8_t value;
-    value = *(rvv_int32m8_t*) in;
-    rvv_bool4_t non_zeros_mask;
+    vint32m8_t value;
+    value = *(vint32m8_t*) in;
+    vbool4_t non_zeros_mask;
     non_zeros_mask = rvv_sne_vs_int32m8(value, 0);
     int32_t non_zeros_count = rvv_popc_m_bool4(non_zeros_mask);
     count += non_zeros_count;
-    rvv_uint32m8_t offset;
+    vuint32m8_t offset;
     offset = rvv_iota_m_32m8(non_zeros_mask);
     // example:
     // mask is           1,1,0,1

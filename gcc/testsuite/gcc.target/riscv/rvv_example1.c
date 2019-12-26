@@ -19,8 +19,8 @@ for (i = 0; I < N; i++) {
 
 void foo1(double *a, double *b, double *c, int n) {
   size_t vl;
-  rvv_float64m2_t vec_n_double, vec_b, vec_c;
-  rvv_uint32m1_t vec_i;
+  vfloat64m2_t vec_n_double, vec_b, vec_c;
+  vuint32m1_t vec_i;
   // set VLMAX and init vector arrary
   rvv_setvlmax_64m2();
   vec_i = rvv_id_32m1();
@@ -28,7 +28,7 @@ void foo1(double *a, double *b, double *c, int n) {
     vec_n_double = rvv_wcvt_ui32tof64_v_32m1(vec_i);
     vec_b = rvv_le_float64m2(b);
     vec_c = rvv_le_float64m2(c);
-    *(rvv_float64m2_t *)a = vec_b + vec_n_double * vec_c;
+    *(vfloat64m2_t *)a = vec_b + vec_n_double * vec_c;
     vec_i = rvv_add_vs_uint32m1(vec_i, vl);
     n -= vl;
     a += vl;

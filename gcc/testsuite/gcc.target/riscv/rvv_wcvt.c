@@ -9,8 +9,8 @@
   void rvvcvtfi##SEW##int##EM##_v_nomask_builtin_test(size_t n, int##SEW##_t *x,\
 					       int##WSEW##_t *y, int##WSEW##_t z)	\
   {									\
-    rvv_int##EM##_t vx;							\
-    rvv_int##WEM##_t vy;						\
+    vint##EM##_t vx;							\
+    vint##WEM##_t vy;						\
     vx = rvv_le_int##EM(x);						\
     vy = rvv_wcvt_i##SEW##toi##WSEW##_v_##EM (vx);			\
     rvv_se_int##WEM(y, vy);						\
@@ -18,8 +18,8 @@
   void rvvcvtuif##SEW##int##EM##_v_nomask_builtin_test(size_t n, uint##WSEW##_t *x,\
 						  uint##SEW##_t *y, uint##WSEW##_t z)	\
   {									\
-    rvv_uint##WEM##_t vx;						\
-    rvv_uint##EM##_t vy;						\
+    vuint##WEM##_t vx;						\
+    vuint##EM##_t vy;						\
     vy = rvv_le_uint##EM(y);						\
     vx = rvv_wcvt_ui##SEW##toui##WSEW##_v_##EM (vy);			\
     rvv_se_uint##WEM(x, vx);						\

@@ -29,8 +29,8 @@ int foo_rvv(double *x, double *y, int n) {
   size_t vl;
   /* set vlmax */
   rvv_setvlmax_64m1();
-  rvv_float64m1_t vec_t, vec_zero, vec_x, vec_y;
-  rvv_bool64_t mask;
+  vfloat64m1_t vec_t, vec_zero, vec_x, vec_y;
+  vbool64_t mask;
   vec_t = rvv_splat_s_float64m1(0.0f);
   vec_zero = rvv_splat_s_float64m1(0.0f);
   for (;vl=rvv_setvl_64m1(n);) {
@@ -45,7 +45,7 @@ int foo_rvv(double *x, double *y, int n) {
   }
   /* set vlmax */
   rvv_setvlmax_64m1();
-  rvv_float64m1_t vec_sum;
+  vfloat64m1_t vec_sum;
   vec_sum = rvv_mv_s_float64m1(vec_sum, 0.0f); /* move scalar to vec_sum[0] */
   vec_sum = rvv_redsum_vs_float64m1(vec_t, vec_sum);  /* vec_sum[0] = sum(vec_sum[0] , vec_t[*] ) */
   double t = rvv_mv_v_float64m1(vec_sum);  /*rd = vs2[0]*/

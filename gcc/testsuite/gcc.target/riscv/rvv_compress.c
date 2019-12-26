@@ -7,9 +7,9 @@
 
 #define RVV_TEST_COMPRESS(STYPE, VCLASS, EM, MLEN)		\
   void test_compress_##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
-    rvv_##VCLASS##EM##_t vx;					\
-    rvv_##VCLASS##EM##_t vy;					\
-    rvv_bool##MLEN##_t mask;					\
+    v##VCLASS##EM##_t vx;					\
+    v##VCLASS##EM##_t vy;					\
+    vbool##MLEN##_t mask;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_set_bool##MLEN ();				\

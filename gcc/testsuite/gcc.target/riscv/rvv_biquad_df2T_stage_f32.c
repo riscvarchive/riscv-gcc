@@ -108,22 +108,22 @@ void riscv_biquad_df2T_stage_f32(const float32_t *pIn, float32_t *pOut,
   // b1 = pCoeffs[1];
   // b2 = pCoeffs[2];
   size_t vl = rvv_setvl_32m1(3); // set vl = 3
-  rvv_float32m1_t v_coef_b;
+  vfloat32m1_t v_coef_b;
   v_coef_b = rvv_le_float32m1(pCoeffs);
   pCoeffs += vl;
 
   // a1 = pCoeffs[3];
   // a2 = pCoeffs[4];
   vl = rvv_setvl_32m1(2); // set vl = 2
-  rvv_float32m1_t v_coef_a;
+  vfloat32m1_t v_coef_a;
   v_coef_a = rvv_le_float32m1(pCoeffs);
   pCoeffs += vl;
 
   /*Reading the state values */
   // d1 = pState[0];
   // d2 = pState[1];
-  rvv_float32m1_t v_d;
-  v_d = *(rvv_float32m1_t *)pState;
+  vfloat32m1_t v_d;
+  v_d = *(vfloat32m1_t *)pState;
 
   while (sample > 0u) {
     /* Read the input */
@@ -140,7 +140,7 @@ void riscv_biquad_df2T_stage_f32(const float32_t *pIn, float32_t *pOut,
     *pOut++ = acc1;
 
     // I'm not sure why does need to use another vector register
-    rvv_float32m1_t v_slide;
+    vfloat32m1_t v_slide;
     v_slide = rvv_copy_v_float32m1(v_d);
 
     v_d = rvv_slidedown_vs_float32m1(
@@ -160,5 +160,5 @@ void riscv_biquad_df2T_stage_f32(const float32_t *pIn, float32_t *pOut,
 
   // pState[0] = d1;
   // pState[1] = d2;
-  *(rvv_float32m1_t *)pState = v_d;
+  *(vfloat32m1_t *)pState = v_d;
 }

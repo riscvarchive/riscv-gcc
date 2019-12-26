@@ -7,7 +7,7 @@
 
 #define RVV_TEST_AMO(STYPE, VCLASS, EM, MLEN, OP)		\
   void test_amo##OP##_##VCLASS##EM (STYPE *x, STYPE *y) {	\
-    rvv_##VCLASS##EM##_t vx, vy;				\
+    v##VCLASS##EM##_t vx, vy;				\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     vx = rvv_amo##OP##_wd_v_##VCLASS##EM(y, vx, vy);		\

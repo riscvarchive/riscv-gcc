@@ -11,10 +11,10 @@
   void v##OP##VCLASS##EM(size_t n, STYPE *op1, STYPE *op2, WSTYPE * op0,\
 			 WSTYPE *mo)					\
   {									\
-    rvv_##VCLASS##EM##_t vop1;						\
-    rvv_##VCLASS##EM##_t vop2;						\
-    rvv_##VCLASS##WEM##_t vop0, vmo;					\
-    rvv_bool##MLEN##_t mask;						\
+    v##VCLASS##EM##_t vop1;						\
+    v##VCLASS##EM##_t vop2;						\
+    v##VCLASS##WEM##_t vop0, vmo;					\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vop0 = rvv_le_##VCLASS##WEM(op0);					\
     vmo = rvv_le_##VCLASS##WEM(mo);					\
@@ -29,9 +29,9 @@
   void x##OP##VCLASS##EM(size_t n, STYPE  op1, STYPE *op2, WSTYPE * op0,\
 			 WSTYPE *mo)					\
   {									\
-    rvv_##VCLASS##EM##_t vop2;						\
-    rvv_##VCLASS##WEM##_t vop0, vmo;					\
-    rvv_bool##MLEN##_t mask;						\
+    v##VCLASS##EM##_t vop2;						\
+    v##VCLASS##WEM##_t vop0, vmo;					\
+    vbool##MLEN##_t mask;						\
     mask = rvv_set_bool##MLEN ();					\
     vop0 = rvv_le_##VCLASS##WEM(op0);					\
     vmo = rvv_le_##VCLASS##WEM(mo);					\

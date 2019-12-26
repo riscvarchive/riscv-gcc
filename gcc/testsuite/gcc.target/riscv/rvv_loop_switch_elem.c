@@ -38,9 +38,9 @@ loop:
 void foo2(int16_t *a1, int32_t *a2, int32_t x10, int n) {
   size_t vl;
   for (; vl = rvv_setvl_16m4(n);) {
-    rvv_int16m4_t v4;
+    vint16m4_t v4;
     v4 = rvv_le_int16m4(a1);
-    rvv_int32m8_t v8;
+    vint32m8_t v8;
     v8 = rvv_wmul_vs_int16m4(v4, x10);
     v8 = rvv_sra_vs_int32m8(v8, 3);
     rvv_se_int32m8(a2, v8);

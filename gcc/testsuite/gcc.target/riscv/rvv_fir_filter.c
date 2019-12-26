@@ -67,7 +67,7 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
     size_t vl = rvv_setvl_32m1(blkCnt);
 
     /* Copy sample vl time into state buffer */
-    *(rvv_float32m1_t *)pStateCurnt = *(rvv_float32m1_t *)pSrc;
+    *(vfloat32m1_t *)pStateCurnt = *(vfloat32m1_t *)pSrc;
 
     // nested loop will compute pDst vl times.
     for (int l = 0; l < vl; l++) {
@@ -85,15 +85,15 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
 
       /* Perform the multiply-accumulates */
       // init zero vector
-      rvv_float32m1_t vsum;
+      vfloat32m1_t vsum;
       vsum = rvv_splat_s_float32m1(0.0);
       size_t nested_vl;
       for(;nested_vl=rvv_setvl_32m1(i);) {
-        rvv_float32m1_t *vpx = (rvv_float32m1_t *)px;
-        rvv_float32m1_t *vpb = (rvv_float32m1_t *)pb;
+        vfloat32m1_t *vpx = (vfloat32m1_t *)px;
+        vfloat32m1_t *vpb = (vfloat32m1_t *)pb;
 
         // acc0 += *px * *pb;
-        rvv_float32m1_t vacc;
+        vfloat32m1_t vacc;
         vacc = rvv_mul_vv_float32m1(*vpx, *vpb);
         vsum = rvv_redsum_vs_float32m1(vacc, vsum); // reduction sum
 

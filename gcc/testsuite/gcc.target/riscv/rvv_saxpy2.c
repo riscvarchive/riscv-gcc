@@ -7,7 +7,7 @@
 void saxpy_2(size_t n, const float a, const float *x, float *y) {
   size_t l;
 
-  rvv_float32m8_t vx, vy;
+  vfloat32m8_t vx, vy;
 
   for (; (l = rvv_setvl_32m8(n)) > 0; n -= l) {
     vx = rvv_le_float32m8(x);

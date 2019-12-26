@@ -11,8 +11,8 @@
    the e and m value.  */
 #define VMBIN(STYPE, VCLASS, EM, MLEN, OP, OPERATOR)                           \
   void vm##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {            \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask1, mask2, mask3;                                    \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask1, mask2, mask3;                                    \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \
@@ -23,8 +23,8 @@
     rvv_se_##VCLASS##EM(x, vx);                                                \
   }                                                                            \
   void vm##OP##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {         \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask1, mask2, mask3;                                    \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask1, mask2, mask3;                                    \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \
@@ -37,8 +37,8 @@
 
 #define VMNBIN(STYPE, VCLASS, EM, MLEN, OP)                                    \
   void vm##OP##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {         \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask1, mask2, mask3;                                    \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask1, mask2, mask3;                                    \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \
@@ -52,8 +52,8 @@
 
 #define VMNOT(STYPE, VCLASS, EM, MLEN)                                         \
   void vmnot##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {          \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask1, mask2, mask3;                                    \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask1, mask2, mask3;                                    \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \

@@ -9,8 +9,8 @@
   void rvv##VCLASS##EM##_v_builtin_test(size_t n, STYPE *x,	\
 					     STYPE *y, STYPE z)	\
   {								\
-    rvv_##VCLASS##EM##_t vx, vy;				\
-    rvv_bool##MLEN##_t mask;					\
+    v##VCLASS##EM##_t vx, vy;				\
+    vbool##MLEN##_t mask;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_set_bool##MLEN ();				\
@@ -20,8 +20,8 @@
   void rvv##VCLASS##EM##_s_builtin_test(size_t n, STYPE *x, 	\
 					     STYPE *y, STYPE z)	\
   {								\
-    rvv_##VCLASS##EM##_t vx, vy;				\
-    rvv_bool##MLEN##_t mask;					\
+    v##VCLASS##EM##_t vx, vy;				\
+    vbool##MLEN##_t mask;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_set_bool##MLEN ();				\
@@ -31,8 +31,8 @@
   void rvv##VCLASS##EM##_i_builtin_test(size_t n, STYPE *x, 	\
 					     STYPE *y, STYPE z)	\
   {								\
-    rvv_##VCLASS##EM##_t vx, vy;				\
-    rvv_bool##MLEN##_t mask;					\
+    v##VCLASS##EM##_t vx, vy;				\
+    vbool##MLEN##_t mask;					\
     vx = rvv_le_##VCLASS##EM(x);				\
     vy = rvv_le_##VCLASS##EM(y);				\
     mask = rvv_set_bool##MLEN ();				\

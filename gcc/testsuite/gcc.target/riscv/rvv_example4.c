@@ -24,15 +24,15 @@ double A[N][N], B[N][N], C[N][N];
 void foo3() {
   int i, j, k;
   size_t vl;
-  rvv_float64m1_t vec_a, vec_b, vec_c, vec_sum;
+  vfloat64m1_t vec_a, vec_b, vec_c, vec_sum;
   for (int i = 0; i < N; ++i) {
     for (int j = 0; j < N; ++j) {
       k = N;
       rvv_setvlmax_64m1();
       vec_c = rvv_splat_s_float64m1(0.0); /* splat scalr to vec_c */
       for (; vl = rvv_setvl_64m1(k);) {
-        vec_a = *(rvv_float64m1_t *)&A[i][N - k];
-        vec_b = *(rvv_float64m1_t *)&B[N - k][j];
+        vec_a = *(vfloat64m1_t *)&A[i][N - k];
+        vec_b = *(vfloat64m1_t *)&B[N - k][j];
         vec_c = vec_a * vec_b + vec_c;
         k -= vl;
       }

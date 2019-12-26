@@ -36,13 +36,13 @@ char* strcpy(char *dst, const char* src) {
   int zero_find = -1;
   while (zero_find < 0) {
     rvv_setvlmax_8m1();
-    rvv_uint8m1_t value;
+    vuint8m1_t value;
     value = rvv_leff_uint8m1(src);
     size_t vl =rvv_readvl();
-    rvv_bool8_t cmp;
+    vbool8_t cmp;
     cmp = rvv_seq_vs_uint8m1(value, 0);
     zero_find = rvv_first_m_bool8(cmp); // if no zero than return -1
-    rvv_bool8_t mask;
+    vbool8_t mask;
     mask = rvv_sif_m_bool8(cmp); // set mask up to and including zero byte
     rvv_se_uint8m1_mask(dst, mask, value);
     src+=vl;

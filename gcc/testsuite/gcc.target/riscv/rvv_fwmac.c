@@ -10,9 +10,9 @@
 #define VWMAC_VV(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)		\
   void v##OP##VCLASS##EM(size_t n, STYPE *op1, STYPE *op2, WSTYPE * op0)\
   {									\
-    rvv_##VCLASS##EM##_t vop1;						\
-    rvv_##VCLASS##EM##_t vop2;						\
-    rvv_##VCLASS##WEM##_t vop0;						\
+    v##VCLASS##EM##_t vop1;						\
+    v##VCLASS##EM##_t vop2;						\
+    v##VCLASS##WEM##_t vop0;						\
     vop0 = rvv_le_##VCLASS##WEM(op0);					\
     vop1 = rvv_le_##VCLASS##EM(op1);					\
     vop2 = rvv_le_##VCLASS##EM(op2);					\
@@ -23,8 +23,8 @@
 #define VWMAC_VX(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)		\
   void x##OP##VCLASS##EM(size_t n, STYPE  op1, STYPE *op2, WSTYPE * op0)\
   {									\
-    rvv_##VCLASS##EM##_t vop2;						\
-    rvv_##VCLASS##WEM##_t vop0;						\
+    v##VCLASS##EM##_t vop2;						\
+    v##VCLASS##WEM##_t vop0;						\
     vop0 = rvv_le_##VCLASS##WEM(op0);					\
     vop2 = rvv_le_##VCLASS##EM(op2);					\
     vop0 = rvv_##OP##_sv_##VCLASS##EM (vop0, op1, vop2);		\

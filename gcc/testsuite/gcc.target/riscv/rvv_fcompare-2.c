@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VCOMPARE_VV(STYPE, VCLASS, EM, MLEN, OP)                               \
   void v##OP##VCLASS##EM##_vv(size_t n, STYPE *x, STYPE *y, STYPE *z) {        \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask;                                                   \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask;                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \
@@ -22,8 +22,8 @@
 
 #define VCOMPARE_VF(STYPE, VCLASS, EM, MLEN, OP)                               \
   void v##OP##VCLASS##EM##_vx(size_t n, STYPE *x, STYPE *y, STYPE *z) {        \
-    rvv_##VCLASS##EM##_t vx, vy, vz;                                           \
-    rvv_bool##MLEN##_t mask;                                                   \
+    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    vbool##MLEN##_t mask;                                                   \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     vz = rvv_le_##VCLASS##EM(z);                                               \

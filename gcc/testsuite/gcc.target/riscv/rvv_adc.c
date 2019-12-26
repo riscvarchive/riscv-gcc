@@ -9,8 +9,8 @@
    the e and m value.  */
 #define VADC(STYPE, VCLASS, EM, MLEN)                                          \
   void vadc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv_##VCLASS##EM##_t vx, vy;                                                \
-    rvv_bool##MLEN##_t carryin;                                                 \
+    v##VCLASS##EM##_t vx, vy;                                                \
+    vbool##MLEN##_t carryin;                                                 \
     vx = rvv_le_##VCLASS##EM(x);                                               \
     vy = rvv_le_##VCLASS##EM(y);                                               \
     carryin = rvv_set_bool##MLEN ();                                          \
