@@ -486,10 +486,18 @@
   MACRO(    float, float, 32m4,   8, double, 64m1, __VA_ARGS__)
 
 #define RVV_INT_LOAD_TEST(MACRO)	\
+  MACRO ( 8m1,  8,  int8_t,  int8_t, b)	\
+  MACRO ( 8m2,  4,  int8_t,  int8_t, b)	\
+  MACRO ( 8m4,  2,  int8_t,  int8_t, b)	\
+  MACRO ( 8m8,  1,  int8_t,  int8_t, b)	\
   MACRO (16m1, 16, int16_t,  int8_t, b)	\
   MACRO (16m2,  8, int16_t,  int8_t, b)	\
   MACRO (16m4,  4, int16_t,  int8_t, b)	\
   MACRO (16m8,  2, int16_t,  int8_t, b)	\
+  MACRO (16m1, 16, int16_t, int16_t, h)	\
+  MACRO (16m2,  8, int16_t, int16_t, h)	\
+  MACRO (16m4,  4, int16_t, int16_t, h)	\
+  MACRO (16m8,  2, int16_t, int16_t, h)	\
   MACRO (32m1, 32, int32_t,  int8_t, b)	\
   MACRO (32m2, 16, int32_t,  int8_t, b)	\
   MACRO (32m4,  8, int32_t,  int8_t, b)	\
@@ -498,6 +506,10 @@
   MACRO (32m2, 16, int32_t, int16_t, h)	\
   MACRO (32m4,  8, int32_t, int16_t, h)	\
   MACRO (32m8,  4, int32_t, int16_t, h)	\
+  MACRO (32m1, 32, int32_t, int32_t, w)	\
+  MACRO (32m2, 16, int32_t, int32_t, w)	\
+  MACRO (32m4,  8, int32_t, int32_t, w)	\
+  MACRO (32m8,  4, int32_t, int32_t, w)	\
   MACRO (64m1, 64, int64_t,  int8_t, b)	\
   MACRO (64m2, 32, int64_t,  int8_t, b)	\
   MACRO (64m4, 16, int64_t,  int8_t, b)	\

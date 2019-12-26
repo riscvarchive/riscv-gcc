@@ -54,9 +54,9 @@ RVV_SEW_UINT_TEST(VSLOADSTORE)
 RVV_SEW_FLOAT_TEST(VSLOADSTORE)
 
 /* { dg-final { scan-assembler-times "vlxe.v" 44 } } */
-/* { dg-final { scan-assembler-times "vlxb.v" 12 } } */
-/* { dg-final { scan-assembler-times "vlxbu.v" 12 } } */
-/* { dg-final { scan-assembler-times "vlxh.v" 8 } } */
-/* { dg-final { scan-assembler-times "vlxhu.v" 8 } } */
-/* { dg-final { scan-assembler-times "vlxw.v" 4 } } */
-/* { dg-final { scan-assembler-times "vlxwu.v" 4 } } */
+/* { dg-final { scan-assembler-times "vlxb.v" 16 } } */
+/* { dg-final { scan-assembler-times "vlxbu.v" 16 } } */
+/* { dg-final { scan-assembler-times "vlxh.v" 12 } } */
+/* { dg-final { scan-assembler-times "vlxhu.v" 12 } } */
+/* { dg-final { scan-assembler-times "vlxw.v" 8 } } */
+/* { dg-final { scan-assembler-times "vlxwu.v" 8 } } */

@@ -95,10 +95,18 @@ typedef __fp16 float16_t;
 
    MACRO (SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)  */
 #define _RVV_INT_LOAD_ITERATOR(MACRO)	\
+  MACRO (8, 1,   8,   int8_t,  8, b)	\
+  MACRO (8, 2,   4,   int8_t,  8, b)	\
+  MACRO (8, 4,   2,   int8_t,  8, b)	\
+  MACRO (8, 8,   1,   int8_t,  8, b)	\
   MACRO (16, 1, 16, int16_t,  8, b)	\
   MACRO (16, 2,  8, int16_t,  8, b)	\
   MACRO (16, 4,  4, int16_t,  8, b)	\
   MACRO (16, 8,  2, int16_t,  8, b)	\
+  MACRO (16, 1, 16, int16_t, 16, h)	\
+  MACRO (16, 2,  8, int16_t, 16, h)	\
+  MACRO (16, 4,  4, int16_t, 16, h)	\
+  MACRO (16, 8,  2, int16_t, 16, h)	\
   MACRO (32, 1, 32, int32_t,  8, b)	\
   MACRO (32, 2, 16, int32_t,  8, b)	\
   MACRO (32, 4,  8, int32_t,  8, b)	\
@@ -107,6 +115,10 @@ typedef __fp16 float16_t;
   MACRO (32, 2, 16, int32_t, 16, h)	\
   MACRO (32, 4,  8, int32_t, 16, h)	\
   MACRO (32, 8,  4, int32_t, 16, h)	\
+  MACRO (32, 1, 32, int32_t, 32, w)	\
+  MACRO (32, 2, 16, int32_t, 32, w)	\
+  MACRO (32, 4,  8, int32_t, 32, w)	\
+  MACRO (32, 8,  4, int32_t, 32, w)	\
   MACRO (64, 1, 64, int64_t,  8, b)	\
   MACRO (64, 2, 32, int64_t,  8, b)	\
   MACRO (64, 4, 16, int64_t,  8, b)	\

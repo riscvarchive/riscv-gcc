@@ -44,6 +44,6 @@ RVV_UINT_TEST(VSLOADSTORE)
 RVV_FLOAT_TEST(VSLOADSTORE)
 
 /* { dg-final { scan-assembler-times "vse.v\t" 44 } } */
-/* { dg-final { scan-assembler-times "vsb.v" 24 } } */
-/* { dg-final { scan-assembler-times "vsh.v" 16 } } */
-/* { dg-final { scan-assembler-times "vsw.v" 8 } } */
+/* { dg-final { scan-assembler-times "vsb.v" 32 } } */
+/* { dg-final { scan-assembler-times "vsh.v" 24 } } */
+/* { dg-final { scan-assembler-times "vsw.v" 16 } } */
