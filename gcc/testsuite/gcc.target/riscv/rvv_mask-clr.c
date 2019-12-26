@@ -7,16 +7,16 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VCLR(STYPE, VCLASS, EM, MLEN)                                          \
+#define VCLR(STYPE, VCLASST, VCLASS, EM, MLEN)                                          \
   void vsbf##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {                        \
-    v##VCLASS##EM##_t vx, vy;                                                \
+    v##VCLASST##EM##_t vx, vy;                                                \
     vbool##MLEN##_t mask0;                                                   \
     vbool##MLEN##_t rv;                                                      \
     vx = vload_##VCLASS##EM(x);                                                 \
     vy = vload_##VCLASS##EM(y);                                                 \
-    mask0 = vclr_bool##MLEN ();                                            \
+    mask0 = vclr_b##MLEN ();                                            \
     vy = vadd_vv_##VCLASS##EM##_mask (mask0, vy, vx, vy);                   \
-    * (v##VCLASS##EM##_t *) y = vy;                                          \
+    * (v##VCLASST##EM##_t *) y = vy;                                          \
   }
 
 RVV_INT_TEST(VCLR)

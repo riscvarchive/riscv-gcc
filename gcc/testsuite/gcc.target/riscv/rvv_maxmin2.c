@@ -7,13 +7,13 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VMAXMIN(STYPE, VCLASS, EM, MLEN)                                       \
+#define VMAXMIN(STYPE, VCLASST, VCLASS, EM, MLEN)                                       \
   void vmaxmin##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {            \
-    v##VCLASS##EM##_t vx, vy;                                                \
+    v##VCLASST##EM##_t vx, vy;                                                \
     vbool##MLEN##_t mask;                                                    \
     vx = vload_##VCLASS##EM(x);                                                 \
     vy = vload_##VCLASS##EM(y);                                                 \
-    mask = vset_bool##MLEN ();                                             \
+    mask = vset_b##MLEN ();                                             \
     vy = vmax_vv_##VCLASS##EM##_mask(mask, vy, vx, vy);                     \
     vy = vmax_vs_##VCLASS##EM##_mask(mask, vy, vy, z);                      \
     vy = vmin_vv_##VCLASS##EM##_mask(mask, vy, vx, vy);                     \

@@ -9,9 +9,9 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VMBIN(STYPE, VCLASS, EM, MLEN, OP, OPERATOR)                           \
+#define VMBIN(STYPE, VCLASST, VCLASS, EM, MLEN, OP, OPERATOR)                           \
   void vm##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {            \
-    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
@@ -23,43 +23,43 @@
     vstore_##VCLASS##EM(x, vx);                                                \
   }                                                                            \
   void vm##OP##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {         \
-    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vload_##VCLASS##EM(z);                                               \
     mask1 = vsetlt_vv_##VCLASS##EM(vx, vy);                                   \
     mask2 = vsetlt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
-    mask3 = v##OP##_mm_bool##MLEN(mask1, mask2);                            \
+    mask3 = v##OP##_mm_b##MLEN(mask1, mask2);                            \
     vx = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
     vstore_##VCLASS##EM(x, vx);                                                \
   }
 
-#define VMNBIN(STYPE, VCLASS, EM, MLEN, OP)                                    \
+#define VMNBIN(STYPE, VCLASST, VCLASS, EM, MLEN, OP)                                    \
   void vm##OP##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {         \
-    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vload_##VCLASS##EM(z);                                               \
     mask1 = vsetlt_vv_##VCLASS##EM(vx, vy);                                   \
     mask2 = vsetlt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
-    mask3 = v##OP##_mm_bool##MLEN(mask1, mask2);                            \
+    mask3 = v##OP##_mm_b##MLEN(mask1, mask2);                            \
     vx = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
     vstore_##VCLASS##EM(x, vx);                                                \
   }
 
 
-#define VMNOT(STYPE, VCLASS, EM, MLEN)                                         \
+#define VMNOT(STYPE, VCLASST, VCLASS, EM, MLEN)                                         \
   void vmnot##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {          \
-    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vload_##VCLASS##EM(z);                                               \
     mask1 = vsetlt_vv_##VCLASS##EM(vx, vy);                                   \
     mask2 = vsetlt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
-    mask3 = vnot_m_bool##MLEN(mask2);                                       \
+    mask3 = vnot_m_b##MLEN(mask2);                                       \
     vx = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
     vstore_##VCLASS##EM(x, vx);                                                \
   }

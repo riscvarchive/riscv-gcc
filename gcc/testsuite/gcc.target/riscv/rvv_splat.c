@@ -5,9 +5,9 @@
 #include <stddef.h>
 #include "rvv-common.h"
 
-#define RVV_TEST_SPLAT(STYPE, VCLASS, EM, MLEN)			\
+#define RVV_TEST_SPLAT(STYPE, VCLASST, VCLASS, EM, MLEN)			\
   void test_splat##VCLASS##EM (STYPE *x, STYPE s) {		\
-    v##VCLASS##EM##_t vx;					\
+    v##VCLASST##EM##_t vx;					\
     vx = vsplat_s_##VCLASS##EM(s);				\
     vstore_##VCLASS##EM(x, vx);					\
   }

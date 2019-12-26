@@ -7,7 +7,7 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VSETVLMAX(STYPE, VCLASS, EM, EMONE, MLEN)			\
+#define VSETVLMAX(STYPE, VCLASST, VCLASS, EM, EMONE, MLEN)			\
   size_t vlmax##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
     return vsetvlmax_##EM  ();					\
   }

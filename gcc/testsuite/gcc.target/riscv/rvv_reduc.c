@@ -7,10 +7,10 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
+#define VREDUC(STYPE, VCLASST, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    v##VCLASS##EMONE##_t vx;						\
-    v##VCLASS##EM##_t vy;						\
+    v##VCLASST##EMONE##_t vx;						\
+    v##VCLASST##EM##_t vy;						\
     vx = vload_##VCLASS##EMONE (x);					\
     vy = vload_##VCLASS##EM (y);					\
     vx = vredsum_vs_##VCLASS##EM (vy, vx);				\
@@ -21,10 +21,10 @@
     vx = vredxor_vs_##VCLASS##EM (vy, vx);				\
     vstore_##VCLASS##EMONE (x, vx);					\
   }
-#define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
+#define VREDUCU(STYPE, VCLASST, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    v##VCLASS##EMONE##_t vx;						\
-    v##VCLASS##EM##_t vy;						\
+    v##VCLASST##EMONE##_t vx;						\
+    v##VCLASST##EM##_t vy;						\
     vx = vload_##VCLASS##EMONE (x);					\
     vy = vload_##VCLASS##EM (y);					\
     vx = vredsum_vs_##VCLASS##EM (vy, vx);				\
@@ -36,10 +36,10 @@
     vstore_##VCLASS##EMONE (x, vx);					\
   }
 
-#define VFREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
+#define VFREDUC(STYPE, VCLASST, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    v##VCLASS##EMONE##_t vx;						\
-    v##VCLASS##EM##_t vy;						\
+    v##VCLASST##EMONE##_t vx;						\
+    v##VCLASST##EM##_t vy;						\
     vx = vload_##VCLASS##EMONE (x);					\
     vy = vload_##VCLASS##EM (y);					\
     vx = vredsum_vs_##VCLASS##EM (vy, vx);				\

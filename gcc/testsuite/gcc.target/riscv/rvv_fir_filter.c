@@ -86,7 +86,7 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
       /* Perform the multiply-accumulates */
       // init zero vector
       vfloat32m1_t vsum;
-      vsum = vsplat_s_float32m1(0.0);
+      vsum = vsplat_s_f32m1(0.0);
       size_t nested_vl;
       for(;nested_vl=vsetvl_32m1(i);) {
         vfloat32m1_t *vpx = (vfloat32m1_t *)px;
@@ -94,11 +94,11 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
 
         // acc0 += *px * *pb;
         vfloat32m1_t vacc;
-        vacc = vmul_vv_float32m1(*vpx, *vpb);
-        vsum = vredsum_vs_float32m1(vacc, vsum); // reduction sum
+        vacc = vmul_vv_f32m1(*vpx, *vpb);
+        vsum = vredsum_vs_f32m1(vacc, vsum); // reduction sum
 
         // acc0 = vacc[0];
-        float tmp = vmv_v_float32m1(vsum);
+        float tmp = vmv_v_f32m1(vsum);
         acc0 += tmp;
 
         px += nested_vl;

@@ -5,14 +5,14 @@
 #include <stddef.h>
 #include "rvv-common.h"
 
-#define RVV_TEST_MV_SV_VS(STYPE, VCLASS, EM, MLEN)		\
+#define RVV_TEST_MV_SV_VS(STYPE, VCLASST, VCLASS, EM, MLEN)		\
   STYPE test_mv_xs##VCLASS##EM (STYPE *x) {			\
-    v##VCLASS##EM##_t vx;					\
+    v##VCLASST##EM##_t vx;					\
     vx = vload_##VCLASS##EM(x);				\
     return vmv_v_##VCLASS##EM(vx);				\
   }								\
   void test_mv_sx##VCLASS##EM (STYPE *x, STYPE s) {		\
-    v##VCLASS##EM##_t vx;					\
+    v##VCLASST##EM##_t vx;					\
     vx = vload_##VCLASS##EM(x);				\
     vx = vmv_s_##VCLASS##EM(vx, s);				\
     vstore_##VCLASS##EM(x, vx);					\

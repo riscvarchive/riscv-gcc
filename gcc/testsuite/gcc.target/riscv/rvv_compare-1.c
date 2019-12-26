@@ -7,9 +7,9 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VCOMPARE_VV(STYPE, VCLASS, EM, MLEN, OP)                               \
+#define VCOMPARE_VV(STYPE, VCLASST, VCLASS, EM, MLEN, OP)                               \
   void v##OP##VCLASS##EM##_vv(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
-    v##VCLASS##EM##_t vx, vy;                                               \
+    v##VCLASST##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
@@ -18,9 +18,9 @@
     vstore_##VCLASS##EM(x, vx);                                                \
   }
 
-#define VCOMPARE_VX(STYPE, VCLASS, EM, MLEN, OP)                               \
+#define VCOMPARE_VX(STYPE, VCLASST, VCLASS, EM, MLEN, OP)                               \
   void v##OP##VCLASS##EM##_vx(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
-    v##VCLASS##EM##_t vx, vy;                                               \
+    v##VCLASST##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
@@ -29,9 +29,9 @@
     vstore_##VCLASS##EM(x, vx);                                                \
   }
 
-#define VCOMPARE_VI(STYPE, VCLASS, EM, MLEN, OP)                               \
+#define VCOMPARE_VI(STYPE, VCLASST, VCLASS, EM, MLEN, OP)                               \
   void v##OP##VCLASS##EM##_vi(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
-    v##VCLASS##EM##_t vx, vy;                                               \
+    v##VCLASST##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
@@ -40,17 +40,17 @@
     vstore_##VCLASS##EM(x, vx);                                                \
   }
 
-#define TEST_COMPARE_VV_VX(STYPE, VCLASS, EM, MLEN, OP)		\
-  VCOMPARE_VV (STYPE, VCLASS, EM, MLEN, OP)			\
-  VCOMPARE_VX (STYPE, VCLASS, EM, MLEN, OP)
+#define TEST_COMPARE_VV_VX(STYPE, VCLASST, VCLASS, EM, MLEN, OP)		\
+  VCOMPARE_VV (STYPE, VCLASST, VCLASS, EM, MLEN, OP)			\
+  VCOMPARE_VX (STYPE, VCLASST, VCLASS, EM, MLEN, OP)
 
-#define TEST_COMPARE_VX_VI(STYPE, VCLASS, EM, MLEN, OP)		\
-  VCOMPARE_VX (STYPE, VCLASS, EM, MLEN, OP)			\
-  VCOMPARE_VI (STYPE, VCLASS, EM, MLEN, OP)
+#define TEST_COMPARE_VX_VI(STYPE, VCLASST, VCLASS, EM, MLEN, OP)		\
+  VCOMPARE_VX (STYPE, VCLASST, VCLASS, EM, MLEN, OP)			\
+  VCOMPARE_VI (STYPE, VCLASST, VCLASS, EM, MLEN, OP)
 
-#define TEST_COMPARE_VV_VX_VI(STYPE, VCLASS, EM, MLEN, OP)	\
-  TEST_COMPARE_VV_VX(STYPE, VCLASS, EM, MLEN, OP)		\
-  VCOMPARE_VI (STYPE, VCLASS, EM, MLEN, OP)
+#define TEST_COMPARE_VV_VX_VI(STYPE, VCLASST, VCLASS, EM, MLEN, OP)	\
+  TEST_COMPARE_VV_VX(STYPE, VCLASST, VCLASS, EM, MLEN, OP)		\
+  VCOMPARE_VI (STYPE, VCLASST, VCLASS, EM, MLEN, OP)
 
 RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, eq)
 RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, eq)

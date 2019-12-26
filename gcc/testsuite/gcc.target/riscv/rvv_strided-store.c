@@ -7,10 +7,10 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VSLOADSTORE(STYPE, VCLASS, EM, MLEN)                                   \
+#define VSLOADSTORE(STYPE, VCLASST, VCLASS, EM, MLEN)                                   \
   void vsloadstore##VCLASS##EM(size_t n, long stride, STYPE *x,                \
                                STYPE *y, STYPE z) {                            \
-    v##VCLASS##EM##_t vx, vy, vz;                                            \
+    v##VCLASST##EM##_t vx, vy, vz;                                            \
     vbool##MLEN##_t mask;                                                    \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
@@ -23,15 +23,15 @@
                                NSTYPE *y, STYPE z) {                      \
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
-    vx = vload_int##EM(x);                                               \
-    vstores##NTYPE_LETTER##_int##EM(y, stride, vx);                        \
+    vx = vload_i##EM(x);                                               \
+    vstores##NTYPE_LETTER##_i##EM(y, stride, vx);                        \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z) {                  \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
-    vx = vload_uint##EM(x);                                              \
-    vstores##NTYPE_LETTER##_uint##EM(y, stride, vx);                       \
+    vx = vload_u##EM(x);                                              \
+    vstores##NTYPE_LETTER##_u##EM(y, stride, vx);                       \
   }
 
 

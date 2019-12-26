@@ -7,10 +7,10 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VSLOADSTORE(STYPE, VCLASS, EM, MLEN)                                   \
+#define VSLOADSTORE(STYPE, VCLASST, VCLASS, EM, MLEN)                                   \
   void vsloadstore##VCLASS##EM(size_t n, long stride, STYPE *x,                \
                                STYPE *y, STYPE z) {                            \
-    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vloadff_##VCLASS##EM(y);                                             \
@@ -23,15 +23,15 @@
                                NSTYPE *y, STYPE z) {                      \
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
-    vx = vload##NTYPE_LETTER##ff_int##EM(y);                              \
-    vstore_int##EM(x, vx);                                                \
+    vx = vload##NTYPE_LETTER##ff_i##EM(y);                              \
+    vstore_i##EM(x, vx);                                                \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z) {                  \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
-    vx = vload##NTYPE_LETTER##ff_uint##EM(y);                             \
-    vstore_uint##EM(x, vx);                                               \
+    vx = vload##NTYPE_LETTER##ff_u##EM(y);                             \
+    vstore_u##EM(x, vx);                                               \
   }
 
 

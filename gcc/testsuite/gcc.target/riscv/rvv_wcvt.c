@@ -11,18 +11,18 @@
   {									\
     vint##EM##_t vx;							\
     vint##WEM##_t vy;						\
-    vx = vload_int##EM(x);						\
-    vy = vcvt_i##SEW##toi##WSEW##_v_##EM (vx);			\
-    vstore_int##WEM(y, vy);						\
+    vx = vload_i##EM(x);						\
+    vy = vcvt_i##WSEW##_i##SEW##_v_##EM (vx);			\
+    vstore_i##WEM(y, vy);						\
   }									\
   void rvvcvtuif##SEW##int##EM##_v_nomask_builtin_test(size_t n, uint##WSEW##_t *x,\
 						  uint##SEW##_t *y, uint##WSEW##_t z)	\
   {									\
     vuint##WEM##_t vx;						\
     vuint##EM##_t vy;						\
-    vy = vload_uint##EM(y);						\
-    vx = vcvt_ui##SEW##toui##WSEW##_v_##EM (vy);			\
-    vstore_uint##WEM(x, vx);						\
+    vy = vload_u##EM(y);						\
+    vx = vcvt_u##WSEW##_u##SEW##_v_##EM (vy);			\
+    vstore_u##WEM(x, vx);						\
   }
 
 RVV_INT_WNCVT_INT_TEST(RVV_WFCVT_TEST)

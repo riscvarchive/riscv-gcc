@@ -7,74 +7,74 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VWADDSUB(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                     \
+#define VWADDSUB(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                     \
   void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {            \
-    v##VCLASS##EM##_t vx, vy;                                               \
-    v##VCLASS##WEM##_t vz;                                                  \
+    v##VCLASST##EM##_t vx, vy;                                               \
+    v##VCLASST##WEM##_t vz;                                                  \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vw##OP##_vv_##VCLASS##EM (vx, vy);                                 \
     vstore_##VCLASS##WEM(z, vz);                                               \
   }                                                                            \
   void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {         \
-    v##VCLASS##EM##_t vx, vy;                                               \
-    v##VCLASS##WEM##_t vz;                                                  \
+    v##VCLASST##EM##_t vx, vy;                                               \
+    v##VCLASST##WEM##_t vz;                                                  \
     vx = vload_##VCLASS##EM(x);                                               \
     vz = vw##OP##_vs_##VCLASS##EM (vx, y);                                  \
     vstore_##VCLASS##WEM(z, vz);                                               \
   }
 
-#define VWADDSUBU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                    \
-  void v##OP##u##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {         \
-    v##VCLASS##EM##_t vx, vy;                                              \
-    v##VCLASS##WEM##_t vz;                                                 \
+#define VWADDSUBU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                    \
+  void v##OP##u##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {         \
+    v##VCLASST##EM##_t vx, vy;                                              \
+    v##VCLASST##WEM##_t vz;                                                 \
     vx = vload_##VCLASS##EM(x);                                              \
     vy = vload_##VCLASS##EM(y);                                              \
     vz = vw##OP##_vv_##VCLASS##EM (vx, vy);                                \
     vstore_##VCLASS##WEM(z, vz);                                              \
   }                                                                            \
-  void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
-    v##VCLASS##EM##_t vx, vy;                                              \
-    v##VCLASS##WEM##_t vz;                                                 \
+  void v##OP##u##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
+    v##VCLASST##EM##_t vx, vy;                                              \
+    v##VCLASST##WEM##_t vz;                                                 \
     vx = vload_##VCLASS##EM(x);                                              \
     vz = vw##OP##_vs_##VCLASS##EM (vx, y);                                \
     vstore_##VCLASS##WEM(z, vz);                                              \
   }
 
-#define VWMULSU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                      \
+#define VWMULSU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                      \
   void v##OP##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z) {         \
-    v##VCLASS##EM##_t vx;                                                   \
-    vu##VCLASS##EM##_t vy;                                                  \
-    v##VCLASS##WEM##_t vz;                                                  \
+    v##VCLASST##EM##_t vx;                                                   \
+    vuint##EM##_t vy;                                                  \
+    v##VCLASST##WEM##_t vz;                                                  \
     vx = vload_##VCLASS##EM(x);                                               \
-    vy = vload_u##VCLASS##EM(y);                                              \
+    vy = vload_u##EM(y);                                              \
     vz = vw##OP##_vv_##VCLASS##EM (vx, vy);                                 \
     vstore_##VCLASS##WEM(z, vz);                                               \
   }                                                                            \
   void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z) {      \
-    v##VCLASS##EM##_t vx;                                                   \
-    vu##VCLASS##EM##_t vy;                                                  \
-    v##VCLASS##WEM##_t vz;                                                  \
+    v##VCLASST##EM##_t vx;                                                   \
+    vuint##EM##_t vy;                                                  \
+    v##VCLASST##WEM##_t vz;                                                  \
     vx = vload_##VCLASS##EM(x);                                               \
     vz = vw##OP##_vs_##VCLASS##EM (vx, y);                                  \
     vstore_##VCLASS##WEM(z, vz);                                               \
   }                                                                            \
-  void v##OP##u##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z) {      \
-    v##VCLASS##EM##_t vx;                                                   \
-    vu##VCLASS##EM##_t vy;                                                  \
-    vu##VCLASS##WEM##_t vz;                                                 \
+  void v##OP##u##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z) {      \
+    v##VCLASST##EM##_t vx;                                                   \
+    vuint##EM##_t vy;                                                  \
+    vuint##WEM##_t vz;                                                 \
     vx = vload_##VCLASS##EM(x);                                               \
-    vy = vload_u##VCLASS##EM(y);                                              \
-    vz = vw##OP##_vv_u##VCLASS##EM (vx, vy);                                \
-    vstore_u##VCLASS##WEM(z, vz);                                              \
+    vy = vload_u##EM(y);                                              \
+    vz = vw##OP##_vv_u##EM (vx, vy);                                \
+    vstore_u##WEM(z, vz);                                              \
   }                                                                            \
-  void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z) {   \
-    v##VCLASS##EM##_t vx;                                                   \
-    vu##VCLASS##EM##_t vy;                                                  \
-    vu##VCLASS##WEM##_t vz;                                                 \
+  void v##OP##u##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z) {   \
+    v##VCLASST##EM##_t vx;                                                   \
+    vuint##EM##_t vy;                                                  \
+    vuint##WEM##_t vz;                                                 \
     vx = vload_##VCLASS##EM(x);                                               \
-    vz = vw##OP##_vs_u##VCLASS##EM (vx, y);                                 \
-    vstore_u##VCLASS##WEM(z, vz);                                              \
+    vz = vw##OP##_vs_u##EM (vx, y);                                 \
+    vstore_u##WEM(z, vz);                                              \
   }
 
 RVV_WINT_TEST_ARG(VWADDSUB, add)

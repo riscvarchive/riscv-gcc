@@ -11,54 +11,54 @@
   {									\
     vfloat##WEM##_t vx;						\
     vint##EM##_t vy;							\
-    vx = vload_float##WEM(x);						\
-    vy = vcvt_f##WSEW##toi##SEW##_v_##WEM (vx);			\
-    vstore_int##EM(y, vy);						\
+    vx = vload_f##WEM(x);						\
+    vy = vcvt_i##SEW##_f##WSEW##_v_##WEM (vx);			\
+    vstore_i##EM(y, vy);						\
   }									\
   void rvvcvtfui##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
 						u##int##SEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##WEM##_t vx;						\
     vuint##EM##_t vy;						\
-    vx = vload_float##WEM(x);					\
-    vy = vcvt_f##WSEW##toui##SEW##_v_##WEM (vx);			\
-    vstore_uint##EM(y, vy);					\
+    vx = vload_f##WEM(x);					\
+    vy = vcvt_u##SEW##_f##WSEW##_v_##WEM (vx);			\
+    vstore_u##EM(y, vy);					\
   }									\
   void rvvcvtif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
 					       int##WSEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##EM##_t vx;						\
     vint##WEM##_t vy;						\
-    vy = vload_int##WEM(y);					\
-    vx = vcvt_i##WSEW##tof##SEW##_v_##WEM (vy);			\
-    vstore_float##EM(x, vx);						\
+    vy = vload_i##WEM(y);					\
+    vx = vcvt_f##SEW##_i##WSEW##_v_##WEM (vy);			\
+    vstore_f##EM(x, vx);						\
   }									\
   void rvvcvtuif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
 						u##int##WSEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##EM##_t vx;						\
     vuint##WEM##_t vy;						\
-    vy = vload_uint##WEM(y);						\
-    vx = vcvt_ui##WSEW##tof##SEW##_v_##WEM (vy);			\
-    vstore_float##EM(x, vx);						\
+    vy = vload_u##WEM(y);						\
+    vx = vcvt_f##SEW##_u##WSEW##_v_##WEM (vy);			\
+    vstore_f##EM(x, vx);						\
   }\
   void rvvcvtff##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
 						_RVV_F##WSEW##_TYPE *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##EM##_t vx;						\
     vfloat##WEM##_t vy;						\
-    vy = vload_float##WEM(y);						\
-    vx = vcvt_f##WSEW##tof##SEW##_v_##WEM (vy);			\
-    vstore_float##EM(x, vx);						\
+    vy = vload_f##WEM(y);						\
+    vx = vcvt_f##SEW##_f##WSEW##_v_##WEM (vy);			\
+    vstore_f##EM(x, vx);						\
   }									\
   void rvvcvtrff##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
 						_RVV_F##WSEW##_TYPE *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##EM##_t vx;						\
     vfloat##WEM##_t vy;						\
-    vy = vload_float##WEM(y);						\
-    vx = vcvt_rod_f##WSEW##tof##SEW##_v_##WEM (vy);			\
-    vstore_float##EM(x, vx);						\
+    vy = vload_f##WEM(y);						\
+    vx = vcvt_rod_f##SEW##_f##WSEW##_v_##WEM (vy);			\
+    vstore_f##EM(x, vx);						\
   }
 
 

@@ -41,11 +41,11 @@ size_t strlen(const char *str) {
   while (first_set < 0) {
     vsetvlmax_8m1(); // setvm max
     vint8m1_t value;
-    value = vloadff_int8m1(str);
+    value = vloadff_i8m1(str);
     size_t vl = vreadvl();
     vbool8_t cmp;
-    cmp = vseteq_vs_int8m1(value, 0);
-    first_set = vfirst_m_bool8(cmp); /* reutrn -1 mean not found */
+    cmp = vseteq_vs_i8m1(value, 0);
+    first_set = vfirst_m_b8(cmp); /* reutrn -1 mean not found */
     str += vl;
   }
   return str - start;

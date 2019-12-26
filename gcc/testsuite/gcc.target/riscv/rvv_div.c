@@ -7,9 +7,9 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VDIV(STYPE, VCLASS, EM, MLEN)                                          \
+#define VDIV(STYPE, VCLASST, VCLASS, EM, MLEN)                                          \
   void vdiv##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    v##VCLASS##EM##_t vx, vy;                                                \
+    v##VCLASST##EM##_t vx, vy;                                                \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
     vy = vx / vy;                                                              \

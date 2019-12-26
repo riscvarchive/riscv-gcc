@@ -26,9 +26,9 @@ void foo4(int n, double *a, double *b, double *c, double *d, double *e) {
     // vec_a = vec_a + ((vec_b + vec_c) / 2) +
     //        (((vec_d + vec_e) / 2) + ((vec_b - vec_e) / 2));
     vec_a = *(vfloat64m8_t *)a +
-            vdiv_vs_float64m8(*(vfloat64m8_t *)b + *(vfloat64m8_t *)c, 2) +
-            vdiv_vs_float64m8(*(vfloat64m8_t *)d + *(vfloat64m8_t *)e, 2) +
-            vdiv_vs_float64m8(*(vfloat64m8_t *)b - *(vfloat64m8_t *)e, 2);
+            vdiv_vs_f64m8(*(vfloat64m8_t *)b + *(vfloat64m8_t *)c, 2) +
+            vdiv_vs_f64m8(*(vfloat64m8_t *)d + *(vfloat64m8_t *)e, 2) +
+            vdiv_vs_f64m8(*(vfloat64m8_t *)b - *(vfloat64m8_t *)e, 2);
     *(vfloat64m8_t *)a = vec_a;
     a += vl;
     b += vl;

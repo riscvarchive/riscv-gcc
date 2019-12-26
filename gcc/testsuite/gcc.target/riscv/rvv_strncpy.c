@@ -50,14 +50,14 @@ char *strncpy(char *dst, const char *src, size_t n) {
   while (zero_find < 0) {
     vsetvlmax_8m1();
     vuint8m1_t value;
-    value = vloadff_uint8m1(src);
+    value = vloadff_u8m1(src);
     size_t vl = vreadvl();
     vbool8_t cmp;
-    cmp = vseteq_vs_uint8m1(value, 0);
-    zero_find = vfirst_m_bool8(cmp); // if no zero than return -1
+    cmp = vseteq_vs_u8m1(value, 0);
+    zero_find = vfirst_m_b8(cmp); // if no zero than return -1
     vbool8_t mask;
-    mask = vsif_m_bool8(cmp); // set mask up to and including zero byte
-    vstore_uint8m1_mask(dst, mask, value);
+    mask = vsif_m_b8(cmp); // set mask up to and including zero byte
+    vstore_u8m1_mask(dst, mask, value);
     n -= vl;
     src += vl;
     dst += vl;
@@ -65,7 +65,7 @@ char *strncpy(char *dst, const char *src, size_t n) {
   // handle zero tail
   vsetvlmax_8m1();
   vuint8m8_t zeros;
-  zeros = vsplat_s_uint8m8(0);
+  zeros = vsplat_s_u8m8(0);
   for (; vl = vsetvl_8m8(n);) {
     *(vuint8m8_t *)dst = zeros;
     n -= vl;

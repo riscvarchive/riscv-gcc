@@ -7,9 +7,9 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VMACC(STYPE, VCLASS, EM, MLEN)                                         \
+#define VMACC(STYPE, VCLASST, VCLASS, EM, MLEN)                                         \
   void vmacc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {             \
-    v##VCLASS##EM##_t vx, vy, vz;                                            \
+    v##VCLASST##EM##_t vx, vy, vz;                                            \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vload_##VCLASS##EM(z);                                               \
@@ -17,9 +17,9 @@
     vstore_##VCLASS##EM(z, vz);                                                  \
   }
 
-#define VMACC_IMM(STYPE, VCLASS, EM, MLEN)                                     \
+#define VMACC_IMM(STYPE, VCLASST, VCLASS, EM, MLEN)                                     \
   void vmacc##VCLASS##EM##_imm(size_t n, STYPE x, STYPE *y, STYPE *z) {        \
-    v##VCLASS##EM##_t vx, vy, vz;                                            \
+    v##VCLASST##EM##_t vx, vy, vz;                                            \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vload_##VCLASS##EM(z);                                               \
     vz = x * vy + vz;                                                          \

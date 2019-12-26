@@ -7,20 +7,20 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VMMISC(STYPE, VCLASS, EM, MLEN, OP)                                    \
+#define VMMISC(STYPE, VCLASST, VCLASS, EM, MLEN, OP)                                    \
   void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {                       \
-    v##VCLASS##EM##_t vx, vy;                                               \
+    v##VCLASST##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask1, mask2;                                           \
     vbool##MLEN##_t rv;                                                     \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
     mask1 = vsetlt_vv_##VCLASS##EM(vx, vy);                                   \
-    mask2 = v##OP##_m_bool##MLEN(mask1);                                    \
+    mask2 = v##OP##_m_b##MLEN(mask1);                                    \
     vy = vadd_vv_##VCLASS##EM##_mask (mask2, vy, vx, vy);                   \
-    * (v##VCLASS##EM##_t *) y = vy;                                         \
+    * (v##VCLASST##EM##_t *) y = vy;                                         \
   }                                                                            \
   void v##OP##VCLASS##EM##_mask(size_t n, STYPE *x, STYPE *y, STYPE *z) {      \
-    v##VCLASS##EM##_t vx, vy, vz;                                           \
+    v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
     long rv;                                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
@@ -29,9 +29,9 @@
     mask1 = vsetlt_vv_##VCLASS##EM(vx, vy);                                   \
     mask2 = vsetlt_vv_##VCLASS##EM(vx, vz);                                   \
     mask3 = vsetlt_vv_##VCLASS##EM(vy, vz);                                   \
-    mask3 = v##OP##_m_bool##MLEN##_mask(mask1, mask2, mask3);               \
+    mask3 = v##OP##_m_b##MLEN##_mask(mask1, mask2, mask3);               \
     vy = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
-    * (v##VCLASS##EM##_t *) y = vy;                                         \
+    * (v##VCLASST##EM##_t *) y = vy;                                         \
   }                                                                            \
 
 RVV_INT_TEST_ARG(VMMISC, sbf)

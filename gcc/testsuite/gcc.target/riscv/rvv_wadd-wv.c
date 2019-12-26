@@ -7,21 +7,21 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VWADD(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                            \
+#define VWADD(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM)                            \
   void vwadd##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z) {           \
-    v##VCLASS##EM##_t vy;                                                   \
-    v##VCLASS##WEM##_t vx, vz;                                              \
+    v##VCLASST##EM##_t vy;                                                   \
+    v##VCLASST##WEM##_t vx, vz;                                              \
     vx = vload_##VCLASS##WEM(x);                                              \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vwadd_wv_##VCLASS##EM (vx, vy);                                    \
     vstore_##VCLASS##WEM(z, vz);                                               \
   }
 
-#define VWADDU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                           \
-  void vwaddu##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y,                       \
+#define VWADDU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM)                           \
+  void vwaddu##EM(size_t n, WSTYPE *x, STYPE *y,                       \
                           WSTYPE *z) {                                         \
-    v##VCLASS##EM##_t vy;                                                   \
-    v##VCLASS##WEM##_t vx, vz;                                              \
+    v##VCLASST##EM##_t vy;                                                   \
+    v##VCLASST##WEM##_t vx, vz;                                              \
     vx = vload_##VCLASS##WEM(x);                                              \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vwadd_wv_##VCLASS##EM (vx, vy);                                    \

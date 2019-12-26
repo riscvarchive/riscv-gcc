@@ -5,53 +5,53 @@
 #include <stddef.h>
 #include "rvv-common.h"
 
-#define RVV_FCVT_TEST(STYPE, VCLASS, EM, MLEN, ISTYPE, IVCLASS, SEW)	\
+#define RVV_FCVT_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, ISTYPE, IVCLASST, IVCLASS, SEW)	\
   void rvvcvtfi##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       ISTYPE *y, STYPE z)	\
   {									\
-    v##VCLASS##EM##_t vx;						\
-    v##IVCLASS##EM##_t vy;						\
+    v##VCLASST##EM##_t vx;						\
+    v##IVCLASST##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
-    mask = vset_bool##MLEN ();					\
+    mask = vset_b##MLEN ();					\
     vx = vload_##VCLASS##EM(x);					\
     vy = vload_##IVCLASS##EM(y);					\
-    vy = vcvt_f##SEW##toi##SEW##_v_##EM##_mask (mask, vy, vx);	\
+    vy = vcvt_i##SEW##_f##SEW##_v_##EM##_mask (mask, vy, vx);	\
     vstore_##IVCLASS##EM(y, vy);					\
   }									\
   void rvvcvtfui##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 						u##ISTYPE *y, STYPE z)	\
   {									\
-    v##VCLASS##EM##_t vx;						\
-    vu##IVCLASS##EM##_t vy;						\
+    v##VCLASST##EM##_t vx;						\
+    vuint##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
-    mask = vset_bool##MLEN ();					\
+    mask = vset_b##MLEN ();					\
     vx = vload_##VCLASS##EM(x);					\
-    vy = vload_u##IVCLASS##EM(y);					\
-    vy = vcvt_f##SEW##toui##SEW##_v_##EM##_mask (mask, vy, vx);	\
-    vstore_u##IVCLASS##EM(y, vy);					\
+    vy = vload_u##EM(y);					\
+    vy = vcvt_u##SEW##_f##SEW##_v_##EM##_mask (mask, vy, vx);	\
+    vstore_u##EM(y, vy);					\
   }									\
   void rvvcvtif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       ISTYPE *y, STYPE z)	\
   {									\
-    v##VCLASS##EM##_t vx;						\
-    v##IVCLASS##EM##_t vy;						\
+    v##VCLASST##EM##_t vx;						\
+    v##IVCLASST##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
-    mask = vset_bool##MLEN ();					\
+    mask = vset_b##MLEN ();					\
     vx = vload_##VCLASS##EM(x);					\
     vy = vload_##IVCLASS##EM(y);					\
-    vx = vcvt_i##SEW##tof##SEW##_v_##EM##_mask (mask, vx, vy);	\
+    vx = vcvt_f##SEW##_i##SEW##_v_##EM##_mask (mask, vx, vy);	\
     vstore_##VCLASS##EM(x, vx);						\
   }									\
   void rvvcvtuif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 						u##ISTYPE *y, STYPE z)	\
   {									\
-    v##VCLASS##EM##_t vx;						\
-    vu##IVCLASS##EM##_t vy;						\
+    v##VCLASST##EM##_t vx;						\
+    vuint##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
-    mask = vset_bool##MLEN ();					\
+    mask = vset_b##MLEN ();					\
     vx = vload_##VCLASS##EM(x);					\
-    vy = vload_u##IVCLASS##EM(y);					\
-    vx = vcvt_ui##SEW##tof##SEW##_v_##EM##_mask (mask, vx, vy);	\
+    vy = vload_u##EM(y);					\
+    vx = vcvt_f##SEW##_u##SEW##_v_##EM##_mask (mask, vx, vy);	\
     vstore_##VCLASS##EM(x, vx);						\
   }									\
 

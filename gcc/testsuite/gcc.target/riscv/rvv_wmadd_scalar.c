@@ -11,11 +11,11 @@ void wsaxpy(size_t n, const float16_t a, const float16_t *x, float *y) {
   vfloat32m8_t vy;
 
   for (; (l = vsetvl_16m4(n)) > 0; n -= l) {
-    vx = vload_float16m4(x); /* setvl x0, x0, e16, m4; vlde.v vx, (xx) */
+    vx = vload_f16m4(x); /* setvl x0, x0, e16, m4; vlde.v vx, (xx) */
     x += l;
-    vy = vload_float32m8(y); /* setvl x0, x0, e32, m8; vlde.v vy, (xy) */
-    vy = vwmadd_vs_float16m4(vx, a, vy);
-    vstore_float32m8(y, vy); /* setvl x0, x0, e32, m8; vste.v vy, (xy) */
+    vy = vload_f32m8(y); /* setvl x0, x0, e32, m8; vlde.v vy, (xy) */
+    vy = vwmadd_vs_f16m4(vx, a, vy);
+    vstore_f32m8(y, vy); /* setvl x0, x0, e32, m8; vste.v vy, (xy) */
     y += l;
   }
 }

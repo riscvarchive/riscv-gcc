@@ -29,7 +29,7 @@ void foo3() {
     for (int j = 0; j < N; ++j) {
       k = N;
       vsetvlmax_64m1();
-      vec_c = vsplat_s_float64m1(0.0); /* splat scalr to vec_c */
+      vec_c = vsplat_s_f64m1(0.0); /* splat scalr to vec_c */
       for (; vl = vsetvl_64m1(k);) {
         vec_a = *(vfloat64m1_t *)&A[i][N - k];
         vec_b = *(vfloat64m1_t *)&B[N - k][j];
@@ -38,10 +38,10 @@ void foo3() {
       }
       vsetvlmax_64m1();
       vec_sum =
-          vmv_s_float64m1(vec_sum, 0.0); /* move scalar to vec_sum[0] */
-      vec_sum = vredsum_vs_float64m1(
+          vmv_s_f64m1(vec_sum, 0.0); /* move scalar to vec_sum[0] */
+      vec_sum = vredsum_vs_f64m1(
           vec_c, vec_sum); /* vd[0] =  sum( vec_sum[0] , vec_c[*] ) */
-      C[i][j] = vmv_v_float64m1(vec_sum); /* rd = vec_sum[0] */
+      C[i][j] = vmv_v_f64m1(vec_sum); /* rd = vec_sum[0] */
     }
   }
 }

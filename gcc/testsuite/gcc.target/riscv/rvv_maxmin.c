@@ -7,9 +7,9 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VMAXMIN(STYPE, VCLASS, EM, MLEN)                                       \
+#define VMAXMIN(STYPE, VCLASST, VCLASS, EM, MLEN)                                       \
   void vmaxmin##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {            \
-    v##VCLASS##EM##_t vx, vy;                                                \
+    v##VCLASST##EM##_t vx, vy;                                                \
     vx = vload_##VCLASS##EM(x);                                                 \
     vy = vload_##VCLASS##EM(y);                                                 \
     vy = vmax_vv_##VCLASS##EM (vx, vy);                                     \

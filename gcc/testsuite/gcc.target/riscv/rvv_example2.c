@@ -31,14 +31,14 @@ int foo_rvv(double *x, double *y, int n) {
   vsetvlmax_64m1();
   vfloat64m1_t vec_t, vec_zero, vec_x, vec_y;
   vbool64_t mask;
-  vec_t = vsplat_s_float64m1(0.0f);
-  vec_zero = vsplat_s_float64m1(0.0f);
+  vec_t = vsplat_s_f64m1(0.0f);
+  vec_zero = vsplat_s_f64m1(0.0f);
   for (;vl=vsetvl_64m1(n);) {
-     vec_x = vload_float64m1(x);
-     mask = vsetne_vs_float64m1(vec_x, 0.0f);
-     vec_y = vload_float64m1_mask(mask, vec_zero /*maskoffed*/, y);
-     vec_t = vmacc_vv_float64m1_mask(mask, vec_x, vec_y, vec_t);
-     count = count + vpopc_m_bool64(mask);
+     vec_x = vload_f64m1(x);
+     mask = vsetne_vs_f64m1(vec_x, 0.0f);
+     vec_y = vload_f64m1_mask(mask, vec_zero /*maskoffed*/, y);
+     vec_t = vmacc_vv_f64m1_mask(mask, vec_x, vec_y, vec_t);
+     count = count + vpopc_m_b64(mask);
      n-=vl;
      x+=vl;
      y+=vl;
@@ -46,9 +46,9 @@ int foo_rvv(double *x, double *y, int n) {
   /* set vlmax */
   vsetvlmax_64m1();
   vfloat64m1_t vec_sum;
-  vec_sum = vmv_s_float64m1(vec_sum, 0.0f); /* move scalar to vec_sum[0] */
-  vec_sum = vredsum_vs_float64m1(vec_t, vec_sum);  /* vec_sum[0] = sum(vec_sum[0] , vec_t[*] ) */
-  double t = vmv_v_float64m1(vec_sum);  /*rd = vs2[0]*/
+  vec_sum = vmv_s_f64m1(vec_sum, 0.0f); /* move scalar to vec_sum[0] */
+  vec_sum = vredsum_vs_f64m1(vec_t, vec_sum);  /* vec_sum[0] = sum(vec_sum[0] , vec_t[*] ) */
+  double t = vmv_v_f64m1(vec_sum);  /*rd = vs2[0]*/
   printf("sum=%lf\n", t);
   return count;
 }

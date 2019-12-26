@@ -61,8 +61,8 @@ size_t compact_non_zero(size_t n, const int32_t* in, const int32_t* out) {
     vint32m8_t value;
     value = *(vint32m8_t*) in;
     vbool4_t non_zeros_mask;
-    non_zeros_mask = vsetne_vs_int32m8(value, 0);
-    int32_t non_zeros_count = vpopc_m_bool4(non_zeros_mask);
+    non_zeros_mask = vsetne_vs_i32m8(value, 0);
+    int32_t non_zeros_count = vpopc_m_b4(non_zeros_mask);
     count += non_zeros_count;
     vuint32m8_t offset;
     offset = viota_m_32m8(non_zeros_mask);
@@ -70,8 +70,8 @@ size_t compact_non_zero(size_t n, const int32_t* in, const int32_t* out) {
     // mask is           1,1,0,1
     // offset is         2,1,1,0
     // active offset is  ^ ^   ^
-    offset = vsll_vs_uint32m8_mask(non_zeros_mask, offset, offset, 2); // Multiply offsets by four bytes
-    vstoreux_int32m8_mask(out, offset, non_zeros_mask, value);
+    offset = vsll_vs_u32m8_mask(non_zeros_mask, offset, offset, 2); // Multiply offsets by four bytes
+    vstoreux_i32m8_mask(out, offset, non_zeros_mask, value);
     n-=vl;
     in+=vl;
     out+=non_zeros_count;

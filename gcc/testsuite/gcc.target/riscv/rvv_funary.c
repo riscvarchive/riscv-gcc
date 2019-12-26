@@ -5,15 +5,15 @@
 #include <stddef.h>
 #include "rvv-common.h"
 
-#define RVV_FCLASS_TEST(STYPE, VCLASS, EM, MLEN, ISTYPE, IVCLASS,  OP)	\
+#define RVV_FCLASS_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, ISTYPE, IVCLASS, OP)	\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,	\
 					       u##ISTYPE *y, STYPE z)	\
   {									\
-    v##VCLASS##EM##_t vx;						\
-    vu##IVCLASS##EM##_t vy;						\
+    v##VCLASST##EM##_t vx;						\
+    vuint##EM##_t vy;						\
     vx = vload_##VCLASS##EM(x);					\
     vy = v##OP##_v_##VCLASS##EM (vx);				\
-    vstore_u##IVCLASS##EM(y, vy);					\
+    vstore_u##EM(y, vy);					\
   }
 
 RVV_FLOAT_INT_TEST_ARG(RVV_FCLASS_TEST, class)

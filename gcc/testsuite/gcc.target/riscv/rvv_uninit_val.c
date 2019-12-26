@@ -10,8 +10,8 @@ void uninit(int8_t *x, int16_t *z, size_t n) {
   vint16m1_t v0, v1, v2;
   vbool16_t mask;
   for (; vl = vsetvl_16m1(n);) {
-    v0 = vloadb_int16m1(x);
-    v1 = vadd_vv_int16m1 (v0, v2);
+    v0 = vloadb_i16m1(x);
+    v1 = vadd_vv_i16m1 (v0, v2);
     *(vint16m1_t *)z = v1;
     z += vl;
     x += vl;

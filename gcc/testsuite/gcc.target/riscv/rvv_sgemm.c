@@ -47,7 +47,7 @@ void segmm_nn(size_t size_n, size_t size_m, size_t size_k,
       const double *bkp = bnp;
       vec_c = *(vfloat64m1_t *)cnp;
       for (k = 0; k < size_k; ++k) {
-        vec_c = vmacc_sv_float64m1(vec_c, *akp, *(vfloat64m1_t *)bkp);
+        vec_c = vmacc_sv_f64m1(vec_c, *akp, *(vfloat64m1_t *)bkp);
         bkp += ldb;
         akp++;
       }

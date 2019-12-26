@@ -34,10 +34,10 @@ void foo(int16_t *a1, int32_t *a2, int32_t x10, int n) {
   size_t vl;
   for (; vl = vsetvl_32m8(n);) {
     vint32m8_t v8;
-    v8 = vloadh_int32m8(a1);
+    v8 = vloadh_i32m8(a1);
     v8 = v8 * x10;
-    v8 = vsra_vs_int32m8(v8, 3);
-    vstore_int32m8(a2, v8);
+    v8 = vsra_vs_i32m8(v8, 3);
+    vstore_i32m8(a2, v8);
     a1 += vl;
     a2 += vl;
     n -= vl;

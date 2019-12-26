@@ -7,9 +7,9 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VCOMPARE_VV(STYPE, VCLASS, EM, MLEN, OP)                               \
+#define VCOMPARE_VV(STYPE, VCLASST, VCLASS, EM, MLEN, OP)                               \
   void v##OP##VCLASS##EM##_vv(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
-    v##VCLASS##EM##_t vx, vy;                                               \
+    v##VCLASST##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
@@ -18,9 +18,9 @@
     vstore_##VCLASS##EM(x, vx);                                                \
   }
 
-#define VCOMPARE_VF(STYPE, VCLASS, EM, MLEN, OP)                               \
+#define VCOMPARE_VF(STYPE, VCLASST, VCLASS, EM, MLEN, OP)                               \
   void v##OP##VCLASS##EM##_vx(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
-    v##VCLASS##EM##_t vx, vy;                                               \
+    v##VCLASST##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
@@ -29,9 +29,9 @@
     vstore_##VCLASS##EM(x, vx);                                                \
   }
 
-#define TEST_COMPARE(STYPE, VCLASS, EM, MLEN, OP)		\
-  VCOMPARE_VV (STYPE, VCLASS, EM, MLEN, OP)			\
-  VCOMPARE_VF (STYPE, VCLASS, EM, MLEN, OP)
+#define TEST_COMPARE(STYPE, VCLASST, VCLASS, EM, MLEN, OP)		\
+  VCOMPARE_VV (STYPE, VCLASST, VCLASS, EM, MLEN, OP)			\
+  VCOMPARE_VF (STYPE, VCLASST, VCLASS, EM, MLEN, OP)
 
 RVV_FLOAT_TEST_ARG(TEST_COMPARE, eq)
 /* { dg-final { scan-assembler-times "vmfeq.vv" 12 } } */
