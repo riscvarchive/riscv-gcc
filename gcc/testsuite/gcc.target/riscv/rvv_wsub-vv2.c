@@ -12,12 +12,12 @@
     v##VCLASS##EM##_t vx, vy;                                               \
     v##VCLASS##WEM##_t vz;                                                  \
     vbool##MLEN##_t mask;                                                   \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
-    vz = vle_##VCLASS##WEM(z);                                              \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
+    vz = vload_##VCLASS##WEM(z);                                              \
     mask = vset_bool##MLEN ();                                             \
     vz = vwsub_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                   \
-    vse_##VCLASS##WEM(z, vz);                                               \
+    vstore_##VCLASS##WEM(z, vz);                                               \
   }
 
 #define VWSUBU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM)                           \
@@ -26,12 +26,12 @@
     v##VCLASS##EM##_t vx, vy;                                              \
     v##VCLASS##WEM##_t vz;                                                 \
     vbool##MLEN##_t mask;                                                   \
-    vx = vle_##VCLASS##EM(x);                                              \
-    vy = vle_##VCLASS##EM(y);                                              \
-    vz = vle_##VCLASS##WEM(z);                                             \
+    vx = vload_##VCLASS##EM(x);                                              \
+    vy = vload_##VCLASS##EM(y);                                              \
+    vz = vload_##VCLASS##WEM(z);                                             \
     mask = vset_bool##MLEN ();                                             \
     vz = vwsub_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                 \
-    vse_##VCLASS##WEM(z, vz);                                              \
+    vstore_##VCLASS##WEM(z, vz);                                              \
   }
 
 RVV_WINT_TEST(VWSUB)

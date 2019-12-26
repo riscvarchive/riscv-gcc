@@ -13,22 +13,22 @@
     v##VCLASS##EM##_t vx, vy, vz;                                            \
     vuint##EM##_t vindex;                                              \
     vbool##MLEN##_t mask;                                                    \
-    vindex = vle_uint##EM(index);                                      \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vindex = vload_uint##EM(index);                                      \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     vz = vx + vy;                                                              \
-    vsxe_##VCLASS##EM(x, vindex, vz);                                       \
+    vstorex_##VCLASS##EM(x, vindex, vz);                                       \
   }									\
   void vsuloadstore##VCLASS##EM(size_t n, long stride, STYPE *x,               \
                                STYPE *y, STYPE z, uint##SEW##_t *index) {       \
     v##VCLASS##EM##_t vx, vy, vz;                                            \
     vuint##EM##_t vindex;                                              \
     vbool##MLEN##_t mask;                                                    \
-    vindex = vle_uint##EM(index);                                      \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vindex = vload_uint##EM(index);                                      \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     vz = vx + vy;                                                              \
-    vsuxe_##VCLASS##EM(x, vindex, vz);                                      \
+    vstoreux_##VCLASS##EM(x, vindex, vz);                                      \
   }
 
 #define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
@@ -37,36 +37,36 @@
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
     vuint##EM##_t vindex;                                         \
-    vindex = vle_uint##EM(index);                                 \
-    vx = vle_int##EM(x);                                               \
-    vsx##NTYPE_LETTER##_int##EM(y, vindex, vx);                        \
+    vindex = vload_uint##EM(index);                                 \
+    vx = vload_int##EM(x);                                               \
+    vstorex##NTYPE_LETTER##_int##EM(y, vindex, vx);                        \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z, u##STYPE *index) {                  \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
     vuint##EM##_t vindex;                                         \
-    vindex = vle_uint##EM(index);                                 \
-    vx = vle_uint##EM(x);                                              \
-    vsx##NTYPE_LETTER##_uint##EM(y, vindex, vx);                       \
+    vindex = vload_uint##EM(index);                                 \
+    vx = vload_uint##EM(x);                                              \
+    vstorex##NTYPE_LETTER##_uint##EM(y, vindex, vx);                       \
   }									\
   void vloadu##EM##NTYPE_LETTER(size_t n, long stride, STYPE *x,           \
                                NSTYPE *y, STYPE z, u##STYPE *index) {     \
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
     vuint##EM##_t vindex;                                         \
-    vindex = vle_uint##EM(index);                                 \
-    vx = vle_int##EM(x);                                               \
-    vsux##NTYPE_LETTER##_int##EM(y, vindex, vx);                        \
+    vindex = vload_uint##EM(index);                                 \
+    vx = vload_int##EM(x);                                               \
+    vstoreux##NTYPE_LETTER##_int##EM(y, vindex, vx);                        \
   }                                                                       \
   void vuloadu##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z, u##STYPE *index) {                  \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
     vuint##EM##_t vindex;                                         \
-    vindex = vle_uint##EM(index);                                 \
-    vx = vle_uint##EM(x);                                              \
-    vsux##NTYPE_LETTER##_uint##EM(y, vindex, vx);                       \
+    vindex = vload_uint##EM(index);                                 \
+    vx = vload_uint##EM(x);                                              \
+    vstoreux##NTYPE_LETTER##_uint##EM(y, vindex, vx);                       \
   }
 
 RVV_INT_LOAD_TEST(VUSLOAD)

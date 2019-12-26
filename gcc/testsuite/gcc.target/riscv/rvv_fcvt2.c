@@ -13,10 +13,10 @@
     v##IVCLASS##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
     mask = vset_bool##MLEN ();					\
-    vx = vle_##VCLASS##EM(x);					\
-    vy = vle_##IVCLASS##EM(y);					\
+    vx = vload_##VCLASS##EM(x);					\
+    vy = vload_##IVCLASS##EM(y);					\
     vy = vcvt_f##SEW##toi##SEW##_v_##EM##_mask (mask, vy, vx);	\
-    vse_##IVCLASS##EM(y, vy);					\
+    vstore_##IVCLASS##EM(y, vy);					\
   }									\
   void rvvcvtfui##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 						u##ISTYPE *y, STYPE z)	\
@@ -25,10 +25,10 @@
     vu##IVCLASS##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
     mask = vset_bool##MLEN ();					\
-    vx = vle_##VCLASS##EM(x);					\
-    vy = vle_u##IVCLASS##EM(y);					\
+    vx = vload_##VCLASS##EM(x);					\
+    vy = vload_u##IVCLASS##EM(y);					\
     vy = vcvt_f##SEW##toui##SEW##_v_##EM##_mask (mask, vy, vx);	\
-    vse_u##IVCLASS##EM(y, vy);					\
+    vstore_u##IVCLASS##EM(y, vy);					\
   }									\
   void rvvcvtif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       ISTYPE *y, STYPE z)	\
@@ -37,10 +37,10 @@
     v##IVCLASS##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
     mask = vset_bool##MLEN ();					\
-    vx = vle_##VCLASS##EM(x);					\
-    vy = vle_##IVCLASS##EM(y);					\
+    vx = vload_##VCLASS##EM(x);					\
+    vy = vload_##IVCLASS##EM(y);					\
     vx = vcvt_i##SEW##tof##SEW##_v_##EM##_mask (mask, vx, vy);	\
-    vse_##VCLASS##EM(x, vx);						\
+    vstore_##VCLASS##EM(x, vx);						\
   }									\
   void rvvcvtuif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 						u##ISTYPE *y, STYPE z)	\
@@ -49,10 +49,10 @@
     vu##IVCLASS##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
     mask = vset_bool##MLEN ();					\
-    vx = vle_##VCLASS##EM(x);					\
-    vy = vle_u##IVCLASS##EM(y);					\
+    vx = vload_##VCLASS##EM(x);					\
+    vy = vload_u##IVCLASS##EM(y);					\
     vx = vcvt_ui##SEW##tof##SEW##_v_##EM##_mask (mask, vx, vy);	\
-    vse_##VCLASS##EM(x, vx);						\
+    vstore_##VCLASS##EM(x, vx);						\
   }									\
 
 

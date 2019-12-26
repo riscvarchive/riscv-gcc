@@ -109,14 +109,14 @@ void riscv_biquad_df2T_stage_f32(const float32_t *pIn, float32_t *pOut,
   // b2 = pCoeffs[2];
   size_t vl = vsetvl_32m1(3); // set vl = 3
   vfloat32m1_t v_coef_b;
-  v_coef_b = vle_float32m1(pCoeffs);
+  v_coef_b = vload_float32m1(pCoeffs);
   pCoeffs += vl;
 
   // a1 = pCoeffs[3];
   // a2 = pCoeffs[4];
   vl = vsetvl_32m1(2); // set vl = 2
   vfloat32m1_t v_coef_a;
-  v_coef_a = vle_float32m1(pCoeffs);
+  v_coef_a = vload_float32m1(pCoeffs);
   pCoeffs += vl;
 
   /*Reading the state values */

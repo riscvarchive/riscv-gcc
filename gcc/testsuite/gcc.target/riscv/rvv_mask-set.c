@@ -12,8 +12,8 @@
     v##VCLASS##EM##_t vx, vy;                                                \
     vbool##MLEN##_t mask0;                                                   \
     vbool##MLEN##_t rv;                                                      \
-    vx = vle_##VCLASS##EM(x);                                                 \
-    vy = vle_##VCLASS##EM(y);                                                 \
+    vx = vload_##VCLASS##EM(x);                                                 \
+    vy = vload_##VCLASS##EM(y);                                                 \
     mask0 = vset_bool##MLEN ();                                            \
     vy = vadd_vv_##VCLASS##EM##_mask (mask0, vy, vx, vy);                   \
     * (v##VCLASS##EM##_t *) y = vy;                                          \

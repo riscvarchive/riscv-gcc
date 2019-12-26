@@ -13,10 +13,10 @@
     v##VCLASS##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                                   \
     mask = vset_bool##MLEN ();                                             \
-    vy = vle_##VCLASS##EM(y);                                               \
-    vx = vle_##VCLASS##EM##_mask(mask, vy, x);                              \
+    vy = vload_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM##_mask(mask, vy, x);                              \
     vz = vx + vy;                                                              \
-    vse_##VCLASS##EM(x, vz);                                                \
+    vstore_##VCLASS##EM(x, vz);                                                \
   }
 
 #define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
@@ -25,18 +25,18 @@
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
     mask = vset_bool##MLEN ();                                        \
-    vx = vle_int##EM (x);                                              \
-    vx = vl##NTYPE_LETTER##_int##EM##_mask(mask, vx, y);               \
-    vse_int##EM(x, vx);                                                \
+    vx = vload_int##EM (x);                                              \
+    vx = vload##NTYPE_LETTER##_int##EM##_mask(mask, vx, y);               \
+    vstore_int##EM(x, vx);                                                \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z) {                  \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
     mask = vset_bool##MLEN ();                                        \
-    vx = vle_uint##EM (x);                                              \
-    vx = vl##NTYPE_LETTER##_uint##EM##_mask(mask, vx, y);              \
-    vse_uint##EM(x, vx);                                               \
+    vx = vload_uint##EM (x);                                              \
+    vx = vload##NTYPE_LETTER##_uint##EM##_mask(mask, vx, y);              \
+    vstore_uint##EM(x, vx);                                               \
   }
 
 

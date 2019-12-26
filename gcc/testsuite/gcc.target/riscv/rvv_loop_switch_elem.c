@@ -39,11 +39,11 @@ void foo2(int16_t *a1, int32_t *a2, int32_t x10, int n) {
   size_t vl;
   for (; vl = vsetvl_16m4(n);) {
     vint16m4_t v4;
-    v4 = vle_int16m4(a1);
+    v4 = vload_int16m4(a1);
     vint32m8_t v8;
     v8 = vwmul_vs_int16m4(v4, x10);
     v8 = vsra_vs_int32m8(v8, 3);
-    vse_int32m8(a2, v8);
+    vstore_int32m8(a2, v8);
     a1 += vl;
     a2 += vl;
     n -= vl;

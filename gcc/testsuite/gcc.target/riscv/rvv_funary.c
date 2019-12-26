@@ -11,9 +11,9 @@
   {									\
     v##VCLASS##EM##_t vx;						\
     vu##IVCLASS##EM##_t vy;						\
-    vx = vle_##VCLASS##EM(x);					\
+    vx = vload_##VCLASS##EM(x);					\
     vy = v##OP##_v_##VCLASS##EM (vx);				\
-    vse_u##IVCLASS##EM(y, vy);					\
+    vstore_u##IVCLASS##EM(y, vy);					\
   }
 
 RVV_FLOAT_INT_TEST_ARG(RVV_FCLASS_TEST, class)

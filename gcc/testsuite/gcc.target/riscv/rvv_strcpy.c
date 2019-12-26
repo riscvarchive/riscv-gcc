@@ -37,14 +37,14 @@ char* strcpy(char *dst, const char* src) {
   while (zero_find < 0) {
     vsetvlmax_8m1();
     vuint8m1_t value;
-    value = vleff_uint8m1(src);
+    value = vloadff_uint8m1(src);
     size_t vl =vreadvl();
     vbool8_t cmp;
     cmp = vseq_vs_uint8m1(value, 0);
     zero_find = vfirst_m_bool8(cmp); // if no zero than return -1
     vbool8_t mask;
     mask = vsif_m_bool8(cmp); // set mask up to and including zero byte
-    vse_uint8m1_mask(dst, mask, value);
+    vstore_uint8m1_mask(dst, mask, value);
     src+=vl;
     dst+=vl;
   }

@@ -11,45 +11,45 @@
   {									\
     vfloat##EM##_t vx;						\
     vint##WEM##_t vy;							\
-    vx = vle_float##EM(x);						\
+    vx = vload_float##EM(x);						\
     vy = vwcvt_f##SEW##toi##WSEW##_v_##EM (vx);			\
-    vse_int##WEM(y, vy);						\
+    vstore_int##WEM(y, vy);						\
   }									\
   void rvvcvtfui##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
 						u##int##WSEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##EM##_t vx;						\
     vuint##WEM##_t vy;						\
-    vx = vle_float##EM(x);					\
+    vx = vload_float##EM(x);					\
     vy = vwcvt_f##SEW##toui##WSEW##_v_##EM (vx);			\
-    vse_uint##WEM(y, vy);					\
+    vstore_uint##WEM(y, vy);					\
   }									\
   void rvvcvtif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
 					       int##SEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##WEM##_t vx;						\
     vint##EM##_t vy;						\
-    vy = vle_int##EM(y);					\
+    vy = vload_int##EM(y);					\
     vx = vwcvt_i##SEW##tof##WSEW##_v_##EM (vy);			\
-    vse_float##WEM(x, vx);						\
+    vstore_float##WEM(x, vx);						\
   }									\
   void rvvcvtuif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
 						u##int##SEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##WEM##_t vx;						\
     vuint##EM##_t vy;						\
-    vy = vle_uint##EM(y);						\
+    vy = vload_uint##EM(y);						\
     vx = vwcvt_ui##SEW##tof##WSEW##_v_##EM (vy);			\
-    vse_float##WEM(x, vx);						\
+    vstore_float##WEM(x, vx);						\
   }\
   void rvvcvtff##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
 						_RVV_F##SEW##_TYPE *y, _RVV_F##SEW##_TYPE z)	\
   {									\
     vfloat##WEM##_t vx;						\
     vfloat##EM##_t vy;						\
-    vy = vle_float##EM(y);						\
+    vy = vload_float##EM(y);						\
     vx = vwcvt_f##SEW##tof##WSEW##_v_##EM (vy);			\
-    vse_float##WEM(x, vx);						\
+    vstore_float##WEM(x, vx);						\
   }
 
 

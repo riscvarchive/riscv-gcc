@@ -11,29 +11,29 @@
   void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
     v##VCLASS##EM##_t vx, vy;                                               \
     vbool##MLEN##_t carryin, carryout;                                      \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     carryout = v##OP##_vv_##VCLASS##EM (vx, vy);                            \
     vy = vadc_vvm_##VCLASS##EM (vx, vy, carryout);                          \
-    vse_##VCLASS##EM(y, vy);                                                \
+    vstore_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void v##OP##VCLASS##EM##_scalar(size_t n, STYPE *x, STYPE *y, STYPE z) {     \
     v##VCLASS##EM##_t vx, vy;                                               \
     vbool##MLEN##_t carryin, carryout;                                      \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     carryout = v##OP##_vs_##VCLASS##EM (vx,  z);                            \
     vy = vadc_vvm_##VCLASS##EM (vx, vy, carryout);                          \
-    vse_##VCLASS##EM(y, vy);                                                \
+    vstore_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
   void v##OP##VCLASS##EM##_imm(size_t n, STYPE *x, STYPE *y, STYPE z) {        \
     v##VCLASS##EM##_t vx, vy;                                               \
     vbool##MLEN##_t carryin, carryout;                                      \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     carryout = v##OP##_vs_##VCLASS##EM (vx, 11);                            \
     vy = vadc_vvm_##VCLASS##EM (vx, vy, carryout);                          \
-    vse_##VCLASS##EM(y, vy);                                                \
+    vstore_##VCLASS##EM(y, vy);                                                \
   }
 
 

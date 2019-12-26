@@ -26,8 +26,8 @@ void foo1(double *a, double *b, double *c, int n) {
   vec_i = vid_32m1();
   for (; vl = vsetvl_64m2(n);) {
     vec_n_double = vwcvt_ui32tof64_v_32m1(vec_i);
-    vec_b = vle_float64m2(b);
-    vec_c = vle_float64m2(c);
+    vec_b = vload_float64m2(b);
+    vec_c = vload_float64m2(c);
     *(vfloat64m2_t *)a = vec_b + vec_n_double * vec_c;
     vec_i = vadd_vs_uint32m1(vec_i, vl);
     n -= vl;

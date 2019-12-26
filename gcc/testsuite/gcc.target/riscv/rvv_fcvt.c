@@ -11,36 +11,36 @@
   {									\
     v##VCLASS##EM##_t vx;						\
     v##IVCLASS##EM##_t vy;						\
-    vx = vle_##VCLASS##EM(x);					\
+    vx = vload_##VCLASS##EM(x);					\
     vy = vcvt_f##SEW##toi##SEW##_v_##EM (vx);			\
-    vse_##IVCLASS##EM(y, vy);					\
+    vstore_##IVCLASS##EM(y, vy);					\
   }									\
   void rvvcvtfui##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 						u##ISTYPE *y, STYPE z)	\
   {									\
     v##VCLASS##EM##_t vx;						\
     vu##IVCLASS##EM##_t vy;						\
-    vx = vle_##VCLASS##EM(x);					\
+    vx = vload_##VCLASS##EM(x);					\
     vy = vcvt_f##SEW##toui##SEW##_v_##EM (vx);			\
-    vse_u##IVCLASS##EM(y, vy);					\
+    vstore_u##IVCLASS##EM(y, vy);					\
   }									\
   void rvvcvtif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       ISTYPE *y, STYPE z)	\
   {									\
     v##VCLASS##EM##_t vx;						\
     v##IVCLASS##EM##_t vy;						\
-    vy = vle_##IVCLASS##EM(y);					\
+    vy = vload_##IVCLASS##EM(y);					\
     vx = vcvt_i##SEW##tof##SEW##_v_##EM (vy);			\
-    vse_##VCLASS##EM(x, vx);						\
+    vstore_##VCLASS##EM(x, vx);						\
   }									\
   void rvvcvtuif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 						u##ISTYPE *y, STYPE z)	\
   {									\
     v##VCLASS##EM##_t vx;						\
     vu##IVCLASS##EM##_t vy;						\
-    vy = vle_u##IVCLASS##EM(y);					\
+    vy = vload_u##IVCLASS##EM(y);					\
     vx = vcvt_ui##SEW##tof##SEW##_v_##EM (vy);			\
-    vse_##VCLASS##EM(x, vx);						\
+    vstore_##VCLASS##EM(x, vx);						\
   }									\
 
 

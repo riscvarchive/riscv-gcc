@@ -9,7 +9,7 @@
   void test_splat##VCLASS##EM (STYPE *x, STYPE s) {		\
     v##VCLASS##EM##_t vx;					\
     vx = vsplat_s_##VCLASS##EM(s);				\
-    vse_##VCLASS##EM(x, vx);					\
+    vstore_##VCLASS##EM(x, vx);					\
   }
 
 RVV_INT_TEST (RVV_TEST_SPLAT)

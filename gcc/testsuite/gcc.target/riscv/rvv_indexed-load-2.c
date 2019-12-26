@@ -14,11 +14,11 @@
     vuint##EM##_t vindex;                                              \
     vbool##MLEN##_t mask;                                                   \
     mask = vset_bool##MLEN ();                                             \
-    vindex = vle_uint##EM(index);                                      \
-    vy = vle_##VCLASS##EM(y);                                               \
-    vx = vlxe_##VCLASS##EM##_mask(mask, vy, x, vindex);                     \
+    vindex = vload_uint##EM(index);                                      \
+    vy = vload_##VCLASS##EM(y);                                               \
+    vx = vloadx_##VCLASS##EM##_mask(mask, vy, x, vindex);                     \
     vz = vx + vy;                                                              \
-    vse_##VCLASS##EM(x, vz);                                                \
+    vstore_##VCLASS##EM(x, vz);                                                \
   }
 
 #define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
@@ -28,10 +28,10 @@
     vbool##MLEN##_t mask;                                              \
     vuint##EM##_t vindex;                                         \
     mask = vset_bool##MLEN ();                                             \
-    vindex = vle_uint##EM(index);                                 \
-    vx = vle_int##EM (x);                                              \
-    vx = vlx##NTYPE_LETTER##_int##EM##_mask(mask, vx, y, vindex);      \
-    vse_int##EM(x, vx);                                                \
+    vindex = vload_uint##EM(index);                                 \
+    vx = vload_int##EM (x);                                              \
+    vx = vloadx##NTYPE_LETTER##_int##EM##_mask(mask, vx, y, vindex);      \
+    vstore_int##EM(x, vx);                                                \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z, u##STYPE *index) { \
@@ -39,10 +39,10 @@
     vbool##MLEN##_t mask;                                              \
     mask = vset_bool##MLEN ();                                             \
     vuint##EM##_t vindex;                                         \
-    vindex = vle_uint##EM(index);                                 \
-    vx = vle_uint##EM (x);                                              \
-    vx = vlx##NTYPE_LETTER##_uint##EM##_mask(mask, vx, y, vindex);     \
-    vse_uint##EM(x, vx);                                               \
+    vindex = vload_uint##EM(index);                                 \
+    vx = vload_uint##EM (x);                                              \
+    vx = vloadx##NTYPE_LETTER##_uint##EM##_mask(mask, vx, y, vindex);     \
+    vstore_uint##EM(x, vx);                                               \
   }
 
 

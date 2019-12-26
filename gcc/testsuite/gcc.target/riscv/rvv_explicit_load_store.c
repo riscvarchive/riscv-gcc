@@ -10,8 +10,8 @@
 #define TEST(STYPE, VCLASS, EM, MLEN)                                          \
   void vadd##VCLASS##EM(STYPE *x, STYPE *y) {                                  \
     v##VCLASS##EM##_t vx;                                                    \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vse_##VCLASS##EM(y, vx);                                                  \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vstore_##VCLASS##EM(y, vx);                                                  \
   }
 
 RVV_INT_TEST(TEST)

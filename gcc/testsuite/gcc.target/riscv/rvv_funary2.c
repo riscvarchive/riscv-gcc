@@ -13,10 +13,10 @@
     vu##IVCLASS##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
     mask = vset_bool##MLEN ();					\
-    vx = vle_##VCLASS##EM(x);					\
-    vy = vle_u##IVCLASS##EM(y);					\
+    vx = vload_##VCLASS##EM(x);					\
+    vy = vload_u##IVCLASS##EM(y);					\
     vy = v##OP##_v_##VCLASS##EM##_mask (mask, vy, vx);		\
-    vse_u##IVCLASS##EM(y, vy);					\
+    vstore_u##IVCLASS##EM(y, vy);					\
   }
 
 RVV_FLOAT_INT_TEST_ARG(RVV_FCLASS_TEST, class)

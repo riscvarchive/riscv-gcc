@@ -11,22 +11,22 @@
   void v##OP##VCLASS##EM##_vv(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
     v##VCLASS##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     mask = v##OP##_vv_##VCLASS##EM(vx, vy);                                \
     vx = vadd_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
-    vse_##VCLASS##EM(x, vx);                                                \
+    vstore_##VCLASS##EM(x, vx);                                                \
   }
 
 #define VCOMPARE_VF(STYPE, VCLASS, EM, MLEN, OP)                               \
   void v##OP##VCLASS##EM##_vx(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
     v##VCLASS##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     mask = v##OP##_vs_##VCLASS##EM(vx, z);                                 \
     vx = vadd_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
-    vse_##VCLASS##EM(x, vx);                                                \
+    vstore_##VCLASS##EM(x, vx);                                                \
   }
 
 #define TEST_COMPARE(STYPE, VCLASS, EM, MLEN, OP)		\

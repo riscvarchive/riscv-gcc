@@ -11,13 +11,13 @@
   void vmul##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     v##VCLASS##EM##_t vx, vy;                                                \
     vbool##MLEN##_t mask;                                                    \
-    vx = vle_##VCLASS##EM(x);                                                 \
-    vy = vle_##VCLASS##EM(y);                                                 \
+    vx = vload_##VCLASS##EM(x);                                                 \
+    vy = vload_##VCLASS##EM(y);                                                 \
     mask = vset_bool##MLEN ();                                             \
     vy = vdiv_vv_##VCLASS##EM##_mask(mask, vy, vx, vy);                     \
     vy = vdiv_vs_##VCLASS##EM##_mask(mask, vy, vy, z);                      \
     vy = vrdiv_vs_##VCLASS##EM##_mask(mask, vy, vy, z);                     \
-    vse_##VCLASS##EM(y, vy);                                                  \
+    vstore_##VCLASS##EM(y, vy);                                                  \
   }
 
 /* integer intrinsics have not finished */

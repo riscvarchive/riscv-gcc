@@ -12,13 +12,13 @@
     v##VCLASS##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     mask = vset_bool##MLEN ();                                             \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     vy = vsub_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);                    \
     vy = vsub_vs_##VCLASS##EM##_mask (mask, vx, vy, z);                     \
-    vse_##VCLASS##EM(y, vy);                                                \
+    vstore_##VCLASS##EM(y, vy);                                                \
     vx = vsub_vs_##VCLASS##EM##_mask (mask, vx, vx, 1);                     \
-    vse_##VCLASS##EM(x, vx);                                                \
+    vstore_##VCLASS##EM(x, vx);                                                \
   }
 /* Same as above without the immediate sub.  */
 #define VSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                   \
@@ -26,11 +26,11 @@
     v##VCLASS##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     mask = vset_bool##MLEN ();                                             \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     vy = vsub_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);                    \
     vy = vsub_vs_##VCLASS##EM##_mask (mask, vx, vy, z);                     \
-    vse_##VCLASS##EM(y, vy);                                                \
+    vstore_##VCLASS##EM(y, vy);                                                \
   }
 /* Same for reverse subtract.  */
 #define VRSUB(STYPE, VCLASS, EM, MLEN)                                         \
@@ -38,12 +38,12 @@
     v##VCLASS##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     mask = vset_bool##MLEN ();                                             \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     vy = vrsub_vs_##VCLASS##EM##_mask (mask, vx, vy, z);                    \
-    vse_##VCLASS##EM(y, vy);                                                \
+    vstore_##VCLASS##EM(y, vy);                                                \
     vx = vrsub_vs_##VCLASS##EM##_mask (mask, vx, vx, 1);                    \
-    vse_##VCLASS##EM(x, vx);                                                \
+    vstore_##VCLASS##EM(x, vx);                                                \
   }
 /* Same as above without the immediate for reverse subtract.  */
 #define VRSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                  \
@@ -51,10 +51,10 @@
     vbool##MLEN##_t mask;                                                    \
     mask = vset_bool##MLEN ();                                             \
     v##VCLASS##EM##_t vx, vy;                                                \
-    vx = vle_##VCLASS##EM(x);                                                 \
-    vy = vle_##VCLASS##EM(y);                                                 \
+    vx = vload_##VCLASS##EM(x);                                                 \
+    vy = vload_##VCLASS##EM(y);                                                 \
     vy = vrsub_vs_##VCLASS##EM##_mask (mask, vx, vy, z);                    \
-    vse_##VCLASS##EM(y, vy);                                                  \
+    vstore_##VCLASS##EM(y, vy);                                                  \
   }
 
 

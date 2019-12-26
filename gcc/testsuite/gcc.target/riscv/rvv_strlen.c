@@ -41,7 +41,7 @@ size_t strlen(const char *str) {
   while (first_set < 0) {
     vsetvlmax_8m1(); // setvm max
     vint8m1_t value;
-    value = vleff_int8m1(str);
+    value = vloadff_int8m1(str);
     size_t vl = vreadvl();
     vbool8_t cmp;
     cmp = vseq_vs_int8m1(value, 0);

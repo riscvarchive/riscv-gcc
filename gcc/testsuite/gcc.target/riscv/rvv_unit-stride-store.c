@@ -12,10 +12,10 @@
                                STYPE *y, STYPE z) {                            \
     v##VCLASS##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                                   \
-    vx = vle_##VCLASS##EM(x);                                               \
-    vy = vle_##VCLASS##EM(y);                                               \
+    vx = vload_##VCLASS##EM(x);                                               \
+    vy = vload_##VCLASS##EM(y);                                               \
     vz = vx + vy;                                                              \
-    vse_##VCLASS##EM(x, vz);                                                \
+    vstore_##VCLASS##EM(x, vz);                                                \
   }
 
 #define VUSSTORE(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
@@ -23,15 +23,15 @@
                                NSTYPE *y, STYPE z) {                      \
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
-    vx = vle_int##EM(x);                                               \
-    vs##NTYPE_LETTER##_int##EM(y, vx);                                 \
+    vx = vload_int##EM(x);                                               \
+    vstore##NTYPE_LETTER##_int##EM(y, vx);                                 \
   }                                                                       \
   void vustore##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,      \
                                 u##NSTYPE *y, STYPE z) {                  \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
-    vx = vle_uint##EM(x);                                              \
-    vs##NTYPE_LETTER##_uint##EM(y, vx);                                \
+    vx = vload_uint##EM(x);                                              \
+    vstore##NTYPE_LETTER##_uint##EM(y, vx);                                \
   }
 
 

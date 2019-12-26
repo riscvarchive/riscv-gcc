@@ -12,31 +12,31 @@
     vu##VCLASS##EM##_t vy;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vx = vle_##VCLASS##EM(x);				\
-    vy = vle_u##VCLASS##EM(y);				\
-    vz = vle_##VCLASS##EM(z);				\
+    vx = vload_##VCLASS##EM(x);				\
+    vy = vload_u##VCLASS##EM(y);				\
+    vz = vload_##VCLASS##EM(z);				\
     vx = vrgather_vv_##VCLASS##EM##_mask(mask, vz, vx, vy);	\
-    vse_##VCLASS##EM(x, vx);					\
+    vstore_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_sx##VCLASS##EM (STYPE *x, STYPE *z, long s) {\
     v##VCLASS##EM##_t vx;					\
     v##VCLASS##EM##_t vz;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vx = vle_##VCLASS##EM(x);				\
-    vz = vle_##VCLASS##EM(z);				\
+    vx = vload_##VCLASS##EM(x);				\
+    vz = vload_##VCLASS##EM(z);				\
     vx = vrgather_vs_##VCLASS##EM##_mask(mask, vz, vx, s);	\
-    vse_##VCLASS##EM(x, vx);					\
+    vstore_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_si##VCLASS##EM (STYPE *x, STYPE *z, long s) {\
     v##VCLASS##EM##_t vx;					\
     v##VCLASS##EM##_t vz;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vz = vle_##VCLASS##EM(z);				\
-    vx = vle_##VCLASS##EM(x);				\
+    vz = vload_##VCLASS##EM(z);				\
+    vx = vload_##VCLASS##EM(x);				\
     vx = vrgather_vs_##VCLASS##EM##_mask(mask, vz, vx, 11);	\
-    vse_##VCLASS##EM(x, vx);					\
+    vstore_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_svu##VCLASS##EM (u##STYPE *x, u##STYPE *y, STYPE *z, long s) {\
     vu##VCLASS##EM##_t vx;					\
@@ -44,31 +44,31 @@
     vu##VCLASS##EM##_t vy;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vx = vle_u##VCLASS##EM(x);				\
-    vy = vle_u##VCLASS##EM(y);				\
-    vz = vle_u##VCLASS##EM(z);				\
+    vx = vload_u##VCLASS##EM(x);				\
+    vy = vload_u##VCLASS##EM(y);				\
+    vz = vload_u##VCLASS##EM(z);				\
     vx = vrgather_vv_u##VCLASS##EM##_mask(mask, vz, vx, vy);	\
-    vse_u##VCLASS##EM(x, vx);				\
+    vstore_u##VCLASS##EM(x, vx);				\
   }								\
   void test_rgather_sxu##VCLASS##EM (u##STYPE *x, STYPE *z, long s) {\
     vu##VCLASS##EM##_t vx;					\
     vu##VCLASS##EM##_t vz;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vx = vle_u##VCLASS##EM(x);				\
-    vz = vle_u##VCLASS##EM(z);				\
+    vx = vload_u##VCLASS##EM(x);				\
+    vz = vload_u##VCLASS##EM(z);				\
     vx = vrgather_vs_u##VCLASS##EM##_mask(mask, vz, vx, s);	\
-    vse_u##VCLASS##EM(x, vx);				\
+    vstore_u##VCLASS##EM(x, vx);				\
   }								\
   void test_rgather_siu##VCLASS##EM (u##STYPE *x, STYPE *z, long s) {\
     vu##VCLASS##EM##_t vx;					\
     vu##VCLASS##EM##_t vz;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vx = vle_u##VCLASS##EM(x);				\
-    vz = vle_u##VCLASS##EM(z);				\
+    vx = vload_u##VCLASS##EM(x);				\
+    vz = vload_u##VCLASS##EM(z);				\
     vx = vrgather_vs_u##VCLASS##EM##_mask(mask, vz, vx, 11);	\
-    vse_u##VCLASS##EM(x, vx);				\
+    vstore_u##VCLASS##EM(x, vx);				\
   }
 
 #define RVV_TEST_FLOAT_RGATHER(STYPE, VCLASS, EM, MLEN, ISTYPE, IVCLASS)\
@@ -78,31 +78,31 @@
     vu##IVCLASS##EM##_t vy;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vx = vle_##VCLASS##EM(x);				\
-    vy = vle_u##IVCLASS##EM(y);				\
-    vz = vle_##VCLASS##EM(z);				\
+    vx = vload_##VCLASS##EM(x);				\
+    vy = vload_u##IVCLASS##EM(y);				\
+    vz = vload_##VCLASS##EM(z);				\
     vx = vrgather_vv_##VCLASS##EM##_mask(mask, vz, vx, vy);	\
-    vse_##VCLASS##EM(x, vx);					\
+    vstore_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_sx##VCLASS##EM (STYPE *x, STYPE *z, long s) {	\
     v##VCLASS##EM##_t vx;					\
     v##VCLASS##EM##_t vz;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vx = vle_##VCLASS##EM(x);				\
-    vz = vle_##VCLASS##EM(z);				\
+    vx = vload_##VCLASS##EM(x);				\
+    vz = vload_##VCLASS##EM(z);				\
     vx = vrgather_vs_##VCLASS##EM##_mask(mask, vz, vx, s);	\
-    vse_##VCLASS##EM(x, vx);					\
+    vstore_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_si##VCLASS##EM (STYPE *x, STYPE *z, long s) {	\
     v##VCLASS##EM##_t vx;					\
     v##VCLASS##EM##_t vz;					\
     vbool##MLEN##_t mask;					\
     mask = vset_bool##MLEN ();				\
-    vx = vle_##VCLASS##EM(x);				\
-    vz = vle_##VCLASS##EM(z);				\
+    vx = vload_##VCLASS##EM(x);				\
+    vz = vload_##VCLASS##EM(z);				\
     vx = vrgather_vs_##VCLASS##EM##_mask(mask, vz, vx, 11);	\
-    vse_##VCLASS##EM(x, vx);					\
+    vstore_##VCLASS##EM(x, vx);					\
   }
 
 RVV_INT_TEST (RVV_TEST_RGATHER)

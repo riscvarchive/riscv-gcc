@@ -11,33 +11,33 @@
   {								\
     v##VCLASS##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
-    vx = vle_##VCLASS##EM(x);				\
-    vy = vle_##VCLASS##EM(y);				\
+    vx = vload_##VCLASS##EM(x);				\
+    vy = vload_##VCLASS##EM(y);				\
     mask = vset_bool##MLEN ();				\
     vy = vmerge_vv_##VCLASS##EM##_mask (mask, vx, vy);	\
-    vse_##VCLASS##EM(y, vy);					\
+    vstore_##VCLASS##EM(y, vy);					\
   }								\
   void rvv##VCLASS##EM##_s_builtin_test(size_t n, STYPE *x, 	\
 					     STYPE *y, STYPE z)	\
   {								\
     v##VCLASS##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
-    vx = vle_##VCLASS##EM(x);				\
-    vy = vle_##VCLASS##EM(y);				\
+    vx = vload_##VCLASS##EM(x);				\
+    vy = vload_##VCLASS##EM(y);				\
     mask = vset_bool##MLEN ();				\
     vy = vmerge_vs_##VCLASS##EM##_mask (mask, vx, z);	\
-    vse_##VCLASS##EM(y, vy);					\
+    vstore_##VCLASS##EM(y, vy);					\
   }								\
   void rvv##VCLASS##EM##_i_builtin_test(size_t n, STYPE *x, 	\
 					     STYPE *y, STYPE z)	\
   {								\
     v##VCLASS##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
-    vx = vle_##VCLASS##EM(x);				\
-    vy = vle_##VCLASS##EM(y);				\
+    vx = vload_##VCLASS##EM(x);				\
+    vy = vload_##VCLASS##EM(y);				\
     mask = vset_bool##MLEN ();				\
     vy = vmerge_vs_##VCLASS##EM##_mask (mask, vx, 11);	\
-    vse_##VCLASS##EM(y, vy);					\
+    vstore_##VCLASS##EM(y, vy);					\
   }
 
 

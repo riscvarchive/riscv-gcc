@@ -11,42 +11,42 @@
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
     v##VCLASS##EMONE##_t vx;						\
     v##VCLASS##EM##_t vy;						\
-    vx = vle_##VCLASS##EMONE (x);					\
-    vy = vle_##VCLASS##EM (y);					\
+    vx = vload_##VCLASS##EMONE (x);					\
+    vy = vload_##VCLASS##EM (y);					\
     vx = vredsum_vs_##VCLASS##EM (vy, vx);				\
     vx = vredmax_vs_##VCLASS##EM (vy, vx);				\
     vx = vredmin_vs_##VCLASS##EM (vy, vx);				\
     vx = vredand_vs_##VCLASS##EM (vy, vx);				\
     vx = vredor_vs_##VCLASS##EM  (vy, vx);				\
     vx = vredxor_vs_##VCLASS##EM (vy, vx);				\
-    vse_##VCLASS##EMONE (x, vx);					\
+    vstore_##VCLASS##EMONE (x, vx);					\
   }
 #define VREDUCU(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
     v##VCLASS##EMONE##_t vx;						\
     v##VCLASS##EM##_t vy;						\
-    vx = vle_##VCLASS##EMONE (x);					\
-    vy = vle_##VCLASS##EM (y);					\
+    vx = vload_##VCLASS##EMONE (x);					\
+    vy = vload_##VCLASS##EM (y);					\
     vx = vredsum_vs_##VCLASS##EM (vy, vx);				\
     vx = vredmax_vs_##VCLASS##EM(vy, vx);				\
     vx = vredmin_vs_##VCLASS##EM(vy, vx);				\
     vx = vredand_vs_##VCLASS##EM (vy, vx);				\
     vx = vredor_vs_##VCLASS##EM  (vy, vx);				\
     vx = vredxor_vs_##VCLASS##EM (vy, vx);				\
-    vse_##VCLASS##EMONE (x, vx);					\
+    vstore_##VCLASS##EMONE (x, vx);					\
   }
 
 #define VFREDUC(STYPE, VCLASS, EM, EMONE, MLEN)				\
   void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
     v##VCLASS##EMONE##_t vx;						\
     v##VCLASS##EM##_t vy;						\
-    vx = vle_##VCLASS##EMONE (x);					\
-    vy = vle_##VCLASS##EM (y);					\
+    vx = vload_##VCLASS##EMONE (x);					\
+    vy = vload_##VCLASS##EM (y);					\
     vx = vredsum_vs_##VCLASS##EM (vy, vx);				\
     vx = vredosum_vs_##VCLASS##EM(vy, vx);				\
     vx = vredmax_vs_##VCLASS##EM (vy, vx);				\
     vx = vredmin_vs_##VCLASS##EM (vy, vx);				\
-    vse_##VCLASS##EMONE (x, vx);					\
+    vstore_##VCLASS##EMONE (x, vx);					\
   }
 
 RVV_INT_REDUC_TEST(VREDUC)
