@@ -12,7 +12,7 @@
     vfloat##WEM##_t vx;						\
     vint##EM##_t vy;							\
     vx = vload_float##WEM(x);						\
-    vy = vncvt_f##WSEW##toi##SEW##_v_##WEM (vx);			\
+    vy = vcvt_f##WSEW##toi##SEW##_v_##WEM (vx);			\
     vstore_int##EM(y, vy);						\
   }									\
   void rvvcvtfui##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
@@ -21,7 +21,7 @@
     vfloat##WEM##_t vx;						\
     vuint##EM##_t vy;						\
     vx = vload_float##WEM(x);					\
-    vy = vncvt_f##WSEW##toui##SEW##_v_##WEM (vx);			\
+    vy = vcvt_f##WSEW##toui##SEW##_v_##WEM (vx);			\
     vstore_uint##EM(y, vy);					\
   }									\
   void rvvcvtif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
@@ -30,7 +30,7 @@
     vfloat##EM##_t vx;						\
     vint##WEM##_t vy;						\
     vy = vload_int##WEM(y);					\
-    vx = vncvt_i##WSEW##tof##SEW##_v_##WEM (vy);			\
+    vx = vcvt_i##WSEW##tof##SEW##_v_##WEM (vy);			\
     vstore_float##EM(x, vx);						\
   }									\
   void rvvcvtuif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
@@ -39,7 +39,7 @@
     vfloat##EM##_t vx;						\
     vuint##WEM##_t vy;						\
     vy = vload_uint##WEM(y);						\
-    vx = vncvt_ui##WSEW##tof##SEW##_v_##WEM (vy);			\
+    vx = vcvt_ui##WSEW##tof##SEW##_v_##WEM (vy);			\
     vstore_float##EM(x, vx);						\
   }\
   void rvvcvtff##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
@@ -48,7 +48,7 @@
     vfloat##EM##_t vx;						\
     vfloat##WEM##_t vy;						\
     vy = vload_float##WEM(y);						\
-    vx = vncvt_f##WSEW##tof##SEW##_v_##WEM (vy);			\
+    vx = vcvt_f##WSEW##tof##SEW##_v_##WEM (vy);			\
     vstore_float##EM(x, vx);						\
   }									\
   void rvvcvtrff##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
@@ -57,7 +57,7 @@
     vfloat##EM##_t vx;						\
     vfloat##WEM##_t vy;						\
     vy = vload_float##WEM(y);						\
-    vx = vncvt_rod_f##WSEW##tof##SEW##_v_##WEM (vy);			\
+    vx = vcvt_rod_f##WSEW##tof##SEW##_v_##WEM (vy);			\
     vstore_float##EM(x, vx);						\
   }
 

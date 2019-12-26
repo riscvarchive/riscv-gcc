@@ -12,7 +12,7 @@
     vint##EM##_t vx;							\
     vint##WEM##_t vy;						\
     vx = vload_int##EM(x);						\
-    vy = vwcvt_i##SEW##toi##WSEW##_v_##EM (vx);			\
+    vy = vcvt_i##SEW##toi##WSEW##_v_##EM (vx);			\
     vstore_int##WEM(y, vy);						\
   }									\
   void rvvcvtuif##SEW##int##EM##_v_nomask_builtin_test(size_t n, uint##WSEW##_t *x,\
@@ -21,7 +21,7 @@
     vuint##WEM##_t vx;						\
     vuint##EM##_t vy;						\
     vy = vload_uint##EM(y);						\
-    vx = vwcvt_ui##SEW##toui##WSEW##_v_##EM (vy);			\
+    vx = vcvt_ui##SEW##toui##WSEW##_v_##EM (vy);			\
     vstore_uint##WEM(x, vx);						\
   }
 

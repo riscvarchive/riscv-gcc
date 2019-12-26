@@ -1697,7 +1697,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vwcvt.x.x.v",						\
-    /* FUNC_NAME */vwcvt_i##SEW##toi##WSEW##_v_##SEW##m##LMUL,	\
+    /* FUNC_NAME */vcvt_i##SEW##toi##WSEW##_v_##SEW##m##LMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
@@ -1706,7 +1706,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vwcvtu.x.x.v",						\
-    /* FUNC_NAME */vwcvt_ui##SEW##toui##WSEW##_v_##SEW##m##LMUL,	\
+    /* FUNC_NAME */vcvt_ui##SEW##toui##WSEW##_v_##SEW##m##LMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
@@ -2022,7 +2022,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.xu.f.v",					\
-    /* FUNC_NAME */vwcvt_f##SEW##toui##WSEW##_v_##SEW##m##LMUL,	\
+    /* FUNC_NAME */vcvt_f##SEW##toui##WSEW##_v_##SEW##m##LMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
@@ -2031,7 +2031,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.x.f.v",						\
-    /* FUNC_NAME */vwcvt_f##SEW##toi##WSEW##_v_##SEW##m##LMUL,	\
+    /* FUNC_NAME */vcvt_f##SEW##toi##WSEW##_v_##SEW##m##LMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
@@ -2040,7 +2040,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.f.xu.v",					\
-    /* FUNC_NAME */vwcvt_ui##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
+    /* FUNC_NAME */vcvt_ui##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
@@ -2049,7 +2049,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.f.x.v",						\
-    /* FUNC_NAME */vwcvt_i##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
+    /* FUNC_NAME */vcvt_i##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
@@ -2058,7 +2058,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.f.f.v",						\
-    /* FUNC_NAME */vwcvt_f##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
+    /* FUNC_NAME */vcvt_f##SEW##tof##WSEW##_v_##SEW##m##LMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
@@ -2071,7 +2071,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.xu.f.w",					\
-    /* FUNC_NAME */vncvt_f##WSEW##toui##SEW##_v_##WSEW##m##WLMUL,	\
+    /* FUNC_NAME */vcvt_f##WSEW##toui##SEW##_v_##WSEW##m##WLMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
@@ -2080,7 +2080,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.x.f.w",						\
-    /* FUNC_NAME */vncvt_f##WSEW##toi##SEW##_v_##WSEW##m##WLMUL,	\
+    /* FUNC_NAME */vcvt_f##WSEW##toi##SEW##_v_##WSEW##m##WLMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
@@ -2089,7 +2089,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.f.xu.w",					\
-    /* FUNC_NAME */vncvt_ui##WSEW##tof##SEW##_v_##WSEW##m##WLMUL,	\
+    /* FUNC_NAME */vcvt_ui##WSEW##tof##SEW##_v_##WSEW##m##WLMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##WSEW##m##WLMUL##_t,				\
@@ -2098,7 +2098,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.f.x.w",						\
-    /* FUNC_NAME */vncvt_i##WSEW##tof##SEW##_v_##WSEW##m##WLMUL,	\
+    /* FUNC_NAME */vcvt_i##WSEW##tof##SEW##_v_##WSEW##m##WLMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
@@ -2107,7 +2107,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.f.f.w",						\
-    /* FUNC_NAME */vncvt_f##WSEW##tof##SEW##_v_##WSEW##m##WLMUL,	\
+    /* FUNC_NAME */vcvt_f##WSEW##tof##SEW##_v_##WSEW##m##WLMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
@@ -2116,7 +2116,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.rod.f.f.w",					\
-    /* FUNC_NAME */vncvt_rod_f##WSEW##tof##SEW##_v_##WSEW##m##WLMUL,	\
+    /* FUNC_NAME */vcvt_rod_f##WSEW##tof##SEW##_v_##WSEW##m##WLMUL,	\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\

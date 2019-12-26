@@ -15,7 +15,7 @@
     mask = vset_bool##MLEN ();					\
     vx = vload_float##WEM(x);						\
     vy = vload_int##EM(y);						\
-    vy = vncvt_f##WSEW##toi##SEW##_v_##WEM##_mask (mask, vy, vx);		\
+    vy = vcvt_f##WSEW##toi##SEW##_v_##WEM##_mask (mask, vy, vx);		\
     vstore_int##EM(y, vy);						\
   }									\
   void rvvcvtfui##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
@@ -27,7 +27,7 @@
     mask = vset_bool##MLEN ();					\
     vx = vload_float##WEM(x);						\
     vy = vload_uint##EM(y);						\
-    vy = vncvt_f##WSEW##toui##SEW##_v_##WEM##_mask (mask, vy, vx);		\
+    vy = vcvt_f##WSEW##toui##SEW##_v_##WEM##_mask (mask, vy, vx);		\
     vstore_uint##EM(y, vy);						\
   }									\
   void rvvcvtif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
@@ -39,7 +39,7 @@
     mask = vset_bool##MLEN ();					\
     vy = vload_int##WEM(y);						\
     vx = vload_float##EM(x);						\
-    vx = vncvt_i##WSEW##tof##SEW##_v_##WEM##_mask (mask, vx, vy);		\
+    vx = vcvt_i##WSEW##tof##SEW##_v_##WEM##_mask (mask, vx, vy);		\
     vstore_float##EM(x, vx);						\
   }									\
   void rvvcvtuif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
@@ -51,7 +51,7 @@
     mask = vset_bool##MLEN ();					\
     vy = vload_uint##WEM(y);						\
     vx = vload_float##EM(x);						\
-    vx = vncvt_ui##WSEW##tof##SEW##_v_##WEM##_mask (mask, vx, vy);		\
+    vx = vcvt_ui##WSEW##tof##SEW##_v_##WEM##_mask (mask, vx, vy);		\
     vstore_float##EM(x, vx);						\
   }\
   void rvvcvtff##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
@@ -63,7 +63,7 @@
     mask = vset_bool##MLEN ();					\
     vy = vload_float##WEM(y);						\
     vx = vload_float##EM(x);						\
-    vx = vncvt_f##WSEW##tof##SEW##_v_##WEM##_mask (mask, vx, vy);		\
+    vx = vcvt_f##WSEW##tof##SEW##_v_##WEM##_mask (mask, vx, vy);		\
     vstore_float##EM(x, vx);						\
   }									\
   void rvvcvtrff##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
@@ -75,7 +75,7 @@
     mask = vset_bool##MLEN ();					\
     vy = vload_float##WEM(y);						\
     vx = vload_float##EM(x);						\
-    vx = vncvt_rod_f##WSEW##tof##SEW##_v_##WEM##_mask (mask, vx, vy);	\
+    vx = vcvt_rod_f##WSEW##tof##SEW##_v_##WEM##_mask (mask, vx, vy);	\
     vstore_float##EM(x, vx);						\
   }
 
