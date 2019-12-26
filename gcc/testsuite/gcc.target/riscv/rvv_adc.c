@@ -11,11 +11,11 @@
   void vadc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     v##VCLASS##EM##_t vx, vy;                                                \
     vbool##MLEN##_t carryin;                                                 \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
-    carryin = rvv_set_bool##MLEN ();                                          \
-    vy = rvv_adc_vvm_##VCLASS##EM (vx, vy, carryin);                            \
-    rvv_se_##VCLASS##EM(y, vy);                                                  \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
+    carryin = vset_bool##MLEN ();                                          \
+    vy = vadc_vvm_##VCLASS##EM (vx, vy, carryin);                            \
+    vse_##VCLASS##EM(y, vy);                                                  \
   }
 
 RVV_INT_TEST(VADC)

@@ -9,7 +9,7 @@
    the e and m value.  */
 #define VSETVLMAX(STYPE, VCLASS, EM, EMONE, MLEN)			\
   size_t vlmax##VCLASS##EM(size_t n, STYPE *x, STYPE *y) {		\
-    return rvv_setvlmax_##EM  ();					\
+    return vsetvlmax_##EM  ();					\
   }
 
 RVV_INT_REDUC_TEST(VSETVLMAX)

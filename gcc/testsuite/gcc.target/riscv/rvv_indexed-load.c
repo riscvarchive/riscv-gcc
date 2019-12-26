@@ -13,11 +13,11 @@
     v##VCLASS##EM##_t vx, vy, vz;                                           \
     vuint##EM##_t vindex;                                              \
     vbool##MLEN##_t mask;                                                   \
-    vindex = rvv_le_uint##EM(index);                                      \
-    vx = rvv_lxe_##VCLASS##EM(x, vindex);                                      \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
+    vindex = vle_uint##EM(index);                                      \
+    vx = vlxe_##VCLASS##EM(x, vindex);                                      \
+    vy = vle_##VCLASS##EM(y);                                               \
     vz = vx + vy;                                                              \
-    rvv_se_##VCLASS##EM(x, vz);                                                \
+    vse_##VCLASS##EM(x, vz);                                                \
   }
 
 #define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
@@ -26,18 +26,18 @@
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
     vuint##EM##_t vindex;                                         \
-    vindex = rvv_le_uint##EM(index);                                 \
-    vx = rvv_lx##NTYPE_LETTER##_int##EM(y, vindex);                       \
-    rvv_se_int##EM(x, vx);                                                \
+    vindex = vle_uint##EM(index);                                 \
+    vx = vlx##NTYPE_LETTER##_int##EM(y, vindex);                       \
+    vse_int##EM(x, vx);                                                \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z, u##STYPE *index) { \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
     vuint##EM##_t vindex;                                         \
-    vindex = rvv_le_uint##EM(index);                                 \
-    vx = rvv_lx##NTYPE_LETTER##_uint##EM(y, vindex);                      \
-    rvv_se_uint##EM(x, vx);                                               \
+    vindex = vle_uint##EM(index);                                 \
+    vx = vlx##NTYPE_LETTER##_uint##EM(y, vindex);                      \
+    vse_uint##EM(x, vx);                                               \
   }
 
 

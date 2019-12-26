@@ -9,64 +9,64 @@
   void test_rgather_sv##VCLASS##EM (STYPE *x, u##STYPE *y, long s) {\
     v##VCLASS##EM##_t vx;					\
     vu##VCLASS##EM##_t vy;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vy = rvv_le_u##VCLASS##EM(y);				\
-    vx = rvv_rgather_vv_##VCLASS##EM(vx, vy);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vy = vle_u##VCLASS##EM(y);				\
+    vx = vrgather_vv_##VCLASS##EM(vx, vy);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_sx##VCLASS##EM (STYPE *x, long s) {		\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_rgather_vs_##VCLASS##EM(vx, s);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vrgather_vs_##VCLASS##EM(vx, s);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_si##VCLASS##EM (STYPE *x, long s) {		\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_rgather_vs_##VCLASS##EM(vx, 11);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vrgather_vs_##VCLASS##EM(vx, 11);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_svu##VCLASS##EM (u##STYPE *x, u##STYPE *y, long s) {\
     vu##VCLASS##EM##_t vx;					\
     vu##VCLASS##EM##_t vy;					\
-    vx = rvv_le_u##VCLASS##EM(x);				\
-    vy = rvv_le_u##VCLASS##EM(y);				\
-    vx = rvv_rgather_vv_u##VCLASS##EM(vx, vy);			\
-    rvv_se_u##VCLASS##EM(x, vx);					\
+    vx = vle_u##VCLASS##EM(x);				\
+    vy = vle_u##VCLASS##EM(y);				\
+    vx = vrgather_vv_u##VCLASS##EM(vx, vy);			\
+    vse_u##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_sxu##VCLASS##EM (u##STYPE *x, long s) {		\
     vu##VCLASS##EM##_t vx;					\
-    vx = rvv_le_u##VCLASS##EM(x);				\
-    vx = rvv_rgather_vs_u##VCLASS##EM(vx, s);			\
-    rvv_se_u##VCLASS##EM(x, vx);					\
+    vx = vle_u##VCLASS##EM(x);				\
+    vx = vrgather_vs_u##VCLASS##EM(vx, s);			\
+    vse_u##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_siu##VCLASS##EM (u##STYPE *x, long s) {		\
     vu##VCLASS##EM##_t vx;					\
-    vx = rvv_le_u##VCLASS##EM(x);				\
-    vx = rvv_rgather_vs_u##VCLASS##EM(vx, 11);			\
-    rvv_se_u##VCLASS##EM(x, vx);					\
+    vx = vle_u##VCLASS##EM(x);				\
+    vx = vrgather_vs_u##VCLASS##EM(vx, 11);			\
+    vse_u##VCLASS##EM(x, vx);					\
   }
 
 #define RVV_TEST_FLOAT_RGATHER(STYPE, VCLASS, EM, MLEN, ISTYPE, IVCLASS)\
   void test_rgather_sv##VCLASS##EM (STYPE *x, u##ISTYPE *y, long s) {\
     v##VCLASS##EM##_t vx;					\
     vu##IVCLASS##EM##_t vy;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vy = rvv_le_u##IVCLASS##EM(y);				\
-    vx = rvv_rgather_vv_##VCLASS##EM(vx, vy);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vy = vle_u##IVCLASS##EM(y);				\
+    vx = vrgather_vv_##VCLASS##EM(vx, vy);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_sx##VCLASS##EM (STYPE *x, long s) {		\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_rgather_vs_##VCLASS##EM(vx, s);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vrgather_vs_##VCLASS##EM(vx, s);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_rgather_si##VCLASS##EM (STYPE *x, long s) {		\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_rgather_vs_##VCLASS##EM(vx, 11);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vrgather_vs_##VCLASS##EM(vx, 11);			\
+    vse_##VCLASS##EM(x, vx);					\
   }
 
 RVV_INT_TEST (RVV_TEST_RGATHER)

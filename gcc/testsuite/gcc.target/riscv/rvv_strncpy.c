@@ -48,25 +48,25 @@ char *strncpy(char *dst, const char *src, size_t n) {
   int zero_find = -1;
   size_t vl;
   while (zero_find < 0) {
-    rvv_setvlmax_8m1();
+    vsetvlmax_8m1();
     vuint8m1_t value;
-    value = rvv_leff_uint8m1(src);
-    size_t vl = rvv_readvl();
+    value = vleff_uint8m1(src);
+    size_t vl = vreadvl();
     vbool8_t cmp;
-    cmp = rvv_seq_vs_uint8m1(value, 0);
-    zero_find = rvv_first_m_bool8(cmp); // if no zero than return -1
+    cmp = vseq_vs_uint8m1(value, 0);
+    zero_find = vfirst_m_bool8(cmp); // if no zero than return -1
     vbool8_t mask;
-    mask = rvv_sif_m_bool8(cmp); // set mask up to and including zero byte
-    rvv_se_uint8m1_mask(dst, mask, value);
+    mask = vsif_m_bool8(cmp); // set mask up to and including zero byte
+    vse_uint8m1_mask(dst, mask, value);
     n -= vl;
     src += vl;
     dst += vl;
   }
   // handle zero tail
-  rvv_setvlmax_8m1();
+  vsetvlmax_8m1();
   vuint8m8_t zeros;
-  zeros = rvv_splat_s_uint8m8(0);
-  for (; vl = rvv_setvl_8m8(n);) {
+  zeros = vsplat_s_uint8m8(0);
+  for (; vl = vsetvl_8m8(n);) {
     *(vuint8m8_t *)dst = zeros;
     n -= vl;
     dst += vl;

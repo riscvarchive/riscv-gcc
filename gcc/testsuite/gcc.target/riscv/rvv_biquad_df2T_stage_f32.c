@@ -107,16 +107,16 @@ void riscv_biquad_df2T_stage_f32(const float32_t *pIn, float32_t *pOut,
   // b0 = pCoeffs[0];
   // b1 = pCoeffs[1];
   // b2 = pCoeffs[2];
-  size_t vl = rvv_setvl_32m1(3); // set vl = 3
+  size_t vl = vsetvl_32m1(3); // set vl = 3
   vfloat32m1_t v_coef_b;
-  v_coef_b = rvv_le_float32m1(pCoeffs);
+  v_coef_b = vle_float32m1(pCoeffs);
   pCoeffs += vl;
 
   // a1 = pCoeffs[3];
   // a2 = pCoeffs[4];
-  vl = rvv_setvl_32m1(2); // set vl = 2
+  vl = vsetvl_32m1(2); // set vl = 2
   vfloat32m1_t v_coef_a;
-  v_coef_a = rvv_le_float32m1(pCoeffs);
+  v_coef_a = vle_float32m1(pCoeffs);
   pCoeffs += vl;
 
   /*Reading the state values */
@@ -130,27 +130,27 @@ void riscv_biquad_df2T_stage_f32(const float32_t *pIn, float32_t *pOut,
     float32_t xn = *pIn++;
 
     // acc1 = (b0 * Xn1) + d1;
-    rvv_setvl_32m1(3); // set vl = 3
-    v_d = rvv_macc_sv_float32m1(
+    vsetvl_32m1(3); // set vl = 3
+    v_d = vmacc_sv_float32m1(
         v_d, xn,
         v_coef_b); // v_d = {b0 * x[n] + d1, b1 * x[n] + d2, b2 * x[n] + 0x0}
-    float acc1 = rvv_mv_v_float32m1(v_d); // acc1 = v_d[0] = b0 * x[n] + d1
+    float acc1 = vmv_v_float32m1(v_d); // acc1 = v_d[0] = b0 * x[n] + d1
 
     /* Store the result in the accumulator in the destination buffer. */
     *pOut++ = acc1;
 
     // I'm not sure why does need to use another vector register
     vfloat32m1_t v_slide;
-    v_slide = rvv_copy_v_float32m1(v_d);
+    v_slide = vcopy_v_float32m1(v_d);
 
-    v_d = rvv_slidedown_vs_float32m1(
+    v_d = vslidedown_vs_float32m1(
         v_slide,
         0x1); // v_d = {b1 * x[n] + d2, b2 * x[n] + 0x0, nan}
 
     // d1 = (b1 * Xn1) + (a1 * acc1) + d2;
     // d2 = (b2 * Xn1) + (a2 * acc1);
-    rvv_setvl_32m1(2); // set vl = 2
-    v_d = rvv_macc_sv_float32m1(v_d, acc1,
+    vsetvl_32m1(2); // set vl = 2
+    v_d = vmacc_sv_float32m1(v_d, acc1,
                                 v_coef_a); // v_d = {b1 * x[n] + d2 + a1 * acc1,
                                            // b2 * x[n] + 0x0 + a2 * acc1}
 

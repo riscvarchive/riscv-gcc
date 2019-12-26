@@ -12,10 +12,10 @@
                                STYPE *y, STYPE z) {                            \
     v##VCLASS##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                                   \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_leff_##VCLASS##EM(y);                                             \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vleff_##VCLASS##EM(y);                                             \
     vz = vx + vy;                                                              \
-    rvv_se_##VCLASS##EM(x, vz);                                                \
+    vse_##VCLASS##EM(x, vz);                                                \
   }
 
 #define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
@@ -23,15 +23,15 @@
                                NSTYPE *y, STYPE z) {                      \
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
-    vx = rvv_l##NTYPE_LETTER##ff_int##EM(y);                              \
-    rvv_se_int##EM(x, vx);                                                \
+    vx = vl##NTYPE_LETTER##ff_int##EM(y);                              \
+    vse_int##EM(x, vx);                                                \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z) {                  \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
-    vx = rvv_l##NTYPE_LETTER##ff_uint##EM(y);                             \
-    rvv_se_uint##EM(x, vx);                                               \
+    vx = vl##NTYPE_LETTER##ff_uint##EM(y);                             \
+    vse_uint##EM(x, vx);                                               \
   }
 
 

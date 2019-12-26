@@ -8,14 +8,14 @@
 #define RVV_TEST_MV_SV_VS(STYPE, VCLASS, EM, MLEN)		\
   STYPE test_mv_xs##VCLASS##EM (STYPE *x) {			\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    return rvv_mv_v_##VCLASS##EM(vx);				\
+    vx = vle_##VCLASS##EM(x);				\
+    return vmv_v_##VCLASS##EM(vx);				\
   }								\
   void test_mv_sx##VCLASS##EM (STYPE *x, STYPE s) {		\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_mv_s_##VCLASS##EM(vx, s);				\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vmv_s_##VCLASS##EM(vx, s);				\
+    vse_##VCLASS##EM(x, vx);					\
   }
 
 RVV_INT_TEST (RVV_TEST_MV_SV_VS)

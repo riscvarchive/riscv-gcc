@@ -42,12 +42,12 @@ void segmm_nn(size_t size_n, size_t size_m, size_t size_k,
     j = size_n;
     const double *bnp = b;
     double *cnp = c;
-    for (; vl = rvv_setvl_64m1(j);) {
+    for (; vl = vsetvl_64m1(j);) {
       const double *akp = a;
       const double *bkp = bnp;
       vec_c = *(vfloat64m1_t *)cnp;
       for (k = 0; k < size_k; ++k) {
-        vec_c = rvv_macc_sv_float64m1(vec_c, *akp, *(vfloat64m1_t *)bkp);
+        vec_c = vmacc_sv_float64m1(vec_c, *akp, *(vfloat64m1_t *)bkp);
         bkp += ldb;
         akp++;
       }

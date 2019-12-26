@@ -12,11 +12,11 @@
                                STYPE *y, STYPE z) {                            \
     v##VCLASS##EM##_t vx, vy, vz;                                            \
     vbool##MLEN##_t mask;                                                    \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
     vz = vx + vy;                                                              \
-    rvv_sse_##VCLASS##EM##_mask(x, stride, mask, vz);                          \
+    vsse_##VCLASS##EM##_mask(x, stride, mask, vz);                          \
   }
 
 #define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
@@ -24,17 +24,17 @@
                                NSTYPE *y, STYPE z) {                      \
     vint##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                              \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_int##EM(x);                                               \
-    rvv_ss##NTYPE_LETTER##_int##EM##_mask(y, stride, mask, vx);                        \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_int##EM(x);                                               \
+    vss##NTYPE_LETTER##_int##EM##_mask(y, stride, mask, vx);                        \
   }                                                                       \
   void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
                                 u##NSTYPE *y, STYPE z) {                  \
     vuint##EM##_t vx, vy, vz;                                          \
     vbool##MLEN##_t mask;                                              \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_uint##EM(x);                                              \
-    rvv_ss##NTYPE_LETTER##_uint##EM##_mask(y, stride, mask, vx);                       \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_uint##EM(x);                                              \
+    vss##NTYPE_LETTER##_uint##EM##_mask(y, stride, mask, vx);                       \
   }
 
 

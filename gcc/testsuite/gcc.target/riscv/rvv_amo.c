@@ -8,11 +8,11 @@
 #define RVV_TEST_AMO(STYPE, VCLASS, EM, MLEN, OP)		\
   void test_amo##OP##_##VCLASS##EM (STYPE *x, STYPE *y) {	\
     v##VCLASS##EM##_t vx, vy;				\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vy = rvv_le_##VCLASS##EM(y);				\
-    vx = rvv_amo##OP##_wd_v_##VCLASS##EM(y, vx, vy);		\
-    rvv_amo##OP##_v_##VCLASS##EM(y, vx, vy);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vy = vle_##VCLASS##EM(y);				\
+    vx = vamo##OP##_wd_v_##VCLASS##EM(y, vx, vy);		\
+    vamo##OP##_v_##VCLASS##EM(y, vx, vy);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
 
 RVV_INT_TEST_ARG (RVV_TEST_AMO, swap)

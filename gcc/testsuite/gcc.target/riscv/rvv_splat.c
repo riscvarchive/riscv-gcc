@@ -8,8 +8,8 @@
 #define RVV_TEST_SPLAT(STYPE, VCLASS, EM, MLEN)			\
   void test_splat##VCLASS##EM (STYPE *x, STYPE s) {		\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_splat_s_##VCLASS##EM(s);				\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vsplat_s_##VCLASS##EM(s);				\
+    vse_##VCLASS##EM(x, vx);					\
   }
 
 RVV_INT_TEST (RVV_TEST_SPLAT)

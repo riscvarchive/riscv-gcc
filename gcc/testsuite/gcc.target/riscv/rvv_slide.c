@@ -8,42 +8,42 @@
 #define RVV_TEST_SLIDEUPDOWN(STYPE, VCLASS, EM, MLEN)		\
   void test_slideup_sx##VCLASS##EM (STYPE *x, long s) {		\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_slideup_vs_##VCLASS##EM(vx, s);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vslideup_vs_##VCLASS##EM(vx, s);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_slidedown_sx##VCLASS##EM (STYPE *x, long s) {	\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_slidedown_vs_##VCLASS##EM(vx, s);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vslidedown_vs_##VCLASS##EM(vx, s);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_slideup_si##VCLASS##EM (STYPE *x, long s) {		\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_slideup_vs_##VCLASS##EM(vx, 11);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vslideup_vs_##VCLASS##EM(vx, 11);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_slidedown_si##VCLASS##EM (STYPE *x, long s) {	\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_slidedown_vs_##VCLASS##EM(vx, 11);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vslidedown_vs_##VCLASS##EM(vx, 11);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
 
 
 #define RVV_TEST_SLIDE1UPDOWN(STYPE, VCLASS, EM, MLEN)		\
   void test_slide1up_sx##VCLASS##EM (STYPE *x, STYPE s) {	\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_slide1up_vs_##VCLASS##EM(vx, s);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vslide1up_vs_##VCLASS##EM(vx, s);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_slide1down_sx##VCLASS##EM (STYPE *x, STYPE s) {	\
     v##VCLASS##EM##_t vx;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vx = rvv_slide1down_vs_##VCLASS##EM(vx, s);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vx = vslide1down_vs_##VCLASS##EM(vx, s);			\
+    vse_##VCLASS##EM(x, vx);					\
   }
 
 RVV_INT_TEST (RVV_TEST_SLIDE1UPDOWN)

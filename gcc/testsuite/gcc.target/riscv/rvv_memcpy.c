@@ -28,7 +28,7 @@
 
 void *memcpy(void *dest, const void *src, size_t n) {
   size_t vl;
-  for (; vl = rvv_setvl_8m8(n);) {
+  for (; vl = vsetvl_8m8(n);) {
     *(vint8m8_t *)dest = *(vint8m8_t *)src;
     n -= vl;
     src += vl;

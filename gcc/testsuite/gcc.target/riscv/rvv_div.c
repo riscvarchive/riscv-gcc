@@ -10,11 +10,11 @@
 #define VDIV(STYPE, VCLASS, EM, MLEN)                                          \
   void vdiv##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     v##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
     vy = vx / vy;                                                              \
     vy = vy / z;                                                               \
-    rvv_se_##VCLASS##EM(y, vy);                                                \
+    vse_##VCLASS##EM(y, vy);                                                \
   }
 
 

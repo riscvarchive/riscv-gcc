@@ -10,13 +10,13 @@
 #define VMAXMIN(STYPE, VCLASS, EM, MLEN)                                       \
   void vmaxmin##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {            \
     v##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvv_le_##VCLASS##EM(x);                                                 \
-    vy = rvv_le_##VCLASS##EM(y);                                                 \
-    vy = rvv_max_vv_##VCLASS##EM (vx, vy);                                     \
-    vy = rvv_max_vs_##VCLASS##EM (vy, z);                                      \
-    vy = rvv_min_vv_##VCLASS##EM (vx, vy);                                     \
-    vy = rvv_min_vs_##VCLASS##EM (vy, z);                                      \
-    rvv_se_##VCLASS##EM(y, vy);                                                  \
+    vx = vle_##VCLASS##EM(x);                                                 \
+    vy = vle_##VCLASS##EM(y);                                                 \
+    vy = vmax_vv_##VCLASS##EM (vx, vy);                                     \
+    vy = vmax_vs_##VCLASS##EM (vy, z);                                      \
+    vy = vmin_vv_##VCLASS##EM (vx, vy);                                     \
+    vy = vmin_vs_##VCLASS##EM (vy, z);                                      \
+    vse_##VCLASS##EM(y, vy);                                                  \
   }
 
 /* XXX: integer intrinsics have not finished */

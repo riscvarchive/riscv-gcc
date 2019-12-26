@@ -12,22 +12,22 @@
     v##VCLASS##EM##_t vx, vy;                                               \
     v##VCLASS##WEM##_t vz;                                                  \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
-    vz = rvv_le_##VCLASS##WEM(z);                                              \
-    vz = rvv_w##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                \
-    rvv_se_##VCLASS##WEM(z, vz);                                               \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
+    vz = vle_##VCLASS##WEM(z);                                              \
+    vz = vw##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                \
+    vse_##VCLASS##WEM(z, vz);                                               \
   }                                                                            \
   void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {         \
     v##VCLASS##EM##_t vx, vy;                                               \
     v##VCLASS##WEM##_t vz;                                                  \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vz = rvv_le_##VCLASS##WEM(z);                                              \
-    vz = rvv_w##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);                 \
-    rvv_se_##VCLASS##WEM(z, vz);                                               \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vz = vle_##VCLASS##WEM(z);                                              \
+    vz = vw##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);                 \
+    vse_##VCLASS##WEM(z, vz);                                               \
   }
 
 #define VWADDSUBU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                    \
@@ -35,22 +35,22 @@
     v##VCLASS##EM##_t vx, vy;                                              \
     v##VCLASS##WEM##_t vz;                                                 \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                              \
-    vy = rvv_le_##VCLASS##EM(y);                                              \
-    vz = rvv_le_##VCLASS##WEM(z);                                             \
-    vz = rvv_w##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);              \
-    rvv_se_##VCLASS##WEM(z, vz);                                              \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                              \
+    vy = vle_##VCLASS##EM(y);                                              \
+    vz = vle_##VCLASS##WEM(z);                                             \
+    vz = vw##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);              \
+    vse_##VCLASS##WEM(z, vz);                                              \
   }                                                                            \
   void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
     v##VCLASS##EM##_t vx, vy;                                              \
     v##VCLASS##WEM##_t vz;                                                 \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                              \
-    vz = rvv_le_##VCLASS##WEM(z);                                             \
-    vz = rvv_w##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);               \
-    rvv_se_##VCLASS##WEM(z, vz);                                              \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                              \
+    vz = vle_##VCLASS##WEM(z);                                             \
+    vz = vw##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);               \
+    vse_##VCLASS##WEM(z, vz);                                              \
   }
 
 #define VWMULSU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP)                      \
@@ -59,46 +59,46 @@
     vu##VCLASS##EM##_t vy;                                                  \
     v##VCLASS##WEM##_t vz;                                                  \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_u##VCLASS##EM(y);                                              \
-    vz = rvv_le_##VCLASS##WEM(z);                                              \
-    vz = rvv_w##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                \
-    rvv_se_##VCLASS##WEM(z, vz);                                               \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_u##VCLASS##EM(y);                                              \
+    vz = vle_##VCLASS##WEM(z);                                              \
+    vz = vw##OP##_vv_##VCLASS##EM##_mask (mask, vz, vx, vy);                \
+    vse_##VCLASS##WEM(z, vz);                                               \
   }                                                                            \
   void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z) {      \
     v##VCLASS##EM##_t vx;                                                   \
     vu##VCLASS##EM##_t vy;                                                  \
     v##VCLASS##WEM##_t vz;                                                  \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vz = rvv_le_##VCLASS##WEM(z);                                              \
-    vz = rvv_w##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);                 \
-    rvv_se_##VCLASS##WEM(z, vz);                                               \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vz = vle_##VCLASS##WEM(z);                                              \
+    vz = vw##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);                 \
+    vse_##VCLASS##WEM(z, vz);                                               \
   }                                                                            \
   void v##OP##u##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, u##WSTYPE *z) {   \
     v##VCLASS##EM##_t vx;                                                   \
     vu##VCLASS##EM##_t vy;                                                  \
     vu##VCLASS##WEM##_t vz;                                                 \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_u##VCLASS##EM(y);                                              \
-    vz = rvv_le_u##VCLASS##WEM(z);                                             \
-    vz = rvv_w##OP##_vv_u##VCLASS##EM##_mask (mask, vz, vx, vy);               \
-    rvv_se_u##VCLASS##WEM(z, vz);                                              \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_u##VCLASS##EM(y);                                              \
+    vz = vle_u##VCLASS##WEM(z);                                             \
+    vz = vw##OP##_vv_u##VCLASS##EM##_mask (mask, vz, vx, vy);               \
+    vse_u##VCLASS##WEM(z, vz);                                              \
   }                                                                            \
   void v##OP##u##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, u##WSTYPE *z) {\
     v##VCLASS##EM##_t vx;                                                   \
     vu##VCLASS##EM##_t vy;                                                  \
     vu##VCLASS##WEM##_t vz;                                                 \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vz = rvv_le_u##VCLASS##WEM(z);                                             \
-    vz = rvv_w##OP##_vs_u##VCLASS##EM##_mask (mask, vz, vx, y);                \
-    rvv_se_u##VCLASS##WEM(z, vz);                                              \
+    mask = vset_bool##MLEN ();                                             \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vz = vle_u##VCLASS##WEM(z);                                             \
+    vz = vw##OP##_vs_u##VCLASS##EM##_mask (mask, vz, vx, y);                \
+    vse_u##VCLASS##WEM(z, vz);                                              \
   }
 
 RVV_WINT_TEST_ARG(VWADDSUB, add)

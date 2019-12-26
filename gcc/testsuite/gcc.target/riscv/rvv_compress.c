@@ -10,11 +10,11 @@
     v##VCLASS##EM##_t vx;					\
     v##VCLASS##EM##_t vy;					\
     vbool##MLEN##_t mask;					\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vy = rvv_le_##VCLASS##EM(y);				\
-    mask = rvv_set_bool##MLEN ();				\
-    vx = rvv_compress_vm_##VCLASS##EM(vx, mask);		\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_##VCLASS##EM(x);				\
+    vy = vle_##VCLASS##EM(y);				\
+    mask = vset_bool##MLEN ();				\
+    vx = vcompress_vm_##VCLASS##EM(vx, mask);		\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
 
 RVV_INT_TEST (RVV_TEST_COMPRESS)

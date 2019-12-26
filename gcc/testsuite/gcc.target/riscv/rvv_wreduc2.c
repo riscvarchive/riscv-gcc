@@ -12,37 +12,37 @@
     v##VCLASS##WEMONE##_t vx;						\
     v##VCLASS##EM##_t vy, vz;						\
     vbool##MLEN##_t mask;						\
-    vx = rvv_le_##VCLASS##WEMONE (x);					\
-    vy = rvv_le_##VCLASS##EM (y);					\
-    vz = rvv_le_##VCLASS##EM (z);					\
-    mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
-    vx = rvv_wredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
-    rvv_se_##VCLASS##WEMONE (x, vx);					\
+    vx = vle_##VCLASS##WEMONE (x);					\
+    vy = vle_##VCLASS##EM (y);					\
+    vz = vle_##VCLASS##EM (z);					\
+    mask = vslt_vv_##VCLASS##EM (vy, vz);				\
+    vx = vwredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
+    vse_##VCLASS##WEMONE (x, vx);					\
   }
 #define VWREDUCU(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
     v##VCLASS##WEMONE##_t vx;						\
     v##VCLASS##EM##_t vy, vz;						\
     vbool##MLEN##_t mask;						\
-    vx = rvv_le_##VCLASS##WEMONE (x);					\
-    vy = rvv_le_##VCLASS##EM (y);					\
-    vz = rvv_le_##VCLASS##EM (z);					\
-    mask = rvv_slt_vv_##VCLASS##EM (vy, vz);				\
-    vx = rvv_wredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
-    rvv_se_##VCLASS##WEMONE (x, vx);					\
+    vx = vle_##VCLASS##WEMONE (x);					\
+    vy = vle_##VCLASS##EM (y);					\
+    vz = vle_##VCLASS##EM (z);					\
+    mask = vslt_vv_##VCLASS##EM (vy, vz);				\
+    vx = vwredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
+    vse_##VCLASS##WEMONE (x, vx);					\
   }
 #define VFWREDUC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEMONE)		\
   void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
     v##VCLASS##WEMONE##_t vx;						\
     v##VCLASS##EM##_t vy, vz;						\
     vbool##MLEN##_t mask;						\
-    vx = rvv_le_##VCLASS##WEMONE (x);					\
-    vy = rvv_le_##VCLASS##EM (y);					\
-    vz = rvv_le_##VCLASS##EM (z);					\
-    mask = rvv_set_bool##MLEN ();					\
-    vx = rvv_wredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
-    vx = rvv_wredosum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
-    rvv_se_##VCLASS##WEMONE (x, vx);					\
+    vx = vle_##VCLASS##WEMONE (x);					\
+    vy = vle_##VCLASS##EM (y);					\
+    vz = vle_##VCLASS##EM (z);					\
+    mask = vset_bool##MLEN ();					\
+    vx = vwredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
+    vx = vwredosum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
+    vse_##VCLASS##WEMONE (x, vx);					\
   }
 
 RVV_WINT_REDUC_TEST(VWREDUC)

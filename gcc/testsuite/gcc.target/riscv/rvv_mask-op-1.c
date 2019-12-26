@@ -13,40 +13,40 @@
   void vm##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {            \
     v##VCLASS##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
-    vz = rvv_le_##VCLASS##EM(z);                                               \
-    mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
-    mask2 = rvv_slt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
+    vz = vle_##VCLASS##EM(z);                                               \
+    mask1 = vslt_vv_##VCLASS##EM(vx, vy);                                   \
+    mask2 = vslt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
     mask3 = mask1 OPERATOR mask2;                                              \
-    vx = rvv_add_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
-    rvv_se_##VCLASS##EM(x, vx);                                                \
+    vx = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
+    vse_##VCLASS##EM(x, vx);                                                \
   }                                                                            \
   void vm##OP##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {         \
     v##VCLASS##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
-    vz = rvv_le_##VCLASS##EM(z);                                               \
-    mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
-    mask2 = rvv_slt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
-    mask3 = rvv_##OP##_mm_bool##MLEN(mask1, mask2);                            \
-    vx = rvv_add_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
-    rvv_se_##VCLASS##EM(x, vx);                                                \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
+    vz = vle_##VCLASS##EM(z);                                               \
+    mask1 = vslt_vv_##VCLASS##EM(vx, vy);                                   \
+    mask2 = vslt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
+    mask3 = v##OP##_mm_bool##MLEN(mask1, mask2);                            \
+    vx = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
+    vse_##VCLASS##EM(x, vx);                                                \
   }
 
 #define VMNBIN(STYPE, VCLASS, EM, MLEN, OP)                                    \
   void vm##OP##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {         \
     v##VCLASS##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
-    vz = rvv_le_##VCLASS##EM(z);                                               \
-    mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
-    mask2 = rvv_slt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
-    mask3 = rvv_##OP##_mm_bool##MLEN(mask1, mask2);                            \
-    vx = rvv_add_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
-    rvv_se_##VCLASS##EM(x, vx);                                                \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
+    vz = vle_##VCLASS##EM(z);                                               \
+    mask1 = vslt_vv_##VCLASS##EM(vx, vy);                                   \
+    mask2 = vslt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
+    mask3 = v##OP##_mm_bool##MLEN(mask1, mask2);                            \
+    vx = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
+    vse_##VCLASS##EM(x, vx);                                                \
   }
 
 
@@ -54,14 +54,14 @@
   void vmnot##VCLASS##EM##2(size_t n, STYPE *x, STYPE *y, STYPE *z) {          \
     v##VCLASS##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask1, mask2, mask3;                                    \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
-    vz = rvv_le_##VCLASS##EM(z);                                               \
-    mask1 = rvv_slt_vv_##VCLASS##EM(vx, vy);                                   \
-    mask2 = rvv_slt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
-    mask3 = rvv_not_m_bool##MLEN(mask2);                                       \
-    vx = rvv_add_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
-    rvv_se_##VCLASS##EM(x, vx);                                                \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
+    vz = vle_##VCLASS##EM(z);                                               \
+    mask1 = vslt_vv_##VCLASS##EM(vx, vy);                                   \
+    mask2 = vslt_vv_##VCLASS##EM##_mask(mask1, mask1, vx, vz);              \
+    mask3 = vnot_m_bool##MLEN(mask2);                                       \
+    vx = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
+    vse_##VCLASS##EM(x, vx);                                                \
   }
 
 RVV_INT_TEST_ARG(VMBIN, and, &)

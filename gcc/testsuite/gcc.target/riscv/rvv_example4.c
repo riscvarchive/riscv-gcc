@@ -28,20 +28,20 @@ void foo3() {
   for (int i = 0; i < N; ++i) {
     for (int j = 0; j < N; ++j) {
       k = N;
-      rvv_setvlmax_64m1();
-      vec_c = rvv_splat_s_float64m1(0.0); /* splat scalr to vec_c */
-      for (; vl = rvv_setvl_64m1(k);) {
+      vsetvlmax_64m1();
+      vec_c = vsplat_s_float64m1(0.0); /* splat scalr to vec_c */
+      for (; vl = vsetvl_64m1(k);) {
         vec_a = *(vfloat64m1_t *)&A[i][N - k];
         vec_b = *(vfloat64m1_t *)&B[N - k][j];
         vec_c = vec_a * vec_b + vec_c;
         k -= vl;
       }
-      rvv_setvlmax_64m1();
+      vsetvlmax_64m1();
       vec_sum =
-          rvv_mv_s_float64m1(vec_sum, 0.0); /* move scalar to vec_sum[0] */
-      vec_sum = rvv_redsum_vs_float64m1(
+          vmv_s_float64m1(vec_sum, 0.0); /* move scalar to vec_sum[0] */
+      vec_sum = vredsum_vs_float64m1(
           vec_c, vec_sum); /* vd[0] =  sum( vec_sum[0] , vec_c[*] ) */
-      C[i][j] = rvv_mv_v_float64m1(vec_sum); /* rd = vec_sum[0] */
+      C[i][j] = vmv_v_float64m1(vec_sum); /* rd = vec_sum[0] */
     }
   }
 }

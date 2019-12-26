@@ -11,40 +11,40 @@
   {								\
     v##VCLASS##EM##_t vx;					\
     vu##VCLASS##EM##_t vy;					\
-    vx = rvv_le_int##EM(x);					\
-    vy = rvv_le_uint##EM(y);					\
-    vx = rvv_mulhsu_vv_##VCLASS##EM (vx, vy);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_int##EM(x);					\
+    vy = vle_uint##EM(y);					\
+    vx = vmulhsu_vv_##VCLASS##EM (vx, vy);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void rvvmulhsu##VCLASS##EM##_uvv(size_t n, STYPE *x,		\
 				 u##STYPE *y, STYPE z)		\
   {								\
     v##VCLASS##EM##_t vx;					\
     vu##VCLASS##EM##_t vy;					\
-    vx = rvv_le_int##EM(x);					\
-    vy = rvv_le_uint##EM(y);					\
-    vy = rvv_mulhsu_vv_u##VCLASS##EM (vx, vy);			\
-    rvv_se_u##VCLASS##EM(y, vy);				\
+    vx = vle_int##EM(x);					\
+    vy = vle_uint##EM(y);					\
+    vy = vmulhsu_vv_u##VCLASS##EM (vx, vy);			\
+    vse_u##VCLASS##EM(y, vy);				\
   }								\
   void rvvmulhsu##VCLASS##EM##_svx(size_t n, STYPE *x,		\
 				 u##STYPE *y, STYPE z)		\
   {								\
     v##VCLASS##EM##_t vx;					\
     vu##VCLASS##EM##_t vy;					\
-    vx = rvv_le_int##EM(x);					\
-    vy = rvv_le_uint##EM(y);					\
-    vx = rvv_mulhsu_vs_##VCLASS##EM (vx, z);			\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    vx = vle_int##EM(x);					\
+    vy = vle_uint##EM(y);					\
+    vx = vmulhsu_vs_##VCLASS##EM (vx, z);			\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void rvvmulhsu##VCLASS##EM##_uvx(size_t n, STYPE *x,		\
 				 u##STYPE *y, u##STYPE z)	\
   {								\
     v##VCLASS##EM##_t vx;					\
     vu##VCLASS##EM##_t vy;					\
-    vx = rvv_le_int##EM(x);					\
-    vy = rvv_le_uint##EM(y);					\
-    vy = rvv_mulhsu_vs_u##VCLASS##EM (vx, z);			\
-    rvv_se_u##VCLASS##EM(y, vy);				\
+    vx = vle_int##EM(x);					\
+    vy = vle_uint##EM(y);					\
+    vy = vmulhsu_vs_u##VCLASS##EM (vx, z);			\
+    vse_u##VCLASS##EM(y, vy);				\
   }
 
 RVV_INT_TEST(RVV_MULHSU_TEST)

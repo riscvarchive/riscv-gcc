@@ -40,15 +40,15 @@ void mixedwidth_mask(int8_t *a, int32_t * b, int32_t* c, size_t n) {
   size_t vl;
   vbool8_t mask;
   vint32m4_t const_one, vec_c;
-  for (; vl = rvv_setvl_8m1(n);) {
-    mask = rvv_slt_vs_int8m1(*(vint8m1_t *)a, 5);
-    const_one = rvv_splat_s_int32m4(1);
-    vec_c = rvv_le_int32m4_mask(mask, const_one /*maskedoff*/, c);
+  for (; vl = vsetvl_8m1(n);) {
+    mask = vslt_vs_int8m1(*(vint8m1_t *)a, 5);
+    const_one = vsplat_s_int32m4(1);
+    vec_c = vle_int32m4_mask(mask, const_one /*maskedoff*/, c);
     *(vint32m4_t *)b = vec_c;
     /* in Jim's test case,
      https://github.com/sifive/riscv-gcc-internal/pull/3/commits/6afe672655fb05d7472147b617edf8ef6cccc459#diff-0c8f8f39238398a98aca2cee450facc9R57
      it looks like we support below implicit operations
-     vint8m1_t const_five = rvv_splat_s_int8m1(5);
+     vint8m1_t const_five = vsplat_s_int8m1(5);
      *(vint32m4_t *)b = (*(vint8m1 *)a < const_five) ? *(vint32m4_t*)c : const_one;
      */
     a += vl;

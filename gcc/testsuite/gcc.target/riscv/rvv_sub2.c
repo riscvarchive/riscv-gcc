@@ -10,43 +10,43 @@
 #define VSUB(STYPE, VCLASS, EM, MLEN)                                          \
   void vsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     v##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvv_le_##VCLASS##EM(x);                                                 \
-    vy = rvv_le_##VCLASS##EM(y);                                                 \
-    vy = rvv_sub_vv_##VCLASS##EM (vx, vy);                                     \
-    vy = rvv_sub_vs_##VCLASS##EM (vy, z);                                      \
-    rvv_se_##VCLASS##EM(y, vy);                                                  \
-    vx = rvv_sub_vs_##VCLASS##EM (vx, 1);                                      \
-    rvv_se_##VCLASS##EM(x, vx);                                                  \
+    vx = vle_##VCLASS##EM(x);                                                 \
+    vy = vle_##VCLASS##EM(y);                                                 \
+    vy = vsub_vv_##VCLASS##EM (vx, vy);                                     \
+    vy = vsub_vs_##VCLASS##EM (vy, z);                                      \
+    vse_##VCLASS##EM(y, vy);                                                  \
+    vx = vsub_vs_##VCLASS##EM (vx, 1);                                      \
+    vse_##VCLASS##EM(x, vx);                                                  \
   }
 /* Same as above without the immediate sub.  */
 #define VSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                   \
   void vsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
     v##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvv_le_##VCLASS##EM(x);                                             \
-    vy = rvv_le_##VCLASS##EM(y);                                             \
-    vy = rvv_sub_vv_##VCLASS##EM (vx, vy);                                     \
-    vy = rvv_sub_vs_##VCLASS##EM (vy, z);                                      \
-    rvv_se_##VCLASS##EM(y, vy);                                                  \
+    vx = vle_##VCLASS##EM(x);                                             \
+    vy = vle_##VCLASS##EM(y);                                             \
+    vy = vsub_vv_##VCLASS##EM (vx, vy);                                     \
+    vy = vsub_vs_##VCLASS##EM (vy, z);                                      \
+    vse_##VCLASS##EM(y, vy);                                                  \
   }
 /* Same for reverse subtract.  */
 #define VRSUB(STYPE, VCLASS, EM, MLEN)                                         \
   void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
     v##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvv_le_##VCLASS##EM(x);                                                 \
-    vy = rvv_le_##VCLASS##EM(y);                                                 \
-    vy = rvv_rsub_vs_##VCLASS##EM (vy, z);                                     \
-    rvv_se_##VCLASS##EM(y, vy);                                                  \
-    vx = rvv_rsub_vs_##VCLASS##EM (vx, 1);                                     \
-    rvv_se_##VCLASS##EM(x, vx);                                                  \
+    vx = vle_##VCLASS##EM(x);                                                 \
+    vy = vle_##VCLASS##EM(y);                                                 \
+    vy = vrsub_vs_##VCLASS##EM (vy, z);                                     \
+    vse_##VCLASS##EM(y, vy);                                                  \
+    vx = vrsub_vs_##VCLASS##EM (vx, 1);                                     \
+    vse_##VCLASS##EM(x, vx);                                                  \
   }
 /* Same as above without the immediate for reverse subtract.  */
 #define VRSUB_NO_IMM(STYPE, VCLASS, EM, MLEN)                                  \
   void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
     v##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvv_le_##VCLASS##EM(x);                                               \
-    vy = rvv_le_##VCLASS##EM(y);                                               \
-    vy = rvv_rsub_vs_##VCLASS##EM (vy, z);                                     \
-    rvv_se_##VCLASS##EM(y, vy);                                                  \
+    vx = vle_##VCLASS##EM(x);                                               \
+    vy = vle_##VCLASS##EM(y);                                               \
+    vy = vrsub_vs_##VCLASS##EM (vy, z);                                     \
+    vse_##VCLASS##EM(y, vy);                                                  \
   }
 
 RVV_INT_TEST(VSUB)

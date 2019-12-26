@@ -9,38 +9,38 @@
   void test_slideup_sx##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
     v##VCLASS##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
-    mask = rvv_set_bool##MLEN ();				\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vy = rvv_le_##VCLASS##EM(y);				\
-    vx = rvv_slideup_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    mask = vset_bool##MLEN ();				\
+    vx = vle_##VCLASS##EM(x);				\
+    vy = vle_##VCLASS##EM(y);				\
+    vx = vslideup_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_slidedown_sx##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
     v##VCLASS##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
-    mask = rvv_set_bool##MLEN ();				\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vy = rvv_le_##VCLASS##EM(y);				\
-    vx = rvv_slidedown_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    mask = vset_bool##MLEN ();				\
+    vx = vle_##VCLASS##EM(x);				\
+    vy = vle_##VCLASS##EM(y);				\
+    vx = vslidedown_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_slideup_si##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
     v##VCLASS##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
-    mask = rvv_set_bool##MLEN ();				\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vy = rvv_le_##VCLASS##EM(y);				\
-    vx = rvv_slideup_vs_##VCLASS##EM##_mask(mask, vy, vx, 11);	\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    mask = vset_bool##MLEN ();				\
+    vx = vle_##VCLASS##EM(x);				\
+    vy = vle_##VCLASS##EM(y);				\
+    vx = vslideup_vs_##VCLASS##EM##_mask(mask, vy, vx, 11);	\
+    vse_##VCLASS##EM(x, vx);					\
   }								\
   void test_slidedown_si##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
     v##VCLASS##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
-    mask = rvv_set_bool##MLEN ();				\
-    vx = rvv_le_##VCLASS##EM(x);				\
-    vy = rvv_le_##VCLASS##EM(y);				\
-    vx = rvv_slidedown_vs_##VCLASS##EM##_mask(mask, vy, vx, 11);\
-    rvv_se_##VCLASS##EM(x, vx);					\
+    mask = vset_bool##MLEN ();				\
+    vx = vle_##VCLASS##EM(x);				\
+    vy = vle_##VCLASS##EM(y);				\
+    vx = vslidedown_vs_##VCLASS##EM##_mask(mask, vy, vx, 11);\
+    vse_##VCLASS##EM(x, vx);					\
   }
 
 
@@ -48,20 +48,20 @@
   void test_slide1up_sx##VCLASS##EM (STYPE *x, STYPE *y, STYPE s) {	\
     v##VCLASS##EM##_t vx, vy;					\
     vbool##MLEN##_t mask;						\
-    mask = rvv_set_bool##MLEN ();					\
-    vx = rvv_le_##VCLASS##EM(x);					\
-    vy = rvv_le_##VCLASS##EM(y);					\
-    vx = rvv_slide1up_vs_##VCLASS##EM##_mask(mask, vy, vx, s);		\
-    rvv_se_##VCLASS##EM(x, vx);						\
+    mask = vset_bool##MLEN ();					\
+    vx = vle_##VCLASS##EM(x);					\
+    vy = vle_##VCLASS##EM(y);					\
+    vx = vslide1up_vs_##VCLASS##EM##_mask(mask, vy, vx, s);		\
+    vse_##VCLASS##EM(x, vx);						\
   }									\
   void test_slide1down_sx##VCLASS##EM (STYPE *x, STYPE *y, STYPE s) {	\
     v##VCLASS##EM##_t vx, vy;					\
     vbool##MLEN##_t mask;						\
-    mask = rvv_set_bool##MLEN ();					\
-    vx = rvv_le_##VCLASS##EM(x);					\
-    vy = rvv_le_##VCLASS##EM(y);					\
-    vx = rvv_slide1down_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\
-    rvv_se_##VCLASS##EM(x, vx);						\
+    mask = vset_bool##MLEN ();					\
+    vx = vle_##VCLASS##EM(x);					\
+    vy = vle_##VCLASS##EM(y);					\
+    vx = vslide1down_vs_##VCLASS##EM##_mask(mask, vy, vx, s);	\
+    vse_##VCLASS##EM(x, vx);						\
   }
 
 RVV_INT_TEST (RVV_TEST_SLIDE1UPDOWN)

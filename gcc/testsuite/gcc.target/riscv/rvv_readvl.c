@@ -8,7 +8,7 @@
 
 int x()
 {
-  return rvv_readvl ();
+  return vreadvl ();
 }
 
 /* { dg-final { scan-assembler-times "csrr" 1 } } */

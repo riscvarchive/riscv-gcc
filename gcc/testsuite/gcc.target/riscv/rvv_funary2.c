@@ -12,11 +12,11 @@
     v##VCLASS##EM##_t vx;						\
     vu##IVCLASS##EM##_t vy;						\
     vbool##MLEN##_t mask;						\
-    mask = rvv_set_bool##MLEN ();					\
-    vx = rvv_le_##VCLASS##EM(x);					\
-    vy = rvv_le_u##IVCLASS##EM(y);					\
-    vy = rvv_##OP##_v_##VCLASS##EM##_mask (mask, vy, vx);		\
-    rvv_se_u##IVCLASS##EM(y, vy);					\
+    mask = vset_bool##MLEN ();					\
+    vx = vle_##VCLASS##EM(x);					\
+    vy = vle_u##IVCLASS##EM(y);					\
+    vy = v##OP##_v_##VCLASS##EM##_mask (mask, vy, vx);		\
+    vse_u##IVCLASS##EM(y, vy);					\
   }
 
 RVV_FLOAT_INT_TEST_ARG(RVV_FCLASS_TEST, class)

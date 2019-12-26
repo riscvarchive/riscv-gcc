@@ -17,13 +17,13 @@
     v##OP2U##VCLASS##EM##_t vop2;                                           \
     v##OP0U##VCLASS##WEM##_t vop0, vmo;                                     \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vop0 = rvv_le_##OP0U##VCLASS##WEM(op0);                                    \
-    vmo = rvv_le_##OP0U##VCLASS##WEM(mo);                                      \
-    vop1 = rvv_le_##OP1U##VCLASS##EM(op1);                                     \
-    vop2 = rvv_le_##OP2U##VCLASS##EM(op2);                                     \
-    vop0 = rvv_##OP##_vv_##OP0U##VCLASS##EM##_mask (mask, vop0, vop1, vop2); \
-    rvv_se_##OP0U##VCLASS##WEM(op0, vop0);                                     \
+    mask = vset_bool##MLEN ();                                             \
+    vop0 = vle_##OP0U##VCLASS##WEM(op0);                                    \
+    vmo = vle_##OP0U##VCLASS##WEM(mo);                                      \
+    vop1 = vle_##OP1U##VCLASS##EM(op1);                                     \
+    vop2 = vle_##OP2U##VCLASS##EM(op2);                                     \
+    vop0 = v##OP##_vv_##OP0U##VCLASS##EM##_mask (mask, vop0, vop1, vop2); \
+    vse_##OP0U##VCLASS##WEM(op0, vop0);                                     \
   }
 
 #define VWMAC_VX(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP, OP0U, OP1U, OP2U)   \
@@ -35,12 +35,12 @@
     v##OP2U##VCLASS##EM##_t vop2;                                           \
     v##OP0U##VCLASS##WEM##_t vop0, vmo;                                     \
     vbool##MLEN##_t mask;                                                   \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vop0 = rvv_le_##OP0U##VCLASS##WEM(op0);                                    \
-    vmo = rvv_le_##OP0U##VCLASS##WEM(mo);                                      \
-    vop2 = rvv_le_##OP2U##VCLASS##EM(op2);                                     \
-    vop0 = rvv_##OP##_sv_##OP0U##VCLASS##EM##_mask (mask, vop0, op1, vop2); \
-    rvv_se_##OP0U##VCLASS##WEM(op0, vop0);                                     \
+    mask = vset_bool##MLEN ();                                             \
+    vop0 = vle_##OP0U##VCLASS##WEM(op0);                                    \
+    vmo = vle_##OP0U##VCLASS##WEM(mo);                                      \
+    vop2 = vle_##OP2U##VCLASS##EM(op2);                                     \
+    vop0 = v##OP##_sv_##OP0U##VCLASS##EM##_mask (mask, vop0, op1, vop2); \
+    vse_##OP0U##VCLASS##WEM(op0, vop0);                                     \
   }
 
 #define VWMAC(STYPE, VCLASS, EM, MLEN, WSTYPE, WEM, OP, OP0U, OP1U, OP2U)   \

@@ -11,14 +11,14 @@
   void vmaxmin##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {            \
     v##VCLASS##EM##_t vx, vy;                                                \
     vbool##MLEN##_t mask;                                                    \
-    vx = rvv_le_##VCLASS##EM(x);                                                 \
-    vy = rvv_le_##VCLASS##EM(y);                                                 \
-    mask = rvv_set_bool##MLEN ();                                             \
-    vy = rvv_max_vv_##VCLASS##EM##_mask(mask, vy, vx, vy);                     \
-    vy = rvv_max_vs_##VCLASS##EM##_mask(mask, vy, vy, z);                      \
-    vy = rvv_min_vv_##VCLASS##EM##_mask(mask, vy, vx, vy);                     \
-    vy = rvv_min_vs_##VCLASS##EM##_mask(mask, vy, vy, z);                      \
-    rvv_se_##VCLASS##EM(y, vy);                                                  \
+    vx = vle_##VCLASS##EM(x);                                                 \
+    vy = vle_##VCLASS##EM(y);                                                 \
+    mask = vset_bool##MLEN ();                                             \
+    vy = vmax_vv_##VCLASS##EM##_mask(mask, vy, vx, vy);                     \
+    vy = vmax_vs_##VCLASS##EM##_mask(mask, vy, vy, z);                      \
+    vy = vmin_vv_##VCLASS##EM##_mask(mask, vy, vx, vy);                     \
+    vy = vmin_vs_##VCLASS##EM##_mask(mask, vy, vy, z);                      \
+    vse_##VCLASS##EM(y, vy);                                                  \
   }
 
 RVV_FLOAT_TEST(VMAXMIN)

@@ -24,15 +24,15 @@ void foo2(double *a, double *b, double *c, int n) {
   vfloat64m1_t vec_n, vec_a, vec_b;
   vbool64_t mask;
   // set VLMAX and init vector arrary
-  rvv_setvlmax_64m1();
-  vec_n = rvv_splat_s_float64m1((double)n);
+  vsetvlmax_64m1();
+  vec_n = vsplat_s_float64m1((double)n);
   size_t vl;
 
-  for (; vl = rvv_setvl_64m1(n);) {
-    vec_a = rvv_le_float64m1(a);
-    vec_b = rvv_le_float64m1(b);
-    mask = rvv_ne_vs_float64m1(vec_a, 0.0);
-    vec_b = rvv_div_vv_float64m1_mask(mask, vec_n /*maskedoff*/, vec_b, vec_a);
+  for (; vl = vsetvl_64m1(n);) {
+    vec_a = vle_float64m1(a);
+    vec_b = vle_float64m1(b);
+    mask = vne_vs_float64m1(vec_a, 0.0);
+    vec_b = vdiv_vv_float64m1_mask(mask, vec_n /*maskedoff*/, vec_b, vec_a);
     *(vfloat64m1_t *)b = vec_b;
     n -= vl;
     a += vl;

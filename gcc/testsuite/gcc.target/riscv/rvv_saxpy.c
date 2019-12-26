@@ -9,13 +9,13 @@ void saxpy(size_t n, const float a, const float *x, float *y) {
 
   vfloat32m8_t vx, vy;
 
-  for (; (l = rvv_setvl_32m8(n)) > 0; n -= l) {
-    vx = rvv_le_float32m8(x);
+  for (; (l = vsetvl_32m8(n)) > 0; n -= l) {
+    vx = vle_float32m8(x);
     x += l;
-    vy = rvv_le_float32m8(y);
+    vy = vle_float32m8(y);
     // vfmacc
     vy = a * vx + vy;
-    rvv_se_float32m8(y, vy);
+    vse_float32m8(y, vy);
     y += l;
   }
 }
