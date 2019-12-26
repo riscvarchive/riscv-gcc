@@ -822,21 +822,21 @@ _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wadd)
 #define _RVVINTCMP(SEW, LMUL, MLEN, T, OP, OPU)				\
 __extension__ extern __inline vbool##MLEN##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vs##OP##_vv_int##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,		\
+vset##OP##_vv_int##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,		\
 				  vint##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_vs##OP##int##SEW##m##LMUL (a, b);		\
 }									\
 __extension__ extern __inline vbool##MLEN##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vs##OP##_vv_uint##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,	\
+vset##OP##_vv_uint##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,	\
 				    vuint##SEW##m##LMUL##_t b)	\
 {									\
   return __builtin_riscv_vs##OPU##uint##SEW##m##LMUL (a, b);		\
 }									\
 __extension__ extern __inline vbool##MLEN##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vs##OP##_vv_int##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
+vset##OP##_vv_int##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 					 vbool##MLEN##_t maskedoff,	\
 					 vint##SEW##m##LMUL##_t a,	\
 					 vint##SEW##m##LMUL##_t b)	\
@@ -846,7 +846,7 @@ vs##OP##_vv_int##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 }									\
 __extension__ extern __inline vbool##MLEN##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vs##OP##_vv_uint##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
+vset##OP##_vv_uint##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 					   vbool##MLEN##_t maskedoff,\
 					   vuint##SEW##m##LMUL##_t a,\
 					   vuint##SEW##m##LMUL##_t b)\

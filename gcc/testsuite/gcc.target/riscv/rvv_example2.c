@@ -35,7 +35,7 @@ int foo_rvv(double *x, double *y, int n) {
   vec_zero = vsplat_s_float64m1(0.0f);
   for (;vl=vsetvl_64m1(n);) {
      vec_x = vload_float64m1(x);
-     mask = vne_vs_float64m1(vec_x, 0.0f);
+     mask = vsetne_vs_float64m1(vec_x, 0.0f);
      vec_y = vload_float64m1_mask(mask, vec_zero /*maskoffed*/, y);
      vec_t = vmacc_vv_float64m1_mask(mask, vec_x, vec_y, vec_t);
      count = count + vpopc_m_bool64(mask);

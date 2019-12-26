@@ -13,7 +13,7 @@
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
-    mask = v##OP##_vv_##VCLASS##EM(vx, vy);                                 \
+    mask = vset##OP##_vv_##VCLASS##EM(vx, vy);                                 \
     vx = vadd_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
     vstore_##VCLASS##EM(x, vx);                                                \
   }
@@ -24,7 +24,7 @@
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
-    mask = v##OP##_vs_##VCLASS##EM(vx, z);                                  \
+    mask = vset##OP##_vs_##VCLASS##EM(vx, z);                                  \
     vx = vadd_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
     vstore_##VCLASS##EM(x, vx);                                                \
   }
@@ -35,7 +35,7 @@
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
-    mask = v##OP##_vs_##VCLASS##EM(vx, 12);                                 \
+    mask = vset##OP##_vs_##VCLASS##EM(vx, 12);                                 \
     vx = vadd_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                    \
     vstore_##VCLASS##EM(x, vx);                                                \
   }
@@ -52,33 +52,33 @@
   TEST_COMPARE_VV_VX(STYPE, VCLASS, EM, MLEN, OP)		\
   VCOMPARE_VI (STYPE, VCLASS, EM, MLEN, OP)
 
-RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, seq)
-RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, seq)
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, eq)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, eq)
 /* { dg-final { scan-assembler-times "vmseq.vv" 32 } } */
 /* { dg-final { scan-assembler-times "vmseq.vx" 32 } } */
 /* { dg-final { scan-assembler-times "vmseq.vi" 32 } } */
-RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sne)
-RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sne)
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, ne)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, ne)
 /* { dg-final { scan-assembler-times "vmsne.vv" 32 } } */
 /* { dg-final { scan-assembler-times "vmsne.vx" 32 } } */
 /* { dg-final { scan-assembler-times "vmsne.vi" 32 } } */
-RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX, slt)
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX, lt)
 /* { dg-final { scan-assembler-times "vmslt.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmslt.vx" 16 } } */
-RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX, slt)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX, lt)
 /* { dg-final { scan-assembler-times "vmsltu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsltu.vx" 16 } } */
-RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sle)
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, le)
 /* { dg-final { scan-assembler-times "vmsle.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsle.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsle.vi" 16 } } */
-RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, sle)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, le)
 /* { dg-final { scan-assembler-times "vmsleu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsleu.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsleu.vi" 16 } } */
-RVV_INT_TEST_ARG(TEST_COMPARE_VX_VI, sgt)
+RVV_INT_TEST_ARG(TEST_COMPARE_VX_VI, gt)
 /* { dg-final { scan-assembler-times "vmsgt.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsgt.vi" 16 } } */
-RVV_UINT_TEST_ARG(TEST_COMPARE_VX_VI, sgt)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VX_VI, gt)
 /* { dg-final { scan-assembler-times "vmsgtu.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsgtu.vi" 16 } } */

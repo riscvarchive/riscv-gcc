@@ -61,7 +61,7 @@ size_t compact_non_zero(size_t n, const int32_t* in, const int32_t* out) {
     vint32m8_t value;
     value = *(vint32m8_t*) in;
     vbool4_t non_zeros_mask;
-    non_zeros_mask = vsne_vs_int32m8(value, 0);
+    non_zeros_mask = vsetne_vs_int32m8(value, 0);
     int32_t non_zeros_count = vpopc_m_bool4(non_zeros_mask);
     count += non_zeros_count;
     vuint32m8_t offset;

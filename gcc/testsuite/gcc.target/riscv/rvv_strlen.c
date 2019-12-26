@@ -44,7 +44,7 @@ size_t strlen(const char *str) {
     value = vloadff_int8m1(str);
     size_t vl = vreadvl();
     vbool8_t cmp;
-    cmp = vseq_vs_int8m1(value, 0);
+    cmp = vseteq_vs_int8m1(value, 0);
     first_set = vfirst_m_bool8(cmp); /* reutrn -1 mean not found */
     str += vl;
   }

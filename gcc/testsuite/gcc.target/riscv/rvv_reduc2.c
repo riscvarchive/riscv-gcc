@@ -15,7 +15,7 @@
     vx = vload_##VCLASS##EMONE (x);					\
     vy = vload_##VCLASS##EM (y);					\
     vz = vload_##VCLASS##EM (z);					\
-    mask = vslt_vv_##VCLASS##EM (vy, vz);				\
+    mask = vsetlt_vv_##VCLASS##EM (vy, vz);				\
     vx = vredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
     vx = vredmax_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
     vx = vredmin_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
@@ -32,7 +32,7 @@
     vx = vload_##VCLASS##EMONE (x);					\
     vy = vload_##VCLASS##EM (y);					\
     vz = vload_##VCLASS##EM (z);					\
-    mask = vslt_vv_##VCLASS##EM (vy, vz);				\
+    mask = vsetlt_vv_##VCLASS##EM (vy, vz);				\
     vx = vredsum_vs_##VCLASS##EM##_mask  (mask, vy, vx);		\
     vx = vredmax_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
     vx = vredmin_vs_##VCLASS##EM##_mask (mask, vy, vx);		\

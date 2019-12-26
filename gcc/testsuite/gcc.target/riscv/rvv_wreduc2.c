@@ -15,7 +15,7 @@
     vx = vload_##VCLASS##WEMONE (x);					\
     vy = vload_##VCLASS##EM (y);					\
     vz = vload_##VCLASS##EM (z);					\
-    mask = vslt_vv_##VCLASS##EM (vy, vz);				\
+    mask = vsetlt_vv_##VCLASS##EM (vy, vz);				\
     vx = vwredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);		\
     vstore_##VCLASS##WEMONE (x, vx);					\
   }
@@ -27,7 +27,7 @@
     vx = vload_##VCLASS##WEMONE (x);					\
     vy = vload_##VCLASS##EM (y);					\
     vz = vload_##VCLASS##EM (z);					\
-    mask = vslt_vv_##VCLASS##EM (vy, vz);				\
+    mask = vsetlt_vv_##VCLASS##EM (vy, vz);				\
     vx = vwredsum_vs_##VCLASS##EM##_mask (mask, vy, vx);	\
     vstore_##VCLASS##WEMONE (x, vx);					\
   }

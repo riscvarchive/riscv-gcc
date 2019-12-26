@@ -14,7 +14,7 @@
     vbool##MLEN##_t rv;                                                     \
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
-    mask1 = vslt_vv_##VCLASS##EM(vx, vy);                                   \
+    mask1 = vsetlt_vv_##VCLASS##EM(vx, vy);                                   \
     mask2 = v##OP##_m_bool##MLEN(mask1);                                    \
     vy = vadd_vv_##VCLASS##EM##_mask (mask2, vy, vx, vy);                   \
     * (v##VCLASS##EM##_t *) y = vy;                                         \
@@ -26,9 +26,9 @@
     vx = vload_##VCLASS##EM(x);                                               \
     vy = vload_##VCLASS##EM(y);                                               \
     vz = vload_##VCLASS##EM(z);                                               \
-    mask1 = vslt_vv_##VCLASS##EM(vx, vy);                                   \
-    mask2 = vslt_vv_##VCLASS##EM(vx, vz);                                   \
-    mask3 = vslt_vv_##VCLASS##EM(vy, vz);                                   \
+    mask1 = vsetlt_vv_##VCLASS##EM(vx, vy);                                   \
+    mask2 = vsetlt_vv_##VCLASS##EM(vx, vz);                                   \
+    mask3 = vsetlt_vv_##VCLASS##EM(vy, vz);                                   \
     mask3 = v##OP##_m_bool##MLEN##_mask(mask1, mask2, mask3);               \
     vy = vadd_vv_##VCLASS##EM##_mask (mask3, vy, vx, vy);                   \
     * (v##VCLASS##EM##_t *) y = vy;                                         \

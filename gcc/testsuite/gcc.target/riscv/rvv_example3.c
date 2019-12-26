@@ -31,7 +31,7 @@ void foo2(double *a, double *b, double *c, int n) {
   for (; vl = vsetvl_64m1(n);) {
     vec_a = vload_float64m1(a);
     vec_b = vload_float64m1(b);
-    mask = vne_vs_float64m1(vec_a, 0.0);
+    mask = vsetne_vs_float64m1(vec_a, 0.0);
     vec_b = vdiv_vv_float64m1_mask(mask, vec_n /*maskedoff*/, vec_b, vec_a);
     *(vfloat64m1_t *)b = vec_b;
     n -= vl;
