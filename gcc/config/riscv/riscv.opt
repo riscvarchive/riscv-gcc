@@ -147,3 +147,7 @@ Enum(riscv_align_data) String(xlen) Value(riscv_align_data_type_xlen)
 
 EnumValue
 Enum(riscv_align_data) String(natural) Value(riscv_align_data_type_natural)
+
+mcheck-constraints
+Target Report Var(riscv_mcheck_constraints) Init(-1)
+Enable the constraints checking for assembler.

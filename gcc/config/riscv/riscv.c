@@ -4399,6 +4399,9 @@ riscv_file_start (void)
   if (! riscv_mrelax)
     fprintf (asm_out_file, "\t.option norelax\n");
 
+  if (riscv_mcheck_constraints)
+    fprintf (asm_out_file, "\t.option checkconstraints\n");
+
   if (riscv_emit_attribute_p)
     riscv_emit_attribute ();
 }
@@ -4582,6 +4585,21 @@ riscv_option_override (void)
   if (riscv_emit_attribute_p)
     error ("%<-mriscv-attribute%> RISC-V ELF attribute requires GNU as 2.32"
 	   " [%<-mriscv-attribute%>]");
+#endif
+
+  /* If user don't set the `m[no-]check-constraints` option and assembler
+     support the constraints checking, then GCC should enable it by default.
+     If user set the `mcheck-constraints` options but the checking isn't
+     supported in assembler, then we should report error here.  */
+  if (riscv_mcheck_constraints < 0)
+#ifdef HAVE_AS_RISCV_CHECK_CONSTRAINTS
+    riscv_mcheck_constraints = 1;
+#else
+    riscv_mcheck_constraints = 0;
+
+  if (riscv_mcheck_constraints)
+    error ("%<-mcheck-constraints%> RISC-V constraints checking is unsupported"
+	   " in GNU as [%<-mcheck-constraints%>]");
 #endif
 }
 
