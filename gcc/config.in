@@ -607,6 +607,12 @@
 #endif
 
 
+/* Define if your assembler supports .option checkconstraints. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_AS_RISCV_CHECK_CONSTRAINTS
+#endif
+
+
 /* Define if your assembler supports relocs needed by -fpic. */
 #ifndef USED_FOR_TARGET
 #undef HAVE_AS_SMALL_PIC_RELOCS

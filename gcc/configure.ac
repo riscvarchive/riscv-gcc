@@ -4883,6 +4883,11 @@ pointers into PC-relative form.])
       [.attribute stack_align,4],,
       [AC_DEFINE(HAVE_AS_RISCV_ATTRIBUTE, 1,
 	  [Define if your assembler supports .attribute.])])
+    gcc_GAS_CHECK_FEATURE([.option checkconstraints support],
+      gcc_cv_as_riscv_check_constraints, [2,33,1],[--fatal-warnings],
+      [.option checkconstraints],,
+      [AC_DEFINE(HAVE_AS_RISCV_CHECK_CONSTRAINTS, 1,
+	  [Define if your assembler supports .option checkconstraints.])])
     ;;
     s390*-*-*)
     gcc_GAS_CHECK_FEATURE([.gnu_attribute support],
