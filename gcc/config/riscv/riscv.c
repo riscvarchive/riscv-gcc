@@ -143,6 +143,9 @@ struct GTY(())  machine_function {
   /* True if attributes on current function have been checked.  */
   bool attributes_checked_p;
 
+  /* True if RA must be saved because of a far jump.  */
+  bool far_jump_used;
+
   /* The current frame information, calculated by riscv_compute_frame_info.  */
   struct riscv_frame_info frame;
 };
@@ -960,7 +963,10 @@ riscv_load_store_insns (rtx mem, rtx_insn *insn)
   bool might_split_p;
   rtx set;
 
-  gcc_assert (MEM_P (mem));
+  /* XXX Not sure why this is being called with !MEM_P (mem).  */
+  if (!MEM_P (mem))
+    return 2;
+
   mode = GET_MODE (mem);
 
   /* Try to prove that INSN does not need to be split.  */
@@ -3194,6 +3200,7 @@ riscv_memmodel_needs_release_fence (enum memmodel model)
 	  any outermost HIGH.
    'R'	Print the low-part relocation associated with OP.
    'C'	Print the integer branch condition for comparison OP.
+   'N'	Print the inverse of the integer branch condition for comparison OP.
    'A'	Print the atomic operation suffix for memory model OP.
    'F'	Print a FENCE if the memory model requires a release.
    'z'	Print x0 if OP is zero, otherwise print OP normally.
@@ -3220,6 +3227,11 @@ riscv_print_operand (FILE *file, rtx op, int letter)
     case 'C':
       /* The RTL names match the instruction names. */
       fputs (GET_RTX_NAME (code), file);
+      break;
+
+    case 'N':
+      /* The RTL names match the instruction names. */
+      fputs (GET_RTX_NAME (reverse_condition (code)), file);
       break;
 
     case 'A':
@@ -3387,6 +3399,34 @@ riscv_frame_set (rtx mem, rtx reg)
   return set;
 }
 
+/* Returns true if the current function might contain a far jump.  */
+
+static bool
+riscv_far_jump_used_p ()
+{
+  size_t func_size = 0;
+
+  if (cfun->machine->far_jump_used)
+    return true;
+
+  /* We can't change far_jump_used during or after reload, as there is
+     no chance to change stack frame layout.  So we must rely on the
+     conservative heuristic below having done the right thing.  */
+  if (reload_in_progress || reload_completed)
+    return false;
+
+  /* Estimate the function length.  */
+  for (rtx_insn *insn = get_insns (); insn; insn = NEXT_INSN (insn))
+    func_size += get_attr_length (insn);
+
+  /* Conservatively determine whether some jump might exceed 1 MiB
+     displacement.  */
+  if (func_size * 2 >= 0x100000)
+    cfun->machine->far_jump_used = true;
+
+  return cfun->machine->far_jump_used;
+}
+
 /* Return true if the current function must save register REGNO.  */
 
 static bool
@@ -3403,6 +3443,9 @@ riscv_save_reg_p (unsigned int regno)
     return true;
 
   if (regno == RETURN_ADDR_REGNUM && crtl->calls_eh_return)
+    return true;
+
+  if (regno == RETURN_ADDR_REGNUM && riscv_far_jump_used_p ())
     return true;
 
   /* If this is an interrupt handler, then must save extra registers.  */
