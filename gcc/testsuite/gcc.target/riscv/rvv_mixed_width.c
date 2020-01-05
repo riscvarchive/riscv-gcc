@@ -40,7 +40,7 @@ void mixedwidth_mask(int8_t *a, int32_t * b, int32_t* c, size_t n) {
   size_t vl;
   vbool8_t mask;
   vint32m4_t const_one, vec_c;
-  for (; vl = vsetvl_8m1(n);) {
+  for (; vl = vsetvl_8m1(n); n -= vl) {
     mask = vsetlt_vs_i8m1(*(vint8m1_t *)a, 5);
     const_one = vsplat_s_i32m4(1);
     vec_c = vload_i32m4_mask(mask, const_one /*maskedoff*/, c);
@@ -54,6 +54,5 @@ void mixedwidth_mask(int8_t *a, int32_t * b, int32_t* c, size_t n) {
     a += vl;
     b += vl;
     c += vl;
-    n -= vl;
   }
 }

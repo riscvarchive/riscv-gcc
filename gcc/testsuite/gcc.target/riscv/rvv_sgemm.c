@@ -42,7 +42,7 @@ void segmm_nn(size_t size_n, size_t size_m, size_t size_k,
     j = size_n;
     const double *bnp = b;
     double *cnp = c;
-    for (; vl = vsetvl_64m1(j);) {
+    for (; vl = vsetvl_64m1(j); j -= vl) {
       const double *akp = a;
       const double *bkp = bnp;
       vec_c = *(vfloat64m1_t *)cnp;
@@ -52,7 +52,6 @@ void segmm_nn(size_t size_n, size_t size_m, size_t size_k,
         akp++;
       }
       *(vfloat64m1_t *)cnp = vec_c;
-      j -= vl;
       cnp += vl;
       bnp += vl;
     }

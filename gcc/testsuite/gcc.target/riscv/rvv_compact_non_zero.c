@@ -57,7 +57,7 @@ loop:
 size_t compact_non_zero(size_t n, const int32_t* in, const int32_t* out) {
   size_t count = 0;
   size_t vl;
-  for (; vl = vsetvl_32m8(n);) {
+  for (; vl = vsetvl_32m8(n); n -= vl) {
     vint32m8_t value;
     value = *(vint32m8_t*) in;
     vbool4_t non_zeros_mask;
@@ -72,7 +72,6 @@ size_t compact_non_zero(size_t n, const int32_t* in, const int32_t* out) {
     // active offset is  ^ ^   ^
     offset = vsll_vs_u32m8_mask(non_zeros_mask, offset, offset, 2); // Multiply offsets by four bytes
     vstoreux_i32m8_mask(out, offset, non_zeros_mask, value);
-    n-=vl;
     in+=vl;
     out+=non_zeros_count;
   }

@@ -61,10 +61,9 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
                          const float *pSrc, float *pDst, uint32_t numTaps,
                          uint32_t blockSize) {
   uint32_t blkCnt = blockSize;
+  size_t vl;
 
-
-  while (blkCnt > 0u) {
-    size_t vl = vsetvl_32m1(blkCnt);
+  for (; vl = vsetvl_32m1(blkCnt); blkCnt -= vl) {
 
     /* Copy sample vl time into state buffer */
     *(vfloat32m1_t *)pStateCurnt = *(vfloat32m1_t *)pSrc;
@@ -88,7 +87,7 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
       vfloat32m1_t vsum;
       vsum = vsplat_s_f32m1(0.0);
       size_t nested_vl;
-      for(;nested_vl=vsetvl_32m1(i);) {
+      for (; nested_vl = vsetvl_32m1(i); i -= nested_vl) {
         vfloat32m1_t *vpx = (vfloat32m1_t *)px;
         vfloat32m1_t *vpb = (vfloat32m1_t *)pb;
 
@@ -103,7 +102,6 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
 
         px += nested_vl;
         pb += nested_vl;
-        i -= nested_vl;
 
       } while (i > 0u);
 
@@ -118,7 +116,6 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
     pStateCurnt += vl;
     pSrc += vl;
 
-    blkCnt -= vl;
   }
 
   return pState;

@@ -66,9 +66,8 @@ char *strncpy(char *dst, const char *src, size_t n) {
   vsetvlmax_8m1();
   vuint8m8_t zeros;
   zeros = vsplat_s_u8m8(0);
-  for (; vl = vsetvl_8m8(n);) {
+  for (; vl = vsetvl_8m8(n); n -= vl) {
     *(vuint8m8_t *)dst = zeros;
-    n -= vl;
     dst += vl;
   }
   return old_dst;

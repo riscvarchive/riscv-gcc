@@ -30,11 +30,10 @@ void foo3() {
       k = N;
       vsetvlmax_64m1();
       vec_c = vsplat_s_f64m1(0.0); /* splat scalr to vec_c */
-      for (; vl = vsetvl_64m1(k);) {
+      for (; vl = vsetvl_64m1(k); k -= vl) {
         vec_a = *(vfloat64m1_t *)&A[i][N - k];
         vec_b = *(vfloat64m1_t *)&B[N - k][j];
         vec_c = vec_a * vec_b + vec_c;
-        k -= vl;
       }
       vsetvlmax_64m1();
       vec_sum =

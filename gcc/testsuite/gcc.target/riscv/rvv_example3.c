@@ -28,13 +28,12 @@ void foo2(double *a, double *b, double *c, int n) {
   vec_n = vsplat_s_f64m1((double)n);
   size_t vl;
 
-  for (; vl = vsetvl_64m1(n);) {
+  for (; vl = vsetvl_64m1(n); n -= vl) {
     vec_a = vload_f64m1(a);
     vec_b = vload_f64m1(b);
     mask = vsetne_vs_f64m1(vec_a, 0.0);
     vec_b = vdiv_vv_f64m1_mask(mask, vec_n /*maskedoff*/, vec_b, vec_a);
     *(vfloat64m1_t *)b = vec_b;
-    n -= vl;
     a += vl;
     b += vl;
   }

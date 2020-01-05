@@ -20,7 +20,7 @@ for (i = 0; i < n; i++) {
 
 void foo4(int n, double *a, double *b, double *c, double *d, double *e) {
   size_t vl;
-  for (; vl = vsetvl_64m8(n);) {
+  for (; vl = vsetvl_64m8(n); n -= vl) {
     vfloat64m8_t vec_a;
     // implicitly div is unsupported not.
     // vec_a = vec_a + ((vec_b + vec_c) / 2) +

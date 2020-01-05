@@ -32,7 +32,7 @@ loop:
 
 void foo(int16_t *a1, int32_t *a2, int32_t x10, int n) {
   size_t vl;
-  for (; vl = vsetvl_32m8(n);) {
+  for (; vl = vsetvl_32m8(n); n -= vl) {
     vint32m8_t v8;
     v8 = vloadh_i32m8(a1);
     v8 = v8 * x10;
@@ -40,6 +40,5 @@ void foo(int16_t *a1, int32_t *a2, int32_t x10, int n) {
     vstore_i32m8(a2, v8);
     a1 += vl;
     a2 += vl;
-    n -= vl;
   }
 }

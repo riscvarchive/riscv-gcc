@@ -33,15 +33,14 @@ int foo_rvv(double *x, double *y, int n) {
   vbool64_t mask;
   vec_t = vsplat_s_f64m1(0.0f);
   vec_zero = vsplat_s_f64m1(0.0f);
-  for (;vl=vsetvl_64m1(n);) {
-     vec_x = vload_f64m1(x);
-     mask = vsetne_vs_f64m1(vec_x, 0.0f);
-     vec_y = vload_f64m1_mask(mask, vec_zero /*maskoffed*/, y);
-     vec_t = vmacc_vv_f64m1_mask(mask, vec_x, vec_y, vec_t);
-     count = count + vpopc_m_b64(mask);
-     n-=vl;
-     x+=vl;
-     y+=vl;
+  for (; vl = vsetvl_64m1(n); n -= vl) {
+    vec_x = vload_f64m1(x);
+    mask = vsetne_vs_f64m1(vec_x, 0.0f);
+    vec_y = vload_f64m1_mask(mask, vec_zero /*maskoffed*/, y);
+    vec_t = vmacc_vv_f64m1_mask(mask, vec_x, vec_y, vec_t);
+    count = count + vpopc_m_b64(mask);
+    x += vl;
+    y += vl;
   }
   /* set vlmax */
   vsetvlmax_64m1();

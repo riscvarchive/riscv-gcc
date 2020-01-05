@@ -37,7 +37,7 @@ loop:
 
 void foo2(int16_t *a1, int32_t *a2, int32_t x10, int n) {
   size_t vl;
-  for (; vl = vsetvl_16m4(n);) {
+  for (; vl = vsetvl_16m4(n); n -= vl) {
     vint16m4_t v4;
     v4 = vload_i16m4(a1);
     vint32m8_t v8;

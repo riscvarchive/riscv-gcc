@@ -38,7 +38,7 @@ void cond_example(int8_t *x, int16_t *a, int16_t *b, int16_t *z, size_t n) {
   size_t vl;
   vint16m1_t v0, maskedoff, result;
   vbool16_t mask;
-  for (; vl = vsetvl_16m1(n);) {
+  for (; vl = vsetvl_16m1(n); n -= vl) {
     v0 = vloadb_i16m1(x);
     mask = vsetlt_vs_i16m1(v0, 5);
     result = vload_i16m1_mask(mask, maskedoff, a);
@@ -49,6 +49,5 @@ void cond_example(int8_t *x, int16_t *a, int16_t *b, int16_t *z, size_t n) {
     b += vl;
     z += vl;
     x += vl;
-    n -= vl;
   }
 }
