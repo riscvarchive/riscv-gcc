@@ -265,7 +265,7 @@ extern const char *riscv_expand_arch (int argc, const char **argv);
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   /* Others.  */							\
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
   /* Vector registers.  */						\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
@@ -408,6 +408,7 @@ enum reg_class
   FRAME_REGS,			/* arg pointer and frame pointer */
   VECTOR_MASK_REGS,		/* vector mask registers */
   VECTOR_REGS,			/* vector registers */
+  VTYPE_REGS,			/* vype register */
   ALL_REGS,			/* all registers */
   LIM_REG_CLASSES		/* max value + 1 */
 };
@@ -430,6 +431,7 @@ enum reg_class
   "FRAME_REGS",								\
   "VECTOR_MASK_REGS", 							\
   "VECTOR_REGS", 							\
+  "VTYPE_REGS", 							\
   "ALL_REGS"								\
 }
 
@@ -454,6 +456,7 @@ enum reg_class
   { 0x00000000, 0x00000000, 0x00000003, 0x00000000 },	/* FRAME_REGS */	\
   { 0x00000000, 0x00000000, 0x00000000, 0x00000001 },	/* VECTOR_MASK_REGS */\
   { 0x00000000, 0x00000000, 0x00000000, 0xffffffff },	/* VECTOR_REGS */\
+  { 0x00000000, 0x00000000, 0x00000008, 0x00000000 },	/* VTYPE_REGS */\
   { 0xffffffff, 0xffffffff, 0x0000000f, 0xffffffff }	/* ALL_REGS */		\
 }
 
@@ -502,7 +505,7 @@ enum reg_class
   96,									\
   /* None of the remaining classes have defined call-saved		\
      registers.  */							\
-  64, 65								\
+  64, 65, 66, 67							\
 }
 
 /* True if VALUE is a signed 12-bit number.  */

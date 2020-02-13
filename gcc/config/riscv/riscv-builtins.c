@@ -531,6 +531,10 @@ tree rvvbool64_t_node;
   DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
   DIRECT_BUILTIN (vsetvl##E##m##L##_di, RISCV_DI_FTYPE_DI, vector),
 
+#define SETVTYPE_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
+  DIRECT_NAMED_NO_TARGET (vsetvli_x0_##MODE, vsetvtype##E##m##L, RISCV_VOID_FTYPE, vector),
+
+
 #define _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
 				  PNAME, PMODE, SUBTYPE, VCLASS)	\
   DIRECT_NAMED (							\
@@ -837,6 +841,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
 
   _RVV_INT_ITERATOR (SETVL_BUILTINS)
+  _RVV_INT_ITERATOR (SETVTYPE_BUILTINS)
 
   _RVV_INT_ITERATOR (VINT_STRIDED_LOAD_STORE_BUILTINS)
   _RVV_FLOAT_ITERATOR (VFLOAT_STRIDED_LOAD_STORE_BUILTINS)
@@ -1208,12 +1213,25 @@ static rtx
 riscv_expand_builtin_insn (enum insn_code icode, unsigned int n_ops,
 			   struct expand_operand *ops, bool has_target_p)
 {
-  if (!maybe_expand_insn (icode, n_ops, ops))
+  switch (icode)
     {
-      error ("invalid argument to built-in function");
-      return has_target_p ? gen_reg_rtx (ops[0].mode) : const0_rtx;
-    }
+#define EXPAND_SETVTYPE_BUILTINS(E, L, MLEN, MODE, SUBMODE)	\
+      case CODE_FOR_vsetvli_x0_##MODE:				\
+	emit_insn (gen_vsetvli_x0_##MODE () );			\
+	break;
 
+_RVV_INT_ITERATOR (EXPAND_SETVTYPE_BUILTINS)
+
+#undef EXPAND_SETVTYPE_BUILTINS
+
+    default:
+      if (!maybe_expand_insn (icode, n_ops, ops))
+	{
+	  error ("invalid argument to built-in function");
+	  return has_target_p ? gen_reg_rtx (ops[0].mode) : const0_rtx;
+	}
+      break;
+    }
   return has_target_p ? ops[0].value : const0_rtx;
 }
 

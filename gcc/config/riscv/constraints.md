@@ -91,6 +91,9 @@
 (define_register_constraint "vm" "TARGET_VECTOR ? VECTOR_MASK_REGS : NO_REGS"
   "A vector mask register (if available).")
 
+(define_register_constraint "vt" "TARGET_VECTOR ? VTYPE_REGS : NO_REGS"
+  "VTYPE register (if available).")
+
 (define_constraint "vc"
   "Any vector duplicate constant."
   (and (match_code "const_vector")
