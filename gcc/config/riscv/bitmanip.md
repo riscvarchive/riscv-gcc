@@ -264,7 +264,7 @@
   [(match_operand:SI 0 "register_operand" "=r")
    (match_operand:SI 1 "register_operand" "r")
    (match_operand:SI 2 "register_operand" "r")]
-  "TARGET_BITMANIP && TARGET_64BIT"
+  "TARGET_64BIT && TARGET_BITMANIP"
 {
   emit_insn (gen_rotlsi3 (operands[0], operands[1], operands[2]));
   DONE;
@@ -282,7 +282,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(rotate:DI (match_operand:DI 1 "register_operand" "r")
 		   (match_operand:DI 2 "register_operand" "r")))]
-  "TARGET_BITMANIP && TARGET_64BIT"
+  "TARGET_64BIT && TARGET_BITMANIP"
   "rol\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
