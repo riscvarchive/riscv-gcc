@@ -290,7 +290,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(sign_extend:DI (rotate:SI (match_operand:SI 1 "register_operand" "r")
 				   (match_operand:SI 2 "register_operand" "r"))))]
-  "TARGET_BITMANIP"
+  "TARGET_64BIT && TARGET_BITMANIP"
   "rolw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
