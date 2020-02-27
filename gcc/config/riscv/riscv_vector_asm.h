@@ -265,9 +265,9 @@
 				    OP0_CONSTRANT,			\
 				    OP1_CONSTRANT)			\
     _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ volatile (ASM_OP " %0, %2"					\
-		      : OP0_CONSTRANT (rv)				\
-		      : "0"(a), OP1_CONSTRANT (b), "vt"(vtype));
+    __asm__ (ASM_OP " %0, %2"						\
+	     : OP0_CONSTRANT (rv)					\
+	     : "0"(a), OP1_CONSTRANT (b), "vt"(vtype));
 
 /* Inline asm template for splat.
    SEW: integer, should be 8, 16, 32, 64
@@ -275,13 +275,13 @@
    ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
    OP0_CONSTRAINT: string for the constraint of operand 0.
    OP1_CONSTRAINT: string for the constraint of operand 1.  */
-#define _RVV_ASM_SPLAT_ASM_TEMPLATE(SEW, LMUL, ASM_OP,			\
-				    OP0_CONSTRANT,			\
-				    OP1_CONSTRANT)			\
-    _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ volatile (ASM_OP " %0, %1"					\
-		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a), "vt"(vtype));
+#define _RVV_ASM_SPLAT_ASM_TEMPLATE(SEW, LMUL, ASM_OP,		\
+				    OP0_CONSTRANT,		\
+				    OP1_CONSTRANT)		\
+    _RVV_SETVTYPE(SEW, LMUL);					\
+    __asm__ (ASM_OP " %0, %1"					\
+	     : OP0_CONSTRANT (rv)				\
+	     : OP1_CONSTRANT (a), "vt"(vtype));
 
 /* Unmasked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
@@ -293,20 +293,20 @@
 				       OP0_CONSTRANT,			\
 				       OP1_CONSTRANT)			\
     _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ volatile (ASM_OP " %0, %1"					\
-		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a), "vt"(vtype));		\
+    __asm__ (ASM_OP " %0, %1"						\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a), "vt"(vtype));				\
 
 /* Inline asm template for scalar move operation.
    ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
    OP0_CONSTRAINT: string for the constraint of operand 0.
    OP1_CONSTRAINT: string for the constraint of operand 1.  */
-#define _RVV_ASM_SCALAR_MOVE_ASM_TEMPLATE(ASM_OP,			\
-					  OP0_CONSTRANT,		\
-					  OP1_CONSTRANT)		\
-    __asm__ volatile (ASM_OP " %0, %1"					\
-		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a));
+#define _RVV_ASM_SCALAR_MOVE_ASM_TEMPLATE(ASM_OP,		\
+					  OP0_CONSTRANT,	\
+					  OP1_CONSTRANT)	\
+    __asm__ (ASM_OP " %0, %1"					\
+	     : OP0_CONSTRANT (rv)				\
+	     : OP1_CONSTRANT (a));
 
 
 /* Inline asm template for reinterpret operation.
@@ -318,9 +318,9 @@
 					  OP0_CONSTRANT,		\
 					  OP1_CONSTRANT)		\
     _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ volatile ("vadd.vi %0, %1, 0"				\
-		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a), "vt"(vtype))
+    __asm__ ("vadd.vi %0, %1, 0"					\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a), "vt"(vtype))
 
 /* Masked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
@@ -332,10 +332,10 @@
 					      OP0_CONSTRANT,		\
 					      OP1_CONSTRANT)		\
     _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ volatile (ASM_OP " %0, %1, %2.t"				\
-		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a),				\
-		        "vm" (mask), "0" (maskedoff), "vt"(vtype))	\
+    __asm__ (ASM_OP " %0, %1, %2.t"					\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a),					\
+	       "vm" (mask), "0" (maskedoff), "vt"(vtype))
 
 /* Unmasked inline asm template.
    SEW: integer, should be 8, 16, 32, 64
@@ -350,9 +350,9 @@
 				     OP2_CONSTRANT)			\
   {									\
     _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ volatile (ASM_OP " %0, %1, %2"				\
-		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a), OP2_CONSTRANT (b), "vt"(vtype)); \
+    __asm__ (ASM_OP " %0, %1, %2"					\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a), OP2_CONSTRANT (b), "vt"(vtype));	\
   }
 
 /* Masked inline asm template.
@@ -368,10 +368,10 @@
 					    OP2_CONSTRANT)		\
   {									\
     _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ volatile (ASM_OP " %0, %1, %2, %3.t"			\
-		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
-		        "vm" (mask), "0" (maskedoff), "vt"(vtype));	\
+    __asm__ (ASM_OP " %0, %1, %2, %3.t"					\
+	     : OP0_CONSTRANT (rv)				\
+	     : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
+	       "vm" (mask), "0" (maskedoff), "vt"(vtype));	\
   }
 
 /* Inline asm template for merge operation.
@@ -387,10 +387,10 @@
 				    OP2_CONSTRANT)			\
   {									\
     _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ volatile (ASM_OP " %0, %1,%2, %3"				\
-		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
-		        "vm" (mask), "vt"(vtype));			\
+    __asm__ (ASM_OP " %0, %1,%2, %3"					\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a), OP2_CONSTRANT (b),			\
+	       "vm" (mask), "vt"(vtype));				\
   }
 
 /* Store intrinsic function template.
@@ -887,10 +887,10 @@ FUNC_NAME (OP0_TYPE op0, OP1_TYPE a, OP2_TYPE b)			\
 {									\
   OP0_TYPE rv;								\
   _RVV_SETVTYPE(SEW, LMUL);						\
-  __asm__ volatile (ASM_OP " %0, %1, %2"				\
-		    : "=vr" (rv)					\
-		    : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
-		      "0" (op0), "vt"(vtype));				\
+  __asm__ (ASM_OP " %0, %1, %2"						\
+	   : "=vr" (rv)							\
+	   : OP1_CONSTRANT (a), OP2_CONSTRANT (b),			\
+	     "0" (op0), "vt"(vtype));					\
   return rv;								\
 }									\
 __extension__ extern __inline OP0_TYPE					\
@@ -899,10 +899,10 @@ FUNC_NAME##_mask (MASK_TYPE mask,					\
 		  OP0_TYPE op0, OP1_TYPE a, OP2_TYPE b)			\
 {									\
   _RVV_SETVTYPE(SEW, LMUL);						\
-  __asm__ volatile (ASM_OP " %0, %1, %2, %3.t"				\
-		    : "+vr" (op0)					\
-		    : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
-		      "vm" (mask), "vt"(vtype));			\
+  __asm__ (ASM_OP " %0, %1, %2, %3.t"					\
+	   : "+vr" (op0)						\
+	   : OP1_CONSTRANT (a), OP2_CONSTRANT (b),			\
+	     "vm" (mask), "vt"(vtype));					\
   return op0;								\
 }
 
