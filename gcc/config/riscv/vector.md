@@ -2494,3 +2494,25 @@
   "vfwred<o>sum.vs\t%0,%3,%2,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+(define_expand "reinterpret_<mode><vintequiv>"
+  [(set (match_operand:VFMODES 0 "register_operand")
+	(subreg:VFMODES (match_operand:<VINTEQUIV> 1 "register_operand") 0))]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_mov<mode> (operands[0],
+	     simplify_gen_subreg (<MODE>mode, operands[1],
+				  <VINTEQUIV>mode, 0)));
+  DONE;
+})
+
+(define_expand "reinterpret_<vintequiv><mode>"
+  [(set (match_operand:<VINTEQUIV> 0 "register_operand")
+	(subreg:<VINTEQUIV> (match_operand:VFMODES 1 "register_operand") 0))]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_mov<vintequiv> (operands[0],
+	     simplify_gen_subreg (<VINTEQUIV>mode, operands[1],
+				  <MODE>mode, 0)));
+  DONE;
+})

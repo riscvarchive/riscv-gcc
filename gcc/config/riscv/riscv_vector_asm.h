@@ -308,20 +308,6 @@
 	     : OP0_CONSTRANT (rv)				\
 	     : OP1_CONSTRANT (a));
 
-
-/* Inline asm template for reinterpret operation.
-   SEW: integer, should be 8, 16, 32, 64
-   LMUL: integer, should be 1, 2, 4 or 8
-   OP0_CONSTRAINT: string for the constraint of operand 0.
-   OP1_CONSTRAINT: string for the constraint of operand 1.  */
-#define _RVV_ASM_REINTERPRET_ASM_TEMPLATE(SEW, LMUL,			\
-					  OP0_CONSTRANT,		\
-					  OP1_CONSTRANT)		\
-    _RVV_SETVTYPE(SEW, LMUL);						\
-    __asm__ ("vadd.vi %0, %1, 0"					\
-	     : OP0_CONSTRANT (rv)					\
-	     : OP1_CONSTRANT (a), "vt"(vtype))
-
 /* Masked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -2780,81 +2766,6 @@ vreadvl ()
 		    : "vl");
   return rv;
 }
-
-/* Reinterpret intrinsic function template.
-   SEW: integer, should be 8, 16, 32, 64
-   LMUL: integer, should be 1, 2, 4 or 8
-   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
-   FUNC_NAME: function name.
-   OP0_TYPE: Type of operand 0.
-   OP1_TYPE: Type of operand 1.
-   OP0_CONSTRAINT: string for the constraint of operand 0.
-   OP1_CONSTRAINT: string for the constraint of operand 1.  */
-#define _RVV_ASM_REINTERPRET_OP_TEMPLATE(SEW, LMUL, FUNC_NAME,		\
-					 OP0_TYPE, OP1_TYPE,		\
-					 OP0_CONSTRANT,			\
-					 OP1_CONSTRANT)			\
-__extension__ extern __inline OP0_TYPE					\
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-FUNC_NAME (OP1_TYPE a)							\
-{									\
-  OP0_TYPE rv;								\
-  _RVV_ASM_REINTERPRET_ASM_TEMPLATE(					\
-    SEW, LMUL,								\
-    OP0_CONSTRANT, OP1_CONSTRANT); 					\
-  return rv;								\
-}
-
-#define _RVV_REINT_INT_UINT(SEW, LMUL, MLEN, T)				\
-  _RVV_ASM_REINTERPRET_OP_TEMPLATE(					\
-    SEW, LMUL,								\
-    /* FUNC_NAME */vreinterpret_i##SEW##_u##SEW##_v_##SEW##m##LMUL,	\
-    /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
-    /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_REINTERPRET_OP_TEMPLATE(					\
-    SEW, LMUL,								\
-    /* FUNC_NAME */vreinterpret_u##SEW##_i##SEW##_v_##SEW##m##LMUL,	\
-    /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
-    /* OP1_CONSTRANT */"vr")
-
-_RVV_INT_ITERATOR (_RVV_REINT_INT_UINT)
-
-
-#define _RVV_REINT_FLOAT_INT(SEW, LMUL, MLEN, T)			\
-  _RVV_ASM_REINTERPRET_OP_TEMPLATE(					\
-    SEW, LMUL,								\
-    /* FUNC_NAME */vreinterpret_u##SEW##_f##SEW##_v_##SEW##m##LMUL,	\
-    /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
-    /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_REINTERPRET_OP_TEMPLATE(					\
-    SEW, LMUL,								\
-    /* FUNC_NAME */vreinterpret_i##SEW##_f##SEW##_v_##SEW##m##LMUL,	\
-    /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
-    /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_REINTERPRET_OP_TEMPLATE(					\
-    SEW, LMUL,								\
-    /* FUNC_NAME */vreinterpret_f##SEW##_u##SEW##_v_##SEW##m##LMUL,	\
-    /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
-    /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_REINTERPRET_OP_TEMPLATE(					\
-    SEW, LMUL,								\
-    /* FUNC_NAME */vreinterpret_f##SEW##_i##SEW##_v_##SEW##m##LMUL,	\
-    /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
-    /* OP1_CONSTRANT */"vr")
-
-_RVV_FLOAT_ITERATOR (_RVV_REINT_FLOAT_INT)
 
 #endif
 #endif

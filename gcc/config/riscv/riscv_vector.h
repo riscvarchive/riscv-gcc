@@ -1208,6 +1208,51 @@ vwred##OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, sum)
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, osum)
 
+
+#define _RVV_VREINTERPRET(SEW, LMUL, MLEN, T)				\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vreinterpret_f##SEW##_i##SEW##_v_##SEW##m##LMUL (vint##SEW##m##LMUL##_t a)\
+{									\
+  return __builtin_riscv_vreinterpret_f##SEW##_i##SEW##_v_##SEW##m##LMUL (a);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vreinterpret_f##SEW##_u##SEW##_v_##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a)\
+{									\
+  return __builtin_riscv_vreinterpret_f##SEW##_u##SEW##_v_##SEW##m##LMUL (a);\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vreinterpret_i##SEW##_f##SEW##_v_##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a)\
+{									\
+  return __builtin_riscv_vreinterpret_i##SEW##_f##SEW##_v_##SEW##m##LMUL (a);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vreinterpret_u##SEW##_f##SEW##_v_##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a)\
+{									\
+  return __builtin_riscv_vreinterpret_u##SEW##_f##SEW##_v_##SEW##m##LMUL (a);\
+}
+
+#define _RVV_VREINTERPRET_INT(SEW, LMUL, MLEN, T)			\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vreinterpret_i##SEW##_u##SEW##_v_##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a)\
+{									\
+  return __builtin_riscv_vreinterpret_i##SEW##_u##SEW##_v_##SEW##m##LMUL (a);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vreinterpret_u##SEW##_i##SEW##_v_##SEW##m##LMUL (vint##SEW##m##LMUL##_t a)\
+{									\
+  return __builtin_riscv_vreinterpret_u##SEW##_i##SEW##_v_##SEW##m##LMUL (a);\
+}
+
+_RVV_FLOAT_ITERATOR (_RVV_VREINTERPRET)
+
+_RVV_INT_ITERATOR (_RVV_VREINTERPRET_INT)
+
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function
    way . */
