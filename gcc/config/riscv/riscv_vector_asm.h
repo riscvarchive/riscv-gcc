@@ -1593,7 +1593,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,
     /* OP0_TYPE */vbool##MLEN##_t,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1604,7 +1604,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,
     /* OP0_TYPE */vbool##MLEN##_t,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
@@ -1618,7 +1618,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,
     /* OP0_TYPE */vbool##MLEN##_t,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */int##SEW##_t,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1629,7 +1629,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,
     /* OP0_TYPE */vbool##MLEN##_t,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
@@ -1645,7 +1645,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,
     /* OP0_TYPE */vbool##MLEN##_t,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */int##SEW##_t,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     /* IMM_CHK */ _RVV_ASM_INT_SIMM_CHK)				\
@@ -1658,7 +1658,7 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,
     /* OP0_TYPE */vbool##MLEN##_t,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     /* IMM_CHK */ _RVV_ASM_INT_SIMM_CHK)
@@ -1694,7 +1694,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1705,7 +1705,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
@@ -1720,7 +1720,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */int##SEW##_t,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1731,7 +1731,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
@@ -1750,7 +1750,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -1759,7 +1759,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")
 
 _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
@@ -1774,7 +1774,7 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1785,7 +1785,7 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1796,7 +1796,7 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1807,7 +1807,7 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
@@ -1825,7 +1825,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1836,7 +1836,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
@@ -1852,7 +1852,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */int##SEW##_t,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1863,7 +1863,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
@@ -1883,7 +1883,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1894,7 +1894,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
@@ -1909,7 +1909,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */int##SEW##_t,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -1920,7 +1920,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
@@ -1936,7 +1936,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */int##SEW##_t,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     /* IMM_CHK */_RVV_ASM_INT_UIMM_CHK)					\
@@ -1949,7 +1949,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     /* IMM_CHK */_RVV_ASM_INT_UIMM_CHK)
@@ -2075,7 +2075,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2084,7 +2084,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2093,7 +2093,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2102,7 +2102,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2111,7 +2111,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")
 
 _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
@@ -2124,7 +2124,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2133,7 +2133,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2142,7 +2142,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##WSEW##m##WLMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2151,7 +2151,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2160,7 +2160,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2169,7 +2169,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")
 
 _RVV_WFLOAT_ITERATOR (_RVV_FNCVT)
@@ -2223,7 +2223,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
@@ -2238,7 +2238,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"f")
 
@@ -2263,7 +2263,7 @@ _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wmul)
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
@@ -2279,7 +2279,7 @@ _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wmul)
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"f")
 
@@ -2337,7 +2337,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsub)
     /* OP0_TYPE */vbool##MLEN##_t,					\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
@@ -2350,7 +2350,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsub)
     /* OP0_TYPE */vbool##MLEN##_t,					\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"f")
 
@@ -2532,7 +2532,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FLOAT_SPLAT)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */word_type,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     _RVV_ASM_INT_UIMM_CHK)						\
@@ -2546,7 +2546,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FLOAT_SPLAT)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */word_type,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     _RVV_ASM_INT_UIMM_CHK)
@@ -2565,7 +2565,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SLIDEUP_SLIDEDOWN, slidedown)
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */word_type,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     _RVV_ASM_INT_UIMM_CHK)
@@ -2586,7 +2586,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1down, slide1down)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -2597,7 +2597,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1down, slide1down)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
@@ -2609,7 +2609,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1down, slide1down)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */word_type,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     _RVV_ASM_INT_UIMM_CHK)						\
@@ -2622,7 +2622,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1down, slide1down)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */word_type,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     _RVV_ASM_INT_UIMM_CHK)
@@ -2639,7 +2639,7 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_RGATHER)
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
@@ -2651,7 +2651,7 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_RGATHER)
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */word_type,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     _RVV_ASM_INT_UIMM_CHK)
@@ -2667,7 +2667,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_RGATHER)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vbool##MLEN##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(					\
@@ -2677,7 +2677,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_RGATHER)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vbool##MLEN##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
@@ -2692,7 +2692,7 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_COMPRESS)
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vbool##MLEN##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
 
