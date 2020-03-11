@@ -34,11 +34,6 @@
 
 /* INLINE ASM VERSION OF INTRINSIC FUNCTION.  */
 
-/* Uitl type for easier expand floating point functions.  */
-#define _RVV_F16_TYPE float16_t
-#define _RVV_F32_TYPE float
-#define _RVV_F64_TYPE double
-
 /* Predicate function for signed immediate value.  */
 #define _RVV_ASM_INT_SIMM_CHK(SEW, IMM) \
   (__builtin_constant_p (b) &&		\
@@ -2317,7 +2312,7 @@ _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_WV_WF, wsub)
     /* OP1_CONSTRANT */"f",						\
     /* OP2_CONSTRANT */"vr")
 
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, macc)
+//_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, macc)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmacc)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, msac)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsac)

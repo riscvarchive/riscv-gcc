@@ -683,6 +683,20 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_##SUBMODE,\
 		vector),
 
+#define VFLOAT_MAC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (vf##OP##MODE, vf##OP##_sv_f##E##m##L,			\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_VF##E##M##L##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (vf##OP##MODE##_scalar, vf##OP##_sv_f##E##m##L##_scalar,\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_##SUBMODE##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (vf##OP##MODE##_mask, vf##OP##_sv_f##E##m##L##_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (vf##OP##MODE##_scalar_mask, vf##OP##_sv_f##E##m##L##_scalar_mask,\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_##SUBMODE##_VF##E##M##L,\
+		vector),
+
 #define VINT_ADC_SBC_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
   DIRECT_NAMED (OP##MODE##4, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L##_VB##MLEN, \
@@ -949,6 +963,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, osum)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, max)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_REDUC_OP_BUILTINS, min)
+
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MAC_OP_BUILTINS, macc)
 
   _RVV_WINT_ITERATOR_ARG (VINT_WREDUC_OP_BUILTINS, sum, sumu)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WREDUC_OP_BUILTINS, sum)

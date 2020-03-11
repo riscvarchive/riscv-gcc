@@ -46,6 +46,11 @@
 #define E16 (01x << 2)
 #define E32 (0x2 << 2)
 
+/* Uitl type for easier expand floating point functions.  */
+#define _RVV_F16_TYPE float16_t
+#define _RVV_F32_TYPE float
+#define _RVV_F64_TYPE double
+
 typedef int word_type __attribute__ ((mode (__word__)));
 typedef __fp16 float16_t;
 
@@ -1252,6 +1257,45 @@ vreinterpret_u##SEW##_i##SEW##_v_##SEW##m##LMUL (vint##SEW##m##LMUL##_t a)\
 _RVV_FLOAT_ITERATOR (_RVV_VREINTERPRET)
 
 _RVV_INT_ITERATOR (_RVV_VREINTERPRET_INT)
+
+#define _RVV_MAC_FLOAT(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t acc,		\
+			  vfloat##SEW##m##LMUL##_t a,			\
+			  vfloat##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_vf##OP##_sv_f##SEW##m##LMUL (acc, a, b);	\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_sv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t acc,		\
+			  _RVV_F##SEW##_TYPE a,				\
+			  vfloat##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_vf##OP##_sv_f##SEW##m##LMUL##_scalar (acc, a, b);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##SEW##m##LMUL##_t acc,	\
+				   vfloat##SEW##m##LMUL##_t a,		\
+				   vfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_vf##OP##_sv_f##SEW##m##LMUL##_mask (mask, acc, a, b);	\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_sv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##SEW##m##LMUL##_t acc,	\
+				   _RVV_F##SEW##_TYPE a,		\
+				   vfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_vf##OP##_sv_f##SEW##m##LMUL##_scalar_mask (mask, acc, a, b);\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, macc)
+
 
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function
