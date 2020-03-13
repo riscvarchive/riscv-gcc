@@ -28,7 +28,7 @@ RVV_FLOAT_TEST_ARG(RVV_MAC_BUILTIN_VEC_SCALAR_MASKED_TEST, nmsub)
 /* { dg-final { scan-assembler-times "vnmsub.vv" 32 } } */
 /* { dg-final { scan-assembler-times "vnmsub.vx" 32 } } */
 
-/* { dg-final { scan-assembler-times "vfmacc.vv" 24 } } */
+/* { dg-final { scan-assembler-times "vfmacc.vv|vfmadd.vv" 48 } } */
 /* { dg-final { scan-assembler-times "vfmacc.vf" 24 } } */
 /* { dg-final { scan-assembler-times "vfnmacc.vv" 24 } } */
 /* { dg-final { scan-assembler-times "vfnmacc.vf" 24 } } */
@@ -36,7 +36,6 @@ RVV_FLOAT_TEST_ARG(RVV_MAC_BUILTIN_VEC_SCALAR_MASKED_TEST, nmsub)
 /* { dg-final { scan-assembler-times "vfmsac.vf" 24 } } */
 /* { dg-final { scan-assembler-times "vfnmsac.vv" 24 } } */
 /* { dg-final { scan-assembler-times "vfnmsac.vf" 24 } } */
-/* { dg-final { scan-assembler-times "vfmadd.vv" 24 } } */
 /* { dg-final { scan-assembler-times "vfmadd.vf" 24 } } */
 /* { dg-final { scan-assembler-times "vfnmadd.vv" 24 } } */
 /* { dg-final { scan-assembler-times "vfnmadd.vf" 24 } } */
