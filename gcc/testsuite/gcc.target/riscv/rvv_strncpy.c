@@ -63,7 +63,7 @@ char *strncpy(char *dst, const char *src, size_t n) {
     dst += vl;
   }
   // handle zero tail
-  vsetvlmax_8m1();
+  vsetvlmax_8m8();
   vuint8m8_t zeros;
   zeros = vsplat_s_u8m8(0);
   for (; vl = vsetvl_8m8(n); n -= vl) {

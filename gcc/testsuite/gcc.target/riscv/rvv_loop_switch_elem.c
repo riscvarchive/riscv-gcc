@@ -46,6 +46,5 @@ void foo2(int16_t *a1, int32_t *a2, int32_t x10, int n) {
     vstore_i32m8(a2, v8);
     a1 += vl;
     a2 += vl;
-    n -= vl;
   }
 }

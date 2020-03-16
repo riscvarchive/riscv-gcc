@@ -20,10 +20,9 @@ for (i = 0; I < N; i++) {
 void foo1(double *a, double *b, double *c, int n) {
   size_t vl;
   vfloat64m2_t vec_n_double, vec_b, vec_c;
-  vuint32m1_t vec_i;
   // set VLMAX and init vector arrary
-  vsetvlmax_64m2();
-  vec_i = vid_32m1();
+  vsetvlmax_32m1();
+  vuint32m1_t vec_i = vid_32m1();
   for (; vl = vsetvl_64m2(n); n -= vl) {
     vec_n_double = vcvt_f64_u32_v_32m1(vec_i);
     vec_b = vload_f64m2(b);
