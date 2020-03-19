@@ -60,7 +60,7 @@ RVV_MODES (8, VNx128, VNx64, VNx32, VNx16)
 
 #define RVV_MASK_MODES(NCOUNT) \
   VECTOR_BOOL_MODE (VNx ## NCOUNT ## BI, NCOUNT, 16); \
-  ADJUST_NUNITS (VNx ## NCOUNT ## BI, riscv_rvv_chunks * NCOUNT); \
+  ADJUST_NUNITS (VNx ## NCOUNT ## BI, riscv_rvv_chunks * (NCOUNT / 2)); \
   ADJUST_BYTESIZE (VNx ## NCOUNT ## BI, riscv_rvv_chunks * 8); \
   ADJUST_ALIGNMENT (VNx ## NCOUNT ## BI, 1);
 
