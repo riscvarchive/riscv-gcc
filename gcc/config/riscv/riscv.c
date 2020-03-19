@@ -5169,7 +5169,7 @@ riscv_option_override (void)
 #endif
 
   if (riscv_rvv_vector_bits == RVV_SCALABLE)
-    riscv_rvv_chunks = poly_uint16 (1, 1);
+    riscv_rvv_chunks = poly_uint16 (2, 2);
   else
     riscv_rvv_chunks = (int) riscv_rvv_vector_bits / 64;
 }
