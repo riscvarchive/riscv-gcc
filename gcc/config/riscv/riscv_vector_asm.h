@@ -867,11 +867,12 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 FUNC_NAME (OP0_TYPE op0, OP1_TYPE a, OP2_TYPE b)			\
 {									\
   OP0_TYPE rv;								\
-  _RVV_SETVTYPE(SEW, LMUL);						\
-  __asm__ (ASM_OP " %0, %1, %2"						\
+  __asm__ ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"			\
+	   ASM_OP " %0, %1, %2"						\
 	   : "=vr" (rv)							\
 	   : OP1_CONSTRANT (a), OP2_CONSTRANT (b),			\
-	     "0" (op0), "vt"(vtype));					\
+	     "0" (op0)							\
+	   : "vtype");							\
   return rv;								\
 }									\
 __extension__ extern __inline OP0_TYPE					\
@@ -879,11 +880,12 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 FUNC_NAME##_mask (MASK_TYPE mask,					\
 		  OP0_TYPE op0, OP1_TYPE a, OP2_TYPE b)			\
 {									\
-  _RVV_SETVTYPE(SEW, LMUL);						\
-  __asm__ (ASM_OP " %0, %1, %2, %3.t"					\
+  __asm__ ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"			\
+	   ASM_OP " %0, %1, %2, %3.t"					\
 	   : "+vr" (op0)						\
 	   : OP1_CONSTRANT (a), OP2_CONSTRANT (b),			\
-	     "vm" (mask), "vt"(vtype));					\
+	     "vm" (mask)						\
+	   : "vtype");							\
   return op0;								\
 }
 
