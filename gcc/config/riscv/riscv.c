@@ -4529,7 +4529,7 @@ riscv_expand_epilogue (int style)
 	{
 	  poly_int64 adj_offset = step1;
 	  adj_offset.coeffs[0] = step1.coeffs[1];
-	  riscv_adjust_frame (stack_pointer_rtx, step1);
+	  riscv_adjust_frame (stack_pointer_rtx, adj_offset);
 	  step1 -= adj_offset;
 	}
 	{
