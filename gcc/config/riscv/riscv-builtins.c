@@ -85,6 +85,22 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 8,  8, vnx16di, DI)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   except SEW8, along with its corresponding vector and integer modes.  */
+#define _RVV_INT_ITERATOR_NO_SEW8(MACRO)	\
+  MACRO (16, 1, 16,  vnx8hi, HI)	\
+  MACRO (16, 2,  8, vnx16hi, HI)	\
+  MACRO (16, 4,  4, vnx32hi, HI)	\
+  MACRO (16, 8,  2, vnx64hi, HI)	\
+  MACRO (32, 1, 32,  vnx4si, SI)	\
+  MACRO (32, 2, 16,  vnx8si, SI)	\
+  MACRO (32, 4,  8, vnx16si, SI)	\
+  MACRO (32, 8,  4, vnx32si, SI)	\
+  MACRO (64, 1, 64,  vnx2di, DI)	\
+  MACRO (64, 2, 32,  vnx4di, DI)	\
+  MACRO (64, 4, 16,  vnx8di, DI)	\
+  MACRO (64, 8,  8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer modes and extra arguments.  */
 #define _RVV_INT_ITERATOR_ARG(MACRO, ...)	\
   MACRO ( 8, 1,  8, vnx16qi, QI, __VA_ARGS__)	\
@@ -282,7 +298,9 @@ enum riscv_builtin_type {
   RISCV_BUILTIN_DIRECT,
 
   /* Likewise, but with return type VOID.  */
-  RISCV_BUILTIN_DIRECT_NO_TARGET
+  RISCV_BUILTIN_DIRECT_NO_TARGET,
+  RISCV_BUILTIN_SHIFT_SCALAR,
+  RISCV_BUILTIN_SHIFT_MASK_SCALAR
 };
 
 /* Declare an availability predicate for built-in functions.  */
@@ -359,6 +377,13 @@ AVAIL (vector, TARGET_VECTOR)
    are constructed differently.  */
 #define DIRECT_NAMED_NO_TARGET(INSN, NAME, FUNCTION_TYPE, AVAIL)	\
   RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_DIRECT_NO_TARGET,		\
+	       FUNCTION_TYPE, AVAIL)
+
+#define SHIFT_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)			\
+  RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_SHIFT_SCALAR, FUNCTION_TYPE, AVAIL)
+
+#define SHIFT_MASK_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)		\
+  RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_SHIFT_MASK_SCALAR,		\
 	       FUNCTION_TYPE, AVAIL)
 
 /* Argument types.  */
@@ -895,6 +920,40 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VF##E##M##L,			\
 		vector),
 
+#define VINT_SHIFT_BUILTINS_NOMASK(E, L, MLEN, MODE, OP)		\
+  DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  SHIFT_NAMED (OP##MODE##3_scalar, v##OP##int##E##m##L##_scalar,	\
+	       RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_UQI,		\
+	       vector),
+
+#define VINT_SHIFT_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  VINT_SHIFT_BUILTINS_NOMASK(E, L, MLEN, MODE, OP)			\
+  DIRECT_NAMED (OP##MODE##3_mask, v##OP##int##E##m##L##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  SHIFT_MASK_NAMED (OP##MODE##3_scalar_mask, v##OP##int##E##m##L##_scalar_mask,\
+		    RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_UQI,\
+		    vector),
+
+#define VUINT_SHIFT_BUILTINS_NOMASK(E, L, MLEN, MODE, OP)		\
+  DIRECT_NAMED (OP##MODE##3, v##OP##uint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  SHIFT_NAMED (OP##MODE##3_scalar, v##OP##uint##E##m##L##_scalar,	\
+	       RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_UQI,		\
+	       vector),
+
+#define VUINT_SHIFT_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  VUINT_SHIFT_BUILTINS_NOMASK(E, L, MLEN, MODE, OP)			\
+  DIRECT_NAMED (OP##MODE##3_mask, v##OP##uint##E##m##L##_mask,		\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  SHIFT_MASK_NAMED (OP##MODE##3_scalar_mask, v##OP##uint##E##m##L##_scalar_mask,\
+		    RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_UQI,\
+		    vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -914,6 +973,11 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   /* XXX: rsub has masked version, but pattern didn't implement yet. */
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, rsub)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, mul)
+
+  _RVV_INT_ITERATOR_ARG (VINT_SHIFT_BUILTINS, vashl)
+  _RVV_INT_ITERATOR_ARG (VINT_SHIFT_BUILTINS, vashr)
+  _RVV_INT_ITERATOR_ARG (VUINT_SHIFT_BUILTINS, vashl)
+  _RVV_INT_ITERATOR_ARG (VUINT_SHIFT_BUILTINS, vlshr)
 
   _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, adc)
   _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, sbc)
@@ -1324,6 +1388,92 @@ riscv_expand_builtin_direct (enum insn_code icode, rtx target, tree exp,
   return riscv_expand_builtin_insn (icode, opno, ops, has_target_p);
 }
 
+/* Return a legitimate rtx for instruction ICODE's return value.  Use TARGET
+   if it's not null, has the right mode, and satisfies operand 0's
+   predicate.  */
+static rtx
+riscv_legitimize_target (enum insn_code icode, rtx target)
+{
+  enum machine_mode mode = insn_data[icode].operand[0].mode;
+
+  if (! target
+      || GET_MODE (target) != mode
+      || ! (*insn_data[icode].operand[0].predicate) (target, mode))
+    return gen_reg_rtx (mode);
+  else
+    return target;
+}
+
+/* Given that ARG is being passed as operand OPNUM to instruction ICODE,
+   check whether ARG satisfies the operand's constraints.  If it doesn't,
+   copy ARG to a temporary register and return that.  Otherwise return ARG
+   itself.  */
+static rtx
+riscv_legitimize_argument (enum insn_code icode, int opnum, rtx arg)
+{
+  enum machine_mode mode = insn_data[icode].operand[opnum].mode;
+
+  if ((*insn_data[icode].operand[opnum].predicate) (arg, mode))
+    return arg;
+  else
+    {
+      rtx tmp_rtx = gen_reg_rtx (mode);
+      convert_move (tmp_rtx, arg, false);
+      return tmp_rtx;
+    }
+}
+
+static rtx
+riscv_expand_builtin_shift_scalar (enum insn_code icode, rtx target, tree exp)
+{
+  rtx pat;
+  rtx op0 = expand_normal (CALL_EXPR_ARG (exp, 0));
+  rtx op1 = expand_normal (CALL_EXPR_ARG (exp, 1));
+
+  /* Map any target to operand 0.  */
+  target = riscv_legitimize_target (icode, target);
+
+  op0 = riscv_legitimize_argument (icode, 1, op0);
+  op1 = riscv_legitimize_argument (icode, 2, op1);
+
+  /* Emit and return the new instruction. */
+  pat = GEN_FCN (icode) (target, op0, op1);
+
+  if (! pat)
+    return NULL_RTX;
+
+  emit_insn (pat);
+  return target;
+}
+
+static rtx
+riscv_expand_builtin_shift_mask_scalar (enum insn_code icode,
+					rtx target, tree exp)
+{
+  rtx pat;
+  rtx op0 = expand_normal (CALL_EXPR_ARG (exp, 0));
+  rtx op1 = expand_normal (CALL_EXPR_ARG (exp, 1));
+  rtx op2 = expand_normal (CALL_EXPR_ARG (exp, 2));
+  rtx op3 = expand_normal (CALL_EXPR_ARG (exp, 3));
+
+  /* Map any target to operand 0.  */
+  target = riscv_legitimize_target (icode, target);
+
+  op0 = riscv_legitimize_argument (icode, 1, op0);
+  op1 = riscv_legitimize_argument (icode, 2, op1);
+  op2 = riscv_legitimize_argument (icode, 3, op2);
+  op3 = riscv_legitimize_argument (icode, 4, op3);
+
+  /* Emit and return the new instruction. */
+  pat = GEN_FCN (icode) (target, op0, op1, op2, op3);
+
+  if (! pat)
+    return NULL_RTX;
+
+  emit_insn (pat);
+  return target;
+}
+
 /* Implement TARGET_EXPAND_BUILTIN.  */
 
 rtx
@@ -1337,6 +1487,10 @@ riscv_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 
   switch (d->builtin_type)
     {
+    case RISCV_BUILTIN_SHIFT_SCALAR:
+      return riscv_expand_builtin_shift_scalar (d->icode, target, exp);
+    case RISCV_BUILTIN_SHIFT_MASK_SCALAR:
+      return riscv_expand_builtin_shift_mask_scalar (d->icode, target, exp);
     case RISCV_BUILTIN_DIRECT:
       return riscv_expand_builtin_direct (d->icode, target, exp, true);
 

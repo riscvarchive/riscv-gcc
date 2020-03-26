@@ -694,6 +694,82 @@ v##OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,		\
   return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
 }									\
 
+#define _RVV_INT_BIN_SHIFT(SEW, LMUL, MLEN, T, OP, BOP)			\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
+			    vuint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##BOP##int##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##SEW##m##LMUL##_t maskedoff,	\
+				   vint##SEW##m##LMUL##_t a,		\
+				   vuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##BOP##int##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a, b);					\
+}
+
+#define _RVV_UINT_BIN_SHIFT(SEW, LMUL, MLEN, T, OP, BOP)		\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
+			    vuint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##BOP##uint##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##SEW##m##LMUL##_t maskedoff,	\
+				   vuint##SEW##m##LMUL##_t a,		\
+				   vuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##BOP##uint##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a, b);					\
+}
+
+#define _RVV_INT_BIN_SHIFT_SCALAR(SEW, LMUL, MLEN, T, OP, BOP)		\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
+			    uint8_t b)					\
+{									\
+  return __builtin_riscv_v##BOP##int##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##SEW##m##LMUL##_t maskedoff,	\
+				   vint##SEW##m##LMUL##_t a,		\
+				   uint8_t b)				\
+{									\
+  return __builtin_riscv_v##BOP##int##SEW##m##LMUL##_scalar_mask (	\
+      mask, maskedoff, a, b);						\
+}
+
+#define _RVV_UINT_BIN_SHIFT_SCALAR(SEW, LMUL, MLEN, T, OP, BOP)		\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
+			    uint8_t b)					\
+{									\
+  return __builtin_riscv_v##BOP##uint##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##SEW##m##LMUL##_t maskedoff,	\
+				   vuint##SEW##m##LMUL##_t a,		\
+				   uint8_t b)				\
+{									\
+  return __builtin_riscv_v##BOP##uint##SEW##m##LMUL##_scalar_mask (	\
+      mask, maskedoff, a, b);						\
+}
+
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, add)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, add)
 #if 0
@@ -705,6 +781,15 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR_NOMASK, rsub)
 #endif
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, mul)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, mul)
+
+_RVV_INT_ITERATOR_ARG (_RVV_UINT_BIN_SHIFT, sll, vashl)
+_RVV_INT_ITERATOR_ARG (_RVV_UINT_BIN_SHIFT_SCALAR, sll, vashl)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_SHIFT, sll, vashl)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_SHIFT_SCALAR, sll, vashl)
+_RVV_INT_ITERATOR_ARG (_RVV_UINT_BIN_SHIFT, srl, vlshr)
+_RVV_INT_ITERATOR_ARG (_RVV_UINT_BIN_SHIFT_SCALAR, srl, vlshr)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_SHIFT, sra, vashr)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_SHIFT_SCALAR, sra, vashr)
 
 #define _RVV_INT_ADC_SBC_OP(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
