@@ -1900,7 +1900,7 @@
 })
 
 (define_insn "vec_cmp<mode><vmaskmode>_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
 			 [(match_operand:VIMODES 2 "register_operand" "vr")
 			  (match_operand:VIMODES 3 "register_operand" "vr")]))
@@ -1925,7 +1925,7 @@
 })
 
 (define_insn "vec_cmp<mode><vmaskmode>_mask_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(if_then_else:<VCMPEQUIV>
 	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm")
 	  (match_operator:<VCMPEQUIV> 1 "comparison_operator"
@@ -1950,7 +1950,7 @@
 })
 
 (define_insn "vec_cmp<mode><vmaskmode>_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
 			 [(match_operand:VFMODES 2 "register_operand" "vr")
 			  (match_operand:VFMODES 3 "register_operand" "vr")]))
@@ -1975,7 +1975,7 @@
 })
 
 (define_insn "vec_cmp<mode><vmaskmode>_mask_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(if_then_else:<VCMPEQUIV>
 	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm")
 	  (match_operator:<VCMPEQUIV> 1 "comparison_operator"
