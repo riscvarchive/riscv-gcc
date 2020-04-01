@@ -322,7 +322,8 @@
    (parallel [(set (mem:VMODES (match_operand:P 2 "register_operand"))
 		   (unspec:VMODES
 		     [(match_operand:<VCMPEQUIV> 0 "register_operand")
-		      (match_operand:VMODES 1 "register_operand")]
+		      (match_operand:VMODES 1 "register_operand")
+		      (mem:VMODES (match_dup 2))]
 		     UNSPEC_MASKED_STORE))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
@@ -333,7 +334,8 @@
   [(set (match_operand:VMODES 0 "memory_operand" "=m")
 	(unspec:VMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
-	   (match_operand:VMODES 2 "register_operand" "vr")]
+	   (match_operand:VMODES 2 "register_operand" "vr")
+	   (match_dup 0)]
 	  UNSPEC_MASKED_STORE))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
