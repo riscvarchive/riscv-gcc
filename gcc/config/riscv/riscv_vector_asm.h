@@ -57,7 +57,7 @@
 				    OP1_CONSTRANT)		\
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " %1, %0"				\
-		      : OP0_CONSTRANT (addr)			\
+		      : OP0_CONSTRANT (*addr)			\
 		      : OP1_CONSTRANT (a), "vt"(vtype)		\
 		      : "memory")
 
@@ -72,7 +72,7 @@
 					   OP1_CONSTRANT)		\
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " %1, %0, %2.t"				\
-		      : OP0_CONSTRANT (addr)				\
+		      : OP0_CONSTRANT (*addr)				\
 		      : OP1_CONSTRANT (a),				\
 		        "vm" (mask), "vt"(vtype)			\
 		      : "memory")
@@ -89,7 +89,7 @@
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " %0, %1, %2"			\
 		      : OP0_CONSTRANT (rv)			\
-		      : OP1_CONSTRANT (a),			\
+		      : OP1_CONSTRANT (*a),			\
 			"r" (stride), "vt"(vtype))
 
 /* Masked inline asm template for store instructions.
@@ -104,7 +104,7 @@
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " %0, %1, %2, %3.t"			\
 		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a),				\
+		      : OP1_CONSTRANT (*a),				\
 		        "r" (stride),					\
 		        "vm" (mask), "0"(maskedoff), "vt"(vtype)	\
 		      : "memory")
@@ -120,7 +120,7 @@
 					    OP1_CONSTRANT)		\
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " %1, %0, %2"				\
-		      : OP0_CONSTRANT (addr)				\
+		      : OP0_CONSTRANT (*addr)				\
 		      : OP1_CONSTRANT (a), "r"(stride), "vt"(vtype)	\
 		      : "memory")
 
@@ -135,7 +135,7 @@
 						   OP1_CONSTRANT)	\
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " %1, %0, %2, %3.t"			\
-		      : OP0_CONSTRANT (addr)				\
+		      : OP0_CONSTRANT (*addr)				\
 		      : OP1_CONSTRANT (a), "r"(stride),			\
 		        "vm" (mask), "vt"(vtype)			\
 		      : "memory")
@@ -152,7 +152,7 @@
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " %0, %1, %2"			\
 		      : OP0_CONSTRANT (rv)			\
-		      : OP1_CONSTRANT (a),			\
+		      : OP1_CONSTRANT (*a),			\
 			"vr" (index), "vt"(vtype)		\
 		      : "memory")
 
@@ -168,7 +168,7 @@
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " %0, %1, %2, %3.t"			\
 		      : OP0_CONSTRANT (rv)				\
-		      : OP1_CONSTRANT (a),				\
+		      : OP1_CONSTRANT (*a),				\
 		        "vr" (index),					\
 		        "vm" (mask), "0"(maskedoff), "vt"(vtype)	\
 		      : "memory")
@@ -184,7 +184,7 @@
 					    OP1_CONSTRANT)	\
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " %1, %0, %2"			\
-		      : OP0_CONSTRANT (addr)			\
+		      : OP0_CONSTRANT (*addr)			\
 		      : OP1_CONSTRANT (a),			\
 			"vr" (index), "vt"(vtype)		\
 		      : "memory")
@@ -200,7 +200,7 @@
 						   OP1_CONSTRANT)	\
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " %1, %0, %2, %3.t"			\
-		      : OP0_CONSTRANT (addr)				\
+		      : OP0_CONSTRANT (*addr)				\
 		      : OP1_CONSTRANT (a),				\
 		        "vr" (index),					\
 		        "vm" (mask), "vt"(vtype)			\
@@ -213,7 +213,7 @@
 #define _RVV_ASM_AMO_WD_ASM_TEMPLATE(SEW, LMUL, ASM_OP)	\
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " %1, %0, %3, %2"			\
-		      : "=A" (addr), "=vr"(rv)			\
+		      : "=A" (*addr), "=vr"(rv)			\
 		      : "1" (a), "vr"(b), "vt"(vtype)		\
 		      : "memory")
 
@@ -224,7 +224,7 @@
 #define _RVV_ASM_AMO_WD_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP)		\
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " %1, %0, %3, %2, %4.t"			\
-		      : "=A" (addr), "=vr"(rv)				\
+		      : "=A" (*addr), "=vr"(rv)				\
 		      : "1" (a), "vr"(b), "vm"(mask), "vt"(vtype)	\
 		      : "memory")
 
@@ -235,7 +235,7 @@
 #define _RVV_ASM_AMO_ASM_TEMPLATE(SEW, LMUL, ASM_OP)	\
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " x0, %0, %2, %1"			\
-		      : "=A" (addr)				\
+		      : "=A" (*addr)				\
 		      : "vr" (a), "vr"(b), "vt"(vtype)		\
 		      : "memory")
 
@@ -246,7 +246,7 @@
 #define _RVV_ASM_AMO_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP)		\
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " x0, %0, %2, %1, %3.t"			\
-		      : "=A" (addr)					\
+		      : "=A" (*addr)					\
 		      : "vr" (a), "vr"(b), "vm"(mask), "vt"(vtype)	\
 		      : "memory")
 
@@ -278,6 +278,20 @@
 	     : OP0_CONSTRANT (rv)				\
 	     : OP1_CONSTRANT (a), "vt"(vtype));
 
+/* Unmasked inline asm template for load operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_LOAD_OP_ASM_TEMPLATE(SEW, LMUL, ASM_OP,		\
+				       OP0_CONSTRANT,			\
+				       OP1_CONSTRANT)			\
+    _RVV_SETVTYPE(SEW, LMUL);						\
+    __asm__ (ASM_OP " %0, %1"						\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (*a), "vt"(vtype));			\
+
 /* Unmasked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -302,6 +316,21 @@
     __asm__ (ASM_OP " %0, %1"					\
 	     : OP0_CONSTRANT (rv)				\
 	     : OP1_CONSTRANT (a));
+
+/* Masked inline asm template for load operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_LOAD_OP_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP,		\
+					      OP0_CONSTRANT,		\
+					      OP1_CONSTRANT)		\
+    _RVV_SETVTYPE(SEW, LMUL);						\
+    __asm__ (ASM_OP " %0, %1, %2.t"					\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (*a),					\
+	       "vm" (mask), "0" (maskedoff), "vt"(vtype))
 
 /* Masked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
@@ -701,6 +730,43 @@ FUNC_NAME (OP1_TYPE a)							\
   return rv;								\
 }
 
+/* LOAD intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_LOAD_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,		\
+				  MASK_TYPE,				\
+				  OP0_TYPE, OP1_TYPE,	 		\
+				  OP0_CONSTRANT,			\
+				  OP1_CONSTRANT)			\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a)							\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_LOAD_OP_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}									\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
+		  OP1_TYPE a)						\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_LOAD_OP_MASKED_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}
+
 /* UNARY intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -954,7 +1020,7 @@ FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
 }									\
 
 #define _RVV_ASM_LOAD(SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)	\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_LOAD_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vl" #NTYPE_LETTER ".v",				\
     /* FUNC_NAME */vload##NTYPE_LETTER##_i##SEW##m##LMUL,		\
@@ -963,7 +1029,7 @@ FUNC_NAME (MASK_TYPE mask, OP1_TYPE a, OP2_TYPE b)			\
     /* OP1_TYPE */const int##NSEW##_t *,				\
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"A")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_LOAD_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vl" #NTYPE_LETTER "u.v",				\
     /* FUNC_NAME */vload##NTYPE_LETTER##_u##SEW##m##LMUL,		\
