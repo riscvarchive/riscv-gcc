@@ -1395,6 +1395,31 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_E_FF_LOAD)
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
+/* Template function for slide1[down|up] vector-scalar operation.  */
+#define _RVV_ASM_SLIDE1_OP_SCALAR(SEW, LMUL, MLEN, T, OP, OPU)		\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vx",						\
+    /* FUNC_NAME */v##OP##_vs_i##SEW##m##LMUL,			\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */int##SEW##_t,						\
+    /* OP0_CONSTRANT */"=&vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r")						\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OPU ".vx",						\
+    /* FUNC_NAME */v##OP##_vs_u##SEW##m##LMUL,			\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */uint##SEW##_t,					\
+    /* OP0_CONSTRANT */"=&vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r")
+
 /* Template function for binary integer vector-vector operation.  */
 #define _RVV_ASM_INT_BIN_OP_VEC(SEW, LMUL, MLEN, T, OP, OPU)	\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -2636,8 +2661,8 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SLIDEUP_SLIDEDOWN, slidedown)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_SLIDEUP_SLIDEDOWN, slideup)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_SLIDEUP_SLIDEDOWN, slidedown)
 
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1up, slide1up)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR, slide1down, slide1down)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_SLIDE1_OP_SCALAR, slide1up, slide1up)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_SLIDE1_OP_SCALAR, slide1down, slide1down)
 
 /* Template function for integer rgather operation.  */
 #define _RVV_ASM_INT_RGATHER(SEW, LMUL, MLEN, T)			\
