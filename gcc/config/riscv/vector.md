@@ -237,6 +237,10 @@
 ;; particular code.
 (define_code_attr vshift [(ashift "vashl") (ashiftrt "vashr") (lshiftrt "vlshr")])
 
+;; <vshift> expand to the name of the vector narrowing shift that implements a
+;; particular code.
+(define_code_attr vnshift [(ashiftrt "vnsra") (lshiftrt "vnsrl")])
+
 ;; Iterator and attributes for widening floating-point reduction instructions.
 (define_int_iterator WFREDUC_REDUC [UNSPEC_REDUC UNSPEC_ORDERED_REDUC])
 
@@ -2791,5 +2795,123 @@
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "v<insn>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;;Vector Narrowing Integer Right Shift Instructions
+
+(define_expand "<vnshift><mode>3_nv"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (truncate:VWIMODES
+		     (any_shiftrt:<VWMODES>
+		       (match_operand:<VWMODES> 1 "register_operand")
+		       (match_operand:VWIMODES 2 "vector_arith_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*<vnshift><mode>3_nv_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=vr,vr")
+	(truncate:VWIMODES
+	  (any_shiftrt:<VWMODES>
+	    (match_operand:<VWMODES> 1 "register_operand" "vr,vr")
+	    (match_operand:VWIMODES 2 "vector_arith_operand" "vr,vk"))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vn<insn>.wv\t%0,%1,%2
+   vn<insn>.wi\t%0,%1,%v2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<vnshift><mode>3_nv_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (truncate:VWIMODES
+		     (any_shiftrt:<VWMODES>
+		       (match_operand:<VWMODES> 1 "register_operand")
+		       (vec_duplicate:VWIMODES
+			 (match_operand:<VSUBMODE> 2 "register_operand")))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*<vnshift><mode>3_nv_scalar_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=vr")
+	(truncate:VWIMODES
+	  (any_shiftrt:<VWMODES>
+	    (match_operand:<VWMODES> 1 "register_operand" "vr")
+	    (vec_duplicate:VWIMODES
+	      (match_operand:<VSUBMODE> 2 "register_operand" "r")))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vn<insn>.wx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<vnshift><mode>3_nv_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (if_then_else:VWIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (truncate:VWIMODES
+		       (any_shiftrt:<VWMODES>
+			 (match_operand:<VWMODES> 3 "register_operand")
+			 (match_operand:VWIMODES 4 "vector_arith_operand")))
+		     (match_operand:VWIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<vnshift><mode>3_nv_mask_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=vr,vr")
+	(if_then_else:VWIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	  (truncate:VWIMODES
+	    (any_shiftrt:<VWMODES>
+	      (match_operand:<VWMODES> 3 "register_operand" "vr,vr")
+	      (match_operand:VWIMODES 4 "vector_arith_operand" "vr,vk")))
+	  (match_operand:VWIMODES 2 "register_operand" "0,0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vn<insn>.wv\t%0,%3,%4,%1.t
+   vn<insn>.wi\t%0,%3,%v4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<vnshift><mode>3_nv_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (if_then_else:VWIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (truncate:VWIMODES
+		       (any_shiftrt:<VWMODES>
+			 (match_operand:<VWMODES> 3 "register_operand")
+			 (vec_duplicate:VWIMODES
+			   (match_operand:<VSUBMODE> 4 "register_operand"))))
+		     (match_operand:VWIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<vnshift><mode>3_scalar_nv_mask_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=vr")
+	(if_then_else:VWIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (truncate:VWIMODES
+	      (any_shiftrt:<VWMODES>
+		(match_operand:<VWMODES> 3 "register_operand" "vr")
+		(vec_duplicate:VWIMODES
+		  (match_operand:<VSUBMODE> 4 "register_operand" "r"))))
+	  (match_operand:VWIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vn<insn>.wx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])

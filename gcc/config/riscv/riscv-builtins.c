@@ -954,6 +954,46 @@ tree rvvbool64_t_node;
 		    RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_UQI,\
 		    vector),
 
+#define VINT_NARROWING_SHIFT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
+					     WE, WL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (OP##VMODE##3_nv, OP##int##WE##m##WL,				\
+		RISCV_VI##E##M##L##_FTYPE_VI##WE##M##WL##_VUI##E##M##L,		\
+		vector),							\
+  SHIFT_NAMED (OP##VMODE##3_nv_scalar, OP##int##WE##m##WL##_scalar,		\
+	       RISCV_VI##E##M##L##_FTYPE_VI##WE##M##WL##_UQI,			\
+	       vector),
+
+#define VINT_NARROWING_SHIFT_BUILTINS(E, L, MLEN, VMODE, SDEMODE,		\
+				      WE, WL, WVMODE, WSMODE, OP)		\
+  VINT_NARROWING_SHIFT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,		\
+				       WE, WL, WVMODE, WSMODE, OP)		\
+  DIRECT_NAMED (OP##VMODE##3_nv_mask, OP##int##WE##m##WL##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##WE##M##WL##_VUI##E##M##L,\
+		vector),							\
+  SHIFT_MASK_NAMED (OP##VMODE##3_nv_scalar_mask, OP##int##WE##m##WL##_scalar_mask,\
+		    RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##WE##M##WL##_UQI,\
+		    vector),
+
+#define VUINT_NARROWING_SHIFT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
+					      WE, WL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (OP##VMODE##3_nv, OP##uint##WE##m##WL,				\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##WE##M##WL##_VUI##E##M##L,	\
+		vector),							\
+  SHIFT_NAMED (OP##VMODE##3_nv_scalar, OP##uint##WE##m##WL##_scalar,		\
+	       RISCV_VUI##E##M##L##_FTYPE_VUI##WE##M##WL##_UQI,			\
+	       vector),
+
+#define VUINT_NARROWING_SHIFT_BUILTINS(E, L, MLEN, VMODE, SDEMODE,	\
+				       WE, WL, WVMODE, WSMODE, OP)	\
+  VUINT_NARROWING_SHIFT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
+					WE, WL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (OP##VMODE##3_nv_mask, OP##uint##WE##m##WL##_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##WE##M##WL##_VUI##E##M##L,\
+		vector),						\
+  SHIFT_MASK_NAMED (OP##VMODE##3_nv_scalar_mask, OP##uint##WE##m##WL##_scalar_mask,\
+		    RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##WE##M##WL##_UQI,\
+		    vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -978,6 +1018,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_SHIFT_BUILTINS, vashr)
   _RVV_INT_ITERATOR_ARG (VUINT_SHIFT_BUILTINS, vashl)
   _RVV_INT_ITERATOR_ARG (VUINT_SHIFT_BUILTINS, vlshr)
+
+  _RVV_WINT_ITERATOR_ARG (VUINT_NARROWING_SHIFT_BUILTINS, vnsrl)
+  _RVV_WINT_ITERATOR_ARG (VINT_NARROWING_SHIFT_BUILTINS, vnsra)
 
   _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, adc)
   _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, sbc)
