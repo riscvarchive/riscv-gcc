@@ -1109,7 +1109,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
     /* ASM_OP */"vsx" #NTYPE_LETTER ".v",				\
     /* FUNC_NAME */vstorex##NTYPE_LETTER##_i##SEW##m##LMUL,		\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const int##NSEW##_t *,				\
+    /* OP0_TYPE */int##NSEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1119,7 +1119,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
     /* ASM_OP */"vsx" #NTYPE_LETTER ".v",				\
     /* FUNC_NAME */vstorex##NTYPE_LETTER##_u##SEW##m##LMUL,		\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const uint##NSEW##_t *,				\
+    /* OP0_TYPE */uint##NSEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1129,7 +1129,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
     /* ASM_OP */"vsux" #NTYPE_LETTER ".v",				\
     /* FUNC_NAME */vstoreux##NTYPE_LETTER##_i##SEW##m##LMUL,		\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const int##NSEW##_t *,				\
+    /* OP0_TYPE */int##NSEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1139,7 +1139,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
     /* ASM_OP */"vsux" #NTYPE_LETTER ".v",				\
     /* FUNC_NAME */vstoreux##NTYPE_LETTER##_u##SEW##m##LMUL,		\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const uint##NSEW##_t *,				\
+    /* OP0_TYPE */uint##NSEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1153,7 +1153,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
     /* ASM_OP */"vsxe.v",						\
     /* FUNC_NAME */vstorex_i##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const int##SEW##_t *,					\
+    /* OP0_TYPE */int##SEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1163,7 +1163,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
     /* ASM_OP */"vsxe.v",						\
     /* FUNC_NAME */vstorex_u##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const uint##SEW##_t *,				\
+    /* OP0_TYPE */uint##SEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1173,7 +1173,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
     /* ASM_OP */"vsuxe.v",						\
     /* FUNC_NAME */vstoreux_i##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const int##SEW##_t *,					\
+    /* OP0_TYPE */int##SEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1183,7 +1183,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
     /* ASM_OP */"vsuxe.v",						\
     /* FUNC_NAME */vstoreux_u##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const uint##SEW##_t *,				\
+    /* OP0_TYPE */uint##SEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1197,7 +1197,7 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_INDEXED_STORE)
     /* ASM_OP */"vsxe.v",						\
     /* FUNC_NAME */vstorex_f##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const _RVV_F##SEW##_TYPE *,				\
+    /* OP0_TYPE */_RVV_F##SEW##_TYPE *,					\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
@@ -1205,9 +1205,9 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_INDEXED_STORE)
   _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
     /* ASM_OP */"vsuxe.v",						\
-    /* FUNC_NAME */vstoreux_f##SEW##m##LMUL,			\
+    /* FUNC_NAME */vstoreux_f##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
-    /* OP0_TYPE */const _RVV_F##SEW##_TYPE *,				\
+    /* OP0_TYPE */_RVV_F##SEW##_TYPE *,					\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=A",						\
