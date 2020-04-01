@@ -1471,6 +1471,58 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_E_FF_LOAD)
 		 			    _RVV_ASM_INT_UIMM_CHK)	\
   _RVV_ASM_INT_BIN_OP_VEC(SEW, LMUL, MLEN, T, OP, OP)
 
+/* Template function for shift operation.  */
+#define _RVV_ASM_INT_SHIFT_OP(SEW, LMUL, MLEN, T, OP)			\
+  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vx",						\
+    /* IMM_ASM_OP */"v" #OP ".vi",					\
+    /* FUNC_NAME */v##OP##_vs_i##SEW##m##LMUL,				\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */uint8_t,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r",						\
+    _RVV_ASM_INT_UIMM_CHK)						\
+  /* vopu.vs */								\
+  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vx",						\
+    /* IMM_ASM_OP */"v" #OP ".vi",					\
+    /* FUNC_NAME */v##OP##_vs_u##SEW##m##LMUL,				\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */uint8_t,						\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"r",						\
+    _RVV_ASM_INT_UIMM_CHK)						\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vv",						\
+    /* FUNC_NAME */v##OP##_vv_i##SEW##m##LMUL,				\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")						\
+  _RVV_ASM_BIN_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"v" #OP ".vv",						\
+    /* FUNC_NAME */v##OP##_vv_u##SEW##m##LMUL,				\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr",						\
+    /* OP2_CONSTRANT */"vr")
+
 /* Template function for binary integer vector-vector, vector-scalar and
    vector-signed-immediate operation.  */
 #define _RVV_ASM_INT_BIN_OP_OPU_WITH_IMM_VER(SEW, LMUL, MLEN, T, OP, OPU)\
@@ -1485,9 +1537,9 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR_WITH_IMM_CHECK, rsub, rsub,
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_IMM_VER, and)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_IMM_VER,  or)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_IMM_VER, xor)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_UIMM_VER, sll)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_UIMM_VER, sra)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_UIMM_VER, srl)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SHIFT_OP, sll)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SHIFT_OP, sra)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SHIFT_OP, srl)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, min, minu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, max, maxu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, div, divu)
