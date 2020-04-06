@@ -290,7 +290,8 @@
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ (ASM_OP " %0, %1"						\
 	     : OP0_CONSTRANT (rv)					\
-	     : OP1_CONSTRANT (*a), "vt"(vtype));			\
+	     : OP1_CONSTRANT (*a), "vt"(vtype)				\
+	     : "memory");
 
 /* Unmasked inline asm template for unary operation.
    SEW: integer, should be 8, 16, 32, 64
