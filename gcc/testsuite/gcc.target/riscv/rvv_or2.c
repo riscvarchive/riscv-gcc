@@ -7,16 +7,16 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VOR(STYPE, VCLASS, EM, MLEN)                                          \
-  void vor##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
-    vy = rvvor##VCLASS##EM (vx, vy);                                          \
-    vy = rvvor##VCLASS##EM##_scalar (vy, z);                                  \
-    rvvst##VCLASS##EM(y, vy);                                                  \
-    vx = rvvor##VCLASS##EM##_scalar (vx, 1);                                  \
-    rvvst##VCLASS##EM(x, vx);                                                  \
+#define VOR(STYPE, VCLASST, VCLASS, EM, MLEN)                                  \
+  void vor##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {                \
+    v##VCLASST##EM##_t vx, vy;                                                 \
+    vx = vload_##VCLASS##EM(x);                                                \
+    vy = vload_##VCLASS##EM(y);                                                \
+    vy = vor_vv_##VCLASS##EM (vx, vy);                                         \
+    vy = vor_vs_##VCLASS##EM (vy, z);                                          \
+    vstore_##VCLASS##EM(y, vy);                                                \
+    vx = vor_vs_##VCLASS##EM (vx, 1);                                          \
+    vstore_##VCLASS##EM(x, vx);                                                \
   }
 
 RVV_INT_TEST(VOR)

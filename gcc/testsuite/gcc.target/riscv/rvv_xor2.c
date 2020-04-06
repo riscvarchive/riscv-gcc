@@ -7,16 +7,16 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VXOR(STYPE, VCLASS, EM, MLEN)                                          \
+#define VXOR(STYPE, VCLASST, VCLASS, EM, MLEN)                                 \
   void vxor##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
-    vy = rvvxor##VCLASS##EM (vx, vy);                                          \
-    vy = rvvxor##VCLASS##EM##_scalar (vy, z);                                  \
-    rvvst##VCLASS##EM(y, vy);                                                  \
-    vx = rvvxor##VCLASS##EM##_scalar (vx, 1);                                  \
-    rvvst##VCLASS##EM(x, vx);                                                  \
+    v##VCLASST##EM##_t vx, vy;                                                 \
+    vx = vload_##VCLASS##EM(x);                                                \
+    vy = vload_##VCLASS##EM(y);                                                \
+    vy = vxor_vv_##VCLASS##EM (vx, vy);                                        \
+    vy = vxor_vs_##VCLASS##EM (vy, z);                                         \
+    vstore_##VCLASS##EM(y, vy);                                                \
+    vx = vxor_vs_##VCLASS##EM (vx, 1);                                         \
+    vstore_##VCLASS##EM(x, vx);                                                \
   }
 
 RVV_INT_TEST(VXOR)

@@ -7,18 +7,18 @@
 
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
-#define VXOR(STYPE, VCLASS, EM, MLEN)                                          \
+#define VXOR(STYPE, VCLASST, VCLASS, EM, MLEN)                                 \
   void vxor##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
-    rvv##VCLASS##EM##_t vx, vy;                                                \
-    rvvbool##MLEN##_t mask;                                                    \
-    vx = rvvld##VCLASS##EM(x);                                                 \
-    vy = rvvld##VCLASS##EM(y);                                                 \
-    mask = rvvslt##VCLASS##EM(vx, vy);                                         \
-    vy = rvvxor##VCLASS##EM##_mask (mask, vy, vx, vy);                         \
-    vy = rvvxor##VCLASS##EM##_scalar_mask (mask, vy, vy, z);                   \
-    rvvst##VCLASS##EM(y, vy);                                                  \
-    vx = rvvxor##VCLASS##EM##_scalar_mask (mask, vy, vx, 1);                   \
-    rvvst##VCLASS##EM(x, vx);                                                  \
+    v##VCLASST##EM##_t vx, vy;                                                 \
+    vbool##MLEN##_t mask;                                                      \
+    vx = vload_##VCLASS##EM(x);                                                \
+    vy = vload_##VCLASS##EM(y);                                                \
+    mask = vset_b##MLEN ();                                                    \
+    vy = vxor_vv_##VCLASS##EM##_mask (mask, vy, vx, vy);                       \
+    vy = vxor_vs_##VCLASS##EM##_mask (mask, vy, vy, z);                        \
+    vstore_##VCLASS##EM(y, vy);                                                \
+    vx = vxor_vs_##VCLASS##EM##_mask (mask, vy, vx, 1);                        \
+    vstore_##VCLASS##EM(x, vx);                                                \
   }
 
 RVV_INT_TEST(VXOR)
