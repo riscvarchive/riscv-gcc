@@ -2207,7 +2207,7 @@
   (set_attr "mode" "none")])
 
 (define_insn "iota<mode>2"
-  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
 	(unspec:VIMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vr")]
 	  UNSPEC_IOTA))]
@@ -2217,7 +2217,7 @@
   (set_attr "mode" "none")])
 
 (define_insn "iota<mode>2_mask"
-  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
 	(unspec:VIMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vr")]
