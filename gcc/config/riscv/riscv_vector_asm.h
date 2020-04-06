@@ -1555,8 +1555,8 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, asub, asubu)
 
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP, smul)
 
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_UIMM_VER, ssra)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_WITH_UIMM_VER, ssrl)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SHIFT_OP, ssra)
+_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SHIFT_OP, ssrl)
 
 /* Template function for vmulhsu.vv and vmulhsu.vx.  */
 #define _RVV_ASM_MULHSU_OP(SEW, LMUL, MLEN, T, OP)			\
@@ -2023,7 +2023,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
-    /* OP2_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
@@ -2049,7 +2049,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
-    /* OP2_TYPE */int##SEW##_t,						\
+    /* OP2_TYPE */uint##SEW##_t,					\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
@@ -2076,7 +2076,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
-    /* OP2_TYPE */int##SEW##_t,						\
+    /* OP2_TYPE */uint##SEW##_t,					\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
