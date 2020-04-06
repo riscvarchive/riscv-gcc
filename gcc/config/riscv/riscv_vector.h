@@ -590,20 +590,20 @@ _RVV_FLOAT_ITERATOR (_RVVFLOATST)
 
 /* Define the add intrinsics.  */
 
-#define _RVV_INT_BIN_OP(SEW, LMUL, MLEN, T, OP)				\
+#define _RVV_INT_BIN_OP(SEW, LMUL, MLEN, T, OP, BOP)			\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 v##OP##_vv_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,		\
 			    vint##SEW##m##LMUL##_t b)		\
 {									\
-  return __builtin_riscv_v##OP##int##SEW##m##LMUL (a, b);		\
+  return __builtin_riscv_v##BOP##int##SEW##m##LMUL (a, b);		\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 v##OP##_vv_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,		\
 				  vuint##SEW##m##LMUL##_t b)		\
 {									\
-  return __builtin_riscv_v##OP##uint##SEW##m##LMUL (a, b);		\
+  return __builtin_riscv_v##BOP##uint##SEW##m##LMUL (a, b);		\
 }									\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -612,7 +612,7 @@ v##OP##_vv_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 					vint##SEW##m##LMUL##_t a,	\
 					vint##SEW##m##LMUL##_t b)	\
 {									\
-  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_mask (		\
+  return __builtin_riscv_v##BOP##int##SEW##m##LMUL##_mask (		\
 	  mask, maskedoff, a, b);					\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t		\
@@ -622,24 +622,24 @@ v##OP##_vv_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 					 vuint##SEW##m##LMUL##_t a,	\
 					 vuint##SEW##m##LMUL##_t b)	\
 {									\
-  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_mask (		\
+  return __builtin_riscv_v##BOP##uint##SEW##m##LMUL##_mask (		\
 	  mask, maskedoff, a, b);					\
 }
 
-#define _RVV_INT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)			\
+#define _RVV_INT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP, BOP)		\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 v##OP##_vs_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,		\
 				 T b)					\
 {									\
-  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
+  return __builtin_riscv_v##BOP##int##SEW##m##LMUL##_scalar (a, b);	\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 v##OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,		\
 					   uint##SEW##_t b)		\
 {									\
-  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
+  return __builtin_riscv_v##BOP##uint##SEW##m##LMUL##_scalar (a, b);	\
 }									\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -648,7 +648,7 @@ v##OP##_vs_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 					vint##SEW##m##LMUL##_t a,	\
 					T b)				\
 {									\
-  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar_mask (	\
+  return __builtin_riscv_v##BOP##int##SEW##m##LMUL##_scalar_mask (	\
       mask, maskedoff, a, b);						\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t		\
@@ -658,7 +658,7 @@ v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 					 vuint##SEW##m##LMUL##_t a,	\
 					 uint##SEW##_t b)		\
 {									\
-  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar_mask (	\
+  return __builtin_riscv_v##BOP##uint##SEW##m##LMUL##_scalar_mask (	\
       mask, maskedoff, a, b);						\
 }
 
@@ -848,8 +848,8 @@ OP##_ws_i##WSEW##m##WLMUL##_mask (vbool##MLEN##_t mask,			\
 	   mask, maskedoff, a, b);					\
 }
 
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, add)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, add)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, add, add)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, add, add)
 #if 0
 /* Use inline asm one at this moment.  */
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_NOMASK, sub)
@@ -857,8 +857,8 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR_NOMASK, sub)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_NOMASK, rsub)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR_NOMASK, rsub)
 #endif
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, mul)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, mul)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, mul, mul)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, mul, mul)
 
 _RVV_INT_ITERATOR_ARG (_RVV_UINT_BIN_SHIFT, sll, vashl)
 _RVV_INT_ITERATOR_ARG (_RVV_UINT_BIN_SHIFT_SCALAR, sll, vashl)
@@ -1094,12 +1094,12 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rdiv)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, max)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, min)
 
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, and)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, and)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, or)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, or)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, xor)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, xor)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, and, and)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, and, and)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, or, ior)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, or, ior)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, xor, xor)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, xor, xor)
 
 #define _RVV_FLOAT_UNARY_OP(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
