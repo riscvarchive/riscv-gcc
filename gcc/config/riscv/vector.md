@@ -2206,41 +2206,89 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
-(define_insn "iota<mode>2"
+(define_expand "iota<mode>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		     [(match_operand:<VCMPEQUIV> 1 "register_operand")]
+		     UNSPEC_IOTA))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR"
+{
+})
+
+(define_insn "*iota<mode>2_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
 	(unspec:VIMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vr")]
-	  UNSPEC_IOTA))]
+	  UNSPEC_IOTA))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR"
  "viota.m\t%0,%1"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
-(define_insn "iota<mode>2_mask"
+(define_expand "iota<mode>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		     [(match_operand:<VCMPEQUIV> 1 "register_operand")
+		      (match_operand:<VCMPEQUIV> 2 "register_operand")]
+		     UNSPEC_FIRST))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR"
+{
+})
+
+(define_insn "*iota<mode>2_mask_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
 	(unspec:VIMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vr")]
-	  UNSPEC_FIRST))]
+	  UNSPEC_FIRST))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR"
  "viota.m\t%0,%2,%1.t"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
-(define_insn "vid<mode>"
+(define_expand "vid<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES [(const_int 0)] UNSPEC_VID))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vid<mode>_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
-	(unspec:VIMODES [(const_int 0)] UNSPEC_VID))]
+	(unspec:VIMODES [(const_int 0)] UNSPEC_VID))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR"
  "vid.v\t%0"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
-(define_insn "vid<mode>_mask"
+(define_expand "vid<mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		     [(match_operand:<VCMPEQUIV> 1 "register_operand")
+		      (match_operand:VIMODES 2 "register_operand")]
+		     UNSPEC_VID))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vid<mode>_mask"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(unspec:VIMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	   (match_operand:VIMODES 2 "register_operand" "0")]
-	  UNSPEC_VID))]
+	  UNSPEC_VID))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR"
  "vid.v\t%0,%1.t"
  [(set_attr "type" "vector")
