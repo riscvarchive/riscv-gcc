@@ -973,39 +973,137 @@ vm##OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,	\
 _RVV_INT_ITERATOR_ARG (_RVV_INT_ADC_SBC_OP, adc)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_ADC_SBC_OP, sbc)
 
-#if 0
-#define _RVV_WINT_ADD_SUB(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
-__extension__ extern __inline vint##WSEW##m##WLMUL##_t		\
+#define _RVV_WINT_ADD_SUB_MASK(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vv_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,		\
-				 vint##SEW##m##LMUL##_t b)		\
+v##OP##_vv_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##WSEW##m##WLMUL##_t maskedoff,	\
+				   vint##SEW##m##LMUL##_t a,		\
+				   vint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL##_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##WSEW##m##WLMUL##_t maskedoff,	\
+				   vint##SEW##m##LMUL##_t a, T b)	\
+{									\
+  return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL##_scalar_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##WSEW##m##WLMUL##_t maskedoff,	\
+				   vuint##SEW##m##LMUL##_t a,		\
+				   vuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL##_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##WSEW##m##WLMUL##_t maskedoff,	\
+				   vuint##SEW##m##LMUL##_t a, u##T b)	\
+{									\
+  return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL##_scalar_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_wv_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##WSEW##m##WLMUL##_t maskedoff,	\
+				   vint##WSEW##m##WLMUL##_t a,		\
+				   vint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##_wv_i##SEW##m##LMUL##_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_ws_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##WSEW##m##WLMUL##_t maskedoff,	\
+				   vint##WSEW##m##WLMUL##_t a, T b)	\
+{									\
+  return __builtin_riscv_v##OP##_wv_i##SEW##m##LMUL##_scalar_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_wv_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##WSEW##m##WLMUL##_t maskedoff,	\
+				   vuint##WSEW##m##WLMUL##_t a,		\
+				   vuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##_wv_u##SEW##m##LMUL##_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_ws_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##WSEW##m##WLMUL##_t maskedoff,	\
+				    vuint##WSEW##m##WLMUL##_t a, u##T b)\
+{									\
+  return __builtin_riscv_v##OP##_wv_u##SEW##m##LMUL##_scalar_mask (mask, maskedoff, a, b);\
+}
+
+_RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB_MASK, wadd)
+_RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB_MASK, wsub)
+
+
+#define _RVV_WINT_ADD_SUB(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
+			    vint##SEW##m##LMUL##_t b)			\
 {									\
   return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL (a, b);		\
 }									\
-__extension__ extern __inline vuint##WSEW##m##WLMUL##_t		\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##u_vv_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,	\
-				   vuint##SEW##m##LMUL##_t b)	\
+v##OP##_vs_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a, T b)		\
 {									\
-  return __builtin_riscv_v##OP##u_vv_u##SEW##m##LMUL (a, b);		\
+  return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL##_scalar (a, b);	\
 }									\
-__extension__ extern __inline vint##WSEW##m##WLMUL##_t		\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_wv_i##SEW##m##LMUL (vint##WSEW##m##WLMUL##_t a,		\
-				vint##SEW##m##LMUL##_t b)		\
+v##OP##_vv_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
+			    vuint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a, u##T b)		\
+{									\
+  return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_wv_i##SEW##m##LMUL (vint##WSEW##m##WLMUL##_t a,			\
+			    vint##SEW##m##LMUL##_t b)			\
 {									\
   return __builtin_riscv_v##OP##_wv_i##SEW##m##LMUL (a, b);		\
 }									\
-__extension__ extern __inline vuint##WSEW##m##WLMUL##_t		\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##u_wv_u##SEW##m##LMUL (vuint##WSEW##m##WLMUL##_t a,	\
-				   vuint##SEW##m##LMUL##_t b)	\
+v##OP##_ws_i##SEW##m##LMUL (vint##WSEW##m##WLMUL##_t a,	T b)		\
 {									\
-  return __builtin_riscv_v##OP##u_wv_u##SEW##m##LMUL (a, b);		\
+  return __builtin_riscv_v##OP##_wv_i##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_wv_u##SEW##m##LMUL (vuint##WSEW##m##WLMUL##_t a,		\
+			    vuint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##OP##_wv_u##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_ws_u##SEW##m##LMUL (vuint##WSEW##m##WLMUL##_t a, u##T b)	\
+{									\
+  return __builtin_riscv_v##OP##_wv_u##SEW##m##LMUL##_scalar (a, b);	\
 }
 
 _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wadd)
-#endif
+_RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wsub)
+
 
 #define _RVVINTCMP(SEW, LMUL, MLEN, T, OP, OPU)				\
 __extension__ extern __inline vbool##MLEN##_t			\

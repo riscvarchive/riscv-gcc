@@ -2104,10 +2104,6 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, sub, subu)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, sub, subu)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, add, addu)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, add, addu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, mul, mulu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
 
@@ -2235,11 +2231,6 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
-
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WV, sub, subu)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, sub, subu)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WV, add, addu)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
 
 /* Template function for narrowing integer vector-vector operation.  */
 #define _RVV_ASM_NINT_BIN_OP_WV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\

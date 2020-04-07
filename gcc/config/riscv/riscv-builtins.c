@@ -85,12 +85,10 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 8,  8, vnx16di, DI)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   except SEW8, along with its corresponding vector and integer modes.  */
-#define _RVV_INT_ITERATOR_NO_SEW8(MACRO)	\
+   for shift operations, along with its corresponding vector
+   and integer modes.  */
+#define _RVV_INT_ITERATOR_SHIFT(MACRO)	\
   MACRO (16, 1, 16,  vnx8hi, HI)	\
-  MACRO (16, 2,  8, vnx16hi, HI)	\
-  MACRO (16, 4,  4, vnx32hi, HI)	\
-  MACRO (16, 8,  2, vnx64hi, HI)	\
   MACRO (32, 1, 32,  vnx4si, SI)	\
   MACRO (32, 2, 16,  vnx8si, SI)	\
   MACRO (32, 4,  8, vnx16si, SI)	\
@@ -831,19 +829,60 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L,	\
 		vector),
 
-#define VINT_WIDENING_ADD_SUB_BUILTINS(SEW, LMUL, MLEN, VMODE, SDEMODE,	\
-				       WSEW, WLMUL, WVMODE, WSMODE, OP)	\
-  DIRECT_NAMED (OP##VMODE##_vv, v##OP##_vv_int##SEW##m##LMUL,		\
-		RISCV_VI##WSEW##M##WLMUL##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL,\
+#define VINT_WIDENING_ADD_SUB_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,\
+					      WE, WL, WVMODE, WSMODE, OP)\
+  DIRECT_NAMED (OP##VMODE##_vv, v##OP##_vv_i##E##m##L,			\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
-  DIRECT_NAMED (OP##u##VMODE##_vv, v##OP##u_vv_uint##SEW##m##LMUL,	\
-		RISCV_VUI##WSEW##M##WLMUL##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL,\
+  DIRECT_NAMED (OP##u##VMODE##_vv, v##OP##_vv_u##E##m##L,		\
+		RISCV_VUI##WE##M##WL##_FTYPE_VUI##E##M##L##_VUI##E##M##L,\
 		vector),						\
-  DIRECT_NAMED (OP##VMODE##_wv, v##OP##_wv_int##SEW##m##LMUL,		\
-		RISCV_VI##WSEW##M##WLMUL##_FTYPE_VI##WSEW##M##WLMUL##_VI##SEW##M##LMUL,\
+  DIRECT_NAMED (OP##VMODE##_vv_scalar, v##OP##_vv_i##E##m##L##_scalar,	\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##E##M##L##_##SDEMODE,	\
 		vector),						\
-  DIRECT_NAMED (OP##u##VMODE##_wv, v##OP##u_wv_uint##SEW##m##LMUL,	\
-		RISCV_VUI##WSEW##M##WLMUL##_FTYPE_VUI##WSEW##M##WLMUL##_VUI##SEW##M##LMUL,\
+  DIRECT_NAMED (OP##u##VMODE##_vv_scalar, v##OP##_vv_u##E##m##L##_scalar,\
+		RISCV_VUI##WE##M##WL##_FTYPE_VUI##E##M##L##_U##SDEMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv, v##OP##_wv_i##E##m##L,			\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##WE##M##WL##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##u##VMODE##_wv, v##OP##_wv_u##E##m##L,		\
+		RISCV_VUI##WE##M##WL##_FTYPE_VUI##WE##M##WL##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv_scalar, v##OP##_wv_i##E##m##L##_scalar,	\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##WE##M##WL##_##SDEMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##u##VMODE##_wv_scalar, v##OP##_wv_u##E##m##L##_scalar,\
+		RISCV_VUI##WE##M##WL##_FTYPE_VUI##WE##M##WL##_##U##SDEMODE,\
+		vector),
+
+#define VINT_WIDENING_ADD_SUB_BUILTINS(E, L, MLEN, VMODE, SDEMODE,	\
+				       WE, WL, WVMODE, WSMODE, OP)	\
+  VINT_WIDENING_ADD_SUB_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
+					WE, WL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (OP##VMODE##_vv_mask, v##OP##_vv_i##E##m##L##_mask,	\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##u##VMODE##_vv_mask, v##OP##_vv_u##E##m##L##_mask,	\
+		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_vv_scalar_mask, v##OP##_vv_i##E##m##L##_scalar_mask,\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L##_##SDEMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##u##VMODE##_vv_scalar_mask, v##OP##_vv_u##E##m##L##_scalar_mask,\
+		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##E##M##L##_U##SDEMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv_mask, v##OP##_wv_i##E##m##L##_mask,	\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##WE##M##WL##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##u##VMODE##_wv_mask, v##OP##_wv_u##E##m##L##_mask,	\
+		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##WE##M##WL##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv_scalar_mask, v##OP##_wv_i##E##m##L##_scalar_mask,\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##WE##M##WL##_##SDEMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##u##VMODE##_wv_scalar_mask, v##OP##_wv_u##E##m##L##_scalar_mask,\
+		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##WE##M##WL##_U##SDEMODE,\
 		vector),
 
 #define VINT_REDUC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
@@ -1026,6 +1065,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, sbc)
 
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wadd)
+  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wsub)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, and)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)
