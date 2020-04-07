@@ -54,7 +54,7 @@ loop:
 ----
 */
 
-size_t compact_non_zero(size_t n, const int32_t* in, const int32_t* out) {
+size_t compact_non_zero(size_t n, const int32_t* in, int32_t* out) {
   size_t count = 0;
   size_t vl;
   for (; vl = vsetvl_32m8(n); n -= vl) {

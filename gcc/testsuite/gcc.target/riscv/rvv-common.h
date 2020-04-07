@@ -45,6 +45,42 @@
   MACRO(int64_t, int, i, 64m4, 16, 64)	\
   MACRO(int64_t, int, i, 64m8,  8, 64)
 
+#define RVV_SEW_INT_TEST_ARG(MACRO, ...)		\
+  MACRO( int8_t, int, i,  8m1,  8, 8, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8m2,  4, 8, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8m4,  2, 8, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8m8,  1, 8, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16m1, 16, 16, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16m2,  8, 16, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16m4,  4, 16, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16m8,  2, 16, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m1, 32, 32, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m2, 16, 32, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m4,  8, 32, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m8,  4, 32, __VA_ARGS__)	\
+  MACRO(int64_t, int, i, 64m1, 64, 64, __VA_ARGS__)	\
+  MACRO(int64_t, int, i, 64m2, 32, 64, __VA_ARGS__)	\
+  MACRO(int64_t, int, i, 64m4, 16, 64, __VA_ARGS__)	\
+  MACRO(int64_t, int, i, 64m8,  8, 64, __VA_ARGS__)
+
+#define RVV_SEW_UINT_TEST_ARG(MACRO, ...)		\
+  MACRO( uint8_t, uint, u,  8m1,  8, 8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8m2,  4, 8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8m4,  2, 8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8m8,  1, 8, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16m1, 16, 16, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16m2,  8, 16, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16m4,  4, 16, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16m8,  2, 16, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32m1, 32, 32, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32m2, 16, 32, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32m4,  8, 32, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32m8,  4, 32, __VA_ARGS__)	\
+  MACRO(uint64_t, uint, u, 64m1, 64, 64, __VA_ARGS__)	\
+  MACRO(uint64_t, uint, u, 64m2, 32, 64, __VA_ARGS__)	\
+  MACRO(uint64_t, uint, u, 64m4, 16, 64, __VA_ARGS__)	\
+  MACRO(uint64_t, uint, u, 64m8,  8, 64, __VA_ARGS__)
+
 #define RVV_INT_TEST_ARG(MACRO, ...)		\
   MACRO( int8_t, int, i,  8m1,  8, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m2,  4, __VA_ARGS__)	\
@@ -187,6 +223,17 @@
   MACRO(uint32_t, uint, u, 32m2, 16, uint64_t, 64m4)	\
   MACRO(uint32_t, uint, u, 32m4,  8, uint64_t, 64m8)
 
+#define RVV_SEW_WINT_TEST_ARG(MACRO, ...)			\
+  MACRO( int8_t, int, i,  8m1,  8, int16_t, 16m2,  8, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8m2,  4, int16_t, 16m4,  8, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8m4,  2, int16_t, 16m8,  8, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16m1, 16, int32_t, 32m2, 16, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16m2,  8, int32_t, 32m4, 16, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16m4,  4, int32_t, 32m8, 16, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m1, 32, int64_t, 64m2, 32, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m2, 16, int64_t, 64m4, 32, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m4,  8, int64_t, 64m8, 32, __VA_ARGS__)
+
 /* The unsigned is added in the macro that we call.  */
 #define RVV_WUINT_TEST_ARG(MACRO, ...)				\
   MACRO( uint8_t, uint, u,  8m1,  8, uint16_t, 16m2, __VA_ARGS__)	\
@@ -198,6 +245,18 @@
   MACRO(uint32_t, uint, u, 32m1, 32, uint64_t, 64m2, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m2, 16, uint64_t, 64m4, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m4,  8, uint64_t, 64m8, __VA_ARGS__)
+
+/* The unsigned is added in the macro that we call.  */
+#define RVV_SEW_WUINT_TEST_ARG(MACRO, ...)				\
+  MACRO( uint8_t, uint, u,  8m1,  8, uint16_t, 16m2,  8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8m2,  4, uint16_t, 16m4,  8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8m4,  2, uint16_t, 16m8,  8, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16m1, 16, uint32_t, 32m2, 16, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16m2,  8, uint32_t, 32m4, 16, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16m4,  4, uint32_t, 32m8, 16, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32m1, 32, uint64_t, 64m2, 32, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32m2, 16, uint64_t, 64m4, 32, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32m4,  8, uint64_t, 64m8, 32, __VA_ARGS__)
 
 #define RVV_QINT_TEST_ARG(MACRO, ...)				\
   MACRO( int8_t, int, i,  8m1,  8, int32_t, 32m4, __VA_ARGS__)	\
@@ -903,4 +962,67 @@
 						       WSTYPE, WEM, OP)		\
   RVV_NINT_BIN_BUILTIN_IMM_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)\
   RVV_NINT_BIN_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)\
+  RVV_NINT_BIN_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)
+
+#define RVV_SHIFT_VEC_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, OP)\
+  void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
+					       uint##SEW##_t *y, STYPE z)\
+  {								\
+    v##VCLASST##EM##_t vx;					\
+    vuint##EM##_t vy;						\
+    vx = vload_##VCLASS##EM(x);				\
+    vy = vload_u##EM(y);				\
+    vx = v##OP##_vv_##VCLASS##EM (vx, vy);			\
+    vstore_##VCLASS##EM(x, vx);					\
+  }								\
+  RVV_BIN_BUILTIN_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, OP)
+
+#define RVV_SHIFT_VEC_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, OP)\
+  void rvv##OP##VCLASS##EM##_v_mask_builtin_test(		\
+	 size_t n, uint##SEW##_t *x, STYPE *y, STYPE z)		\
+  {								\
+    v##VCLASST##EM##_t vy;					\
+    vuint##EM##_t vx;						\
+    vbool##MLEN##_t mask;					\
+    vx = vload_u##EM(x);					\
+    vy = vload_##VCLASS##EM(y);					\
+    mask = vset_b##MLEN ();					\
+    vy = v##OP##_vv_##VCLASS##EM##_mask (mask, vy, vy, vx);	\
+    vstore_##VCLASS##EM(y, vy);					\
+  }								\
+  RVV_BIN_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, OP)
+
+#define RVV_NINT_SHIFT_BUILTIN_VEC_SCALAR_IMM_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,\
+						   WSTYPE, WEM, SEW, OP)\
+  void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, WSTYPE *x,	\
+					       uint##SEW##_t *z, STYPE *y)\
+  {									\
+    v##VCLASST##WEM##_t vx;						\
+    v##VCLASST##EM##_t vy;						\
+    vuint##EM##_t vz;							\
+    vx = vload_##VCLASS##WEM(x);					\
+    vz = vload_u##EM(z);						\
+    vy = v##OP##_wv_##VCLASS##WEM (vx, vz);				\
+    vstore_##VCLASS##EM(y, vy);						\
+  }									\
+  RVV_NINT_BIN_BUILTIN_IMM_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)\
+  RVV_NINT_BIN_BUILTIN_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)
+
+#define RVV_NINT_SHIFT_BUILTIN_VEC_SCALAR_IMM_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,\
+							  WSTYPE, WEM, SEW, OP)	\
+  void rvv##OP##VCLASS##EM##_v_mask_builtin_test(		\
+	 size_t n, WSTYPE *x, STYPE *y, uint##SEW##_t *z)	\
+  {								\
+    v##VCLASST##WEM##_t vx;					\
+    v##VCLASST##EM##_t vy;					\
+    vuint##EM##_t vz;						\
+    vbool##MLEN##_t mask;					\
+    vx = vload_##VCLASS##WEM(x);				\
+    vy = vload_##VCLASS##EM(y);					\
+    vz = vload_u##EM(z);					\
+    mask = vset_b##MLEN ();					\
+    vy = v##OP##_wv_##VCLASS##WEM##_mask (mask, vy, vx, vz);	\
+    vstore_##VCLASS##EM(y, vy);					\
+  }								\
+  RVV_NINT_BIN_BUILTIN_IMM_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)\
   RVV_NINT_BIN_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, OP)
