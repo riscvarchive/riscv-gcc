@@ -1106,42 +1106,82 @@ _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wsub)
 
 
 #define _RVVINTCMP(SEW, LMUL, MLEN, T, OP, OPU)				\
-__extension__ extern __inline vbool##MLEN##_t			\
+__extension__ extern __inline vbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vset##OP##_vv_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,		\
-				  vint##SEW##m##LMUL##_t b)		\
+			       vint##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_vs##OP##int##SEW##m##LMUL (a, b);		\
 }									\
-__extension__ extern __inline vbool##MLEN##_t			\
+__extension__ extern __inline vbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vset##OP##_vv_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,	\
-				    vuint##SEW##m##LMUL##_t b)	\
+vset##OP##_vv_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,		\
+			       vuint##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_vs##OPU##uint##SEW##m##LMUL (a, b);		\
 }									\
-__extension__ extern __inline vbool##MLEN##_t			\
+__extension__ extern __inline vbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vset##OP##_vv_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
-					 vbool##MLEN##_t maskedoff,	\
-					 vint##SEW##m##LMUL##_t a,	\
-					 vint##SEW##m##LMUL##_t b)	\
+vset##OP##_vv_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				      vbool##MLEN##_t maskedoff,	\
+				      vint##SEW##m##LMUL##_t a,		\
+				      vint##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_vs##OP##int##SEW##m##LMUL##_mask (mask, maskedoff, \
 							   a, b);	\
 }									\
-__extension__ extern __inline vbool##MLEN##_t			\
+__extension__ extern __inline vbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vset##OP##_vv_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
-					   vbool##MLEN##_t maskedoff,\
-					   vuint##SEW##m##LMUL##_t a,\
-					   vuint##SEW##m##LMUL##_t b)\
+vset##OP##_vv_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				      vbool##MLEN##_t maskedoff,	\
+				      vuint##SEW##m##LMUL##_t a,	\
+				      vuint##SEW##m##LMUL##_t b)	\
 {									\
   return __builtin_riscv_vs##OPU##uint##SEW##m##LMUL##_mask (mask, maskedoff, \
 							     a, b);	\
+}									\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset##OP##_vs_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,		\
+			       T b)					\
+{									\
+  return __builtin_riscv_vs##OP##int##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset##OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,		\
+			       u##T b)					\
+{									\
+  return __builtin_riscv_vs##OPU##uint##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset##OP##_vs_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				      vbool##MLEN##_t maskedoff,	\
+				      vint##SEW##m##LMUL##_t a,		\
+				      T b)				\
+{									\
+  return __builtin_riscv_vs##OP##int##SEW##m##LMUL##_scalar_mask (mask, maskedoff, \
+								  a, b);\
+}									\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				      vbool##MLEN##_t maskedoff,	\
+				      vuint##SEW##m##LMUL##_t a,	\
+				      u##T b)				\
+{									\
+  return __builtin_riscv_vs##OPU##uint##SEW##m##LMUL##_scalar_mask (mask, maskedoff, \
+								    a, b);\
 }
 
+_RVV_INT_ITERATOR_ARG (_RVVINTCMP, eq, eq)
+_RVV_INT_ITERATOR_ARG (_RVVINTCMP, ne, ne)
 _RVV_INT_ITERATOR_ARG (_RVVINTCMP, lt, ltu)
+_RVV_INT_ITERATOR_ARG (_RVVINTCMP, le, leu)
+_RVV_INT_ITERATOR_ARG (_RVVINTCMP, gt, gtu)
+_RVV_INT_ITERATOR_ARG (_RVVINTCMP, ge, geu)
+
 
 #define _RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\

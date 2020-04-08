@@ -770,6 +770,18 @@ tree rvvbool64_t_node;
 		vector),						\
   DIRECT_NAMED (s##OPU##MODE##_mask, vs##OPU##uint##E##m##L##_mask,	\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L, \
+		vector),						\
+  DIRECT_NAMED (s##OP##MODE##_scalar, vs##OP##int##E##m##L##_scalar,	\
+		RISCV_VB##MLEN##_FTYPE_VI##E##M##L##_##SUBMODE,		\
+		vector),						\
+  DIRECT_NAMED (s##OPU##MODE##_scalar, vs##OPU##uint##E##m##L##_scalar,	\
+		RISCV_VB##MLEN##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (s##OP##MODE##_scalar_mask, vs##OP##int##E##m##L##_scalar_mask,	\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VI##E##M##L##_##SUBMODE,\
+		vector),						\
+  DIRECT_NAMED (s##OPU##MODE##_scalar_mask, vs##OPU##uint##E##m##L##_scalar_mask,\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
 #define MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
@@ -1070,7 +1082,12 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, and)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, xor)
+  _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, eq, eq)
+  _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, ne, ne)
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, lt, ltu)
+  _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, le, leu)
+  _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, gt, gtu)
+  _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, ge, geu)
 
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, add)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, sub)

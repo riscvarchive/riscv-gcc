@@ -221,6 +221,12 @@
 ;; All operation valid for floating-point.
 (define_code_iterator any_fop [plus mult smax smin minus div])
 
+;; All operation valid for comparison.
+(define_code_iterator any_cmp [eq ne lt ltu le leu gt gtu ge geu])
+
+;; All operation valid for comparison, except ge and geu.
+(define_code_iterator cmp_except_ge [eq ne lt ltu le leu gt gtu])
+
 ;; All operation valid for widening add and subtract.
 (define_code_iterator add_sub [plus minus])
 
@@ -243,6 +249,14 @@
 ;; <vshift> expand to the name of the vector narrowing shift that implements a
 ;; particular code.
 (define_code_attr vnshift [(ashiftrt "vnsra") (lshiftrt "vnsrl")])
+
+;; <icmp> expand to the name of the vector integer comparison that implements a
+;; particular code.
+(define_code_attr icmp [(eq "seq") (ne "sne") (lt "slt") (ltu "sltu") (le "sle")
+			(leu "sleu") (gt "sgt") (gtu "sgtu") (ge "sge") (geu "sgeu")])
+
+(define_code_attr ltge [(lt "ltge_") (ltu "ltge_") (ge "ltge_") (geu "ltge_")
+			(eq "") (ne "") (le "") (leu "") (gt "") (gtu "") ])
 
 ;; Iterator and attributes for widening floating-point reduction instructions.
 (define_int_iterator WFREDUC_REDUC [UNSPEC_REDUC UNSPEC_ORDERED_REDUC])
@@ -2198,20 +2212,22 @@
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
 		   (match_operator:<VCMPEQUIV> 1 "comparison_operator"
 		     [(match_operand:VIMODES 2 "register_operand")
-		      (match_operand:VIMODES 3 "register_operand")]))
+		      (match_operand:VIMODES 3 "vector_arith_operand")]))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
  "TARGET_VECTOR"
 {
 })
 
 (define_insn "vec_cmp<mode><vmaskmode>_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr, &vr")
 	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
-			 [(match_operand:VIMODES 2 "register_operand" "vr")
-			  (match_operand:VIMODES 3 "register_operand" "vr")]))
+			 [(match_operand:VIMODES 2 "register_operand" "vr, vr")
+			  (match_operand:VIMODES 3 "vector_arith_operand" "vr, vi")]))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR"
- "vms%B1.vv\t%0,%2,%3"
+ "@
+  vms%B1.vv\t%0,%2,%3
+  vms%B1.vi\t%0,%2,%v3"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
@@ -2222,7 +2238,7 @@
 		     (match_operand:<VCMPEQUIV> 5 "register_operand")
 		     (match_operator:<VCMPEQUIV> 1 "comparison_operator"
 		       [(match_operand:VIMODES 2 "register_operand")
-			(match_operand:VIMODES 3 "register_operand")])
+			(match_operand:VIMODES 3 "vector_arith_operand")])
 		     (match_operand:<VCMPEQUIV> 4 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
  "TARGET_VECTOR"
@@ -2230,16 +2246,45 @@
 })
 
 (define_insn "vec_cmp<mode><vmaskmode>_mask_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr, &vr")
+	(if_then_else:<VCMPEQUIV>
+	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm, vm")
+	  (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+	    [(match_operand:VIMODES 2 "register_operand" "vr, vr")
+	     (match_operand:VIMODES 3 "vector_arith_operand" "vr, vi")])
+	  (match_operand:<VCMPEQUIV> 4 "register_operand" "0, 0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+ "TARGET_VECTOR"
+ "@
+  vms%B1.vv\t%0,%2,%3,%5.t
+  vms%B1.vi\t%0,%2,%v3,%5.t"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "vec_cmp<mode><vmaskmode>_scalar_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
+	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
+			 [(match_operand:VIMODES 2 "register_operand" "vr")
+			  (vec_duplicate:VIMODES
+			    (match_operand:<VSUBMODE> 3 "register_operand" "r"))]))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+ "TARGET_VECTOR"
+ "vms%B1.vx\t%0,%2,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "vec_cmp<mode><vmaskmode>_scalar_mask_nosetvl"
   [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(if_then_else:<VCMPEQUIV>
 	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm")
 	  (match_operator:<VCMPEQUIV> 1 "comparison_operator"
 	    [(match_operand:VIMODES 2 "register_operand" "vr")
-	     (match_operand:VIMODES 3 "register_operand" "vr")])
+	     (vec_duplicate:VIMODES
+	       (match_operand:<VSUBMODE> 3 "register_operand" "r"))])
 	  (match_operand:<VCMPEQUIV> 4 "register_operand" "0")))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR"
- "vms%B1.vv\t%0,%2,%3,%5.t"
+ "vms%B1.vx\t%0,%2,%3,%5.t"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
@@ -2626,27 +2671,90 @@
 
 ;; compare functions
 
-(define_expand "slt<u><mode>"
+(define_expand "<icmp><mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
-		(any_lt:<VCMPEQUIV>
+		(any_cmp:<VCMPEQUIV>
 		  (match_operand:VIMODES 1 "register_operand")
-		  (match_operand:VIMODES 2 "register_operand")))
+		  (match_operand:VIMODES 2 "<ltge>vector_arith_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
 })
 
-(define_expand "slt<u><mode>_mask"
+(define_expand "<icmp><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		(if_then_else:<VCMPEQUIV>
+		  (match_operand:<VCMPEQUIV> 1 "register_operand")
+		  (any_cmp:<VCMPEQUIV>
+		    (match_operand:VIMODES 3 "register_operand")
+		    (match_operand:VIMODES 4 "<ltge>vector_arith_operand"))
+		  (match_operand:<VCMPEQUIV> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "<icmp><mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		(cmp_except_ge:<VCMPEQUIV>
+		  (match_operand:VIMODES 1 "register_operand")
+		  (vec_duplicate:VIMODES
+		    (match_operand:<VSUBMODE> 2 "register_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+;; We don't have compare with grater then.
+;; Using vmslt and vmnand to replace it.
+(define_expand "sge<u><mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		(any_lt:<VCMPEQUIV>
+		  (match_operand:VIMODES 1 "register_operand")
+		  (vec_duplicate:VIMODES
+		    (match_operand:<VSUBMODE> 2 "register_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])
+    (set (match_dup 0)
+      (not:<VCMPEQUIV>
+	(and:<VCMPEQUIV> (match_dup 0) (match_dup 0))))]
+  "TARGET_VECTOR"
+{
+})
+
+;; We don't have compare with grater then.
+;; Using vmslt and vmxor to replace it.
+(define_expand "<icmp><mode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		(if_then_else:<VCMPEQUIV>
+		  (match_operand:<VCMPEQUIV> 1 "register_operand")
+		  (cmp_except_ge:<VCMPEQUIV>
+		    (match_operand:VIMODES 3 "register_operand")
+		    (vec_duplicate:VIMODES
+		      (match_operand:<VSUBMODE> 4 "register_operand")))
+		  (match_operand:<VCMPEQUIV> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "sge<u><mode>_scalar_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
 		(if_then_else:<VCMPEQUIV>
 		  (match_operand:<VCMPEQUIV> 1 "register_operand")
 		  (any_lt:<VCMPEQUIV>
 		    (match_operand:VIMODES 3 "register_operand")
-		    (match_operand:VIMODES 4 "register_operand"))
+		    (vec_duplicate:VIMODES
+		      (match_operand:<VSUBMODE> 4 "register_operand")))
 		  (match_operand:<VCMPEQUIV> 2 "register_operand")))
-	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])
+    (set (match_dup 0)
+      (xor:<VCMPEQUIV> (match_dup 0) (match_dup 1)))]
   "TARGET_VECTOR"
 {
 })

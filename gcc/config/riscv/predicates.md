@@ -250,3 +250,14 @@
 (define_predicate "vector_shift_operand"
   (ior (match_operand 0 "const_vector_shift_operand")
        (match_operand 0 "register_operand")))
+
+(define_predicate "ltge_const_vector_int_operand"
+  (match_code "const_vector")
+{
+  op = unwrap_const_vec_duplicate (op);
+  return CONST_INT_P (op) && IN_RANGE (INTVAL (op) + 1, -16, 15);
+})
+
+(define_predicate "ltge_vector_arith_operand"
+  (ior (match_operand 0 "ltge_const_vector_int_operand")
+       (match_operand 0 "register_operand")))
