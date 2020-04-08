@@ -307,6 +307,22 @@
 	     : OP0_CONSTRANT (rv)					\
 	     : OP1_CONSTRANT (a), "vt"(vtype));				\
 
+/* Unmasked inline asm template for unary operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_WUNARY_OP_ASM_TEMPLATE(SEW, LMUL, ASM_OP,		\
+				        OP0_CONSTRANT,			\
+				        OP1_CONSTRANT)			\
+    __asm__ ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"			\
+	     ASM_OP " %0, %1"						\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a)					\
+	     : "vtype");
+
+
 /* Inline asm template for scalar move operation.
    ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
    OP0_CONSTRAINT: string for the constraint of operand 0.
@@ -348,6 +364,22 @@
 	     : OP1_CONSTRANT (a),					\
 	       "vm" (mask), "0" (maskedoff), "vt"(vtype))
 
+/* Masked inline asm template for widening unary operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_WUNARY_OP_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP,	\
+					       OP0_CONSTRANT,		\
+					       OP1_CONSTRANT)		\
+    __asm__ ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"			\
+             ASM_OP " %0, %1, %2.t"					\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a),					\
+	       "vm" (mask), "0" (maskedoff)				\
+	     : "vtype")
+
 /* Unmasked inline asm template.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -365,6 +397,26 @@
 	     : OP0_CONSTRANT (rv)					\
 	     : OP1_CONSTRANT (a), OP2_CONSTRANT (b), "vt"(vtype));	\
   }
+
+/* Unmasked inline asm template for widening operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP2_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_WBIN_OP_ASM_TEMPLATE(SEW, LMUL, ASM_OP,		\
+				     OP0_CONSTRANT,			\
+				     OP1_CONSTRANT,			\
+				     OP2_CONSTRANT)			\
+  {									\
+    __asm__ ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"			\
+	     ASM_OP " %0, %1, %2"					\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a), OP2_CONSTRANT (b)			\
+	     : "vtype");						\
+  }
+
 
 /* Masked inline asm template.
    SEW: integer, should be 8, 16, 32, 64
@@ -384,6 +436,27 @@
 	     : OP1_CONSTRANT (a), OP2_CONSTRANT (b),		\
 	       "vm" (mask), "0" (maskedoff), "vt"(vtype));	\
   }
+
+/* Masked inline asm template for widening operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP2_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_WBIN_OP_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP,		\
+					     OP0_CONSTRANT,		\
+					     OP1_CONSTRANT,		\
+					     OP2_CONSTRANT)		\
+  {									\
+    __asm__ ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"			\
+	     ASM_OP " %0, %1, %2, %3.t"					\
+	     : OP0_CONSTRANT (rv)					\
+	     : OP1_CONSTRANT (a), OP2_CONSTRANT (b),			\
+	       "vm" (mask), "0" (maskedoff)				\
+	     : "vtype");						\
+  }
+
 
 /* Inline asm template for merge operation.
    SEW: integer, should be 8, 16, 32, 64
@@ -731,6 +804,31 @@ FUNC_NAME (OP1_TYPE a)							\
   return rv;								\
 }
 
+/* Unmasked unary intrinsic function template for widening operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_UNMASKED_WUNARY_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,\
+					     OP0_TYPE, OP1_TYPE,	\
+					     OP0_CONSTRANT,		\
+					     OP1_CONSTRANT)		\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a)							\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_WUNARY_OP_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}
+
+
 /* LOAD intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -767,6 +865,37 @@ FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
     OP0_CONSTRANT, OP1_CONSTRANT); 					\
   return rv;								\
 }
+
+/* UNARY intrinsic function template for widening operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.  */
+#define _RVV_ASM_WUNARY_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+				    MASK_TYPE,				\
+				    OP0_TYPE, OP1_TYPE,	 		\
+				    OP0_CONSTRANT,			\
+				    OP1_CONSTRANT)			\
+  _RVV_ASM_UNMASKED_WUNARY_OP_TEMPLATE (SEW, LMUL, ASM_OP, FUNC_NAME,	\
+				        OP0_TYPE, OP1_TYPE,		\
+				        OP0_CONSTRANT, OP1_CONSTRANT)	\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
+		  OP1_TYPE a)						\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_WUNARY_OP_MASKED_ASM_TEMPLATE(				\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT); 					\
+  return rv;								\
+}
+
 
 /* UNARY intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64
@@ -825,6 +954,34 @@ FUNC_NAME (OP1_TYPE a, OP2_TYPE b)					\
   return rv;								\
 }
 
+/* Unmasked binary intrinsic function template for widening operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP2_TYPE: Type of operand 2.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP2_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_UNMASKED_WBIN_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,\
+					   OP0_TYPE, OP1_TYPE, OP2_TYPE, \
+					   OP0_CONSTRANT,		\
+					   OP1_CONSTRANT,		\
+					   OP2_CONSTRANT)		\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a, OP2_TYPE b)					\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_WBIN_OP_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT); 			\
+  return rv;								\
+}
+
+
 /* Binary intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64
    LMUL: integer, should be 1, 2, 4 or 8
@@ -859,6 +1016,95 @@ FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
     OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT); 			\
   return rv;								\
 }
+
+/* Binary intrinsic function template for widening operation.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: string for opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP2_TYPE: Type of operand 2.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP2_CONSTRAINT: string for the constraint of operand 2.  */
+#define _RVV_ASM_WBIN_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,		\
+				 MASK_TYPE,				\
+				 OP0_TYPE, OP1_TYPE, OP2_TYPE, 		\
+				 OP0_CONSTRANT,				\
+				 OP1_CONSTRANT,				\
+				 OP2_CONSTRANT)				\
+  _RVV_ASM_UNMASKED_WBIN_OP_TEMPLATE(SEW, LMUL, ASM_OP, FUNC_NAME,	\
+				     OP0_TYPE, OP1_TYPE, OP2_TYPE,	\
+				     OP0_CONSTRANT,			\
+				     OP1_CONSTRANT,			\
+				     OP2_CONSTRANT)			\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff,			\
+		  OP1_TYPE a, OP2_TYPE b)				\
+{									\
+  OP0_TYPE rv;								\
+  _RVV_ASM_WBIN_OP_MASKED_ASM_TEMPLATE(					\
+    SEW, LMUL, ASM_OP,							\
+    OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT); 			\
+  return rv;								\
+}
+
+/* Binary intrinsic function template for widening operation,
+   but support immediate version.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   ASM_OP: opcode, e.g. vadd.vv, vsub.vx, vwadd.wv...
+   IMM_ASM_OP: opcode for immediate variant, e.g. vadd.vi
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   OP0_TYPE: Type of operand 0.
+   OP1_TYPE: Type of operand 1.
+   OP2_TYPE: Type of operand 2.
+   OP0_CONSTRAINT: string for the constraint of operand 0.
+   OP1_CONSTRAINT: string for the constraint of operand 1.
+   OP2_CONSTRAINT: string for the constraint of operand 2.
+   IMM_CHK: Predicate function for immediate value.  */
+#define _RVV_ASM_WBIN_OP_IMM_TEMPLATE(SEW, LMUL, ASM_OP, IMM_ASM_OP,	\
+				      FUNC_NAME,	MASK_TYPE,	\
+				      OP0_TYPE, OP1_TYPE, OP2_TYPE, 	\
+				      OP0_CONSTRANT,			\
+				      OP1_CONSTRANT,			\
+				      OP2_CONSTRANT, IMM_CHK)		\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (OP1_TYPE a, OP2_TYPE b)					\
+{									\
+  OP0_TYPE rv;								\
+  if (IMM_CHK(SEW, b))							\
+    _RVV_ASM_WBIN_OP_ASM_TEMPLATE(					\
+      SEW, LMUL, IMM_ASM_OP,						\
+      OP0_CONSTRANT, OP1_CONSTRANT, "i")				\
+  else									\
+    _RVV_ASM_WBIN_OP_ASM_TEMPLATE(					\
+      SEW, LMUL, ASM_OP,						\
+      OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT) 			\
+  return rv;								\
+}									\
+__extension__ extern __inline OP0_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME##_mask (MASK_TYPE mask, OP0_TYPE maskedoff, 			\
+		  OP1_TYPE a, OP2_TYPE b)				\
+{									\
+  OP0_TYPE rv;								\
+  if (IMM_CHK(SEW, b))							\
+    _RVV_ASM_WBIN_OP_MASKED_ASM_TEMPLATE(				\
+      SEW, LMUL, IMM_ASM_OP,						\
+      OP0_CONSTRANT, OP1_CONSTRANT, "i")				\
+  else									\
+    _RVV_ASM_WBIN_OP_MASKED_ASM_TEMPLATE(				\
+      SEW, LMUL, ASM_OP,						\
+      OP0_CONSTRANT, OP1_CONSTRANT, OP2_CONSTRANT)			\
+  return rv;								\
+}									\
+
 
 /* Binary intrinsic function template, but support immediate version.
    SEW: integer, should be 8, 16, 32, 64
@@ -1827,7 +2073,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
 /* Template function for widening integer vector-vector operation.  */
 #define _RVV_ASM_WINT_BIN_OP_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				OP, OPU)				\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OP ".vv",						\
     /* FUNC_NAME */vw##OP##_vv_i##SEW##m##LMUL,			\
@@ -1838,7 +2084,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OPU ".vv",					\
     /* FUNC_NAME */vw##OP##_vv_u##SEW##m##LMUL,			\
@@ -1853,7 +2099,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
 /* Template function for widening integer vector-scalar operation.  */
 #define _RVV_ASM_WINT_BIN_OP_VX(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				OP, OPU)				\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OP ".vx",						\
     /* FUNC_NAME */vw##OP##_vs_i##SEW##m##LMUL,			\
@@ -1864,7 +2110,7 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_CMP_IMM, ge, geu)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OPU ".vx",					\
     /* FUNC_NAME */vw##OP##_vs_u##SEW##m##LMUL,			\
@@ -1884,7 +2130,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, mul, mulu)
 _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
 
 #define _RVV_ASM_WCVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)		\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vwcvt.x.x.v",						\
     /* FUNC_NAME */vcvt_i##WSEW##_i##SEW##_v_##SEW##m##LMUL,		\
@@ -1893,7 +2139,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vwcvtu.x.x.v",						\
     /* FUNC_NAME */vcvt_u##WSEW##_u##SEW##_v_##SEW##m##LMUL,		\
@@ -1907,7 +2153,7 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
 
 /* Template function for vwmulsu.v[v|x] instructions.  */
 #define _RVV_ASM_WMULSU(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OP ".vv",						\
     /* FUNC_NAME */vw##OP##_vv_i##SEW##m##LMUL,			\
@@ -1918,7 +2164,7 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OP ".vv",						\
     /* FUNC_NAME */vw##OP##_vv_u##SEW##m##LMUL,			\
@@ -1929,7 +2175,7 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OP ".vx",						\
     /* FUNC_NAME */vw##OP##_vs_i##SEW##m##LMUL,			\
@@ -1940,7 +2186,7 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OP ".vx",						\
     /* FUNC_NAME */vw##OP##_vs_u##SEW##m##LMUL,			\
@@ -1985,7 +2231,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
    operand 1 is widening type.  */
 #define _RVV_ASM_WINT_BIN_OP_WX(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				OP, OPU)				\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OP ".wx",						\
     /* FUNC_NAME */vw##OP##_ws_i##SEW##m##LMUL,			\
@@ -1996,7 +2242,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OPU ".wx",					\
     /* FUNC_NAME */vw##OP##_ws_u##SEW##m##LMUL,			\
@@ -2016,7 +2262,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
 /* Template function for narrowing integer vector-vector operation.  */
 #define _RVV_ASM_NINT_BIN_OP_WV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				OP, OPU)				\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"v" #OP ".wv",						\
     /* FUNC_NAME */v##OP##_wv_i##WSEW##m##WLMUL,			\
@@ -2027,7 +2273,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"v" #OPU ".wv",						\
     /* FUNC_NAME */v##OP##_wv_u##WSEW##m##WLMUL,			\
@@ -2042,7 +2288,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
 /* Template function for narrowing integer vector-scalar operation.  */
 #define _RVV_ASM_NINT_BIN_OP_WX(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				OP, OPU)				\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"v" #OP ".wx",						\
     /* FUNC_NAME */v##OP##_ws_i##WSEW##m##WLMUL,			\
@@ -2053,7 +2299,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"v" #OPU ".wx",						\
     /* FUNC_NAME */v##OP##_ws_u##WSEW##m##WLMUL,			\
@@ -2068,7 +2314,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
 /* Template function for narrowing integer vector-scalar operation.  */
 #define _RVV_ASM_NINT_BIN_OP_WXI(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				OP, OPU)				\
-  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_IMM_TEMPLATE(					\
     SEW, LMUL,								\
     /* ASM_OP */"v" #OP ".wx",						\
     /* IMM_ASM_OP */"v" #OP ".wi",					\
@@ -2081,7 +2327,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_WX, add, addu)
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     /* IMM_CHK */_RVV_ASM_INT_UIMM_CHK)					\
-  _RVV_ASM_BIN_OP_IMM_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_IMM_TEMPLATE(					\
     SEW, LMUL,								\
     /* ASM_OP */"v" #OPU ".wx",						\
     /* IMM_ASM_OP */"v" #OPU ".wi",					\
@@ -2209,7 +2455,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCLASS)
 _RVV_FLOAT_ITERATOR (_RVV_FCVT)
 
 #define _RVV_FWCVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)			\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.xu.f.v",					\
     /* FUNC_NAME */vcvt_u##WSEW##_f##SEW##_v_##SEW##m##LMUL,	\
@@ -2218,7 +2464,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.x.f.v",						\
     /* FUNC_NAME */vcvt_i##WSEW##_f##SEW##_v_##SEW##m##LMUL,	\
@@ -2227,7 +2473,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.f.xu.v",					\
     /* FUNC_NAME */vcvt_f##WSEW##_u##SEW##_v_##SEW##m##LMUL,	\
@@ -2236,7 +2482,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.f.x.v",						\
     /* FUNC_NAME */vcvt_f##WSEW##_i##SEW##_v_##SEW##m##LMUL,	\
@@ -2245,7 +2491,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfwcvt.f.f.v",						\
     /* FUNC_NAME */vcvt_f##WSEW##_f##SEW##_v_##SEW##m##LMUL,	\
@@ -2258,7 +2504,7 @@ _RVV_FLOAT_ITERATOR (_RVV_FCVT)
 _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
 
 #define _RVV_FNCVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)			\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.xu.f.w",					\
     /* FUNC_NAME */vcvt_u##SEW##_f##WSEW##_v_##WSEW##m##WLMUL,		\
@@ -2267,7 +2513,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.x.f.w",						\
     /* FUNC_NAME */vcvt_i##SEW##_f##WSEW##_v_##WSEW##m##WLMUL,		\
@@ -2276,7 +2522,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.f.xu.w",					\
     /* FUNC_NAME */vcvt_f##SEW##_u##WSEW##_v_##WSEW##m##WLMUL,		\
@@ -2285,7 +2531,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* OP1_TYPE */vuint##WSEW##m##WLMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.f.x.w",						\
     /* FUNC_NAME */vcvt_f##SEW##_i##WSEW##_v_##WSEW##m##WLMUL,		\
@@ -2294,7 +2540,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* OP1_TYPE */vint##WSEW##m##WLMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.f.f.w",						\
     /* FUNC_NAME */vcvt_f##SEW##_f##WSEW##_v_##WSEW##m##WLMUL,	\
@@ -2303,7 +2549,7 @@ _RVV_WFLOAT_ITERATOR (_RVV_FWCVT)
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")						\
-  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+  _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vfncvt.rod.f.f.w",					\
     /* FUNC_NAME */vcvt_rod_f##SEW##_f##WSEW##_v_##WSEW##m##WLMUL,	\
@@ -2356,10 +2602,10 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
 /* Template function for widening floating point vector-vector operation.  */
 #define _RVV_ASM_WFLOAT_BIN_OP_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				  OP)					\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vf" #OP ".vv",						\
-    /* FUNC_NAME */v##OP##_vv_f##SEW##m##LMUL,			\
+    /* FUNC_NAME */v##OP##_vv_f##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
@@ -2371,10 +2617,10 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
 /* Template function for widening floating point vector-scalar operation.  */
 #define _RVV_ASM_WFLOAT_BIN_OP_VF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				  OP)					\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vf" #OP ".vf",						\
-    /* FUNC_NAME */v##OP##_vs_f##SEW##m##LMUL,			\
+    /* FUNC_NAME */v##OP##_vs_f##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
@@ -2396,10 +2642,10 @@ _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wmul)
    operand 1 is widening type.  */
 #define _RVV_ASM_WFLOAT_BIN_OP_WV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				  OP)					\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vf" #OP ".wv",						\
-    /* FUNC_NAME */v##OP##_wv_f##SEW##m##LMUL,			\
+    /* FUNC_NAME */v##OP##_wv_f##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
@@ -2412,10 +2658,10 @@ _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wmul)
    operand 1 is widening type.  */
 #define _RVV_ASM_WFLOAT_BIN_OP_WF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				  OP)					\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vf" #OP ".wf",						\
-    /* FUNC_NAME */v##OP##_ws_f##SEW##m##LMUL,			\
+    /* FUNC_NAME */v##OP##_ws_f##SEW##m##LMUL,				\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
     /* OP1_TYPE */vfloat##WSEW##m##WLMUL##_t,				\
