@@ -87,7 +87,7 @@
     vz = vload_##VCLASS##EM(z);                                               \
     mask1 = vsetlt_vv_##VCLASS##EM(vx, vy);                                   \
     mask2 = vsetlt_vv_##VCLASS##EM(vx, vz);                                   \
-    vy = viota_m_##EM##_mask(mask1, mask2);                                 \
+    vy = viota_m_##EM##_mask(mask1, vx, mask2);				\
     vstore_##VCLASS##EM(y, vy);                                                \
   }                                                                            \
 

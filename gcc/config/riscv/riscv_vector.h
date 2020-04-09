@@ -1014,10 +1014,12 @@ viota_m_##SEW##m##LMUL (vbool##MLEN##_t a)			\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-viota_m_##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+viota_m_##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+			       vuint##SEW##m##LMUL##_t maskedoff,	\
 				      vbool##MLEN##_t a)		\
 {									\
-  return __builtin_riscv_viotauint##SEW##m##LMUL##_mask (mask, a);	\
+  return __builtin_riscv_viotauint##SEW##m##LMUL##_mask (mask,		\
+							 maskedoff, a);	\
 }
 
 _RVV_INT_ITERATOR (_RVV_IOTA)

@@ -792,10 +792,10 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN,			\
 		vector),						\
   DIRECT_NAMED (iota##MODE##2_mask, viotaint##E##m##L##_mask,		\
-		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VB##MLEN,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VB##MLEN,\
 		vector),						\
   DIRECT_NAMED (iota##MODE##2_mask, viotauint##E##m##L##_mask,		\
-		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VB##MLEN,		\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VB##MLEN,\
 		vector),
 
 #define VID_BUILTINS(E, L, MLEN, MODE, SUBMODE)				\

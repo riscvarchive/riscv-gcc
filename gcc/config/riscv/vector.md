@@ -2233,7 +2233,8 @@
    (parallel [(set (match_operand:VIMODES 0 "register_operand")
 		   (unspec:VIMODES
 		     [(match_operand:<VCMPEQUIV> 1 "register_operand")
-		      (match_operand:<VCMPEQUIV> 2 "register_operand")]
+		      (match_operand:VIMODES 2 "register_operand")
+		      (match_operand:<VCMPEQUIV> 3 "register_operand")]
 		     UNSPEC_FIRST))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
  "TARGET_VECTOR"
@@ -2241,14 +2242,15 @@
 })
 
 (define_insn "*iota<mode>2_mask_nosetvl"
-  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(unspec:VIMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
-	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vr")]
+	   (match_operand:VIMODES 2 "register_operand" "0")
+	   (match_operand:<VCMPEQUIV> 3 "register_operand" "vr")]
 	  UNSPEC_FIRST))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR"
- "viota.m\t%0,%2,%1.t"
+ "viota.m\t%0,%3,%1.t"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
