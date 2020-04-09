@@ -1804,6 +1804,28 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP, smul)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SHIFT_OP, ssra)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_SHIFT_OP, ssrl)
 
+#define _RVV_ASM_INT_NOT(SEW, LMUL, MLEN, T)				\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vnot.v",						\
+    /* FUNC_NAME */vnot_v_i##SEW##m##LMUL,				\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")						\
+  _RVV_ASM_UNARY_OP_TEMPLATE(						\
+    SEW, LMUL,								\
+    /* ASM_OP */"vnot.v",						\
+    /* FUNC_NAME */vnot_v_u##SEW##m##LMUL,				\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
+    /* OP0_CONSTRANT */"=vr",						\
+    /* OP1_CONSTRANT */"vr")
+
+_RVV_INT_ITERATOR(_RVV_ASM_INT_NOT)
+
 /* Template function for vmulhsu.vv and vmulhsu.vx.  */
 #define _RVV_ASM_MULHSU_OP(SEW, LMUL, MLEN, T, OP)			\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
