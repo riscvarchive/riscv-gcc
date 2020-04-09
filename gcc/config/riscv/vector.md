@@ -2995,7 +2995,7 @@
    (parallel [(set (match_operand:VIMODES 0 "register_operand")
 		   (any_shift:VIMODES
 		     (match_operand:VIMODES 1 "register_operand")
-		     (match_operand:VIMODES 2 "vector_arith_operand")))
+		     (match_operand:VIMODES 2 "vector_shift_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
@@ -3004,7 +3004,7 @@
 (define_insn "*<vshift><mode>3_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
 	(any_shift:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
-			   (match_operand:VIMODES 2 "vector_arith_operand" "vr,vk")))
+			   (match_operand:VIMODES 2 "vector_shift_operand" "vr,vk")))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "@
@@ -3042,7 +3042,7 @@
 		   (if_then_else:VIMODES
 		     (match_operand:<VCMPEQUIV> 1 "register_operand")
 		     (any_shift:VIMODES (match_operand:VIMODES 3 "register_operand")
-					(match_operand:VIMODES 4 "vector_arith_operand"))
+					(match_operand:VIMODES 4 "vector_shift_operand"))
 		     (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
@@ -3054,7 +3054,7 @@
 	(if_then_else:VIMODES
 	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
 	  (any_shift:VIMODES (match_operand:VIMODES 3 "register_operand" "vr,vr")
-			     (match_operand:VIMODES 4 "vector_arith_operand" "vr,vk"))
+			     (match_operand:VIMODES 4 "vector_shift_operand" "vr,vk"))
 	  (match_operand:VIMODES 2 "register_operand" "0,0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
@@ -3101,7 +3101,7 @@
 		   (truncate:VWIMODES
 		     (any_shiftrt:<VWMODES>
 		       (match_operand:<VWMODES> 1 "register_operand")
-		       (match_operand:VWIMODES 2 "vector_arith_operand"))))
+		       (match_operand:VWIMODES 2 "vector_shift_operand"))))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
@@ -3112,7 +3112,7 @@
 	(truncate:VWIMODES
 	  (any_shiftrt:<VWMODES>
 	    (match_operand:<VWMODES> 1 "register_operand" "vr,vr")
-	    (match_operand:VWIMODES 2 "vector_arith_operand" "vr,vk"))))
+	    (match_operand:VWIMODES 2 "vector_shift_operand" "vr,vk"))))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "@
@@ -3155,7 +3155,7 @@
 		     (truncate:VWIMODES
 		       (any_shiftrt:<VWMODES>
 			 (match_operand:<VWMODES> 3 "register_operand")
-			 (match_operand:VWIMODES 4 "vector_arith_operand")))
+			 (match_operand:VWIMODES 4 "vector_shift_operand")))
 		     (match_operand:VWIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
@@ -3169,7 +3169,7 @@
 	  (truncate:VWIMODES
 	    (any_shiftrt:<VWMODES>
 	      (match_operand:<VWMODES> 3 "register_operand" "vr,vr")
-	      (match_operand:VWIMODES 4 "vector_arith_operand" "vr,vk")))
+	      (match_operand:VWIMODES 4 "vector_shift_operand" "vr,vk")))
 	  (match_operand:VWIMODES 2 "register_operand" "0,0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
