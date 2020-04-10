@@ -784,6 +784,32 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
+#define VINT_MIN_MAX_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
+  DIRECT_NAMED (OP##MODE##3, vv##OP##int##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OPU##MODE##3, vv##OPU##uint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_mask, vv##OP##int##E##m##L##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OPU##MODE##3_mask, vv##OPU##uint##E##m##L##_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_scalar, vs##OP##int##E##m##L##_scalar,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OPU##MODE##3_scalar, vs##OPU##uint##E##m##L##_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_scalar_mask, vs##OP##int##E##m##L##_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
+		vector),						\
+  DIRECT_NAMED (OPU##MODE##3_scalar_mask, vs##OPU##uint##E##m##L##_scalar_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
+		vector),
+
 #define MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
   DIRECT_NAMED (OP##vnx##N##bi3, v##OP##bool##MLEN,			\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN,		\
@@ -1088,6 +1114,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, le, leu)
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, gt, gtu)
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, ge, geu)
+
+  _RVV_INT_ITERATOR_ARG (VINT_MIN_MAX_BUILTINS, smax, umax)
+  _RVV_INT_ITERATOR_ARG (VINT_MIN_MAX_BUILTINS, smin, umin)
 
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, add)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, sub)
