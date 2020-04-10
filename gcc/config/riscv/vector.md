@@ -886,8 +886,8 @@
 		     (any_bitwise:VIMODES
 		       (vec_duplicate:VIMODES
 			 (match_operand:<VSUBMODE> 4 "register_operand"))
-		       (match_operand:VIMODES 3 "vector_arith_operand"))
-		     (match_operand:VIMODES 2 "vector_arith_operand")))
+		       (match_operand:VIMODES 3 "register_operand"))
+		     (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
@@ -900,8 +900,8 @@
 	    (any_bitwise:VIMODES
 	      (vec_duplicate:VIMODES
 		(match_operand:<VSUBMODE> 4 "register_operand" "r"))
-	      (match_operand:VIMODES 3 "vector_arith_operand" "vr"))
-	  (match_operand:VIMODES 2 "vector_arith_operand" "0")))
+	      (match_operand:VIMODES 3 "register_operand" "vr"))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "v<insn>.vx\t%0,%3,%4,%1.t"
