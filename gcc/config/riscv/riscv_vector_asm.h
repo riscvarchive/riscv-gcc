@@ -2382,7 +2382,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=vd",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_MERGE_IMM_TEMPLATE(						\
@@ -2394,7 +2394,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */int##SEW##_t,						\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=vd",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")						\
   _RVV_ASM_MERGE_TEMPLATE(						\
@@ -2405,7 +2405,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=vd",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_MERGE_IMM_TEMPLATE(						\
@@ -2417,7 +2417,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */uint##SEW##_t,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=vd",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
@@ -2783,7 +2783,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, ge)
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=vd",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
   _RVV_ASM_MERGE_TEMPLATE(						\
@@ -2794,7 +2794,7 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_CMP, ge)
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */_RVV_F##SEW##_TYPE,					\
-    /* OP0_CONSTRANT */"=vr",						\
+    /* OP0_CONSTRANT */"=vd",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"f")
 
