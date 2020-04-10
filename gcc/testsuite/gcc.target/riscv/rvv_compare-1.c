@@ -62,12 +62,6 @@ RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, ne)
 /* { dg-final { scan-assembler-times "vmsne.vv" 32 } } */
 /* { dg-final { scan-assembler-times "vmsne.vx" 32 } } */
 /* { dg-final { scan-assembler-times "vmsne.vi" 32 } } */
-RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX, lt)
-/* { dg-final { scan-assembler-times "vmslt.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmslt.vx" 16 } } */
-RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX, lt)
-/* { dg-final { scan-assembler-times "vmsltu.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmsltu.vx" 16 } } */
 RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, le)
 /* { dg-final { scan-assembler-times "vmsle.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsle.vx" 16 } } */
@@ -76,9 +70,25 @@ RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, le)
 /* { dg-final { scan-assembler-times "vmsleu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsleu.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsleu.vi" 16 } } */
-RVV_INT_TEST_ARG(TEST_COMPARE_VX_VI, gt)
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, gt)
+/* { dg-final { scan-assembler-times "vmsgt.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsgt.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsgt.vi" 16 } } */
-RVV_UINT_TEST_ARG(TEST_COMPARE_VX_VI, gt)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, gt)
+/* { dg-final { scan-assembler-times "vmsgtu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmsgtu.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmsgtu.vi" 16 } } */
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, lt)
+RVV_INT_TEST_ARG(TEST_COMPARE_VV_VX_VI, ge)
+/* { dg-final { scan-assembler-times "vmslt.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vmsge.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vmslt.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vmslt.vi" 32 } } */
+/* { dg-final { scan-assembler-times "vmnot.m" 64 } } */
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, lt)
+RVV_UINT_TEST_ARG(TEST_COMPARE_VV_VX_VI, ge)
+/* { dg-final { scan-assembler-times "vmsltu.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vmsgeu.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vmsltu.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vmsltu.vi" 32 } } */
+/* { dg-final { scan-assembler-times "vmnot.m" 64 } } */
