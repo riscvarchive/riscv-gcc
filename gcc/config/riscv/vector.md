@@ -1992,7 +1992,7 @@
 
 (define_insn "mov<mode>cc"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vr")
+   (set (match_operand:VIMODES 0 "register_operand" "=vd")
 	(if_then_else:VIMODES
 	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
 	  (match_operand:VIMODES 1 "register_operand" "vr")
@@ -2004,7 +2004,7 @@
 
 (define_insn "mov<mode>cc"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VFMODES 0 "register_operand" "=vr")
+   (set (match_operand:VFMODES 0 "register_operand" "=vd")
 	(if_then_else:VFMODES
 	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
 	  (match_operand:VFMODES 1 "register_operand" "vr")
