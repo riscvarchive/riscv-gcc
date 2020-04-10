@@ -2226,7 +2226,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
    operand 1 is widening type.  */
 #define _RVV_ASM_WINT_BIN_OP_WV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				OP, OPU)				\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OP ".wv",						\
     /* FUNC_NAME */vw##OP##_wv_i##SEW##m##LMUL,			\
@@ -2237,7 +2237,7 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")						\
-  _RVV_ASM_BIN_OP_TEMPLATE(						\
+  _RVV_ASM_WBIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
     /* ASM_OP */"vw" #OPU ".wv",					\
     /* FUNC_NAME */vw##OP##_wv_u##SEW##m##LMUL,			\
