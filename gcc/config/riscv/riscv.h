@@ -410,6 +410,7 @@ enum reg_class
   FP_REGS,			/* floating-point registers */
   FRAME_REGS,			/* arg pointer and frame pointer */
   VECTOR_MASK_REGS,		/* vector mask registers */
+  VECTOR_NO_MASK_REGS,		/* vector registers except mask registers */
   VECTOR_REGS,			/* vector registers */
   VTYPE_REGS,			/* vype register */
   ALL_REGS,			/* all registers */
@@ -433,6 +434,7 @@ enum reg_class
   "FP_REGS",								\
   "FRAME_REGS",								\
   "VECTOR_MASK_REGS", 							\
+  "VECTOR_NO_MASK_REGS", 						\
   "VECTOR_REGS", 							\
   "VTYPE_REGS", 							\
   "ALL_REGS"								\
@@ -458,6 +460,7 @@ enum reg_class
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000 },	/* FP_REGS */		\
   { 0x00000000, 0x00000000, 0x00000003, 0x00000000 },	/* FRAME_REGS */	\
   { 0x00000000, 0x00000000, 0x00000000, 0x00000001 },	/* VECTOR_MASK_REGS */\
+  { 0x00000000, 0x00000000, 0x00000000, 0xfffffffe },	/* VECTOR_REGS */\
   { 0x00000000, 0x00000000, 0x00000000, 0xffffffff },	/* VECTOR_REGS */\
   { 0x00000000, 0x00000000, 0x00000008, 0x00000000 },	/* VTYPE_REGS */\
   { 0xffffffff, 0xffffffff, 0x0000000f, 0xffffffff }	/* ALL_REGS */		\
