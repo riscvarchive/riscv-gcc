@@ -38,6 +38,16 @@
 			      VNx4SI VNx8SI VNx16SI VNx32SI
 			      VNx2DI VNx4DI VNx8DI VNx16DI])
 
+(define_mode_attr EXT_VIMODES
+  [(VNx16QI "VNx16HI") (VNx32QI "VNx32HI")
+   (VNx64QI "VNx64HI") (VNx128QI "VNx128HI")
+   (VNx8HI "VNx8SI")   (VNx16HI "VNx16SI")
+   (VNx32HI "VNx32SI") (VNx64HI "VNx64SI")
+   (VNx4SI "VNx4DI")   (VNx8SI "VNx8DI")
+   (VNx16SI "VNx16DI") (VNx32SI "VNx32DI")
+   (VNx2DI "VNx2TI")   (VNx4DI "VNx4TI")
+   (VNx8DI "VNx8TI")   (VNx16DI "VNx16TI")])
+
 ;; All vector modes supported for widening integer alu.
 (define_mode_iterator VWIMODES [VNx16QI VNx32QI VNx64QI
 				VNx8HI VNx16HI VNx32HI
@@ -178,6 +188,13 @@
    (VNx4SF "m1") (VNx8SF "m2") (VNx16SF "m4") (VNx32SF "m8")
    (VNx2DF "m1") (VNx4DF "m2") (VNx8DF "m4") (VNx16DF "m8")])
 
+;; Equivalent of "size" for a vector element.
+(define_mode_attr vmsize
+  [(VNx16QI "b") (VNx32QI "b") (VNx64QI "b") (VNx128QI "b")
+   (VNx8HI "h") (VNx16HI "h") (VNx32HI "h") (VNx64HI "h")
+   (VNx4SI "w") (VNx8SI "w") (VNx16SI "w") (VNx32SI "w")
+   (VNx2DI "d") (VNx4DI "d") (VNx8DI "d") (VNx16DI "d")])
+
 ;; Map a vector mode to its LMUL==1 equivalent.
 ;; This is for reductions which use scalars in vector registers.
 (define_mode_attr V1MODES [(VNx16QI "VNx16QI") (VNx32QI "VNx16QI")
@@ -277,6 +294,11 @@
 
 (define_int_attr misc_maskop [(UNSPEC_SBF "sbf") (UNSPEC_SIF "sif")
 			      (UNSPEC_SOF "sof")])
+
+(define_int_iterator UNSPEC_VMULH [UNSPEC_VMULHS UNSPEC_VMULHU UNSPEC_VMULHSU])
+
+(define_int_attr v_su [(UNSPEC_VMULHS "s") (UNSPEC_VMULHU "u")
+		       (UNSPEC_VMULHSU "su")])
 
 ;; Vsetvl instructions.
 
@@ -1907,6 +1929,379 @@
   "vmul.vx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;;Multiply with vector-vector and returning high bits of product
+
+(define_expand "<su>mul<mode>3_highpart"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (truncate:VIMODES
+		     (ashiftrt:<EXT_VIMODES>
+		       (mult:<EXT_VIMODES>
+			 (any_extend:<EXT_VIMODES>
+			   (match_operand:VIMODES 1 "register_operand"))
+			 (any_extend:<EXT_VIMODES>
+			   (match_operand:VIMODES 2 "register_operand")))
+		       (match_operand:<EXT_VIMODES> 3 "shift_<vmsize>_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*<su>mul<mode>3_highpart_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(truncate:VIMODES
+	  (ashiftrt:<EXT_VIMODES>
+	    (mult:<EXT_VIMODES>
+	      (any_extend:<EXT_VIMODES>
+		(match_operand:VIMODES 1 "register_operand" "vr"))
+	      (any_extend:<EXT_VIMODES>
+		(match_operand:VIMODES 2 "register_operand" "vr")))
+	    (match_operand:<EXT_VIMODES> 3 "shift_<vmsize>_operand" "Ws<vmsize>"))))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmulh<u>.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "sumul<mode>3_highpart"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (truncate:VIMODES
+		     (ashiftrt:<EXT_VIMODES>
+		       (mult:<EXT_VIMODES>
+			 (sign_extend:<EXT_VIMODES>
+			   (match_operand:VIMODES 1 "register_operand"))
+			 (zero_extend:<EXT_VIMODES>
+			   (match_operand:VIMODES 2 "register_operand")))
+		     (match_operand:<EXT_VIMODES> 3 "shift_<vmsize>_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*sumul<mode>3_highpart_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(truncate:VIMODES
+	  (ashiftrt:<EXT_VIMODES>
+	    (mult:<EXT_VIMODES>
+	      (sign_extend:<EXT_VIMODES>
+		(match_operand:VIMODES 1 "register_operand" "vr"))
+	      (zero_extend:<EXT_VIMODES>
+		(match_operand:VIMODES 2 "register_operand" "vr")))
+	    (match_operand:<EXT_VIMODES> 3 "shift_<vmsize>_operand" "Ws<vmsize>"))))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmulhsu.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "mulh<v_su><mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		     [(match_operand:VIMODES 1 "register_operand")
+		      (match_operand:VIMODES 2 "register_operand")]
+		    UNSPEC_VMULH))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+  rtx shift = GEN_INT (GET_MODE_UNIT_BITSIZE (<VIMODES:MODE>mode));
+  emit_insn (gen_<v_su>mul<mode>3_highpart (operands[0], operands[1],
+					    operands[2], shift));
+  DONE;
+})
+
+;;Multiply with vector-scalar returning high bits of product
+
+(define_expand "<su>mul<mode>3_highpart_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (truncate:VIMODES
+		     (ashiftrt:<EXT_VIMODES>
+		       (mult:<EXT_VIMODES>
+			 (any_extend:<EXT_VIMODES>
+			   (match_operand:VIMODES 1 "register_operand"))
+			 (any_extend:<EXT_VIMODES>
+			   (vec_duplicate:VIMODES
+			     (match_operand:<VSUBMODE> 2 "register_operand"))))
+		       (match_operand:<EXT_VIMODES> 3 "shift_<vmsize>_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*<su>mul<mode>3_highpart_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(truncate:VIMODES
+	  (ashiftrt:<EXT_VIMODES>
+	    (mult:<EXT_VIMODES>
+	      (any_extend:<EXT_VIMODES>
+		(match_operand:VIMODES 1 "register_operand" "vr"))
+	      (any_extend:<EXT_VIMODES>
+		(vec_duplicate:VIMODES
+		  (match_operand:<VSUBMODE> 2 "register_operand" "r"))))
+	    (match_operand:<EXT_VIMODES> 3 "shift_<vmsize>_operand" "Ws<vmsize>"))))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmulh<u>.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "sumul<mode>3_highpart_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (truncate:VIMODES
+		     (ashiftrt:<EXT_VIMODES>
+		       (mult:<EXT_VIMODES>
+			 (sign_extend:<EXT_VIMODES>
+			   (match_operand:VIMODES 1 "register_operand"))
+			 (zero_extend:<EXT_VIMODES>
+			   (vec_duplicate:VIMODES
+			     (match_operand:<VSUBMODE> 2 "register_operand"))))
+		       (match_operand:<EXT_VIMODES> 3 "shift_<vmsize>_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*sumul<mode>3_highpart_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(truncate:VIMODES
+	  (ashiftrt:<EXT_VIMODES>
+	    (mult:<EXT_VIMODES>
+	      (sign_extend:<EXT_VIMODES>
+		(match_operand:VIMODES 1 "register_operand" "vr"))
+	      (zero_extend:<EXT_VIMODES>
+		(vec_duplicate:VIMODES
+		  (match_operand:<VSUBMODE> 2 "register_operand" "r"))))
+	    (match_operand:<EXT_VIMODES> 3 "shift_<vmsize>_operand" "Ws<vmsize>"))))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmulhsu.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "mulh<v_su><mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		     [(match_operand:VIMODES 1 "register_operand")
+		      (match_operand:<VSUBMODE> 2 "register_operand")]
+		    UNSPEC_VMULH))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+  rtx shift = GEN_INT (GET_MODE_UNIT_BITSIZE (<VIMODES:MODE>mode));
+  emit_insn (gen_<v_su>mul<mode>3_highpart_scalar (operands[0], operands[1],
+						   operands[2], shift));
+  DONE;
+})
+
+;;Multiply with vector-vector for vector masking type
+;;and returning high bits of product
+
+(define_expand "<su>mul<mode>3_highpart_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (truncate:VIMODES
+		       (ashiftrt:<EXT_VIMODES>
+			 (mult:<EXT_VIMODES>
+			   (any_extend:<EXT_VIMODES>
+			     (match_operand:VIMODES 3 "register_operand"))
+			   (any_extend:<EXT_VIMODES>
+			     (match_operand:VIMODES 4 "register_operand")))
+		       (match_operand:<EXT_VIMODES> 5 "shift_<vmsize>_operand")))
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*<su>mul<mode>3_highpart_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (truncate:VIMODES
+	    (ashiftrt:<EXT_VIMODES>
+	      (mult:<EXT_VIMODES>
+		(any_extend:<EXT_VIMODES>
+		  (match_operand:VIMODES 3 "register_operand" "vr"))
+		(any_extend:<EXT_VIMODES>
+		  (match_operand:VIMODES 4 "register_operand" "vr")))
+	      (match_operand:<EXT_VIMODES> 5 "shift_<vmsize>_operand" "Ws<vmsize>")))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmulh<u>.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "sumul<mode>3_highpart_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (truncate:VIMODES
+		       (ashiftrt:<EXT_VIMODES>
+			 (mult:<EXT_VIMODES>
+			   (sign_extend:<EXT_VIMODES>
+			     (match_operand:VIMODES 3 "register_operand"))
+			   (zero_extend:<EXT_VIMODES>
+			     (match_operand:VIMODES 4 "register_operand")))
+		       (match_operand:<EXT_VIMODES> 5 "shift_<vmsize>_operand")))
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*sumul<mode>3_highpart_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (truncate:VIMODES
+	    (ashiftrt:<EXT_VIMODES>
+	      (mult:<EXT_VIMODES>
+		(sign_extend:<EXT_VIMODES>
+		  (match_operand:VIMODES 3 "register_operand" "vr"))
+		(zero_extend:<EXT_VIMODES>
+		  (match_operand:VIMODES 4 "register_operand" "vr")))
+	      (match_operand:<EXT_VIMODES> 5 "shift_<vmsize>_operand" "Ws<vmsize>")))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmulhsu.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "mulh<v_su><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VIMODES
+		       [(match_operand:VIMODES 3 "register_operand")
+			(match_operand:VIMODES 4 "register_operand")]
+		      UNSPEC_VMULH)
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+  rtx shift = GEN_INT (GET_MODE_UNIT_BITSIZE (<VIMODES:MODE>mode));
+  emit_insn (gen_<v_su>mul<mode>3_highpart_mask (operands[0], operands[1],
+						 operands[2], operands[3],
+						 operands[4], shift));
+  DONE;
+})
+
+;;Multiply with vector-scalar for vector masking type
+;;and returning high bits of product
+
+(define_expand "<su>mul<mode>3_highpart_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (truncate:VIMODES
+		       (ashiftrt:<EXT_VIMODES>
+			 (mult:<EXT_VIMODES>
+			   (any_extend:<EXT_VIMODES>
+			     (match_operand:VIMODES 3 "register_operand"))
+			   (any_extend:<EXT_VIMODES>
+			     (vec_duplicate:VIMODES
+			       (match_operand:<VSUBMODE> 4 "register_operand"))))
+		       (match_operand:<EXT_VIMODES> 5 "shift_<vmsize>_operand")))
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*<su>mul<mode>3_highpart_scalar_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (truncate:VIMODES
+	    (ashiftrt:<EXT_VIMODES>
+	      (mult:<EXT_VIMODES>
+		(any_extend:<EXT_VIMODES>
+		  (match_operand:VIMODES 3 "register_operand" "vr"))
+		(any_extend:<EXT_VIMODES>
+		  (vec_duplicate:VIMODES
+		    (match_operand:<VSUBMODE> 4 "register_operand" "r"))))
+	      (match_operand:<EXT_VIMODES> 5 "shift_<vmsize>_operand" "Ws<vmsize>")))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmulh<u>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "sumul<mode>3_highpart_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (truncate:VIMODES
+		       (ashiftrt:<EXT_VIMODES>
+			 (mult:<EXT_VIMODES>
+			   (sign_extend:<EXT_VIMODES>
+			     (match_operand:VIMODES 3 "register_operand"))
+			   (zero_extend:<EXT_VIMODES>
+			     (vec_duplicate:VIMODES
+			       (match_operand:<VSUBMODE> 4 "register_operand" "r"))))
+		       (match_operand:<EXT_VIMODES> 5 "shift_<vmsize>_operand")))
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*sumul<mode>3_highpart_scalar_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (truncate:VIMODES
+	    (ashiftrt:<EXT_VIMODES>
+	      (mult:<EXT_VIMODES>
+		(sign_extend:<EXT_VIMODES>
+		  (match_operand:VIMODES 3 "register_operand" "vr"))
+		(zero_extend:<EXT_VIMODES>
+		  (vec_duplicate:VIMODES
+		    (match_operand:<VSUBMODE> 4 "register_operand" "r"))))
+	      (match_operand:<EXT_VIMODES> 5 "shift_<vmsize>_operand" "Ws<vmsize>")))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vmulhsu.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "mulh<v_su><mode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VIMODES
+		       [(match_operand:VIMODES 3 "register_operand")
+			(match_operand:<VSUBMODE> 4 "register_operand")]
+		      UNSPEC_VMULH)
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+  rtx shift = GEN_INT (GET_MODE_UNIT_BITSIZE (<VIMODES:MODE>mode));
+  emit_insn (gen_<v_su>mul<mode>3_highpart_scalar_mask (operands[0],
+							operands[1],
+							operands[2],
+							operands[3],
+							operands[4],
+							shift));
+  DONE;
+})
 
 ;; FP widen multiply instructions.
 

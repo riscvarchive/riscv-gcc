@@ -54,6 +54,26 @@
   (and (match_code "const_int")
        (match_test "LUI_OPERAND (ival)")))
 
+(define_constraint "Wsb"
+  "A constraint that matches an immediate shift constant in QImode."
+  (and (match_code "const_int")
+       (match_test "ival == 8")))
+
+(define_constraint "Wsh"
+  "A constraint that matches an immediate shift constant in HImode."
+  (and (match_code "const_int")
+       (match_test "ival == 16")))
+
+(define_constraint "Wsw"
+  "A constraint that matches an immediate shift constant in SImode."
+  (and (match_code "const_int")
+       (match_test "ival == 32")))
+
+(define_constraint "Wsd"
+  "A constraint that matches an immediate shift constant in DImode."
+  (and (match_code "const_int")
+       (match_test "ival == 64")))
+
 ;; Floating-point constant +0.0, used for FCVT-based moves when FMV is
 ;; not available in RV32.
 (define_constraint "G"

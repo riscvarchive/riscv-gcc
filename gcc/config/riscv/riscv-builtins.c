@@ -85,6 +85,22 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 8,  8, vnx16di, DI)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   except SEW8, along with its corresponding vector and integer modes.  */
+#define _RVV_INT_ITERATOR_NO_SEW8(MACRO)\
+  MACRO (16, 1, 16,  vnx8hi, HI)	\
+  MACRO (16, 2,  8, vnx16hi, HI)	\
+  MACRO (16, 4,  4, vnx32hi, HI)	\
+  MACRO (16, 8,  2, vnx64hi, HI)	\
+  MACRO (32, 1, 32,  vnx4si, SI)	\
+  MACRO (32, 2, 16,  vnx8si, SI)	\
+  MACRO (32, 4,  8, vnx16si, SI)	\
+  MACRO (32, 8,  4, vnx32si, SI)	\
+  MACRO (64, 1, 64,  vnx2di, DI)	\
+  MACRO (64, 2, 32,  vnx4di, DI)	\
+  MACRO (64, 4, 16,  vnx8di, DI)	\
+  MACRO (64, 8,  8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    for shift operations, along with its corresponding vector
    and integer modes.  */
 #define _RVV_INT_ITERATOR_SHIFT(MACRO)	\
@@ -810,6 +826,48 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
+#define VINT_MULH_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##s##MODE, vv##OP##int##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##u##MODE, vv##OP##uint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##su##MODE, vv##OP##su_int##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##s##MODE##_scalar, vv##OP##int##E##m##L##_scalar,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##u##MODE##_scalar, vv##OP##uint##E##m##L##_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##su##MODE##_scalar, vv##OP##su_int##E##m##L##_scalar,\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_U##SUBMODE,	\
+		vector),
+
+#define VINT_MULH_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)	\
+  VINT_MULH_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##s##MODE##_mask, vv##OP##int##E##m##L##_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
+		vector),					\
+  DIRECT_NAMED (OP##u##MODE##_mask, vv##OP##uint##E##m##L##_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),					\
+  DIRECT_NAMED (OP##su##MODE##_mask, vv##OP##su_int##E##m##L##_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VUI##E##M##L,\
+		vector),					\
+  DIRECT_NAMED (OP##s##MODE##_scalar_mask, vv##OP##int##E##m##L##_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
+		vector),					\
+  DIRECT_NAMED (OP##u##MODE##_scalar_mask, vv##OP##uint##E##m##L##_scalar_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
+		vector),					\
+  DIRECT_NAMED (OP##su##MODE##_scalar_mask, vv##OP##su_int##E##m##L##_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_U##SUBMODE,\
+		vector),
+
+
 #define MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
   DIRECT_NAMED (OP##vnx##N##bi3, v##OP##bool##MLEN,			\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN,		\
@@ -1124,6 +1182,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, mul)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, div)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SCALAR_ONLY_BIN_OP_BUILTINS, rdiv)
+  _RVV_INT_ITERATOR_ARG (VINT_MULH_BUILTINS, mulh)
 
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, max)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, min)

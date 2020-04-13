@@ -1749,7 +1749,6 @@ _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_SCALAR_WITH_IMM_CHECK, rsub, rsub,
 		       _RVV_ASM_INT_SIMM_CHK)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, div, divu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, rem, remu)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, mulh, mulhu)
 
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU_WITH_IMM_VER, sadd, saddu)
 _RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_BIN_OP_OPU, ssub, ssubu)
@@ -1830,8 +1829,6 @@ _RVV_INT_ITERATOR(_RVV_ASM_INT_NOT)
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"vr")
-
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_MULHSU_OP, mulhsu)
 
 /* Template function for single-width integer vector-vector multiply-add
    operation.  */

@@ -261,3 +261,19 @@
 (define_predicate "ltge_vector_arith_operand"
   (ior (match_operand 0 "ltge_const_vector_int_operand")
        (match_operand 0 "register_operand")))
+
+(define_predicate "shift_b_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 8")))
+
+(define_predicate "shift_h_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 16")))
+
+(define_predicate "shift_w_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 32")))
+
+(define_predicate "shift_d_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 64")))
