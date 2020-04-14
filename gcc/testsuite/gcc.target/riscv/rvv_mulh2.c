@@ -18,18 +18,6 @@
     vx = vmulhsu_vv_##VCLASS##EM##_mask (mask, vx, vx, vy);	\
     vstore_##VCLASS##EM(x, vx);					\
   }								\
-  void rvvmulhsu##EM##_uvv(size_t n, STYPE *x,		\
-				 u##STYPE *y, STYPE z)		\
-  {								\
-    v##VCLASST##EM##_t vx;					\
-    vuint##EM##_t vy;					\
-    vbool##MLEN##_t mask;					\
-    mask = vset_b##MLEN ();				\
-    vx = vload_i##EM(x);					\
-    vy = vload_u##EM(y);					\
-    vy = vmulhsu_vv_u##EM##_mask (mask, vy, vx, vy);	\
-    vstore_u##EM(y, vy);				\
-  }								\
   void rvvmulhsu##EM##_svx(size_t n, STYPE *x,		\
 				 u##STYPE *y, STYPE z)		\
   {								\
@@ -41,23 +29,11 @@
     vy = vload_u##EM(y);					\
     vx = vmulhsu_vs_##VCLASS##EM##_mask (mask, vx, vx, z);	\
     vstore_##VCLASS##EM(x, vx);					\
-  }								\
-  void rvvmulhsu##EM##_uvx(size_t n, STYPE *x,		\
-				 u##STYPE *y, u##STYPE z)	\
-  {								\
-    v##VCLASST##EM##_t vx;					\
-    vuint##EM##_t vy;					\
-    vbool##MLEN##_t mask;					\
-    mask = vset_b##MLEN ();				\
-    vx = vload_i##EM(x);					\
-    vy = vload_u##EM(y);					\
-    vy = vmulhsu_vs_u##EM##_mask (mask, vy, vx, z);	\
-    vstore_u##EM(y, vy);				\
   }
 
 RVV_INT_TEST(RVV_MULHSU_TEST)
-/* { dg-final { scan-assembler-times "vmulhsu.vv" 32 } } */
-/* { dg-final { scan-assembler-times "vmulhsu.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vmulhsu.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vmulhsu.vx" 16 } } */
 
 RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, mulh)
 RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, mulh)
