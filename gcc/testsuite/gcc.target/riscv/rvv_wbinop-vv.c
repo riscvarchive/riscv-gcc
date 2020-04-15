@@ -58,23 +58,6 @@
     vx = vload_##VCLASS##EM(x);                                               \
     vz = vw##OP##_vs_##VCLASS##EM (vx, y);                                  \
     vstore_##VCLASS##WEM(z, vz);                                               \
-  }                                                                            \
-  void v##OP##u##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z) {      \
-    v##VCLASST##EM##_t vx;                                                   \
-    vuint##EM##_t vy;                                                  \
-    vuint##WEM##_t vz;                                                 \
-    vx = vload_##VCLASS##EM(x);                                               \
-    vy = vload_u##EM(y);                                              \
-    vz = vw##OP##_vv_u##EM (vx, vy);                                \
-    vstore_u##WEM(z, vz);                                              \
-  }                                                                            \
-  void v##OP##u##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z) {   \
-    v##VCLASST##EM##_t vx;                                                   \
-    vuint##EM##_t vy;                                                  \
-    vuint##WEM##_t vz;                                                 \
-    vx = vload_##VCLASS##EM(x);                                               \
-    vz = vw##OP##_vs_u##EM (vx, y);                                 \
-    vstore_u##WEM(z, vz);                                              \
   }
 
 RVV_WINT_TEST_ARG(VWADDSUB, add)
@@ -101,8 +84,8 @@ RVV_WFLOAT_TEST_ARG(VWADDSUB, mul)
 /* { dg-final { scan-assembler-times "vwmulu.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwmul.vx" 9 } } */
 /* { dg-final { scan-assembler-times "vwmulu.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwmulsu.vv" 18 } } */
-/* { dg-final { scan-assembler-times "vwmulsu.vx" 18 } } */
+/* { dg-final { scan-assembler-times "vwmulsu.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwmulsu.vx" 9 } } */
 /* { dg-final { scan-assembler-times "vfwadd.vv" 6 } } */
 /* { dg-final { scan-assembler-times "vfwadd.vf" 6 } } */
 /* { dg-final { scan-assembler-times "vfwsub.vv" 6 } } */

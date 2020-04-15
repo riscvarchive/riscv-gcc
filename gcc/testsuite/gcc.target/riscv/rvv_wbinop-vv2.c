@@ -76,29 +76,6 @@
     vz = vload_##VCLASS##WEM(z);                                              \
     vz = vw##OP##_vs_##VCLASS##EM##_mask (mask, vz, vx, y);                 \
     vstore_##VCLASS##WEM(z, vz);                                               \
-  }                                                                            \
-  void v##OP##u##EM(size_t n, STYPE *x, u##STYPE *y, u##WSTYPE *z) {   \
-    v##VCLASST##EM##_t vx;                                                   \
-    vuint##EM##_t vy;                                                  \
-    vuint##WEM##_t vz;                                                 \
-    vbool##MLEN##_t mask;                                                   \
-    mask = vset_b##MLEN ();                                             \
-    vx = vload_##VCLASS##EM(x);                                               \
-    vy = vload_u##EM(y);                                              \
-    vz = vload_u##WEM(z);                                             \
-    vz = vw##OP##_vv_u##EM##_mask (mask, vz, vx, vy);               \
-    vstore_u##WEM(z, vz);                                              \
-  }                                                                            \
-  void v##OP##u##EM##_s(size_t n, STYPE *x, u##STYPE y, u##WSTYPE *z) {\
-    v##VCLASST##EM##_t vx;                                                   \
-    vuint##EM##_t vy;                                                  \
-    vuint##WEM##_t vz;                                                 \
-    vbool##MLEN##_t mask;                                                   \
-    mask = vset_b##MLEN ();                                             \
-    vx = vload_##VCLASS##EM(x);                                               \
-    vz = vload_u##WEM(z);                                             \
-    vz = vw##OP##_vs_u##EM##_mask (mask, vz, vx, y);                \
-    vstore_u##WEM(z, vz);                                              \
   }
 
 RVV_WINT_TEST_ARG(VWADDSUB, add)
@@ -125,8 +102,8 @@ RVV_WFLOAT_TEST_ARG(VWADDSUB, mul)
 /* { dg-final { scan-assembler-times "vwmulu.vv" 9 } } */
 /* { dg-final { scan-assembler-times "vwmul.vx" 9 } } */
 /* { dg-final { scan-assembler-times "vwmulu.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwmulsu.vv" 18 } } */
-/* { dg-final { scan-assembler-times "vwmulsu.vx" 18 } } */
+/* { dg-final { scan-assembler-times "vwmulsu.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwmulsu.vx" 9 } } */
 /* { dg-final { scan-assembler-times "vfwadd.vv" 6 } } */
 /* { dg-final { scan-assembler-times "vfwadd.vf" 6 } } */
 /* { dg-final { scan-assembler-times "vfwsub.vv" 6 } } */
