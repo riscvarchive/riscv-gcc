@@ -3826,3 +3826,107 @@
   "v<insn>.vx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;; Integer divide instructions.
+
+(define_expand "<optab><mode>3"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (any_div:VIMODES
+		     (match_operand:VIMODES 1 "register_operand")
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*<optab><mode>3_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(any_div:VIMODES (match_operand:VIMODES 1 "register_operand" "vr")
+			 (match_operand:VIMODES 2 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<insn>.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<optab><mode>3_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (any_div:VIMODES
+		     (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand"))
+		     (match_operand:VIMODES 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+;; XXX: No divide instruction with vector-scalar,
+;; all divide patterns prefer vector-vector.
+
+(define_insn "*<optab><mode>3_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(any_div:VIMODES (vec_duplicate:VIMODES
+			   (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+			 (match_operand:VIMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<insn>.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<optab><mode>3_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (any_div:VIMODES (match_operand:VIMODES 3 "register_operand")
+				      (match_operand:VIMODES 4 "register_operand"))
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<optab><mode>3_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (any_div:VIMODES (match_operand:VIMODES 3 "register_operand" "vr")
+			   (match_operand:VIMODES 4 "register_operand" "vr"))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<insn>.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<optab><mode>3_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (any_div:VIMODES
+		       (vec_duplicate:VIMODES
+			 (match_operand:<VSUBMODE> 4 "register_operand"))
+		       (match_operand:VIMODES 3 "register_operand"))
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<optab><mode>3_scalar_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(if_then_else:VIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (any_div:VIMODES (vec_duplicate:VIMODES
+			       (match_operand:<VSUBMODE> 4 "register_operand" "r"))
+			     (match_operand:VIMODES 3 "register_operand" "vr"))
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<insn>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])

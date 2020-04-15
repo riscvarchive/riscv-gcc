@@ -800,7 +800,7 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
-#define VINT_MIN_MAX_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
+#define VINT_BIN_OP_OPU_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
   DIRECT_NAMED (OP##MODE##3, vv##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
@@ -1173,8 +1173,11 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, gt, gtu)
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, ge, geu)
 
-  _RVV_INT_ITERATOR_ARG (VINT_MIN_MAX_BUILTINS, smax, umax)
-  _RVV_INT_ITERATOR_ARG (VINT_MIN_MAX_BUILTINS, smin, umin)
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_OPU_BUILTINS, smax, umax)
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_OPU_BUILTINS, smin, umin)
+
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_OPU_BUILTINS, div, udiv)
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_OPU_BUILTINS, mod, umod)
 
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, add)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, sub)
