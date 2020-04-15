@@ -143,6 +143,9 @@ static GTY(()) int riscv_builtin_decl_index[NUM_INSN_CODES];
 #define GET_BUILTIN_DECL(CODE) \
   riscv_builtin_decls[riscv_builtin_decl_index[(CODE)]]
 
+/* Type node for fp16.  */
+tree fp16_type_node;
+
 /* Return the function type associated with function prototype TYPE.  */
 
 static tree
@@ -173,6 +176,13 @@ riscv_build_function_type (enum riscv_function_type type)
 void
 riscv_init_builtins (void)
 {
+  /* _Float16 is C specific.  So we need a language independent type for
+     half floats.  Use __fp16 same as the arm/aarch64 ports.  */
+  fp16_type_node = make_node (REAL_TYPE);
+  TYPE_PRECISION (fp16_type_node) = 16;
+  layout_type (fp16_type_node);
+  (*lang_hooks.types.register_builtin_type) (fp16_type_node, "__fp16");
+
   for (size_t i = 0; i < ARRAY_SIZE (riscv_builtins); i++)
     {
       const struct riscv_builtin_description *d = &riscv_builtins[i];

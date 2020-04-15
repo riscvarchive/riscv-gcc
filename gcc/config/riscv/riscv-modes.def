@@ -20,3 +20,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 FLOAT_MODE (TF, 16, ieee_quad_format);
+
+/* Half-precision floating point for __fp16.  */
+FLOAT_MODE (HF, 2, 0);
+ADJUST_FLOAT_FORMAT (HF, &ieee_half_format);

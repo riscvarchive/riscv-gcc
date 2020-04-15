@@ -111,6 +111,8 @@ static const struct riscv_ext_version riscv_ext_version_table[] =
   {"zifencei", ISA_SPEC_CLASS_20191213, 2, 0},
   {"zifencei", ISA_SPEC_CLASS_20190608, 2, 0},
 
+  {"zfh", ISA_SPEC_CLASS_NONE, 0, 1},
+
   /* Terminate the list.  */
   {NULL, ISA_SPEC_CLASS_NONE, 0, 0}
 };
@@ -961,6 +963,8 @@ static const riscv_ext_flag_table_t riscv_ext_flag_table[] =
   {"zicsr",    &gcc_options::x_riscv_zi_subext, MASK_ZICSR},
   {"zifencei", &gcc_options::x_riscv_zi_subext, MASK_ZIFENCEI},
 
+  {"zfh", &gcc_options::x_target_flags, MASK_RVZFH},
+
   {NULL, NULL, 0}
 };
 
@@ -1000,6 +1004,10 @@ riscv_parse_arch_string (const char *isa,
 	    opts->*arch_ext_flag_tab->var_ref |= arch_ext_flag_tab->mask;
 	}
     }
+
+  if (subset_list->lookup ("zfh") && !subset_list->lookup ("f"))
+    error_at (loc, "%<-march=%s%>: `zfh` extension requires `f' extension",
+	      isa);
 
   if (current_subset_list)
     delete current_subset_list;
