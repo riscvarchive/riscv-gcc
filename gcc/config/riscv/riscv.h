@@ -949,4 +949,6 @@ extern void riscv_remove_unneeded_save_restore_calls (void);
 
 #define HARD_REGNO_RENAME_OK(FROM, TO) riscv_hard_regno_rename_ok (FROM, TO)
 
+#define TARGET_FP16 TARGET_RVZFH
+
 #endif /* ! GCC_RISCV_H */

@@ -647,6 +647,16 @@ riscv_parse_arch_string (const char *isa, int *flags, location_t loc)
   if (subset_list->lookup ("c"))
     *flags |= MASK_RVC;
 
+  *flags &= ~MASK_RVZFH;
+  if (subset_list->lookup ("zfh"))
+    {
+      if (!(*flags & MASK_HARD_FLOAT))
+	error_at (loc, "%<-march=%s%>: `zfh` extension requires `f' extension",
+		  isa);
+
+      *flags |= MASK_RVZFH;
+    }
+
   if (current_subset_list)
     delete current_subset_list;
 
