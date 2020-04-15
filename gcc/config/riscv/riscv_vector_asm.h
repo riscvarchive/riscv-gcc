@@ -2089,9 +2089,6 @@ _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
 
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VV, mul, mulu)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WINT_BIN_OP_VX, mul, mulu)
-
 #define _RVV_ASM_WCVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)		\
   _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2160,8 +2157,6 @@ _RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r")
-
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_WMULSU, mulsu)
 
 /* Template function for widening integer vector-vector operation,
    operand 1 is widening type.  */

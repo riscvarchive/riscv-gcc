@@ -3930,3 +3930,248 @@
   "v<insn>.vx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;; Vector widening signed integer multiply
+;; and unsigned integer multiply
+
+(define_expand "wmul<u><mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		(mult:<VWMODES>
+		  (any_extend:<VWMODES>
+		    (match_operand:VWIMODES 1 "register_operand"))
+		  (any_extend:<VWMODES>
+		    (match_operand:VWIMODES 2 "register_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*wmul<u><mode>_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(mult:<VWMODES>
+	  (any_extend:<VWMODES>
+	    (match_operand:VWIMODES 1 "register_operand" "vr"))
+	  (any_extend:<VWMODES>
+	    (match_operand:VWIMODES 2 "register_operand" "vr"))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwmul<u>.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "wmul<u><mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (mult:<VWMODES>
+		     (any_extend:<VWMODES>
+		       (match_operand:VWIMODES 1 "register_operand"))
+		     (any_extend:<VWMODES>
+		       (vec_duplicate:VWIMODES
+			 (match_operand:<VSUBMODE> 2 "register_operand")))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*wmul<u><mode>_scalar_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(mult:<VWMODES>
+	  (any_extend:<VWMODES>
+	    (match_operand:VWIMODES 1 "register_operand" "vr"))
+	  (any_extend:<VWMODES>
+	    (vec_duplicate:VWIMODES
+	      (match_operand:<VSUBMODE> 2 "register_operand" "r")))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwmul<u>.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "wmul<u><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (mult:<VWMODES>
+		       (any_extend:<VWMODES>
+			 (match_operand:VWIMODES 3 "register_operand"))
+		       (any_extend:<VWMODES>
+			 (match_operand:VWIMODES 4 "register_operand")))
+		     (match_operand:<VWMODES> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "wmul<u><mode>_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (mult:<VWMODES>
+	    (any_extend:<VWMODES>
+	      (match_operand:VWIMODES 3 "register_operand" "vr"))
+	    (any_extend:<VWMODES>
+	      (match_operand:VWIMODES 4 "register_operand" "vr")))
+	  (match_operand:<VWMODES> 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwmul<u>.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "wmul<u><mode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (mult:<VWMODES>
+		       (any_extend:<VWMODES>
+			 (match_operand:VWIMODES 3 "register_operand"))
+		       (any_extend:<VWMODES>
+			 (vec_duplicate:VWIMODES
+			   (match_operand:<VSUBMODE> 4 "register_operand"))))
+		     (match_operand:<VWMODES> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "wmul<u><mode>_scalar_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (mult:<VWMODES>
+	      (any_extend:<VWMODES>
+		(match_operand:VWIMODES 3 "register_operand" "vr"))
+	      (any_extend:<VWMODES>
+		(vec_duplicate:VWIMODES
+		  (match_operand:<VSUBMODE> 4 "register_operand" "r"))))
+	  (match_operand:<VWMODES> 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwmul<u>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Vector widening signed-unsigned integer multiply
+
+(define_expand "wmulsu<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		(mult:<VWMODES>
+		  (sign_extend:<VWMODES>
+		    (match_operand:VWIMODES 1 "register_operand"))
+		  (zero_extend:<VWMODES>
+		    (match_operand:VWIMODES 2 "register_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*wmulsu<mode>_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(mult:<VWMODES>
+	  (sign_extend:<VWMODES>
+	    (match_operand:VWIMODES 1 "register_operand" "vr"))
+	  (zero_extend:<VWMODES>
+	    (match_operand:VWIMODES 2 "register_operand" "vr"))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwmulsu.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "wmulsu<mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (mult:<VWMODES>
+		     (sign_extend:<VWMODES>
+		       (match_operand:VWIMODES 1 "register_operand"))
+		     (zero_extend:<VWMODES>
+		       (vec_duplicate:VWIMODES
+			 (match_operand:<VSUBMODE> 2 "register_operand")))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*wmulsu<mode>_scalar_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(mult:<VWMODES>
+	  (sign_extend:<VWMODES>
+	    (match_operand:VWIMODES 1 "register_operand" "vr"))
+	  (zero_extend:<VWMODES>
+	    (vec_duplicate:VWIMODES
+	      (match_operand:<VSUBMODE> 2 "register_operand" "r")))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwmulsu.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "wmulsu<mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (mult:<VWMODES>
+		       (sign_extend:<VWMODES>
+			 (match_operand:VWIMODES 3 "register_operand"))
+		       (zero_extend:<VWMODES>
+			 (match_operand:VWIMODES 4 "register_operand")))
+		     (match_operand:<VWMODES> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "wmulsu<mode>_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (mult:<VWMODES>
+	    (sign_extend:<VWMODES>
+	      (match_operand:VWIMODES 3 "register_operand" "vr"))
+	    (zero_extend:<VWMODES>
+	      (match_operand:VWIMODES 4 "register_operand" "vr")))
+	  (match_operand:<VWMODES> 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwmulsu.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "wmulsu<mode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (mult:<VWMODES>
+		       (sign_extend:<VWMODES>
+			 (match_operand:VWIMODES 3 "register_operand"))
+		       (zero_extend:<VWMODES>
+			 (vec_duplicate:VWIMODES
+			   (match_operand:<VSUBMODE> 4 "register_operand"))))
+		     (match_operand:<VWMODES> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "wmulsu<mode>_scalar_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (mult:<VWMODES>
+	      (sign_extend:<VWMODES>
+		(match_operand:VWIMODES 3 "register_operand" "vr"))
+	      (zero_extend:<VWMODES>
+		(vec_duplicate:VWIMODES
+		  (match_operand:<VSUBMODE> 4 "register_operand" "r"))))
+	  (match_operand:<VWMODES> 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwmulsu.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
