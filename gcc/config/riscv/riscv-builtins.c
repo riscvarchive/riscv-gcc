@@ -911,6 +911,35 @@ tree rvvbool64_t_node;
 		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L##_U##SUBMODE,\
 		vector),
 
+#define VINT_MAC_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (v##OP##MODE, v##OP##_sv_i##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (v##OP##MODE##_scalar, v##OP##_sv_i##E##m##L##_scalar,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (v##OP##MODE, v##OP##_sv_u##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (v##OP##MODE##_scalar, v##OP##_sv_u##E##m##L##_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE##_VUI##E##M##L,\
+		vector),
+
+#define VINT_MAC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  VINT_MAC_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (v##OP##MODE##_mask, v##OP##_sv_i##E##m##L##_mask,	\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (v##OP##MODE##_mask, v##OP##_sv_u##E##m##L##_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (v##OP##MODE##_scalar_mask, v##OP##_sv_i##E##m##L##_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_##SUBMODE##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (v##OP##MODE##_scalar_mask, v##OP##_sv_u##E##m##L##_scalar_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_U##SUBMODE##_VUI##E##M##L,\
+		vector),
+
 #define MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
   DIRECT_NAMED (OP##vnx##N##bi3, v##OP##bool##MLEN,			\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN,		\
@@ -1222,6 +1251,11 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_OPU_BUILTINS, div, udiv)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_OPU_BUILTINS, mod, umod)
+
+  _RVV_INT_ITERATOR_ARG (VINT_MAC_OP_BUILTINS, macc)
+  _RVV_INT_ITERATOR_ARG (VINT_MAC_OP_BUILTINS, madd)
+  _RVV_INT_ITERATOR_ARG (VINT_MAC_OP_BUILTINS, nmsac)
+  _RVV_INT_ITERATOR_ARG (VINT_MAC_OP_BUILTINS, nmsub)
 
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, add)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, sub)

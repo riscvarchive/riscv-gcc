@@ -1880,11 +1880,6 @@ _RVV_INT_ITERATOR(_RVV_ASM_INT_NOT)
   _RVV_ASM_INT_MAC_VV(SEW, LMUL, MLEN, T, OP)		\
   _RVV_ASM_INT_MAC_VX(SEW, LMUL, MLEN, T, OP)
 
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, macc)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, nmsac)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, madd)
-_RVV_INT_ITERATOR_ARG (_RVV_ASM_INT_MAC, nmsub)
-
 /* Template function for widening integer vector-vector multiply-add
    operation.  */
 #define _RVV_ASM_INT_WMAC_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
