@@ -940,6 +940,64 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_U##SUBMODE##_VUI##E##M##L,\
 		vector),
 
+#define VINT_WIDENING_MAC_OP_BUILTINS_SCALAR_NOMASK(E, L, MLEN, MODE, SUBMODE,\
+						    WE, WL, WVMODE, WSMODE, OP, NAME)\
+  DIRECT_NAMED (OP##MODE##WVMODE##4_scalar, v##NAME##_sv_i##E##m##L##_scalar,\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##WE##M##WL##_##SUBMODE##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (u##OP##MODE##WVMODE##4_scalar, v##NAME##_sv_u##E##m##L##_scalar,\
+		RISCV_VUI##WE##M##WL##_FTYPE_VUI##WE##M##WL##_U##SUBMODE##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (su##OP##MODE##WVMODE##4_scalar, v##NAME##su_sv_i##E##m##L##_scalar,\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##WE##M##WL##_##SUBMODE##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (us##OP##MODE##WVMODE##4_scalar, v##NAME##us_sv_i##E##m##L##_scalar,\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##WE##M##WL##_U##SUBMODE##_VI##E##M##L,\
+		vector),
+
+#define VINT_WIDENING_MAC_OP_BUILTINS_SCALAR(E, L, MLEN, MODE, SUBMODE,\
+					     WE, WL, WVMODE, WSMODE, OP, NAME)\
+  VINT_WIDENING_MAC_OP_BUILTINS_SCALAR_NOMASK(E, L, MLEN, MODE, SUBMODE,\
+					      WE, WL, WVMODE, WSMODE, OP, NAME)\
+  DIRECT_NAMED (OP##MODE##WVMODE##4_scalar_mask, v##NAME##_sv_i##E##m##L##_scalar_mask,\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_##SUBMODE##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (u##OP##MODE##WVMODE##4_scalar_mask, v##NAME##_sv_u##E##m##L##_scalar_mask,\
+		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_U##SUBMODE##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (su##OP##MODE##WVMODE##4_scalar_mask, v##NAME##su_sv_i##E##m##L##_scalar_mask,\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_##SUBMODE##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (us##OP##MODE##WVMODE##4_scalar_mask, v##NAME##us_sv_i##E##m##L##_scalar_mask,\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_U##SUBMODE##_VI##E##M##L,\
+		vector),
+
+#define VINT_WIDENING_MAC_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE,\
+					     WE, WL, WVMODE, WSMODE, OP, NAME)\
+  DIRECT_NAMED (OP##MODE##WVMODE##4, v##NAME##_sv_i##E##m##L,		\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##WE##M##WL##_VI##E##M##L##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (u##OP##MODE##WVMODE##4, v##NAME##_sv_u##E##m##L,	\
+		RISCV_VUI##WE##M##WL##_FTYPE_VUI##WE##M##WL##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (su##OP##MODE##WVMODE##4, v##NAME##su_sv_i##E##m##L,	\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##WE##M##WL##_VI##E##M##L##_VUI##E##M##L,\
+		vector),
+
+#define VINT_WIDENING_MAC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE,\
+				      WE, WL, WVMODE, WSMODE, OP, NAME)\
+  VINT_WIDENING_MAC_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE,\
+				       WE, WL, WVMODE, WSMODE, OP, NAME)\
+  DIRECT_NAMED (OP##MODE##WVMODE##4_mask, v##NAME##_sv_i##E##m##L##_mask,\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (u##OP##MODE##WVMODE##4_mask, v##NAME##_sv_u##E##m##L##_mask,\
+		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (su##OP##MODE##WVMODE##4_mask, v##NAME##su_sv_i##E##m##L##_mask,\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L##_VUI##E##M##L,\
+		vector),
+
 #define MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
   DIRECT_NAMED (OP##vnx##N##bi3, v##OP##bool##MLEN,			\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN,		\
@@ -1235,6 +1293,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wadd)
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_ADD_SUB_BUILTINS, wsub)
   _RVV_WINT_ITERATOR_ARG (VINT_WMUL_BUILTINS, wmul)
+  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS, madd, wmacc)
+  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS_SCALAR, madd, wmacc)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, and)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)

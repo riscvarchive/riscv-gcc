@@ -1922,15 +1922,6 @@ _RVV_INT_ITERATOR(_RVV_ASM_INT_NOT)
 		       ASM_OP, FUNC_NAME_OP, OP0U, OP1U, OP2U,		\
 		       OP0T, OP1T, OP2T)				\
 
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,      wmacc,   wmacc,
-			i, i, i, int, int, int)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,     wmaccu,   wmacc,
-			u, u, u, uint, uint, uint)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,    wmaccsu, wmaccsu,
-			i, i, u, int, int, uint)
-_RVV_WINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, wmaccus, wmaccus,
-			i, u, i, int, uint, int)
-
 _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,      qmacc,   qmacc,
 			i, i, i, int, int, int)
 _RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,     qmaccu,   qmacc,
