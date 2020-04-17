@@ -1746,6 +1746,8 @@ v##OP##us_sv_i##SEW##m##LMUL (vint##WSEW##m##WLMUL##_t acc,		\
 
 _RVV_WINT_ITERATOR_ARG (_RVV_MAC_WINT, wmacc)
 _RVV_WINT_ITERATOR_ARG (_RVV_MAC_WINT_MASK, wmacc)
+_RVV_QINT_ITERATOR_ARG (_RVV_MAC_WINT, qmacc)
+_RVV_QINT_ITERATOR_ARG (_RVV_MAC_WINT_MASK, qmacc)
 
 #define _RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\

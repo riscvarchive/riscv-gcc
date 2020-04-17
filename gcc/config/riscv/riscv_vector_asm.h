@@ -1922,15 +1922,6 @@ _RVV_INT_ITERATOR(_RVV_ASM_INT_NOT)
 		       ASM_OP, FUNC_NAME_OP, OP0U, OP1U, OP2U,		\
 		       OP0T, OP1T, OP2T)				\
 
-_RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,      qmacc,   qmacc,
-			i, i, i, int, int, int)
-_RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,     qmaccu,   qmacc,
-			u, u, u, uint, uint, uint)
-_RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC,    qmaccsu, qmaccsu,
-			i, i, u, int, int, uint)
-_RVV_QINT_ITERATOR_ARG (_RVV_ASM_INT_WMAC_VX, qmaccus, qmaccus,
-			i, u, i, int, uint, int)
-
 /* Template function for integer vector-vector comparison operation.  */
 #define _RVV_ASM_INT_CMP_VV(SEW, LMUL, MLEN, T, OP, OPU)		\
   _RVV_ASM_BIN_OP_TEMPLATE(						\

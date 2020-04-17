@@ -151,6 +151,17 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
+   corresponding quad-widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, QSEW, QLMUL, QVMODE, QSMODE)  */
+#define _RVV_QINT_ITERATOR(MACRO)			\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 32, 4, vnx16si, SI)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, 32, 8, vnx32si, SI)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, 64, 4,  vnx8di, DI)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    except LMUL1, along with its corresponding vector, integer modes, and
    info for corresponding widening vector type and extra arguments.
 
@@ -178,6 +189,17 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4di, DI, __VA_ARGS__)	\
   MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
   MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
+   corresponding quad-widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, QSEW, QLMUL, QVMODE, QSMODE)  */
+#define _RVV_QINT_ITERATOR_ARG(MACRO, ...)				\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 32, 4, vnx16si, SI, __VA_ARGS__)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, 32, 8, vnx32si, SI, __VA_ARGS__)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI, __VA_ARGS__)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer modes and floating point
@@ -1295,6 +1317,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_WINT_ITERATOR_ARG (VINT_WMUL_BUILTINS, wmul)
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS, madd, wmacc)
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS_SCALAR, madd, wmacc)
+  _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS, madd, qmacc)
+  _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS_SCALAR, madd, qmacc)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, and)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)
