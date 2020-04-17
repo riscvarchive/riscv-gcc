@@ -2766,15 +2766,55 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
-(define_insn "mov<mode>cc"
+(define_expand "mov<mode>cc"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vd")
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		(if_then_else:VIMODES
+		  (match_operand:<VCMPEQUIV> 1 "register_operand")
+		  (match_operand:VIMODES 2 "register_operand")
+		  (match_operand:VIMODES 3 "vector_arith_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR"
+{
+})
+
+(define_insn "mov<mode>cc_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vd,vd")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm,vm")
+	  (match_operand:VIMODES 1 "register_operand" "vr,vr")
+	  (match_operand:VIMODES 2 "vector_arith_operand" "vr, vi")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+ "TARGET_VECTOR"
+ "@
+  vmerge.vvm\t%0,%1,%2,%3
+  vmerge.vim\t%0,%1,%2,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_expand "mov<mode>cc_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		(if_then_else:VIMODES
+		  (match_operand:<VCMPEQUIV> 1 "register_operand")
+		  (match_operand:VIMODES 2 "register_operand")
+		  (vec_duplicate:VIMODES
+		    (match_operand:<VSUBMODE> 3 "register_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR"
+{
+})
+
+(define_insn "mov<mode>cc_scalar_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vd")
 	(if_then_else:VIMODES
 	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
 	  (match_operand:VIMODES 1 "register_operand" "vr")
-	  (match_operand:VIMODES 2 "register_operand" "vr")))]
+	  (vec_duplicate:VIMODES
+	    (match_operand:<VSUBMODE> 2 "register_operand" "r"))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR"
- "vmerge.vvm\t%0,%2,%1,%3"
+ "vmerge.vxm\t%0,%1,%2,%3"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 

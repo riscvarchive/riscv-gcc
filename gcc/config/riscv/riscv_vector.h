@@ -1749,6 +1749,42 @@ _RVV_WINT_ITERATOR_ARG (_RVV_MAC_WINT_MASK, wmacc)
 _RVV_QINT_ITERATOR_ARG (_RVV_MAC_WINT, qmacc)
 _RVV_QINT_ITERATOR_ARG (_RVV_MAC_WINT_MASK, qmacc)
 
+#define _RVV_INT_MERGE(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+			    vint##SEW##m##LMUL##_t a,			\
+			    vint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##OP##i##SEW##m##LMUL##_mask (mask, a, b);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+			    vuint##SEW##m##LMUL##_t a,			\
+			    vuint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##OP##u##SEW##m##LMUL##_mask (mask, a, b);	\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##SEW##m##LMUL##_t a,		\
+				   T b)					\
+{									\
+  return __builtin_riscv_v##OP##i##SEW##m##LMUL##_scalar_mask (mask, a, b);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##SEW##m##LMUL##_t a,		\
+				   u##T b)				\
+{									\
+  return __builtin_riscv_v##OP##u##SEW##m##LMUL##_scalar_mask (mask, a, b);\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_MERGE, merge)
+
 #define _RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

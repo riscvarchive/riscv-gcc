@@ -1281,6 +1281,20 @@ tree rvvbool64_t_node;
 		    RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##WE##M##WL##_UQI,\
 		    vector),
 
+#define VINT_MERGE_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##MODE##cc, v##NAME##i##E##m##L##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##cc, v##NAME##u##E##m##L##_mask,		\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##cc_scalar, v##NAME##i##E##m##L##_scalar_mask,	\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_##SUBMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##cc_scalar, v##NAME##u##E##m##L##_scalar_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_U##SUBMODE,\
+		vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -1300,6 +1314,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   /* XXX: rsub has masked version, but pattern didn't implement yet. */
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, rsub)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, mul)
+
+  _RVV_INT_ITERATOR_ARG (VINT_MERGE_BUILTINS, mov, merge)
 
   _RVV_INT_ITERATOR_ARG (VINT_SHIFT_BUILTINS, vashl)
   _RVV_INT_ITERATOR_ARG (VINT_SHIFT_BUILTINS, vashr)
