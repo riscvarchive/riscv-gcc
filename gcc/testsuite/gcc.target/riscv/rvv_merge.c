@@ -13,6 +13,7 @@
     vbool##MLEN##_t mask;					\
     vx = vload_##VCLASS##EM(x);				\
     vy = vload_##VCLASS##EM(y);				\
+    asm volatile ("" : : : "memory");			\
     mask = vset_b##MLEN ();				\
     vy = vmerge_vv_##VCLASS##EM##_mask (mask, vx, vy);	\
     vstore_##VCLASS##EM(y, vy);					\
