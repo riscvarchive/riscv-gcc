@@ -213,7 +213,7 @@
 #define _RVV_ASM_AMO_WD_ASM_TEMPLATE(SEW, LMUL, ASM_OP)	\
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " %1, %0, %3, %2"			\
-		      : "=A" (*addr), "=vr"(rv)			\
+		      : "+A" (*addr), "=vr"(rv)			\
 		      : "1" (a), "vr"(b), "vt"(vtype)		\
 		      : "memory")
 
@@ -224,7 +224,7 @@
 #define _RVV_ASM_AMO_WD_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP)		\
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " %1, %0, %3, %2, %4.t"			\
-		      : "=A" (*addr), "=vr"(rv)				\
+		      : "+A" (*addr), "=vr"(rv)				\
 		      : "1" (a), "vr"(b), "vm"(mask), "vt"(vtype)	\
 		      : "memory")
 
@@ -235,7 +235,7 @@
 #define _RVV_ASM_AMO_ASM_TEMPLATE(SEW, LMUL, ASM_OP)	\
     _RVV_SETVTYPE(SEW, LMUL);					\
     __asm__ volatile (ASM_OP " x0, %0, %2, %1"			\
-		      : "=A" (*addr)				\
+		      : "+A" (*addr)				\
 		      : "vr" (a), "vr"(b), "vt"(vtype)		\
 		      : "memory")
 
@@ -246,7 +246,7 @@
 #define _RVV_ASM_AMO_MASKED_ASM_TEMPLATE(SEW, LMUL, ASM_OP)		\
     _RVV_SETVTYPE(SEW, LMUL);						\
     __asm__ volatile (ASM_OP " x0, %0, %2, %1, %3.t"			\
-		      : "=A" (*addr)					\
+		      : "+A" (*addr)					\
 		      : "vr" (a), "vr"(b), "vm"(mask), "vt"(vtype)	\
 		      : "memory")
 
@@ -1296,7 +1296,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_LOAD)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */int##NSEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_STORE_TEMPLATE(						\
     SEW, LMUL,								\
@@ -1305,7 +1305,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_LOAD)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */uint##NSEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")
 
 _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STORE)
@@ -1340,7 +1340,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_LOAD)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */int##NSEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_STRIDED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
@@ -1349,7 +1349,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_LOAD)
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */uint##NSEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")
 
 _RVV_INT_LOAD_ITERATOR (_RVV_ASM_STRIDED_STORE)
@@ -1425,7 +1425,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
     /* OP0_TYPE */int##NSEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
@@ -1435,7 +1435,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
     /* OP0_TYPE */uint##NSEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
@@ -1445,7 +1445,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
     /* OP0_TYPE */int##NSEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
@@ -1455,7 +1455,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_LOAD)
     /* OP0_TYPE */uint##NSEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")
 
 _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
@@ -1469,7 +1469,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
     /* OP0_TYPE */int##SEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
@@ -1479,7 +1479,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
     /* OP0_TYPE */uint##SEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
@@ -1489,7 +1489,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
     /* OP0_TYPE */int##SEW##_t *,					\
     /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
@@ -1499,7 +1499,7 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_INDEXED_STORE)
     /* OP0_TYPE */uint##SEW##_t *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")
 
 _RVV_INT_ITERATOR (_RVV_ASM_INT_INDEXED_STORE)
@@ -1513,7 +1513,7 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_INDEXED_STORE)
     /* OP0_TYPE */_RVV_F##SEW##_TYPE *,					\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")						\
   _RVV_ASM_INDEXED_STORE_TEMPLATE(					\
     SEW, LMUL,								\
@@ -1523,7 +1523,7 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_INDEXED_STORE)
     /* OP0_TYPE */_RVV_F##SEW##_TYPE *,					\
     /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
     /* INDEX_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP0_CONSTRANT */"=A",						\
+    /* OP0_CONSTRANT */"+A",						\
     /* OP1_CONSTRANT */"vr")
 
 _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_STORE)
