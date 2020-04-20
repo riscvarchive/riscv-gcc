@@ -718,6 +718,20 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
+#define VINT_SCALAR_ONLY_BIN_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##MODE##3_scalar, v##OP##int##E##m##L##_scalar,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_scalar, v##OP##uint##E##m##L##_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_scalar_mask, v##OP##int##E##m##L##_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_scalar_mask, v##OP##uint##E##m##L##_scalar_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
+		vector),
+
 #define VFLOAT_UNARY_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
   DIRECT_NAMED (OP##MODE##2, vf##OP##float##E##m##L,			\
 		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L,			\
@@ -1309,10 +1323,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR (VFLOAT_LOAD_STORE_BUILTINS)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, add)
-  /* XXX: sub has masked version, but pattern didn't implement yet. */
-  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, sub)
-  /* XXX: rsub has masked version, but pattern didn't implement yet. */
-  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS_NOMASK, rsub)
+  _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, sub)
+  _RVV_INT_ITERATOR_ARG (VINT_SCALAR_ONLY_BIN_OP_BUILTINS, rsub)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, mul)
 
   _RVV_INT_ITERATOR_ARG (VINT_MERGE_BUILTINS, mov, merge)
