@@ -99,6 +99,16 @@
   MACRO(int64_t, int, i, 64m4, 16, __VA_ARGS__)	\
   MACRO(int64_t, int, i, 64m8,  8, __VA_ARGS__)
 
+#define RVV_AMOW_INT_TEST_ARG(MACRO, ...)			\
+  MACRO(int32_t, int, i, 32m1, 32, 32, u, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m2, 16, 32, u, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m4,  8, 32, u, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32m8,  4, 32, u, __VA_ARGS__)	\
+  MACRO(int64_t, int, i, 64m1, 64, 64,  , __VA_ARGS__)	\
+  MACRO(int64_t, int, i, 64m2, 32, 64,  , __VA_ARGS__)	\
+  MACRO(int64_t, int, i, 64m4, 16, 64,  , __VA_ARGS__)	\
+  MACRO(int64_t, int, i, 64m8,  8, 64,  ,__VA_ARGS__)
+
 #define RVV_INT_MASKED_TEST(MACRO)	\
   MACRO( int8_t, int, i,  8m1,  8, slt)	\
   MACRO( int8_t, int, i,  8m2,  4, slt)	\
@@ -305,6 +315,20 @@
   MACRO(   double, float, f, 64m2, 32, __VA_ARGS__)	\
   MACRO(   double, float, f, 64m4, 16, __VA_ARGS__)	\
   MACRO(   double, float, f, 64m8,  8, __VA_ARGS__)
+
+#define RVV_SEW_FLOAT_TEST_ARG(MACRO, ...)     	\
+  MACRO(float16_t, float, f, 16m1, 16, 16, __VA_ARGS__)	\
+  MACRO(float16_t, float, f, 16m2,  8, 16, __VA_ARGS__)	\
+  MACRO(float16_t, float, f, 16m4,  4, 16, __VA_ARGS__)	\
+  MACRO(float16_t, float, f, 16m8,  2, 16, __VA_ARGS__)	\
+  MACRO(    float, float, f, 32m1, 32, 32, __VA_ARGS__)	\
+  MACRO(    float, float, f, 32m2, 16, 32, __VA_ARGS__)	\
+  MACRO(    float, float, f, 32m4,  8, 32, __VA_ARGS__)	\
+  MACRO(    float, float, f, 32m8,  4, 32, __VA_ARGS__)	\
+  MACRO(   double, float, f, 64m1, 64, 64, __VA_ARGS__)	\
+  MACRO(   double, float, f, 64m2, 32, 64, __VA_ARGS__)	\
+  MACRO(   double, float, f, 64m4, 16, 64, __VA_ARGS__)	\
+  MACRO(   double, float, f, 64m8,  8, 64, __VA_ARGS__)
 
 #define RVV_FLOAT_INT_TEST(MACRO)     	\
   MACRO(float16_t, float, f, 16m1, 16, int16_t, int)	\

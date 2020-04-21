@@ -9,26 +9,32 @@
   void test_amo##OP##e_##VCLASS##EM (uint##SEW##_t *x, int##SEW##_t *y) {\
     vint##EM##_t vy;						\
     vuint##EM##_t vx;						\
+    vbool##MLEN##_t mask;					\
+    mask = vset_b##MLEN ();				\
     vx = vload_u##EM(x);					\
     vy = vload_i##EM(y);					\
-    vy = vamo##OP##e_v_i##EM(y, vx, vy);			\
+    vy = vamo##OP##e_v_i##EM##_mask(mask, y, vx, vy);			\
     vstore_i##EM(y, vy);					\
   }								\
   void test_uamo##OP##e_##VCLASS##EM (uint##SEW##_t *x, uint##SEW##_t *y) {\
     vuint##EM##_t vx, vy;						\
+    vbool##MLEN##_t mask;					\
+    mask = vset_b##MLEN ();				\
     vx = vload_u##EM(x);					\
     vy = vload_u##EM(y);					\
-    vx = vamo##OPU##e_v_u##EM(y, vx, vy);			\
+    vx = vamo##OPU##e_v_u##EM##_mask(mask, y, vx, vy);			\
     vstore_u##EM(x, vx);					\
   }								\
 
 #define RVV_TEST_FAMO(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, OP)	\
   void test_amo##OP##e_##VCLASS##EM (uint##SEW##_t *x, STYPE *y) {	\
     vuint##EM##_t vx;						\
+    vbool##MLEN##_t mask;					\
+    mask = vset_b##MLEN ();				\
     v##VCLASST##EM##_t vy;					\
     vx = vload_u##EM(x);					\
     vy = vload_##VCLASS##EM(y);					\
-    vy = vamo##OP##e_v_##VCLASS##EM(y, vx, vy);			\
+    vy = vamo##OP##e_v_##VCLASS##EM##_mask(mask, y, vx, vy);			\
     vstore_##VCLASS##EM(y, vy);					\
   }
 
@@ -36,16 +42,20 @@
   void test_amo##OP##w_##VCLASS##EM (uint##SEW##_t *x, int##SEW##_t *y, UADDR_LETTER##int32_t *addr) {\
     vint##EM##_t vy;						\
     vuint##EM##_t vx;						\
+    vbool##MLEN##_t mask;					\
+    mask = vset_b##MLEN ();				\
     vx = vload_u##EM(x);					\
     vy = vload_i##EM(y);					\
-    vy = vamo##OP##w_v_i##EM(addr, vx, vy);			\
+    vy = vamo##OP##w_v_i##EM##_mask(mask, addr, vx, vy);			\
     vstore_i##EM(y, vy);					\
   }								\
   void test_uamo##OP##w_##VCLASS##EM (uint##SEW##_t *x, uint##SEW##_t *y, UADDR_LETTER##int32_t *addr) {\
     vuint##EM##_t vx, vy;						\
+    vbool##MLEN##_t mask;					\
+    mask = vset_b##MLEN ();				\
     vx = vload_u##EM(x);					\
     vy = vload_u##EM(y);					\
-    vx = vamo##OPU##w_v_u##EM(addr, vx, vy);			\
+    vx = vamo##OPU##w_v_u##EM##_mask(mask, addr, vx, vy);			\
     vstore_u##EM(x, vx);					\
   }								\
 
