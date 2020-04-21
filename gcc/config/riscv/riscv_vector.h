@@ -1101,6 +1101,77 @@ _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wadd)
 _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wsub)
 
 
+#define _RVV_WFLOAT_ADD_SUB_MASK(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##WSEW##m##WLMUL##_t maskedoff,\
+				   vfloat##SEW##m##LMUL##_t a,		\
+				   vfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_vf##OP##_vv_f##SEW##m##LMUL##_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##WSEW##m##WLMUL##_t maskedoff,\
+				   vfloat##SEW##m##LMUL##_t a, T b)	\
+{									\
+  return __builtin_riscv_vf##OP##_vv_f##SEW##m##LMUL##_scalar_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_wv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##WSEW##m##WLMUL##_t maskedoff,\
+				   vfloat##WSEW##m##WLMUL##_t a,	\
+				   vfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_vf##OP##_wv_f##SEW##m##LMUL##_mask (mask, maskedoff, a, b);\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_ws_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##WSEW##m##WLMUL##_t maskedoff,\
+				   vfloat##WSEW##m##WLMUL##_t a, T b)	\
+{									\
+  return __builtin_riscv_vf##OP##_wv_f##SEW##m##LMUL##_scalar_mask (mask, maskedoff, a, b);\
+}
+
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_WFLOAT_ADD_SUB_MASK, wadd)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_WFLOAT_ADD_SUB_MASK, wsub)
+
+#define _RVV_WFLOAT_ADD_SUB(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,			\
+			    vfloat##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_vf##OP##_vv_f##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a, T b)		\
+{									\
+  return __builtin_riscv_vf##OP##_vv_f##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_wv_f##SEW##m##LMUL (vfloat##WSEW##m##WLMUL##_t a,		\
+			    vfloat##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_vf##OP##_wv_f##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_ws_f##SEW##m##LMUL (vfloat##WSEW##m##WLMUL##_t a, T b)		\
+{									\
+  return __builtin_riscv_vf##OP##_wv_f##SEW##m##LMUL##_scalar (a, b);	\
+}
+
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_WFLOAT_ADD_SUB, wadd)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_WFLOAT_ADD_SUB, wsub)
+
+
 #define _RVVINTCMP(SEW, LMUL, MLEN, T, OP, OPU)				\
 __extension__ extern __inline vbool##MLEN##_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

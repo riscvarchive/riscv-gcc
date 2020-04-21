@@ -2608,8 +2608,6 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
   _RVV_ASM_WFLOAT_BIN_OP_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
   _RVV_ASM_WFLOAT_BIN_OP_VF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)
 
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wadd)
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wsub)
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wmul)
 
 /* Template function for widening floating point vector-vector operation,
@@ -2651,8 +2649,6 @@ _RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_VV_VF, wmul)
   _RVV_ASM_WFLOAT_BIN_OP_WV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
   _RVV_ASM_WFLOAT_BIN_OP_WF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)
 
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_WV_WF, wadd)
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_ASM_WFLOAT_BIN_OP_WV_WF, wsub)
 
 /* Template function for single-width floating point vector-vector and
    vector-scalar multiply-add operation.  */

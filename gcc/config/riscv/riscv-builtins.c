@@ -1147,6 +1147,38 @@ tree rvvbool64_t_node;
 		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##WE##M##WL##_U##SDEMODE,\
 		vector),
 
+#define VFLOAT_WIDENING_ADD_SUB_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,\
+						WE, WL, WVMODE, WSMODE, OP)\
+  DIRECT_NAMED (OP##VMODE##_vv, v##OP##_vv_f##E##m##L,			\
+		RISCV_VF##WE##M##WL##_FTYPE_VF##E##M##L##_VF##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_vv_scalar, v##OP##_vv_f##E##m##L##_scalar,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VF##E##M##L##_##SDEMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv, v##OP##_wv_f##E##m##L,			\
+		RISCV_VF##WE##M##WL##_FTYPE_VF##WE##M##WL##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv_scalar, v##OP##_wv_f##E##m##L##_scalar,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VF##WE##M##WL##_##SDEMODE,	\
+		vector),
+
+#define VFLOAT_WIDENING_ADD_SUB_BUILTINS(E, L, MLEN, VMODE, SDEMODE,	\
+					 WE, WL, WVMODE, WSMODE, OP)	\
+  VFLOAT_WIDENING_ADD_SUB_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
+					  WE, WL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (OP##VMODE##_vv_mask, v##OP##_vv_f##E##m##L##_mask,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VF##E##M##L##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_vv_scalar_mask, v##OP##_vv_f##E##m##L##_scalar_mask,\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VF##E##M##L##_##SDEMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv_mask, v##OP##_wv_f##E##m##L##_mask,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VF##WE##M##WL##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##_wv_scalar_mask, v##OP##_wv_f##E##m##L##_scalar_mask,\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VF##WE##M##WL##_##SDEMODE,\
+		vector),
+
 #define VINT_REDUC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
   DIRECT_NAMED (reduc_##OP##MODE, reduc_##OP##int##E##m##L,		\
 		RISCV_VI##E##M1_FTYPE_VI##E##M1_VI##E##M##L,		\
@@ -1417,6 +1449,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_WINT_ITERATOR_ARG (VINT_WREDUC_OP_BUILTINS, sum, sumu)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WREDUC_OP_BUILTINS, sum)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WREDUC_OP_BUILTINS, osum)
+
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WIDENING_ADD_SUB_BUILTINS, fwadd)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WIDENING_ADD_SUB_BUILTINS, fwsub)
 
   _RVV_INT_FLOAT_ITERATOR (VREINTERPRET)
   _RVV_INT_ITERATOR (VREINTERPRET_INT)
