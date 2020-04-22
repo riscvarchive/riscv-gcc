@@ -2673,14 +2673,6 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
     /* OP1_CONSTRANT */"f",						\
     /* OP2_CONSTRANT */"vr")
 
-//_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, macc)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmacc)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, msac)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsac)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, madd)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmadd)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, msub)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_MAC, nmsub)
 
 /* Template function for floating-point vector-vector and vector-sclar
    comparison operation.  */

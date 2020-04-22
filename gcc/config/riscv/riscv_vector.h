@@ -2328,7 +2328,13 @@ v##OP##_sv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 }
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, macc)
-
+_RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, nmacc)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, msac)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, nmsac)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, madd)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, nmadd)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, msub)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, nmsub)
 
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function
