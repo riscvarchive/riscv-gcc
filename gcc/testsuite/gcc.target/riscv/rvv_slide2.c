@@ -77,5 +77,5 @@ RVV_FLOAT_TEST (RVV_TEST_SLIDEUPDOWN)
 /* { dg-final { scan-assembler-times "vslidedown.vi" 44 } } */
 /* { dg-final { scan-assembler-times "vslide1up.vx" 32 } } */
 /* { dg-final { scan-assembler-times "vslide1down.vx" 32 } } */
-/* { dg-final { scan-assembler-times "vslide1up.vf" 12 } } */
-/* { dg-final { scan-assembler-times "vslide1down.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vfslide1up.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vfslide1down.vf" 12 } } */

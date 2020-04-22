@@ -1671,7 +1671,7 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_E_FF_LOAD)
 #define _RVV_ASM_FSLIDE1_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
     SEW, LMUL,								\
-    /* ASM_OP */"v" #OP ".vf",						\
+    /* ASM_OP */"vf" #OP ".vf",						\
     /* FUNC_NAME */v##OP##_vs_f##SEW##m##LMUL,			\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
