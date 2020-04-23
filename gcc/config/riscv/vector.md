@@ -792,7 +792,7 @@
 })
 
 (define_insn "*adc<mode>4_nosetvl"
-  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr,&vr")
 	(plus:VIMODES
 	  (plus:VIMODES
 	    (match_operand:VIMODES 1 "register_operand" "vr,vr")
@@ -827,7 +827,7 @@
 })
 
 (define_insn "*adc<mode>4_scalar_nosetvl"
-  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
 	(plus:VIMODES
 	  (plus:VIMODES
 	    (vec_duplicate:VIMODES
@@ -862,7 +862,7 @@
 })
 
 (define_insn "*madc<mode>4m_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr,vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr,&vr")
 	(unspec:<VCMPEQUIV>
 	  [(plus:VIMODES
 	     (plus:VIMODES
@@ -901,7 +901,7 @@
 })
 
 (define_insn "*madc<mode>4m_scalar_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(unspec:<VCMPEQUIV>
 	  [(plus:VIMODES
 	     (plus:VIMODES
@@ -933,7 +933,7 @@
 })
 
 (define_insn "*madc<mode>4_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr,vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr,&vr")
 	(unspec:<VCMPEQUIV>
 	  [(plus:VIMODES
 	     (match_operand:VIMODES 1 "register_operand" "vr,vr")
@@ -962,7 +962,7 @@
 })
 
 (define_insn "*madc<mode>4_scalar_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(unspec:<VCMPEQUIV>
 	  [(plus:VIMODES
 	     (vec_duplicate:VIMODES
@@ -992,7 +992,7 @@
 })
 
 (define_insn "*sbc<mode>4_nosetvl"
-  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
 	(minus:VIMODES
 	  (minus:VIMODES
 	    (match_operand:VIMODES 1 "register_operand" "vr")
@@ -1025,7 +1025,7 @@
 })
 
 (define_insn "*sbc<mode>4_scalar_nosetvl"
-  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
 	(minus:VIMODES
 	  (minus:VIMODES
 	    (match_operand:VIMODES 1 "register_operand" "vr")
@@ -1060,7 +1060,7 @@
 })
 
 (define_insn "*msbc<mode>4m_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(unspec:<VCMPEQUIV>
 	  [(minus:VIMODES
 	     (minus:VIMODES
@@ -1097,7 +1097,7 @@
 })
 
 (define_insn "*msbc<mode>4m_scalar_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(unspec:<VCMPEQUIV>
 	  [(minus:VIMODES
 	     (minus:VIMODES
@@ -1129,7 +1129,7 @@
 })
 
 (define_insn "*madc<mode>4_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(unspec:<VCMPEQUIV>
 	  [(minus:VIMODES
 	     (match_operand:VIMODES 1 "register_operand" "vr")
@@ -1156,7 +1156,7 @@
 })
 
 (define_insn "*msbc<mode>4_scalar_nosetvl"
-  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=vr")
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(unspec:<VCMPEQUIV>
 	  [(minus:VIMODES
 	     (match_operand:VIMODES 1 "register_operand" "vr")
