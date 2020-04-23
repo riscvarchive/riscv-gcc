@@ -14,7 +14,7 @@ void wsaxpy(size_t n, const float16_t a, const float16_t *x, float *y) {
     vx = vload_f16m4(x); /* setvl x0, x0, e16, m4; vlde.v vx, (xx) */
     x += l;
     vy = vload_f32m8(y); /* setvl x0, x0, e32, m8; vlde.v vy, (xy) */
-    vy = vwmadd_vs_f16m4(vx, a, vy);
+    vy = vwmacc_sv_f16m4(vy, a, vx);
     vstore_f32m8(y, vy); /* setvl x0, x0, e32, m8; vste.v vy, (xy) */
     y += l;
   }
