@@ -65,10 +65,6 @@
 (define_mode_iterator VQWIMODES [VNx16QI VNx32QI
 				 VNx8HI  VNx16HI])
 
-;; All vector modes supported for widening alu operations.
-;; ??? Complete the list.
-(define_mode_iterator VFWMODES [VNx32HF])
-
 ;; Map a vector float mode to a vector int mode of the same size.
 (define_mode_attr VINTEQUIV
   [(VNx8HF "VNx8HI") (VNx16HF "VNx16HI")
@@ -118,10 +114,6 @@
    (VNx8HF "vnx8bi")   (VNx16HF "vnx16bi") (VNx32HF "vnx32bi") (VNx64HF "vnx64bi")
    (VNx4SF "vnx4bi")   (VNx8SF "vnx8bi")   (VNx16SF "vnx16bi") (VNx32SF "vnx32bi")
    (VNx2DF "vnx2bi")   (VNx4DF "vnx4bi")   (VNx8DF "vnx8bi")   (VNx16DF "vnx16bi")])
-
-;; Map a vector mode to its wider mode.
-;; ??? Complete the list.
-(define_mode_attr VWMODE [(VNx32HF "VNx32SF")])
 
 ;; Map a vector mode to its element mode.
 (define_mode_attr VSUBMODE
@@ -3279,45 +3271,285 @@
 
 ;; FP widen multiply accumulate instructions.
 
-;; ??? Needs splitter.
-(define_insn "riscv_vfwmaddfloat<vememode><vmmode>"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
-	(plus:<VWMODE>
-	 (mult:<VWMODE> (float_extend:<VWMODE>
-			 (match_operand:VFWMODES 1 "register_operand" "vr"))
-			(float_extend:<VWMODE>
-			 (match_operand:VFWMODES 2 "register_operand" "vr")))
-	 (match_operand:<VWMODE> 3 "register_operand" "0")))]
+(define_expand "vfw<vfmac><mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (add_sub:<VWMODES>
+		     (mult:<VWMODES>
+		       (float_extend:<VWMODES>
+			 (match_operand:VWFMODES 2 "register_operand"))
+		       (float_extend:<VWMODES>
+			 (match_operand:VWFMODES 3 "register_operand")))
+		     (match_operand:<VWMODES> 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vsetvli\tx0,x0,<vemode>,<vmmode>\;vfwmacc.vv\t%0,%1,%2"
+{
+})
+
+(define_insn "vfw<vfmac><mode>_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(add_sub:<VWMODES>
+	  (mult:<VWMODES>
+	    (float_extend:<VWMODES>
+	      (match_operand:VWFMODES 1 "register_operand" "vr"))
+	    (float_extend:<VWMODES>
+	      (match_operand:VWFMODES 2 "register_operand" "vr")))
+	  (match_operand:<VWMODES> 3 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfw<vfmac>.vv\t%0,%1,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn "riscv_vfwmsubfloat<vememode><vmmode>"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
-	(minus:<VWMODE>
-	 (mult:<VWMODE> (float_extend:<VWMODE>
-			 (match_operand:VFWMODES 1 "register_operand" "vr"))
-			(float_extend:<VWMODE>
-			 (match_operand:VFWMODES 2 "register_operand" "vr")))
-	 (match_operand:<VWMODE> 3 "register_operand" "0")))]
+(define_expand "vfw<vfmac><mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (add_sub:<VWMODES>
+		     (mult:<VWMODES>
+		       (vec_duplicate:<VWMODES>
+			 (float_extend:<VWMODES>
+			   (match_operand:<VSUBMODE> 2 "register_operand")))
+		       (float_extend:<VWMODES>
+			 (match_operand:VWFMODES 3 "register_operand")))
+		     (match_operand:<VWMODES> 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vsetvli\tx0,x0,<vemode>,<vmmode>\;vfwmsac.vv\t%0,%1,%2"
+{
+})
+
+(define_insn "vfw<vfmac><mode>_scalar_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(add_sub:<VWMODES>
+	  (mult:<VWMODES>
+	    (vec_duplicate:<VWMODES>
+	      (float_extend:<VWMODES>
+		(match_operand:<VSUBMODE> 2 "register_operand" "f")))
+	    (float_extend:<VWMODES>
+	      (match_operand:VWFMODES 1 "register_operand" "vr")))
+	  (match_operand:<VWMODES> 3 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfw<vfmac>.vf\t%0,%2,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-;; ??? Missing scalar form of vfwmsub.
-(define_insn "riscv_vfwmaddfloat<vememode><vmmode>_scalar"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
-	(plus:<VWMODE>
-	 (mult:<VWMODE> (float_extend:<VWMODE>
-			 (match_operand:VFWMODES 1 "register_operand" "vr"))
-			(vec_duplicate:<VWMODE>
-			 (float_extend:<VWMODE>
-			  (match_operand:<VSUBMODE> 2 "register_operand" "f"))))
-	 (match_operand:<VWMODE> 3 "register_operand" "0")))]
+(define_expand "vfw<vfmac><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (add_sub:<VWMODES>
+		       (mult:<VWMODES>
+			 (float_extend:<VWMODES>
+			   (match_operand:VWFMODES 3 "register_operand"))
+			 (float_extend:<VWMODES>
+			   (match_operand:VWFMODES 4 "register_operand")))
+		       (match_operand:<VWMODES> 2 "register_operand"))
+		     (match_dup 2)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vsetvli\tx0,x0,<vemode>,<vmmode>\;vfwmacc.vf\t%0,%2,%1"
+{
+})
+
+(define_insn "vfw<vfmac><mode>_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (add_sub:<VWMODES>
+	    (mult:<VWMODES>
+	      (float_extend:<VWMODES>
+		(match_operand:VWFMODES 3 "register_operand" "vr"))
+	      (float_extend:<VWMODES>
+		(match_operand:VWFMODES 4 "register_operand" "vr")))
+	    (match_operand:<VWMODES> 2 "register_operand" "0"))
+	(match_dup 2)))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfw<vfmac>.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vfw<vfmac><mode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (add_sub:<VWMODES>
+		       (mult:<VWMODES>
+			 (vec_duplicate:<VWMODES>
+			   (float_extend:<VWMODES>
+			     (match_operand:<VSUBMODE> 3 "register_operand")))
+			 (float_extend:<VWMODES>
+			   (match_operand:VWFMODES 4 "register_operand")))
+		       (match_operand:<VWMODES> 2 "register_operand"))
+		     (match_dup 2)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfw<vfmac><mode>_scalar_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (add_sub:<VWMODES>
+	    (mult:<VWMODES>
+	      (vec_duplicate:<VWMODES>
+		(float_extend:<VWMODES>
+		  (match_operand:<VSUBMODE> 4 "register_operand" "f")))
+	      (float_extend:<VWMODES>
+		(match_operand:VWFMODES 3 "register_operand" "vr")))
+	    (match_operand:<VWMODES> 2 "register_operand" "0"))
+	(match_dup 2)))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfw<vfmac>.vf\t%0,%4,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; FP widen negate multiply accumulate instructions.
+
+(define_expand "vfw<vfnmac><mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (add_sub:<VWMODES>
+		     (neg:<VWMODES>
+		       (mult:<VWMODES>
+			 (float_extend:<VWMODES>
+			   (match_operand:VWFMODES 2 "register_operand"))
+			 (float_extend:<VWMODES>
+			   (match_operand:VWFMODES 3 "register_operand"))))
+		     (match_operand:<VWMODES> 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfw<vfnmac><mode>_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(add_sub:<VWMODES>
+	  (neg:<VWMODES>
+	    (mult:<VWMODES>
+	      (float_extend:<VWMODES>
+		(match_operand:VWFMODES 1 "register_operand" "vr"))
+	      (float_extend:<VWMODES>
+		(match_operand:VWFMODES 2 "register_operand" "vr"))))
+	  (match_operand:<VWMODES> 3 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfw<vfnmac>.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vfw<vfnmac><mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (add_sub:<VWMODES>
+		     (neg:<VWMODES>
+		       (mult:<VWMODES>
+			 (vec_duplicate:<VWMODES>
+			   (float_extend:<VWMODES>
+			     (match_operand:<VSUBMODE> 2 "register_operand")))
+			   (float_extend:<VWMODES>
+			     (match_operand:VWFMODES 3 "register_operand"))))
+		     (match_operand:<VWMODES> 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfw<vfnmac><mode>_scalar_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(add_sub:<VWMODES>
+	  (neg:<VWMODES>
+	    (mult:<VWMODES>
+	      (vec_duplicate:<VWMODES>
+		(float_extend:<VWMODES>
+		  (match_operand:<VSUBMODE> 2 "register_operand" "f")))
+	      (float_extend:<VWMODES>
+		(match_operand:VWFMODES 1 "register_operand" "vr"))))
+	  (match_operand:<VWMODES> 3 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfw<vfnmac>.vf\t%0,%2,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vfw<vfnmac><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (add_sub:<VWMODES>
+		       (neg:<VWMODES>
+			 (mult:<VWMODES>
+			   (float_extend:<VWMODES>
+			     (match_operand:VWFMODES 3 "register_operand"))
+			   (float_extend:<VWMODES>
+			     (match_operand:VWFMODES 4 "register_operand"))))
+		       (match_operand:<VWMODES> 2 "register_operand"))
+		     (match_dup 2)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfw<vfnmac><mode>_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (add_sub:<VWMODES>
+	    (neg:<VWMODES>
+	      (mult:<VWMODES>
+		(float_extend:<VWMODES>
+		  (match_operand:VWFMODES 3 "register_operand" "vr"))
+		(float_extend:<VWMODES>
+		  (match_operand:VWFMODES 4 "register_operand" "vr"))))
+	    (match_operand:<VWMODES> 2 "register_operand" "0"))
+	(match_dup 2)))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfw<vfnmac>.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vfw<vfnmac><mode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (add_sub:<VWMODES>
+		       (neg:<VWMODES>
+			 (mult:<VWMODES>
+			   (vec_duplicate:<VWMODES>
+			     (float_extend:<VWMODES>
+			       (match_operand:<VSUBMODE> 3 "register_operand")))
+			   (float_extend:<VWMODES>
+			     (match_operand:VWFMODES 4 "register_operand"))))
+		       (match_operand:<VWMODES> 2 "register_operand"))
+		     (match_dup 2)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfw<vfnmac><mode>_scalar_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (add_sub:<VWMODES>
+	    (neg:<VWMODES>
+	      (mult:<VWMODES>
+		(vec_duplicate:<VWMODES>
+		  (float_extend:<VWMODES>
+		    (match_operand:<VSUBMODE> 4 "register_operand" "f")))
+		(float_extend:<VWMODES>
+		  (match_operand:VWFMODES 3 "register_operand" "vr"))))
+	    (match_operand:<VWMODES> 2 "register_operand" "0"))
+	(match_dup 2)))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfw<vfnmac>.vf\t%0,%4,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

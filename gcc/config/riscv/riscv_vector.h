@@ -2099,29 +2099,6 @@ vwmul_vs_float16m4 (vfloat16m4_t a, const float16_t b)
   return __builtin_riscv_vfwmulfloat16m4_scalar (a, b);
 }
 #endif
-/* Helpers for FP widening multiply accumulate.  */
-
-__extension__ extern __inline vfloat32m8_t
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
-vwmadd_vv_f16m4 (vfloat16m4_t a, vfloat16m4_t b, vfloat32m8_t c)
-{
-  return __builtin_riscv_vfwmaddfloat16m4 (a, b, c);
-}
-
-__extension__ extern __inline vfloat32m8_t
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
-vwmsub_vv_f16m4 (vfloat16m4_t a, vfloat16m4_t b, vfloat32m8_t c)
-{
-  return __builtin_riscv_vfwmsubfloat16m4 (a, b, c);
-}
-
-__extension__ extern __inline vfloat32m8_t
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
-vwmadd_vs_f16m4 (vfloat16m4_t a, const float16_t b,
-			vfloat32m8_t c)
-{
-  return __builtin_riscv_vfwmaddfloat16m4_scalar (a, b, c);
-}
 
 /* Reductions.  */
 
@@ -2335,6 +2312,47 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, madd)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, nmadd)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, msub)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_MAC_FLOAT, nmsub)
+
+#define _RVV_WMAC_FLOAT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_f##SEW##m##LMUL (vfloat##WSEW##m##WLMUL##_t acc,		\
+			  vfloat##SEW##m##LMUL##_t a,			\
+			  vfloat##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_vf##OP##_sv_f##SEW##m##LMUL (acc, a, b);	\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_sv_f##SEW##m##LMUL (vfloat##WSEW##m##WLMUL##_t acc,		\
+			  _RVV_F##SEW##_TYPE a,				\
+			  vfloat##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_vf##OP##_sv_f##SEW##m##LMUL##_scalar (acc, a, b);\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##WSEW##m##WLMUL##_t acc,	\
+				   vfloat##SEW##m##LMUL##_t a,		\
+				   vfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_vf##OP##_sv_f##SEW##m##LMUL##_mask (mask, acc, a, b);	\
+}									\
+__extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_sv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##WSEW##m##WLMUL##_t acc,	\
+				   _RVV_F##SEW##_TYPE a,		\
+				   vfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_vf##OP##_sv_f##SEW##m##LMUL##_scalar_mask (mask, acc, a, b);\
+}
+
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_WMAC_FLOAT, wmacc)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_WMAC_FLOAT, wnmacc)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_WMAC_FLOAT, wmsac)
+_RVV_WFLOAT_ITERATOR_ARG (_RVV_WMAC_FLOAT, wnmsac)
 
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function

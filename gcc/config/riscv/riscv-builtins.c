@@ -772,6 +772,21 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_##SUBMODE##_VF##E##M##L,\
 		vector),
 
+#define VFLOAT_WIDENING_MAC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE,	\
+					WE, WL, WMODE, WSMODE, OP)	\
+  DIRECT_NAMED (vf##OP##MODE, vf##OP##_sv_f##E##m##L,			\
+		RISCV_VF##WE##M##WL##_FTYPE_VF##WE##M##WL##_VF##E##M##L##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (vf##OP##MODE##_scalar, vf##OP##_sv_f##E##m##L##_scalar,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VF##WE##M##WL##_##SUBMODE##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (vf##OP##MODE##_mask, vf##OP##_sv_f##E##m##L##_mask,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VF##E##M##L##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (vf##OP##MODE##_scalar_mask, vf##OP##_sv_f##E##m##L##_scalar_mask,\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_##SUBMODE##_VF##E##M##L,\
+		vector),
+
 #define VINT_ADC_SBC_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
   DIRECT_NAMED (OP##MODE##4, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L##_VB##MLEN, \
@@ -1468,6 +1483,11 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MAC_OP_BUILTINS, msub)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MAC_OP_BUILTINS, nmsub)
 
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WIDENING_MAC_OP_BUILTINS, wmacc)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WIDENING_MAC_OP_BUILTINS, wnmacc)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WIDENING_MAC_OP_BUILTINS, wmsac)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WIDENING_MAC_OP_BUILTINS, wnmsac)
+
   _RVV_WINT_ITERATOR_ARG (VINT_WREDUC_OP_BUILTINS, sum, sumu)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WREDUC_OP_BUILTINS, sum)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WREDUC_OP_BUILTINS, osum)
@@ -1478,13 +1498,6 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_INT_FLOAT_ITERATOR (VREINTERPRET)
   _RVV_INT_ITERATOR (VREINTERPRET_INT)
-
-  DIRECT_BUILTIN (vfwmaddfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4_VF32M8,
-		  vector),
-  DIRECT_BUILTIN (vfwmsubfloat16m4, RISCV_VF32M8_FTYPE_VF16M4_VF16M4_VF32M8,
-		  vector),
-  DIRECT_BUILTIN (vfwmaddfloat16m4_scalar, RISCV_VF32M8_FTYPE_VF16M4_HF_VF32M8,
-		  vector),
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the
