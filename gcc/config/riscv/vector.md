@@ -5255,12 +5255,12 @@
   [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
 	(add_sub:VIMODES
 	  (match_operand:VIMODES 3 "register_operand" "vr,0")
-	  (mult:VIMODES (match_operand:VIMODES 1 "register_operand" "0,vr")
-			(match_operand:VIMODES 2 "register_operand" "vr,vr"))))
+	  (mult:VIMODES (match_operand:VIMODES 1 "register_operand" "vr,vr")
+			(match_operand:VIMODES 2 "register_operand" "0,vr"))))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "@
-   v<vmadd_sub>.vv\t%0,%2,%3
+   v<vmadd_sub>.vv\t%0,%1,%3
    v<vmac>.vv\t%0,%1,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -5304,7 +5304,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "@
-   v<vmadd_sub>.vx\t%0,%1,%2
+   v<vmadd_sub>.vx\t%0,%1,%3
    v<vmac>.vx\t%0,%1,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -5346,16 +5346,16 @@
 		   (if_then_else:VIMODES
 		     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm, vm")
 		     (add_sub:VIMODES
-		       (match_operand:VIMODES 2 "register_operand" "vr, 0")
+		       (match_operand:VIMODES 2 "register_operand" "0, vr")
 		       (mult:VIMODES
-			 (match_operand:VIMODES 3 "register_operand" "0, vr")
-			 (match_operand:VIMODES 4 "register_operand" "vr, vr")))
+			 (match_operand:VIMODES 3 "register_operand" "vr, vr")
+			 (match_operand:VIMODES 4 "register_operand" "vr, 0")))
 		     (match_operand:VIMODES 5 "register_operand" "0, 0")))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "@
-   v<vmadd_sub>.vv\t%0,%4,%2,%1.t
-   v<vmac>.vv\t%0,%3,%4,%1.t"
+   v<vmac>.vv\t%0,%3,%4,%1.t
+   v<vmadd_sub>.vv\t%0,%3,%2,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
