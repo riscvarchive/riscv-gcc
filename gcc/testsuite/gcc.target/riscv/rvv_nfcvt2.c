@@ -30,6 +30,30 @@
     vy = vcvt_u##SEW##_f##WSEW##_v_##WEM##_mask (mask, vy, vx);		\
     vstore_u##EM(y, vy);						\
   }									\
+  void rvvcvtrtzfi##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
+					       int##SEW##_t *y, _RVV_F##SEW##_TYPE z)	\
+  {									\
+    vfloat##WEM##_t vx;						\
+    vint##EM##_t vy;							\
+    vbool##MLEN##_t mask;						\
+    mask = vset_b##MLEN ();					\
+    vx = vload_f##WEM(x);						\
+    vy = vload_i##EM(y);						\
+    vy = vcvt_rtz_i##SEW##_f##WSEW##_v_##WEM##_mask (mask, vy, vx);		\
+    vstore_i##EM(y, vy);						\
+  }									\
+  void rvvcvtrtzfui##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##WSEW##_TYPE *x,\
+						u##int##SEW##_t *y, _RVV_F##SEW##_TYPE z)	\
+  {									\
+    vfloat##WEM##_t vx;						\
+    vuint##EM##_t vy;						\
+    vbool##MLEN##_t mask;						\
+    mask = vset_b##MLEN ();					\
+    vx = vload_f##WEM(x);						\
+    vy = vload_u##EM(y);						\
+    vy = vcvt_rtz_u##SEW##_f##WSEW##_v_##WEM##_mask (mask, vy, vx);		\
+    vstore_u##EM(y, vy);						\
+  }									\
   void rvvcvtif##SEWfloat##EM##_v_nomask_builtin_test(size_t n, _RVV_F##SEW##_TYPE *x,\
 					       int##WSEW##_t *y, _RVV_F##SEW##_TYPE z)	\
   {									\
@@ -84,6 +108,8 @@ RVV_FLOAT_WNCVT_INT_TEST(RVV_NFCVT_TEST)
 
 /* { dg-final { scan-assembler-times "vfncvt.xu.f.w" 6 } } */
 /* { dg-final { scan-assembler-times "vfncvt.x.f.w" 6 } } */
+/* { dg-final { scan-assembler-times "vfncvt.rtz.xu.f.w" 6 } } */
+/* { dg-final { scan-assembler-times "vfncvt.rtz.x.f.w" 6 } } */
 /* { dg-final { scan-assembler-times "vfncvt.f.xu.w" 6 } } */
 /* { dg-final { scan-assembler-times "vfncvt.f.x.w" 6 } } */
 /* { dg-final { scan-assembler-times "vfncvt.f.f.w" 6 } } */

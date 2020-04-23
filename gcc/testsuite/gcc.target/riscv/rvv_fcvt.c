@@ -24,6 +24,24 @@
     vy = vcvt_u##SEW##_f##SEW##_v_##EM (vx);			\
     vstore_u##EM(y, vy);					\
   }									\
+  void rvvcvtrtzfi##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
+					       ISTYPE *y, STYPE z)	\
+  {									\
+    v##VCLASST##EM##_t vx;						\
+    v##IVCLASST##EM##_t vy;						\
+    vx = vload_##VCLASS##EM(x);					\
+    vy = vcvt_rtz_i##SEW##_f##SEW##_v_##EM (vx);			\
+    vstore_##IVCLASS##EM(y, vy);					\
+  }									\
+  void rvvcvtrtzfui##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
+						u##ISTYPE *y, STYPE z)	\
+  {									\
+    v##VCLASST##EM##_t vx;						\
+    vuint##EM##_t vy;						\
+    vx = vload_##VCLASS##EM(x);					\
+    vy = vcvt_rtz_u##SEW##_f##SEW##_v_##EM (vx);			\
+    vstore_u##EM(y, vy);					\
+  }									\
   void rvvcvtif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       ISTYPE *y, STYPE z)	\
   {									\
@@ -49,5 +67,7 @@ RVV_FLOAT_CVT_INT_TEST(RVV_FCVT_TEST)
 
 /* { dg-final { scan-assembler-times "vfcvt.xu.f.v" 12 } } */
 /* { dg-final { scan-assembler-times "vfcvt.x.f.v" 12 } } */
+/* { dg-final { scan-assembler-times "vfcvt.rtz.xu.f.v" 12 } } */
+/* { dg-final { scan-assembler-times "vfcvt.rtz.x.f.v" 12 } } */
 /* { dg-final { scan-assembler-times "vfcvt.f.xu.v" 12 } } */
 /* { dg-final { scan-assembler-times "vfcvt.f.x.v" 12 } } */
