@@ -4306,7 +4306,7 @@ riscv_adjust_frame (rtx target, poly_int64 offset)
 {
   rtx temp_reg1 = RISCV_PROLOGUE_TEMP (Pmode);
   rtx temp_reg2 = RISCV_PROLOGUE_TEMP2 (Pmode);
-  rtx insn;
+  rtx insn, dwarf, adjust_frame_rtx;
 
   emit_insn (riscv_gen_load_poly_int (temp_reg1, temp_reg1, temp_reg2, offset));
 
@@ -4314,7 +4314,18 @@ riscv_adjust_frame (rtx target, poly_int64 offset)
 			target,
 			temp_reg1);
 
-  RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
+  insn = emit_insn (insn);
+
+  RTX_FRAME_RELATED_P (insn) = 1;
+
+  adjust_frame_rtx =
+    gen_rtx_SET (target,
+		 plus_constant (Pmode, target, offset));
+
+  dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA,
+			  copy_rtx (adjust_frame_rtx), NULL_RTX);
+
+  REG_NOTES (insn) = dwarf;
 }
 
 /* Expand the "prologue" pattern.  */
@@ -5843,6 +5854,20 @@ riscv_vector_alignment (const_tree type)
     return MIN (align, 128);
 }
 
+/* Implement the TARGET_DWARF_POLY_INDETERMINATE_VALUE hook.  */
+
+static unsigned int
+riscv_dwarf_poly_indeterminate_value (unsigned int i, unsigned int *factor,
+				      int *offset)
+{
+  /* Polynomial invariant 1 == (VLENB / 8) - 1.  */
+  /* XXX: It's might not correct for ELEN=32 system.  */
+  gcc_assert (i == 1);
+  *factor = 8;
+  *offset = 1;
+  return RISCV_DWARF_VLEN;
+}
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
@@ -6048,6 +6073,10 @@ riscv_vector_alignment (const_tree type)
 
 #undef TARGET_VECTOR_ALIGNMENT
 #define TARGET_VECTOR_ALIGNMENT riscv_vector_alignment
+
+#undef TARGET_DWARF_POLY_INDETERMINATE_VALUE
+#define TARGET_DWARF_POLY_INDETERMINATE_VALUE \
+  riscv_dwarf_poly_indeterminate_value
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

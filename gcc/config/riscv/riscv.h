@@ -1021,4 +1021,6 @@ extern poly_uint16 riscv_rvv_chunks;
 
 #define TARGET_SUPPORTS_WIDE_INT 1
 
+#define RISCV_DWARF_VLEN (4096 + 0xc22)
+
 #endif /* ! GCC_RISCV_H */
