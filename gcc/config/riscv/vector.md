@@ -342,6 +342,17 @@
 (define_int_attr v_su [(UNSPEC_VMULHS "s") (UNSPEC_VMULHU "u")
 		       (UNSPEC_VMULHSU "su")])
 
+;; Iterator and attributes for sign-injection instructions.
+(define_int_iterator UNSPEC_COPYSIGNS [UNSPEC_COPYSIGN UNSPEC_NCOPYSIGN
+				       UNSPEC_XORSIGN])
+
+(define_int_attr copysign [(UNSPEC_COPYSIGN "copysign")
+			   (UNSPEC_NCOPYSIGN "ncopysign")
+			   (UNSPEC_XORSIGN "xorsign")])
+
+(define_int_attr nx [(UNSPEC_COPYSIGN "") (UNSPEC_NCOPYSIGN "n")
+		     (UNSPEC_XORSIGN "x")])
+
 ;; Vsetvl instructions.
 
 ;; These use VIMODES because only the SEW and LMUL matter.  The int/float
@@ -3606,6 +3617,119 @@
   "@
    vfmv.v.f\t%0,%1
    vmv.v.x\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; FP sign-injection instructions.
+
+(define_expand "<copysign><mode>3"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (unspec:VFMODES
+		     [(match_operand:VFMODES 1 "register_operand")
+		      (match_operand:VFMODES 2 "register_operand")]
+		    UNSPEC_COPYSIGNS))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<copysign><mode>3_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(unspec:VFMODES [(match_operand:VFMODES 1 "register_operand" "vr")
+			 (match_operand:VFMODES 2 "register_operand" "vr")]
+			 UNSPEC_COPYSIGNS))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfsgnj<nx>.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<copysign><mode>3_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (unspec:VFMODES
+		     [(match_operand:VFMODES 1 "register_operand")
+		      (vec_duplicate:VFMODES
+			(match_operand:<VSUBMODE> 2 "register_operand"))]
+		    UNSPEC_COPYSIGNS))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<copysign><mode>3_scalar_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(unspec:VFMODES
+	  [(match_operand:VFMODES 1 "register_operand" "vr")
+	   (vec_duplicate:VFMODES
+	     (match_operand:<VSUBMODE> 2 "register_operand" "f"))]
+	   UNSPEC_COPYSIGNS))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfsgnj<nx>.vf\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<copysign><mode>3_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (if_then_else:VFMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VFMODES
+		       [(match_operand:VFMODES 3 "register_operand")
+			(match_operand:VFMODES 4 "register_operand")]
+		      UNSPEC_COPYSIGNS)
+		     (match_operand:VFMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<copysign><mode>3_mask_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(if_then_else:VFMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (unspec:VFMODES
+	    [(match_operand:VFMODES 3 "register_operand" "vr")
+	     (match_operand:VFMODES 4 "register_operand" "vr")]
+	   UNSPEC_COPYSIGNS)
+	  (match_operand:VFMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfsgnj<nx>.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<copysign><mode>3_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (if_then_else:VFMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VFMODES
+		       [(match_operand:VFMODES 3 "register_operand")
+			(vec_duplicate:VFMODES
+			  (match_operand:<VSUBMODE> 4 "register_operand"))]
+		      UNSPEC_COPYSIGNS)
+		     (match_operand:VFMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<copysign><mode>3_scalar_mask_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(if_then_else:VFMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	    (unspec:VFMODES
+	      [(match_operand:VFMODES 3 "register_operand" "vr")
+	       (vec_duplicate:VFMODES
+		 (match_operand:<VSUBMODE> 4 "register_operand" "f"))]
+	     UNSPEC_COPYSIGNS)
+	  (match_operand:VFMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vfsgnj<nx>.vf\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

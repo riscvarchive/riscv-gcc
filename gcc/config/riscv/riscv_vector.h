@@ -1886,17 +1886,17 @@ v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_MERGE, merge)
 
-#define _RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
+#define _RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP, NAME)		\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vs_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,	\
+v##NAME##_vs_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,	\
 				   T b)					\
 {									\
   return __builtin_riscv_vf##OP##float##SEW##m##LMUL##_scalar (a, b);	\
 }									\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
+v##NAME##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 					  vfloat##SEW##m##LMUL##_t maskedoff, \
 					  vfloat##SEW##m##LMUL##_t a, \
 					  T b)			\
@@ -1905,18 +1905,18 @@ v##OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
       mask, maskedoff, a, b);						\
 }
 
-#define _RVV_FLOAT_BIN_OP(SEW, LMUL, MLEN, T, OP)			\
-_RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)			\
+#define _RVV_FLOAT_BIN_OP(SEW, LMUL, MLEN, T, OP, NAME)			\
+_RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP, NAME)			\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,	\
+v##NAME##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,	\
 			      vfloat##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_vf##OP##float##SEW##m##LMUL (a, b);		\
 }									\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
+v##NAME##_vv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 				       vfloat##SEW##m##LMUL##_t maskedoff, \
 				       vfloat##SEW##m##LMUL##_t a,	\
 				       vfloat##SEW##m##LMUL##_t b)	\
@@ -1925,15 +1925,19 @@ v##OP##_vv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
       mask, maskedoff, a, b);						\
 }
 
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, add)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, sub)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rsub)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, mul)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, div)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rdiv)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, add, add)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, sub, sub)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rsub, rsub)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, mul, mul)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, div, div)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP_SCALAR, rdiv, rdiv)
 
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, max)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, min)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, max, max)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, min, min)
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, copysign, sgnj)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, ncopysign, sgnjn)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_BIN_OP, xorsign, sgnjx)
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, and, and)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, and, and)

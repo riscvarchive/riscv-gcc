@@ -2569,10 +2569,6 @@ _RVV_WFLOAT_ITERATOR (_RVV_FNCVT)
   _RVV_ASM_FLOAT_BIN_OP_VEC(SEW, LMUL, MLEN, T, OP)			\
   _RVV_ASM_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)
 
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnj)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjn)
-_RVV_FLOAT_ITERATOR_ARG (_RVV_ASM_FLOAT_BIN_OP, sgnjx)
-
 /* Template function for widening floating point vector-vector operation.  */
 #define _RVV_ASM_WFLOAT_BIN_OP_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT,	\
 				  OP)					\
