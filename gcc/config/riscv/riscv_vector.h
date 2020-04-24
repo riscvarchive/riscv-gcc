@@ -1249,6 +1249,49 @@ _RVV_INT_ITERATOR_ARG (_RVVINTCMP, le, leu)
 _RVV_INT_ITERATOR_ARG (_RVVINTCMP, gt, gtu)
 _RVV_INT_ITERATOR_ARG (_RVVINTCMP, ge, geu)
 
+#define _RVV_FCMP(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset##OP##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,		\
+			       vfloat##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_f##OP##int##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset##OP##_vv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				      vbool##MLEN##_t maskedoff,	\
+				      vfloat##SEW##m##LMUL##_t a,	\
+				      vfloat##SEW##m##LMUL##_t b)	\
+{									\
+  return __builtin_riscv_f##OP##int##SEW##m##LMUL##_mask (mask, maskedoff, \
+							   a, b);	\
+}									\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset##OP##_vs_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,		\
+			       _RVV_F##SEW##_TYPE b)			\
+{									\
+  return __builtin_riscv_f##OP##int##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset##OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				      vbool##MLEN##_t maskedoff,	\
+				      vfloat##SEW##m##LMUL##_t a,	\
+				      _RVV_F##SEW##_TYPE b)		\
+{									\
+  return __builtin_riscv_f##OP##int##SEW##m##LMUL##_scalar_mask (mask, maskedoff, \
+								  a, b);\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FCMP, eq)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FCMP, ne)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FCMP, lt)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FCMP, le)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FCMP, gt)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FCMP, ge)
+
 #define _RVVINT_MIN_MAX(SEW, LMUL, MLEN, T, OP)				\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

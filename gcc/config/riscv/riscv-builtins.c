@@ -851,6 +851,20 @@ tree rvvbool64_t_node;
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
+#define FCMP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)			\
+  DIRECT_NAMED (OP##MODE, OP##int##E##m##L,				\
+		RISCV_VB##MLEN##_FTYPE_VF##E##M##L##_VF##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_mask, OP##int##E##m##L##_mask,		\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VF##E##M##L##_VF##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_scalar, OP##int##E##m##L##_scalar,		\
+		RISCV_VB##MLEN##_FTYPE_VF##E##M##L##_##SUBMODE,		\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_scalar_mask, OP##int##E##m##L##_scalar_mask,	\
+		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN##_VF##E##M##L##_##SUBMODE,\
+		vector),
+
 #define VINT_BIN_OP_OPU_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
   DIRECT_NAMED (OP##MODE##3, vv##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
@@ -1445,6 +1459,13 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, copysign)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, ncopysign)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, xorsign)
+
+  _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, feq)
+  _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, fne)
+  _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, flt)
+  _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, fle)
+  _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, fgt)
+  _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, fge)
 
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, clr)
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, set)

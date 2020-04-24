@@ -251,6 +251,9 @@
 ;; All operation valid for comparison.
 (define_code_iterator any_cmp [eq ne lt ltu le leu gt gtu ge geu])
 
+;; All operation valid for signed comparison.
+(define_code_iterator signed_cmp [eq ne lt le gt ge])
+
 ;; All operation valid for comparison, except ge and geu.
 (define_code_iterator cmp_except_ge [eq ne lt ltu le leu gt gtu])
 
@@ -319,6 +322,11 @@
 
 (define_code_attr ltge [(lt "ltge_") (ltu "ltge_") (ge "ltge_") (geu "ltge_")
 			(eq "") (ne "") (le "") (leu "") (gt "") (gtu "") ])
+
+;; <fcmp> expand to the name of the vector floating-point comparison that
+;; implements a particular code.
+(define_code_attr fcmp [(eq "feq") (ne "fne") (lt "flt") (le "fle")
+			(gt "fgt") (ge "fge")])
 
 ;; <vshift> expand to the name of the min and max that implements a
 ;; particular code.
@@ -3841,6 +3849,30 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
+(define_expand "vec_cmp<mode><vmaskmode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+		     [(match_operand:VFMODES 2 "register_operand")
+		      (vec_duplicate:VFMODES
+			(match_operand:<VSUBMODE> 3 "register_operand"))]))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vec_cmp<mode><vmaskmode>_scalar_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
+	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
+			 [(match_operand:VFMODES 2 "register_operand" "vr")
+			  (vec_duplicate:VFMODES
+			    (match_operand:<VSUBMODE> 3 "register_operand" "f"))]))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+ "TARGET_VECTOR && TARGET_HARD_FLOAT"
+ "vmf%B1.vf\t%0,%2,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
 (define_expand "vec_cmp<mode><vmaskmode>_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
@@ -3866,6 +3898,36 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
  "vmf%B1.vv\t%0,%2,%3,%5.t"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_expand "vec_cmp<mode><vmaskmode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		   (if_then_else:<VCMPEQUIV>
+		     (match_operand:<VCMPEQUIV> 5 "register_operand")
+		     (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+		       [(match_operand:VFMODES 2 "register_operand")
+			(vec_duplicate:VFMODES
+			  (match_operand:<VSUBMODE> 3 "register_operand"))])
+		     (match_operand:<VCMPEQUIV> 4 "register_operand")))
+	       (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vec_cmp<mode><vmaskmode>_scalar_mask_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
+	(if_then_else:<VCMPEQUIV>
+	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm")
+	  (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+	    [(match_operand:VFMODES 2 "register_operand" "vr")
+	     (vec_duplicate:VFMODES
+	       (match_operand:<VSUBMODE> 3 "register_operand" "f"))])
+	  (match_operand:<VCMPEQUIV> 4 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+ "TARGET_VECTOR && TARGET_HARD_FLOAT"
+ "vmf%B1.vf\t%0,%2,%3,%5.t"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
@@ -4240,7 +4302,7 @@
 
 ;; Adaptor for built-in functions
 
-;; compare functions
+;; Integer compare functions
 
 (define_expand "<icmp><mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
@@ -4326,6 +4388,60 @@
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])
     (set (match_dup 0)
       (xor:<VCMPEQUIV> (match_dup 0) (match_dup 1)))]
+  "TARGET_VECTOR"
+{
+})
+
+;; FP compare functions
+
+(define_expand "<fcmp><mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		(signed_cmp:<VCMPEQUIV>
+		  (match_operand:VFMODES 1 "register_operand")
+		  (match_operand:VFMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "<fcmp><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		(if_then_else:<VCMPEQUIV>
+		  (match_operand:<VCMPEQUIV> 1 "register_operand")
+		  (signed_cmp:<VCMPEQUIV>
+		    (match_operand:VFMODES 3 "register_operand")
+		    (match_operand:VFMODES 4 "register_operand"))
+		  (match_operand:<VCMPEQUIV> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "<fcmp><mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		(signed_cmp:<VCMPEQUIV>
+		  (match_operand:VFMODES 1 "register_operand")
+		  (vec_duplicate:VFMODES
+		    (match_operand:<VSUBMODE> 2 "register_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "<fcmp><mode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
+		(if_then_else:<VCMPEQUIV>
+		  (match_operand:<VCMPEQUIV> 1 "register_operand")
+		  (signed_cmp:<VCMPEQUIV>
+		    (match_operand:VFMODES 3 "register_operand")
+		    (vec_duplicate:VFMODES
+		      (match_operand:<VSUBMODE> 4 "register_operand")))
+		  (match_operand:<VCMPEQUIV> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
 })
