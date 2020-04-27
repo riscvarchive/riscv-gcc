@@ -64,6 +64,7 @@
   UNSPEC_VMULHS
   UNSPEC_VMULHU
   UNSPEC_VMULHSU
+  UNSPEC_FCVT_XUF
 ])
 
 (define_c_enum "unspecv" [
@@ -412,7 +413,9 @@
 		     (gt "") (gtu "u")
 		     (ge "") (geu "u")
 		     (lt "") (ltu "u")
-		     (le "") (leu "u")])
+		     (le "") (leu "u")
+		     (fix "") (unsigned_fix "u")
+		     (float "") (unsigned_float "u")])
 
 ;; <su> is like <u>, but the signed form expands to "s" rather than "".
 (define_code_attr su [(sign_extend "s") (zero_extend "u")])

@@ -266,6 +266,10 @@
 ;; All operation valid for min and max.
 (define_code_iterator any_minmax [smin umin smax umax])
 
+;;All operantion valid for floating-point and integer convert.
+(define_code_iterator any_fix [fix unsigned_fix])
+(define_code_iterator any_float [float unsigned_float])
+
 ;; <reduc> expands to the name of the reduction that implements a
 ;; particular code.
 (define_code_attr reduc [(plus "sum") (umax "maxu") (smax "max") (umin "minu")
@@ -332,6 +336,9 @@
 ;; particular code.
 (define_code_attr minmax [(umax "umax") (smax "smax") (umin "umin") (smin "smin")])
 
+(define_code_attr fix_cvt [(fix "fix_trunc") (unsigned_fix "fixuns_trunc")])
+(define_code_attr float_cvt [(float "float") (unsigned_float "floatuns")])
+
 ;; Iterator and attributes for widening floating-point reduction instructions.
 (define_int_iterator WFREDUC_REDUC [UNSPEC_REDUC UNSPEC_ORDERED_REDUC])
 
@@ -360,6 +367,14 @@
 
 (define_int_attr nx [(UNSPEC_COPYSIGN "") (UNSPEC_NCOPYSIGN "n")
 		     (UNSPEC_XORSIGN "x")])
+
+;; Iterator and attributes for convert instructions.
+(define_int_iterator UNSPEC_FCVT [UNSPEC_LRINT UNSPEC_FCVT_XUF])
+
+(define_int_attr fcvt_xf [(UNSPEC_LRINT "lrint")
+			  (UNSPEC_FCVT_XUF "fcvt_xuf")])
+
+(define_int_attr fu [(UNSPEC_LRINT "") (UNSPEC_FCVT_XUF "u")])
 
 ;; Vsetvl instructions.
 
@@ -6337,5 +6352,149 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vqmaccus.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Single-Width Floating-Point/Integer Type-Convert Instructions
+
+(define_expand "<fix_cvt><mode><vintequiv>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VINTEQUIV> 0 "register_operand")
+		   (any_fix:<VINTEQUIV>
+		    (match_operand:VFMODES 1 "register_operand")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<fix_cvt><mode><vintequiv>2_nosetvl"
+  [(set (match_operand:<VINTEQUIV> 0 "register_operand" "=vr")
+	(any_fix:<VINTEQUIV>
+	  (match_operand:VFMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfcvt.rtz.x<u>.f.v %0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<fix_cvt><mode><vintequiv>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VINTEQUIV> 0 "register_operand")
+		   (if_then_else:<VINTEQUIV>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (any_fix:<VINTEQUIV>
+		       (match_operand:VFMODES 3 "register_operand"))
+		     (match_operand:<VINTEQUIV> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<fix_cvt><mode><vintequiv>2_mask_nosetvl"
+  [(set (match_operand:<VINTEQUIV> 0 "register_operand" "=vr")
+	(if_then_else:<VINTEQUIV>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (any_fix:<VINTEQUIV>
+	    (match_operand:VFMODES 3 "register_operand" "vr"))
+	  (match_operand:<VINTEQUIV> 2 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfcvt.rtz.x<u>.f.v %0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<fcvt_xf><mode><vintequiv>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VINTEQUIV> 0 "register_operand")
+		   (unspec:<VINTEQUIV>
+		     [(match_operand:VFMODES 1 "register_operand")]
+		    UNSPEC_FCVT))
+   (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<fcvt_xf><mode><vintequiv>2_nosetvl"
+  [(set (match_operand:<VINTEQUIV> 0 "register_operand" "=vr")
+	(unspec:<VINTEQUIV>
+	  [(match_operand:VFMODES 1 "register_operand" "vr")]
+	   UNSPEC_FCVT))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfcvt.x<fu>.f.v %0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<fcvt_xf><mode><vintequiv>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VINTEQUIV> 0 "register_operand")
+		   (if_then_else:<VINTEQUIV>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:<VINTEQUIV>
+		       [(match_operand:VFMODES 3 "register_operand")]
+		      UNSPEC_FCVT)
+		     (match_operand:<VINTEQUIV> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<fcvt_xf><mode><vintequiv>2_mask_nosetvl"
+  [(set (match_operand:<VINTEQUIV> 0 "register_operand" "=vr")
+	(if_then_else:<VINTEQUIV>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (unspec:<VINTEQUIV>
+	    [(match_operand:VFMODES 3 "register_operand" "vr")]
+	   UNSPEC_FCVT)
+	  (match_operand:<VINTEQUIV> 2 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfcvt.x<fu>.f.v %0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<float_cvt><vintequiv><mode>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (any_float:VFMODES
+		     (match_operand:<VINTEQUIV> 1 "register_operand")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<float_cvt><vintequiv><mode>2_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(any_float:VFMODES
+	    (match_operand:<VINTEQUIV> 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfcvt.f.x<u>.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<float_cvt><vintequiv><mode>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (if_then_else:VFMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (any_float:VFMODES
+		       (match_operand:<VINTEQUIV> 3 "register_operand"))
+		     (match_operand:VFMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "<float_cvt><vintequiv><mode>2_mask_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(if_then_else:VFMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (any_float:VFMODES
+	    (match_operand:<VINTEQUIV> 3 "register_operand"  "vr"))
+	  (match_operand:VFMODES 2 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfcvt.f.x<u>.v\t%0,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])

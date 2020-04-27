@@ -2390,8 +2390,6 @@ _RVV_FLOAT_ITERATOR (_RVV_FCLASS)
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"vr")						\
 
-_RVV_FLOAT_ITERATOR (_RVV_FCVT)
-
 #define _RVV_FWCVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)			\
   _RVV_ASM_WUNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\

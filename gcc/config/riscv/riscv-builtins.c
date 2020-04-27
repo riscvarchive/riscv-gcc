@@ -291,6 +291,25 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8df, DF, __VA_ARGS__)	\
   MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16df, DF, __VA_ARGS__)
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating point modes, and info for
+   corresponding integer vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, FMODE, FSMODE, IMODE, ISMODE)  */
+#define _RVV_FLOAT_INT_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 16,  vnx8hf, HF,  vnx8hi, HI, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hf, HF, vnx16hi, HI, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hf, HF, vnx32hi, HI, __VA_ARGS__)	\
+  MACRO (16, 8,  2, vnx64hf, HF, vnx64hi, HI, __VA_ARGS__)	\
+  MACRO (32, 1, 32,  vnx4sf, SF,  vnx4si, SI, __VA_ARGS__)	\
+  MACRO (32, 2, 16,  vnx8sf, SF,  vnx8si, SI, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16sf, SF, vnx16si, SI, __VA_ARGS__)	\
+  MACRO (32, 8,  4, vnx32sf, SF, vnx32si, SI, __VA_ARGS__)	\
+  MACRO (64, 1, 64,  vnx2df, DF,  vnx2di, DI, __VA_ARGS__)	\
+  MACRO (64, 2, 32,  vnx4df, DF,  vnx4di, DI, __VA_ARGS__)	\
+  MACRO (64, 4, 16,  vnx8df, DF,  vnx8di, DI, __VA_ARGS__)	\
+  MACRO (64, 8,  8, vnx16df, DF, vnx16di, DI, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported MLEN and internal
    type numbering on VNx<N>BI for vector masking modes.  */
 #define _RVV_MASK_ITERATOR(MACRO)	\
@@ -756,6 +775,42 @@ tree rvvbool64_t_node;
 		vector),						\
   DIRECT_NAMED (OP##MODE##3_scalar_mask, vf##OP##float##E##m##L##_scalar_mask,\
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_##SUBMODE,\
+		vector),
+
+#define VFLOAT_CVT_XF_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+			       IMODE, ISMODE, OP, NAME)			\
+  DIRECT_NAMED (OP##FMODE##IMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VI##E##M##L##_FTYPE_VF##E##M##L,			\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##IMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VF##E##M##L,\
+		vector),
+
+#define VFLOAT_CVT_XUF_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+				IMODE, ISMODE, OP, NAME)		\
+  DIRECT_NAMED (OP##FMODE##IMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VUI##E##M##L##_FTYPE_VF##E##M##L,			\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##IMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VF##E##M##L,\
+		vector),
+
+#define VFLOAT_CVT_FX_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+			       IMODE, ISMODE, OP, NAME)			\
+  DIRECT_NAMED (OP##IMODE##FMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VF##E##M##L##_FTYPE_VI##E##M##L,			\
+		vector),						\
+  DIRECT_NAMED (OP##IMODE##FMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VI##E##M##L,\
+		vector),
+
+#define VFLOAT_CVT_FXU_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+				IMODE, ISMODE, OP, NAME)		\
+  DIRECT_NAMED (OP##IMODE##FMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VF##E##M##L##_FTYPE_VUI##E##M##L,			\
+		vector),						\
+  DIRECT_NAMED (OP##IMODE##FMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VUI##E##M##L,\
 		vector),
 
 #define VFLOAT_MAC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
@@ -1466,6 +1521,14 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, fle)
   _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, fgt)
   _RVV_FLOAT_ITERATOR_ARG (FCMP_BUILTINS, fge)
+
+  _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_CVT_FX_BUILTINS, float, fcvt_fx)
+  _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_CVT_FXU_BUILTINS, floatuns, fcvt_fxu)
+  _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_CVT_XF_BUILTINS, lrint, fcvt_xf)
+  _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_CVT_XF_BUILTINS, fix_trunc, fcvt_rtz_xf)
+  _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_CVT_XUF_BUILTINS, fcvt_xuf, fcvt_xuf)
+  _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_CVT_XUF_BUILTINS,
+			       fixuns_trunc, fcvt_rtz_xuf)
 
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, clr)
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, set)
