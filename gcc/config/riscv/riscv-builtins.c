@@ -293,6 +293,32 @@ along with GCC; see the file COPYING3.  If not see
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, floating point modes, and info for
+   corresponding widening integer vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, FMODE, FSMODE, WSEW, WLMUL, WIMODE, WISMODE)  */
+#define _RVV_FLOAT_WINT_ITERATOR_ARG(MACRO, ...)			\
+  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8si, SI, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16si, SI, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32si, SI, __VA_ARGS__)	\
+  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4di, DI, __VA_ARGS__)	\
+  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16di, DI, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
+   corresponding widening floating point vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, IMODE, ISMODE, WSEW, WLMUL, WFMODE, WFSMODE)  */
+#define _RVV_WFLOAT_INT_ITERATOR_ARG(MACRO, ...)			\
+  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8sf, SF, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16sf, SF, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32sf, SF, __VA_ARGS__)	\
+  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4df, DF, __VA_ARGS__)	\
+  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8df, DF, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16df, DF, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating point modes, and info for
    corresponding integer vector type and extra arguments.
 
    MACRO (SEW, LMUL, MLEN, FMODE, FSMODE, IMODE, ISMODE)  */
@@ -811,6 +837,51 @@ tree rvvbool64_t_node;
 		vector),						\
   DIRECT_NAMED (OP##IMODE##FMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VUI##E##M##L,\
+		vector),
+
+#define VFLOAT_WCVT_XF_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+				WE, WL, WIMODE, WISMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##FMODE##WIMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VI##WE##M##WL##_FTYPE_VF##E##M##L,		\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##WIMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VF##E##M##L,\
+		vector),
+
+#define VFLOAT_WCVT_XUF_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+				 WE, WL, WIMODE, WISMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##FMODE##WIMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VUI##WE##M##WL##_FTYPE_VF##E##M##L,		\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##WIMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VF##E##M##L,\
+		vector),
+
+#define VFLOAT_WCVT_FX_BUILTINS(E, L, MLEN, IMODE, ISMODE,		\
+				WE, WL, WFMODE, WFSMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##IMODE##WFMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VF##WE##M##WL##_FTYPE_VI##E##M##L,		\
+		vector),						\
+  DIRECT_NAMED (OP##IMODE##WFMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VI##E##M##L,\
+		vector),
+
+#define VFLOAT_WCVT_FXU_BUILTINS(E, L, MLEN, IMODE, ISMODE,		\
+				 WE, WL, WFMODE, WFSMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##IMODE##WFMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VF##WE##M##WL##_FTYPE_VUI##E##M##L,		\
+		vector),						\
+  DIRECT_NAMED (OP##IMODE##WFMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VUI##E##M##L,\
+		vector),
+
+#define VFLOAT_WCVT_FF_BUILTINS(E, L, MLEN, VMODE, SMODE,		\
+				WE, WL, WVMODE, WSMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##VMODE##WVMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VF##WE##M##WL##_FTYPE_VF##E##M##L,		\
+		vector),						\
+  DIRECT_NAMED (OP##VMODE##WVMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VF##E##M##L,\
 		vector),
 
 #define VFLOAT_MAC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
@@ -1529,6 +1600,14 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_CVT_XUF_BUILTINS, fcvt_xuf, fcvt_xuf)
   _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_CVT_XUF_BUILTINS,
 			       fixuns_trunc, fcvt_rtz_xuf)
+  _RVV_WFLOAT_INT_ITERATOR_ARG (VFLOAT_WCVT_FX_BUILTINS, float, wfcvt_fx)
+  _RVV_WFLOAT_INT_ITERATOR_ARG (VFLOAT_WCVT_FXU_BUILTINS, floatuns, wfcvt_fxu)
+  _RVV_FLOAT_WINT_ITERATOR_ARG (VFLOAT_WCVT_XF_BUILTINS, lrint, wfcvt_xf)
+  _RVV_FLOAT_WINT_ITERATOR_ARG (VFLOAT_WCVT_XF_BUILTINS, fix_trunc, wfcvt_rtz_xf)
+  _RVV_FLOAT_WINT_ITERATOR_ARG (VFLOAT_WCVT_XUF_BUILTINS, fcvt_xuf, wfcvt_xuf)
+  _RVV_FLOAT_WINT_ITERATOR_ARG (VFLOAT_WCVT_XUF_BUILTINS,
+				fixuns_trunc, wfcvt_rtz_xuf)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WCVT_FF_BUILTINS, extend, wfcvt_ff)
 
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, clr)
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, set)
