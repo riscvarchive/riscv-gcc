@@ -65,6 +65,7 @@
   UNSPEC_VMULHU
   UNSPEC_VMULHSU
   UNSPEC_FCVT_XUF
+  UNSPEC_ROD
 ])
 
 (define_c_enum "unspecv" [

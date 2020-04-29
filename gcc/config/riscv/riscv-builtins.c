@@ -884,6 +884,51 @@ tree rvvbool64_t_node;
 		RISCV_VF##WE##M##WL##_FTYPE_VB##MLEN##_VF##WE##M##WL##_VF##E##M##L,\
 		vector),
 
+#define VFLOAT_NCVT_XF_BUILTINS(E, L, MLEN, IMODE, ISMODE,		\
+				WE, WL, WFMODE, WFSMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##WFMODE##IMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VI##E##M##L##_FTYPE_VF##WE##M##WL,		\
+		vector),						\
+  DIRECT_NAMED (OP##WFMODE##IMODE##2_mask, vf##NAME##f##E##m##L##_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VF##WE##M##WL,\
+		vector),
+
+#define VFLOAT_NCVT_XUF_BUILTINS(E, L, MLEN, IMODE, ISMODE,		\
+				 WE, WL, WFMODE, WFSMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##WFMODE##IMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VUI##E##M##L##_FTYPE_VF##WE##M##WL,		\
+		vector),						\
+  DIRECT_NAMED (OP##WFMODE##IMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VF##WE##M##WL,\
+		vector),
+
+#define VFLOAT_NCVT_FX_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+				WE, WL, WIMODE, WISMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##WIMODE##FMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VF##E##M##L##_FTYPE_VI##WE##M##WL,		\
+		vector),						\
+  DIRECT_NAMED (OP##WIMODE##FMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VI##WE##M##WL,\
+		vector),
+
+#define VFLOAT_NCVT_FXU_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+				 WE, WL, WIMODE, WISMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##WIMODE##FMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VF##E##M##L##_FTYPE_VUI##WE##M##WL,		\
+		vector),						\
+  DIRECT_NAMED (OP##WIMODE##FMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VUI##WE##M##WL,\
+		vector),
+
+#define VFLOAT_NCVT_FF_BUILTINS(E, L, MLEN, VMODE, SMODE,		\
+				WE, WL, WVMODE, WSMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##WVMODE##VMODE##2, vf##NAME##f##E##m##L,		\
+		RISCV_VF##E##M##L##_FTYPE_VF##WE##M##WL,		\
+		vector),						\
+  DIRECT_NAMED (OP##WVMODE##VMODE##2_mask, vf##NAME##f##E##m##L##_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##WE##M##WL,\
+		vector),
+
 #define VFLOAT_MAC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
   DIRECT_NAMED (vf##OP##MODE, vf##OP##_sv_f##E##m##L,			\
 		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_VF##E##M##L##_VF##E##M##L,\
@@ -1608,6 +1653,16 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_WINT_ITERATOR_ARG (VFLOAT_WCVT_XUF_BUILTINS,
 				fixuns_trunc, wfcvt_rtz_xuf)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WCVT_FF_BUILTINS, extend, wfcvt_ff)
+
+  _RVV_FLOAT_WINT_ITERATOR_ARG (VFLOAT_NCVT_FX_BUILTINS, float, nfcvt_fx)
+  _RVV_FLOAT_WINT_ITERATOR_ARG (VFLOAT_NCVT_FXU_BUILTINS, floatuns, nfcvt_fxu)
+  _RVV_WFLOAT_INT_ITERATOR_ARG (VFLOAT_NCVT_XF_BUILTINS, lrint, nfcvt_xf)
+  _RVV_WFLOAT_INT_ITERATOR_ARG (VFLOAT_NCVT_XF_BUILTINS, fix_trunc, nfcvt_rtz_xf)
+  _RVV_WFLOAT_INT_ITERATOR_ARG (VFLOAT_NCVT_XUF_BUILTINS, fcvt_xuf, nfcvt_xuf)
+  _RVV_WFLOAT_INT_ITERATOR_ARG (VFLOAT_NCVT_XUF_BUILTINS,
+				fixuns_trunc, nfcvt_rtz_xuf)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_NCVT_FF_BUILTINS, trunc, nfcvt_ff)
+  _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_NCVT_FF_BUILTINS, trunc_rod, nfcvt_rod_ff)
 
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, clr)
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, set)

@@ -2529,8 +2529,6 @@ _RVV_FLOAT_ITERATOR (_RVV_FCLASS)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")
 
-_RVV_WFLOAT_ITERATOR (_RVV_FNCVT)
-
 /* Template function for binary floating point vector-scalar operation.  */
 #define _RVV_ASM_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP)		\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
