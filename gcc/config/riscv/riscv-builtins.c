@@ -1564,6 +1564,11 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
+#define VFLOAT_MERGE_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##MODE##cc_scalar, v##NAME##f##E##m##L##_scalar_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_##SUBMODE,\
+		vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -1583,6 +1588,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, mul)
 
   _RVV_INT_ITERATOR_ARG (VINT_MERGE_BUILTINS, mov, merge)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MERGE_BUILTINS, mov, merge)
 
   _RVV_INT_ITERATOR_ARG (VINT_SHIFT_BUILTINS, vashl)
   _RVV_INT_ITERATOR_ARG (VINT_SHIFT_BUILTINS, vashr)

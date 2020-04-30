@@ -1929,6 +1929,18 @@ v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_MERGE, merge)
 
+#define _RVV_FLOAT_MERGE(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##SEW##m##LMUL##_t a,		\
+				   _RVV_F##SEW##_TYPE b)		\
+{									\
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_scalar_mask (mask, a, b);\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_MERGE, merge)
+
 #define _RVV_FLOAT_BIN_OP_SCALAR(SEW, LMUL, MLEN, T, OP, NAME)		\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

@@ -2718,8 +2718,6 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"f")
 
-_RVV_FLOAT_ITERATOR (_RVV_ASM_MERGE_FLOAT_OP)
-
 /* Template function for widening floating point vector-vector multiply-add
    operation.  */
 #define _RVV_ASM_FLOAT_WMAC_VV(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\

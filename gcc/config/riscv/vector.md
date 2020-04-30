@@ -4026,6 +4026,8 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
+;; Vector FP merge.
+
 (define_insn "mov<mode>cc"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (set (match_operand:VFMODES 0 "register_operand" "=vd")
@@ -4035,6 +4037,32 @@
 	  (match_operand:VFMODES 2 "register_operand" "vr")))]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
  "vmerge.vvm\t%0,%2,%1,%3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_expand "mov<mode>cc_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		(if_then_else:VFMODES
+		  (match_operand:<VCMPEQUIV> 1 "register_operand")
+		  (match_operand:VFMODES 2 "register_operand")
+		  (vec_duplicate:VFMODES
+		    (match_operand:<VSUBMODE> 3 "register_operand"))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+ "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "mov<mode>cc_scalar_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vd")
+	(if_then_else:VFMODES
+	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
+	  (match_operand:VFMODES 1 "register_operand" "vr")
+	  (vec_duplicate:VFMODES
+	    (match_operand:<VSUBMODE> 2 "register_operand" "f"))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+ "TARGET_VECTOR && TARGET_HARD_FLOAT"
+ "vfmerge.vfm\t%0,%1,%2,%3"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
