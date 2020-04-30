@@ -929,6 +929,14 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##WE##M##WL,\
 		vector),
 
+#define VFLOAT_VFCLASS_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (OP##MODE##2, vf##OP##float##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VF##E##M##L,			\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##2_mask, vf##OP##float##E##m##L##_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VF##E##M##L,\
+		vector),
+
 #define VFLOAT_MAC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
   DIRECT_NAMED (vf##OP##MODE, vf##OP##_sv_f##E##m##L,			\
 		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_VF##E##M##L##_VF##E##M##L,\
@@ -1717,6 +1725,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WIDENING_ADD_SUB_BUILTINS, fwadd)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WIDENING_ADD_SUB_BUILTINS, fwsub)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_WMUL_BUILTINS, fwmul)
+
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_VFCLASS_BUILTINS, vfclass)
 
   _RVV_INT_FLOAT_ITERATOR (VREINTERPRET)
   _RVV_INT_ITERATOR (VREINTERPRET_INT)

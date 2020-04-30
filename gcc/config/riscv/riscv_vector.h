@@ -2009,6 +2009,26 @@ v##OP##_v_f##SEW##m##LMUL##_mask (				\
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, sqrt)
 
+#define _RVV_FLOAT_VFCLASS(SEW, LMUL, MLEN, T, OP, NAME)		\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_v_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a)		\
+{									\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL (a);		\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_v_f##SEW##m##LMUL##_mask (					\
+  vbool##MLEN##_t mask,							\
+  vuint##SEW##m##LMUL##_t maskedoff, 					\
+  vfloat##SEW##m##LMUL##_t a)						\
+{									\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL##_mask (		\
+      mask, maskedoff, a);						\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_VFCLASS, vfclass, class)
+
 #define _RVV_FLOAT_CVT_XF(SEW, LMUL, MLEN, T, OP, NAME)			\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

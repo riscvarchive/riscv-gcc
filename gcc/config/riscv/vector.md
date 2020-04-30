@@ -6956,3 +6956,55 @@
   "vfncvt.rod.f.f.w\t%0,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;;Vector Floating-Point Classify Instruction.
+
+(define_expand "vfclass<mode>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VLMODE> 0 "register_operand")
+		   (unspec:<VLMODE>
+		     [(match_operand:VFMODES 1 "register_operand")]
+		    UNSPEC_VFCLASS))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfclass<mode>2_nosetvl"
+  [(set (match_operand:<VLMODE> 0 "register_operand" "=&vr")
+	(unspec:<VLMODE>
+	  [(match_operand:VFMODES 1 "register_operand" "vr")]
+	 UNSPEC_VFCLASS))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfclass.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vfclass<mode>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VLMODE> 0 "register_operand")
+		   (if_then_else:<VLMODE>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:<VLMODE>
+		       [(match_operand:VFMODES 3 "register_operand")]
+		      UNSPEC_VFCLASS)
+		     (match_operand:<VLMODE> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfclass<mode>2_mask_nosetvl"
+  [(set (match_operand:<VLMODE> 0 "register_operand" "=vr")
+	(if_then_else:<VLMODE>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (unspec:<VLMODE>
+	    [(match_operand:VFMODES 3 "register_operand" "vr")]
+	   UNSPEC_VFCLASS)
+	  (match_operand:<VLMODE> 2 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfclass.v\t%0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
