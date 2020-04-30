@@ -3090,43 +3090,51 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_RGATHER)
 
 _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_RGATHER)
 
+/* Compress intrinsic function template.
+   SEW: integer, should be 8, 16, 32, 64
+   LMUL: integer, should be 1, 2, 4 or 8
+   FUNC_NAME: function name.
+   MASK_TYPE: Type of mask.
+   VAL_TYPE: Type of input/output operand. */
+#define _RVV_ASM_COMPRESS_OP_TEMPLATE(SEW, LMUL, FUNC_NAME,		\
+				      MASK_TYPE,			\
+				      VAL_TYPE)				\
+__extension__ extern __inline VAL_TYPE					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+FUNC_NAME (MASK_TYPE mask, VAL_TYPE a, VAL_TYPE b)			\
+{									\
+  VAL_TYPE rv;								\
+  __asm__ ("vsetvli x0,x0,e" #SEW ",m" #LMUL "\n\t"			\
+	   "vcompress.vm %0, %1, %2"					\
+	   : "=vr" (rv)							\
+	   : "vr" (b), "vr" (mask),					\
+	     "0" (a)							\
+	   : "vtype");							\
+  return rv;								\
+}									\
+
 /* Template function for integer compress operation.  */
 #define _RVV_ASM_INT_COMPRESS(SEW, LMUL, MLEN, T)			\
-  _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(					\
+  _RVV_ASM_COMPRESS_OP_TEMPLATE(					\
     SEW, LMUL,								\
-    /* ASM_OP */"vcompress.vm",						\
-    /* FUNC_NAME */vcompress_vm_i##SEW##m##LMUL,			\
-    /* OP0_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vint##SEW##m##LMUL##_t,				\
-    /* OP2_TYPE */vbool##MLEN##_t,					\
-    /* OP0_CONSTRANT */"=&vr",						\
-    /* OP1_CONSTRANT */"vr",						\
-    /* OP2_CONSTRANT */"vr")						\
-  _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(					\
+    /* FUNC_NAME */vcompress_vm_i##SEW##m##LMUL##_mask,			\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* VAL_TYPE */vint##SEW##m##LMUL##_t)				\
+  _RVV_ASM_COMPRESS_OP_TEMPLATE(					\
     SEW, LMUL,								\
-    /* ASM_OP */"vcompress.vm",						\
-    /* FUNC_NAME */vcompress_vm_u##SEW##m##LMUL,			\
-    /* OP0_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
-    /* OP2_TYPE */vbool##MLEN##_t,					\
-    /* OP0_CONSTRANT */"=&vr",						\
-    /* OP1_CONSTRANT */"vr",						\
-    /* OP2_CONSTRANT */"vr")
+    /* FUNC_NAME */vcompress_vm_u##SEW##m##LMUL##_mask,			\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* VAL_TYPE */vuint##SEW##m##LMUL##_t)
 
 _RVV_INT_ITERATOR (_RVV_ASM_INT_COMPRESS)
 
 /* Template function for floating point compress operation.  */
 #define _RVV_ASM_FLOAT_COMPRESS(SEW, LMUL, MLEN, T)			\
-  _RVV_ASM_UNMASKED_BIN_OP_TEMPLATE(					\
+  _RVV_ASM_COMPRESS_OP_TEMPLATE(					\
     SEW, LMUL,								\
-    /* ASM_OP */"vcompress.vm",						\
-    /* FUNC_NAME */vcompress_vm_f##SEW##m##LMUL,			\
-    /* OP0_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP1_TYPE */vfloat##SEW##m##LMUL##_t,				\
-    /* OP2_TYPE */vbool##MLEN##_t,					\
-    /* OP0_CONSTRANT */"=&vr",						\
-    /* OP1_CONSTRANT */"vr",						\
-    /* OP2_CONSTRANT */"vr")
+    /* FUNC_NAME */vcompress_vm_f##SEW##m##LMUL##_mask,			\
+    /* MASK_TYPE */vbool##MLEN##_t,					\
+    /* VAL_TYPE */vfloat##SEW##m##LMUL##_t)
 
 _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_COMPRESS)
 
