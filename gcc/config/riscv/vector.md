@@ -1805,7 +1805,7 @@
 })
 
 (define_insn "*w<add_sub:optab><any_extend:u><mode>_vv_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (any_extend:<VWMODES>
 	    (match_operand:VWIMODES 1 "register_operand" "vr"))
@@ -1832,7 +1832,7 @@
 })
 
 (define_insn "*w<add_sub:optab><any_extend:u><mode>_vv_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (any_extend:<VWMODES>
 	    (match_operand:VWIMODES 1 "register_operand" "vr"))
@@ -1924,7 +1924,7 @@
 })
 
 (define_insn "*w<add_sub:optab><any_extend:u><mode>_wv_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (match_operand:<VWMODES> 1 "register_operand" "vr")
 	  (any_extend:<VWMODES>
@@ -1949,7 +1949,7 @@
 })
 
 (define_insn "*w<add_sub:optab><any_extend:u><mode>_wv_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (match_operand:<VWMODES> 1 "register_operand" "vr")
 	  (any_extend:<VWMODES>
@@ -2039,7 +2039,7 @@
 })
 
 (define_insn "*fw<optab><mode>_vv_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (float_extend:<VWMODES>
 	    (match_operand:VWFMODES 1 "register_operand" "vr"))
@@ -2066,7 +2066,7 @@
 })
 
 (define_insn "*fw<optab><mode>_vv_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (float_extend:<VWMODES>
 	    (match_operand:VWFMODES 1 "register_operand" "vr"))
@@ -2158,7 +2158,7 @@
 })
 
 (define_insn "*fw<optab><mode>_wv_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (match_operand:<VWMODES> 1 "register_operand" "vr")
 	  (float_extend:<VWMODES>
@@ -2183,7 +2183,7 @@
 })
 
 (define_insn "*fw<optab><mode>_wv_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (match_operand:<VWMODES> 1 "register_operand" "vr")
 	  (float_extend:<VWMODES>
@@ -2747,7 +2747,7 @@
 })
 
 (define_insn "*fwmul<mode>_vv_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(mult:<VWMODES>
 	  (float_extend:<VWMODES>
 	    (match_operand:VWFMODES 1 "register_operand" "vr"))
@@ -2774,7 +2774,7 @@
 })
 
 (define_insn "*fwmul<mode>_vv_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(mult:<VWMODES>
 	  (float_extend:<VWMODES>
 	    (match_operand:VWFMODES 1 "register_operand" "vr"))
@@ -3349,7 +3349,7 @@
 })
 
 (define_insn "vfw<vfmac><mode>_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (mult:<VWMODES>
 	    (float_extend:<VWMODES>
@@ -3380,7 +3380,7 @@
 })
 
 (define_insn "vfw<vfmac><mode>_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (mult:<VWMODES>
 	    (vec_duplicate:<VWMODES>
@@ -3488,7 +3488,7 @@
 })
 
 (define_insn "vfw<vfnmac><mode>_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (neg:<VWMODES>
 	    (mult:<VWMODES>
@@ -3521,7 +3521,7 @@
 })
 
 (define_insn "vfw<vfnmac><mode>_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(add_sub:<VWMODES>
 	  (neg:<VWMODES>
 	    (mult:<VWMODES>
@@ -4595,7 +4595,7 @@
 })
 
 (define_insn "*wreduc_sum<u><mode>_nosetvl"
-  [(set (match_operand:<VW1MODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VW1MODES> 0 "register_operand" "=&vr")
 	(unspec:<VW1MODES>
 	 [(plus:<VWMODES>
 	    (vec_duplicate:<VWMODES>
@@ -4777,7 +4777,7 @@
 })
 
 (define_insn "*wreduc_<o>sum<mode>_nosetvl"
-  [(set (match_operand:<VW1MODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VW1MODES> 0 "register_operand" "=&vr")
 	(unspec:<VW1MODES>
 	  [(plus:<VWMODES>
 	    (vec_duplicate:<VWMODES>
@@ -4974,7 +4974,7 @@
 })
 
 (define_insn "*<vnshift><mode>3_nv_nosetvl"
-  [(set (match_operand:VWIMODES 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VWIMODES 0 "register_operand" "=&vr,&vr")
 	(truncate:VWIMODES
 	  (any_shiftrt:<VWMODES>
 	    (match_operand:<VWMODES> 1 "register_operand" "vr,vr")
@@ -5001,7 +5001,7 @@
 })
 
 (define_insn "*<vnshift><mode>3_nv_scalar_nosetvl"
-  [(set (match_operand:VWIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VWIMODES 0 "register_operand" "=&vr")
 	(truncate:VWIMODES
 	  (any_shiftrt:<VWMODES>
 	    (match_operand:<VWMODES> 1 "register_operand" "vr")
@@ -5304,7 +5304,7 @@
 })
 
 (define_insn "*wmul<u><mode>_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(mult:<VWMODES>
 	  (any_extend:<VWMODES>
 	    (match_operand:VWIMODES 1 "register_operand" "vr"))
@@ -5331,7 +5331,7 @@
 })
 
 (define_insn "*wmul<u><mode>_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(mult:<VWMODES>
 	  (any_extend:<VWMODES>
 	    (match_operand:VWIMODES 1 "register_operand" "vr"))
@@ -5426,7 +5426,7 @@
 })
 
 (define_insn "*wmulsu<mode>_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(mult:<VWMODES>
 	  (sign_extend:<VWMODES>
 	    (match_operand:VWIMODES 1 "register_operand" "vr"))
@@ -5453,7 +5453,7 @@
 })
 
 (define_insn "*wmulsu<mode>_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(mult:<VWMODES>
 	  (sign_extend:<VWMODES>
 	    (match_operand:VWIMODES 1 "register_operand" "vr"))
@@ -5741,7 +5741,7 @@
 })
 
 (define_insn "<u>madd<mode><vwimode>4_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(plus:<VWMODES>
 	  (mult:<VWMODES>
 	    (any_extend:<VWMODES>
@@ -5771,7 +5771,7 @@
 })
 
 (define_insn "sumadd<mode><vwimode>4_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(plus:<VWMODES>
 	  (mult:<VWMODES>
 	    (sign_extend:<VWMODES>
@@ -5802,7 +5802,7 @@
 })
 
 (define_insn "<u>madd<mode><vwimode>4_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(plus:<VWMODES>
 	  (mult:<VWMODES>
 	    (any_extend:<VWMODES>
@@ -5834,7 +5834,7 @@
 })
 
 (define_insn "sumadd<mode><vwimode>4_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(plus:<VWMODES>
 	  (mult:<VWMODES>
 	    (sign_extend:<VWMODES>
@@ -5866,7 +5866,7 @@
 })
 
 (define_insn "usmadd<mode><vwimode>4_scalar_nosetvl"
-  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(plus:<VWMODES>
 	  (mult:<VWMODES>
 	    (zero_extend:<VWMODES>
@@ -6085,7 +6085,7 @@
 })
 
 (define_insn "<u>madd<mode><vqwimode>4_nosetvl"
-  [(set (match_operand:<VQWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VQWMODES> 0 "register_operand" "=&vr")
 	(plus:<VQWMODES>
 	  (mult:<VQWMODES>
 	    (any_extend:<VQWMODES>
@@ -6115,7 +6115,7 @@
 })
 
 (define_insn "sumadd<mode><vqwimode>4_nosetvl"
-  [(set (match_operand:<VQWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VQWMODES> 0 "register_operand" "=&vr")
 	(plus:<VQWMODES>
 	  (mult:<VQWMODES>
 	    (sign_extend:<VQWMODES>
@@ -6146,7 +6146,7 @@
 })
 
 (define_insn "<u>madd<mode><vqwimode>4_scalar_nosetvl"
-  [(set (match_operand:<VQWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VQWMODES> 0 "register_operand" "=&vr")
 	(plus:<VQWMODES>
 	  (mult:<VQWMODES>
 	    (any_extend:<VQWMODES>
@@ -6178,7 +6178,7 @@
 })
 
 (define_insn "sumadd<mode><vqwimode>4_scalar_nosetvl"
-  [(set (match_operand:<VQWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VQWMODES> 0 "register_operand" "=&vr")
 	(plus:<VQWMODES>
 	  (mult:<VQWMODES>
 	    (sign_extend:<VQWMODES>
@@ -6210,7 +6210,7 @@
 })
 
 (define_insn "usmadd<mode><vqwimode>4_scalar_nosetvl"
-  [(set (match_operand:<VQWMODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VQWMODES> 0 "register_operand" "=&vr")
 	(plus:<VQWMODES>
 	  (mult:<VQWMODES>
 	    (zero_extend:<VQWMODES>
