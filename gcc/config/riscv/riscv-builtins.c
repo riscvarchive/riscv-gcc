@@ -381,7 +381,8 @@ enum riscv_builtin_type {
   /* Likewise, but with return type VOID.  */
   RISCV_BUILTIN_DIRECT_NO_TARGET,
   RISCV_BUILTIN_SHIFT_SCALAR,
-  RISCV_BUILTIN_SHIFT_MASK_SCALAR
+  RISCV_BUILTIN_SHIFT_MASK_SCALAR,
+  RISCV_BUILTIN_MV_XS
 };
 
 /* Declare an availability predicate for built-in functions.  */
@@ -466,6 +467,9 @@ AVAIL (vector, TARGET_VECTOR)
 #define SHIFT_MASK_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)		\
   RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_SHIFT_MASK_SCALAR,		\
 	       FUNCTION_TYPE, AVAIL)
+
+#define MV_XS_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)			\
+  RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_MV_XS, FUNCTION_TYPE, AVAIL)
 
 /* Argument types.  */
 #define RISCV_ATYPE_VOID void_type_node
@@ -733,6 +737,22 @@ tree rvvbool64_t_node;
 				    float, VF)				\
   _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,	\
 				    float, VF)
+
+#define VINT_MV_X_S_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
+  MV_XS_NAMED (OP##MODE, v##NAME##i##E##m##L,				\
+	       RISCV_##SUBMODE##_FTYPE_VI##E##M##L,			\
+	       vector),							\
+  MV_XS_NAMED (OP##MODE, v##NAME##u##E##m##L,				\
+	       RISCV_U##SUBMODE##_FTYPE_VUI##E##M##L,			\
+	       vector),
+
+#define VINT_MV_S_X_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##MODE, v##NAME##i##E##m##L,				\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE, v##NAME##u##E##m##L,				\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
+		vector),
 
 #define VINT_BIN_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
   DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
@@ -1638,6 +1658,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SCALAR_ONLY_BIN_OP_BUILTINS, rdiv)
   _RVV_INT_ITERATOR_ARG (VINT_MULH_BUILTINS, mulh)
 
+  _RVV_INT_ITERATOR_ARG (VINT_MV_X_S_BUILTINS, vec_extract_sext, mv_xs)
+  _RVV_INT_ITERATOR_ARG (VINT_MV_S_X_BUILTINS, vec_set, mv_sx)
+
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, max)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, min)
 
@@ -2113,6 +2136,27 @@ riscv_legitimize_argument (enum insn_code icode, int opnum, rtx arg)
 }
 
 static rtx
+riscv_expand_unary_builtin (enum insn_code icode, rtx target, tree exp)
+{
+  rtx pat;
+  rtx op0 = expand_normal (CALL_EXPR_ARG (exp, 0));
+
+  /* Map any target to operand 0.  */
+  target = riscv_legitimize_target (icode, target);
+
+  op0 = riscv_legitimize_argument (icode, 1, op0);
+
+  /* Emit and return the new instruction. */
+  pat = GEN_FCN (icode) (target, op0);
+
+  if (! pat)
+    return NULL_RTX;
+
+  emit_insn (pat);
+  return target;
+}
+
+static rtx
 riscv_expand_builtin_shift_scalar (enum insn_code icode, rtx target, tree exp)
 {
   rtx pat;
@@ -2180,6 +2224,8 @@ riscv_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
       return riscv_expand_builtin_shift_scalar (d->icode, target, exp);
     case RISCV_BUILTIN_SHIFT_MASK_SCALAR:
       return riscv_expand_builtin_shift_mask_scalar (d->icode, target, exp);
+    case RISCV_BUILTIN_MV_XS:
+      return riscv_expand_unary_builtin (d->icode, target, exp);
     case RISCV_BUILTIN_DIRECT:
       return riscv_expand_builtin_direct (d->icode, target, exp, true);
 

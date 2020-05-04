@@ -711,6 +711,59 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+;; Integer Scalar Move Instructions.
+
+;; XXX: we should support scalar move for XLEN is 32.
+(define_expand "vec_extract_sext<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:DI 0 "register_operand")
+		   (sign_extend:DI
+		     (vec_select:<VSUBMODE>
+		       (match_operand:VIMODES 1 "register_operand")
+		       (parallel [(const_int 0)]))))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_64BIT"
+{
+})
+
+(define_insn "vec_extract_sext<mode>_nosetvl"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(sign_extend:DI
+	  (vec_select:<VSUBMODE>
+	    (match_operand:VIMODES 1 "register_operand" "vr")
+	    (parallel [(const_int 0)]))))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_64BIT"
+  "vmv.x.s\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vec_set<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (vec_merge:VIMODES
+		     (vec_duplicate:VIMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand"))
+		     (match_operand:VIMODES 1 "register_operand")
+		     (const_int 1)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_64BIT"
+{
+})
+
+(define_insn "vec_set<mode>_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(vec_merge:VIMODES
+	  (vec_duplicate:VIMODES
+	    (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+	  (match_operand:VIMODES 1 "register_operand" "0")
+	  (const_int 1)))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_64BIT"
+  "vmv.s.x\t%0,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Integer ALU instructions.
 
 (define_expand "add<mode>3"

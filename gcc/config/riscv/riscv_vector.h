@@ -495,6 +495,38 @@ vcopy_v_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a)		\
 
 _RVV_FLOAT_ITERATOR (_RVV_FLOAT_VEC_MOVE)
 
+#define _RVV_INT_MV_XS(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline T						\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vmv_v_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a)			\
+{									\
+  return __builtin_riscv_v##OP##i##SEW##m##LMUL (a);			\
+}									\
+__extension__ extern __inline u##T					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vmv_v_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a)			\
+{									\
+  return __builtin_riscv_v##OP##u##SEW##m##LMUL (a);			\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_MV_XS, mv_xs)
+
+#define _RVV_INT_MV_SX(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vmv_s_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a, T b)			\
+{									\
+  return __builtin_riscv_v##OP##i##SEW##m##LMUL (a, b);			\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vmv_s_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a, u##T b)		\
+{									\
+  return __builtin_riscv_v##OP##u##SEW##m##LMUL (a, b);			\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_MV_SX, mv_sx)
+
 #define _RVVFLOATLD(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
