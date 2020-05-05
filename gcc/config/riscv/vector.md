@@ -404,6 +404,17 @@
 
 (define_int_attr fu [(UNSPEC_LRINT "") (UNSPEC_FCVT_XUF "u")])
 
+;; Iterator and attributes for slide instructions.
+(define_int_iterator UNSPEC_VSLIDES [UNSPEC_VSLIDEUP UNSPEC_VSLIDEDOWN])
+
+(define_int_iterator UNSPEC_VSLIDES1 [UNSPEC_VSLIDE1UP UNSPEC_VSLIDE1DOWN])
+
+(define_int_iterator UNSPEC_VFSLIDES1 [UNSPEC_VFSLIDE1UP UNSPEC_VFSLIDE1DOWN])
+
+(define_int_attr ud [(UNSPEC_VSLIDEUP "up") (UNSPEC_VSLIDEDOWN "down")
+		     (UNSPEC_VSLIDE1UP "up") (UNSPEC_VSLIDE1DOWN "down")
+		     (UNSPEC_VFSLIDE1UP "up") (UNSPEC_VFSLIDE1DOWN "down")])
+
 ;; Vsetvl instructions.
 
 ;; These use VIMODES because only the SEW and LMUL matter.  The int/float
@@ -7138,5 +7149,175 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "vfclass.v\t%0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;;Vector Integer Slide Instructions.
+
+(define_expand "vslide<ud><VMODES:mode><X:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec:VMODES
+		     [(match_operand:VMODES 1 "register_operand")
+		      (match_operand:X 2 "reg_or_uimm5_operand")]
+		     UNSPEC_VSLIDES))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vslide<ud><VMODES:mode><X:mode>_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr, &vr")
+	(unspec:VMODES
+	  [(match_operand:VMODES 1 "register_operand" "vr, vr")
+	   (match_operand:X 2 "reg_or_uimm5_operand" "r, K")]
+	  UNSPEC_VSLIDES))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vslide<ud>.vx\t%0,%1,%2
+   vslide<ud>.vi\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vslide<ud><VMODES:mode><X:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (if_then_else:VMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VMODES
+		       [(match_operand:VMODES 3 "register_operand")
+			(match_operand:X 4 "reg_or_uimm5_operand")]
+		      UNSPEC_VSLIDES)
+		     (match_operand:VMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vslide<ud><VMODES:mode><X:mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr,&vr")
+	(if_then_else:VMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	  (unspec:VMODES
+	    [(match_operand:VMODES 3 "register_operand" "vr,vr")
+	     (match_operand:X 4 "reg_or_uimm5_operand" "r,K")]
+	   UNSPEC_VSLIDES)
+	  (match_operand:VMODES 2 "register_operand" "0,0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vslide<ud>.vx\t%0,%3,%4,%1.t
+   vslide<ud>.vi\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vslide1<ud><VIMODES:mode><X:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		     [(match_operand:VIMODES 1 "register_operand")
+		      (match_operand:X 2 "register_operand")]
+		     UNSPEC_VSLIDES1))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vslide1<ud><VIMODES:mode><X:mode>_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
+	(unspec:VIMODES
+	  [(match_operand:VIMODES 1 "register_operand" "vr")
+	   (match_operand:X 2 "register_operand" "r")]
+	  UNSPEC_VSLIDES1))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vslide1<ud>.vx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vslide1<ud><VIMODES:mode><X:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (if_then_else:VIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VIMODES
+		       [(match_operand:VIMODES 3 "register_operand")
+			(match_operand:X 4 "reg_or_uimm5_operand")]
+		      UNSPEC_VSLIDES1)
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vslide1<ud><VIMODES:mode><X:mode>_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
+	(if_then_else:VIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (unspec:VIMODES
+	    [(match_operand:VIMODES 3 "register_operand" "vr")
+	     (match_operand:X 4 "register_operand" "r")]
+	   UNSPEC_VSLIDES1)
+	  (match_operand:VIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vslide1<ud>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;;Vector FP Slide Instructions.
+
+(define_expand "vfslide1<ud><mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (unspec:VFMODES
+		     [(match_operand:VFMODES 1 "register_operand")
+		      (match_operand:<VSUBMODE> 2 "register_operand")]
+		     UNSPEC_VFSLIDES1))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfslide1<ud><mode>_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=&vr")
+	(unspec:VFMODES
+	  [(match_operand:VFMODES 1 "register_operand" "vr")
+	   (match_operand:<VSUBMODE> 2 "register_operand" "f")]
+	  UNSPEC_VFSLIDES1))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfslide1<ud>.vf\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vfslide1<ud><mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (if_then_else:VFMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VFMODES
+		       [(match_operand:VFMODES 3 "register_operand")
+			(match_operand:<VSUBMODE> 4 "register_operand")]
+		      UNSPEC_VFSLIDES1)
+		     (match_operand:VFMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vfslide1<ud><mode>_mask_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=&vr")
+	(if_then_else:VFMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (unspec:VFMODES
+	    [(match_operand:VFMODES 3 "register_operand" "vr")
+	     (match_operand:<VSUBMODE> 4 "register_operand" "f")]
+	   UNSPEC_VFSLIDES1)
+	  (match_operand:VFMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfslide1<ud>.vf\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])

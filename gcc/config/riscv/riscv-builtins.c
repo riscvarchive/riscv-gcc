@@ -481,6 +481,8 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_HI int16_type_node
 #define RISCV_ATYPE_SI int32_type_node
 #define RISCV_ATYPE_DI int64_type_node
+#define RISCV_ATYPE_SIZE size_type_node
+#define RISCV_ATYPE_LONG long_integer_type_node
 
 #define RISCV_ATYPE_QI_PTR intQI_ptr_type_node
 #define RISCV_ATYPE_HI_PTR intHI_ptr_type_node
@@ -1599,6 +1601,80 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_##SUBMODE,\
 		vector),
 
+#define VINT_SLIDE_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##MODE##si, OP##int##E##m##L##_si,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_SIZE,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di, OP##int##E##m##L##_di,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_SIZE,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##si, OP##u##E##m##L##_si,		\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_SIZE,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di, OP##u##E##m##L##_di,		\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_SIZE,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##si_mask, OP##int##E##m##L##_si_mask,	\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_SIZE,\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di_mask, OP##int##E##m##L##_di_mask,	\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_SIZE,\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##si_mask, OP##u##E##m##L##_si_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_SIZE,\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di_mask, OP##u##E##m##L##_di_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_SIZE,\
+		vector),
+
+#define VINT_SLIDE1_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##MODE##si, OP##int##E##m##L##_si,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_LONG,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di, OP##int##E##m##L##_di,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_LONG,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##si, OP##u##E##m##L##_si,		\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_LONG,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di, OP##u##E##m##L##_di,		\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_LONG,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##si_mask, OP##int##E##m##L##_si_mask,	\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_LONG,\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di_mask, OP##int##E##m##L##_di_mask,	\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_LONG,\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##si_mask, OP##u##E##m##L##_si_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_LONG,\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di_mask, OP##u##E##m##L##_di_mask,	\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_LONG,\
+		vector),
+
+#define VFLOAT_SLIDE_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##MODE##si, OP##f##E##m##L##_si,		\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_SIZE,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di, OP##f##E##m##L##_di,		\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_SIZE,	\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##si_mask, OP##f##E##m##L##_si_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_SIZE,\
+		vector),					\
+  DIRECT_NAMED (OP##MODE##di_mask, OP##f##E##m##L##_di_mask,	\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_SIZE,\
+		vector),
+
+#define VFLOAT_SLIDE1_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (OP##MODE, OP##f##E##m##L,				\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_mask, OP##f##E##m##L##_mask,			\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_##SUBMODE,\
+		vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -1659,6 +1735,16 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_MAC_OP_BUILTINS, madd)
   _RVV_INT_ITERATOR_ARG (VINT_MAC_OP_BUILTINS, nmsac)
   _RVV_INT_ITERATOR_ARG (VINT_MAC_OP_BUILTINS, nmsub)
+
+  _RVV_INT_ITERATOR_ARG (VINT_SLIDE_BUILTINS, vslideup)
+  _RVV_INT_ITERATOR_ARG (VINT_SLIDE_BUILTINS, vslidedown)
+  _RVV_INT_ITERATOR_ARG (VINT_SLIDE1_BUILTINS, vslide1up)
+  _RVV_INT_ITERATOR_ARG (VINT_SLIDE1_BUILTINS, vslide1down)
+
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE_BUILTINS, vslideup)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE_BUILTINS, vslidedown)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE1_BUILTINS, vfslide1up)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE1_BUILTINS, vfslide1down)
 
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, add)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, sub)

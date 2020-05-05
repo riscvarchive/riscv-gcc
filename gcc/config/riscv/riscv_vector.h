@@ -2053,6 +2053,163 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, or, ior)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, xor, xor)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, xor, xor)
 
+#define _RVV_INT_SLIDE(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
+			    size_t b)					\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_si (a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_di (a, b);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
+			    size_t b)					\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_si (a, b);		\
+  else									\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_di (a, b);		\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##SEW##m##LMUL##_t maskedoff,	\
+				   vint##SEW##m##LMUL##_t a,		\
+				   size_t b)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_si_mask (mask,	\
+						maskedoff, a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_di_mask (mask,	\
+						maskedoff, a, b);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##SEW##m##LMUL##_t maskedoff,	\
+				   vuint##SEW##m##LMUL##_t a,		\
+				   size_t b)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_si_mask (mask,	\
+						maskedoff, a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_di_mask (mask,	\
+						maskedoff, a, b);	\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_SLIDE, slideup)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_SLIDE, slidedown)
+
+#define _RVV_FLOAT_SLIDE(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,			\
+			    size_t b)					\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_si (a, b);		\
+  else									\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_di (a, b);		\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##SEW##m##LMUL##_t maskedoff,	\
+				   vfloat##SEW##m##LMUL##_t a,		\
+				   size_t b)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_si_mask (mask,	\
+						maskedoff, a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_di_mask (mask,	\
+						maskedoff, a, b);	\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_SLIDE, slideup)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_SLIDE, slidedown)
+
+#define _RVV_INT_SLIDE1(SEW, LMUL, MLEN, T, OP)				\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
+			    long b)					\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_si (a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_di (a, b);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
+			    long b)					\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_si (a, b);		\
+  else									\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_di (a, b);		\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vint##SEW##m##LMUL##_t maskedoff,	\
+				   vint##SEW##m##LMUL##_t a,		\
+				   long b)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_si_mask (mask,	\
+						maskedoff, a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_di_mask (mask,	\
+						maskedoff, a, b);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vuint##SEW##m##LMUL##_t maskedoff,	\
+				   vuint##SEW##m##LMUL##_t a,		\
+				   long b)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_si_mask (mask,	\
+						maskedoff, a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_di_mask (mask,	\
+						maskedoff, a, b);	\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_SLIDE1, slide1up)
+_RVV_INT_ITERATOR_ARG (_RVV_INT_SLIDE1, slide1down)
+
+#define _RVV_FLOAT_SLIDE1(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,			\
+			    _RVV_F##SEW##_TYPE b)			\
+{									\
+  return __builtin_riscv_vf##OP##f##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				   vfloat##SEW##m##LMUL##_t maskedoff,	\
+				   vfloat##SEW##m##LMUL##_t a,		\
+				   _RVV_F##SEW##_TYPE b)		\
+{									\
+  return __builtin_riscv_vf##OP##f##SEW##m##LMUL##_mask (mask,		\
+							maskedoff, a, b);\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_SLIDE1, slide1up)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_SLIDE1, slide1down)
+
 #define _RVV_FLOAT_UNARY_OP(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
