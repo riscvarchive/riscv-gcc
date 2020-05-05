@@ -764,6 +764,57 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+;; FP Scalar Move Instructions.
+
+;; XXX: we should support scalar move for FLEN is 32.
+(define_expand "vec_extract_fext<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VSUBMODE> 0 "register_operand")
+		   (vec_select:<VSUBMODE>
+		     (match_operand:VFMODES 1 "register_operand")
+		     (parallel [(const_int 0)])))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vec_extract_fext<mode>_nosetvl"
+  [(set (match_operand:<VSUBMODE> 0 "register_operand" "=f")
+	(vec_select:<VSUBMODE>
+	  (match_operand:VFMODES 1 "register_operand" "vr")
+	  (parallel [(const_int 0)])))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfmv.f.s\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vec_set<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (vec_merge:VFMODES
+		     (vec_duplicate:VFMODES
+		       (match_operand:<VSUBMODE> 2 "register_operand"))
+		     (match_operand:VFMODES 1 "register_operand")
+		     (const_int 1)))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
+
+(define_insn "vec_set<mode>_nosetvl"
+  [(set (match_operand:VFMODES 0 "register_operand" "=vr")
+	(vec_merge:VFMODES
+	  (vec_duplicate:VFMODES
+	    (match_operand:<VSUBMODE> 2 "register_operand" "f"))
+	  (match_operand:VFMODES 1 "register_operand" "0")
+	  (const_int 1)))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+  "vfmv.s.f\t%0,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Integer ALU instructions.
 
 (define_expand "add<mode>3"

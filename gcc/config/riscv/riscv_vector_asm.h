@@ -2805,8 +2805,6 @@ _RVV_WINT_ITERATOR_ARG (_RVV_ASM_NINT_BIN_OP, nclip, nclipu)
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"f")
 
-_RVV_FLOAT_ITERATOR (_RVV_MV_FS_SF)
-
 #define _RVV_INT_SPLAT(SEW, LMUL, MLEN, T)				\
   _RVV_ASM_SPLAT_TEMPLATE(						\
     SEW, LMUL,								\

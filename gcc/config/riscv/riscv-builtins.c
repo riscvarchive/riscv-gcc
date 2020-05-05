@@ -754,6 +754,16 @@ tree rvvbool64_t_node;
 		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
 		vector),
 
+#define VFLOAT_MV_F_S_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##MODE, v##NAME##f##E##m##L,				\
+		RISCV_##SUBMODE##_FTYPE_VF##E##M##L,			\
+		vector),
+
+#define VFLOAT_MV_S_F_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##MODE, v##NAME##f##E##m##L,				\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_##SUBMODE,	\
+		vector),
+
 #define VINT_BIN_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
   DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
@@ -1660,6 +1670,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_INT_ITERATOR_ARG (VINT_MV_X_S_BUILTINS, vec_extract_sext, mv_xs)
   _RVV_INT_ITERATOR_ARG (VINT_MV_S_X_BUILTINS, vec_set, mv_sx)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MV_F_S_BUILTINS, vec_extract_fext, mv_fs)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MV_S_F_BUILTINS, vec_set, mv_sf)
 
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, max)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, min)
