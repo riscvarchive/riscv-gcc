@@ -2936,8 +2936,6 @@ _RVV_FLOAT_ITERATOR (_RVV_FLOAT_SPLAT)
     /* OP2_CONSTRANT */"r",						\
     _RVV_ASM_INT_UIMM_CHK)
 
-_RVV_INT_ITERATOR (_RVV_ASM_INT_RGATHER)
-
 /* Template function for floating point rgather operation.  */
 #define _RVV_ASM_FLOAT_RGATHER(SEW, LMUL, MLEN, T)			\
   _RVV_ASM_BIN_OP_TEMPLATE(						\
@@ -2964,8 +2962,6 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_RGATHER)
     /* OP1_CONSTRANT */"vr",						\
     /* OP2_CONSTRANT */"r",						\
     _RVV_ASM_INT_UIMM_CHK)
-
-_RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_RGATHER)
 
 /* Compress intrinsic function template.
    SEW: integer, should be 8, 16, 32, 64

@@ -235,6 +235,23 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 8,  8, vnx16df, DF)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating point modes, and info for
+   corresponding integer vector type and extra arguments.  */
+#define _RVV_FLOAT_INT_ITERATOR(MACRO)		\
+  MACRO (16, 1, 16,  vnx8hf, HF,  vnx8hi, HI)	\
+  MACRO (16, 2,  8, vnx16hf, HF, vnx16hi, HI)	\
+  MACRO (16, 4,  4, vnx32hf, HF, vnx32hi, HI)	\
+  MACRO (16, 8,  2, vnx64hf, HF, vnx64hi, HI)	\
+  MACRO (32, 1, 32,  vnx4sf, SF,  vnx4si, SI)	\
+  MACRO (32, 2, 16,  vnx8sf, SF,  vnx8si, SI)	\
+  MACRO (32, 4,  8, vnx16sf, SF, vnx16si, SI)	\
+  MACRO (32, 8,  4, vnx32sf, SF, vnx32si, SI)	\
+  MACRO (64, 1, 64,  vnx2df, DF,  vnx2di, DI)	\
+  MACRO (64, 2, 32,  vnx4df, DF,  vnx4di, DI)	\
+  MACRO (64, 4, 16,  vnx8df, DF,  vnx8di, DI)	\
+  MACRO (64, 8,  8, vnx16df, DF, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    except LMUL1, along with its corresponding vector and floating point
    modes.  */
 #define _RVV_FLOAT_ITERATOR_NOTM1(MACRO)	\
@@ -1675,6 +1692,47 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_##SUBMODE,\
 		vector),
 
+#define VINT_VRGATHER_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (OP##MODE, v##OP##int##E##m##L,				\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE, v##OP##uint##E##m##L,				\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_scalar, v##OP##int##E##m##L##_scalar,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_U##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_scalar, v##OP##uint##E##m##L##_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_mask, v##OP##int##E##m##L##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_mask, v##OP##uint##E##m##L##_mask,		\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_scalar_mask, v##OP##int##E##m##L##_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_U##SUBMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##_scalar_mask, v##OP##uint##E##m##L##_scalar_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
+		vector),
+
+#define VFLOAT_VRGATHER_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
+				 IMODE, ISMODE, OP)			\
+  DIRECT_NAMED (OP##FMODE, v##OP##f##E##m##L,				\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##_scalar, v##OP##f##E##m##L##_scalar,		\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_U##ISMODE,	\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##_mask, v##OP##f##E##m##L##_mask,		\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_VUI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##_scalar_mask, v##OP##f##E##m##L##_scalar_mask,\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_U##ISMODE,\
+		vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -1745,6 +1803,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE_BUILTINS, vslidedown)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE1_BUILTINS, vfslide1up)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE1_BUILTINS, vfslide1down)
+
+  _RVV_INT_ITERATOR_ARG (VINT_VRGATHER_BUILTINS, vrgather)
+  _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_VRGATHER_BUILTINS, vrgather)
 
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, add)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_BIN_OP_BUILTINS, sub)

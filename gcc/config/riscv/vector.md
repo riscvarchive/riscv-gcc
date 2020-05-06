@@ -149,6 +149,16 @@
    (VNx4SF "SF") (VNx8SF "SF") (VNx16SF "SF") (VNx32SF "SF")
    (VNx2DF "DF") (VNx4DF "DF") (VNx8DF "DF") (VNx16DF "DF")])
 
+;; Map a vector mode to its integer element mode.
+(define_mode_attr VISUBMODE
+  [(VNx16QI "QI") (VNx32QI "QI") (VNx64QI "QI") (VNx128QI "QI")
+   (VNx8HI "HI") (VNx16HI "HI") (VNx32HI "HI") (VNx64HI "HI")
+   (VNx4SI "SI") (VNx8SI "SI") (VNx16SI "SI") (VNx32SI "SI")
+   (VNx2DI "DI") (VNx4DI "DI") (VNx8DI "DI") (VNx16DI "DI")
+   (VNx8HF "HI") (VNx16HF "HI") (VNx32HF "HI") (VNx64HF "HI")
+   (VNx4SF "SI") (VNx8SF "SI") (VNx16SF "SI") (VNx32SF "SI")
+   (VNx2DF "DI") (VNx4DF "DI") (VNx8DF "DI") (VNx16DF "DI")])
+
 ;; Map a vector mode to its VSETVLI mode, which for now is always the integer
 ;; vector mode, as the integer vemode/vmmode is a superset of the float ones.
 (define_mode_attr VLMODE
@@ -7319,5 +7329,119 @@
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "vfslide1<ud>.vf\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;;Vector Register Gather Instruction
+
+(define_expand "vrgather<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec:VMODES
+		     [(match_operand:VMODES 1 "register_operand")
+		      (match_operand:<VLMODE> 2 "register_operand")]
+		     UNSPEC_VRGATHER))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vrgather<mode>_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
+	(unspec:VMODES
+	  [(match_operand:VMODES 1 "register_operand" "vr")
+	   (match_operand:<VLMODE> 2 "register_operand" "vr")]
+	   UNSPEC_VRGATHER))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vrgather.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vrgather<mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (if_then_else:VMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VMODES
+		       [(match_operand:VMODES 3 "register_operand")
+			(match_operand:<VLMODE> 4 "register_operand")]
+		      UNSPEC_VRGATHER)
+		     (match_operand:VMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vrgather<mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
+	(if_then_else:VMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (unspec:VMODES
+	    [(match_operand:VMODES 3 "register_operand" "vr")
+	     (match_operand:<VLMODE> 4 "register_operand" "vr")]
+	   UNSPEC_VRGATHER)
+	  (match_operand:VMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vrgather.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vrgather<mode>_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec:VMODES
+		     [(match_operand:VMODES 1 "register_operand")
+		      (match_operand:<VISUBMODE> 2 "reg_or_uimm5_operand")]
+		     UNSPEC_VRGATHER))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vrgather<mode>_scalar_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr,&vr")
+	(unspec:VMODES
+	  [(match_operand:VMODES 1 "register_operand" "vr,vr")
+	   (match_operand:<VISUBMODE> 2 "reg_or_uimm5_operand" "r,K")]
+	   UNSPEC_VRGATHER))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vrgather.vx\t%0,%1,%2
+   vrgather.vi\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vrgather<mode>_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (if_then_else:VMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VMODES
+		       [(match_operand:VMODES 3 "register_operand")
+			(match_operand:<VISUBMODE> 4 "reg_or_uimm5_operand")]
+		      UNSPEC_VRGATHER)
+		     (match_operand:VMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vrgather<mode>_scalar_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr,&vr")
+	(if_then_else:VMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	  (unspec:VMODES
+	    [(match_operand:VMODES 3 "register_operand" "vr,vr")
+	     (match_operand:<VISUBMODE> 4 "reg_or_uimm5_operand" "r,K")]
+	   UNSPEC_VRGATHER)
+	  (match_operand:VMODES 2 "register_operand" "0,0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vrgather.vx\t%0,%3,%4,%1.t
+   vrgather.vi\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])

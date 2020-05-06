@@ -228,6 +228,23 @@ typedef __fp16 float16_t;
   MACRO (64, 4, 16,    double, __VA_ARGS__)	\
   MACRO (64, 8,  8,    double, __VA_ARGS__)
 
+/* An iterator to call a macro with every supported SEW, LMUL, MLEN and
+   corresponding scalar integer and floating-point modes
+   with extra arguments for float operations.  */
+#define _RVV_FLOAT_INT_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 16, float16_t, int16_t, __VA_ARGS__)	\
+  MACRO (16, 2,  8, float16_t, int16_t, __VA_ARGS__)	\
+  MACRO (16, 4,  4, float16_t, int16_t, __VA_ARGS__)	\
+  MACRO (16, 8,  2, float16_t, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 32,     float, int32_t, __VA_ARGS__)	\
+  MACRO (32, 2, 16,     float, int32_t, __VA_ARGS__)	\
+  MACRO (32, 4,  8,     float, int32_t, __VA_ARGS__)	\
+  MACRO (32, 8,  4,     float, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 64,    double, int64_t, __VA_ARGS__)	\
+  MACRO (64, 2, 32,    double, int64_t, __VA_ARGS__)	\
+  MACRO (64, 4, 16,    double, int64_t, __VA_ARGS__)	\
+  MACRO (64, 8,  8,    double, int64_t, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, scalar modes, info for
    corresponding widening vector type.
@@ -2943,6 +2960,116 @@ _RVV_WFLOAT_ITERATOR_ARG (_RVV_WMAC_FLOAT, wmacc)
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_WMAC_FLOAT, wnmacc)
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_WMAC_FLOAT, wmsac)
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_WMAC_FLOAT, wnmsac)
+
+#define _RVV_INT_VRGATHER(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vv_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
+			 vuint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vv_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
+			 vuint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL (a, b);		\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vv_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vint##SEW##m##LMUL##_t maskedoff,	\
+				vint##SEW##m##LMUL##_t a,		\
+				vuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a, b);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vv_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vuint##SEW##m##LMUL##_t maskedoff, 	\
+				vuint##SEW##m##LMUL##_t a,		\
+				vuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a, b);					\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vs_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
+			 u##T b)					\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vs_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
+			 u##T b)					\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vs_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vint##SEW##m##LMUL##_t maskedoff,	\
+				vint##SEW##m##LMUL##_t a,		\
+				u##T b)					\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar_mask (	\
+      mask, maskedoff, a, b);						\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vuint##SEW##m##LMUL##_t maskedoff,	\
+				vuint##SEW##m##LMUL##_t a,		\
+				u##T b)					\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar_mask (	\
+      mask, maskedoff, a, b);						\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_VRGATHER, vrgather)
+
+#define _RVV_FLOAT_VRGATHER(SEW, LMUL, MLEN, T, INT_T, OP)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,			\
+			 vuint##SEW##m##LMUL##_t b)			\
+{									\
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL (a, b);			\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vv_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vfloat##SEW##m##LMUL##_t maskedoff, 	\
+				vfloat##SEW##m##LMUL##_t a,		\
+				vuint##SEW##m##LMUL##_t b)		\
+{									\
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_mask (		\
+      mask, maskedoff, a, b);						\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vs_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,			\
+			 u##INT_T b)					\
+{									\
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_scalar (a, b);	\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vfloat##SEW##m##LMUL##_t maskedoff,	\
+				vfloat##SEW##m##LMUL##_t a,		\
+				u##INT_T b)				\
+{									\
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_scalar_mask (		\
+      mask, maskedoff, a, b);						\
+}
+
+_RVV_FLOAT_INT_ITERATOR_ARG (_RVV_FLOAT_VRGATHER, vrgather)
 
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function
