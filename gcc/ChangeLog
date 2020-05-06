@@ -1,3 +1,9 @@
+2020-05-06  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/94950
+	* config/riscv/riscv-builtins.c (riscv_atomic_assign_expand_fenv): Use
+	TARGET_EXPR instead of MODIFY_EXPR for first assignment to old_flags.
+
 2020-05-07  Release Manager
 
 	* GCC 10.1.0 released.
