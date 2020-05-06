@@ -28,6 +28,7 @@
 #define _GCC_RISCV_VECTOR_H 1
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifndef __OPTIMIZE__
 #error "Vector intrinsics require enable optimization, e.g. -O"
