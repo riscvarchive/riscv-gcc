@@ -538,6 +538,58 @@ make_vector_modes (enum mode_class cl, const char *prefix, unsigned int width,
     }
 }
 
+/* For all modes in class CL, construct vector modes of width
+   WIDTH, having as many components as necessary, and partition as
+   NPART subpart.  */
+#define VECTOR_TUPLE_MODES_WITH_PREFIX(PREFIX, C, W, N) \
+  make_vector_tuple_modes (MODE_##C, #PREFIX, W, N, __FILE__, __LINE__)
+static void ATTRIBUTE_UNUSED
+make_vector_tuple_modes (enum mode_class cl, const char *prefix,
+			 unsigned int width, unsigned nsubpart,
+			 const char *file, unsigned int line)
+{
+  struct mode_data *m;
+  struct mode_data *v;
+  /* Big enough for a 32-bit UINT_MAX plus the text.  */
+  char buf[12];
+  unsigned int ncomponents;
+  enum mode_class vclass = vector_class (cl);
+
+  if (vclass == MODE_RANDOM)
+    return;
+
+  for (m = modes[cl]; m; m = m->next)
+    {
+      /* Do not construct vector modes with only one element, or
+	 vector modes where the element size doesn't divide the full
+	 size evenly.  */
+      ncomponents = width / m->bytesize / nsubpart;
+      if (ncomponents < 2)
+	continue;
+      if (width % m->bytesize)
+	continue;
+
+      /* Skip QFmode and BImode.  FIXME: this special case should
+	 not be necessary.  */
+      if (cl == MODE_FLOAT && m->bytesize == 1)
+	continue;
+      if (cl == MODE_INT && m->precision == 1)
+	continue;
+
+      if ((size_t) snprintf (buf, sizeof buf, "%s%ux%u%s", prefix,
+			     nsubpart, ncomponents, m->name) >= sizeof buf)
+	{
+	  error ("%s:%d: mode name \"%s\" is too long",
+		 m->file, m->line, m->name);
+	  continue;
+	}
+
+      v = new_mode (vclass, xstrdup (buf), file, line);
+      v->component = m;
+      v->ncomponents = ncomponents;
+    }
+}
+
 /* Create a vector of booleans called NAME with COUNT elements and
    BYTESIZE bytes in total.  */
 #define VECTOR_BOOL_MODE(NAME, COUNT, BYTESIZE) \
