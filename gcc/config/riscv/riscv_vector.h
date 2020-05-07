@@ -840,17 +840,17 @@ v##OP##_vs_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
       mask, maskedoff, a, b);						\
 }
 
-#define _RVV_UINT_BIN_NARROWING(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)\
+#define _RVV_UINT_BIN_NARROWING(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, NAME, OP)\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_wv_u##WSEW##m##WLMUL (vuint##WSEW##m##WLMUL##_t a,			\
+NAME##_wv_u##WSEW##m##WLMUL (vuint##WSEW##m##WLMUL##_t a,		\
 			     vuint##SEW##m##LMUL##_t b)			\
 {									\
   return __builtin_riscv_##OP##uint##WSEW##m##WLMUL (a, b);		\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_wv_u##WSEW##m##WLMUL##_mask (vbool##MLEN##_t mask,			\
+NAME##_wv_u##WSEW##m##WLMUL##_mask (vbool##MLEN##_t mask,		\
 				     vuint##SEW##m##LMUL##_t maskedoff,	\
 				     vuint##WSEW##m##WLMUL##_t a,	\
 				     vuint##SEW##m##LMUL##_t b)		\
@@ -860,17 +860,17 @@ OP##_wv_u##WSEW##m##WLMUL##_mask (vbool##MLEN##_t mask,			\
 }
 
 #define _RVV_UINT_BIN_NARROWING_SCALAR(SEW, LMUL, MLEN, T,		\
-				       WSEW, WLMUL, WT, OP)		\
+				       WSEW, WLMUL, WT, NAME, OP)	\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_ws_u##WSEW##m##WLMUL (vuint##WSEW##m##WLMUL##_t a,			\
+NAME##_ws_u##WSEW##m##WLMUL (vuint##WSEW##m##WLMUL##_t a,		\
 			      uint8_t b)				\
 {									\
   return __builtin_riscv_##OP##uint##WSEW##m##WLMUL##_scalar (a, b);	\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_ws_u##WSEW##m##WLMUL##_mask (vbool##MLEN##_t mask,		\
+NAME##_ws_u##WSEW##m##WLMUL##_mask (vbool##MLEN##_t mask,		\
 				     vuint##SEW##m##LMUL##_t maskedoff,	\
 				     vuint##WSEW##m##WLMUL##_t a,	\
 				     uint8_t b)				\
@@ -935,10 +935,15 @@ _RVV_INT_ITERATOR_ARG (_RVV_UINT_BIN_SHIFT_SCALAR, srl, vlshr)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_SHIFT, sra, vashr)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_SHIFT_SCALAR, sra, vashr)
 
-_RVV_WINT_ITERATOR_ARG (_RVV_UINT_BIN_NARROWING, vnsrl)
-_RVV_WINT_ITERATOR_ARG (_RVV_UINT_BIN_NARROWING_SCALAR, vnsrl)
+_RVV_WINT_ITERATOR_ARG (_RVV_UINT_BIN_NARROWING, vnsrl, vnsrl)
+_RVV_WINT_ITERATOR_ARG (_RVV_UINT_BIN_NARROWING_SCALAR, vnsrl, vnsrl)
 _RVV_WINT_ITERATOR_ARG (_RVV_INT_BIN_NARROWING, vnsra)
 _RVV_WINT_ITERATOR_ARG (_RVV_INT_BIN_NARROWING_SCALAR, vnsra)
+
+_RVV_WINT_ITERATOR_ARG (_RVV_UINT_BIN_NARROWING, vnclip, vnclipu)
+_RVV_WINT_ITERATOR_ARG (_RVV_UINT_BIN_NARROWING_SCALAR, vnclip, vnclipu)
+_RVV_WINT_ITERATOR_ARG (_RVV_INT_BIN_NARROWING, vnclip)
+_RVV_WINT_ITERATOR_ARG (_RVV_INT_BIN_NARROWING_SCALAR, vnclip)
 
 #define _RVV_INT_ADC_SBC_OP(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\

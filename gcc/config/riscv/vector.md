@@ -393,7 +393,8 @@
 (define_int_iterator UNSPEC_VMULH [UNSPEC_VMULHS UNSPEC_VMULHU UNSPEC_VMULHSU])
 
 (define_int_attr v_su [(UNSPEC_VMULHS "s") (UNSPEC_VMULHU "u")
-		       (UNSPEC_VMULHSU "su")])
+		       (UNSPEC_VMULHSU "su") (UNSPEC_VNCLIP "")
+		       (UNSPEC_VNCLIPU "u")])
 
 ;; Iterator and attributes for sign-injection instructions.
 (define_int_iterator UNSPEC_COPYSIGNS [UNSPEC_COPYSIGN UNSPEC_NCOPYSIGN
@@ -424,6 +425,9 @@
 (define_int_attr ud [(UNSPEC_VSLIDEUP "up") (UNSPEC_VSLIDEDOWN "down")
 		     (UNSPEC_VSLIDE1UP "up") (UNSPEC_VSLIDE1DOWN "down")
 		     (UNSPEC_VFSLIDE1UP "up") (UNSPEC_VFSLIDE1DOWN "down")])
+
+;; Iterator and attributes for narrowing clip instructions.
+(define_int_iterator UNSPEC_VCLIP [UNSPEC_VNCLIP UNSPEC_VNCLIPU])
 
 ;; Vsetvl instructions.
 
@@ -7471,5 +7475,123 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vcompress.vm\t%0,%1,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;;Vector Narrowing Fixed-Point Clip Instructions
+
+(define_expand "vnclip<v_su><mode>3_nv"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (unspec:VWIMODES
+		     [(match_operand:<VWMODES> 1 "register_operand")
+		      (match_operand:VWIMODES 2 "vector_shift_operand")]
+		    UNSPEC_VCLIP))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vnclip<v_su><mode>3_nv_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=&vr,&vr")
+	(unspec:VWIMODES
+	  [(match_operand:<VWMODES> 1 "register_operand" "vr,vr")
+	   (match_operand:VWIMODES 2 "vector_shift_operand" "vr,vk")]
+	 UNSPEC_VCLIP))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vnclip<v_su>.wv\t%0,%1,%2
+   vnclip<v_su>.wi\t%0,%1,%v2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vnclip<v_su><mode>3_nv_scalar"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (unspec:VWIMODES
+		     [(match_operand:<VWMODES> 1 "register_operand")
+		      (vec_duplicate:VWIMODES
+			(match_operand:<VSUBMODE> 2 "register_operand"))]
+		    UNSPEC_VCLIP))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vnclip<v_su><mode>3_nv_scalar_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=&vr")
+	(unspec:VWIMODES
+	  [(match_operand:<VWMODES> 1 "register_operand" "vr")
+	   (vec_duplicate:VWIMODES
+	     (match_operand:<VSUBMODE> 2 "register_operand" "r"))]
+	   UNSPEC_VCLIP))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vnclip<v_su>.wx\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vnclip<v_su><mode>3_nv_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (if_then_else:VWIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VWIMODES
+		       [(match_operand:<VWMODES> 3 "register_operand")
+			(match_operand:VWIMODES 4 "vector_shift_operand")]
+		      UNSPEC_VCLIP)
+		     (match_operand:VWIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vnclip<v_su><mode>3_nv_mask_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=vr,vr")
+	(if_then_else:VWIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	  (unspec:VWIMODES
+	    [(match_operand:<VWMODES> 3 "register_operand" "vr,vr")
+	     (match_operand:VWIMODES 4 "vector_shift_operand" "vr,vk")]
+	   UNSPEC_VCLIP)
+	  (match_operand:VWIMODES 2 "register_operand" "0,0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vnclip<v_su>.wv\t%0,%3,%4,%1.t
+   vnclip<v_su>.wi\t%0,%3,%v4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vnclip<v_su><mode>3_nv_scalar_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (if_then_else:VWIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VWIMODES
+		       [(match_operand:<VWMODES> 3 "register_operand")
+			(vec_duplicate:VWIMODES
+			  (match_operand:<VSUBMODE> 4 "register_operand"))]
+		      UNSPEC_VCLIP)
+		     (match_operand:VWIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vnclip<v_su><mode>3_scalar_nv_mask_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=vr")
+	(if_then_else:VWIMODES
+          (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (unspec:VWIMODES
+	    [(match_operand:<VWMODES> 3 "register_operand" "vr")
+	     (vec_duplicate:VWIMODES
+	       (match_operand:<VSUBMODE> 4 "register_operand" "r"))]
+	   UNSPEC_VCLIP)
+	  (match_operand:VWIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vnclip<v_su>.wx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
