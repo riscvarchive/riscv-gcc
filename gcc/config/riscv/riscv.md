@@ -77,6 +77,8 @@
   UNSPEC_VCOMPRESS
   UNSPEC_VNCLIP
   UNSPEC_VNCLIPU
+  UNSPEC_VSSRL
+  UNSPEC_VSSRA
 ])
 
 (define_c_enum "unspecv" [
