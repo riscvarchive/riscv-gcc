@@ -21,7 +21,9 @@ RVV_INT_TEST(VDIV)
 RVV_UINT_TEST(VDIV)
 RVV_FLOAT_TEST(VDIV)
 
-/* { dg-final { scan-assembler-times "vdiv.vv" 32 } } */
-/* { dg-final { scan-assembler-times "vdivu.vv" 32 } } */
+/* { dg-final { scan-assembler-times "vdiv.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vdiv.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vdivu.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vdivu.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vfdiv.vv" 12 } } */
 /* { dg-final { scan-assembler-times "vfdiv.vf" 12 } } */
