@@ -2999,8 +2999,6 @@ FUNC_NAME (MASK_TYPE mask, VAL_TYPE a, VAL_TYPE b)			\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* VAL_TYPE */vuint##SEW##m##LMUL##_t)
 
-_RVV_INT_ITERATOR (_RVV_ASM_INT_COMPRESS)
-
 /* Template function for floating point compress operation.  */
 #define _RVV_ASM_FLOAT_COMPRESS(SEW, LMUL, MLEN, T)			\
   _RVV_ASM_COMPRESS_OP_TEMPLATE(					\
@@ -3008,8 +3006,6 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_COMPRESS)
     /* FUNC_NAME */vcompress_vm_f##SEW##m##LMUL##_mask,			\
     /* MASK_TYPE */vbool##MLEN##_t,					\
     /* VAL_TYPE */vfloat##SEW##m##LMUL##_t)
-
-_RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_COMPRESS)
 
 /* Template function for integer AMO operation.  */
 #define _RVV_INT_AMO_TEMPLATE(SEW, LMUL, MLEN, T, OP, OPU)		\

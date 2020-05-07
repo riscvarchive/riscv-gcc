@@ -7445,3 +7445,31 @@
    vrgather.vi\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;;Vector Compress Instruction.
+
+(define_expand "vcompress<mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec:VMODES
+		     [(match_operand:<VCMPEQUIV> 1 "register_operand")
+		      (match_operand:VMODES 2 "register_operand")
+		      (match_operand:VMODES 3 "register_operand")]
+		     UNSPEC_VCOMPRESS))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "vcompress<mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
+	(unspec:VMODES
+	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	   (match_operand:VMODES 2 "register_operand" "0")
+	   (match_operand:VMODES 3 "register_operand" "vr")]
+	   UNSPEC_VCOMPRESS))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vcompress.vm\t%0,%1,%3"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])

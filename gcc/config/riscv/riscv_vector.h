@@ -3071,6 +3071,41 @@ OP##_vs_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
 
 _RVV_FLOAT_INT_ITERATOR_ARG (_RVV_FLOAT_VRGATHER, vrgather)
 
+#define _RVV_INT_VCOMPRESS(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vm_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vint##SEW##m##LMUL##_t maskedoff,	\
+				vint##SEW##m##LMUL##_t a)		\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a);						\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vm_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vuint##SEW##m##LMUL##_t maskedoff, 	\
+				vuint##SEW##m##LMUL##_t a)		\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a);						\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_VCOMPRESS, vcompress)
+
+#define _RVV_FLOAT_VCOMPRESS(SEW, LMUL, MLEN, T, OP)			\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+OP##_vm_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				vfloat##SEW##m##LMUL##_t maskedoff, 	\
+				vfloat##SEW##m##LMUL##_t a)		\
+{									\
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_mask (		\
+      mask, maskedoff, a);						\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_VCOMPRESS, vcompress)
+
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function
    way . */
