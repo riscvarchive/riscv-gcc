@@ -453,7 +453,11 @@
 			 (plus "add")
 			 (minus "sub")
 			 (smax "max")
-			 (smin "min")])
+			 (smin "min")
+			 (us_plus "usadd")
+			 (ss_plus "ssadd")
+			 (us_minus "ussub")
+			 (ss_minus "sssub")])
 
 ;; <insn> expands to the name of the insn that implements a particular code.
 (define_code_attr insn [(ashift "sll")
@@ -471,7 +475,11 @@
 			(smax "max")
 			(umax "maxu")
 			(smin "min")
-			(umin "minu")])
+			(umin "minu")
+			(us_plus "saddu")
+			(ss_plus "sadd")
+			(us_minus "ssubu")
+			(ss_minus "ssub")])
 
 ;; Ghost instructions produce no real code and introduce no hazards.
 ;; They exist purely to express an effect on dataflow.
