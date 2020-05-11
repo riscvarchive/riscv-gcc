@@ -1021,6 +1021,8 @@ extern poly_uint16 riscv_rvv_chunks;
 
 #define TARGET_SUPPORTS_WIDE_INT 1
 
+#define REGMODE_NATURAL_SIZE(MODE) riscv_regmode_natural_size (MODE)
+
 #define RISCV_DWARF_VLEN (4096 + 0xc22)
 
 #endif /* ! GCC_RISCV_H */

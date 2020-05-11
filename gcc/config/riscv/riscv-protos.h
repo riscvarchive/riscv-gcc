@@ -77,6 +77,7 @@ extern bool riscv_gpr_save_operation_p (rtx);
 
 /* Routines for vector support.  */
 bool riscv_const_vec_all_same_in_range_p (rtx, HOST_WIDE_INT, HOST_WIDE_INT);
+extern poly_uint64 riscv_regmode_natural_size (machine_mode);
 
 /* Routines implemented in riscv-c.c.  */
 void riscv_cpu_cpp_builtins (cpp_reader *);

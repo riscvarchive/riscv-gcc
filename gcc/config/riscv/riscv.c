@@ -5868,6 +5868,16 @@ riscv_dwarf_poly_indeterminate_value (unsigned int i, unsigned int *factor,
   return RISCV_DWARF_VLEN;
 }
 
+/* Implement REGMODE_NATURAL_SIZE.  */
+
+poly_uint64
+riscv_regmode_natural_size (machine_mode mode)
+{
+  if (TARGET_VECTOR && VECTOR_MODE_P (mode))
+    return BYTES_PER_RVV_VECTOR;
+  return UNITS_PER_WORD;
+}
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
