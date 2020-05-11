@@ -1025,4 +1025,165 @@ extern poly_uint16 riscv_rvv_chunks;
 
 #define RISCV_DWARF_VLEN (4096 + 0xc22)
 
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NO_SEW8_ARG(MACRO, ...)			\
+  MACRO (16, 1, 2, 16, H, h,  VNx2x8H,  vnx2x8h, __VA_ARGS__)   \
+  MACRO (16, 1, 3, 16, H, h,  VNx3x8H,  vnx3x8h, __VA_ARGS__)   \
+  MACRO (16, 1, 4, 16, H, h,  VNx4x8H,  vnx4x8h, __VA_ARGS__)   \
+  MACRO (16, 1, 5, 16, H, h,  VNx5x8H,  vnx5x8h, __VA_ARGS__)   \
+  MACRO (16, 1, 6, 16, H, h,  VNx6x8H,  vnx6x8h, __VA_ARGS__)   \
+  MACRO (16, 1, 7, 16, H, h,  VNx7x8H,  vnx7x8h, __VA_ARGS__)   \
+  MACRO (16, 1, 8, 16, H, h,  VNx8x8H,  vnx8x8h, __VA_ARGS__)   \
+  MACRO (16, 2, 2,  8, H, h, VNx2x16H, vnx2x16h, __VA_ARGS__)   \
+  MACRO (16, 2, 3,  8, H, h, VNx3x16H, vnx3x16h, __VA_ARGS__)   \
+  MACRO (16, 2, 4,  8, H, h, VNx4x16H, vnx4x16h, __VA_ARGS__)   \
+  MACRO (16, 4, 2,  4, H, h, VNx2x32H, vnx2x32h, __VA_ARGS__)   \
+  MACRO (32, 1, 2, 32, S, s,  VNx2x4S,  vnx2x4s, __VA_ARGS__)   \
+  MACRO (32, 1, 3, 32, S, s,  VNx3x4S,  vnx3x4s, __VA_ARGS__)   \
+  MACRO (32, 1, 4, 32, S, s,  VNx4x4S,  vnx4x4s, __VA_ARGS__)   \
+  MACRO (32, 1, 5, 32, S, s,  VNx5x4S,  vnx5x4s, __VA_ARGS__)   \
+  MACRO (32, 1, 6, 32, S, s,  VNx6x4S,  vnx6x4s, __VA_ARGS__)   \
+  MACRO (32, 1, 7, 32, S, s,  VNx7x4S,  vnx7x4s, __VA_ARGS__)   \
+  MACRO (32, 1, 8, 32, S, s,  VNx8x4S,  vnx8x4s, __VA_ARGS__)   \
+  MACRO (32, 2, 2, 16, S, s,  VNx2x8S,  vnx2x8s, __VA_ARGS__)   \
+  MACRO (32, 2, 3, 16, S, s,  VNx3x8S,  vnx3x8s, __VA_ARGS__)   \
+  MACRO (32, 2, 4, 16, S, s,  VNx4x8S,  vnx4x8s, __VA_ARGS__)   \
+  MACRO (32, 4, 2,  8, S, s, VNx2x16S, vnx2x16s, __VA_ARGS__)   \
+  MACRO (64, 1, 2, 64, D, d,  VNx2x2D,  vnx2x2d, __VA_ARGS__)   \
+  MACRO (64, 1, 3, 64, D, d,  VNx3x2D,  vnx3x2d, __VA_ARGS__)   \
+  MACRO (64, 1, 4, 64, D, d,  VNx4x2D,  vnx4x2d, __VA_ARGS__)   \
+  MACRO (64, 1, 5, 64, D, d,  VNx5x2D,  vnx5x2d, __VA_ARGS__)   \
+  MACRO (64, 1, 6, 64, D, d,  VNx6x2D,  vnx6x2d, __VA_ARGS__)   \
+  MACRO (64, 1, 7, 64, D, d,  VNx7x2D,  vnx7x2d, __VA_ARGS__)   \
+  MACRO (64, 1, 8, 64, D, d,  VNx8x2D,  vnx8x2d, __VA_ARGS__)   \
+  MACRO (64, 2, 2, 32, D, d,  VNx2x4D,  vnx2x4d, __VA_ARGS__)   \
+  MACRO (64, 2, 3, 32, D, d,  VNx3x4D,  vnx3x4d, __VA_ARGS__)   \
+  MACRO (64, 2, 4, 32, D, d,  VNx4x4D,  vnx4x4d, __VA_ARGS__)   \
+  MACRO (64, 4, 2, 16, D, d,  VNx2x8D,  vnx2x8d, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF2_NO_SEW8_ARG(MACRO, ...)			\
+  MACRO (16, 1, 2, 16, H, h,  VNx2x8H,  vnx2x8h, __VA_ARGS__)   \
+  MACRO (16, 2, 2,  8, H, h, VNx2x16H, vnx2x16h, __VA_ARGS__)   \
+  MACRO (16, 4, 2,  4, H, h, VNx2x32H, vnx2x32h, __VA_ARGS__)   \
+  MACRO (32, 1, 2, 32, S, s,  VNx2x4S,  vnx2x4s, __VA_ARGS__)   \
+  MACRO (32, 2, 2, 16, S, s,  VNx2x8S,  vnx2x8s, __VA_ARGS__)   \
+  MACRO (32, 4, 2,  8, S, s, VNx2x16S, vnx2x16s, __VA_ARGS__)   \
+  MACRO (64, 1, 2, 64, D, d,  VNx2x2D,  vnx2x2d, __VA_ARGS__)   \
+  MACRO (64, 2, 2, 32, D, d,  VNx2x4D,  vnx2x4d, __VA_ARGS__)   \
+  MACRO (64, 4, 2, 16, D, d,  VNx2x8D,  vnx2x8d, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF3_NO_SEW8_ARG(MACRO, ...)			\
+  MACRO (16, 1, 3, 16, H, h,  VNx3x8H,  vnx3x8h, __VA_ARGS__)   \
+  MACRO (16, 2, 3,  8, H, h, VNx3x16H, vnx3x16h, __VA_ARGS__)   \
+  MACRO (32, 1, 3, 32, S, s,  VNx3x4S,  vnx3x4s, __VA_ARGS__)   \
+  MACRO (32, 2, 3, 16, S, s,  VNx3x8S,  vnx3x8s, __VA_ARGS__)   \
+  MACRO (64, 1, 3, 64, D, d,  VNx3x2D,  vnx3x2d, __VA_ARGS__)   \
+  MACRO (64, 2, 3, 32, D, d,  VNx3x4D,  vnx3x4d, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF4_NO_SEW8_ARG(MACRO, ...)			\
+  MACRO (16, 1, 4, 16, H, h,  VNx4x8H,  vnx4x8h, __VA_ARGS__)   \
+  MACRO (16, 2, 4,  8, H, h, VNx4x16H, vnx4x16h, __VA_ARGS__)   \
+  MACRO (32, 1, 4, 32, S, s,  VNx4x4S,  vnx4x4s, __VA_ARGS__)   \
+  MACRO (32, 2, 4, 16, S, s,  VNx4x8S,  vnx4x8s, __VA_ARGS__)   \
+  MACRO (64, 1, 4, 64, D, d,  VNx4x2D,  vnx4x2d, __VA_ARGS__)   \
+  MACRO (64, 2, 4, 32, D, d,  VNx4x4D,  vnx4x4d, __VA_ARGS__)
+
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF5_NO_SEW8_ARG(MACRO, ...)			\
+  MACRO (16, 1, 5, 16, H, h,  VNx5x8H,  vnx5x8h, __VA_ARGS__)   \
+  MACRO (32, 1, 5, 32, S, s,  VNx5x4S,  vnx5x4s, __VA_ARGS__)   \
+  MACRO (64, 1, 5, 64, D, d,  VNx5x2D,  vnx5x2d, __VA_ARGS__)   \
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF6_NO_SEW8_ARG(MACRO, ...)			\
+  MACRO (16, 1, 6, 16, H, h,  VNx6x8H,  vnx6x8h, __VA_ARGS__)   \
+  MACRO (32, 1, 6, 32, S, s,  VNx6x4S,  vnx6x4s, __VA_ARGS__)   \
+  MACRO (64, 1, 6, 64, D, d,  VNx6x2D,  vnx6x2d, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF7_NO_SEW8_ARG(MACRO, ...)			\
+  MACRO (16, 1, 7, 16, H, h,  VNx7x8H,  vnx7x8h, __VA_ARGS__)   \
+  MACRO (32, 1, 7, 32, S, s,  VNx7x4S,  vnx7x4s, __VA_ARGS__)   \
+  MACRO (64, 1, 7, 64, D, d,  VNx7x2D,  vnx7x2d, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF8_NO_SEW8_ARG(MACRO, ...)			\
+  MACRO (16, 1, 8, 16, H, h,  VNx8x8H,  vnx8x8h, __VA_ARGS__)   \
+  MACRO (32, 1, 8, 32, S, s,  VNx8x4S,  vnx8x4s, __VA_ARGS__)   \
+  MACRO (64, 1, 8, 64, D, d,  VNx8x2D,  vnx8x2d, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_ARG(MACRO, ...)				\
+  _RVV_SEG_NO_SEW8_ARG (MACRO, __VA_ARGS__)			\
+  MACRO ( 8, 1, 2,  8, Q, q, VNx2x16Q, vnx2x16q, __VA_ARGS__)   \
+  MACRO ( 8, 1, 3,  8, Q, q, VNx3x16Q, vnx3x16q, __VA_ARGS__)   \
+  MACRO ( 8, 1, 4,  8, Q, q, VNx4x16Q, vnx4x16q, __VA_ARGS__)   \
+  MACRO ( 8, 1, 5,  8, Q, q, VNx5x16Q, vnx5x16q, __VA_ARGS__)   \
+  MACRO ( 8, 1, 6,  8, Q, q, VNx6x16Q, vnx6x16q, __VA_ARGS__)   \
+  MACRO ( 8, 1, 7,  8, Q, q, VNx7x16Q, vnx7x16q, __VA_ARGS__)   \
+  MACRO ( 8, 1, 8,  8, Q, q, VNx8x16Q, vnx8x16q, __VA_ARGS__)   \
+  MACRO ( 8, 2, 2,  4, Q, q, VNx2x32Q, vnx2x32q, __VA_ARGS__)   \
+  MACRO ( 8, 2, 3,  4, Q, q, VNx3x32Q, vnx3x32q, __VA_ARGS__)   \
+  MACRO ( 8, 2, 4,  4, Q, q, VNx4x32Q, vnx4x32q, __VA_ARGS__)   \
+  MACRO ( 8, 4, 2,  2, Q, q, VNx2x64Q, vnx2x64q, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF2_ARG(MACRO, ...)				\
+  _RVV_SEG_NF2_NO_SEW8_ARG (MACRO, __VA_ARGS__)			\
+  MACRO ( 8, 1, 2,  8, Q, q, VNx2x16Q, vnx2x16q, __VA_ARGS__)   \
+  MACRO ( 8, 2, 2,  4, Q, q, VNx2x32Q, vnx2x32q, __VA_ARGS__)   \
+  MACRO ( 8, 4, 2,  2, Q, q, VNx2x64Q, vnx2x64q, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF3_ARG(MACRO, ...)				\
+  _RVV_SEG_NF3_NO_SEW8_ARG (MACRO, __VA_ARGS__)			\
+  MACRO ( 8, 1, 3,  8, Q, q, VNx3x16Q, vnx3x16q, __VA_ARGS__)   \
+  MACRO ( 8, 2, 3,  4, Q, q, VNx3x32Q, vnx3x32q, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF4_ARG(MACRO, ...)				\
+  _RVV_SEG_NF4_NO_SEW8_ARG (MACRO, __VA_ARGS__)			\
+  MACRO ( 8, 1, 4,  8, Q, q, VNx4x16Q, vnx4x16q, __VA_ARGS__)   \
+  MACRO ( 8, 2, 4,  4, Q, q, VNx4x32Q, vnx4x32q, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF5_ARG(MACRO, ...)				\
+  _RVV_SEG_NF5_NO_SEW8_ARG (MACRO, __VA_ARGS__)			\
+  MACRO ( 8, 1, 5,  8, Q, q, VNx5x16Q, vnx5x16q, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF6_ARG(MACRO, ...)				\
+  _RVV_SEG_NF6_NO_SEW8_ARG (MACRO, __VA_ARGS__)			\
+  MACRO ( 8, 1, 6,  8, Q, q, VNx6x16Q, vnx6x16q, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF7_ARG(MACRO, ...)				\
+  _RVV_SEG_NF7_NO_SEW8_ARG (MACRO, __VA_ARGS__)			\
+  MACRO ( 8, 1, 7,  8, Q, q, VNx7x16Q, vnx7x16q, __VA_ARGS__)
+
+/* MACRO (SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,
+	  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, ...)  */
+#define _RVV_SEG_NF8_ARG(MACRO, ...)				\
+  _RVV_SEG_NF8_NO_SEW8_ARG (MACRO, __VA_ARGS__)			\
+  MACRO ( 8, 1, 8,  8, Q, q, VNx8x16Q, vnx8x16q, __VA_ARGS__)
+
 #endif /* ! GCC_RISCV_H */
