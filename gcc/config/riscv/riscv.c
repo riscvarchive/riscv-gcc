@@ -4869,6 +4869,7 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
     }
   else if (VECT_REG_P (regno))
    {
+      int align = -1;
       if (!VECT_REG_P (regno + nregs -1))
 	return false;
 
@@ -4876,10 +4877,28 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
       if (!VECTOR_MODE_P (mode))
 	return false;
 
+      switch (mode)
+	{
+#define VEC_INT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
+			    SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
+			    VMODE_PREFIX_LOWER, X)			\
+	case E_##VMODE_PREFIX_UPPER##Imode:				\
+	  align = LMUL;							\
+	  break;
+	_RVV_SEG_ARG (VEC_INT_TUPLE_TYPES, X)
+#define VEC_FLOAT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
+			      SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
+			      VMODE_PREFIX_LOWER, X)			\
+	case E_##VMODE_PREFIX_UPPER##Fmode:				\
+	  align = LMUL;							\
+	  break;
+	_RVV_SEG_NO_SEW8_ARG (VEC_FLOAT_TUPLE_TYPES, X)
+	default:
+	  align = nregs;
+	}
+
       /* Check alignment requirement for vector mode.  */
-      /* TODO: We might have mode with non-power-of-2 nregs for segment
-	       load store in future.  */
-      if ((regno & (nregs - 1)) != 0)
+      if ((regno & (align - 1)) != 0)
 	return false;
     }
   else if (regno == VTYPE_REGNUM || regno == VL_REGNUM)
