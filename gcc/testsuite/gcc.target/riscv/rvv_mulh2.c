@@ -38,11 +38,10 @@ RVV_INT_TEST(RVV_MULHSU_TEST)
 RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, mulh)
 RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, mulh)
 RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, smul)
-RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, smul)
 
 /* { dg-final { scan-assembler-times "vmulh.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmulh.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vmulhu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vmulhu.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vsmul.vv" 32 } } */
-/* { dg-final { scan-assembler-times "vsmul.vx" 32 } } */
+/* { dg-final { scan-assembler-times "vsmul.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vsmul.vx" 16 } } */
