@@ -784,31 +784,36 @@ tree rvvbool64_t_node;
 		vector),
 
 #define VINT_SAT_BIN_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
-  DIRECT_NAMED (s##OP##MODE##3, vs##OP##int##E##m##L,			\
+  DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
 		vector),						\
-  DIRECT_NAMED (u##OP##MODE##3, vu##OP##uint##E##m##L,			\
-		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
-		vector),						\
-  DIRECT_NAMED (s##OP##MODE##3_scalar, vs##OP##int##E##m##L##_scalar,	\
+  DIRECT_NAMED (OP##MODE##3_scalar, v##OP##int##E##m##L##_scalar,	\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_##SUBMODE,	\
-		vector),						\
-  DIRECT_NAMED (u##OP##MODE##3_scalar, vu##OP##uint##E##m##L##_scalar,	\
-		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
 		vector),
 
 #define VINT_SAT_BIN_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
   VINT_SAT_BIN_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)		\
-  DIRECT_NAMED (s##OP##MODE##3_mask, vs##OP##int##E##m##L##_mask,	\
+  DIRECT_NAMED (OP##MODE##3_mask, v##OP##int##E##m##L##_mask,		\
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VI##E##M##L,\
 		vector),						\
-  DIRECT_NAMED (u##OP##MODE##3_mask, vu##OP##uint##E##m##L##_mask,	\
+  DIRECT_NAMED (OP##MODE##3_scalar_mask, v##OP##int##E##m##L##_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
+		vector),
+
+#define VUINT_SAT_BIN_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##MODE##3, v##OP##uint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##3_scalar, v##OP##uint##E##m##L##_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
+		vector),
+
+#define VUINT_SAT_BIN_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  VUINT_SAT_BIN_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (OP##MODE##3_mask, v##OP##uint##E##m##L##_mask,		\
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
 		vector),						\
-  DIRECT_NAMED (s##OP##MODE##3_scalar_mask, vs##OP##int##E##m##L##_scalar_mask,\
-		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_##SUBMODE,\
-		vector),						\
-  DIRECT_NAMED (u##OP##MODE##3_scalar_mask, vu##OP##uint##E##m##L##_scalar_mask,\
+  DIRECT_NAMED (OP##MODE##3_scalar_mask, v##OP##uint##E##m##L##_scalar_mask,\
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
 		vector),
 
@@ -1793,8 +1798,15 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_SCALAR_ONLY_BIN_OP_BUILTINS, rsub)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, mul)
 
-  _RVV_INT_ITERATOR_ARG (VINT_SAT_BIN_BUILTINS, sadd)
-  _RVV_INT_ITERATOR_ARG (VINT_SAT_BIN_BUILTINS, ssub)
+  _RVV_INT_ITERATOR_ARG (VINT_SAT_BIN_BUILTINS, ssadd)
+  _RVV_INT_ITERATOR_ARG (VINT_SAT_BIN_BUILTINS, sssub)
+  _RVV_INT_ITERATOR_ARG (VUINT_SAT_BIN_BUILTINS, usadd)
+  _RVV_INT_ITERATOR_ARG (VUINT_SAT_BIN_BUILTINS, ussub)
+  _RVV_INT_ITERATOR_ARG (VINT_SAT_BIN_BUILTINS, vaadd)
+  _RVV_INT_ITERATOR_ARG (VINT_SAT_BIN_BUILTINS, vasub)
+  _RVV_INT_ITERATOR_ARG (VUINT_SAT_BIN_BUILTINS, vaaddu)
+  _RVV_INT_ITERATOR_ARG (VUINT_SAT_BIN_BUILTINS, vasubu)
+  _RVV_INT_ITERATOR_ARG (VINT_SAT_BIN_BUILTINS, vsmul)
 
   _RVV_INT_ITERATOR_ARG (VINT_MERGE_BUILTINS, mov, merge)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MERGE_BUILTINS, mov, merge)
