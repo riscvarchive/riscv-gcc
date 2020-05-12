@@ -79,4 +79,5 @@ void sub4(size_t n, const int*x, int*y, float *z, float a, float b)
     }
 }
 
-/* { dg-final { scan-assembler-times "vmerge.vvm" 4 } } */
+/* { dg-final { scan-assembler-times "vmerge.vvm" 3 } } */
+/* { dg-final { scan-assembler-times "vmin.vv" 1 } } */
