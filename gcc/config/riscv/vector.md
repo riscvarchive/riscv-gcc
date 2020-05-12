@@ -4255,7 +4255,8 @@
   rtx tmp = gen_reg_rtx (<VCMPEQUIV>mode);
   emit_insn (gen_vec_cmp<mode><vmaskmode> (tmp, operands[3],
 					   operands[4], operands[5]));
-  emit_insn (gen_mov<mode>cc (operands[0], operands[1], operands[2], tmp));
+  emit_insn (gen_mov<mode>cc_nosetvl (operands[0], operands[1],
+				      operands[2], tmp));
   DONE;
 })
 
@@ -4273,7 +4274,8 @@
   rtx tmp = gen_reg_rtx (<VCMPEQUIV>mode);
   emit_insn (gen_vec_cmp<mode><vmaskmode> (tmp, operands[3],
 					   operands[4], operands[5]));
-  emit_insn (gen_mov<mode>cc (operands[0], operands[1], operands[2], tmp));
+  emit_insn (gen_mov<mode>cc_nosetvl (operands[0], operands[1],
+				      operands[2], tmp));
   DONE;
 })
 
@@ -4291,7 +4293,8 @@
   rtx tmp = gen_reg_rtx (<VCMPEQUIV>mode);
   emit_insn (gen_vec_cmp<vintequiv><vmaskmode> (tmp, operands[3],
 					   operands[4], operands[5]));
-  emit_insn (gen_mov<mode>cc (operands[0], operands[1], operands[2], tmp));
+  emit_insn (gen_mov<mode>cc_nosetvl (operands[0], operands[1],
+				      operands[2], tmp));
   DONE;
 })
 
@@ -4309,7 +4312,8 @@
   rtx tmp = gen_reg_rtx (<VCMPEQUIV>mode);
   emit_insn (gen_vec_cmp<mode><vmaskmode> (tmp, operands[3],
 					   operands[4], operands[5]));
-  emit_insn (gen_mov<vintequiv>cc (operands[0], operands[1], operands[2], tmp));
+  emit_insn (gen_mov<vintequiv>cc_nosetvl (operands[0], operands[1],
+					   operands[2], tmp));
   DONE;
 })
 
