@@ -1763,8 +1763,6 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_E_FF_LOAD)
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"vr")
 
-_RVV_INT_ITERATOR(_RVV_ASM_INT_NOT)
-
 /* Template function for vmulhsu.vv and vmulhsu.vx.  */
 #define _RVV_ASM_MULHSU_OP(SEW, LMUL, MLEN, T, OP)			\
   _RVV_ASM_BIN_OP_TEMPLATE(						\

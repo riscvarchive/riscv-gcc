@@ -783,6 +783,23 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_##SUBMODE,	\
 		vector),
 
+#define VINT_UNARY_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
+  DIRECT_NAMED (OP##MODE##2, v##OP##int##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L,			\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##2, v##OP##uint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L,		\
+		vector),
+
+#define VINT_UNARY_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
+  VINT_UNARY_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)		\
+  DIRECT_NAMED (OP##MODE##2_mask, v##OP##int##E##m##L##_mask,		\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##2_mask, v##OP##uint##E##m##L##_mask,		\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L,\
+		vector),
+
 #define VINT_SAT_BIN_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
   DIRECT_NAMED (OP##MODE##3, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L,	\
@@ -1838,6 +1855,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, and)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, xor)
+  _RVV_INT_ITERATOR_ARG (VINT_UNARY_OP_BUILTINS, one_cmpl)
+
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, eq, eq)
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, ne, ne)
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, lt, ltu)

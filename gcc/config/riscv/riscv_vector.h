@@ -654,6 +654,40 @@ vstores_f##SEW##m##LMUL##_mask (const T *a, word_type stride,	\
 _RVV_FLOAT_ITERATOR (_RVVFLOATLD)
 _RVV_FLOAT_ITERATOR (_RVVFLOATST)
 
+#define _RVV_INT_UNARY_OP(SEW, LMUL, MLEN, T, OP, NAME)			\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_v_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a)			\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL (a);			\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_v_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a)			\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL (a);			\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_v_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				     vint##SEW##m##LMUL##_t maskedoff,	\
+				     vint##SEW##m##LMUL##_t a)		\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a);						\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_v_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				     vuint##SEW##m##LMUL##_t maskedoff, \
+				     vuint##SEW##m##LMUL##_t a)		\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_mask (		\
+	  mask, maskedoff, a);						\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_UNARY_OP, one_cmpl, not)
+
 /* ??? An intrinsic with sizeless type args that doesn't call a builtin fails
    in ipa because it doesn't handle sizeless types in predicates, as called
    from will_be_nonconstant_predicate.  So all of these must use a builtin.  */
