@@ -654,6 +654,32 @@ vstores_f##SEW##m##LMUL##_mask (const T *a, word_type stride,	\
 _RVV_FLOAT_ITERATOR (_RVVFLOATLD)
 _RVV_FLOAT_ITERATOR (_RVVFLOATST)
 
+#define _RVV_FLOAT_UNARY_SCALAR_OP(SEW, LMUL, MLEN, T, OP, NAME)	\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_s_f##SEW##m##LMUL (_RVV_F##SEW##_TYPE a)			\
+{									\
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL (a);			\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_SCALAR_OP, vec_duplicate, splat)
+
+#define _RVV_INT_UNARY_SCALAR_OP(SEW, LMUL, MLEN, T, OP, NAME)		\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_s_i##SEW##m##LMUL (T a)					\
+{									\
+  return __builtin_riscv_v##OP##int##SEW##m##LMUL (a);			\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+v##NAME##_s_u##SEW##m##LMUL (u##T a)					\
+{									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL (a);			\
+}
+
+_RVV_INT_ITERATOR_ARG (_RVV_INT_UNARY_SCALAR_OP, vec_duplicate, splat)
+
 #define _RVV_INT_UNARY_OP(SEW, LMUL, MLEN, T, OP, NAME)			\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

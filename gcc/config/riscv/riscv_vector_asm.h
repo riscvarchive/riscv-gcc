@@ -2807,8 +2807,6 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_E_FF_LOAD)
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"r")
 
-_RVV_INT_ITERATOR (_RVV_INT_SPLAT)
-
 #define _RVV_FLOAT_SPLAT(SEW, LMUL, MLEN, T)				\
   _RVV_ASM_SPLAT_TEMPLATE(						\
     SEW, LMUL,								\
@@ -2818,8 +2816,6 @@ _RVV_INT_ITERATOR (_RVV_INT_SPLAT)
     /* OP1_TYPE */_RVV_F##SEW##_TYPE,					\
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"f")
-
-_RVV_FLOAT_ITERATOR (_RVV_FLOAT_SPLAT)
 
 /* Vector Slideup Instructions.  */
 

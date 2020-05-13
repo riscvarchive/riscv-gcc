@@ -783,6 +783,19 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_##SUBMODE,	\
 		vector),
 
+#define VINT_UNARY_OP_BUILTINS_SCALAR(E, L, MLEN, MODE, SUBMODE, OP)\
+  DIRECT_NAMED (OP##MODE, v##OP##int##E##m##L,			\
+		RISCV_VI##E##M##L##_FTYPE_##SUBMODE,		\
+		vector),					\
+  DIRECT_NAMED (OP##MODE, v##OP##uint##E##m##L,			\
+		RISCV_VUI##E##M##L##_FTYPE_U##SUBMODE,		\
+		vector),
+
+#define VFLOAT_UNARY_OP_BUILTINS_SCALAR(E, L, MLEN, MODE, SUBMODE, OP)\
+  DIRECT_NAMED (OP##MODE, v##OP##f##E##m##L,			\
+		RISCV_VF##E##M##L##_FTYPE_##SUBMODE,		\
+		vector),
+
 #define VINT_UNARY_OP_BUILTINS_NOMASK(E, L, MLEN, MODE, SUBMODE, OP)	\
   DIRECT_NAMED (OP##MODE##2, v##OP##int##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L,			\
@@ -1878,6 +1891,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, xor)
   _RVV_INT_ITERATOR_ARG (VINT_UNARY_OP_BUILTINS, one_cmpl)
+  _RVV_INT_ITERATOR_ARG (VINT_UNARY_OP_BUILTINS_SCALAR, vec_duplicate)
+  _RVV_FLOAT_ITERATOR_ARG (VFLOAT_UNARY_OP_BUILTINS_SCALAR, vec_duplicate)
 
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, eq, eq)
   _RVV_INT_ITERATOR_ARG (ICMP_BUILTINS, ne, ne)
