@@ -1470,6 +1470,26 @@ tree rvvbool64_t_node;
 		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##WE##M##WL##_U##SDEMODE,\
 		vector),
 
+#define VINT_WIDENING_CVT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
+					  WE, WL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (OP##VMODE##WVMODE##2, v##OP##_vv_i##E##m##L,		\
+		RISCV_VI##WE##M##WL##_FTYPE_VI##E##M##L,		\
+		vector),						\
+  DIRECT_NAMED (zero_##OP##VMODE##WVMODE##2, v##OP##_vv_u##E##m##L,	\
+		RISCV_VUI##WE##M##WL##_FTYPE_VUI##E##M##L,		\
+		vector),
+
+#define VINT_WIDENING_CVT_BUILTINS(E, L, MLEN, VMODE, SDEMODE,	\
+				   WE, WL, WVMODE, WSMODE, OP)	\
+  VINT_WIDENING_CVT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
+				    WE, WL, WVMODE, WSMODE, OP)	\
+  DIRECT_NAMED (OP##VMODE##WVMODE##2_mask, v##OP##_vv_i##E##m##L##_mask,\
+		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L,\
+		vector),						\
+  DIRECT_NAMED (zero_##OP##VMODE##WVMODE##2_mask, v##OP##_vv_u##E##m##L##_mask,\
+		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##E##M##L,\
+		vector),
+
 #define VFLOAT_WIDENING_ADD_SUB_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,\
 						WE, WL, WVMODE, WSMODE, OP)\
   DIRECT_NAMED (OP##VMODE##_vv, v##OP##_vv_f##E##m##L,			\
@@ -1851,6 +1871,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS_SCALAR, madd, wmacc)
   _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS, madd, qmacc)
   _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS_SCALAR, madd, qmacc)
+
+  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS, extend)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, and)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)

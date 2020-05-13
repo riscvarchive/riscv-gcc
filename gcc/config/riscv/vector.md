@@ -387,6 +387,10 @@
 (define_code_attr fix_cvt [(fix "fix_trunc") (unsigned_fix "fixuns_trunc")])
 (define_code_attr float_cvt [(float "float") (unsigned_float "floatuns")])
 
+;; <sz_op> expand to the name of the wcvt and wcvtu that implements a
+;; particular code.
+(define_code_attr sz_op [(sign_extend "") (zero_extend "zero_")])
+
 ;; Iterator and attributes for widening floating-point reduction instructions.
 (define_int_iterator WFREDUC_REDUC [UNSPEC_REDUC UNSPEC_ORDERED_REDUC])
 
@@ -2227,6 +2231,54 @@
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vw<add_sub:insn><any_extend:u>.wx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;;Vector Widening Sign-extend and Zero-extend
+
+(define_expand "<sz_op>extend<mode><vwimode>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (any_extend:<VWMODES>
+		     (match_operand:VWIMODES 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<sz_op>extend<mode><vwimode>2_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
+	(any_extend:<VWMODES>
+	    (match_operand:VWIMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwcvt<u>.x.x.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<sz_op>extend<mode><vwimode>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
+		   (if_then_else:<VWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (any_extend:<VWMODES>
+		       (match_operand:VWIMODES 3 "register_operand"))
+		     (match_operand:<VWMODES> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<sz_op>extend<mode><vwimode>2_mask_nosetvl"
+  [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VWMODES>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (any_extend:<VWMODES>
+	    (match_operand:VWIMODES 3 "register_operand" "vr"))
+	  (match_operand:<VWMODES> 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vwcvt<u>.x.x.v\t%0,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

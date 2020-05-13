@@ -2068,8 +2068,6 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_E_FF_LOAD)
     /* OP0_CONSTRANT */"=&vr",						\
     /* OP1_CONSTRANT */"vr")
 
-_RVV_WINT_ITERATOR (_RVV_ASM_WCVT)
-
 /* Template function for vwmulsu.v[v|x] instructions.  */
 #define _RVV_ASM_WMULSU(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
   _RVV_ASM_WBIN_OP_TEMPLATE(						\
