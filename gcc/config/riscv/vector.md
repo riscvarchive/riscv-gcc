@@ -216,6 +216,16 @@
    (VNx4SF "e32") (VNx8SF "e32") (VNx16SF "e32") (VNx32SF "e32")
    (VNx2DF "e64") (VNx4DF "e64") (VNx8DF "e64") (VNx16DF "e64")])
 
+;; Map a vector mode to its EEW value.
+(define_mode_attr eew
+  [(VNx16QI "8") (VNx32QI "8") (VNx64QI "8") (VNx128QI "8")
+   (VNx8HI "16") (VNx16HI "16") (VNx32HI "16") (VNx64HI "16")
+   (VNx4SI "32") (VNx8SI "32") (VNx16SI "32") (VNx32SI "32")
+   (VNx2DI "64") (VNx4DI "64") (VNx8DI "64") (VNx16DI "64")
+   (VNx8HF "16") (VNx16HF "16") (VNx32HF "16") (VNx64HF "16")
+   (VNx4SF "32") (VNx8SF "32") (VNx16SF "32") (VNx32SF "32")
+   (VNx2DF "64") (VNx4DF "64") (VNx8DF "64") (VNx16DF "64")])
+
 ;; Map a vector mode to its SEW value, minus the e.
 (define_mode_attr vememode
   [(VNx16QI "8") (VNx32QI "8") (VNx64QI "8") (VNx128QI "8")
@@ -514,7 +524,7 @@
 	  (match_operand:VMODES 3 "register_operand" "0")))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vle.v\t%0,%1,%2.t"
+  "vle<eew>.v\t%0,%1,%2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -549,7 +559,7 @@
 	  UNSPEC_MASKED_STORE))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vse.v\t%2,%0,%1.t"
+  "vse<eew>.v\t%2,%0,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -577,7 +587,7 @@
 	  UNSPEC_STRIDED_LOAD))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vlse.v\t%0,(%1),%2"
+  "vlse<eew>.v\t%0,(%1),%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -609,7 +619,7 @@
 	  (match_operand:VMODES 4 "register_operand" "0")))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vlse.v\t%0,(%1),%2,%3.t"
+  "vlse<eew>.v\t%0,(%1),%2,%3.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -635,7 +645,7 @@
 	  UNSPEC_STRIDED_STORE))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vsse.v\t%0,(%1),%2"
+  "vsse<eew>.v\t%0,(%1),%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -663,7 +673,7 @@
 	  UNSPEC_STRIDED_STORE))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vsse.v\t%0,(%1),%2,%3.t"
+  "vsse<eew>.v\t%0,(%1),%2,%3.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -707,8 +717,8 @@
   "@
    vmv.v.v\t%0,%1
    vmv.v.i\t%0,%1
-   vle.v\t%0,%1
-   vse.v\t%1,%0"
+   vle<eew>.v\t%0,%1
+   vse<eew>.v\t%1,%0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -745,8 +755,8 @@
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
   "@
    vmv.v.v\t%0,%1
-   vle.v\t%0,%1
-   vse.v\t%1,%0"
+   vle<eew>.v\t%0,%1
+   vse<eew>.v\t%1,%0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
