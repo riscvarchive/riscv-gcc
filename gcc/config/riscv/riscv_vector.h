@@ -196,6 +196,14 @@ typedef __fp16 float16_t;
   MACRO (16, 1, 16, int16_t, 64, 4, int64_t, __VA_ARGS__)		\
   MACRO (16, 2,  8, int16_t, 64, 8, int64_t, __VA_ARGS__)
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, scalar modes, info for
+   corresponding 8 times widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, TYPE, WSEW, WLMUL, WTYPE)  */
+#define _RVV_EINT_ITERATOR_ARG(MACRO, ...)				\
+  MACRO ( 8, 1,  8,  int8_t, 64, 8, int64_t, __VA_ARGS__)
+
 /* An iterator to call a macro with every supported SEW, LMUL, MLEN and
    corresponding scalar modes for float operations.  */
 #define _RVV_FLOAT_ITERATOR(MACRO)				\
@@ -1335,18 +1343,18 @@ v##OP##_ws_u##SEW##m##LMUL (vuint##WSEW##m##WLMUL##_t a, u##T b)	\
 _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wadd)
 _RVV_WINT_ITERATOR_ARG (_RVV_WINT_ADD_SUB, wsub)
 
-#define _RVV_WINT_CVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)		\
+#define _RVV_WINT_CVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)		\
 __extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vcvt_i##WSEW##_i##SEW##_v_##SEW##m##LMUL (vint##SEW##m##LMUL##_t a)	\
 {									\
-  return __builtin_riscv_vextend_vv_i##SEW##m##LMUL (a);		\
+  return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL (a);		\
 }									\
 __extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vcvt_u##WSEW##_u##SEW##_v_##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a)	\
 {									\
-  return __builtin_riscv_vextend_vv_u##SEW##m##LMUL (a);		\
+  return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL (a);		\
 }									\
 __extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -1354,7 +1362,7 @@ vcvt_i##WSEW##_i##SEW##_v_##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 				   vint##WSEW##m##WLMUL##_t maskedoff,	\
 				   vint##SEW##m##LMUL##_t a)		\
 {									\
-  return __builtin_riscv_vextend_vv_i##SEW##m##LMUL##_mask (mask, maskedoff, a);\
+  return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL##_mask (mask, maskedoff, a);\
 }									\
 __extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -1362,10 +1370,12 @@ vcvt_u##WSEW##_u##SEW##_v_##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
 				   vuint##WSEW##m##WLMUL##_t maskedoff,	\
 				   vuint##SEW##m##LMUL##_t a)		\
 {									\
-  return __builtin_riscv_vextend_vv_u##SEW##m##LMUL##_mask (mask, maskedoff, a);\
+  return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL##_mask (mask, maskedoff, a);\
 }
 
-_RVV_WINT_ITERATOR (_RVV_WINT_CVT)
+_RVV_WINT_ITERATOR_ARG (_RVV_WINT_CVT, extend)
+_RVV_QINT_ITERATOR_ARG (_RVV_WINT_CVT, extend_q)
+_RVV_EINT_ITERATOR_ARG (_RVV_WINT_CVT, extend_e)
 
 #define _RVV_WFLOAT_ADD_SUB_MASK(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)\
 __extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\

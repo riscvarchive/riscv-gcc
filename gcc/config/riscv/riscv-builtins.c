@@ -162,6 +162,14 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
+   corresponding 8 times vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, QSEW, QLMUL, QVMODE, QSMODE)  */
+#define _RVV_EINT_ITERATOR(MACRO)			\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 64, 8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    except LMUL1, along with its corresponding vector, integer modes, and
    info for corresponding widening vector type and extra arguments.
 
@@ -200,6 +208,14 @@ along with GCC; see the file COPYING3.  If not see
   MACRO ( 8, 2,  4, vnx32qi, QI, 32, 8, vnx32si, SI, __VA_ARGS__)	\
   MACRO (16, 1, 16,  vnx8hi, HI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
   MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
+   corresponding eighth-widening vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, ESEW, ELMUL, EVMODE, ESMODE)  */
+#define _RVV_EINT_ITERATOR_ARG(MACRO, ...)				\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 64, 8, vnx16di, DI, __VA_ARGS__)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer modes and floating point
@@ -1484,22 +1500,23 @@ tree rvvbool64_t_node;
 		vector),
 
 #define VINT_WIDENING_CVT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
-					  WE, WL, WVMODE, WSMODE, OP)	\
-  DIRECT_NAMED (OP##VMODE##WVMODE##2, v##OP##_vv_i##E##m##L,		\
+					  WE, WL, WVMODE, WSMODE,	\
+					  OP, NAME)			\
+  DIRECT_NAMED (OP##VMODE##WVMODE##2, v##NAME##_vv_i##E##m##L,		\
 		RISCV_VI##WE##M##WL##_FTYPE_VI##E##M##L,		\
 		vector),						\
-  DIRECT_NAMED (zero_##OP##VMODE##WVMODE##2, v##OP##_vv_u##E##m##L,	\
+  DIRECT_NAMED (zero_##OP##VMODE##WVMODE##2, v##NAME##_vv_u##E##m##L,	\
 		RISCV_VUI##WE##M##WL##_FTYPE_VUI##E##M##L,		\
 		vector),
 
-#define VINT_WIDENING_CVT_BUILTINS(E, L, MLEN, VMODE, SDEMODE,	\
-				   WE, WL, WVMODE, WSMODE, OP)	\
-  VINT_WIDENING_CVT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
-				    WE, WL, WVMODE, WSMODE, OP)	\
-  DIRECT_NAMED (OP##VMODE##WVMODE##2_mask, v##OP##_vv_i##E##m##L##_mask,\
+#define VINT_WIDENING_CVT_BUILTINS(E, L, MLEN, VMODE, SDEMODE,		\
+				   WE, WL, WVMODE, WSMODE, OP, NAME)	\
+  VINT_WIDENING_CVT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,		\
+				    WE, WL, WVMODE, WSMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##VMODE##WVMODE##2_mask, v##NAME##_vv_i##E##m##L##_mask,\
 		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L,\
 		vector),						\
-  DIRECT_NAMED (zero_##OP##VMODE##WVMODE##2_mask, v##OP##_vv_u##E##m##L##_mask,\
+  DIRECT_NAMED (zero_##OP##VMODE##WVMODE##2_mask, v##NAME##_vv_u##E##m##L##_mask,\
 		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##E##M##L,\
 		vector),
 
@@ -1885,7 +1902,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS, madd, qmacc)
   _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS_SCALAR, madd, qmacc)
 
-  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS, extend)
+  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS, extend, extend)
+  _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS, extend, extend_q)
+  _RVV_EINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS, extend, extend_e)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, and)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)

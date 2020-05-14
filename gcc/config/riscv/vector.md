@@ -400,6 +400,7 @@
 ;; <sz_op> expand to the name of the wcvt and wcvtu that implements a
 ;; particular code.
 (define_code_attr sz_op [(sign_extend "") (zero_extend "zero_")])
+(define_code_attr sz [(sign_extend "s") (zero_extend "z")])
 
 ;; Iterator and attributes for widening floating-point reduction instructions.
 (define_int_iterator WFREDUC_REDUC [UNSPEC_REDUC UNSPEC_ORDERED_REDUC])
@@ -2289,6 +2290,102 @@
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vwcvt<u>.x.x.v\t%0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;;Vector Quad-Widening Sign-extend and Zero-extend
+
+(define_expand "<sz_op>extend<mode><vqwimode>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VQWMODES> 0 "register_operand")
+		   (any_extend:<VQWMODES>
+		     (match_operand:VQWIMODES 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<sz_op>extend<mode><vqwimode>2_nosetvl"
+  [(set (match_operand:<VQWMODES> 0 "register_operand" "=&vr")
+	(any_extend:<VQWMODES>
+	    (match_operand:VQWIMODES 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<sz>ext.vf4\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<sz_op>extend<mode><vqwimode>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VQWMODES> 0 "register_operand")
+		   (if_then_else:<VQWMODES>
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (any_extend:<VQWMODES>
+		       (match_operand:VQWIMODES 3 "register_operand"))
+		     (match_operand:<VQWMODES> 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<sz_op>extend<mode><vqwimode>2_mask_nosetvl"
+  [(set (match_operand:<VQWMODES> 0 "register_operand" "=vr")
+	(if_then_else:<VQWMODES>
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (any_extend:<VQWMODES>
+	    (match_operand:VQWIMODES 3 "register_operand" "vr"))
+	  (match_operand:<VQWMODES> 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<sz>ext.vf4\t%0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;;Vector Eighth Sign-extend and Zero-extend
+
+(define_expand "<sz_op>extendvnx16qivnx16di2"
+  [(set (reg:VNx16QI VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VNx16DI 0 "register_operand")
+		   (any_extend:VNx16DI
+		     (match_operand:VNx16QI 1 "register_operand")))
+	      (use (reg:VNx16QI VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<sz_op>extendvnx16qivnx16di2_nosetvl"
+  [(set (match_operand:VNx16DI 0 "register_operand" "=&vr")
+	(any_extend:VNx16DI
+	    (match_operand:VNx16QI 1 "register_operand" "vr")))
+   (use (reg:VNx16QI VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<sz>ext.vf8\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<sz_op>extendvnx16qivnx16di2_mask"
+  [(set (reg:VNx16QI VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VNx16DI 0 "register_operand")
+		   (if_then_else:VNx16DI
+		     (match_operand:VNx16BI 1 "register_operand")
+		     (any_extend:VNx16DI
+		       (match_operand:VNx16QI 3 "register_operand"))
+		     (match_operand:VNx16DI 2 "register_operand")))
+	      (use (reg:VNx16QI VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<sz_op>extendvnx16qivnx16di2_mask_nosetvl"
+  [(set (match_operand:VNx16DI 0 "register_operand" "=vr")
+	(if_then_else:VNx16DI
+	  (match_operand:VNx16BI 1 "register_operand" "vm")
+	  (any_extend:VNx16DI
+	    (match_operand:VNx16QI 3 "register_operand" "vr"))
+	  (match_operand:VNx16DI 2 "register_operand" "0")))
+    (use (reg:VNx16QI VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<sz>ext.vf8\t%0,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
