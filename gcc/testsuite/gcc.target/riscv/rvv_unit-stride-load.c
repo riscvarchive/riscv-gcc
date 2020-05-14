@@ -18,34 +18,11 @@
     vstore_##VCLASS##EM(x, vz);                                                \
   }
 
-#define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
-  void vload##EM##NTYPE_LETTER(size_t n, long stride, STYPE *x,           \
-                               NSTYPE *y, STYPE z) {                      \
-    vint##EM##_t vx, vy, vz;                                           \
-    vbool##MLEN##_t mask;                                              \
-    vx = vload##NTYPE_LETTER##_i##EM(y);                                \
-    vstore_i##EM(x, vx);                                                \
-  }                                                                       \
-  void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
-                                u##NSTYPE *y, STYPE z) {                  \
-    vuint##EM##_t vx, vy, vz;                                          \
-    vbool##MLEN##_t mask;                                              \
-    vx = vload##NTYPE_LETTER##_u##EM(y);                               \
-    vstore_u##EM(x, vx);                                               \
-  }
-
-
-
-RVV_INT_LOAD_TEST(VUSLOAD)
-
 RVV_INT_TEST(VSLOADSTORE)
 RVV_UINT_TEST(VSLOADSTORE)
 RVV_FLOAT_TEST(VSLOADSTORE)
 
-/* { dg-final { scan-assembler-times "vle.v" 88 } } */
-/* { dg-final { scan-assembler-times "vlb.v" 16 } } */
-/* { dg-final { scan-assembler-times "vlbu.v" 16 } } */
-/* { dg-final { scan-assembler-times "vlh.v" 12 } } */
-/* { dg-final { scan-assembler-times "vlhu.v" 12 } } */
-/* { dg-final { scan-assembler-times "vlw.v" 8 } } */
-/* { dg-final { scan-assembler-times "vlwu.v" 8 } } */
+/* { dg-final { scan-assembler-times "vle8.v" 16 } } */
+/* { dg-final { scan-assembler-times "vle16.v" 24 } } */
+/* { dg-final { scan-assembler-times "vle32.v" 24 } } */
+/* { dg-final { scan-assembler-times "vle64.v" 24 } } */

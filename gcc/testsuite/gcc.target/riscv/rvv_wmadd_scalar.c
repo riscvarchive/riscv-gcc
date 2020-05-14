@@ -21,8 +21,9 @@ void wsaxpy(size_t n, const float16_t a, const float16_t *x, float *y) {
 }
 
 /* { dg-final { scan-assembler-times "vsetvli\tx0,x0,e16,m4" 2} } */
-/* { dg-final { scan-assembler-times "vle.v" 2 } } */
+/* { dg-final { scan-assembler "vle16.v" } } */
+/* { dg-final { scan-assembler "vle32.v" } } */
 /* { dg-final { scan-assembler "vsetvli\tx0,x0,e32,m8"} } */
 /* { dg-final { scan-assembler "vfwmacc.vf" } } */
-/* { dg-final { scan-assembler "vse.v" } } */
+/* { dg-final { scan-assembler "vse32.v" } } */
 /* { dg-final { scan-assembler "vsetvli\ta\[0-9\],a\[0-9\],e16,m4"} } */

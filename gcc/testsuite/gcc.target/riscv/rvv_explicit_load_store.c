@@ -17,5 +17,11 @@
 RVV_INT_TEST(TEST)
 RVV_FLOAT_TEST(TEST)
 
-/* { dg-final { scan-assembler-times "vle\.v" 28 } } */
-/* { dg-final { scan-assembler-times "vse.v\t" 28 } } */
+/* { dg-final { scan-assembler-times "vle8\.v" 4 } } */
+/* { dg-final { scan-assembler-times "vle16\.v" 8 } } */
+/* { dg-final { scan-assembler-times "vle32\.v" 8 } } */
+/* { dg-final { scan-assembler-times "vle64\.v" 8 } } */
+/* { dg-final { scan-assembler-times "vse8.v\t" 4 } } */
+/* { dg-final { scan-assembler-times "vse16.v\t" 8 } } */
+/* { dg-final { scan-assembler-times "vse32.v\t" 8 } } */
+/* { dg-final { scan-assembler-times "vse64.v\t" 8 } } */

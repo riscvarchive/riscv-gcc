@@ -21,7 +21,7 @@ void saxpy_2(size_t n, const float a, const float *x, float *y) {
 }
 
 /* { dg-final { scan-assembler-times "vsetvli\ta\[0-9\],a\[0-9\],e32,m8" 2 } } */
-/* { dg-final { scan-assembler-times "vle.v" 2 } } */
+/* { dg-final { scan-assembler-times "vle32.v" 2 } } */
 /* { dg-final { scan-assembler "vsetvli\tx0,x0,e32,m8"} } */
 /* { dg-final { scan-assembler "vfmsac.vv" } } */
-/* { dg-final { scan-assembler "vse.v" } } */
+/* { dg-final { scan-assembler "vse32.v" } } */

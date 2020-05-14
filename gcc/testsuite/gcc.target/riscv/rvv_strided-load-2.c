@@ -19,39 +19,11 @@
     vstore_##VCLASS##EM(x, vz);                                                  \
   }
 
-#define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
-  void vload##EM##NTYPE_LETTER(size_t n, long stride, STYPE *x,           \
-                               NSTYPE *y, STYPE z) {                      \
-    vint##EM##_t vx, vy, vz;                                           \
-    vbool##MLEN##_t mask;                                              \
-    mask = vset_b##MLEN ();                                        \
-    vx = vload_i##EM (x);                                              \
-    vx = vloads##NTYPE_LETTER##_i##EM##_mask(mask, vx, y, n);           \
-    vstore_i##EM(x, vx);                                                \
-  }                                                                       \
-  void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
-                                u##NSTYPE *y, STYPE z) {                  \
-    vuint##EM##_t vx, vy, vz;                                          \
-    vbool##MLEN##_t mask;                                              \
-    mask = vset_b##MLEN ();                                        \
-    vx = vload_u##EM (x);                                             \
-    vx = vloads##NTYPE_LETTER##_u##EM##_mask(mask, vx, y, n);          \
-    vstore_u##EM(x, vx);                                               \
-  }
-
-
-
-RVV_INT_LOAD_TEST(VUSLOAD)
-
 RVV_INT_TEST(VSLOADSTORE)
 RVV_UINT_TEST(VSLOADSTORE)
 RVV_FLOAT_TEST(VSLOADSTORE)
 
-/* { dg-final { scan-assembler-times "vlse.v" 44 } } */
-/* { dg-final { scan-assembler-times "vlsb.v" 16 } } */
-/* { dg-final { scan-assembler-times "vlsbu.v" 16 } } */
-/* { dg-final { scan-assembler-times "vlsh.v" 12 } } */
-/* { dg-final { scan-assembler-times "vlshu.v" 12 } } */
-/* { dg-final { scan-assembler-times "vlsw.v" 8 } } */
-/* { dg-final { scan-assembler-times "vlswu.v" 8 } } */
-
+/* { dg-final { scan-assembler-times "vlse8.v" 8 } } */
+/* { dg-final { scan-assembler-times "vlse16.v" 12 } } */
+/* { dg-final { scan-assembler-times "vlse32.v" 12 } } */
+/* { dg-final { scan-assembler-times "vlse64.v" 12 } } */
