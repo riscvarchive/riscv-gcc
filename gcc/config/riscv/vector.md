@@ -8086,3 +8086,55 @@
   "<sat_op>.vx\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;; Unit-stride Fault-Only-First Load Instructions
+
+(define_expand "vleff<VMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec:VMODES
+		     [(mem:VMODES (match_operand:P 1 "register_operand"))]
+		    UNSPEC_VLEFF))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vleff<mode>_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec:VMODES
+	  [(match_operand:VMODES 1 "memory_operand"  "m")]
+	 UNSPEC_VLEFF))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vleff<eew>.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vleff<VMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (if_then_else:VMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (unspec:VMODES
+		       [(mem:VMODES (match_operand:P 3 "register_operand"))]
+		      UNSPEC_VLEFF)
+		     (match_operand:VMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vleff<VMODES:mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(if_then_else:VMODES
+	  (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")
+	  (unspec:VMODES
+	    [(match_operand:VMODES 1 "memory_operand" "m")]
+	   UNSPEC_VLEFF)
+	  (match_operand:VMODES 3 "register_operand" "0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vleff<eew>.v\t%0,%1,%2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])

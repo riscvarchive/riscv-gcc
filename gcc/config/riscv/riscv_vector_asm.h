@@ -1492,8 +1492,6 @@ _RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_INDEXED_STORE)
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"A")
 
-_RVV_INT_LOAD_ITERATOR (_RVV_ASM_FF_LOAD)
-
 #define _RVV_ASM_INT_E_FF_LOAD(SEW, LMUL, MLEN, T)			\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -1514,8 +1512,6 @@ _RVV_INT_LOAD_ITERATOR (_RVV_ASM_FF_LOAD)
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"A")
 
-_RVV_INT_ITERATOR (_RVV_ASM_INT_E_FF_LOAD)
-
 #define _RVV_ASM_FLOAT_E_FF_LOAD(SEW, LMUL, MLEN, T)			\
   _RVV_ASM_UNARY_OP_TEMPLATE(						\
     SEW, LMUL,								\
@@ -1526,8 +1522,6 @@ _RVV_INT_ITERATOR (_RVV_ASM_INT_E_FF_LOAD)
     /* OP1_TYPE */const _RVV_F##SEW##_TYPE *,				\
     /* OP0_CONSTRANT */"=vr",						\
     /* OP1_CONSTRANT */"A")
-
-_RVV_FLOAT_ITERATOR (_RVV_ASM_FLOAT_E_FF_LOAD)
 
 /* Template function for binary integer vector-scalar operation with immediate
    variant.  */

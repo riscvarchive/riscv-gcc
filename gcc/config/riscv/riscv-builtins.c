@@ -696,6 +696,33 @@ tree rvvbool64_t_node;
 #define SETVTYPE_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_NAMED_NO_TARGET (vsetvli_x0_##MODE, vsetvtype##E##m##L, RISCV_VOID_FTYPE, vector),
 
+#define _VINT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
+			       PNAME, PMODE, SUBTYPE, VCLASS)		\
+  DIRECT_NAMED (							\
+    vleff##MODE##_##PNAME, vleff##SUBTYPE##E##m##L##_##PNAME,		\
+    RISCV_##VCLASS##E##M##L##_FTYPE_C_##SUBMODE##_PTR,			\
+    vector),								\
+  DIRECT_NAMED (							\
+    vleff##MODE##_##PNAME##_mask,					\
+    vleff##SUBTYPE##E##m##L##_##PNAME##_mask,				\
+    RISCV_##VCLASS##E##M##L##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_C_##SUBMODE##_PTR, \
+    vector),
+
+#define VINT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, SUBMODE)		\
+  _VINT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, SUBMODE, si, SI,		\
+			 int, VI)					\
+  _VINT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,		\
+			 int, VI)					\
+  _VINT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, U##SUBMODE, si, SI,		\
+			 uint, VUI)					\
+  _VINT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, U##SUBMODE, di, DI,		\
+			 uint, VUI)
+
+#define VFLOAT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, SUBMODE)		\
+  _VINT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, SUBMODE, si, SI,		\
+			 float, VF)					\
+  _VINT_LOAD_FF_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,		\
+			 float, VF)
 
 #define _VINT_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
 				  PNAME, PMODE, SUBTYPE, VCLASS)	\
@@ -1859,6 +1886,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_INT_ITERATOR (VINT_LOAD_STORE_BUILTINS)
   _RVV_FLOAT_ITERATOR (VFLOAT_LOAD_STORE_BUILTINS)
+
+  _RVV_INT_ITERATOR (VINT_LOAD_FF_BUILTINS)
+  _RVV_FLOAT_ITERATOR (VFLOAT_LOAD_FF_BUILTINS)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, add)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, sub)

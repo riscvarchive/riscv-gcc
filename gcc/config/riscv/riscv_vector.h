@@ -333,6 +333,54 @@ _RVV_INT_ITERATOR (_RVV_INT_VEC_MOVE)
 
 /* Define the ld/st intrinsics.  */
 
+#define _RVVINTLD_FF(SEW, LMUL, MLEN, T)				\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vleff_i##SEW##m##LMUL (const int##SEW##_t *a)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vleffint##SEW##m##LMUL##_si (a);		\
+  else									\
+    return __builtin_riscv_vleffint##SEW##m##LMUL##_di (a);		\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vleff_u##SEW##m##LMUL (const uint##SEW##_t *a)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vleffuint##SEW##m##LMUL##_si (a);		\
+  else									\
+    return __builtin_riscv_vleffuint##SEW##m##LMUL##_di (a);		\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vleff_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+			      vint##SEW##m##LMUL##_t maskedoff,		\
+			      const int##SEW##_t *a)			\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vleffint##SEW##m##LMUL##_si_mask (		\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vleffint##SEW##m##LMUL##_di_mask (		\
+	     mask, maskedoff, a);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vleff_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+				  vuint##SEW##m##LMUL##_t maskedoff,	\
+				  const uint##SEW##_t *a)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vleffuint##SEW##m##LMUL##_si_mask (		\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vleffuint##SEW##m##LMUL##_di_mask (		\
+	     mask, maskedoff, a);					\
+}
+
+_RVV_INT_ITERATOR (_RVVINTLD_FF)
+
 #define _RVVINTLD(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -572,6 +620,32 @@ vmv_s_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a, _RVV_F##SEW##_TYPE b)\
 }
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_INT_MV_SF, mv_sf)
+
+#define _RVVFLOATLD_FF(SEW, LMUL, MLEN, T)				\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vleff_f##SEW##m##LMUL (const T *a)					\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlefffloat##SEW##m##LMUL##_si (a);		\
+  else									\
+    return __builtin_riscv_vlefffloat##SEW##m##LMUL##_di (a);		\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vleff_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
+			      vfloat##SEW##m##LMUL##_t maskedoff,	\
+			      const T *a)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlefffloat##SEW##m##LMUL##_si_mask (		\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vlefffloat##SEW##m##LMUL##_di_mask (		\
+	     mask, maskedoff, a);					\
+}
+
+_RVV_FLOAT_ITERATOR (_RVVFLOATLD_FF)
 
 #define _RVVFLOATLD(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\

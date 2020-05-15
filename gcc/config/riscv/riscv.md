@@ -84,6 +84,7 @@
   UNSPEC_VASUBU
   UNSPEC_VASUB
   UNSPEC_VSMUL
+  UNSPEC_VLEFF
 ])
 
 (define_c_enum "unspecv" [
