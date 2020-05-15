@@ -50,7 +50,7 @@ char *strncpy(char *dst, const char *src, size_t n) {
   while (zero_find < 0) {
     vsetvlmax_8m1();
     vuint8m1_t value;
-    value = vloadff_u8m1(src);
+    value = vleff_u8m1(src);
     size_t vl = vreadvl();
     vbool8_t cmp;
     cmp = vseteq_vs_u8m1(value, 0);

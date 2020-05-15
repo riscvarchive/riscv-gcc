@@ -13,39 +13,16 @@
     v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                                   \
     vx = vload_##VCLASS##EM(x);                                               \
-    vy = vloadff_##VCLASS##EM(y);                                             \
+    vy = vleff_##VCLASS##EM(y);                                             \
     vz = vx + vy;                                                              \
     vstore_##VCLASS##EM(x, vz);                                                \
   }
-
-#define VUSLOAD(EM, MLEN, STYPE, NSTYPE, NTYPE_LETTER)			  \
-  void vload##EM##NTYPE_LETTER(size_t n, long stride, STYPE *x,           \
-                               NSTYPE *y, STYPE z) {                      \
-    vint##EM##_t vx, vy, vz;                                           \
-    vbool##MLEN##_t mask;                                              \
-    vx = vload##NTYPE_LETTER##ff_i##EM(y);                              \
-    vstore_i##EM(x, vx);                                                \
-  }                                                                       \
-  void vuload##EM##NTYPE_LETTER(size_t n, long stride, u##STYPE *x,       \
-                                u##NSTYPE *y, STYPE z) {                  \
-    vuint##EM##_t vx, vy, vz;                                          \
-    vbool##MLEN##_t mask;                                              \
-    vx = vload##NTYPE_LETTER##ff_u##EM(y);                             \
-    vstore_u##EM(x, vx);                                               \
-  }
-
-
-
-RVV_INT_LOAD_TEST(VUSLOAD)
 
 RVV_INT_TEST(VSLOADSTORE)
 RVV_UINT_TEST(VSLOADSTORE)
 RVV_FLOAT_TEST(VSLOADSTORE)
 
-/* { dg-final { scan-assembler-times "vleff.v" 44 } } */
-/* { dg-final { scan-assembler-times "vlbff.v" 16 } } */
-/* { dg-final { scan-assembler-times "vlbuff.v" 16 } } */
-/* { dg-final { scan-assembler-times "vlhff.v" 12 } } */
-/* { dg-final { scan-assembler-times "vlhuff.v" 12 } } */
-/* { dg-final { scan-assembler-times "vlwff.v" 8 } } */
-/* { dg-final { scan-assembler-times "vlwuff.v" 8 } } */
+/* { dg-final { scan-assembler-times "vleff8.v" 8 } } */
+/* { dg-final { scan-assembler-times "vleff16.v" 12 } } */
+/* { dg-final { scan-assembler-times "vleff32.v" 12 } } */
+/* { dg-final { scan-assembler-times "vleff64.v" 12 } } */
