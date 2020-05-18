@@ -369,6 +369,92 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 4, 16,  vnx8df, DF,  vnx8di, DI, __VA_ARGS__)	\
   MACRO (64, 8,  8, vnx16df, DF, vnx16di, DI, __VA_ARGS__)
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
+   corresponding indexed load and store vector type and extra arguments.
+
+   MACRO (SEW, LMUL, MLEN, MODE, SMODE, ISEW, ILMUL, IMODE, ISMODE)  */
+#define _RVV_INT_INDEX_LOAD_ITERATOR(MACRO)		\
+  MACRO ( 8, 1,  8, vnx16qi, QI,  8, 1, vnx16qi, QI)	\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI)	\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 32, 4, vnx16si, SI)	\
+  MACRO ( 8, 1,  8, vnx16qi, QI, 64, 8, vnx16di, DI)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI,  8, 2, vnx32qi, QI)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI)	\
+  MACRO ( 8, 2,  4, vnx32qi, QI, 32, 8, vnx32si, SI)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI,  8, 4, vnx64qi, QI)	\
+  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI)	\
+  MACRO ( 8, 8,  1,vnx128qi, QI,  8, 8,vnx128qi, QI)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, 16, 1,  vnx8hi, HI)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8si, SI)	\
+  MACRO (16, 1, 16,  vnx8hi, HI, 64, 4,  vnx8di, DI)	\
+  MACRO (16, 2,  8, vnx16hi, HI,  8, 1, vnx16qi, QI)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 16, 2, vnx16hi, HI)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI)	\
+  MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI)	\
+  MACRO (16, 4,  4, vnx32hi, HI,  8, 2, vnx32qi, QI)	\
+  MACRO (16, 4,  4, vnx32hi, HI, 16, 4, vnx32hi, HI)	\
+  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI)	\
+  MACRO (16, 8,  2, vnx64hi, HI,  8, 4, vnx64qi, QI)	\
+  MACRO (16, 8,  2, vnx64hi, HI, 16, 8, vnx64hi, HI)	\
+  MACRO (32, 1, 32,  vnx4si, SI, 32, 1,  vnx4si, SI)	\
+  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4di, DI)	\
+  MACRO (32, 2, 16,  vnx8si, SI, 16, 1,  vnx8hi, HI)	\
+  MACRO (32, 2, 16,  vnx8si, SI, 32, 2,  vnx8si, SI)	\
+  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI)	\
+  MACRO (32, 4,  8, vnx16si, SI,  8, 1, vnx16qi, QI)	\
+  MACRO (32, 4,  8, vnx16si, SI, 16, 2, vnx16hi, HI)	\
+  MACRO (32, 4,  8, vnx16si, SI, 32, 4, vnx16si, SI)	\
+  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI)	\
+  MACRO (32, 8,  4, vnx32si, SI,  8, 2, vnx32qi, QI)	\
+  MACRO (32, 8,  4, vnx32si, SI, 16, 4, vnx32hi, HI)	\
+  MACRO (32, 8,  4, vnx32si, SI, 32, 8, vnx32si, SI)	\
+  MACRO (64, 1, 64,  vnx2di, DI, 64, 1,  vnx2di, DI)	\
+  MACRO (64, 2, 32,  vnx4di, DI, 32, 1,  vnx4si, SI)	\
+  MACRO (64, 2, 32,  vnx4di, DI, 64, 2,  vnx4di, DI)	\
+  MACRO (64, 4, 16,  vnx8di, DI, 16, 1,  vnx8hi, HI)	\
+  MACRO (64, 4, 16,  vnx8di, DI, 32, 2,  vnx8si, SI)	\
+  MACRO (64, 4, 16,  vnx8di, DI, 64, 4,  vnx8di, DI)	\
+  MACRO (64, 8,  8, vnx16di, DI,  8, 1, vnx16qi, QI)	\
+  MACRO (64, 8,  8, vnx16di, DI, 16, 2, vnx16hi, HI)	\
+  MACRO (64, 8,  8, vnx16di, DI, 32, 4, vnx16si, SI)	\
+  MACRO (64, 8,  8, vnx16di, DI, 64, 8, vnx16di, DI)
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating-point modes, and info for
+   corresponding indexed load and store vector type and extra arguments.
+   MACRO (SEW, LMUL, MLEN, MODE, SMODE, ISEW, ILMUL, IMODE, ISMODE)  */
+
+#define _RVV_FLOAT_INDEX_LOAD_ITERATOR(MACRO)		\
+  MACRO (16, 1, 16,  vnx8hf, HF, 16, 1,  vnx8hi, HF)	\
+  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8si, SF)	\
+  MACRO (16, 1, 16,  vnx8hf, HF, 64, 4,  vnx8di, DF)	\
+  MACRO (16, 2,  8, vnx16hf, HF, 16, 2, vnx16hi, HF)	\
+  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16si, SF)	\
+  MACRO (16, 2,  8, vnx16hf, HF, 64, 8, vnx16di, DF)	\
+  MACRO (16, 4,  4, vnx32hf, HF, 16, 4, vnx32hi, HF)	\
+  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32si, SF)	\
+  MACRO (16, 8,  2, vnx64hf, HF, 16, 8, vnx64hi, HF)	\
+  MACRO (32, 1, 32,  vnx4sf, SF, 32, 1,  vnx4si, SF)	\
+  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4di, DF)	\
+  MACRO (32, 2, 16,  vnx8sf, SF, 16, 1,  vnx8hi, HF)	\
+  MACRO (32, 2, 16,  vnx8sf, SF, 32, 2,  vnx8si, SF)	\
+  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8di, DF)	\
+  MACRO (32, 4,  8, vnx16sf, SF, 16, 2, vnx16hi, HF)	\
+  MACRO (32, 4,  8, vnx16sf, SF, 32, 4, vnx16si, SF)	\
+  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16di, DF)	\
+  MACRO (32, 8,  4, vnx32sf, SF, 16, 4, vnx32hi, HF)	\
+  MACRO (32, 8,  4, vnx32sf, SF, 32, 8, vnx32si, SF)	\
+  MACRO (64, 1, 64,  vnx2df, DF, 64, 1,  vnx2di, DF)	\
+  MACRO (64, 2, 32,  vnx4df, DF, 32, 1,  vnx4si, SF)	\
+  MACRO (64, 2, 32,  vnx4df, DF, 64, 2,  vnx4di, DF)	\
+  MACRO (64, 4, 16,  vnx8df, DF, 16, 1,  vnx8hi, HF)	\
+  MACRO (64, 4, 16,  vnx8df, DF, 32, 2,  vnx8si, SF)	\
+  MACRO (64, 4, 16,  vnx8df, DF, 64, 4,  vnx8di, DF)	\
+  MACRO (64, 8,  8, vnx16df, DF, 16, 2, vnx16hi, HF)	\
+  MACRO (64, 8,  8, vnx16df, DF, 32, 4, vnx16si, SF)	\
+  MACRO (64, 8,  8, vnx16df, DF, 64, 8, vnx16di, DF)
+
 /* An iterator to call a macro with every supported MLEN and internal
    type numbering on VNx<N>BI for vector masking modes.  */
 #define _RVV_MASK_ITERATOR(MACRO)	\
@@ -799,6 +885,48 @@ tree rvvbool64_t_node;
 				    float, VF)				\
   _VINT_STRIDED_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE, di, DI,	\
 				    float, VF)
+
+#define VINT_INDEX_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
+				       IE, IL, IMODE, ISUBMODE)			\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_si, vlxeii##E##m##L##_##IE##m##IL##_si,	\
+		RISCV_VI##E##M##L##_FTYPE_C_##SUBMODE##_PTR##_VUI##IE##M##IL,	\
+		vector),							\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_si, vlxeiu##E##m##L##_##IE##m##IL##_si,	\
+		RISCV_VUI##E##M##L##_FTYPE_C_U##SUBMODE##_PTR##_VUI##IE##M##IL,	\
+		vector),							\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_si_mask, vlxeii##E##m##L##_##IE##m##IL##_si_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
+		vector),							\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_si_mask, vlxeiu##E##m##L##_##IE##m##IL##_si_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR##_VUI##IE##M##IL,\
+		vector),							\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_di, vlxeii##E##m##L##_##IE##m##IL##_di,	\
+		RISCV_VI##E##M##L##_FTYPE_C_##SUBMODE##_PTR##_VUI##IE##M##IL,	\
+		vector),							\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_di, vlxeiu##E##m##L##_##IE##m##IL##_di,	\
+		RISCV_VUI##E##M##L##_FTYPE_C_U##SUBMODE##_PTR##_VUI##IE##M##IL,	\
+		vector),							\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_di_mask, vlxeii##E##m##L##_##IE##m##IL##_di_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
+		vector),							\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_di_mask, vlxeiu##E##m##L##_##IE##m##IL##_di_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_C_U##SUBMODE##_PTR##_VUI##IE##M##IL,\
+		vector),
+
+#define VFLOAT_INDEX_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,	\
+					 IE, IL, IMODE, ISUBMODE)	\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_si, vlxeif##E##m##L##_##IE##m##IL##_si,\
+		RISCV_VF##E##M##L##_FTYPE_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
+		vector),						\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_si_mask, vlxeif##E##m##L##_##IE##m##IL##_si_mask,\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
+		vector),						\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_di, vlxeif##E##m##L##_##IE##m##IL##_di,\
+		RISCV_VF##E##M##L##_FTYPE_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
+		vector),						\
+  DIRECT_NAMED (vlxei##MODE##IMODE##_di_mask, vlxeif##E##m##L##_##IE##m##IL##_di_mask,\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
+		vector),
 
 #define VINT_MV_X_S_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
   MV_XS_NAMED (OP##MODE, v##NAME##i##E##m##L,				\
@@ -1889,6 +2017,9 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_INT_ITERATOR (VINT_LOAD_FF_BUILTINS)
   _RVV_FLOAT_ITERATOR (VFLOAT_LOAD_FF_BUILTINS)
+
+  _RVV_INT_INDEX_LOAD_ITERATOR (VINT_INDEX_LOAD_STORE_BUILTINS)
+  _RVV_FLOAT_INDEX_LOAD_ITERATOR (VFLOAT_INDEX_LOAD_STORE_BUILTINS)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, add)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, sub)

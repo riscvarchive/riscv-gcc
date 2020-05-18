@@ -61,6 +61,13 @@
 (define_mode_iterator VWFMODES [VNx8HF VNx16HF VNx32HF
 				VNx4SF VNx8SF VNx16SF])
 
+;; All vector modes supported for widening mode.
+(define_mode_iterator VW_FIMODES [VNx16QI VNx32QI VNx64QI
+				  VNx8HI VNx16HI VNx32HI
+				  VNx4SI VNx8SI VNx16SI
+				  VNx8HF VNx16HF VNx32HF
+				  VNx4SF VNx8SF VNx16SF])
+
 ;; All vector masking modes.
 (define_mode_iterator VMASKMODES [VNx2BI VNx4BI VNx8BI VNx16BI
 				  VNx32BI VNx64BI VNx128BI])
@@ -675,6 +682,145 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vsse<eew>.v\t%0,(%1),%2,%3.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Vector Indexed Load instructions
+
+;; XXX: we should support gather load for XLEN is 32.
+(define_expand "gather_load<VMODES:mode><VIMODES:mode>"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+	      (unspec:VMODES
+		[(match_operand:DI 1 "register_operand")
+		 (match_operand:VIMODES 2 "register_operand")
+		 (match_operand:DI 3 "const_0_operand")
+		 (match_operand:DI 4 "const_1_operand")
+		 (mem:BLK (scratch))]
+		UNSPEC_LOAD_GATHER))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_64BIT && TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "gather_load<VMODES:mode><VIMODES:mode>_<P:mode>"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec:VMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:VIMODES 2 "register_operand" "vr")
+	   (match_operand 3 "const_0_operand" "J")
+	   (match_operand 4 "const_1_operand" "Wsa")
+	   (mem:BLK (scratch))]
+	  UNSPEC_LOAD_GATHER))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vlxei<VIMODES:eew>.v\t%0,(%1),%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "mask_gather_load<VMODES:mode><VIMODES:mode>"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+	      (unspec:VMODES
+		[(match_operand:<VMODES:VCMPEQUIV> 5 "register_operand")
+		 (match_operand:DI 1 "register_operand")
+		 (match_operand:VIMODES 2 "register_operand")
+		 (match_operand:DI 3 "const_0_operand")
+		 (match_operand:DI 4 "const_1_operand")
+		 (mem:BLK (scratch))]
+		UNSPEC_LOAD_GATHER))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_64BIT && TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "mask_gather_load<VMODES:mode><VIMODES:mode>_<P:mode>"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec:VMODES
+	  [(match_operand:<VMODES:VCMPEQUIV> 5 "register_operand" "vm")
+	   (match_operand:P 1 "register_operand" "r")
+	   (match_operand:VIMODES 2 "register_operand" "vr")
+	   (match_operand 3 "const_0_operand" "J")
+	   (match_operand 4 "const_1_operand" "Wsa")
+	   (mem:BLK (scratch))]
+	  UNSPEC_LOAD_GATHER))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vlxei<VIMODES:eew>.v\t%0,(%1),%2,%5.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Vector Indexed Load instructions for builtin
+
+(define_expand "vlxei<VMODES:mode><VIMODES:mode>_<P:mode>"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+	      (unspec:VMODES
+		[(match_operand:P 1 "register_operand")
+		 (match_operand:VIMODES 2 "register_operand")
+		 (mem:BLK (scratch))]
+		UNSPEC_INDEXED_LOAD))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "vlxei<VMODES:mode><VIMODES:mode>_<P:mode>_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec:VMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:VIMODES 2 "register_operand" "vr")
+	   (mem:BLK (scratch))]
+	  UNSPEC_INDEXED_LOAD))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vlxei<VIMODES:eew>.v\t%0,(%1),%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vlxei<VMODES:mode><VIMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+	      (unspec:VMODES
+		[(match_operand:<VMODES:VCMPEQUIV> 1 "register_operand")
+		 (match_operand:VMODES 2 "register_operand")
+		 (match_operand:P 3 "register_operand")
+		 (match_operand:VIMODES 4 "register_operand")
+		 (mem:BLK (scratch))]
+		UNSPEC_INDEXED_LOAD))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "vlxei<VMODES:mode><VIMODES:mode>_<P:mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec:VMODES
+	  [(match_operand:<VMODES:VCMPEQUIV> 1 "register_operand" "vm")
+	   (match_operand:VMODES 2 "register_operand" "0")
+	   (match_operand:P 3 "register_operand" "r")
+	   (match_operand:VIMODES 4 "register_operand" "vr")
+	   (mem:BLK (scratch))]
+	  UNSPEC_INDEXED_LOAD))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vlxei<VIMODES:eew>.v\t%0,(%3),%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

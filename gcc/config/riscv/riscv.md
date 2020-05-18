@@ -85,6 +85,8 @@
   UNSPEC_VASUB
   UNSPEC_VSMUL
   UNSPEC_VLEFF
+  UNSPEC_LOAD_GATHER
+  UNSPEC_INDEXED_LOAD
 ])
 
 (define_c_enum "unspecv" [

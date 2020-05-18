@@ -54,6 +54,11 @@
   (and (match_code "const_int")
        (match_test "LUI_OPERAND (ival)")))
 
+(define_constraint "Wsa"
+  "Integer one."
+  (and (match_code "const_int")
+       (match_test "ival == 1")))
+
 (define_constraint "Wsb"
   "A constraint that matches an immediate shift constant in QImode."
   (and (match_code "const_int")

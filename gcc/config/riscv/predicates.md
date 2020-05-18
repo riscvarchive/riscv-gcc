@@ -55,6 +55,10 @@
   (and (match_code "const_int,const_wide_int,const_double,const_vector")
        (match_test "op == CONST0_RTX (GET_MODE (op))")))
 
+(define_predicate "const_1_operand"
+  (and (match_code "const_int,const_wide_int,const_double,const_vector")
+       (match_test "op == CONST1_RTX (GET_MODE (op))")))
+
 (define_predicate "reg_or_0_operand"
   (ior (match_operand 0 "const_0_operand")
        (match_operand 0 "register_operand")))
