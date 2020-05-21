@@ -474,6 +474,13 @@
 			 (UNSPEC_VASUBU "vasubu") (UNSPEC_VASUB "vasub")
 			 (UNSPEC_VSMUL "vsmul")])
 
+;; Iterator and attributes for vsxei and vsuxei instructions.
+(define_int_iterator UNSPEC_INDEXED_STORE [UNSPEC_ORDERED_INDEXED_STORE
+					   UNSPEC_UNORDERED_INDEXED_STORE])
+
+(define_int_attr order [(UNSPEC_ORDERED_INDEXED_STORE "")
+			(UNSPEC_UNORDERED_INDEXED_STORE "u")])
+
 ;; Vsetvl instructions.
 
 ;; These use VIMODES because only the SEW and LMUL matter.  The int/float
@@ -821,6 +828,143 @@
    && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
 		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
   "vlxei<VIMODES:eew>.v\t%0,(%3),%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Vector Indexed Store Instructions
+
+;; XXX: we should support scatter store for XLEN is 32.
+(define_expand "scatter_store<VMODES:mode><VIMODES:mode>"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+	      (unspec:BLK
+		[(match_operand:DI 0 "register_operand")
+		 (match_operand:VIMODES 1 "register_operand")
+		 (match_operand:DI 2 "const_0_operand")
+		 (match_operand:DI 3 "const_1_operand")
+		 (match_operand:VMODES 4 "register_operand")]
+		UNSPEC_STORE_SCATTER))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_64BIT && TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "scatter_store<VMODES:mode><VIMODES:mode>_<P:mode>"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:P 0 "register_operand" "r")
+	   (match_operand:VIMODES 1 "register_operand" "vr")
+	   (match_operand 2 "const_0_operand" "J")
+	   (match_operand 3 "const_1_operand" "Wsa")
+	   (match_operand:VMODES 4 "register_operand" "vr")]
+	  UNSPEC_STORE_SCATTER))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vsxei<VIMODES:eew>.v\t%4,(%0),%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "mask_scatter_store<VMODES:mode><VIMODES:mode>"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+	      (unspec:BLK
+		[(match_operand:<VMODES:VCMPEQUIV> 5 "register_operand")
+		 (match_operand:DI 0 "register_operand")
+		 (match_operand:VIMODES 1 "register_operand")
+		 (match_operand:DI 2 "const_0_operand")
+		 (match_operand:DI 3 "const_1_operand")
+		 (match_operand:VMODES 4 "register_operand")]
+		UNSPEC_STORE_SCATTER))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_64BIT && TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "mask_scatter_store<VMODES:mode><VIMODES:mode>_<P:mode>"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:<VMODES:VCMPEQUIV> 5 "register_operand" "vm")
+	   (match_operand:P 0 "register_operand" "r")
+	   (match_operand:VIMODES 1 "register_operand" "vr")
+	   (match_operand 2 "const_0_operand" "J")
+	   (match_operand 3 "const_1_operand" "Wsa")
+	   (match_operand:VMODES 4 "register_operand" "vr")]
+	  UNSPEC_STORE_SCATTER))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vsxei<VIMODES:eew>.v\t%4,(%0),%1,%5.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Vector Ordered-Indexed Store instructions for builtin
+
+(define_expand "vs<order>xei<VMODES:mode><VIMODES:mode>_<P:mode>"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+	      (unspec:BLK
+		[(match_operand:P 0 "register_operand")
+		 (match_operand:VIMODES 1 "register_operand")
+		 (match_operand:VMODES 2 "register_operand")]
+		UNSPEC_INDEXED_STORE))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "vs<order>xei<VMODES:mode><VIMODES:mode>_<P:mode>_nosetvl"
+   [(set (mem:BLK (scratch))
+	 (unspec:BLK
+	   [(match_operand:P 0 "register_operand" "r")
+	    (match_operand:VIMODES 1 "register_operand" "vr")
+	    (match_operand:VMODES 2 "register_operand" "vr")]
+	   UNSPEC_INDEXED_STORE))
+    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vs<order>xei<VIMODES:eew>.v\t%2,(%0),%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vs<order>xei<VMODES:mode><VIMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+	      (unspec:BLK
+		[(match_operand:<VMODES:VCMPEQUIV> 0 "register_operand")
+		 (match_operand:P 1 "register_operand")
+		 (match_operand:VIMODES 2 "register_operand")
+		 (match_operand:VMODES 3 "register_operand")]
+		UNSPEC_INDEXED_STORE))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "vs<order>xei<VMODES:mode><VIMODES:mode>_<P:mode>_mask_nosetvl"
+   [(set (mem:BLK (scratch))
+	 (unspec:BLK
+	   [(match_operand:<VMODES:VCMPEQUIV> 0 "register_operand" "vm")
+	    (match_operand:P 1 "register_operand" "r")
+	    (match_operand:VIMODES 2 "register_operand" "vr")
+	    (match_operand:VMODES 3 "register_operand" "vr")]
+	   UNSPEC_INDEXED_STORE))
+    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vs<order>xei<VIMODES:eew>.v\t%3,(%1),%2,%0.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
