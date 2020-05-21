@@ -71,7 +71,7 @@ size_t compact_non_zero(size_t n, const int32_t* in, int32_t* out) {
     // offset is         2,1,1,0
     // active offset is  ^ ^   ^
     offset = vsll_vs_u32m8_mask(non_zeros_mask, offset, offset, 2); // Multiply offsets by four bytes
-    vstoreux_i32m8_mask(out, offset, non_zeros_mask, value);
+    vsuxe32_v_i32m8_mask(non_zeros_mask, out, offset, value);
     in+=vl;
     out+=non_zeros_count;
   }
