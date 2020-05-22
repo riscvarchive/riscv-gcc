@@ -3713,6 +3713,105 @@ OP##_vm_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,			\
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_VCOMPRESS, vcompress)
 
+#define _RVVINT_AMO(SEW, LMUL, MLEN, T, ISEW, ILMUL, NAME)		\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+NAME##ISEW##_v_i##SEW##m##LMUL (const T *a,				\
+				vuint##ISEW##m##ILMUL##_t indexed,	\
+				vint##SEW##m##LMUL##_t value)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_##NAME##ii##SEW##m##LMUL##_##ISEW##m##ILMUL##_si (a, indexed, value);\
+  else									\
+    return __builtin_riscv_##NAME##ii##SEW##m##LMUL##_##ISEW##m##ILMUL##_di (a, indexed, value);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+NAME##ISEW##_v_u##SEW##m##LMUL (const u##T *a,				\
+				vuint##ISEW##m##ILMUL##_t indexed,	\
+				vuint##SEW##m##LMUL##_t value)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_##NAME##iu##SEW##m##LMUL##_##ISEW##m##ILMUL##_si (a, indexed, value);\
+  else									\
+    return __builtin_riscv_##NAME##iu##SEW##m##LMUL##_##ISEW##m##ILMUL##_di (a, indexed, value);\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+NAME##ISEW##_v_i##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				       const T *a,			\
+				       vuint##ISEW##m##ILMUL##_t indexed,\
+				       vint##SEW##m##LMUL##_t value)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_##NAME##ii##SEW##m##LMUL##_##ISEW##m##ILMUL##_si_mask (\
+	     mask, a, indexed, value);					\
+  else									\
+    return __builtin_riscv_##NAME##ii##SEW##m##LMUL##_##ISEW##m##ILMUL##_di_mask (\
+	     mask, a, indexed, value);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+NAME##ISEW##_v_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				       const u##T *a,			\
+				       vuint##ISEW##m##ILMUL##_t indexed,\
+				       vuint##SEW##m##LMUL##_t value)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_##NAME##iu##SEW##m##LMUL##_##ISEW##m##ILMUL##_si_mask (\
+	     mask, a, indexed, value);					\
+  else									\
+    return __builtin_riscv_##NAME##iu##SEW##m##LMUL##_##ISEW##m##ILMUL##_di_mask (\
+	     mask, a, indexed, value);					\
+}
+
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoswape)
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoadde)
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoxore)
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoande)
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoore)
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamomine)
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamomaxe)
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamominue)
+_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamomaxue)
+
+#define _RVVFLOAT_AMO(SEW, LMUL, MLEN, T, ISEW, ILMUL, NAME)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+NAME##ISEW##_v_f##SEW##m##LMUL (const _RVV_F##SEW##_TYPE *a,		\
+				vuint##ISEW##m##ILMUL##_t indexed,	\
+				vfloat##SEW##m##LMUL##_t value)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_##NAME##if##SEW##m##LMUL##_##ISEW##m##ILMUL##_si (a, indexed, value);\
+  else									\
+    return __builtin_riscv_##NAME##if##SEW##m##LMUL##_##ISEW##m##ILMUL##_di (a, indexed, value);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+NAME##ISEW##_v_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
+				       const _RVV_F##SEW##_TYPE *a,	\
+				       vuint##ISEW##m##ILMUL##_t indexed,\
+				       vfloat##SEW##m##LMUL##_t value)	\
+{									\
+  if (__riscv_xlen == 32)						\
+  return __builtin_riscv_##NAME##if##SEW##m##LMUL##_##ISEW##m##ILMUL##_si_mask (\
+	   mask, a, indexed, value);					\
+  else									\
+  return __builtin_riscv_##NAME##if##SEW##m##LMUL##_##ISEW##m##ILMUL##_di_mask (\
+	   mask, a, indexed, value);					\
+}
+
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoswape)
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoadde)
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoxore)
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoande)
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoore)
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamomine)
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamomaxe)
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamominue)
+_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamomaxue)
+
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function
    way . */

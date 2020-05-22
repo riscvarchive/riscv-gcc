@@ -481,6 +481,20 @@
 (define_int_attr order [(UNSPEC_ORDERED_INDEXED_STORE "")
 			(UNSPEC_UNORDERED_INDEXED_STORE "u")])
 
+;; Iterator and attributes for all vector atomic instructions.
+(define_int_iterator UNSPEC_VAMO [UNSPEC_VAMO_SWAP UNSPEC_VAMO_ADD
+				  UNSPEC_VAMO_XOR  UNSPEC_VAMO_AND
+				  UNSPEC_VAMO_OR   UNSPEC_VAMO_MIN
+				  UNSPEC_VAMO_MAX  UNSPEC_VAMO_MINU
+				  UNSPEC_VAMO_MAXU])
+
+(define_int_attr vamo
+  [(UNSPEC_VAMO_SWAP "vamoswapei") (UNSPEC_VAMO_ADD "vamoaddei")
+   (UNSPEC_VAMO_XOR "vamoxorei")   (UNSPEC_VAMO_AND "vamoandei")
+   (UNSPEC_VAMO_OR "vamoorei")     (UNSPEC_VAMO_MIN "vamominei")
+   (UNSPEC_VAMO_MAX "vamomaxei")   (UNSPEC_VAMO_MINU "vamominuei")
+   (UNSPEC_VAMO_MAXU "vamomaxuei")])
+
 ;; Vsetvl instructions.
 
 ;; These use VIMODES because only the SEW and LMUL matter.  The int/float
@@ -8426,5 +8440,73 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vleff<eew>.v\t%0,%1,%2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Vector atomic instructions for builtin
+
+(define_expand "<vamo><VMODES:mode><VIMODES:mode>_<P:mode>"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec_volatile:VMODES
+		     [(match_operand:P 1 "register_operand")
+		      (match_operand:VIMODES 2 "register_operand")
+		      (match_operand:VMODES 3 "register_operand")
+		      (mem:BLK (scratch))]
+		     UNSPEC_VAMO))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "<vamo><VMODES:mode><VIMODES:mode>_<P:mode>_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec_volatile:VMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:VIMODES 2 "register_operand" "vr")
+	   (match_operand:VMODES 3 "register_operand" "0")
+	   (mem:BLK (scratch))]
+	  UNSPEC_VAMO))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "<vamo><VIMODES:eew>.v\t%0,(%1),%2,%0"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<vamo><VMODES:mode><VIMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec_volatile:VMODES
+		     [(match_operand:<VMODES:VCMPEQUIV> 1 "register_operand")
+		      (match_operand:P 2 "register_operand")
+		      (match_operand:VIMODES 3 "register_operand")
+		      (match_operand:VMODES 4 "register_operand")
+		      (mem:BLK (scratch))]
+		     UNSPEC_VAMO))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "<vamo><VMODES:mode><VIMODES:mode>_<P:mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec_volatile:VMODES
+	  [(match_operand:<VMODES:VCMPEQUIV> 1 "register_operand" "vm")
+	   (match_operand:P 2 "register_operand" "r")
+	   (match_operand:VIMODES 3 "register_operand" "vr")
+	   (match_operand:VMODES 4 "register_operand" "0")
+	   (mem:BLK (scratch))]
+	  UNSPEC_VAMO))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "<vamo><VIMODES:eew>.v\t%0,(%2),%3,%0,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])

@@ -2980,14 +2980,6 @@ FUNC_NAME (MASK_TYPE mask, VAL_TYPE a, VAL_TYPE b)			\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t)
 
-_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, swap, swap)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, add, add)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, xor, xor)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, or, or)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, and, and)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, min, minu)
-_RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, max, maxu)
-
 /* Template function for integer AMO operation.  */
 #define _RVV_INT_AMOW_TEMPLATE(SEW, LMUL, MLEN, TYPE, NSEW, ADDR_TYPE_LETTER,\
 			       OP, OPU)					\
@@ -3008,14 +3000,6 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_AMO_TEMPLATE, max, maxu)
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vuint##SEW##m##LMUL##_t)
 
-_RVV_INT_AMOW_ITERATOR_ARG (_RVV_INT_AMOW_TEMPLATE, swap, swap)
-_RVV_INT_AMOW_ITERATOR_ARG (_RVV_INT_AMOW_TEMPLATE, add, add)
-_RVV_INT_AMOW_ITERATOR_ARG (_RVV_INT_AMOW_TEMPLATE, xor, xor)
-_RVV_INT_AMOW_ITERATOR_ARG (_RVV_INT_AMOW_TEMPLATE, or, or)
-_RVV_INT_AMOW_ITERATOR_ARG (_RVV_INT_AMOW_TEMPLATE, and, and)
-_RVV_INT_AMOW_ITERATOR_ARG (_RVV_INT_AMOW_TEMPLATE, min, minu)
-_RVV_INT_AMOW_ITERATOR_ARG (_RVV_INT_AMOW_TEMPLATE, max, maxu)
-
 #define _RVV_AMO_FLOAT_TEMPLATE(SEW, LMUL, MLEN, T, OP)			\
   _RVV_ASM_AMO_WD_TEMPLATE(						\
     SEW, LMUL,								\
@@ -3025,8 +3009,6 @@ _RVV_INT_AMOW_ITERATOR_ARG (_RVV_INT_AMOW_TEMPLATE, max, maxu)
     /* OP0_TYPE */_RVV_F##SEW##_TYPE *,					\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vfloat##SEW##m##LMUL##_t)
-
-_RVV_FLOAT_ITERATOR_ARG (_RVV_AMO_FLOAT_TEMPLATE, swap)
 
 __extension__ extern __inline word_type
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
