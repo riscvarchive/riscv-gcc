@@ -99,6 +99,7 @@
   UNSPEC_VAMO_MAX
   UNSPEC_VAMO_MINU
   UNSPEC_VAMO_MAXU
+  UNSPEC_READ_VL
 ])
 
 (define_c_enum "unspecv" [

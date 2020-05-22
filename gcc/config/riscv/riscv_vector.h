@@ -3812,6 +3812,16 @@ _RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamomaxe)
 _RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamominue)
 _RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamomaxue)
 
+__extension__ extern __inline size_t
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
+vreadvl ()
+{
+  if (__riscv_xlen == 32)
+    return __builtin_riscv_vreadvlsi ();
+  else
+    return __builtin_riscv_vreadvldi ();
+}
+
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function
    way . */

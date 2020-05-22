@@ -3010,17 +3010,5 @@ FUNC_NAME (MASK_TYPE mask, VAL_TYPE a, VAL_TYPE b)			\
     /* OP1_TYPE */vuint##SEW##m##LMUL##_t,				\
     /* OP2_TYPE */vfloat##SEW##m##LMUL##_t)
 
-__extension__ extern __inline word_type
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
-vreadvl ()
-{
-  word_type rv;
-  __asm__ volatile ("csrr %0, vl"
-		    : "=r" (rv)
-		    :
-		    : "vl");
-  return rv;
-}
-
 #endif
 #endif

@@ -8510,3 +8510,12 @@
   "<vamo><VIMODES:eew>.v\t%0,(%2),%3,%0,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;; Read VL
+(define_insn "riscv_vreadvl<mode>"
+  [(set (match_operand:P 0 "register_operand" "=r")
+	(unspec_volatile:P [(reg:P VL_REGNUM)] UNSPEC_READ_VL))]
+  "TARGET_VECTOR"
+  "csrr\t%0, vl"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
