@@ -5,82 +5,95 @@
 #include <stddef.h>
 #include "rvv-common.h"
 
-#define RVV_TEST_AMO(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, OP, OPU)	\
-  void test_amo##OP##e_##VCLASS##EM (uint##SEW##_t *x, int##SEW##_t *y) {\
+#define RVV_TEST_AMO(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, IEM, ISEW, OP, OPU)	\
+  void test_amo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, int##SEW##_t *y) {\
     vint##EM##_t vy;						\
-    vuint##EM##_t vx;						\
-    vx = vload_u##EM(x);					\
+    vuint##IEM##_t vindex;					\
+    vindex = vload_u##IEM(index);				\
     vy = vload_i##EM(y);					\
-    vy = vamo##OP##e_v_i##EM(y, vx, vy);			\
+    vy = vamo##OP##ISEW##_v_i##EM(y, vindex, vy);		\
     vstore_i##EM(y, vy);					\
   }								\
-  void test_uamo##OP##e_##VCLASS##EM (uint##SEW##_t *x, uint##SEW##_t *y) {\
-    vuint##EM##_t vx, vy;						\
-    vx = vload_u##EM(x);					\
+  void test_uamo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, uint##SEW##_t *y) {\
+    vuint##EM##_t vy;						\
+    vuint##IEM##_t vindex;					\
+    vindex = vload_u##IEM(index);				\
     vy = vload_u##EM(y);					\
-    vx = vamo##OPU##e_v_u##EM(y, vx, vy);			\
-    vstore_u##EM(x, vx);					\
+    vy = vamo##OPU##ISEW##_v_u##EM(y, vindex, vy);		\
+    vstore_u##EM(y, vy);					\
   }								\
 
-#define RVV_TEST_FAMO(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, OP)	\
-  void test_amo##OP##e_##VCLASS##EM (uint##SEW##_t *x, STYPE *y) {	\
-    vuint##EM##_t vx;						\
+#define RVV_TEST_FAMO(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, IEM, ISEW, OP)	\
+  void test_amo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, STYPE *y) {	\
     v##VCLASST##EM##_t vy;					\
-    vx = vload_u##EM(x);					\
+    vuint##IEM##_t vindex;					\
+    vindex = vload_u##IEM(index);				\
     vy = vload_##VCLASS##EM(y);					\
-    vy = vamo##OP##e_v_##VCLASS##EM(y, vx, vy);			\
+    vy = vamo##OP##ISEW##_v_##VCLASS##EM(y, vindex, vy);	\
     vstore_##VCLASS##EM(y, vy);					\
   }
 
-#define RVV_TEST_AMOW(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, UADDR_LETTER, OP, OPU)	\
-  void test_amo##OP##w_##VCLASS##EM (uint##SEW##_t *x, int##SEW##_t *y, UADDR_LETTER##int32_t *addr) {\
-    vint##EM##_t vy;						\
-    vuint##EM##_t vx;						\
-    vx = vload_u##EM(x);					\
-    vy = vload_i##EM(y);					\
-    vy = vamo##OP##w_v_i##EM(addr, vx, vy);			\
-    vstore_i##EM(y, vy);					\
-  }								\
-  void test_uamo##OP##w_##VCLASS##EM (uint##SEW##_t *x, uint##SEW##_t *y, UADDR_LETTER##int32_t *addr) {\
-    vuint##EM##_t vx, vy;						\
-    vx = vload_u##EM(x);					\
-    vy = vload_u##EM(y);					\
-    vx = vamo##OPU##w_v_u##EM(addr, vx, vy);			\
-    vstore_u##EM(x, vx);					\
-  }								\
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, swape, swape)
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, adde, adde)
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, xore, xore)
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, ore, ore)
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, ande, ande)
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, mine, mine)
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, maxe, maxe)
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, minue, minue)
+RVV_INT_INDEX_TEST_ARG (RVV_TEST_AMO, maxue, maxue)
 
-RVV_SEW_INT_TEST_ARG (RVV_TEST_AMO, swap, swap)
-RVV_SEW_INT_TEST_ARG (RVV_TEST_AMO, add, add)
-RVV_SEW_INT_TEST_ARG (RVV_TEST_AMO, xor, xor)
-RVV_SEW_INT_TEST_ARG (RVV_TEST_AMO, or, or)
-RVV_SEW_INT_TEST_ARG (RVV_TEST_AMO, and, and)
-RVV_SEW_INT_TEST_ARG (RVV_TEST_AMO, min, minu)
-RVV_SEW_INT_TEST_ARG (RVV_TEST_AMO, max, maxu)
-RVV_SEW_FLOAT_TEST_ARG (RVV_TEST_FAMO, swap)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, swape)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, adde)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, xore)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, ore)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, ande)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, mine)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, maxe)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, minue)
+RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, maxue)
 
-RVV_AMOW_INT_TEST_ARG (RVV_TEST_AMOW, swap, swap)
-RVV_AMOW_INT_TEST_ARG (RVV_TEST_AMOW, add, add)
-RVV_AMOW_INT_TEST_ARG (RVV_TEST_AMOW, xor, xor)
-RVV_AMOW_INT_TEST_ARG (RVV_TEST_AMOW, or, or)
-RVV_AMOW_INT_TEST_ARG (RVV_TEST_AMOW, and, and)
-RVV_AMOW_INT_TEST_ARG (RVV_TEST_AMOW, min, minu)
-RVV_AMOW_INT_TEST_ARG (RVV_TEST_AMOW, max, maxu)
+/* { dg-final { scan-assembler-times "vamoswapei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamoswapei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamoswapei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamoswapei64.v" 29 } } */
 
-/* { dg-final { scan-assembler-times "vamoswape.v" 44 } } */
-/* { dg-final { scan-assembler-times "vamoadde.v" 32 } } */
-/* { dg-final { scan-assembler-times "vamoxore.v" 32 } } */
-/* { dg-final { scan-assembler-times "vamoore.v" 32 } } */
-/* { dg-final { scan-assembler-times "vamoande.v" 32 } } */
-/* { dg-final { scan-assembler-times "vamomine.v" 16 } } */
-/* { dg-final { scan-assembler-times "vamominue.v" 16 } } */
-/* { dg-final { scan-assembler-times "vamomaxe.v" 16 } } */
-/* { dg-final { scan-assembler-times "vamomaxue.v" 16 } } */
-/* { dg-final { scan-assembler-times "vamoswapw.v" 16 } } */
-/* { dg-final { scan-assembler-times "vamoaddw.v" 16} } */
-/* { dg-final { scan-assembler-times "vamoxorw.v" 16 } } */
-/* { dg-final { scan-assembler-times "vamoorw.v" 16 } } */
-/* { dg-final { scan-assembler-times "vamoandw.v" 16 } } */
-/* { dg-final { scan-assembler-times "vamominw.v" 8 } } */
-/* { dg-final { scan-assembler-times "vamominuw.v" 8 } } */
-/* { dg-final { scan-assembler-times "vamomaxw.v" 8 } } */
-/* { dg-final { scan-assembler-times "vamomaxuw.v" 8 } } */
+/* { dg-final { scan-assembler-times "vamoaddei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamoaddei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamoaddei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamoaddei64.v" 29 } } */
+
+/* { dg-final { scan-assembler-times "vamoxorei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamoxorei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamoxorei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamoxorei64.v" 29 } } */
+
+/* { dg-final { scan-assembler-times "vamoorei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamoorei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamoorei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamoorei64.v" 29 } } */
+
+/* { dg-final { scan-assembler-times "vamoandei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamoandei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamoandei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamoandei64.v" 29 } } */
+
+/* { dg-final { scan-assembler-times "vamominei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamominei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamominei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamominei64.v" 29 } } */
+
+/* { dg-final { scan-assembler-times "vamominuei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamominuei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamominuei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamominuei64.v" 29 } } */
+
+/* { dg-final { scan-assembler-times "vamomaxei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamomaxei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamomaxei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamomaxei64.v" 29 } } */
+
+/* { dg-final { scan-assembler-times "vamomaxuei8.v" 20 } } */
+/* { dg-final { scan-assembler-times "vamomaxuei16.v" 33 } } */
+/* { dg-final { scan-assembler-times "vamomaxuei32.v" 34 } } */
+/* { dg-final { scan-assembler-times "vamomaxuei64.v" 29 } } */
