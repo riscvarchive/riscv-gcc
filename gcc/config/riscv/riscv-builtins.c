@@ -374,7 +374,7 @@ along with GCC; see the file COPYING3.  If not see
    corresponding indexed load and store vector type and extra arguments.
 
    MACRO (SEW, LMUL, MLEN, MODE, SMODE, ISEW, ILMUL, IMODE, ISMODE)  */
-#define _RVV_INT_INDEX_LOAD_ITERATOR(MACRO)		\
+#define _RVV_INT_INDEX_ITERATOR(MACRO)			\
   MACRO ( 8, 1,  8, vnx16qi, QI,  8, 1, vnx16qi, QI)	\
   MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI)	\
   MACRO ( 8, 1,  8, vnx16qi, QI, 32, 4, vnx16si, SI)	\
@@ -471,7 +471,7 @@ along with GCC; see the file COPYING3.  If not see
    corresponding indexed load and store vector type and extra arguments.
    MACRO (SEW, LMUL, MLEN, MODE, SMODE, ISEW, ILMUL, IMODE, ISMODE)  */
 
-#define _RVV_FLOAT_INDEX_LOAD_ITERATOR(MACRO)		\
+#define _RVV_FLOAT_INDEX_ITERATOR(MACRO)		\
   MACRO (16, 1, 16,  vnx8hf, HF, 16, 1,  vnx8hi, HF)	\
   MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8si, SF)	\
   MACRO (16, 1, 16,  vnx8hf, HF, 64, 4,  vnx8di, DF)	\
@@ -2183,8 +2183,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_INT_ITERATOR (VINT_LOAD_FF_BUILTINS)
   _RVV_FLOAT_ITERATOR (VFLOAT_LOAD_FF_BUILTINS)
 
-  _RVV_INT_INDEX_LOAD_ITERATOR (VINT_INDEX_LOAD_STORE_BUILTINS)
-  _RVV_FLOAT_INDEX_LOAD_ITERATOR (VFLOAT_INDEX_LOAD_STORE_BUILTINS)
+  _RVV_INT_INDEX_ITERATOR (VINT_INDEX_LOAD_STORE_BUILTINS)
+  _RVV_FLOAT_INDEX_ITERATOR (VFLOAT_INDEX_LOAD_STORE_BUILTINS)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, add)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, sub)

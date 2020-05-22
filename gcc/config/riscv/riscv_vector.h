@@ -143,7 +143,7 @@ typedef __fp16 float16_t;
    corresponding indexed load and store vector type and extra arguments.
 
    MACRO (SEW, LMUL, MLEN, TYPE, ISEW, ILMUL)  */
-#define _RVV_INT_INDEX_LOAD_ITERATOR(MACRO)	\
+#define _RVV_INT_INDEX_ITERATOR(MACRO)	\
   MACRO ( 8, 1,  8,  int8_t,  8, 1)	\
   MACRO ( 8, 1,  8,  int8_t, 16, 2)	\
   MACRO ( 8, 1,  8,  int8_t, 32, 4)	\
@@ -189,7 +189,7 @@ typedef __fp16 float16_t;
   MACRO (64, 8,  8, int64_t, 32, 4)	\
   MACRO (64, 8,  8, int64_t, 64, 8)
 
-#define _RVV_INT_INDEX_LOAD_ITERATOR_ARG(MACRO, ...)	\
+#define _RVV_INT_INDEX_ITERATOR_ARG(MACRO, ...)	\
   MACRO ( 8, 1,  8,  int8_t,  8, 1, __VA_ARGS__)	\
   MACRO ( 8, 1,  8,  int8_t, 16, 2, __VA_ARGS__)	\
   MACRO ( 8, 1,  8,  int8_t, 32, 4, __VA_ARGS__)	\
@@ -240,7 +240,7 @@ typedef __fp16 float16_t;
    corresponding indexed load and store vector type and extra arguments.
 
    MACRO (SEW, LMUL, MLEN, TYPE, ISEW, ILMUL)  */
-#define _RVV_FLOAT_INDEX_LOAD_ITERATOR(MACRO)	\
+#define _RVV_FLOAT_INDEX_ITERATOR(MACRO)	\
   MACRO (16, 1, 16, float16_t, 16, 1)	\
   MACRO (16, 1, 16, float16_t, 32, 2)	\
   MACRO (16, 1, 16, float16_t, 64, 4)	\
@@ -270,7 +270,7 @@ typedef __fp16 float16_t;
   MACRO (64, 8,  8,    double, 32, 4)	\
   MACRO (64, 8,  8,    double, 64, 8)
 
-#define _RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG(MACRO, ...)	\
+#define _RVV_FLOAT_INDEX_ITERATOR_ARG(MACRO, ...)	\
   MACRO (16, 1, 16, float16_t, 16, 1, __VA_ARGS__)	\
   MACRO (16, 1, 16, float16_t, 32, 2, __VA_ARGS__)	\
   MACRO (16, 1, 16, float16_t, 64, 4, __VA_ARGS__)	\
@@ -771,7 +771,7 @@ vlxe##ISEW##_v_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 	     mask, maskedoff, a, indexed);				\
 }
 
-_RVV_INT_INDEX_LOAD_ITERATOR (_RVVINTLD_INDEXED)
+_RVV_INT_INDEX_ITERATOR (_RVVINTLD_INDEXED)
 
 #define _RVVFLOAT_LD_INDEXED(SEW, LMUL, MLEN, T, ISEW, ILMUL)		\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
@@ -799,7 +799,7 @@ vlxe##ISEW##_v_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 	   mask, maskedoff, a, indexed);				\
 }
 
-_RVV_FLOAT_INDEX_LOAD_ITERATOR (_RVVFLOAT_LD_INDEXED)
+_RVV_FLOAT_INDEX_ITERATOR (_RVVFLOAT_LD_INDEXED)
 
 #define _RVVINTST_INDEXED(SEW, LMUL, MLEN, T, ISEW, ILMUL, NAME)	\
 __extension__ extern __inline void					\
@@ -853,8 +853,8 @@ NAME##ISEW##_v_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 	     mask, a, indexed, value);					\
 }
 
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINTST_INDEXED, vsxe)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINTST_INDEXED, vsuxe)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINTST_INDEXED, vsxe)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINTST_INDEXED, vsuxe)
 
 #define _RVVFLOAT_ST_INDEXED(SEW, LMUL, MLEN, T, ISEW, ILMUL, NAME)	\
 __extension__ extern __inline void					\
@@ -883,8 +883,8 @@ NAME##ISEW##_v_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 	   mask, a, indexed, value);					\
 }
 
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_ST_INDEXED, vsxe)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_ST_INDEXED, vsuxe)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_ST_INDEXED, vsxe)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_ST_INDEXED, vsuxe)
 
 #define _RVV_FLOAT_VEC_MOVE(SEW, LMUL, MLEN, T)				\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
@@ -3765,15 +3765,15 @@ NAME##ISEW##_v_u##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 	     mask, a, indexed, value);					\
 }
 
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoswape)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoadde)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoxore)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoande)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamoore)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamomine)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamomaxe)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamominue)
-_RVV_INT_INDEX_LOAD_ITERATOR_ARG (_RVVINT_AMO, vamomaxue)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamoswape)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamoadde)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamoxore)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamoande)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamoore)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamomine)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamomaxe)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamominue)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVVINT_AMO, vamomaxue)
 
 #define _RVVFLOAT_AMO(SEW, LMUL, MLEN, T, ISEW, ILMUL, NAME)		\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
@@ -3802,15 +3802,15 @@ NAME##ISEW##_v_f##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,		\
 	   mask, a, indexed, value);					\
 }
 
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoswape)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoadde)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoxore)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoande)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamoore)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamomine)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamomaxe)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamominue)
-_RVV_FLOAT_INDEX_LOAD_ITERATOR_ARG (_RVVFLOAT_AMO, vamomaxue)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamoswape)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamoadde)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamoxore)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamoande)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamoore)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamomine)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamomaxe)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamominue)
+_RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_AMO, vamomaxue)
 
 /* riscv_vector_asm.h contain the inline asm version of intrinsic function,
    it will removed once we implement all intrinsic function in built-in function
