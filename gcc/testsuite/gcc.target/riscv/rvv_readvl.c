@@ -6,7 +6,7 @@
 #include "rvv-common.h"
 
 
-int x()
+size_t x()
 {
   return vreadvl ();
 }
