@@ -3822,10 +3822,5 @@ vreadvl ()
     return __builtin_riscv_vreadvldi ();
 }
 
-/* riscv_vector_asm.h contain the inline asm version of intrinsic function,
-   it will removed once we implement all intrinsic function in built-in function
-   way . */
-#include <riscv_vector_asm.h>
-
 #endif
 #endif
