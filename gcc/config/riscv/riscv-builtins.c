@@ -1821,22 +1821,24 @@ tree rvvbool64_t_node;
 
 #define VINT_WIDENING_CVT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
 					  WE, WL, WVMODE, WSMODE,	\
-					  OP, NAME)			\
+					  OP, OPU, NAME)		\
   DIRECT_NAMED (OP##VMODE##WVMODE##2, v##NAME##_vv_i##E##m##L,		\
 		RISCV_VI##WE##M##WL##_FTYPE_VI##E##M##L,		\
 		vector),						\
-  DIRECT_NAMED (zero_##OP##VMODE##WVMODE##2, v##NAME##_vv_u##E##m##L,	\
+  DIRECT_NAMED (OPU##VMODE##WVMODE##2, v##NAME##_vv_u##E##m##L,		\
 		RISCV_VUI##WE##M##WL##_FTYPE_VUI##E##M##L,		\
 		vector),
 
 #define VINT_WIDENING_CVT_BUILTINS(E, L, MLEN, VMODE, SDEMODE,		\
-				   WE, WL, WVMODE, WSMODE, OP, NAME)	\
+				   WE, WL, WVMODE, WSMODE,		\
+				   OP, OPU, NAME)			\
   VINT_WIDENING_CVT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,		\
-				    WE, WL, WVMODE, WSMODE, OP, NAME)	\
+				    WE, WL, WVMODE, WSMODE,		\
+				    OP, OPU, NAME)			\
   DIRECT_NAMED (OP##VMODE##WVMODE##2_mask, v##NAME##_vv_i##E##m##L##_mask,\
 		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L,\
 		vector),						\
-  DIRECT_NAMED (zero_##OP##VMODE##WVMODE##2_mask, v##NAME##_vv_u##E##m##L##_mask,\
+  DIRECT_NAMED (OPU##VMODE##WVMODE##2_mask, v##NAME##_vv_u##E##m##L##_mask,\
 		RISCV_VUI##WE##M##WL##_FTYPE_VB##MLEN##_VUI##WE##M##WL##_VUI##E##M##L,\
 		vector),
 
@@ -2231,9 +2233,14 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS, madd, qmacc)
   _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_MAC_OP_BUILTINS_SCALAR, madd, qmacc)
 
-  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS, extend, extend)
-  _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS, extend, extend_q)
-  _RVV_EINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS, extend, extend_e)
+  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS,
+			  wcvt, wcvtu, wcvt)
+  _RVV_WINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS,
+			  extend, zero_extend, extend)
+  _RVV_QINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS,
+			  extend, zero_extend, extend_q)
+  _RVV_EINT_ITERATOR_ARG (VINT_WIDENING_CVT_BUILTINS,
+			  extend, zero_extend, extend_e)
 
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, and)
   _RVV_INT_ITERATOR_ARG (VINT_BIN_OP_BUILTINS, ior)

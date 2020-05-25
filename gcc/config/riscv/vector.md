@@ -53,6 +53,11 @@
 				VNx8HI VNx16HI VNx32HI
 				VNx4SI VNx8SI VNx16SI])
 
+;; All vector modes supported for narrowing integer alu.
+(define_mode_iterator VNIMODES [VNx16HI VNx32HI VNx64HI
+				VNx8SI VNx16SI VNx32SI
+				VNx4DI VNx8DI VNx16DI])
+
 ;; All vector modes supported for FP type-convert.
 (define_mode_iterator CVT_VWIMODES [VNx8HI VNx16HI VNx32HI
 				    VNx4SI VNx8SI VNx16SI])
@@ -105,6 +110,12 @@
    (VNx4SI "VNx4DI")   (VNx8SI "VNx8DI")   (VNx16SI "VNx16DI")
    (VNx8HF "VNx8SF")   (VNx16HF "VNx16SF") (VNx32HF "VNx32SF")
    (VNx4SF "VNx4DF")   (VNx8SF "VNx8DF")   (VNx16SF "VNx16DF")])
+
+;; Map a vector int or float mode to narrowing vector mode.
+(define_mode_attr VNMODES
+  [(VNx16HI "VNx16QI") (VNx32HI "VNx32QI") (VNx64HI "VNx64QI")
+   (VNx8SI "VNx8HI")   (VNx16SI "VNx16HI") (VNx32SI "VNx32HI")
+   (VNx4DI "VNx4SI")   (VNx8DI "VNx8SI")   (VNx16DI "VNx16SI")])
 
 ;; Map a vector int mode to quad-widening vector mode.
 (define_mode_attr VQWMODES
@@ -217,6 +228,11 @@
 (define_mode_attr vwfmode
   [(VNx8HF  "vnx8sf") (VNx16HF "vnx16sf") (VNx32HF "vnx32sf")
    (VNx4SF  "vnx4df") (VNx8SF  "vnx8df")  (VNx16SF "vnx16df")])
+
+(define_mode_attr vnimode
+  [(VNx16HI "vnx16qi") (VNx32HI "vnx32qi") (VNx64HI "vnx64qi")
+   (VNx8SI  "vnx8hi")  (VNx16SI "vnx16hi") (VNx32SI "vnx32hi")
+   (VNx4DI  "vnx4si")  (VNx8DI  "vnx8si")  (VNx16DI "vnx16si")])
 
 (define_mode_attr vqwimode
   [(VNx16QI "vnx16si") (VNx32QI "vnx32si")
@@ -2564,7 +2580,7 @@
 
 ;;Vector Widening Sign-extend and Zero-extend
 
-(define_expand "<sz_op>extend<mode><vwimode>2"
+(define_expand "wcvt<u><mode><vwimode>2"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
 		   (any_extend:<VWMODES>
@@ -2574,7 +2590,7 @@
 {
 })
 
-(define_insn "<sz_op>extend<mode><vwimode>2_nosetvl"
+(define_insn "wcvt<u><mode><vwimode>2_nosetvl"
   [(set (match_operand:<VWMODES> 0 "register_operand" "=&vr")
 	(any_extend:<VWMODES>
 	    (match_operand:VWIMODES 1 "register_operand" "vr")))
@@ -2584,7 +2600,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "<sz_op>extend<mode><vwimode>2_mask"
+(define_expand "wcvt<u><mode><vwimode>2_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VWMODES> 0 "register_operand")
 		   (if_then_else:<VWMODES>
@@ -2597,7 +2613,7 @@
 {
 })
 
-(define_insn "<sz_op>extend<mode><vwimode>2_mask_nosetvl"
+(define_insn "wcvt<u><mode><vwimode>2_mask_nosetvl"
   [(set (match_operand:<VWMODES> 0 "register_operand" "=vr")
 	(if_then_else:<VWMODES>
 	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -2607,6 +2623,51 @@
     (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "vwcvt<u>.x.x.v\t%0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+(define_expand "<sz_op>extend<vnimode><mode>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VNIMODES 0 "register_operand")
+		   (any_extend:VNIMODES
+		     (match_operand:<VNMODES> 1 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<sz_op>extend<vnimode><mode>2_nosetvl"
+  [(set (match_operand:VNIMODES 0 "register_operand" "=&vr")
+	(any_extend:VNIMODES
+	    (match_operand:<VNMODES> 1 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<sz>ext.vf2\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "<sz_op>extend<vnimode><mode>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VNIMODES 0 "register_operand")
+		   (if_then_else:VNIMODES
+		     (match_operand:<VCMPEQUIV> 1 "register_operand")
+		     (any_extend:VNIMODES
+		       (match_operand:<VNMODES> 3 "register_operand"))
+		     (match_operand:VNIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "<sz_op>extend<mode><vnimode>2_mask_nosetvl"
+  [(set (match_operand:VNIMODES 0 "register_operand" "=vr")
+	(if_then_else:VNIMODES
+	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	  (any_extend:VNIMODES
+	    (match_operand:<VNMODES> 3 "register_operand" "vr"))
+	  (match_operand:VNIMODES 2 "register_operand" "0")))
+    (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "v<sz>ext.vf2\t%0,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

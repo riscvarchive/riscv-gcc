@@ -1774,9 +1774,41 @@ vcvt_u##WSEW##_u##SEW##_v_##SEW##m##LMUL##_mask (vbool##MLEN##_t mask,	\
   return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL##_mask (mask, maskedoff, a);\
 }
 
-_RVV_WINT_ITERATOR_ARG (_RVV_WINT_CVT, extend)
-_RVV_QINT_ITERATOR_ARG (_RVV_WINT_CVT, extend_q)
-_RVV_EINT_ITERATOR_ARG (_RVV_WINT_CVT, extend_e)
+_RVV_WINT_ITERATOR_ARG (_RVV_WINT_CVT, wcvt)
+
+#define _RVV_WINT_EXTEND(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP, NAME)	\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vs##NAME##_v_i##WSEW##m##WLMUL (vint##SEW##m##LMUL##_t a)		\
+{									\
+  return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL (a);		\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vz##NAME##_v_u##WSEW##m##WLMUL (vuint##SEW##m##LMUL##_t a)		\
+{									\
+  return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL (a);		\
+}									\
+__extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vs##NAME##_v_i##WSEW##m##WLMUL##_mask (vbool##MLEN##_t mask,		\
+				       vint##WSEW##m##WLMUL##_t maskedoff,\
+				       vint##SEW##m##LMUL##_t a)	\
+{									\
+  return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL##_mask (mask, maskedoff, a);\
+}									\
+__extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vz##NAME##_v_u##WSEW##m##WLMUL##_mask (vbool##MLEN##_t mask,		\
+				       vuint##WSEW##m##WLMUL##_t maskedoff,\
+				       vuint##SEW##m##LMUL##_t a)	\
+{									\
+  return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL##_mask (mask, maskedoff, a);\
+}
+
+_RVV_WINT_ITERATOR_ARG (_RVV_WINT_EXTEND, extend, ext_vf2)
+_RVV_QINT_ITERATOR_ARG (_RVV_WINT_EXTEND, extend_q, ext_vf4)
+_RVV_EINT_ITERATOR_ARG (_RVV_WINT_EXTEND, extend_e, ext_vf8)
 
 #define _RVV_WFLOAT_ADD_SUB_MASK(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)\
 __extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
