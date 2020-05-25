@@ -29,7 +29,3 @@ RVV_INT_WNCVT_INT_TEST(RVV_WFCVT_TEST)
 
 /* { dg-final { scan-assembler-times "vwcvt.x.x.v" 9 } } */
 /* { dg-final { scan-assembler-times "vwcvtu.x.x.v" 9 } } */
-/* { dg-final { scan-assembler-times "vsext.vf4" 4 } } */
-/* { dg-final { scan-assembler-times "vzext.vf4" 4 } } */
-/* { dg-final { scan-assembler "vsext.vf8"} } */
-/* { dg-final { scan-assembler "vzext.vf8"} } */
