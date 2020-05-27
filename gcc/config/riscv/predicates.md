@@ -63,6 +63,10 @@
   (ior (match_operand 0 "const_0_operand")
        (match_operand 0 "register_operand")))
 
+(define_predicate "reg_or_mem_operand"
+  (ior (match_operand 0 "memory_operand")
+       (match_operand 0 "register_operand")))
+
 (define_predicate "uimm5_operand"
   (match_operand 0 "const_csr_operand"))
 

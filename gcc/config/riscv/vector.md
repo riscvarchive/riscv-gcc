@@ -38,6 +38,10 @@
 			      VNx4SI VNx8SI VNx16SI VNx32SI
 			      VNx2DI VNx4DI VNx8DI VNx16DI])
 
+;; All vector modes supported for whole load/store.
+(define_mode_iterator V1_FIMODES [VNx16QI VNx8HI VNx4SI VNx2DI
+				  VNx8HF VNx4SF VNx2DF])
+
 (define_mode_attr EXT_VIMODES
   [(VNx16QI "VNx16HI") (VNx32QI "VNx32HI")
    (VNx64QI "VNx64HI") (VNx128QI "VNx128HI")
@@ -186,6 +190,25 @@
    (VNx4SF "SI") (VNx8SF "SI") (VNx16SF "SI") (VNx32SF "SI")
    (VNx2DF "DI") (VNx4DF "DI") (VNx8DF "DI") (VNx16DF "DI")])
 
+;; Map a vector mode to LMUL=1 vector mode.
+(define_mode_attr VSINGLE
+  [(VNx16QI "VNx16QI") (VNx32QI "VNx16QI") (VNx64QI "VNx16QI") (VNx128QI "VNx16QI")
+   (VNx8HI "VNx8HI")   (VNx16HI "VNx8HI")  (VNx32HI "VNx8HI")  (VNx64HI "VNx8HI")
+   (VNx4SI "VNx4SI")   (VNx8SI "VNx4SI")   (VNx16SI "VNx4SI")  (VNx32SI "VNx4SI")
+   (VNx2DI "VNx2DI")   (VNx4DI "VNx2DI")   (VNx8DI "VNx2DI")   (VNx16DI "VNx2DI")
+   (VNx8HF "VNx8HF")   (VNx16HF "VNx8HF")  (VNx32HF "VNx8HF")  (VNx64HF "VNx8HF")
+   (VNx4SF "VNx4SF")   (VNx8SF "VNx4SF")   (VNx16SF "VNx4SF")  (VNx32SF "VNx4SF")
+   (VNx2DF "VNx2DF")   (VNx4DF "VNx2DF")   (VNx8DF "VNx2DF")   (VNx16DF "VNx2DF")])
+
+(define_mode_attr vsingle
+  [(VNx16QI "vnx16qi") (VNx32QI "vnx16qi") (VNx64QI "vnx16qi") (VNx128QI "vnx16qi")
+   (VNx8HI "vnx8hi")   (VNx16HI "vnx8hi")  (VNx32HI "vnx8hi")  (VNx64HI "vnx8hi")
+   (VNx4SI "vnx4si")   (VNx8SI "vnx4si")   (VNx16SI "vnx4si")  (VNx32SI "vnx4si")
+   (VNx2DI "vnx2di")   (VNx4DI "vnx2di")   (VNx8DI "vnx2di")   (VNx16DI "vnx2di")
+   (VNx8HF "vnx8hf")   (VNx16HF "vnx8hf")  (VNx32HF "vnx8hf")  (VNx64HF "vnx8hf")
+   (VNx4SF "vnx4sf")   (VNx8SF "vnx4sf")   (VNx16SF "vnx4sf")  (VNx32SF "vnx4sf")
+   (VNx2DF "vnx2df")   (VNx4DF "vnx2df")   (VNx8DF "vnx2df")   (VNx16DF "vnx2df")])
+
 ;; Map a vector mode to its VSETVLI mode, which for now is always the integer
 ;; vector mode, as the integer vemode/vmmode is a superset of the float ones.
 (define_mode_attr VLMODE
@@ -281,6 +304,26 @@
    (VNx8HF "m1") (VNx16HF "m2") (VNx32HF "m4") (VNx64HF "m8")
    (VNx4SF "m1") (VNx8SF "m2") (VNx16SF "m4") (VNx32SF "m8")
    (VNx2DF "m1") (VNx4DF "m2") (VNx8DF "m4") (VNx16DF "m8")])
+
+;; The number of subvectors in a VMODES.
+(define_mode_attr vector_count
+  [(VNx16QI "1") (VNx32QI "2") (VNx64QI "4") (VNx128QI "8")
+   (VNx8HI "1")  (VNx16HI "2") (VNx32HI "4") (VNx64HI "8")
+   (VNx4SI "1")  (VNx8SI "2")  (VNx16SI "4") (VNx32SI "8")
+   (VNx2DI "1")  (VNx4DI "2")  (VNx8DI "4")  (VNx16DI "8")
+   (VNx8HF "1")  (VNx16HF "2") (VNx32HF "4") (VNx64HF "8")
+   (VNx4SF "1")  (VNx8SF "2")  (VNx16SF "4") (VNx32SF "8")
+   (VNx2DF "1")  (VNx4DF "2")  (VNx8DF "4")  (VNx16DF "8")])
+
+;; Map a vector mode to nf field.
+(define_mode_attr nf
+  [(VNx16QI "1") (VNx32QI "2") (VNx64QI "4") (VNx128QI "8")
+   (VNx8HI "1") (VNx16HI "2") (VNx32HI "4") (VNx64HI "8")
+   (VNx4SI "1") (VNx8SI "2") (VNx16SI "4") (VNx32SI "8")
+   (VNx2DI "1") (VNx4DI "2") (VNx8DI "4") (VNx16DI "8")
+   (VNx8HF "1") (VNx16HF "2") (VNx32HF "4") (VNx64HF "8")
+   (VNx4SF "1") (VNx8SF "2") (VNx16SF "4") (VNx32SF "8")
+   (VNx2DF "1") (VNx4DF "2") (VNx8DF "4") (VNx16DF "8")])
 
 ;; Equivalent of "size" for a vector element.
 (define_mode_attr vmsize
@@ -1018,32 +1061,74 @@
 
 ;; If operand 1 is a const_vector, then we can't split until after reload,
 ;; to ensure that the scratch operand has been allocated a reg first.
-(define_insn_and_split "mov<mode>"
+(define_expand "mov<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr,vr, m,vr")
-	(match_operand:VIMODES 1 "vector_move_operand"  " vr,vi, m,vr,vc"))
-   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,X,r"))]
+   (parallel [(set (match_operand:VMODES 0 "nonimmediate_operand")
+                   (match_operand:VMODES 1 "vector_move_operand"))])]
   "TARGET_VECTOR"
-  "#"
-  "&& 1 && (reload_completed || GET_CODE (operands[1]) != CONST_VECTOR)"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_dup 0) (match_dup 1))
-	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
 {
-  /* If we have a const vector, then we have to load it's value into the
-     scratch reg, and then create a vec_duplicate of it.  */
-  if (!satisfies_constraint_vi (operands[1]) &&
-      const_vec_duplicate_p (operands[1], &operands[3]))
+  if (lra_in_progress || reload_in_progress)
     {
-      emit_move_insn (operands[2], operands[3]);
-      operands[1] = gen_rtx_VEC_DUPLICATE (GET_MODE (operands[1]),
-					   operands[2]);
+      /* We prefer emit whole register move instructions
+	 at register allocation pass. If emit normally
+	 vector move instructions, then may get wrong vtype.  */
+      if (REG_P (operands[0]) && REG_P (operands[1]))
+	{
+	  emit_insn (gen_whole_mov<mode>_reg (operands[0], operands[1]));
+	  DONE;
+	}
+      else if ((REG_P (operands[0]) && MEM_P (operands[1]))
+	       || (MEM_P (operands[0]) && REG_P (operands[1])))
+	{
+	  /* The whole register move load/store instructions
+	     only support in LMUL is 1. If LMUL more than 1, then spilt it. */
+	  if (<vector_count> == 1)
+	    emit_insn (gen_whole_mov<vsingle>_mem (operands[0], operands[1]));
+	  else
+	    {
+	      if (TARGET_64BIT)
+		emit_insn (gen_whole_mov<mode>di_mem_split (operands[0],
+							    operands[1]));
+	      else
+		emit_insn (gen_whole_mov<mode>si_mem_split (operands[0],
+							    operands[1]));
+	    }
+	  DONE;
+	}
+      else
+	gcc_unreachable ();
     }
-}
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
+  else
+    {
+      gcc_assert (can_create_pseudo_p ());
 
-(define_insn "*mov<mode>_nosetvl"
+      rtx dup_value;
+
+      /* If we have a const vector, then we have to load it's value into the
+ 	 scratch reg, and then create a vec_duplicate of it.  */
+      if ((!satisfies_constraint_vi (operands[1])
+	   && const_vec_duplicate_p (operands[1], &dup_value)
+	   && INTEGRAL_MODE_P (<MODE>mode))
+	  || ((const_vec_duplicate_p (operands[1], &dup_value))
+	      && FLOAT_MODE_P (<MODE>mode)))
+	{
+	  rtx tmp_reg = gen_reg_rtx (<VSUBMODE>mode);
+
+	  emit_move_insn (tmp_reg, dup_value);
+	  emit_insn (gen_vsetvli_x0_<vlmode>());
+	  emit_insn (gen_vec_duplicate<mode>_nosetvl (operands[0], tmp_reg));
+	  DONE;
+	}
+      else
+	{
+	  emit_insn (gen_vsetvli_x0_<vlmode>());
+	  emit_insn (gen_mov<mode>_nosetvl (operands[0], operands[1]));
+	  DONE;
+	}
+    }
+})
+
+(define_insn "mov<mode>_nosetvl"
   [(set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr,vr, m")
 	(match_operand:VIMODES 1 "vector_move_operand"  " vr,vi, m,vr"))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
@@ -1056,33 +1141,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-;; ??? We don't yet support vector float modes with constant immediate
-;; inputs.
-(define_insn_and_split "mov<mode>"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VFMODES 0 "nonimmediate_operand" "=vr,vr,vr, m,vr")
-	(match_operand:VFMODES 1 "vector_move_operand"  " vr,vi, m,vr,vc"))
-   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,X,r"))]
-  "TARGET_VECTOR"
-  "#"
-  "&& 1 && (reload_completed || GET_CODE (operands[1]) != CONST_VECTOR)"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_dup 0) (match_dup 1))
-	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-{
-  /* If we have a const vector, then we have to load it's value into the
-     scratch reg, and then create a vec_duplicate of it.  */
-  if (const_vec_duplicate_p (operands[1], &operands[3]))
-    {
-      emit_move_insn (operands[2], operands[3]);
-      operands[1] = gen_rtx_VEC_DUPLICATE (GET_MODE (operands[1]),
-					   operands[2]);
-    }
-}
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
-
-(define_insn "*mov<mode>_nosetvl"
+(define_insn "mov<mode>_nosetvl"
   [(set (match_operand:VFMODES 0 "nonimmediate_operand" "=vr,vr, m")
 	(match_operand:VFMODES 1 "nonimmediate_operand" " vr, m,vr"))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
@@ -1091,6 +1150,104 @@
    vmv.v.v\t%0,%1
    vle<eew>.v\t%0,%1
    vse<eew>.v\t%1,%0"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Whole regiser move
+(define_insn "whole_mov<mode>_reg"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(match_operand:VMODES 1 "register_operand" "vr"))]
+  "TARGET_VECTOR"
+  "vmv<nf>r.v\t%0,%1"
+   [(set_attr "type" "vector")
+    (set_attr "mode" "none")])
+
+;; Whole regiser move load and store
+(define_insn_and_split "whole_mov<VMODES:mode><P:mode>_mem_split"
+  [(set (match_operand:VMODES 0 "reg_or_mem_operand" "=vr, m")
+	(match_operand:VMODES 1 "reg_or_mem_operand"  "m, vr"))
+   (clobber (match_scratch:P 2 "=r,r"))
+   (clobber (match_scratch:P 3 "=r,r"))]
+  "TARGET_VECTOR
+   && ((register_operand (operands[0], <VMODES:MODE>mode)
+        && memory_operand (operands[1], <VMODES:MODE>mode))
+       || (memory_operand (operands[0], <VMODES:MODE>mode)
+	   && register_operand (operands[1], <VMODES:MODE>mode)))"
+  "#"
+  "&& reload_completed"
+  [(const_int 0)]
+{
+  int load_p = REG_P (operands[0]) ? 1 : 0;
+  rtx reg = load_p ? operands[0] : operands[1];
+  rtx mem = load_p ? operands[1] : operands[0];
+  rtx vlenb = gen_int_mode (UNITS_PER_V_REG, Pmode);
+
+  /* Spiltting a load/store instruction when LMUL is 2,4,8.
+     For example, split a load instruction that LMUL is 4.
+     The assembly like this:
+
+       csrr op2, vlenb
+       vl1r subop0, op1
+       add  op3, op2, op1
+       vl1r subop0, op3
+       add  op3, op3, op2
+       vl1r subop0, op3
+       add  op3, op3, op2
+       vl1r subop0, op3
+
+     To adjust address the base register from op1 replace to op3.
+     And offset is vlenb, We use ADD instruction to adjust new address.  */
+
+  for (unsigned int step = 0; step < <vector_count>; ++step)
+    {
+      rtx submem = adjust_automodify_address (mem, <VSINGLE>mode,
+					      operands[2],
+					      step * BYTES_PER_RVV_VECTOR);
+      rtx subreg = simplify_gen_subreg (<VSINGLE>mode, reg,
+					<VMODES:MODE>mode,
+					step * BYTES_PER_RVV_VECTOR);
+
+      /* The first round, just emit a load/store instruction.  */
+      if (step != 0)
+	{
+	  if (step == 1)
+	    {
+	      /* Emit a ADD instruction to adjust address,
+		 the address is base + vlenb.  */
+	      emit_move_insn (operands[3], vlenb);
+	      emit_insn (gen_rtx_SET (operands[2],
+				      gen_rtx_PLUS (Pmode, operands[3],
+						    XEXP (mem, 0))));
+	    }
+	  else
+	    emit_insn (gen_rtx_SET (operands[2],
+				    gen_rtx_PLUS (Pmode, operands[2],
+						  operands[3])));
+	}
+
+      /* Emit a vector load/store instruction.  */
+      if (load_p)
+	emit_insn (gen_whole_mov<vsingle>_mem (subreg, submem));
+      else
+	emit_insn (gen_whole_mov<vsingle>_mem (submem, subreg));
+    }
+
+  DONE;
+})
+
+(define_insn "whole_mov<mode>_mem"
+  [(set (match_operand:V1_FIMODES 0 "reg_or_mem_operand" "=vr,m")
+       	(unspec:V1_FIMODES
+	  [(match_operand:V1_FIMODES 1 "reg_or_mem_operand" "m,vr")]
+	 UNSPEC_WHOLE_MOVE))]
+  "TARGET_VECTOR
+   && ((register_operand (operands[0], <MODE>mode)
+        && memory_operand (operands[1], <MODE>mode))
+       || (memory_operand (operands[0], <MODE>mode)
+	   && register_operand (operands[1], <MODE>mode)))"
+  "@
+   vl1r.v\t%0,%1
+   vs1r.v\t%1,%0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -4376,7 +4533,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_insn "*vec_duplicate<mode>_nosetvl"
+(define_insn "vec_duplicate<mode>_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
 	(vec_duplicate:VIMODES
 	 (match_operand:<VSUBMODE> 1 "register_operand" "r")))
