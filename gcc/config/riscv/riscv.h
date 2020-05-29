@@ -489,9 +489,16 @@ enum reg_class
   (((VALUE & 0xffffffff) == VALUE) && (VALUE & 0x80000000)		\
    && SMALL_OPERAND (VALUE | (0xffffffffUL << 32)))
 
-/* If this is a single bit mask, then we can load it with sbseti.  */
+/* If this is a single bit mask, then we can load it with sbseti.  But this
+   is not useful for any of the low 31 bits because we can use addi or lui
+   to load them.  It is wrong for loading SImode 0x80000000 on rv64 because it
+   needs to be sign-extended.  So we restrict this to the upper 32-bits
+   only.  */
+/* ??? It is OK for DImode 0x80000000 on rv64, but we don't know the target
+   mode in riscv_build_integer_1 so can't handle this case separate from the
+   bad SImode case.  */
 #define SINGLE_BIT_MASK_OPERAND(VALUE) \
-  (pow2p_hwi (VALUE))
+  (pow2p_hwi (VALUE) && (ctz_hwi (VALUE) >= 32))
 
 /* Stack layout; function entry, exit and calling.  */
 
