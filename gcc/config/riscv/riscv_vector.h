@@ -1024,7 +1024,7 @@ vstore_f##SEW##m##LMUL (const T *a, vfloat##SEW##m##LMUL##_t b)	\
 {									\
   * (vfloat##SEW##m##LMUL##_t *) a = b;				\
 }									\
-__extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
+__extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vstore_f##SEW##m##LMUL##_mask (const T *a,				\
 				   vbool##MLEN##_t mask,		\
@@ -1035,7 +1035,7 @@ vstore_f##SEW##m##LMUL##_mask (const T *a,				\
   else									\
     __builtin_riscv_vsefloat##SEW##m##LMUL##_di_mask (mask, b, a);	\
 }									\
-__extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
+__extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vstores_f##SEW##m##LMUL (const T *a, word_type stride,		\
 			     vfloat##SEW##m##LMUL##_t b)		\
@@ -1045,7 +1045,7 @@ vstores_f##SEW##m##LMUL (const T *a, word_type stride,		\
   else									\
     __builtin_riscv_vssefloat##SEW##m##LMUL##_di (b, a, stride);	\
 }									\
-__extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
+__extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vstores_f##SEW##m##LMUL##_mask (const T *a, word_type stride,	\
 				    vbool##MLEN##_t mask,		\
