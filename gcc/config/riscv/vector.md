@@ -1252,15 +1252,16 @@
    (set_attr "mode" "none")])
 
 ;; move pattern for vector masking type.
-;; XXX: we should support load/store for masking type.
 (define_insn "mov<mode>"
-  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr,vr,vr")
-	(match_operand:VMASKMODES 1 "vector_move_operand" " vr,v0,v1"))]
+  [(set (match_operand:VMASKMODES 0 "register_operand"    "=vr,vr,vr,vr,  m")
+	(match_operand:VMASKMODES 1 "vector_move_operand" " vr,v0,v1, m, vr"))]
   "TARGET_VECTOR"
   "@
    vmcpy.m\t%0,%1
    vmclr.m\t%0
-   vmset.m\t%0"
+   vmset.m\t%0
+   vl1r.v\t%0, %1
+   vs1r.v\t%0, %1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
