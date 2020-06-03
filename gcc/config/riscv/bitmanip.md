@@ -306,8 +306,8 @@
 
 ;;; ??? assembler doesn't accept rev8
 (define_insn "bswapdi2"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(bswap:SI (match_operand:SI 1 "register_operand" "r")))]
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(bswap:DI (match_operand:DI 1 "register_operand" "r")))]
   "TARGET_64BIT && TARGET_BITMANIP"
   "grevi\t%0,%1,0x38"
   [(set_attr "type" "bitmanip")])
