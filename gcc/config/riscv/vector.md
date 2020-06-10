@@ -18,25 +18,8 @@
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
 
-;; All vector modes supported.
-(define_mode_iterator VMODES [VNx16QI VNx32QI VNx64QI VNx128QI
-			     VNx8HI VNx16HI VNx32HI VNx64HI
-			     VNx4SI VNx8SI VNx16SI VNx32SI
-			     VNx2DI VNx4DI VNx8DI VNx16DI
-			     VNx8HF VNx16HF VNx32HF VNx64HF
-			     VNx4SF VNx8SF VNx16SF VNx32SF
-			     VNx2DF VNx4DF VNx8DF VNx16DF])
+(include "vector-iterator.md")
 
-;; All vector modes supported for FP load/store/alu.
-(define_mode_iterator VFMODES [VNx8HF VNx16HF VNx32HF VNx64HF
-			      VNx4SF VNx8SF VNx16SF VNx32SF
-			      VNx2DF VNx4DF VNx8DF VNx16DF])
-
-;; All vector modes supported for integer load/store/alu.
-(define_mode_iterator VIMODES [VNx16QI VNx32QI VNx64QI VNx128QI
-			      VNx8HI VNx16HI VNx32HI VNx64HI
-			      VNx4SI VNx8SI VNx16SI VNx32SI
-			      VNx2DI VNx4DI VNx8DI VNx16DI])
 
 ;; All vector modes supported for whole load/store.
 (define_mode_iterator V1_FIMODES [VNx16QI VNx8HI VNx4SI VNx2DI
@@ -52,11 +35,6 @@
    (VNx2DI "VNx2TI")   (VNx4DI "VNx4TI")
    (VNx8DI "VNx8TI")   (VNx16DI "VNx16TI")])
 
-;; All vector modes supported for widening integer alu.
-(define_mode_iterator VWIMODES [VNx16QI VNx32QI VNx64QI
-				VNx8HI VNx16HI VNx32HI
-				VNx4SI VNx8SI VNx16SI])
-
 ;; All vector modes supported for narrowing integer alu.
 (define_mode_iterator VNIMODES [VNx16HI VNx32HI VNx64HI
 				VNx8SI VNx16SI VNx32SI
@@ -66,20 +44,12 @@
 (define_mode_iterator CVT_VWIMODES [VNx8HI VNx16HI VNx32HI
 				    VNx4SI VNx8SI VNx16SI])
 
-;; All vector modes supported for widening floating point alu.
-(define_mode_iterator VWFMODES [VNx8HF VNx16HF VNx32HF
-				VNx4SF VNx8SF VNx16SF])
-
 ;; All vector modes supported for widening mode.
 (define_mode_iterator VW_FIMODES [VNx16QI VNx32QI VNx64QI
 				  VNx8HI VNx16HI VNx32HI
 				  VNx4SI VNx8SI VNx16SI
 				  VNx8HF VNx16HF VNx32HF
 				  VNx4SF VNx8SF VNx16SF])
-
-;; All vector masking modes.
-(define_mode_iterator VMASKMODES [VNx2BI VNx4BI VNx8BI VNx16BI
-				  VNx32BI VNx64BI VNx128BI])
 
 ;; All vector modes supported for quad-widening integer alu.
 (define_mode_iterator VQWIMODES [VNx16QI VNx32QI
@@ -88,32 +58,6 @@
 ;; All vector modes supported for quad-narrowing integer alu.
 (define_mode_iterator VQNIMODES [VNx16SI VNx32SI
 				 VNx8DI  VNx16DI])
-
-;; Map a vector float mode to a vector int mode of the same size.
-(define_mode_attr VINTEQUIV
-  [(VNx8HF "VNx8HI") (VNx16HF "VNx16HI")
-   (VNx32HF "VNx32HI") (VNx64HF "VNx64HI")
-   (VNx4SF "VNx4SI") (VNx8SF "VNx8SI")
-   (VNx16SF "VNx16SI") (VNx32SF "VNx32SI")
-   (VNx2DF "VNx2DI") (VNx4DF "VNx4DI")
-   (VNx8DF "VNx8DI") (VNx16DF "VNx16DI")])
-
-;; Map a vector float mode to a vector int mode of the same size, lowercase.
-(define_mode_attr vintequiv
-  [(VNx8HF "vnx8hi") (VNx16HF "vnx16hi")
-   (VNx32HF "vnx32hi") (VNx64HF "vnx64hi")
-   (VNx4SF "vnx4si") (VNx8SF "vnx8si")
-   (VNx16SF "vnx16si") (VNx32SF "vnx32si")
-   (VNx2DF "vnx2di") (VNx4DF "vnx4di")
-   (VNx8DF "vnx8di") (VNx16DF "vnx16di")])
-
-;; Map a vector int or float mode to widening vector mode.
-(define_mode_attr VWMODES
-  [(VNx16QI "VNx16HI") (VNx32QI "VNx32HI") (VNx64QI "VNx64HI")
-   (VNx8HI "VNx8SI")   (VNx16HI "VNx16SI") (VNx32HI "VNx32SI")
-   (VNx4SI "VNx4DI")   (VNx8SI "VNx8DI")   (VNx16SI "VNx16DI")
-   (VNx8HF "VNx8SF")   (VNx16HF "VNx16SF") (VNx32HF "VNx32SF")
-   (VNx4SF "VNx4DF")   (VNx8SF "VNx8DF")   (VNx16SF "VNx16DF")])
 
 ;; Map a vector int or float mode to narrowing vector mode.
 (define_mode_attr VNMODES
@@ -151,35 +95,6 @@
   [(VNx8HI "vnx8sf") (VNx16HI "vnx16sf") (VNx32HI "vnx32sf")
    (VNx4SI "vnx4df") (VNx8SI "vnx8df")   (VNx16SI "vnx16df")])
 
-;; Map a vector int or float mode to a vector compare mode.
-(define_mode_attr VCMPEQUIV
-  [(VNx16QI "VNx16BI") (VNx32QI "VNx32BI") (VNx64QI "VNx64BI") (VNx128QI "VNx128BI")
-   (VNx8HI "VNx8BI")   (VNx16HI "VNx16BI") (VNx32HI "VNx32BI") (VNx64HI "VNx64BI")
-   (VNx4SI "VNx4BI")   (VNx8SI "VNx8BI")   (VNx16SI "VNx16BI") (VNx32SI "VNx32BI")
-   (VNx2DI "VNx2BI")   (VNx4DI "VNx4BI")   (VNx8DI "VNx8BI")   (VNx16DI "VNx16BI")
-   (VNx8HF "VNx8BI")   (VNx16HF "VNx16BI") (VNx32HF "VNx32BI") (VNx64HF "VNx64BI")
-   (VNx4SF "VNx4BI")   (VNx8SF "VNx8BI")   (VNx16SF "VNx16BI") (VNx32SF "VNx32BI")
-   (VNx2DF "VNx2BI")   (VNx4DF "VNx4BI")   (VNx8DF "VNx8BI")   (VNx16DF "VNx16BI")])
-
-(define_mode_attr vmaskmode
-  [(VNx16QI "vnx16bi") (VNx32QI "vnx32bi") (VNx64QI "vnx64bi") (VNx128QI "vnx128bi")
-   (VNx8HI "vnx8bi")   (VNx16HI "vnx16bi") (VNx32HI "vnx32bi") (VNx64HI "vnx64bi")
-   (VNx4SI "vnx4bi")   (VNx8SI "vnx8bi")   (VNx16SI "vnx16bi") (VNx32SI "vnx32bi")
-   (VNx2DI "vnx2bi")   (VNx4DI "vnx4bi")   (VNx8DI "vnx8bi")   (VNx16DI "vnx16bi")
-   (VNx8HF "vnx8bi")   (VNx16HF "vnx16bi") (VNx32HF "vnx32bi") (VNx64HF "vnx64bi")
-   (VNx4SF "vnx4bi")   (VNx8SF "vnx8bi")   (VNx16SF "vnx16bi") (VNx32SF "vnx32bi")
-   (VNx2DF "vnx2bi")   (VNx4DF "vnx4bi")   (VNx8DF "vnx8bi")   (VNx16DF "vnx16bi")])
-
-;; Map a vector mode to its element mode.
-(define_mode_attr VSUBMODE
-  [(VNx16QI "QI") (VNx32QI "QI") (VNx64QI "QI") (VNx128QI "QI")
-   (VNx8HI "HI") (VNx16HI "HI") (VNx32HI "HI") (VNx64HI "HI")
-   (VNx4SI "SI") (VNx8SI "SI") (VNx16SI "SI") (VNx32SI "SI")
-   (VNx2DI "DI") (VNx4DI "DI") (VNx8DI "DI") (VNx16DI "DI")
-   (VNx8HF "HF") (VNx16HF "HF") (VNx32HF "HF") (VNx64HF "HF")
-   (VNx4SF "SF") (VNx8SF "SF") (VNx16SF "SF") (VNx32SF "SF")
-   (VNx2DF "DF") (VNx4DF "DF") (VNx8DF "DF") (VNx16DF "DF")])
-
 ;; Map a vector mode to its integer element mode.
 (define_mode_attr VISUBMODE
   [(VNx16QI "QI") (VNx32QI "QI") (VNx64QI "QI") (VNx128QI "QI")
@@ -209,40 +124,6 @@
    (VNx4SF "vnx4sf")   (VNx8SF "vnx4sf")   (VNx16SF "vnx4sf")  (VNx32SF "vnx4sf")
    (VNx2DF "vnx2df")   (VNx4DF "vnx2df")   (VNx8DF "vnx2df")   (VNx16DF "vnx2df")])
 
-;; Map a vector mode to its VSETVLI mode, which for now is always the integer
-;; vector mode, as the integer vemode/vmmode is a superset of the float ones.
-(define_mode_attr VLMODE
-  [(VNx16QI "VNx16QI") (VNx32QI "VNx32QI")
-   (VNx64QI "VNx64QI") (VNx128QI "VNx128QI")
-   (VNx8HI "VNx8HI") (VNx16HI "VNx16HI")
-   (VNx32HI "VNx32HI") (VNx64HI "VNx64HI")
-   (VNx4SI "VNx4SI") (VNx8SI "VNx8SI")
-   (VNx16SI "VNx16SI") (VNx32SI "VNx32SI")
-   (VNx2DI "VNx2DI") (VNx4DI "VNx4DI")
-   (VNx8DI "VNx8DI") (VNx16DI "VNx16DI")
-   (VNx8HF "VNx8HI") (VNx16HF "VNx16HI")
-   (VNx32HF "VNx32HI") (VNx64HF "VNx64HI")
-   (VNx4SF "VNx4SI") (VNx8SF "VNx8SI")
-   (VNx16SF "VNx16SI") (VNx32SF "VNx32SI")
-   (VNx2DF "VNx2DI") (VNx4DF "VNx4DI")
-   (VNx8DF "VNx8DI") (VNx16DF "VNx16DI")])
-
-(define_mode_attr vlmode
-  [(VNx16QI "vnx16qi") (VNx32QI "vnx32qi")
-   (VNx64QI "vnx64qi") (VNx128QI "vnx128qi")
-   (VNx8HI  "vnx8hi")  (VNx16HI "vnx16hi")
-   (VNx32HI "vnx32hi") (VNx64HI "vnx64hi")
-   (VNx4SI  "vnx4si")  (VNx8SI "vnx8si")
-   (VNx16SI "vnx16si") (VNx32SI "vnx32si")
-   (VNx2DI  "vnx2di")  (VNx4DI "vnx4di")
-   (VNx8DI  "vnx8di")  (VNx16DI "vnx16di")
-   (VNx8HF  "vnx8hi")  (VNx16HF "vnx16hi")
-   (VNx32HF "vnx32hi") (VNx64HF "vnx64hi")
-   (VNx4SF  "vnx4si")  (VNx8SF "vnx8si")
-   (VNx16SF "vnx16si") (VNx32SF "vnx32si")
-   (VNx2DF  "vnx2di")  (VNx4DF "vnx4di")
-   (VNx8DF  "vnx8di")  (VNx16DF "vnx16di")])
-
 (define_mode_attr vwimode
   [(VNx16QI "vnx16hi") (VNx32QI "vnx32hi") (VNx64QI "vnx64hi")
    (VNx8HI  "vnx8si")  (VNx16HI "vnx16si") (VNx32HI "vnx32si")
@@ -265,16 +146,6 @@
   [(VNx16SI "vnx16qi") (VNx32SI "vnx32qi")
    (VNx8DI  "vnx8hi")  (VNx16DI "vnx16hi")])
 
-;; Map a vector mode to its SEW value.
-(define_mode_attr vemode
-  [(VNx16QI "e8") (VNx32QI "e8") (VNx64QI "e8") (VNx128QI "e8")
-   (VNx8HI "e16") (VNx16HI "e16") (VNx32HI "e16") (VNx64HI "e16")
-   (VNx4SI "e32") (VNx8SI "e32") (VNx16SI "e32") (VNx32SI "e32")
-   (VNx2DI "e64") (VNx4DI "e64") (VNx8DI "e64") (VNx16DI "e64")
-   (VNx8HF "e16") (VNx16HF "e16") (VNx32HF "e16") (VNx64HF "e16")
-   (VNx4SF "e32") (VNx8SF "e32") (VNx16SF "e32") (VNx32SF "e32")
-   (VNx2DF "e64") (VNx4DF "e64") (VNx8DF "e64") (VNx16DF "e64")])
-
 ;; Map a vector mode to its EEW value.
 (define_mode_attr eew
   [(VNx16QI "8") (VNx32QI "8") (VNx64QI "8") (VNx128QI "8")
@@ -284,26 +155,6 @@
    (VNx8HF "16") (VNx16HF "16") (VNx32HF "16") (VNx64HF "16")
    (VNx4SF "32") (VNx8SF "32") (VNx16SF "32") (VNx32SF "32")
    (VNx2DF "64") (VNx4DF "64") (VNx8DF "64") (VNx16DF "64")])
-
-;; Map a vector mode to its SEW value, minus the e.
-(define_mode_attr vememode
-  [(VNx16QI "8") (VNx32QI "8") (VNx64QI "8") (VNx128QI "8")
-   (VNx8HI "16") (VNx16HI "16") (VNx32HI "16") (VNx64HI "16")
-   (VNx4SI "32") (VNx8SI "32") (VNx16SI "32") (VNx32SI "32")
-   (VNx2DI "64") (VNx4DI "64") (VNx8DI "64") (VNx16DI "64")
-   (VNx8HF "16") (VNx16HF "16") (VNx32HF "16") (VNx64HF "16")
-   (VNx4SF "32") (VNx8SF "32") (VNx16SF "32") (VNx32SF "32")
-   (VNx2DF "64") (VNx4DF "64") (VNx8DF "64") (VNx16DF "64")])
-
-;; Map a vector mode to its LMUL value.
-(define_mode_attr vmmode
-  [(VNx16QI "m1") (VNx32QI "m2") (VNx64QI "m4") (VNx128QI "m8")
-   (VNx8HI "m1") (VNx16HI "m2") (VNx32HI "m4") (VNx64HI "m8")
-   (VNx4SI "m1") (VNx8SI "m2") (VNx16SI "m4") (VNx32SI "m8")
-   (VNx2DI "m1") (VNx4DI "m2") (VNx8DI "m4") (VNx16DI "m8")
-   (VNx8HF "m1") (VNx16HF "m2") (VNx32HF "m4") (VNx64HF "m8")
-   (VNx4SF "m1") (VNx8SF "m2") (VNx16SF "m4") (VNx32SF "m8")
-   (VNx2DF "m1") (VNx4DF "m2") (VNx8DF "m4") (VNx16DF "m8")])
 
 ;; The number of subvectors in a VMODES.
 (define_mode_attr vector_count
@@ -331,34 +182,6 @@
    (VNx8HI "h") (VNx16HI "h") (VNx32HI "h") (VNx64HI "h")
    (VNx4SI "w") (VNx8SI "w") (VNx16SI "w") (VNx32SI "w")
    (VNx2DI "d") (VNx4DI "d") (VNx8DI "d") (VNx16DI "d")])
-
-;; Map a vector mode to its LMUL==1 equivalent.
-;; This is for reductions which use scalars in vector registers.
-(define_mode_attr V1MODES [(VNx16QI "VNx16QI") (VNx32QI "VNx16QI")
-			   (VNx64QI "VNx16QI") (VNx128QI "VNx16QI")
-			   (VNx8HI "VNx8HI") (VNx16HI "VNx8HI")
-			   (VNx32HI "VNx8HI") (VNx64HI "VNx8HI")
-			   (VNx4SI "VNx4SI") (VNx8SI "VNx4SI")
-			   (VNx16SI "VNx4SI") (VNx32SI "VNx4SI")
-			   (VNx2DI "VNx2DI") (VNx4DI "VNx2DI")
-			   (VNx8DI "VNx2DI") (VNx16DI "VNx2DI")
-			   (VNx8HF "VNx8HF") (VNx16HF "VNx8HF")
-			   (VNx32HF "VNx8HF") (VNx64HF "VNx8HF")
-			   (VNx4SF "VNx4SF") (VNx8SF "VNx4SF")
-			   (VNx16SF "VNx4SF") (VNx32SF "VNx4SF")
-			   (VNx2DF "VNx2DF") (VNx4DF "VNx2DF")
-			   (VNx8DF "VNx2DF") (VNx16DF "VNx2DF")])
-
-(define_mode_attr VW1MODES [ (VNx16QI "VNx8HI")  (VNx32QI "VNx8HI")
-			     (VNx64QI "VNx8HI") (VNx128QI "VNx8HI")
-			     (VNx8HI  "VNx4SI") (VNx16HI  "VNx4SI")
-			    (VNx32HI  "VNx4SI") (VNx64HI  "VNx4SI")
-			     (VNx4SI  "VNx2DI")  (VNx8SI  "VNx2DI")
-			    (VNx16SI  "VNx2DI") (VNx32SI  "VNx2DI")
-			     (VNx8HF  "VNx4SF") (VNx16HF  "VNx4SF")
-			    (VNx32HF  "VNx4SF") (VNx64HF  "VNx4SF")
-			     (VNx4SF  "VNx2DF")  (VNx8SF  "VNx2DF")
-			    (VNx16SF  "VNx2DF") (VNx32SF  "VNx2DF")])
 
 ;; Operations valid for integer reductions.
 (define_code_iterator any_reduc [plus umax smax umin smin and ior xor])
