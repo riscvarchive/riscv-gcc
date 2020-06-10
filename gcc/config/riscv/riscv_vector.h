@@ -464,6 +464,177 @@ typedef __fp16 float16_t;
   MACRO (32, __VA_ARGS__)					\
   MACRO (64, __VA_ARGS__)					\
 
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for integer tuple operations
+   with NF=2.  */
+#define _RVV_INT_TUPLE_NF2_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1, 2,  8,  int8_t, __VA_ARGS__)	\
+  MACRO ( 8, 2, 2,  4,  int8_t, __VA_ARGS__)	\
+  MACRO ( 8, 4, 2,  2,  int8_t, __VA_ARGS__)	\
+  MACRO (16, 1, 2, 16, int16_t, __VA_ARGS__)	\
+  MACRO (16, 2, 2,  8, int16_t, __VA_ARGS__)	\
+  MACRO (16, 4, 2,  4, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 2, 32, int32_t, __VA_ARGS__)	\
+  MACRO (32, 2, 2, 16, int32_t, __VA_ARGS__)	\
+  MACRO (32, 4, 2,  8, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 2, 64, int64_t, __VA_ARGS__)	\
+  MACRO (64, 2, 2, 32, int64_t, __VA_ARGS__)	\
+  MACRO (64, 4, 2, 16, int64_t, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for integer tuple operations
+   with NF=3.  */
+#define _RVV_INT_TUPLE_NF3_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1, 3,  8,  int8_t, __VA_ARGS__)	\
+  MACRO ( 8, 2, 3,  4,  int8_t, __VA_ARGS__)	\
+  MACRO (16, 1, 3, 16, int16_t, __VA_ARGS__)	\
+  MACRO (16, 2, 3,  8, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 3, 32, int32_t, __VA_ARGS__)	\
+  MACRO (32, 2, 3, 16, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 3, 64, int64_t, __VA_ARGS__)	\
+  MACRO (64, 2, 3, 32, int64_t, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for integer tuple operations
+   with NF=4.  */
+#define _RVV_INT_TUPLE_NF4_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1, 4,  8,  int8_t, __VA_ARGS__)	\
+  MACRO ( 8, 2, 4,  4,  int8_t, __VA_ARGS__)	\
+  MACRO (16, 1, 4, 16, int16_t, __VA_ARGS__)	\
+  MACRO (16, 2, 4,  8, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 4, 32, int32_t, __VA_ARGS__)	\
+  MACRO (32, 2, 4, 16, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 4, 64, int64_t, __VA_ARGS__)	\
+  MACRO (64, 2, 4, 32, int64_t, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for integer tuple operations
+   with NF=5.  */
+#define _RVV_INT_TUPLE_NF5_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1, 5,  8,  int8_t, __VA_ARGS__)	\
+  MACRO (16, 1, 5, 16, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 5, 32, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 5, 64, int64_t, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for integer tuple operations
+   with NF=6.  */
+#define _RVV_INT_TUPLE_NF6_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1, 6,  8,  int8_t, __VA_ARGS__)	\
+  MACRO (16, 1, 6, 16, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 6, 32, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 6, 64, int64_t, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for integer tuple operations
+   with NF=7.  */
+#define _RVV_INT_TUPLE_NF7_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1, 7,  8,  int8_t, __VA_ARGS__)	\
+  MACRO (16, 1, 7, 16, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 7, 32, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 7, 64, int64_t, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for integer tuple operations
+   with NF=8.  */
+#define _RVV_INT_TUPLE_NF8_ITERATOR_ARG(MACRO, ...)	\
+  MACRO ( 8, 1, 8,  8,  int8_t, __VA_ARGS__)	\
+  MACRO (16, 1, 8, 16, int16_t, __VA_ARGS__)	\
+  MACRO (32, 1, 8, 32, int32_t, __VA_ARGS__)	\
+  MACRO (64, 1, 8, 64, int64_t, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for integer tuple
+   operations.  */
+#define _RVV_INT_TUPLE_ITERATOR_ARG(MACRO, ...)		\
+  _RVV_INT_TUPLE_NF2_ITERATOR_ARG (MACRO, __VA_ARGS__)	\
+  _RVV_INT_TUPLE_NF3_ITERATOR_ARG (MACRO, __VA_ARGS__)	\
+  _RVV_INT_TUPLE_NF4_ITERATOR_ARG (MACRO, __VA_ARGS__)	\
+  _RVV_INT_TUPLE_NF5_ITERATOR_ARG (MACRO, __VA_ARGS__)	\
+  _RVV_INT_TUPLE_NF6_ITERATOR_ARG (MACRO, __VA_ARGS__)	\
+  _RVV_INT_TUPLE_NF7_ITERATOR_ARG (MACRO, __VA_ARGS__)	\
+  _RVV_INT_TUPLE_NF8_ITERATOR_ARG (MACRO, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for float tuple operations
+   with NF=2.  */
+#define _RVV_FLOAT_TUPLE_NF2_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 2, 16, float16_t, __VA_ARGS__)		\
+  MACRO (16, 2, 2,  8, float16_t, __VA_ARGS__)		\
+  MACRO (16, 4, 2,  4, float16_t, __VA_ARGS__)		\
+  MACRO (32, 1, 2, 32,     float, __VA_ARGS__)		\
+  MACRO (32, 2, 2, 16,     float, __VA_ARGS__)		\
+  MACRO (32, 4, 2,  8,     float, __VA_ARGS__)		\
+  MACRO (64, 1, 2, 64,    double, __VA_ARGS__)		\
+  MACRO (64, 2, 2, 32,    double, __VA_ARGS__)		\
+  MACRO (64, 4, 2, 16,    double, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for float tuple operations
+   with NF=3.  */
+#define _RVV_FLOAT_TUPLE_NF3_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 3, 16, float16_t, __VA_ARGS__)		\
+  MACRO (16, 2, 3,  8, float16_t, __VA_ARGS__)		\
+  MACRO (32, 1, 3, 32,     float, __VA_ARGS__)		\
+  MACRO (32, 2, 3, 16,     float, __VA_ARGS__)		\
+  MACRO (64, 1, 3, 64,    double, __VA_ARGS__)		\
+  MACRO (64, 2, 3, 32,    double, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for float tuple operations
+   with NF=4.  */
+#define _RVV_FLOAT_TUPLE_NF4_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 4, 16, float16_t, __VA_ARGS__)		\
+  MACRO (16, 2, 4,  8, float16_t, __VA_ARGS__)		\
+  MACRO (32, 1, 4, 32,     float, __VA_ARGS__)		\
+  MACRO (32, 2, 4, 16,     float, __VA_ARGS__)		\
+  MACRO (64, 1, 4, 64,    double, __VA_ARGS__)		\
+  MACRO (64, 2, 4, 32,    double, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for float tuple operations
+   with NF=5.  */
+#define _RVV_FLOAT_TUPLE_NF5_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 5, 16, float16_t, __VA_ARGS__)		\
+  MACRO (32, 1, 5, 32,     float, __VA_ARGS__)		\
+  MACRO (64, 1, 5, 64,    double, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for float tuple operations
+   with NF=6.  */
+#define _RVV_FLOAT_TUPLE_NF6_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 6, 16, float16_t, __VA_ARGS__)		\
+  MACRO (32, 1, 6, 32,     float, __VA_ARGS__)		\
+  MACRO (64, 1, 6, 64,    double, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for float tuple operations
+   with NF=7.  */
+#define _RVV_FLOAT_TUPLE_NF7_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 7, 16, float16_t, __VA_ARGS__)		\
+  MACRO (32, 1, 7, 32,     float, __VA_ARGS__)		\
+  MACRO (64, 1, 7, 64,    double, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for float tuple operations
+   with NF=8.  */
+#define _RVV_FLOAT_TUPLE_NF8_ITERATOR_ARG(MACRO, ...)	\
+  MACRO (16, 1, 8, 16, float16_t, __VA_ARGS__)		\
+  MACRO (32, 1, 8, 32,     float, __VA_ARGS__)		\
+  MACRO (64, 1, 8, 64,    double, __VA_ARGS__)
+
+/* An iterator to call a macro with every supported SEW, LMUL, NF, MLEN and
+   corresponding scalar modes with extra arguments for float tuple
+   operations.  */
+#define _RVV_FLOAT_TUPLE_ITERATOR_ARG(MACRO, ...)	\
+  _RVV_FLOAT_TUPLE_NF2_ITERATOR_ARG (MACRO, __VA_ARGS__)\
+  _RVV_FLOAT_TUPLE_NF3_ITERATOR_ARG (MACRO, __VA_ARGS__)\
+  _RVV_FLOAT_TUPLE_NF4_ITERATOR_ARG (MACRO, __VA_ARGS__)\
+  _RVV_FLOAT_TUPLE_NF5_ITERATOR_ARG (MACRO, __VA_ARGS__)\
+  _RVV_FLOAT_TUPLE_NF6_ITERATOR_ARG (MACRO, __VA_ARGS__)\
+  _RVV_FLOAT_TUPLE_NF7_ITERATOR_ARG (MACRO, __VA_ARGS__)\
+  _RVV_FLOAT_TUPLE_NF8_ITERATOR_ARG (MACRO, __VA_ARGS__)
+
 /* Define the setvl intrinsics.  Use the int iterator because it is a
    superset of the float one, but ignore the type operand.  */
 
@@ -518,6 +689,32 @@ vmv_v_v_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a)		\
 
 
 _RVV_INT_ITERATOR (_RVV_INT_VEC_MOVE)
+
+#define _RVVINT_TUPLE_COPY(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcopy_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##x##NF##_t a)	\
+{									\
+  return a;								\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcopy_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##x##NF##_t a)	\
+{									\
+  return a;								\
+}									\
+
+_RVV_INT_TUPLE_ITERATOR_ARG (_RVVINT_TUPLE_COPY, )
+
+#define _RVVFLOAT_TUPLE_COPY(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcopy_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##x##NF##_t a)	\
+{									\
+  return a;								\
+}									\
+
+_RVV_FLOAT_TUPLE_ITERATOR_ARG (_RVVFLOAT_TUPLE_COPY, )
 
 /* Define the ld/st intrinsics.  */
 
@@ -3911,6 +4108,834 @@ vreadvl ()
   else
     return __builtin_riscv_vreadvldi ();
 }
+
+#define _RVVINT_TUPLE_LDST(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e_v_i##SEW##m##LMUL##x##NF (const int##SEW##_t *a)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_loadint##SEW##m##LMUL##x##NF##_si (a);	\
+  else									\
+    return __builtin_riscv_vseg_loadint##SEW##m##LMUL##x##NF##_di (a);	\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e_v_i##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vint##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const int##SEW##_t *a)						\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_loadint##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vseg_loadint##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a);					\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##eff_v_i##SEW##m##LMUL##x##NF (const int##SEW##_t *a)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_ff_loadint##SEW##m##LMUL##x##NF##_si (a);\
+  else									\
+    return __builtin_riscv_vseg_ff_loadint##SEW##m##LMUL##x##NF##_di (a);\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##eff_v_i##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vint##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const int##SEW##_t *a)						\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_ff_loadint##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vseg_ff_loadint##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a);					\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlxseg##NF##e_v_i##SEW##m##LMUL##x##NF (const int##SEW##_t *a, vuint##SEW##m##LMUL##_t idx)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_idx_loadint##SEW##m##LMUL##x##NF##_si (a, idx);	\
+  else									\
+    return __builtin_riscv_vseg_idx_loadint##SEW##m##LMUL##x##NF##_di (a, idx);	\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlxseg##NF##e_v_i##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vint##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const int##SEW##_t *a,						\
+  vuint##SEW##m##LMUL##_t idx)						\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_idx_loadint##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a, idx);					\
+  else									\
+    return __builtin_riscv_vseg_idx_loadint##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a, idx);					\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e_v_i##SEW##m##LMUL##x##NF (const int##SEW##_t *a, ptrdiff_t s)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_strided_loadint##SEW##m##LMUL##x##NF##_si (a, s);\
+  else									\
+    return __builtin_riscv_vseg_strided_loadint##SEW##m##LMUL##x##NF##_di (a, s);\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e_v_i##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vint##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const int##SEW##_t *a, ptrdiff_t s)					\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_strided_loadint##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a, s);					\
+  else									\
+    return __builtin_riscv_vseg_strided_loadint##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a, s);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e_v_u##SEW##m##LMUL##x##NF (const uint##SEW##_t *a)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_loaduint##SEW##m##LMUL##x##NF##_si (a);	\
+  else									\
+    return __builtin_riscv_vseg_loaduint##SEW##m##LMUL##x##NF##_di (a);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e_v_u##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vuint##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const uint##SEW##_t *a)						\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_loaduint##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vseg_loaduint##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##eff_v_u##SEW##m##LMUL##x##NF (const uint##SEW##_t *a)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_ff_loaduint##SEW##m##LMUL##x##NF##_si (a);\
+  else									\
+    return __builtin_riscv_vseg_ff_loaduint##SEW##m##LMUL##x##NF##_di (a);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##eff_v_u##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vuint##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const uint##SEW##_t *a)						\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_ff_loaduint##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vseg_ff_loaduint##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlxseg##NF##e_v_u##SEW##m##LMUL##x##NF (const uint##SEW##_t *a, vuint##SEW##m##LMUL##_t idx)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_idx_loaduint##SEW##m##LMUL##x##NF##_si (a, idx);\
+  else									\
+    return __builtin_riscv_vseg_idx_loaduint##SEW##m##LMUL##x##NF##_di (a, idx);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlxseg##NF##e_v_u##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vuint##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const uint##SEW##_t *a, vuint##SEW##m##LMUL##_t idx)			\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_idx_loaduint##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a, idx);					\
+  else									\
+    return __builtin_riscv_vseg_idx_loaduint##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a, idx);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e_v_u##SEW##m##LMUL##x##NF (const uint##SEW##_t *a, ptrdiff_t s)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_strided_loaduint##SEW##m##LMUL##x##NF##_si (a, s);	\
+  else									\
+    return __builtin_riscv_vseg_strided_loaduint##SEW##m##LMUL##x##NF##_di (a, s);	\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e_v_u##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vuint##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const uint##SEW##_t *a, ptrdiff_t s)					\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_strided_loaduint##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a, s);					\
+  else									\
+    return __builtin_riscv_vseg_strided_loaduint##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a,s );					\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e_v_u##SEW##m##LMUL##x##NF (uint##SEW##_t *a,		\
+				   vuint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_storeuint##SEW##m##LMUL##x##NF##_si (b, a);	\
+  else									\
+    __builtin_riscv_vseg_storeuint##SEW##m##LMUL##x##NF##_di (b, a);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e_v_u##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					   uint##SEW##_t *a,		\
+				   vuint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_storeuint##SEW##m##LMUL##x##NF##_si_mask (mask, b, a);	\
+  else									\
+    __builtin_riscv_vseg_storeuint##SEW##m##LMUL##x##NF##_di_mask (mask, b, a);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e_v_i##SEW##m##LMUL##x##NF (int##SEW##_t *a,			\
+				   vint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_storeint##SEW##m##LMUL##x##NF##_si (b, a);	\
+  else									\
+    __builtin_riscv_vseg_storeint##SEW##m##LMUL##x##NF##_di (b, a);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e_v_i##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					   int##SEW##_t *a,		\
+				   vint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_storeint##SEW##m##LMUL##x##NF##_si_mask (mask, b, a);	\
+  else									\
+    __builtin_riscv_vseg_storeint##SEW##m##LMUL##x##NF##_di_mask (mask, b, a);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsxseg##NF##e_v_u##SEW##m##LMUL##x##NF (uint##SEW##_t *a,		\
+					vuint##SEW##m##LMUL##_t idx, \
+				   vuint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_idx_storeuint##SEW##m##LMUL##x##NF##_si (b, a, idx);	\
+  else									\
+    __builtin_riscv_vseg_idx_storeuint##SEW##m##LMUL##x##NF##_di (b, a, idx);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsxseg##NF##e_v_i##SEW##m##LMUL##x##NF (int##SEW##_t *a,		\
+					vuint##SEW##m##LMUL##_t idx, \
+				   vint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_idx_storeint##SEW##m##LMUL##x##NF##_si (b, a, idx);	\
+  else									\
+    __builtin_riscv_vseg_idx_storeint##SEW##m##LMUL##x##NF##_di (b, a, idx);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsxseg##NF##e_v_u##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					   uint##SEW##_t *a,		\
+					   vuint##SEW##m##LMUL##_t idx, \
+				   vuint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_idx_storeuint##SEW##m##LMUL##x##NF##_si_mask (mask, b, a, idx);	\
+  else									\
+    __builtin_riscv_vseg_idx_storeuint##SEW##m##LMUL##x##NF##_di_mask (mask, b, a, idx);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsxseg##NF##e_v_i##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					   int##SEW##_t *a,		\
+					   vuint##SEW##m##LMUL##_t idx, \
+				   vint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_idx_storeint##SEW##m##LMUL##x##NF##_si_mask (mask, b, a, idx);	\
+  else									\
+    __builtin_riscv_vseg_idx_storeint##SEW##m##LMUL##x##NF##_di_mask (mask, b, a, idx);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e_v_u##SEW##m##LMUL##x##NF (uint##SEW##_t *a, ptrdiff_t s,	\
+				   vuint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_strided_storeuint##SEW##m##LMUL##x##NF##_si (b, a, s);\
+  else									\
+    __builtin_riscv_vseg_strided_storeuint##SEW##m##LMUL##x##NF##_di (b, a, s);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e_v_u##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					   uint##SEW##_t *a, ptrdiff_t s,\
+				   vuint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_strided_storeuint##SEW##m##LMUL##x##NF##_si_mask (mask, b, a, s);	\
+  else									\
+    __builtin_riscv_vseg_strided_storeuint##SEW##m##LMUL##x##NF##_di_mask (mask, b, a, s);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e_v_i##SEW##m##LMUL##x##NF (int##SEW##_t *a, ptrdiff_t s,	\
+				   vint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_strided_storeint##SEW##m##LMUL##x##NF##_si (b, a, s);	\
+  else									\
+    __builtin_riscv_vseg_strided_storeint##SEW##m##LMUL##x##NF##_di (b, a, s);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e_v_i##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					   int##SEW##_t *a,		\
+					   ptrdiff_t s,			\
+				   vint##SEW##m##LMUL##x##NF##_t b)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_strided_storeint##SEW##m##LMUL##x##NF##_si_mask (mask, b, a, s);	\
+  else									\
+    __builtin_riscv_vseg_strided_storeint##SEW##m##LMUL##x##NF##_di_mask (mask, b, a, s);	\
+}									\
+
+
+
+_RVV_INT_TUPLE_ITERATOR_ARG (_RVVINT_TUPLE_LDST, )
+
+#define _RVVFLOAT_TUPLE_LDST(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e_v_f##SEW##m##LMUL##x##NF (const _RVV_F##SEW##_TYPE *a)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_loadfloat##SEW##m##LMUL##x##NF##_si (a);\
+  else									\
+    return __builtin_riscv_vseg_loadfloat##SEW##m##LMUL##x##NF##_di (a);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e_v_f##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vfloat##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const _RVV_F##SEW##_TYPE *a)						\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_loadfloat##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vseg_loadfloat##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a);					\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##eff_v_f##SEW##m##LMUL##x##NF (const _RVV_F##SEW##_TYPE *a)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_ff_loadfloat##SEW##m##LMUL##x##NF##_si (a);\
+  else									\
+    return __builtin_riscv_vseg_ff_loadfloat##SEW##m##LMUL##x##NF##_di (a);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##eff_v_f##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vfloat##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const _RVV_F##SEW##_TYPE *a)						\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_ff_loadfloat##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a);					\
+  else									\
+    return __builtin_riscv_vseg_ff_loadfloat##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a);					\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlxseg##NF##e_v_f##SEW##m##LMUL##x##NF (const _RVV_F##SEW##_TYPE *a, vuint##SEW##m##LMUL##_t idx)	\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_idx_loadfloat##SEW##m##LMUL##x##NF##_si (a, idx);\
+  else									\
+    return __builtin_riscv_vseg_idx_loadfloat##SEW##m##LMUL##x##NF##_di (a, idx);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlxseg##NF##e_v_f##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vfloat##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const _RVV_F##SEW##_TYPE *a, vuint##SEW##m##LMUL##_t idx)		\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_idx_loadfloat##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a, idx);					\
+  else									\
+    return __builtin_riscv_vseg_idx_loadfloat##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a, idx);					\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e_v_f##SEW##m##LMUL##x##NF (const _RVV_F##SEW##_TYPE *a, ptrdiff_t s) \
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_strided_loadfloat##SEW##m##LMUL##x##NF##_si (a, s);\
+  else									\
+    return __builtin_riscv_vseg_strided_loadfloat##SEW##m##LMUL##x##NF##_di (a, s);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e_v_f##SEW##m##LMUL##x##NF##_m (				\
+  vbool##MLEN##_t mask,							\
+  vfloat##SEW##m##LMUL##x##NF##_t maskedoff,				\
+  const _RVV_F##SEW##_TYPE *a, ptrdiff_t s)				\
+{									\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vseg_strided_loadfloat##SEW##m##LMUL##x##NF##_si_mask (\
+	     mask, maskedoff, a, s);					\
+  else									\
+    return __builtin_riscv_vseg_strided_loadfloat##SEW##m##LMUL##x##NF##_di_mask (\
+	     mask, maskedoff, a, s);					\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e_v_f##SEW##m##LMUL##x##NF (_RVV_F##SEW##_TYPE *a,		\
+				       vfloat##SEW##m##LMUL##x##NF##_t b)\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_storefloat##SEW##m##LMUL##x##NF##_si (b, a);	\
+  else									\
+    __builtin_riscv_vseg_storefloat##SEW##m##LMUL##x##NF##_di (b, a);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e_v_f##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					  _RVV_F##SEW##_TYPE *a,	\
+				       vfloat##SEW##m##LMUL##x##NF##_t b)\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_storefloat##SEW##m##LMUL##x##NF##_si_mask (mask, b, a);	\
+  else									\
+    __builtin_riscv_vseg_storefloat##SEW##m##LMUL##x##NF##_di_mask (mask, b, a);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsxseg##NF##e_v_f##SEW##m##LMUL##x##NF (_RVV_F##SEW##_TYPE *a,		\
+					vuint##SEW##m##LMUL##_t idx,	\
+				       vfloat##SEW##m##LMUL##x##NF##_t b)\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_idx_storefloat##SEW##m##LMUL##x##NF##_si (b, a, idx);\
+  else									\
+    __builtin_riscv_vseg_idx_storefloat##SEW##m##LMUL##x##NF##_di (b, a, idx);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsxseg##NF##e_v_f##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					  _RVV_F##SEW##_TYPE *a,	\
+					vuint##SEW##m##LMUL##_t idx,	\
+				       vfloat##SEW##m##LMUL##x##NF##_t b)\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_idx_storefloat##SEW##m##LMUL##x##NF##_si_mask (mask, b, a, idx);	\
+  else									\
+    __builtin_riscv_vseg_idx_storefloat##SEW##m##LMUL##x##NF##_di_mask (mask, b, a, idx);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e_v_f##SEW##m##LMUL##x##NF (_RVV_F##SEW##_TYPE *a, ptrdiff_t s,\
+				       vfloat##SEW##m##LMUL##x##NF##_t b)\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_strided_storefloat##SEW##m##LMUL##x##NF##_si (b, a, s);	\
+  else									\
+    __builtin_riscv_vseg_strided_storefloat##SEW##m##LMUL##x##NF##_di (b, a, s);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e_v_f##SEW##m##LMUL##x##NF##_m (vbool##MLEN##_t mask,	\
+					  _RVV_F##SEW##_TYPE *a, ptrdiff_t s,	\
+				       vfloat##SEW##m##LMUL##x##NF##_t b)\
+{									\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseg_strided_storefloat##SEW##m##LMUL##x##NF##_si_mask (mask, b, a, s);	\
+  else									\
+    __builtin_riscv_vseg_strided_storefloat##SEW##m##LMUL##x##NF##_di_mask (mask, b, a, s);	\
+}
+
+
+_RVV_FLOAT_TUPLE_ITERATOR_ARG (_RVVFLOAT_TUPLE_LDST, )
+
+
+#define _RVVINT_TUPLE_INSERT(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##x##NF##_t vt,		\
+			     unsigned idx,				\
+			     vint##SEW##m##LMUL##_t v)			\
+{									\
+  return __builtin_riscv_vtuple_insertint##SEW##m##LMUL##x##NF (vt, v, idx);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##x##NF##_t vt,		\
+			     unsigned idx,				\
+			     vuint##SEW##m##LMUL##_t v)			\
+{									\
+  return __builtin_riscv_vtuple_insertuint##SEW##m##LMUL##x##NF (vt, v, idx);\
+}
+
+_RVV_INT_TUPLE_ITERATOR_ARG (_RVVINT_TUPLE_INSERT, )
+
+#define _RVVFLOAT_TUPLE_INSERT(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##x##NF##_t vt,	\
+			     unsigned idx,				\
+			     vfloat##SEW##m##LMUL##_t v)		\
+{									\
+  return __builtin_riscv_vtuple_insertfloat##SEW##m##LMUL##x##NF (vt, v, idx);\
+}
+_RVV_FLOAT_TUPLE_ITERATOR_ARG (_RVVFLOAT_TUPLE_INSERT, )
+
+#define _RVVINT_TUPLE_EXTRACT(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vget_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##x##NF##_t vt,		\
+			     unsigned idx)				\
+{									\
+  return __builtin_riscv_vtuple_extractint##SEW##m##LMUL##x##NF (vt, idx);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vget_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##x##NF##_t vt,		\
+			     unsigned idx)				\
+{									\
+  return __builtin_riscv_vtuple_extractuint##SEW##m##LMUL##x##NF (vt, idx);\
+}
+
+_RVV_INT_TUPLE_ITERATOR_ARG (_RVVINT_TUPLE_EXTRACT, )
+
+#define _RVVFLOAT_TUPLE_EXTRACT(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vget_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##x##NF##_t vt,	\
+			     unsigned idx)				\
+{									\
+  return __builtin_riscv_vtuple_extractfloat##SEW##m##LMUL##x##NF (vt, idx);\
+}
+_RVV_FLOAT_TUPLE_ITERATOR_ARG (_RVVFLOAT_TUPLE_EXTRACT, )
+
+#define _RVVINT_TUPLE_CREATE2(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##_t v1,		\
+				vint##SEW##m##LMUL##_t v2)		\
+{									\
+  return __builtin_riscv_vtuple_createint##SEW##m##LMUL##x##NF (v1, v2);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##_t v1,		\
+				vuint##SEW##m##LMUL##_t v2)		\
+{									\
+  return __builtin_riscv_vtuple_createuint##SEW##m##LMUL##x##NF (	\
+	   v1, v2);							\
+}
+
+_RVV_INT_TUPLE_NF2_ITERATOR_ARG (_RVVINT_TUPLE_CREATE2, )
+
+#define _RVVINT_TUPLE_CREATE3(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##_t v1,		\
+				vint##SEW##m##LMUL##_t v2,		\
+				vint##SEW##m##LMUL##_t v3)		\
+{									\
+  return __builtin_riscv_vtuple_createint##SEW##m##LMUL##x##NF (v1, v2, v3);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##_t v1,		\
+				vuint##SEW##m##LMUL##_t v2,		\
+				vuint##SEW##m##LMUL##_t v3)		\
+{									\
+  return __builtin_riscv_vtuple_createuint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3);							\
+}
+
+_RVV_INT_TUPLE_NF3_ITERATOR_ARG (_RVVINT_TUPLE_CREATE3, )
+
+#define _RVVINT_TUPLE_CREATE4(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##_t v1,		\
+				vint##SEW##m##LMUL##_t v2,		\
+				vint##SEW##m##LMUL##_t v3,		\
+				vint##SEW##m##LMUL##_t v4)		\
+{									\
+  return __builtin_riscv_vtuple_createint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4);						\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##_t v1,		\
+				vuint##SEW##m##LMUL##_t v2,		\
+				vuint##SEW##m##LMUL##_t v3,		\
+				vuint##SEW##m##LMUL##_t v4)		\
+{									\
+  return __builtin_riscv_vtuple_createuint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4);						\
+}
+
+_RVV_INT_TUPLE_NF4_ITERATOR_ARG (_RVVINT_TUPLE_CREATE4, )
+
+#define _RVVINT_TUPLE_CREATE5(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##_t v1,		\
+				vint##SEW##m##LMUL##_t v2,		\
+				vint##SEW##m##LMUL##_t v3,		\
+				vint##SEW##m##LMUL##_t v4,		\
+				vint##SEW##m##LMUL##_t v5)		\
+{									\
+  return __builtin_riscv_vtuple_createint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5);						\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##_t v1,		\
+				vuint##SEW##m##LMUL##_t v2,		\
+				vuint##SEW##m##LMUL##_t v3,		\
+				vuint##SEW##m##LMUL##_t v4,		\
+				vuint##SEW##m##LMUL##_t v5)		\
+{									\
+  return __builtin_riscv_vtuple_createuint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5);						\
+}
+
+_RVV_INT_TUPLE_NF5_ITERATOR_ARG (_RVVINT_TUPLE_CREATE5, )
+
+#define _RVVINT_TUPLE_CREATE6(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##_t v1,		\
+				vint##SEW##m##LMUL##_t v2,		\
+				vint##SEW##m##LMUL##_t v3,		\
+				vint##SEW##m##LMUL##_t v4,		\
+				vint##SEW##m##LMUL##_t v5,		\
+				vint##SEW##m##LMUL##_t v6)		\
+{									\
+  return __builtin_riscv_vtuple_createint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##_t v1,		\
+				vuint##SEW##m##LMUL##_t v2,		\
+				vuint##SEW##m##LMUL##_t v3,		\
+				vuint##SEW##m##LMUL##_t v4,		\
+				vuint##SEW##m##LMUL##_t v5,		\
+				vuint##SEW##m##LMUL##_t v6)		\
+{									\
+  return __builtin_riscv_vtuple_createuint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6);					\
+}
+
+_RVV_INT_TUPLE_NF6_ITERATOR_ARG (_RVVINT_TUPLE_CREATE6, )
+
+#define _RVVINT_TUPLE_CREATE7(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##_t v1,		\
+				vint##SEW##m##LMUL##_t v2,		\
+				vint##SEW##m##LMUL##_t v3,		\
+				vint##SEW##m##LMUL##_t v4,		\
+				vint##SEW##m##LMUL##_t v5,		\
+				vint##SEW##m##LMUL##_t v6,		\
+				vint##SEW##m##LMUL##_t v7)		\
+{									\
+  return __builtin_riscv_vtuple_createint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6, v7);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##_t v1,		\
+				vuint##SEW##m##LMUL##_t v2,		\
+				vuint##SEW##m##LMUL##_t v3,		\
+				vuint##SEW##m##LMUL##_t v4,		\
+				vuint##SEW##m##LMUL##_t v5,		\
+				vuint##SEW##m##LMUL##_t v6,		\
+				vuint##SEW##m##LMUL##_t v7)		\
+{									\
+  return __builtin_riscv_vtuple_createuint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6, v7);					\
+}
+
+_RVV_INT_TUPLE_NF7_ITERATOR_ARG (_RVVINT_TUPLE_CREATE7, )
+
+#define _RVVINT_TUPLE_CREATE8(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##_t v1,		\
+				vint##SEW##m##LMUL##_t v2,		\
+				vint##SEW##m##LMUL##_t v3,		\
+				vint##SEW##m##LMUL##_t v4,		\
+				vint##SEW##m##LMUL##_t v5,		\
+				vint##SEW##m##LMUL##_t v6,		\
+				vint##SEW##m##LMUL##_t v7,		\
+				vint##SEW##m##LMUL##_t v8)		\
+{									\
+  return __builtin_riscv_vtuple_createint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6, v7, v8);				\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##_t v1,		\
+				vuint##SEW##m##LMUL##_t v2,		\
+				vuint##SEW##m##LMUL##_t v3,		\
+				vuint##SEW##m##LMUL##_t v4,		\
+				vuint##SEW##m##LMUL##_t v5,		\
+				vuint##SEW##m##LMUL##_t v6,		\
+				vuint##SEW##m##LMUL##_t v7,		\
+				vuint##SEW##m##LMUL##_t v8)		\
+{									\
+  return __builtin_riscv_vtuple_createuint##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6, v7, v8);				\
+}
+
+_RVV_INT_TUPLE_NF8_ITERATOR_ARG (_RVVINT_TUPLE_CREATE8, )
+
+
+#define _RVVFLOAT_TUPLE_CREATE2(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##_t v1,		\
+				vfloat##SEW##m##LMUL##_t v2)		\
+{									\
+  return __builtin_riscv_vtuple_createfloat##SEW##m##LMUL##x##NF (v1, v2);\
+}
+
+_RVV_FLOAT_TUPLE_NF2_ITERATOR_ARG (_RVVFLOAT_TUPLE_CREATE2, )
+
+#define _RVVFLOAT_TUPLE_CREATE3(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##_t v1,		\
+				vfloat##SEW##m##LMUL##_t v2,		\
+				vfloat##SEW##m##LMUL##_t v3)		\
+{									\
+  return __builtin_riscv_vtuple_createfloat##SEW##m##LMUL##x##NF (v1, v2, v3);\
+}
+
+_RVV_FLOAT_TUPLE_NF3_ITERATOR_ARG (_RVVFLOAT_TUPLE_CREATE3, )
+
+#define _RVVFLOAT_TUPLE_CREATE4(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##_t v1,		\
+				vfloat##SEW##m##LMUL##_t v2,		\
+				vfloat##SEW##m##LMUL##_t v3,		\
+				vfloat##SEW##m##LMUL##_t v4)		\
+{									\
+  return __builtin_riscv_vtuple_createfloat##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4);						\
+}
+
+_RVV_FLOAT_TUPLE_NF4_ITERATOR_ARG (_RVVFLOAT_TUPLE_CREATE4, )
+
+#define _RVVFLOAT_TUPLE_CREATE5(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##_t v1,		\
+				vfloat##SEW##m##LMUL##_t v2,		\
+				vfloat##SEW##m##LMUL##_t v3,		\
+				vfloat##SEW##m##LMUL##_t v4,		\
+				vfloat##SEW##m##LMUL##_t v5)		\
+{									\
+  return __builtin_riscv_vtuple_createfloat##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5);						\
+}
+
+_RVV_FLOAT_TUPLE_NF5_ITERATOR_ARG (_RVVFLOAT_TUPLE_CREATE5, )
+
+#define _RVVFLOAT_TUPLE_CREATE6(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##_t v1,		\
+				vfloat##SEW##m##LMUL##_t v2,		\
+				vfloat##SEW##m##LMUL##_t v3,		\
+				vfloat##SEW##m##LMUL##_t v4,		\
+				vfloat##SEW##m##LMUL##_t v5,		\
+				vfloat##SEW##m##LMUL##_t v6)		\
+{									\
+  return __builtin_riscv_vtuple_createfloat##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6);					\
+}
+
+_RVV_FLOAT_TUPLE_NF6_ITERATOR_ARG (_RVVFLOAT_TUPLE_CREATE6, )
+
+#define _RVVFLOAT_TUPLE_CREATE7(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##_t v1,		\
+				vfloat##SEW##m##LMUL##_t v2,		\
+				vfloat##SEW##m##LMUL##_t v3,		\
+				vfloat##SEW##m##LMUL##_t v4,		\
+				vfloat##SEW##m##LMUL##_t v5,		\
+				vfloat##SEW##m##LMUL##_t v6,		\
+				vfloat##SEW##m##LMUL##_t v7)		\
+{									\
+  return __builtin_riscv_vtuple_createfloat##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6, v7);					\
+}
+
+_RVV_FLOAT_TUPLE_NF7_ITERATOR_ARG (_RVVFLOAT_TUPLE_CREATE7, )
+
+#define _RVVFLOAT_TUPLE_CREATE8(SEW, LMUL, NF, MLEN, T, XARG)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vcreate_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##_t v1,		\
+				vfloat##SEW##m##LMUL##_t v2,		\
+				vfloat##SEW##m##LMUL##_t v3,		\
+				vfloat##SEW##m##LMUL##_t v4,		\
+				vfloat##SEW##m##LMUL##_t v5,		\
+				vfloat##SEW##m##LMUL##_t v6,		\
+				vfloat##SEW##m##LMUL##_t v7,		\
+				vfloat##SEW##m##LMUL##_t v8)		\
+{									\
+  return __builtin_riscv_vtuple_createfloat##SEW##m##LMUL##x##NF (	\
+	   v1, v2, v3, v4, v5, v6, v7, v8);				\
+}
+
+_RVV_FLOAT_TUPLE_NF8_ITERATOR_ARG (_RVVFLOAT_TUPLE_CREATE8, )
 
 #endif
 #endif

@@ -571,6 +571,14 @@ along with GCC; see the file COPYING3.  If not see
 #define RISCV_FTYPE_NAME2(A, B, C) RISCV_##A##_FTYPE_##B##_##C
 #define RISCV_FTYPE_NAME3(A, B, C, D) RISCV_##A##_FTYPE_##B##_##C##_##D
 #define RISCV_FTYPE_NAME4(A, B, C, D, E) RISCV_##A##_FTYPE_##B##_##C##_##D##_##E
+#define RISCV_FTYPE_NAME5(A, B, C, D, E, F) \
+  RISCV_##A##_FTYPE_##B##_##C##_##D##_##E##_##F
+#define RISCV_FTYPE_NAME6(A, B, C, D, E, F, G) \
+  RISCV_##A##_FTYPE_##B##_##C##_##D##_##E##_##F##_##G
+#define RISCV_FTYPE_NAME7(A, B, C, D, E, F, G, H) \
+  RISCV_##A##_FTYPE_##B##_##C##_##D##_##E##_##F##_##G##_##H
+#define RISCV_FTYPE_NAME8(A, B, C, D, E, F, G, H, I) \
+  RISCV_##A##_FTYPE_##B##_##C##_##D##_##E##_##F##_##G##_##H##_##I
 
 /* Classifies the prototype of a built-in function.  */
 enum riscv_function_type {
@@ -691,6 +699,8 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_SIZE size_type_node
 #define RISCV_ATYPE_LONG long_integer_type_node
 
+#define RISCV_ATYPE_PTRDIFF ptrdiff_type_node
+
 #define RISCV_ATYPE_QI_PTR intQI_ptr_type_node
 #define RISCV_ATYPE_HI_PTR intHI_ptr_type_node
 #define RISCV_ATYPE_SI_PTR intSI_ptr_type_node
@@ -776,6 +786,128 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_VUI64M4 rvvuint64m4_t_node
 #define RISCV_ATYPE_VUI64M8 rvvuint64m8_t_node
 
+#define RISCV_ATYPE_VI8M1X2  rvvint8m1x2_t_node
+#define RISCV_ATYPE_VUI8M1X2 rvvuint8m1x2_t_node
+#define RISCV_ATYPE_VI8M1X3  rvvint8m1x3_t_node
+#define RISCV_ATYPE_VUI8M1X3 rvvuint8m1x3_t_node
+#define RISCV_ATYPE_VI8M1X4  rvvint8m1x4_t_node
+#define RISCV_ATYPE_VUI8M1X4 rvvuint8m1x4_t_node
+#define RISCV_ATYPE_VI8M1X5  rvvint8m1x5_t_node
+#define RISCV_ATYPE_VUI8M1X5 rvvuint8m1x5_t_node
+#define RISCV_ATYPE_VI8M1X6  rvvint8m1x6_t_node
+#define RISCV_ATYPE_VUI8M1X6 rvvuint8m1x6_t_node
+#define RISCV_ATYPE_VI8M1X7  rvvint8m1x7_t_node
+#define RISCV_ATYPE_VUI8M1X7 rvvuint8m1x7_t_node
+#define RISCV_ATYPE_VI8M1X8  rvvint8m1x8_t_node
+#define RISCV_ATYPE_VUI8M1X8 rvvuint8m1x8_t_node
+#define RISCV_ATYPE_VI8M2X2  rvvint8m2x2_t_node
+#define RISCV_ATYPE_VUI8M2X2 rvvuint8m2x2_t_node
+#define RISCV_ATYPE_VI8M2X3  rvvint8m2x3_t_node
+#define RISCV_ATYPE_VUI8M2X3 rvvuint8m2x3_t_node
+#define RISCV_ATYPE_VI8M2X4  rvvint8m2x4_t_node
+#define RISCV_ATYPE_VUI8M2X4 rvvuint8m2x4_t_node
+#define RISCV_ATYPE_VI8M4X2  rvvint8m4x2_t_node
+#define RISCV_ATYPE_VUI8M4X2 rvvuint8m4x2_t_node
+#define RISCV_ATYPE_VI16M1X2  rvvint16m1x2_t_node
+#define RISCV_ATYPE_VUI16M1X2 rvvuint16m1x2_t_node
+#define RISCV_ATYPE_VF16M1X2  rvvfloat16m1x2_t_node
+#define RISCV_ATYPE_VI16M1X3  rvvint16m1x3_t_node
+#define RISCV_ATYPE_VUI16M1X3 rvvuint16m1x3_t_node
+#define RISCV_ATYPE_VF16M1X3  rvvfloat16m1x3_t_node
+#define RISCV_ATYPE_VI16M1X4  rvvint16m1x4_t_node
+#define RISCV_ATYPE_VUI16M1X4 rvvuint16m1x4_t_node
+#define RISCV_ATYPE_VF16M1X4  rvvfloat16m1x4_t_node
+#define RISCV_ATYPE_VI16M1X5  rvvint16m1x5_t_node
+#define RISCV_ATYPE_VUI16M1X5 rvvuint16m1x5_t_node
+#define RISCV_ATYPE_VF16M1X5  rvvfloat16m1x5_t_node
+#define RISCV_ATYPE_VI16M1X6  rvvint16m1x6_t_node
+#define RISCV_ATYPE_VUI16M1X6 rvvuint16m1x6_t_node
+#define RISCV_ATYPE_VF16M1X6  rvvfloat16m1x6_t_node
+#define RISCV_ATYPE_VI16M1X7  rvvint16m1x7_t_node
+#define RISCV_ATYPE_VUI16M1X7 rvvuint16m1x7_t_node
+#define RISCV_ATYPE_VF16M1X7  rvvfloat16m1x7_t_node
+#define RISCV_ATYPE_VI16M1X8  rvvint16m1x8_t_node
+#define RISCV_ATYPE_VUI16M1X8 rvvuint16m1x8_t_node
+#define RISCV_ATYPE_VF16M1X8  rvvfloat16m1x8_t_node
+#define RISCV_ATYPE_VI16M2X2  rvvint16m2x2_t_node
+#define RISCV_ATYPE_VUI16M2X2 rvvuint16m2x2_t_node
+#define RISCV_ATYPE_VF16M2X2  rvvfloat16m2x2_t_node
+#define RISCV_ATYPE_VI16M2X3  rvvint16m2x3_t_node
+#define RISCV_ATYPE_VUI16M2X3 rvvuint16m2x3_t_node
+#define RISCV_ATYPE_VF16M2X3  rvvfloat16m2x3_t_node
+#define RISCV_ATYPE_VI16M2X4  rvvint16m2x4_t_node
+#define RISCV_ATYPE_VUI16M2X4 rvvuint16m2x4_t_node
+#define RISCV_ATYPE_VF16M2X4  rvvfloat16m2x4_t_node
+#define RISCV_ATYPE_VI16M4X2  rvvint16m4x2_t_node
+#define RISCV_ATYPE_VUI16M4X2 rvvuint16m4x2_t_node
+#define RISCV_ATYPE_VF16M4X2  rvvfloat16m4x2_t_node
+#define RISCV_ATYPE_VI32M1X2  rvvint32m1x2_t_node
+#define RISCV_ATYPE_VUI32M1X2 rvvuint32m1x2_t_node
+#define RISCV_ATYPE_VF32M1X2  rvvfloat32m1x2_t_node
+#define RISCV_ATYPE_VI32M1X3  rvvint32m1x3_t_node
+#define RISCV_ATYPE_VUI32M1X3 rvvuint32m1x3_t_node
+#define RISCV_ATYPE_VF32M1X3  rvvfloat32m1x3_t_node
+#define RISCV_ATYPE_VI32M1X4  rvvint32m1x4_t_node
+#define RISCV_ATYPE_VUI32M1X4 rvvuint32m1x4_t_node
+#define RISCV_ATYPE_VF32M1X4  rvvfloat32m1x4_t_node
+#define RISCV_ATYPE_VI32M1X5  rvvint32m1x5_t_node
+#define RISCV_ATYPE_VUI32M1X5 rvvuint32m1x5_t_node
+#define RISCV_ATYPE_VF32M1X5  rvvfloat32m1x5_t_node
+#define RISCV_ATYPE_VI32M1X6  rvvint32m1x6_t_node
+#define RISCV_ATYPE_VUI32M1X6 rvvuint32m1x6_t_node
+#define RISCV_ATYPE_VF32M1X6  rvvfloat32m1x6_t_node
+#define RISCV_ATYPE_VI32M1X7  rvvint32m1x7_t_node
+#define RISCV_ATYPE_VUI32M1X7 rvvuint32m1x7_t_node
+#define RISCV_ATYPE_VF32M1X7  rvvfloat32m1x7_t_node
+#define RISCV_ATYPE_VI32M1X8  rvvint32m1x8_t_node
+#define RISCV_ATYPE_VUI32M1X8 rvvuint32m1x8_t_node
+#define RISCV_ATYPE_VF32M1X8  rvvfloat32m1x8_t_node
+#define RISCV_ATYPE_VI32M2X2  rvvint32m2x2_t_node
+#define RISCV_ATYPE_VUI32M2X2 rvvuint32m2x2_t_node
+#define RISCV_ATYPE_VF32M2X2  rvvfloat32m2x2_t_node
+#define RISCV_ATYPE_VI32M2X3  rvvint32m2x3_t_node
+#define RISCV_ATYPE_VUI32M2X3 rvvuint32m2x3_t_node
+#define RISCV_ATYPE_VF32M2X3  rvvfloat32m2x3_t_node
+#define RISCV_ATYPE_VI32M2X4  rvvint32m2x4_t_node
+#define RISCV_ATYPE_VUI32M2X4 rvvuint32m2x4_t_node
+#define RISCV_ATYPE_VF32M2X4  rvvfloat32m2x4_t_node
+#define RISCV_ATYPE_VI32M4X2  rvvint32m4x2_t_node
+#define RISCV_ATYPE_VUI32M4X2 rvvuint32m4x2_t_node
+#define RISCV_ATYPE_VF32M4X2  rvvfloat32m4x2_t_node
+#define RISCV_ATYPE_VI64M1X2  rvvint64m1x2_t_node
+#define RISCV_ATYPE_VUI64M1X2 rvvuint64m1x2_t_node
+#define RISCV_ATYPE_VF64M1X2  rvvfloat64m1x2_t_node
+#define RISCV_ATYPE_VI64M1X3  rvvint64m1x3_t_node
+#define RISCV_ATYPE_VUI64M1X3 rvvuint64m1x3_t_node
+#define RISCV_ATYPE_VF64M1X3  rvvfloat64m1x3_t_node
+#define RISCV_ATYPE_VI64M1X4  rvvint64m1x4_t_node
+#define RISCV_ATYPE_VUI64M1X4 rvvuint64m1x4_t_node
+#define RISCV_ATYPE_VF64M1X4  rvvfloat64m1x4_t_node
+#define RISCV_ATYPE_VI64M1X5  rvvint64m1x5_t_node
+#define RISCV_ATYPE_VUI64M1X5 rvvuint64m1x5_t_node
+#define RISCV_ATYPE_VF64M1X5  rvvfloat64m1x5_t_node
+#define RISCV_ATYPE_VI64M1X6  rvvint64m1x6_t_node
+#define RISCV_ATYPE_VUI64M1X6 rvvuint64m1x6_t_node
+#define RISCV_ATYPE_VF64M1X6  rvvfloat64m1x6_t_node
+#define RISCV_ATYPE_VI64M1X7  rvvint64m1x7_t_node
+#define RISCV_ATYPE_VUI64M1X7 rvvuint64m1x7_t_node
+#define RISCV_ATYPE_VF64M1X7  rvvfloat64m1x7_t_node
+#define RISCV_ATYPE_VI64M1X8  rvvint64m1x8_t_node
+#define RISCV_ATYPE_VUI64M1X8 rvvuint64m1x8_t_node
+#define RISCV_ATYPE_VF64M1X8  rvvfloat64m1x8_t_node
+#define RISCV_ATYPE_VI64M2X2  rvvint64m2x2_t_node
+#define RISCV_ATYPE_VUI64M2X2 rvvuint64m2x2_t_node
+#define RISCV_ATYPE_VF64M2X2  rvvfloat64m2x2_t_node
+#define RISCV_ATYPE_VI64M2X3  rvvint64m2x3_t_node
+#define RISCV_ATYPE_VUI64M2X3 rvvuint64m2x3_t_node
+#define RISCV_ATYPE_VF64M2X3  rvvfloat64m2x3_t_node
+#define RISCV_ATYPE_VI64M2X4  rvvint64m2x4_t_node
+#define RISCV_ATYPE_VUI64M2X4 rvvuint64m2x4_t_node
+#define RISCV_ATYPE_VF64M2X4  rvvfloat64m2x4_t_node
+#define RISCV_ATYPE_VI64M4X2  rvvint64m4x2_t_node
+#define RISCV_ATYPE_VUI64M4X2 rvvuint64m4x2_t_node
+#define RISCV_ATYPE_VF64M4X2  rvvfloat64m4x2_t_node
+
 /* Helper type nodes for vector support.  */
 tree const_float_ptr_type_node;
 tree const_double_ptr_type_node;
@@ -849,6 +981,25 @@ tree rvvbool16_t_node;
 tree rvvbool32_t_node;
 tree rvvbool64_t_node;
 
+#define F16_TYPE_NODE fp16_type_node
+#define F32_TYPE_NODE float_type_node
+#define F64_TYPE_NODE double_type_node
+
+#define RISCV_DECL_FSEG_TYPES(SEW, LMUL, NR, MLEN,			\
+			      SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			      VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER,X)	\
+  tree rvvfloat##SEW##m##LMUL##x##NR##_t_node;
+
+_RVV_SEG_NO_SEW8_ARG (RISCV_DECL_FSEG_TYPES, X)
+
+#define RISCV_DECL_SEG_TYPES(SEW, LMUL, NR, MLEN,			\
+			     SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			     VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER,X)	\
+  tree rvvint##SEW##m##LMUL##x##NR##_t_node;				\
+  tree rvvuint##SEW##m##LMUL##x##NR##_t_node;
+
+_RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
+
 /* RISCV_FTYPE_ATYPESN takes N RISCV_FTYPES-like type codes and lists
    their associated RISCV_ATYPEs.  */
 #define RISCV_FTYPE_ATYPES0(A) \
@@ -862,6 +1013,19 @@ tree rvvbool64_t_node;
 #define RISCV_FTYPE_ATYPES4(A, B, C, D, E) \
   RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, \
   RISCV_ATYPE_##E
+#define RISCV_FTYPE_ATYPES5(A, B, C, D, E, F) \
+  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, \
+  RISCV_ATYPE_##E, RISCV_ATYPE_##F
+#define RISCV_FTYPE_ATYPES6(A, B, C, D, E, F, G) \
+  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, \
+  RISCV_ATYPE_##E, RISCV_ATYPE_##F, RISCV_ATYPE_##G
+#define RISCV_FTYPE_ATYPES7(A, B, C, D, E, F, G, H) \
+  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, \
+  RISCV_ATYPE_##E, RISCV_ATYPE_##F, RISCV_ATYPE_##G, RISCV_ATYPE_##H
+#define RISCV_FTYPE_ATYPES8(A, B, C, D, E, F, G, H, I) \
+  RISCV_ATYPE_##A, RISCV_ATYPE_##B, RISCV_ATYPE_##C, RISCV_ATYPE_##D, \
+  RISCV_ATYPE_##E, RISCV_ATYPE_##F, RISCV_ATYPE_##G, RISCV_ATYPE_##H, \
+  RISCV_ATYPE_##I
 
 #define SETVL_BUILTINS(E, L, MLEN, MODE, SUBMODE)			\
   DIRECT_BUILTIN (vsetvl##E##m##L##_si, RISCV_SI_FTYPE_SI, vector),	\
@@ -2184,6 +2348,380 @@ tree rvvbool64_t_node;
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L,\
 		vector),
 
+#define _VINT_SEG_LOAD_STORE(E, L, NF, MLEN, MODE, SUBMODE,	\
+			     PNAME, PMODE, SUBTYPE, VCLASS)\
+  DIRECT_NAMED (							\
+    vseg_load##MODE##_##PNAME,				\
+    vseg_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR,		\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_load##MODE##_##PNAME##_mask,					\
+    vseg_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_store##MODE##_##PNAME,				\
+    vseg_store##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_store##MODE##_##PNAME##_mask,					\
+    vseg_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_idx_load##MODE##_##PNAME,				\
+    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_VUI##E##M##L,		\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_idx_load##MODE##_##PNAME##_mask,					\
+    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_VUI##E##M##L,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_idx_store##MODE##_##PNAME,				\
+    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_idx_store##MODE##_##PNAME##_mask,					\
+    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_strided_load##MODE##_##PNAME,					\
+    vseg_strided_load##SUBTYPE##E##m##L##x##NF##_##PNAME,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_PTRDIFF,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_strided_load##MODE##_##PNAME##_mask,				\
+    vseg_strided_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,	\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_PTRDIFF,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_strided_store##MODE##_##PNAME,					\
+    vseg_strided_store##SUBTYPE##E##m##L##x##NF##_##PNAME,		\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_PTRDIFF,\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_strided_store##MODE##_##PNAME##_mask,				\
+    vseg_strided_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,	\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_PTRDIFF,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_ff_load##MODE##_##PNAME,					\
+    vseg_ff_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR,		\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_ff_load##MODE##_##PNAME##_mask,				\
+    vseg_ff_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR,	\
+    vector),								\
+
+
+#define VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN,			\
+			    SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			    VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  _VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, SMODE_PREFIX_UPPER##I, si, SI,\
+		       int, VI)						\
+  _VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, SMODE_PREFIX_UPPER##I, di, DI,\
+		       int, VI)						\
+  _VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, U##SMODE_PREFIX_UPPER##I, si, SI,\
+		       uint, VUI)					\
+  _VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, U##SMODE_PREFIX_UPPER##I, di, DI,\
+		       uint, VUI)
+
+#define _VFLOAT_SEG_LOAD_STORE(E, L, NF, MLEN, MODE, SUBMODE,	\
+			     PNAME, PMODE, SUBTYPE, VCLASS)\
+  DIRECT_NAMED (							\
+    vseg_load##MODE##_##PNAME,				\
+    vseg_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR,		\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_load##MODE##_##PNAME##_mask,					\
+    vseg_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_store##MODE##_##PNAME,				\
+    vseg_store##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_store##MODE##_##PNAME##_mask,					\
+    vseg_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_idx_load##MODE##_##PNAME,				\
+    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_VUI##E##M##L,\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_idx_load##MODE##_##PNAME##_mask,				\
+    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_VUI##E##M##L,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_idx_store##MODE##_##PNAME,				\
+    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_idx_store##MODE##_##PNAME##_mask,					\
+    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_strided_load##MODE##_##PNAME,					\
+    vseg_strided_load##SUBTYPE##E##m##L##x##NF##_##PNAME,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_PTRDIFF,		\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_strided_load##MODE##_##PNAME##_mask,					\
+    vseg_strided_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_PTRDIFF,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_strided_store##MODE##_##PNAME,					\
+    vseg_strided_store##SUBTYPE##E##m##L##x##NF##_##PNAME,		\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_PTRDIFF,\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_strided_store##MODE##_##PNAME##_mask,				\
+    vseg_strided_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,	\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_PTRDIFF,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_ff_load##MODE##_##PNAME,					\
+    vseg_ff_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR,		\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_ff_load##MODE##_##PNAME##_mask,				\
+    vseg_ff_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR,	\
+    vector),
+
+#define VFLOAT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN,			\
+			      SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			      VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)\
+  _VFLOAT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##f, SMODE_PREFIX_UPPER##F, si, SI,\
+			 float, VF)						\
+  _VFLOAT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##f, SMODE_PREFIX_UPPER##F, di, DI,\
+			 float, VF)
+
+#define VINT_SEG_INSERT(SEW, LMUL, NF, MLEN,				\
+			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
+			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_insert##VMODE_PREFIX_LOWER##i,				\
+    vtuple_insertint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##X##NF##_VI##SEW##M##LMUL##_SI,\
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_insert##VMODE_PREFIX_LOWER##i,				\
+    vtuple_insertuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##X##NF##_VUI##SEW##M##LMUL##_SI,\
+    vector),
+
+#define VFLOAT_SEG_INSERT(SEW, LMUL, NF, MLEN,				\
+			  SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_insert##VMODE_PREFIX_LOWER##f,				\
+    vtuple_insertfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##X##NF##	_VF##SEW##M##LMUL##_SI,\
+    vector),								\
+
+#define VINT_SEG_EXTRACT(SEW, LMUL, NF, MLEN,				\
+			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
+			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_extract##VMODE_PREFIX_LOWER##i,				\
+    vtuple_extractint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##_FTYPE_VI##SEW##M##LMUL##X##NF##_SI,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_extract##VMODE_PREFIX_LOWER##i,				\
+    vtuple_extractuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##_FTYPE_VUI##SEW##M##LMUL##X##NF##_SI,	\
+    vector),
+
+#define VFLOAT_SEG_EXTRACT(SEW, LMUL, NF, MLEN,				\
+			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
+			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_extract##VMODE_PREFIX_LOWER##f,				\
+    vtuple_extractfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##_FTYPE_VF##SEW##M##LMUL##X##NF##_SI,	\
+    vector),
+
+#define VINT_SEG_CREATE2(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL, \
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL, \
+    vector),
+
+#define VINT_SEG_CREATE3(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL, \
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL, \
+    vector),
+
+#define VINT_SEG_CREATE4(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL, \
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL, \
+    vector),
+
+#define VINT_SEG_CREATE5(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL, \
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL, \
+    vector),
+
+#define VINT_SEG_CREATE6(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL, \
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL, \
+    vector),
+
+#define VINT_SEG_CREATE7(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL, \
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL, \
+    vector),
+
+#define VINT_SEG_CREATE8(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createint##SEW##m##LMUL##x##NF,				\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL##_VI##SEW##M##LMUL, \
+    vector),								\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##i,				\
+    vtuple_createuint##SEW##m##LMUL##x##NF,				\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL##_VUI##SEW##M##LMUL, \
+    vector),
+
+#define VFLOAT_SEG_CREATE2(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##f,				\
+    vtuple_createfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##_VF##SEW##M##LMUL, \
+    vector),
+
+#define VFLOAT_SEG_CREATE3(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##f,				\
+    vtuple_createfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL, \
+    vector),
+
+#define VFLOAT_SEG_CREATE4(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##f,				\
+    vtuple_createfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL, \
+    vector),
+
+#define VFLOAT_SEG_CREATE5(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##f,				\
+    vtuple_createfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL, \
+    vector),
+
+#define VFLOAT_SEG_CREATE6(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##f,				\
+    vtuple_createfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL, \
+    vector),
+
+#define VFLOAT_SEG_CREATE7(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##f,				\
+    vtuple_createfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL, \
+    vector),
+
+#define VFLOAT_SEG_CREATE8(SEW, LMUL, NF, MLEN,				\
+			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			 VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
+  DIRECT_NAMED (							\
+    vtuple_create##VMODE_PREFIX_LOWER##f,				\
+    vtuple_createfloat##SEW##m##LMUL##x##NF,				\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL##_VF##SEW##M##LMUL, \
+    vector),
+
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
@@ -2429,6 +2967,32 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_INT_FLOAT_ITERATOR (VREINTERPRET)
   _RVV_INT_ITERATOR (VREINTERPRET_INT)
+
+  /* Segment load/store.  */
+  _RVV_SEG_ARG(VINT_SEG_LOAD_STORE, )
+  _RVV_SEG_NO_SEW8_ARG(VFLOAT_SEG_LOAD_STORE, )
+
+  _RVV_SEG_ARG(VINT_SEG_INSERT, )
+  _RVV_SEG_NO_SEW8_ARG(VFLOAT_SEG_INSERT, )
+
+  _RVV_SEG_ARG(VINT_SEG_EXTRACT, )
+  _RVV_SEG_NO_SEW8_ARG(VFLOAT_SEG_EXTRACT, )
+
+  _RVV_SEG_NF2_ARG(VINT_SEG_CREATE2, )
+  _RVV_SEG_NF3_ARG(VINT_SEG_CREATE3, )
+  _RVV_SEG_NF4_ARG(VINT_SEG_CREATE4, )
+  _RVV_SEG_NF5_ARG(VINT_SEG_CREATE5, )
+  _RVV_SEG_NF6_ARG(VINT_SEG_CREATE6, )
+  _RVV_SEG_NF7_ARG(VINT_SEG_CREATE7, )
+  _RVV_SEG_NF8_ARG(VINT_SEG_CREATE8, )
+
+  _RVV_SEG_NF2_NO_SEW8_ARG(VFLOAT_SEG_CREATE2, )
+  _RVV_SEG_NF3_NO_SEW8_ARG(VFLOAT_SEG_CREATE3, )
+  _RVV_SEG_NF4_NO_SEW8_ARG(VFLOAT_SEG_CREATE4, )
+  _RVV_SEG_NF5_NO_SEW8_ARG(VFLOAT_SEG_CREATE5, )
+  _RVV_SEG_NF6_NO_SEW8_ARG(VFLOAT_SEG_CREATE6, )
+  _RVV_SEG_NF7_NO_SEW8_ARG(VFLOAT_SEG_CREATE7, )
+  _RVV_SEG_NF8_NO_SEW8_ARG(VFLOAT_SEG_CREATE8, )
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the
@@ -2676,6 +3240,30 @@ riscv_init_builtins (void)
 	= riscv_vector_type ("vbool32_t", boolean_type_node, VNx4BImode);
       rvvbool64_t_node
 	= riscv_vector_type ("vbool64_t", boolean_type_node, VNx2BImode);
+
+#define RISCV_DEFINE_FSEG_TYPES(SEW, LMUL, NR, MLEN,			\
+				SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+				VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER,X)\
+      rvvfloat##SEW##m##LMUL##x##NR##_t_node				\
+	= riscv_vector_type ("vfloat" #SEW "m" #LMUL "x" #NR "_t",	\
+			     F##SEW##_TYPE_NODE,			\
+			     VMODE_PREFIX_UPPER##Fmode);
+
+_RVV_SEG_NO_SEW8_ARG (RISCV_DEFINE_FSEG_TYPES, X)
+
+#define RISCV_DEFINE_SEG_TYPES(SEW, LMUL, NR, MLEN,			\
+			       SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			       VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER,X)\
+      rvvint##SEW##m##LMUL##x##NR##_t_node				\
+	= riscv_vector_type ("vint" #SEW "m" #LMUL "x" #NR "_t",	\
+			     int##SMODE_PREFIX_UPPER##I_type_node,	\
+			     VMODE_PREFIX_UPPER##Imode);		\
+      rvvuint##SEW##m##LMUL##x##NR##_t_node				\
+	= riscv_vector_type ("vuint" #SEW "m" #LMUL "x" #NR "_t",	\
+			     unsigned_int##SMODE_PREFIX_UPPER##I_type_node,\
+			     VMODE_PREFIX_UPPER##Imode);
+
+_RVV_SEG_ARG (RISCV_DEFINE_SEG_TYPES, X)
 
     }
 

@@ -886,8 +886,10 @@
 ;; to ensure that the scratch operand has been allocated a reg first.
 (define_expand "mov<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_operand:VMODES 0 "nonimmediate_operand")
-                   (match_operand:VMODES 1 "vector_move_operand"))])]
+   (set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr,vr, m,vr")
+	(match_operand:VIMODES 1 "vector_move_operand"  " vr,vi, m,vr,vc"))
+   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,X,r"))
+   (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
 {
   if (lra_in_progress || reload_in_progress)
@@ -8574,3 +8576,574 @@
   "csrr\t%0, vl"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;; Vector segment load/store
+
+(define_expand "vseg_load<VTMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VTMODES 0 "register_operand")
+		   (unspec:VTMODES
+		      [(match_operand:P 1 "register_operand")
+		       (mem:BLK (scratch))]
+		     UNSPEC_SEG_LOAD))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_load<VTMODES:mode>_<P:mode>"
+  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+	(unspec:VTMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (mem:BLK (scratch))]
+	  UNSPEC_SEG_LOAD))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlseg<NF>e.v\t%0, (%1)"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_load<VTMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VTMODES 0 "register_operand")
+		   (unspec:VTMODES
+		      [(match_operand:P 3 "register_operand")
+		       (match_operand:<VCMPEQUIV> 1 "register_operand")
+		       (match_operand:VTMODES 2 "register_operand")
+		       (mem:BLK (scratch))]
+		     UNSPEC_SEG_LOAD))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_load<VTMODES:mode>_<P:mode>_mask"
+  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+	(unspec:VTMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")
+	   (match_operand:VTMODES 3 "register_operand" "0")
+	   (mem:BLK (scratch))]
+	  UNSPEC_SEG_LOAD))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlseg<NF>e.v\t%0, (%1), %2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_ff_load<VTMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VTMODES 0 "register_operand")
+		   (unspec:VTMODES
+		      [(match_operand:P 1 "register_operand")
+		       (mem:BLK (scratch))]
+		     UNSPEC_SEG_LOAD_FIRST_FAULT))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_ff_load<VTMODES:mode>_<P:mode>"
+  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+	(unspec:VTMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (mem:BLK (scratch))]
+	  UNSPEC_SEG_LOAD_FIRST_FAULT))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlseg<NF>eff.v\t%0, (%1)"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_ff_load<VTMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VTMODES 0 "register_operand")
+		   (unspec:VTMODES
+		      [(match_operand:P 3 "register_operand")
+		       (match_operand:<VCMPEQUIV> 1 "register_operand")
+		       (match_operand:VTMODES 2 "register_operand")
+		       (mem:BLK (scratch))]
+		     UNSPEC_SEG_LOAD_FIRST_FAULT))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_ff_load<VTMODES:mode>_<P:mode>_mask"
+  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+	(unspec:VTMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")
+	   (match_operand:VTMODES 3 "register_operand" "0")
+	   (mem:BLK (scratch))]
+	  UNSPEC_SEG_LOAD_FIRST_FAULT))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlseg<NF>eff.v\t%0, (%1), %2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_idx_load<VTMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VTMODES 0 "register_operand")
+		   (unspec:VTMODES
+		      [(match_operand:P 1 "register_operand")
+		       (match_operand:<VMEMINXMODE> 2 "register_operand")
+		       (mem:BLK (scratch))]
+		     UNSPEC_SEG_LOAD))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_idx_load<VTMODES:mode>_<P:mode>"
+  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+	(unspec:VTMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:<VMEMINXMODE> 2 "register_operand")
+	   (mem:BLK (scratch))]
+	  UNSPEC_SEG_LOAD))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlxseg<NF>e.v\t%0, (%1), %2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_idx_load<VTMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VTMODES 0 "register_operand")
+		   (unspec:VTMODES
+		      [(match_operand:P 3 "register_operand")
+		       (match_operand:<VMEMINXMODE> 4 "register_operand")
+		       (match_operand:<VCMPEQUIV> 1 "register_operand")
+		       (match_operand:VTMODES 2 "register_operand")
+		       (mem:BLK (scratch))]
+		     UNSPEC_SEG_LOAD))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_idx_load<VTMODES:mode>_<P:mode>_mask"
+  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+	(unspec:VTMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:<VMEMINXMODE> 4 "register_operand")
+	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")
+	   (match_operand:VTMODES 3 "register_operand" "0")
+	   (mem:BLK (scratch))]
+	  UNSPEC_SEG_LOAD))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlxseg<NF>e.v\t%0, (%1), %4, %2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_strided_load<VTMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VTMODES 0 "register_operand")
+		   (unspec:VTMODES
+		      [(match_operand:P 1 "register_operand")
+		       (match_operand:P 2 "register_operand")
+		       (mem:BLK (scratch))]
+		     UNSPEC_SEG_LOAD))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_strided_load<VTMODES:mode>_<P:mode>"
+  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+	(unspec:VTMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:P 2 "register_operand")
+	   (mem:BLK (scratch))]
+	  UNSPEC_SEG_LOAD))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlsseg<NF>e.v\t%0, (%1), %2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_strided_load<VTMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VTMODES 0 "register_operand")
+		   (unspec:VTMODES
+		      [(match_operand:P 3 "register_operand")
+		       (match_operand:P 4 "register_operand")
+		       (match_operand:<VCMPEQUIV> 1 "register_operand")
+		       (match_operand:VTMODES 2 "register_operand")
+		       (mem:BLK (scratch))]
+		     UNSPEC_SEG_LOAD))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_strided_load<VTMODES:mode>_<P:mode>_mask"
+  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+	(unspec:VTMODES
+	  [(match_operand:P 1 "register_operand" "r")
+	   (match_operand:P 4 "register_operand")
+	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")
+	   (match_operand:VTMODES 3 "register_operand" "0")
+	   (mem:BLK (scratch))]
+	  UNSPEC_SEG_LOAD))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vlsseg<NF>e.v\t%0, (%1), %4, %2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+
+(define_expand "vseg_store<VTMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+		   (unspec:BLK
+		     [(match_operand:P 1 "register_operand")
+		      (match_operand:VTMODES 0 "register_operand")]
+		      UNSPEC_SEG_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_store<VTMODES:mode>_<P:mode>"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:P 0 "register_operand" "r")
+	   (match_operand:VTMODES 1 "register_operand" "vr")]
+	  UNSPEC_SEG_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vsseg<NF>e.v\t%1, (%0)"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_store<VTMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+		   (unspec:BLK
+		     [(match_operand:P 2 "register_operand")
+		      (match_operand:VTMODES 1 "register_operand")
+		      (match_operand:<VCMPEQUIV> 0 "register_operand")]
+		      UNSPEC_SEG_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_store<VTMODES:mode>_<P:mode>_mask"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:P 0 "register_operand" "r")
+	   (match_operand:VTMODES 1 "register_operand" "vr")
+	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")]
+	  UNSPEC_SEG_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vsseg<NF>e.v\t%1, (%0), %2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_idx_store<VTMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+		   (unspec:BLK
+		     [(match_operand:P 1 "register_operand")
+		      (match_operand:<VMEMINXMODE> 2 "register_operand")
+		      (match_operand:VTMODES 0 "register_operand")]
+		      UNSPEC_SEG_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_idx_store<VTMODES:mode>_<P:mode>"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:P 0 "register_operand" "r")
+	   (match_operand:<VMEMINXMODE> 2 "register_operand")
+	   (match_operand:VTMODES 1 "register_operand" "vr")]
+	  UNSPEC_SEG_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vsxseg<NF>e.v\t%1, (%0), %2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_idx_store<VTMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+		   (unspec:BLK
+		     [(match_operand:P 2 "register_operand")
+		      (match_operand:<VMEMINXMODE> 3 "register_operand")
+		      (match_operand:VTMODES 1 "register_operand")
+		      (match_operand:<VCMPEQUIV> 0 "register_operand")]
+		      UNSPEC_SEG_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_idx_store<VTMODES:mode>_<P:mode>_mask"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:P 0 "register_operand" "r")
+	   (match_operand:<VMEMINXMODE> 3 "register_operand")
+	   (match_operand:VTMODES 1 "register_operand" "vr")
+	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")]
+	  UNSPEC_SEG_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vsxseg<NF>e.v\t%1, (%0), %3, %2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_strided_store<VTMODES:mode>_<P:mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+		   (unspec:BLK
+		     [(match_operand:P 1 "register_operand")
+		      (match_operand:P 2 "register_operand")
+		      (match_operand:VTMODES 0 "register_operand")]
+		      UNSPEC_SEG_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_strided_store<VTMODES:mode>_<P:mode>"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:P 0 "register_operand" "r")
+	   (match_operand:P 2 "register_operand")
+	   (match_operand:VTMODES 1 "register_operand" "vr")]
+	  UNSPEC_SEG_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vssseg<NF>e.v\t%1, (%0), %2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vseg_strided_store<VTMODES:mode>_<P:mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (mem:BLK (scratch))
+		   (unspec:BLK
+		     [(match_operand:P 2 "register_operand")
+		      (match_operand:P 3 "register_operand")
+		      (match_operand:VTMODES 1 "register_operand")
+		      (match_operand:<VCMPEQUIV> 0 "register_operand")]
+		      UNSPEC_SEG_STORE))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vseg_strided_store<VTMODES:mode>_<P:mode>_mask"
+  [(set (mem:BLK (scratch))
+	(unspec:BLK
+	  [(match_operand:P 0 "register_operand" "r")
+	   (match_operand:P 3 "register_operand")
+	   (match_operand:VTMODES 1 "register_operand" "vr")
+	   (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")]
+	  UNSPEC_SEG_STORE))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vssseg<NF>e.v\t%1, (%0), %3, %2.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+
+(define_insn_and_split "mov<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:VTMODES 0 "nonimmediate_operand" "=vr,vr, m,vr")
+	(match_operand:VTMODES 1 "vector_move_operand"  " vr, m,vr,vc"))
+   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,r"))]
+  "TARGET_VECTOR"
+  "#"
+  "&& reload_completed"
+  [(const_int 0)]
+{
+  int i;
+  if (REG_P (operands[0]) && REG_P (operands[1]))
+    {
+      for (i = 0; i < riscv_get_nf (<MODE>mode); ++i)
+	{
+	  poly_int64 offset = i * GET_MODE_SIZE (<VTSUBMODE>mode);
+	  rtx dst_subreg = simplify_gen_subreg (<VTSUBMODE>mode, operands[0],
+						<MODE>mode, offset);
+	  rtx src_subreg = simplify_gen_subreg (<VTSUBMODE>mode, operands[1],
+						<MODE>mode, offset);
+	  emit_move_insn (dst_subreg, src_subreg);
+	}
+    }
+  else if (REG_P (operands[0]) && MEM_P (operands[1]))
+    {
+      if (TARGET_64BIT)
+	emit_insn (gen_vseg_load<mode>_di (operands[0], XEXP (operands[1], 0)));
+      else
+	emit_insn (gen_vseg_load<mode>_si (operands[0], XEXP (operands[1], 0)));
+    }
+  else if (REG_P (operands[0]) && GET_CODE (operands[1]) == CONST_VECTOR)
+    {
+      rtx val;
+      if (!const_vec_duplicate_p (operands[1], &val))
+	gcc_unreachable ();
+
+      emit_move_insn (operands[2], val);
+
+      for (i = 0; i < riscv_get_nf (<MODE>mode); ++i)
+	{
+	  poly_int64 offset = i * GET_MODE_SIZE (<VTSUBMODE>mode);
+	  rtx dst_subreg = simplify_gen_subreg (<VTSUBMODE>mode, operands[0],
+						<MODE>mode, offset);
+
+          emit_insn (gen_vec_duplicate<vtsubmode> (dst_subreg, operands[2]));
+	}
+    }
+  else if (MEM_P (operands[0]) && REG_P (operands[1]))
+    {
+      if (TARGET_64BIT)
+	emit_insn (gen_vseg_store<mode>_di (operands[1], XEXP (operands[0], 0)));
+      else
+	emit_insn (gen_vseg_store<mode>_si (operands[1], XEXP (operands[0], 0)));
+    }
+  else
+    gcc_unreachable ();
+  DONE;
+}
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vtuple_insert<mode>"
+  [(match_operand:VTMODES 0 "register_operand")
+   (match_operand:VTMODES 1 "register_operand")
+   (match_operand:<VTSUBMODE> 2 "register_operand")
+   (match_operand:SI 3 "const_int_operand" "")]
+  "TARGET_VECTOR"
+{
+  if (INTVAL (operands[3]) < 0
+      || (INTVAL (operands[3]) > riscv_get_nf (<MODE>mode)))
+    {
+      gcc_unreachable ();
+      FAIL;
+    }
+  poly_int64 offset = INTVAL (operands[3]) * GET_MODE_SIZE (<VTSUBMODE>mode);
+  emit_move_insn (operands[0], operands[1]);
+  rtx subreg = simplify_gen_subreg (<VTSUBMODE>mode, operands[0],
+				    <MODE>mode, offset);
+  emit_move_insn (subreg, operands[2]);
+  DONE;
+})
+
+(define_expand "vtuple_extract<mode>"
+  [(match_operand:<VTSUBMODE> 0 "register_operand")
+   (match_operand:VTMODES 1 "register_operand")
+   (match_operand:SI 2 "const_int_operand")]
+  "TARGET_VECTOR"
+{
+  if (INTVAL (operands[2]) < 0
+      || (INTVAL (operands[2]) > riscv_get_nf (<MODE>mode)))
+    {
+      gcc_unreachable ();
+      FAIL;
+    }
+  poly_int64 offset = INTVAL (operands[2]) * GET_MODE_SIZE (<VTSUBMODE>mode);
+  rtx subreg = simplify_gen_subreg (<VTSUBMODE>mode, operands[1],
+				    <MODE>mode, offset);
+  emit_move_insn (operands[0], subreg);
+  DONE;
+})
+
+;; Maybe use define_insn_and_split might get better optimization?
+(define_expand "vtuple_create<mode>"
+  [(match_operand:VTNF2MODES 0 "register_operand")
+   (match_operand:<VTSUBMODE> 1 "register_operand")
+   (match_operand:<VTSUBMODE> 2 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_expand_vtuple_create (operands);
+  DONE;
+})
+
+(define_expand "vtuple_create<mode>"
+  [(match_operand:VTNF3MODES 0 "register_operand")
+   (match_operand:<VTSUBMODE> 1 "register_operand")
+   (match_operand:<VTSUBMODE> 2 "register_operand")
+   (match_operand:<VTSUBMODE> 3 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_expand_vtuple_create (operands);
+  DONE;
+})
+
+(define_expand "vtuple_create<mode>"
+  [(match_operand:VTNF4MODES 0 "register_operand")
+   (match_operand:<VTSUBMODE> 1 "register_operand")
+   (match_operand:<VTSUBMODE> 2 "register_operand")
+   (match_operand:<VTSUBMODE> 3 "register_operand")
+   (match_operand:<VTSUBMODE> 4 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_expand_vtuple_create (operands);
+  DONE;
+})
+
+(define_expand "vtuple_create<mode>"
+  [(match_operand:VTNF5MODES 0 "register_operand")
+   (match_operand:<VTSUBMODE> 1 "register_operand")
+   (match_operand:<VTSUBMODE> 2 "register_operand")
+   (match_operand:<VTSUBMODE> 3 "register_operand")
+   (match_operand:<VTSUBMODE> 4 "register_operand")
+   (match_operand:<VTSUBMODE> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_expand_vtuple_create (operands);
+  DONE;
+})
+
+(define_expand "vtuple_create<mode>"
+  [(match_operand:VTNF6MODES 0 "register_operand")
+   (match_operand:<VTSUBMODE> 1 "register_operand")
+   (match_operand:<VTSUBMODE> 2 "register_operand")
+   (match_operand:<VTSUBMODE> 3 "register_operand")
+   (match_operand:<VTSUBMODE> 4 "register_operand")
+   (match_operand:<VTSUBMODE> 5 "register_operand")
+   (match_operand:<VTSUBMODE> 6 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_expand_vtuple_create (operands);
+  DONE;
+})
+
+(define_expand "vtuple_create<mode>"
+  [(match_operand:VTNF7MODES 0 "register_operand")
+   (match_operand:<VTSUBMODE> 1 "register_operand")
+   (match_operand:<VTSUBMODE> 2 "register_operand")
+   (match_operand:<VTSUBMODE> 3 "register_operand")
+   (match_operand:<VTSUBMODE> 4 "register_operand")
+   (match_operand:<VTSUBMODE> 5 "register_operand")
+   (match_operand:<VTSUBMODE> 6 "register_operand")
+   (match_operand:<VTSUBMODE> 7 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_expand_vtuple_create (operands);
+  DONE;
+})
+
+(define_expand "vtuple_create<mode>"
+  [(match_operand:VTNF8MODES 0 "register_operand")
+   (match_operand:<VTSUBMODE> 1 "register_operand")
+   (match_operand:<VTSUBMODE> 2 "register_operand")
+   (match_operand:<VTSUBMODE> 3 "register_operand")
+   (match_operand:<VTSUBMODE> 4 "register_operand")
+   (match_operand:<VTSUBMODE> 5 "register_operand")
+   (match_operand:<VTSUBMODE> 6 "register_operand")
+   (match_operand:<VTSUBMODE> 7 "register_operand")
+   (match_operand:<VTSUBMODE> 8 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_expand_vtuple_create (operands);
+  DONE;
+})

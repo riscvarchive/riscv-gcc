@@ -101,6 +101,11 @@
   UNSPEC_VAMO_MAXU
   UNSPEC_READ_VL
   UNSPEC_WHOLE_MOVE
+
+  ;; Segment load/store
+  UNSPEC_SEG_STORE
+  UNSPEC_SEG_LOAD
+  UNSPEC_SEG_LOAD_FIRST_FAULT
 ])
 
 (define_c_enum "unspecv" [

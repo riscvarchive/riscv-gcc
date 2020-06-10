@@ -78,6 +78,7 @@ extern bool riscv_gpr_save_operation_p (rtx);
 /* Routines for vector support.  */
 bool riscv_const_vec_all_same_in_range_p (rtx, HOST_WIDE_INT, HOST_WIDE_INT);
 extern poly_uint64 riscv_regmode_natural_size (machine_mode);
+extern void riscv_expand_vtuple_create (rtx *);
 
 /* Routines implemented in riscv-c.c.  */
 void riscv_cpu_cpp_builtins (cpp_reader *);
@@ -97,5 +98,8 @@ extern std::string riscv_arch_str (bool version_p = true);
 extern bool riscv_hard_regno_rename_ok (unsigned, unsigned);
 
 rtl_opt_pass * make_pass_shorten_memrefs (gcc::context *ctxt);
+
+/* Routines for vector tuple types.  */
+extern int riscv_get_nf (machine_mode);
 
 #endif /* ! GCC_RISCV_PROTOS_H */

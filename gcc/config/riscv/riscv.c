@@ -5897,6 +5897,75 @@ riscv_regmode_natural_size (machine_mode mode)
   return UNITS_PER_WORD;
 }
 
+/* Get the number of fields for the mode, MODE should be a machine mode for
+   vector tuple types.  */
+
+int
+riscv_get_nf (machine_mode mode)
+{
+  switch (mode)
+    {
+#define VEC_INT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
+			    SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
+			    VMODE_PREFIX_LOWER, X)			\
+    case E_##VMODE_PREFIX_UPPER##Imode:					\
+      return NF;
+    _RVV_SEG_ARG (VEC_INT_TUPLE_TYPES, X)
+#define VEC_FLOAT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
+			      SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
+			      VMODE_PREFIX_LOWER, X)			\
+    case E_##VMODE_PREFIX_UPPER##Fmode:				\
+      return NF;
+    _RVV_SEG_NO_SEW8_ARG (VEC_FLOAT_TUPLE_TYPES, X)
+
+    default:
+      /* Non-vector tuple type should not call this function.  */
+      gcc_unreachable ();
+      return -1;
+    }
+}
+
+/* Routines for expand vtuple_create pattern.  */
+
+void
+riscv_expand_vtuple_create (rtx *operands)
+{
+  machine_mode vtmode = GET_MODE (operands[0]);
+  int nf = riscv_get_nf (vtmode);
+  int i;
+  gcc_assert (nf != -1);
+
+  /* Made GCC won't 0-initialize register.  */
+  emit_clobber (operands[0]);
+
+  for (i = 0; i <nf; ++i)
+    switch (vtmode)
+      {
+#define VEC_INT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
+			    SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
+			    VMODE_PREFIX_LOWER, X)			\
+	case E_##VMODE_PREFIX_UPPER##Imode:				\
+	  emit_insn (							\
+	    gen_vtuple_insert####VMODE_PREFIX_LOWER##i (		\
+	      operands[0], operands[0],					\
+	      operands[i + 1], GEN_INT (i)));				\
+	  break;
+	_RVV_SEG_ARG (VEC_INT_TUPLE_TYPES, X)
+#define VEC_FLOAT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
+			      SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
+			      VMODE_PREFIX_LOWER, X)			\
+	case E_##VMODE_PREFIX_UPPER##Fmode:				\
+	  emit_insn (							\
+	    gen_vtuple_insert####VMODE_PREFIX_LOWER##f (		\
+	      operands[0], operands[0],					\
+	      operands[i + 1], GEN_INT (i)));				\
+	  break;
+	_RVV_SEG_NO_SEW8_ARG (VEC_FLOAT_TUPLE_TYPES, X)
+      default:
+	gcc_unreachable ();
+      }
+}
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
