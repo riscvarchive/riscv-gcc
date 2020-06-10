@@ -475,20 +475,25 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (16, 1, 16,  vnx8hf, HF, 16, 1,  vnx8hi, HF)	\
   MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8si, SF)	\
   MACRO (16, 1, 16,  vnx8hf, HF, 64, 4,  vnx8di, DF)	\
+  MACRO (16, 2,  8, vnx16hf, HF,  8, 1, vnx16qi, HF)	\
   MACRO (16, 2,  8, vnx16hf, HF, 16, 2, vnx16hi, HF)	\
   MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16si, SF)	\
   MACRO (16, 2,  8, vnx16hf, HF, 64, 8, vnx16di, DF)	\
+  MACRO (16, 4,  4, vnx32hf, HF,  8, 2, vnx32qi, HF)	\
   MACRO (16, 4,  4, vnx32hf, HF, 16, 4, vnx32hi, HF)	\
   MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32si, SF)	\
+  MACRO (16, 8,  2, vnx64hf, HF,  8, 4, vnx64qi, HF)	\
   MACRO (16, 8,  2, vnx64hf, HF, 16, 8, vnx64hi, HF)	\
   MACRO (32, 1, 32,  vnx4sf, SF, 32, 1,  vnx4si, SF)	\
   MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4di, DF)	\
   MACRO (32, 2, 16,  vnx8sf, SF, 16, 1,  vnx8hi, HF)	\
   MACRO (32, 2, 16,  vnx8sf, SF, 32, 2,  vnx8si, SF)	\
   MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8di, DF)	\
+  MACRO (32, 4,  8, vnx16sf, SF,  8, 1, vnx16qi, HF)	\
   MACRO (32, 4,  8, vnx16sf, SF, 16, 2, vnx16hi, HF)	\
   MACRO (32, 4,  8, vnx16sf, SF, 32, 4, vnx16si, SF)	\
   MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16di, DF)	\
+  MACRO (32, 8,  4, vnx32sf, SF,  8, 2, vnx32qi, HF)	\
   MACRO (32, 8,  4, vnx32sf, SF, 16, 4, vnx32hi, HF)	\
   MACRO (32, 8,  4, vnx32sf, SF, 32, 8, vnx32si, SF)	\
   MACRO (64, 1, 64,  vnx2df, DF, 64, 1,  vnx2di, DF)	\
@@ -497,6 +502,7 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 4, 16,  vnx8df, DF, 16, 1,  vnx8hi, HF)	\
   MACRO (64, 4, 16,  vnx8df, DF, 32, 2,  vnx8si, SF)	\
   MACRO (64, 4, 16,  vnx8df, DF, 64, 4,  vnx8di, DF)	\
+  MACRO (64, 8,  8, vnx16df, DF,  8, 1, vnx16qi, HF)	\
   MACRO (64, 8,  8, vnx16df, DF, 16, 2, vnx16hi, HF)	\
   MACRO (64, 8,  8, vnx16df, DF, 32, 4, vnx16si, SF)	\
   MACRO (64, 8,  8, vnx16df, DF, 64, 8, vnx16di, DF)
@@ -505,20 +511,25 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (16, 1, 16,  vnx8hf, HF, 16, 1,  vnx8hi, HF, __VA_ARGS__)	\
   MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8si, SF, __VA_ARGS__)	\
   MACRO (16, 1, 16,  vnx8hf, HF, 64, 4,  vnx8di, DF, __VA_ARGS__)	\
+  MACRO (16, 2,  8, vnx16hf, HF,  8, 1, vnx16qi, HF, __VA_ARGS__)	\
   MACRO (16, 2,  8, vnx16hf, HF, 16, 2, vnx16hi, HF, __VA_ARGS__)	\
   MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16si, SF, __VA_ARGS__)	\
   MACRO (16, 2,  8, vnx16hf, HF, 64, 8, vnx16di, DF, __VA_ARGS__)	\
+  MACRO (16, 4,  4, vnx32hf, HF,  8, 2, vnx32qi, HF, __VA_ARGS__)	\
   MACRO (16, 4,  4, vnx32hf, HF, 16, 4, vnx32hi, HF, __VA_ARGS__)	\
   MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32si, SF, __VA_ARGS__)	\
+  MACRO (16, 8,  2, vnx64hf, HF,  8, 4, vnx64qi, HF, __VA_ARGS__)	\
   MACRO (16, 8,  2, vnx64hf, HF, 16, 8, vnx64hi, HF, __VA_ARGS__)	\
   MACRO (32, 1, 32,  vnx4sf, SF, 32, 1,  vnx4si, SF, __VA_ARGS__)	\
   MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4di, DF, __VA_ARGS__)	\
   MACRO (32, 2, 16,  vnx8sf, SF, 16, 1,  vnx8hi, HF, __VA_ARGS__)	\
   MACRO (32, 2, 16,  vnx8sf, SF, 32, 2,  vnx8si, SF, __VA_ARGS__)	\
   MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8di, DF, __VA_ARGS__)	\
+  MACRO (32, 4,  8, vnx16sf, SF,  8, 1, vnx16qi, HF, __VA_ARGS__)	\
   MACRO (32, 4,  8, vnx16sf, SF, 16, 2, vnx16hi, HF, __VA_ARGS__)	\
   MACRO (32, 4,  8, vnx16sf, SF, 32, 4, vnx16si, SF, __VA_ARGS__)	\
   MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16di, DF, __VA_ARGS__)	\
+  MACRO (32, 8,  4, vnx32sf, SF,  8, 2, vnx32qi, HF, __VA_ARGS__)	\
   MACRO (32, 8,  4, vnx32sf, SF, 16, 4, vnx32hi, HF, __VA_ARGS__)	\
   MACRO (32, 8,  4, vnx32sf, SF, 32, 8, vnx32si, SF, __VA_ARGS__)	\
   MACRO (64, 1, 64,  vnx2df, DF, 64, 1,  vnx2di, DF, __VA_ARGS__)	\
@@ -527,6 +538,7 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 4, 16,  vnx8df, DF, 16, 1,  vnx8hi, HF, __VA_ARGS__)	\
   MACRO (64, 4, 16,  vnx8df, DF, 32, 2,  vnx8si, SF, __VA_ARGS__)	\
   MACRO (64, 4, 16,  vnx8df, DF, 64, 4,  vnx8di, DF, __VA_ARGS__)	\
+  MACRO (64, 8,  8, vnx16df, DF,  8, 1, vnx16qi, HF, __VA_ARGS__)	\
   MACRO (64, 8,  8, vnx16df, DF, 16, 2, vnx16hi, HF, __VA_ARGS__)	\
   MACRO (64, 8,  8, vnx16df, DF, 32, 4, vnx16si, SF, __VA_ARGS__)	\
   MACRO (64, 8,  8, vnx16df, DF, 64, 8, vnx16di, DF, __VA_ARGS__)

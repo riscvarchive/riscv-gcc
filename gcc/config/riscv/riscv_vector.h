@@ -244,20 +244,25 @@ typedef __fp16 float16_t;
   MACRO (16, 1, 16, float16_t, 16, 1)	\
   MACRO (16, 1, 16, float16_t, 32, 2)	\
   MACRO (16, 1, 16, float16_t, 64, 4)	\
+  MACRO (16, 2,  8, float16_t,  8, 1)	\
   MACRO (16, 2,  8, float16_t, 16, 2)	\
   MACRO (16, 2,  8, float16_t, 32, 4)	\
   MACRO (16, 2,  8, float16_t, 64, 8)	\
+  MACRO (16, 4,  4, float16_t,  8, 2)	\
   MACRO (16, 4,  4, float16_t, 16, 4)	\
   MACRO (16, 4,  4, float16_t, 32, 8)	\
+  MACRO (16, 8,  2, float16_t,  8, 4)	\
   MACRO (16, 8,  2, float16_t, 16, 8)	\
   MACRO (32, 1, 32,     float, 32, 1)	\
   MACRO (32, 1, 32,     float, 64, 2)	\
   MACRO (32, 2, 16,     float, 16, 1)	\
   MACRO (32, 2, 16,     float, 32, 2)	\
   MACRO (32, 2, 16,     float, 64, 4)	\
+  MACRO (32, 4,  8,     float,  8, 1)	\
   MACRO (32, 4,  8,     float, 16, 2)	\
   MACRO (32, 4,  8,     float, 32, 4)	\
   MACRO (32, 4,  8,     float, 64, 8)	\
+  MACRO (32, 8,  4,     float,  8, 2)	\
   MACRO (32, 8,  4,     float, 16, 4)	\
   MACRO (32, 8,  4,     float, 32, 8)	\
   MACRO (64, 1, 64,    double, 64, 1)	\
@@ -266,6 +271,7 @@ typedef __fp16 float16_t;
   MACRO (64, 4, 16,    double, 16, 1)	\
   MACRO (64, 4, 16,    double, 32, 2)	\
   MACRO (64, 4, 16,    double, 64, 4)	\
+  MACRO (64, 8,  8,    double,  8, 1)	\
   MACRO (64, 8,  8,    double, 16, 2)	\
   MACRO (64, 8,  8,    double, 32, 4)	\
   MACRO (64, 8,  8,    double, 64, 8)
@@ -274,20 +280,25 @@ typedef __fp16 float16_t;
   MACRO (16, 1, 16, float16_t, 16, 1, __VA_ARGS__)	\
   MACRO (16, 1, 16, float16_t, 32, 2, __VA_ARGS__)	\
   MACRO (16, 1, 16, float16_t, 64, 4, __VA_ARGS__)	\
+  MACRO (16, 2,  8, float16_t,  8, 1, __VA_ARGS__)	\
   MACRO (16, 2,  8, float16_t, 16, 2, __VA_ARGS__)	\
   MACRO (16, 2,  8, float16_t, 32, 4, __VA_ARGS__)	\
   MACRO (16, 2,  8, float16_t, 64, 8, __VA_ARGS__)	\
+  MACRO (16, 4,  4, float16_t,  8, 2, __VA_ARGS__)	\
   MACRO (16, 4,  4, float16_t, 16, 4, __VA_ARGS__)	\
   MACRO (16, 4,  4, float16_t, 32, 8, __VA_ARGS__)	\
+  MACRO (16, 8,  2, float16_t,  8, 4, __VA_ARGS__)	\
   MACRO (16, 8,  2, float16_t, 16, 8, __VA_ARGS__)	\
   MACRO (32, 1, 32,     float, 32, 1, __VA_ARGS__)	\
   MACRO (32, 1, 32,     float, 64, 2, __VA_ARGS__)	\
   MACRO (32, 2, 16,     float, 16, 1, __VA_ARGS__)	\
   MACRO (32, 2, 16,     float, 32, 2, __VA_ARGS__)	\
   MACRO (32, 2, 16,     float, 64, 4, __VA_ARGS__)	\
+  MACRO (32, 4,  8,     float,  8, 1, __VA_ARGS__)	\
   MACRO (32, 4,  8,     float, 16, 2, __VA_ARGS__)	\
   MACRO (32, 4,  8,     float, 32, 4, __VA_ARGS__)	\
   MACRO (32, 4,  8,     float, 64, 8, __VA_ARGS__)	\
+  MACRO (32, 8,  4,     float,  8, 2, __VA_ARGS__)	\
   MACRO (32, 8,  4,     float, 16, 4, __VA_ARGS__)	\
   MACRO (32, 8,  4,     float, 32, 8, __VA_ARGS__)	\
   MACRO (64, 1, 64,    double, 64, 1, __VA_ARGS__)	\
@@ -296,6 +307,7 @@ typedef __fp16 float16_t;
   MACRO (64, 4, 16,    double, 16, 1, __VA_ARGS__)	\
   MACRO (64, 4, 16,    double, 32, 2, __VA_ARGS__)	\
   MACRO (64, 4, 16,    double, 64, 4, __VA_ARGS__)	\
+  MACRO (64, 8,  8,    double,  8, 1, __VA_ARGS__)	\
   MACRO (64, 8,  8,    double, 16, 2, __VA_ARGS__)	\
   MACRO (64, 8,  8,    double, 32, 4, __VA_ARGS__)	\
   MACRO (64, 8,  8,    double, 64, 8, __VA_ARGS__)
