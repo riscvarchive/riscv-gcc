@@ -5731,6 +5731,128 @@ riscv_mangle_type (const_tree type)
       case E_VNx32BImode:  return "_vbool4_t";
       case E_VNx64BImode:  return "_vbool2_t";
       case E_VNx128BImode: return "_vbool1_t";
+
+      case E_VNx2x16QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m1x2_t": "_vint8m1x2_t";
+      case E_VNx3x16QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m1x3_t": "_vint8m1x3_t";
+      case E_VNx4x16QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m1x4_t": "_vint8m1x4_t";
+      case E_VNx5x16QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m1x5_t": "_vint8m1x5_t";
+      case E_VNx6x16QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m1x6_t": "_vint8m1x6_t";
+      case E_VNx7x16QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m1x7_t": "_vint8m1x7_t";
+      case E_VNx8x16QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m1x8_t": "_vint8m1x8_t";
+      case E_VNx2x32QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m2x2_t": "_vint8m2x2_t";
+      case E_VNx3x32QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m2x3_t": "_vint8m2x3_t";
+      case E_VNx4x32QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m2x4_t": "_vint8m2x4_t";
+      case E_VNx2x64QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m4x2_t": "_vint8m4x2_t";
+      case E_VNx2x8HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m1x2_t": "_vint16m1x2_t";
+      case E_VNx3x8HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m1x3_t": "_vint16m1x3_t";
+      case E_VNx4x8HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m1x4_t": "_vint16m1x4_t";
+      case E_VNx5x8HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m1x5_t": "_vint16m1x5_t";
+      case E_VNx6x8HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m1x6_t": "_vint16m1x6_t";
+      case E_VNx7x8HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m1x7_t": "_vint16m1x7_t";
+      case E_VNx8x8HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m1x8_t": "_vint16m1x8_t";
+      case E_VNx2x16HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m2x2_t": "_vint16m2x2_t";
+      case E_VNx3x16HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m2x3_t": "_vint16m2x3_t";
+      case E_VNx4x16HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m2x4_t": "_vint16m2x4_t";
+      case E_VNx2x32HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m4x2_t": "_vint16m4x2_t";
+      case E_VNx2x4SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m1x2_t": "_vint32m1x2_t";
+      case E_VNx3x4SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m1x3_t": "_vint32m1x3_t";
+      case E_VNx4x4SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m1x4_t": "_vint32m1x4_t";
+      case E_VNx5x4SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m1x5_t": "_vint32m1x5_t";
+      case E_VNx6x4SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m1x6_t": "_vint32m1x6_t";
+      case E_VNx7x4SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m1x7_t": "_vint32m1x7_t";
+      case E_VNx8x4SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m1x8_t": "_vint32m1x8_t";
+      case E_VNx2x8SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m2x2_t": "_vint32m2x2_t";
+      case E_VNx3x8SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m2x3_t": "_vint32m2x3_t";
+      case E_VNx4x8SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m2x4_t": "_vint32m2x4_t";
+      case E_VNx2x16SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m4x2_t": "_vint32m4x2_t";
+      case E_VNx2x2DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m1x2_t": "_vint64m1x2_t";
+      case E_VNx3x2DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m1x3_t": "_vint64m1x3_t";
+      case E_VNx4x2DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m1x4_t": "_vint64m1x4_t";
+      case E_VNx5x2DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m1x5_t": "_vint64m1x5_t";
+      case E_VNx6x2DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m1x6_t": "_vint64m1x6_t";
+      case E_VNx7x2DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m1x7_t": "_vint64m1x7_t";
+      case E_VNx8x2DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m1x8_t": "_vint64m1x8_t";
+      case E_VNx2x4DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m2x2_t": "_vint64m2x2_t";
+      case E_VNx3x4DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m2x3_t": "_vint64m2x3_t";
+      case E_VNx4x4DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m2x4_t": "_vint64m2x4_t";
+      case E_VNx2x8DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m4x2_t": "_vint64m4x2_t";
+      case E_VNx2x8HFmode: return "_vfloat16m1x2_t";
+      case E_VNx3x8HFmode: return "_vfloat16m1x3_t";
+      case E_VNx4x8HFmode: return "_vfloat16m1x4_t";
+      case E_VNx5x8HFmode: return "_vfloat16m1x5_t";
+      case E_VNx6x8HFmode: return "_vfloat16m1x6_t";
+      case E_VNx7x8HFmode: return "_vfloat16m1x7_t";
+      case E_VNx8x8HFmode: return "_vfloat16m1x8_t";
+      case E_VNx2x16HFmode: return "_vfloat16m2x2_t";
+      case E_VNx3x16HFmode: return "_vfloat16m2x3_t";
+      case E_VNx4x16HFmode: return "_vfloat16m2x4_t";
+      case E_VNx2x32HFmode: return "_vfloat16m4x2_t";
+      case E_VNx2x4SFmode: return "_vfloat32m1x2_t";
+      case E_VNx3x4SFmode: return "_vfloat32m1x3_t";
+      case E_VNx4x4SFmode: return "_vfloat32m1x4_t";
+      case E_VNx5x4SFmode: return "_vfloat32m1x5_t";
+      case E_VNx6x4SFmode: return "_vfloat32m1x6_t";
+      case E_VNx7x4SFmode: return "_vfloat32m1x7_t";
+      case E_VNx8x4SFmode: return "_vfloat32m1x8_t";
+      case E_VNx2x8SFmode: return "_vfloat32m2x2_t";
+      case E_VNx3x8SFmode: return "_vfloat32m2x3_t";
+      case E_VNx4x8SFmode: return "_vfloat32m2x4_t";
+      case E_VNx2x16SFmode: return "_vfloat32m4x2_t";
+      case E_VNx2x2DFmode: return "_vfloat64m1x2_t";
+      case E_VNx3x2DFmode: return "_vfloat64m1x3_t";
+      case E_VNx4x2DFmode: return "_vfloat64m1x4_t";
+      case E_VNx5x2DFmode: return "_vfloat64m1x5_t";
+      case E_VNx6x2DFmode: return "_vfloat64m1x6_t";
+      case E_VNx7x2DFmode: return "_vfloat64m1x7_t";
+      case E_VNx8x2DFmode: return "_vfloat64m1x8_t";
+      case E_VNx2x4DFmode: return "_vfloat64m2x2_t";
+      case E_VNx3x4DFmode: return "_vfloat64m2x3_t";
+      case E_VNx4x4DFmode: return "_vfloat64m2x4_t";
+      case E_VNx2x8DFmode: return "_vfloat64m4x2_t";
       default:
 	break;
       }
