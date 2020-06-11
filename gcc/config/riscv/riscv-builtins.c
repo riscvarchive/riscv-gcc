@@ -2049,6 +2049,9 @@ tree rvvbool64_t_node;
 		vector),
 
 #define VFLOAT_MERGE_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
+  DIRECT_NAMED (OP##MODE##cc, v##NAME##f##E##m##L##_mask,		\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L,\
+		vector),						\
   DIRECT_NAMED (OP##MODE##cc_scalar, v##NAME##f##E##m##L##_scalar_mask,	\
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_##SUBMODE,\
 		vector),
