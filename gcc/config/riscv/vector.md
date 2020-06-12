@@ -886,8 +886,8 @@
 ;; to ensure that the scratch operand has been allocated a reg first.
 (define_expand "mov<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr,vr, m,vr")
-	(match_operand:VIMODES 1 "vector_move_operand"  " vr,vi, m,vr,vc"))
+   (set (match_operand:VMODES 0 "nonimmediate_operand" "=vr,vr,vr, m,vr")
+	(match_operand:VMODES 1 "vector_move_operand"  " vr,vi, m,vr,vc"))
    (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,X,r"))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
