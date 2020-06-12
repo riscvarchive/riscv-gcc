@@ -1304,6 +1304,18 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vsplat_s_f##SEW##m##LMUL (_RVV_F##SEW##_TYPE a)				\
 {									\
   return vfmv_v_f_f##SEW##m##LMUL (a);					\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vzero_f##SEW##m##LMUL ()						\
+{									\
+  return vsplat_s_f##SEW##m##LMUL (0.0);				\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vundefined_f##SEW##m##LMUL ()						\
+{									\
+  return vsplat_s_f##SEW##m##LMUL (0.0);				\
 }
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_SPLAT_OP, vec_duplicate)
@@ -1329,9 +1341,33 @@ vsplat_s_i##SEW##m##LMUL (T a)						\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vsplatv_s_u##SEW##m##LMUL (u##T a)					\
+vsplat_s_u##SEW##m##LMUL (u##T a)					\
 {									\
   return __builtin_riscv_v##OP##uint##SEW##m##LMUL (a);			\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vzero_i##SEW##m##LMUL ()						\
+{									\
+  return vsplat_s_i##SEW##m##LMUL (0);					\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vundefined_i##SEW##m##LMUL ()						\
+{									\
+  return vsplat_s_i##SEW##m##LMUL (0);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vzero_u##SEW##m##LMUL ()						\
+{									\
+  return vsplat_s_u##SEW##m##LMUL (0);					\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vundefined_u##SEW##m##LMUL ()						\
+{									\
+  return vsplat_s_u##SEW##m##LMUL (0);					\
 }
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_UNARY_SPLAT_OP, vec_duplicate)
@@ -4108,6 +4144,7 @@ vreadvl ()
   else
     return __builtin_riscv_vreadvldi ();
 }
+
 
 #define _RVVINT_TUPLE_LDST(SEW, LMUL, NF, MLEN, T, XARG)		\
 __extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
