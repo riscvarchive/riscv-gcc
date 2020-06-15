@@ -431,9 +431,7 @@
   (VNx4x8SF "VNx8SI") (VNx2x16SF "VNx16SI") (VNx2x2DF "VNx2DI") (VNx3x2DF "VNx2DI")
   (VNx4x2DF "VNx2DI") (VNx5x2DF "VNx2DI") (VNx6x2DF "VNx2DI") (VNx7x2DF "VNx2DI")
   (VNx8x2DF "VNx2DI") (VNx2x4DF "VNx4DI") (VNx3x4DF "VNx4DI") (VNx4x4DF "VNx4DI")
-  (VNx2x8DF "VNx8DI") (VNx2BI "VNx2DI") (VNx4BI "VNx4SI") (VNx8BI "VNx8HI")
-  (VNx16BI "VNx16QI") (VNx32BI "VNx32QI") (VNx64BI "VNx64QI") (VNx128BI "VNx128QI")
-])
+  (VNx2x8DF "VNx8DI")])
 
 ;; Map a vector mode to its VSETVLI mode, which for now is always the integer
 ;; vector mode, as the integer vemode/vmmode is a superset of the float ones.
@@ -464,9 +462,7 @@
   (VNx4x8SF "vnx8si") (VNx2x16SF "vnx16si") (VNx2x2DF "vnx2di") (VNx3x2DF "vnx2di")
   (VNx4x2DF "vnx2di") (VNx5x2DF "vnx2di") (VNx6x2DF "vnx2di") (VNx7x2DF "vnx2di")
   (VNx8x2DF "vnx2di") (VNx2x4DF "vnx4di") (VNx3x4DF "vnx4di") (VNx4x4DF "vnx4di")
-  (VNx2x8DF "vnx8di") (VNx2BI "vnx2di") (VNx4BI "vnx4si") (VNx8BI "vnx8hi")
-  (VNx16BI "vnx16qi") (VNx32BI "vnx32qi") (VNx64BI "vnx64qi") (VNx128BI "vnx128qi")
-])
+  (VNx2x8DF "vnx8di")])
 
 ;; Map a vector mode to its index load mode
 (define_mode_attr VMEMINXMODE [
