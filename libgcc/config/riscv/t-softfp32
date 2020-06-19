@@ -43,8 +43,8 @@ softfp_extras := divsf3 divdf3 divtf3
 
 endif
 
-ifdef FP16_SUPPORT
-softfp_extensions += hfdf hftf
-softfp_truncations += tfhf dfhf
-softfp_extras := fixhfdi fixunshfdi floatdihf floatundihf
-endif
+softfp_extensions += hfsf hfdf hftf
+softfp_truncations += tfhf dfhf sfhf
+softfp_extras += fixhfsi fixhfdi fixunshfsi fixunshfdi \
+		 floatsihf floatdihf floatunsihf floatundihf \
+		 eqhf2 gehf2 lehf2 unordhf2
