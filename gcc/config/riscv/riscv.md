@@ -1486,13 +1486,13 @@
    (set_attr "mode" "HF")])
 
 (define_insn "*movhf_softfloat"
-  [(set (match_operand:HF 0 "nonimmediate_operand" "= r,r,m")
-	(match_operand:HF 1 "move_operand"         " Gr,m,r"))]
+  [(set (match_operand:HF 0 "nonimmediate_operand" "= r,r,m,*f,*r")
+	(match_operand:HF 1 "move_operand"         " Gr,m,r,*r,*f"))]
   "!TARGET_FP16
    && (register_operand (operands[0], HFmode)
        || reg_or_0_operand (operands[1], HFmode))"
   { return riscv_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,load,store")
+  [(set_attr "move_type" "move,load,store,mtc,mfc")
    (set_attr "mode" "HF")])
 
 ;; 32-bit floating point moves
