@@ -4480,6 +4480,11 @@ static int
 riscv_register_move_cost (machine_mode mode,
 			  reg_class_t from, reg_class_t to)
 {
+  /* There is no easy way to move fp16 value between FPR without ZFH
+     extension, it require an extra temp GPR to move that.  */
+  if (!TARGET_FP16 && mode == HFmode && from == FP_REGS && to == FP_REGS)
+    return 6;
+
   return riscv_secondary_memory_needed (mode, from, to) ? 8 : 2;
 }
 
