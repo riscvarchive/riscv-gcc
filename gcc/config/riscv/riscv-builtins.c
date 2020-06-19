@@ -2724,10 +2724,10 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 
 static const struct riscv_builtin_description riscv_builtins[] = {
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
-  DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
+  DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float),
 
-  DIRECT_BUILTIN (vreadvlsi, RISCV_SIZE_FTYPE_VOID, vector),
-  DIRECT_BUILTIN (vreadvldi, RISCV_SIZE_FTYPE_VOID, vector),
+  DIRECT_BUILTIN (vreadvlsi, RISCV_SIZE_FTYPE, vector),
+  DIRECT_BUILTIN (vreadvldi, RISCV_SIZE_FTYPE, vector),
 
   _RVV_INT_ITERATOR (SETVL_BUILTINS)
   _RVV_INT_ITERATOR (SETVTYPE_BUILTINS)
