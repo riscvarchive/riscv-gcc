@@ -3742,14 +3742,14 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, min)
 #define _RVV_FWREDUC_OP(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
 __extension__ extern __inline vfloat##WSEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vfwred##OP##_vf_f##SEW##m##LMUL##_f##WSEW##m1 (vfloat##SEW##m##LMUL##_t a,	\
+vfwred##OP##_vs_f##SEW##m##LMUL##_f##WSEW##m1 (vfloat##SEW##m##LMUL##_t a,	\
 					vfloat##WSEW##m1_t b)	\
 {									\
   return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL (b, a);	\
 }									\
 __extension__ extern __inline vfloat##WSEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vfwred##OP##_vf_f##SEW##m##LMUL##_f##WSEW##m1_m (vbool##MLEN##_t mask,	\
+vfwred##OP##_vs_f##SEW##m##LMUL##_f##WSEW##m1_m (vbool##MLEN##_t mask,	\
 					       vfloat##SEW##m##LMUL##_t a,\
 					       vfloat##WSEW##m1_t b)	\
 {									\
