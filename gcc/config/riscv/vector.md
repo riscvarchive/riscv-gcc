@@ -900,37 +900,35 @@
 ;; to ensure that the scratch operand has been allocated a reg first.
 (define_expand "mov<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VMODES 0 "nonimmediate_operand" "=vr,vr,vr, m,vr")
-	(match_operand:VMODES 1 "vector_move_operand"  " vr,vi, m,vr,vc"))
-   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,X,r"))
+   (set (match_operand:VMODES 0 "nonimmediate_operand")
+	(match_operand:VMODES 1 "vector_move_operand"))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
 {
+
+  /* Need to force register if mem <- !reg.  */
+  if (MEM_P (operands[0]) && !REG_P (operands[1]))
+    operands[1] = force_reg (<MODE>mode, operands[1]);
+
   if (lra_in_progress || reload_in_progress)
     {
       /* We prefer emit whole register move instructions
 	 at register allocation pass. If emit normally
 	 vector move instructions, then may get wrong vtype.  */
-      if (REG_P (operands[0]) && REG_P (operands[1]))
-	{
-	  emit_insn (gen_whole_mov<mode>_reg (operands[0], operands[1]));
-	  DONE;
-	}
-      else if ((REG_P (operands[0]) && MEM_P (operands[1]))
-	       || (MEM_P (operands[0]) && REG_P (operands[1])))
+      if (!(MEM_P (operands[0]) && MEM_P (operands[1])))
 	{
 	  /* The whole register move load/store instructions
 	     only support in LMUL is 1. If LMUL more than 1, then spilt it. */
 	  if (<vector_count> == 1)
-	    emit_insn (gen_whole_mov<vsingle>_mem (operands[0], operands[1]));
+	    emit_insn (gen_whole_mov<vsingle>_lmul1 (operands[0], operands[1]));
 	  else
 	    {
 	      if (TARGET_64BIT)
-		emit_insn (gen_whole_mov<mode>di_mem_split (operands[0],
-							    operands[1]));
+		emit_insn (gen_whole_mov<mode>di_split (operands[0],
+							operands[1]));
 	      else
-		emit_insn (gen_whole_mov<mode>si_mem_split (operands[0],
-							    operands[1]));
+		emit_insn (gen_whole_mov<mode>si_split (operands[0],
+							operands[1]));
 	    }
 	  DONE;
 	}
@@ -972,7 +970,9 @@
 	(match_operand:VIMODES 1 "vector_move_operand"  " vr,vi, m,vr"))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
-  "TARGET_VECTOR"
+  "TARGET_VECTOR
+   && !(memory_operand (operands[0], <VIMODES:MODE>mode)
+        && const_vec_duplicate_p (operands[1]))"
   "@
    vmv.v.v\t%0,%1
    vmv.v.i\t%0,%1
@@ -995,27 +995,25 @@
    (set_attr "mode" "none")])
 
 ;; Whole regiser move
-(define_insn "whole_mov<mode>_reg"
-  [(set (match_operand:VMODES 0 "register_operand" "=vr")
-	(match_operand:VMODES 1 "register_operand" "vr"))]
-  "TARGET_VECTOR"
-  "vmv<nf>r.v\t%0,%1"
-   [(set_attr "type" "vector")
-    (set_attr "mode" "none")])
-
-;; Whole regiser move load and store
-(define_insn_and_split "whole_mov<VMODES:mode><P:mode>_mem_split"
-  [(set (match_operand:VMODES 0 "reg_or_mem_operand" "=vr, m")
-	(match_operand:VMODES 1 "reg_or_mem_operand"  "m, vr"))
-   (clobber (match_scratch:P 2 "=r,r"))
-   (clobber (match_scratch:P 3 "=r,r"))]
+(define_insn_and_split "whole_mov<VMODES:mode><P:mode>_split"
+  [(set (match_operand:VMODES 0 "reg_or_mem_operand" "=vr,vr,m")
+       	(unspec:VMODES
+	  [(match_operand:VMODES 1 "reg_or_mem_operand" "vr,m,vr")]
+	 UNSPEC_WHOLE_MOVE))
+   (clobber (match_scratch:P 2 "=X,r,r"))
+   (clobber (match_scratch:P 3 "=X,r,r"))]
   "TARGET_VECTOR
+   && !(memory_operand (operands[0], <VMODES:MODE>mode)
+        && memory_operand (operands[1], <VMODES:MODE>mode))"
+  "@
+   vmv<nf>r.v\t%0,%1
+   #
+   #"
+  "&& reload_completed
    && ((register_operand (operands[0], <VMODES:MODE>mode)
         && memory_operand (operands[1], <VMODES:MODE>mode))
        || (memory_operand (operands[0], <VMODES:MODE>mode)
 	   && register_operand (operands[1], <VMODES:MODE>mode)))"
-  "#"
-  "&& reload_completed"
   [(const_int 0)]
 {
   int load_p = REG_P (operands[0]) ? 1 : 0;
@@ -1068,25 +1066,25 @@
 
       /* Emit a vector load/store instruction.  */
       if (load_p)
-	emit_insn (gen_whole_mov<vsingle>_mem (subreg, submem));
+	emit_insn (gen_whole_mov<vsingle>_lmul1 (subreg, submem));
       else
-	emit_insn (gen_whole_mov<vsingle>_mem (submem, subreg));
+	emit_insn (gen_whole_mov<vsingle>_lmul1 (submem, subreg));
     }
 
   DONE;
 })
 
-(define_insn "whole_mov<mode>_mem"
-  [(set (match_operand:V1_FIMODES 0 "reg_or_mem_operand" "=vr,m")
+;; Whole regiser move when LMUL is 1.
+(define_insn "whole_mov<mode>_lmul1"
+  [(set (match_operand:V1_FIMODES 0 "reg_or_mem_operand" "=vr,vr,m")
        	(unspec:V1_FIMODES
-	  [(match_operand:V1_FIMODES 1 "reg_or_mem_operand" "m,vr")]
+	  [(match_operand:V1_FIMODES 1 "reg_or_mem_operand" "vr,m,vr")]
 	 UNSPEC_WHOLE_MOVE))]
   "TARGET_VECTOR
-   && ((register_operand (operands[0], <MODE>mode)
-        && memory_operand (operands[1], <MODE>mode))
-       || (memory_operand (operands[0], <MODE>mode)
-	   && register_operand (operands[1], <MODE>mode)))"
+   && !(memory_operand (operands[0], <MODE>mode)
+        && memory_operand (operands[1], <MODE>mode))"
   "@
+   vmv1r.v\t%0,%1
    vl1r.v\t%0,%1
    vs1r.v\t%1,%0"
   [(set_attr "type" "vector")
