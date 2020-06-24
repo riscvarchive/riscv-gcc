@@ -8349,7 +8349,7 @@
 		     (match_operand:<VCMPEQUIV> 1 "register_operand")
 		     (unspec:VIMODES
 		       [(match_operand:VIMODES 3 "register_operand")
-			(match_operand:X 4 "reg_or_uimm5_operand")]
+			(match_operand:X 4 "register_operand")]
 		      UNSPEC_VSLIDES1)
 		     (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
