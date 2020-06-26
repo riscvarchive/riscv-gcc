@@ -171,6 +171,42 @@ riscv_sr_match_epilogue (void)
   return start;
 }
 
+/* If the function has stack incomming arguments, find all the uses of sp
+   between its prologue and its epilogue and update their offset  */
+static void
+update_sp_use (rtx_insn *prologue, rtx_insn *epilogue)
+{
+  rtx_insn *insn;
+
+  /* Skip if the function has no stack incomming arguments */
+  if (crtl->args.size == 0)
+    return;
+
+  for (insn = NEXT_INSN (prologue); insn != epilogue; insn = NEXT_INSN (insn))
+    if (INSN_P (insn) && GET_CODE (PATTERN (insn)) == SET)
+      {
+	rtx pat_src = SET_SRC (PATTERN (insn));
+
+	/* case assigning sp value */
+	if (GET_CODE (pat_src) == PLUS && REG_P (XEXP (pat_src, 0))
+	    && REGNO (XEXP (pat_src, 0)) == STACK_POINTER_REGNUM)
+	  {
+	    INTVAL (XEXP (pat_src, 1)) -= TARGET_RVE ? 12 : 16;
+	    continue;
+	  }
+
+	/* case loading stack incoming arguments  */
+	if (GET_CODE (pat_src) == SIGN_EXTEND
+	    || GET_CODE (pat_src) == ZERO_EXTEND)
+	  pat_src = XEXP (pat_src, 0);
+
+	if (MEM_P (pat_src) && GET_CODE (XEXP (pat_src, 0)) == PLUS
+	    && REG_P (XEXP (XEXP (pat_src, 0), 0))
+	    && REGNO (XEXP (XEXP (pat_src, 0), 0)) == STACK_POINTER_REGNUM)
+	  INTVAL (XEXP (XEXP (pat_src, 0), 1)) -= TARGET_RVE ? 12 : 16;
+      }
+}
+
 /* Helper for riscv_remove_unneeded_save_restore_calls.  If we match the
    prologue instructions but not the epilogue then we might have the case
    where the epilogue has been optimized out due to a call to a no-return
@@ -218,6 +254,7 @@ check_for_no_return_call (rtx_insn *prologue)
     fprintf (dump_file,
 	     "Prologue call to riscv_save_0 followed by noreturn call, "
 	     "removing prologue.\n");
+  update_sp_use (prologue, NULL);
   remove_insn (prologue);
 }
 
@@ -455,8 +492,9 @@ riscv_remove_unneeded_save_restore_calls (void)
   REG_NOTES (insn) = REG_NOTES (call);
   SIBLING_CALL_P (insn) = 1;
 
-  /* Now update the prologue and epilogue to take account of the
+  /* Now update the prologue, epilogue and use of sp to take account of the
      changes within the function body.  */
+  update_sp_use (prologue_matched, epilogue_matched);
   remove_insn (prologue_matched);
   remove_insn (NEXT_INSN (NEXT_INSN (NEXT_INSN (epilogue_matched))));
   remove_insn (NEXT_INSN (NEXT_INSN (epilogue_matched)));
