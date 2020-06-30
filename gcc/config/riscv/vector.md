@@ -8984,7 +8984,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vleff<eew>.v\t%0,%1"
+  "vle<eew>ff.v\t%0,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -9014,7 +9014,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vleff<eew>.v\t%0,%1,%2.t"
+  "vle<eew>ff.v\t%0,%1,%2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
