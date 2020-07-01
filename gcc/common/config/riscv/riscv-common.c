@@ -394,6 +394,8 @@ riscv_subset_list::parse_std_ext (const char *p)
   while (*p)
     {
       char subset[2] = {0, 0};
+      int default_major_version = 2;
+      int default_minor_version = 0;
 
       if (*p == 'x' || *p == 's' || *p == 'h' || *p == 'z')
 	break;
@@ -424,10 +426,17 @@ riscv_subset_list::parse_std_ext (const char *p)
 
       std_exts++;
 
+      if (*p == 'v')
+	{
+	  default_major_version = 0;
+	  default_minor_version = 9;
+	}
+
       p++;
+
       p = parsing_subset_version (p, &major_version, &minor_version,
-				  /* default_major_version= */ 2,
-				  /* default_minor_version= */ 0,
+				  default_major_version,
+				  default_minor_version,
 				  /* std_ext_p= */ true,
 				  &explicit_version_p);
 
