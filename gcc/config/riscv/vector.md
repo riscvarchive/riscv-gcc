@@ -9176,7 +9176,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vlseg<NF>e.v\t%0, (%1)"
+  "vlseg<NF>e<eew>.v\t%0, (%1)"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -9206,7 +9206,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vlseg<NF>e.v\t%0, (%1), %2.t"
+  "vlseg<NF>e<eew>.v\t%0, (%1), %2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -9350,7 +9350,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vlsseg<NF>e.v\t%0, (%1), %2"
+  "vlsseg<NF>e<eew>.v\t%0, (%1), %2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -9382,7 +9382,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vlsseg<NF>e.v\t%0, (%1), %4, %2.t"
+  "vlsseg<NF>e<eew>.v\t%0, (%1), %4, %2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -9409,7 +9409,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vsseg<NF>e.v\t%1, (%0)"
+  "vsseg<NF>e<eew>.v\t%1, (%0)"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -9523,7 +9523,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vssseg<NF>e.v\t%1, (%0), %2"
+  "vssseg<NF>e<eew>.v\t%1, (%0), %2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -9553,7 +9553,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vssseg<NF>e.v\t%1, (%0), %3, %2.t"
+  "vssseg<NF>e<eew>.v\t%1, (%0), %3, %2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
