@@ -4893,6 +4893,7 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	  align = LMUL;							\
 	  break;
 	_RVV_SEG_ARG (VEC_INT_TUPLE_TYPES, X)
+#undef VEC_INT_TUPLE_TYPES
 #define VEC_FLOAT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
 			      SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
 			      VMODE_PREFIX_LOWER, X)			\
@@ -4900,6 +4901,7 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	  align = LMUL;							\
 	  break;
 	_RVV_SEG_NO_SEW8_ARG (VEC_FLOAT_TUPLE_TYPES, X)
+#undef VEC_FLOAT_TUPLE_TYPES
 	default:
 	  align = nregs;
 	}
@@ -6040,13 +6042,14 @@ riscv_get_nf (machine_mode mode)
     case E_##VMODE_PREFIX_UPPER##Imode:					\
       return NF;
     _RVV_SEG_ARG (VEC_INT_TUPLE_TYPES, X)
+#undef VEC_INT_TUPLE_TYPES
 #define VEC_FLOAT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
 			      SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
 			      VMODE_PREFIX_LOWER, X)			\
     case E_##VMODE_PREFIX_UPPER##Fmode:				\
       return NF;
     _RVV_SEG_NO_SEW8_ARG (VEC_FLOAT_TUPLE_TYPES, X)
-
+#undef VEC_FLOAT_TUPLE_TYPES
     default:
       /* Non-vector tuple type should not call this function.  */
       gcc_unreachable ();
@@ -6080,6 +6083,7 @@ riscv_expand_vtuple_create (rtx *operands)
 	      operands[i + 1], GEN_INT (i)));				\
 	  break;
 	_RVV_SEG_ARG (VEC_INT_TUPLE_TYPES, X)
+#undef VEC_INT_TUPLE_TYPES
 #define VEC_FLOAT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
 			      SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
 			      VMODE_PREFIX_LOWER, X)			\
@@ -6090,6 +6094,7 @@ riscv_expand_vtuple_create (rtx *operands)
 	      operands[i + 1], GEN_INT (i)));				\
 	  break;
 	_RVV_SEG_NO_SEW8_ARG (VEC_FLOAT_TUPLE_TYPES, X)
+#undef VEC_FLOAT_TUPLE_TYPES
       default:
 	gcc_unreachable ();
       }
