@@ -3941,36 +3941,50 @@ OP##_vv_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 OP##_vx_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
-			 u##T b)					\
+			 size_t b)					\
 {									\
-  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar (a, b);	\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_si_scalar (a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_di_scalar (a, b);	\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 OP##_vx_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
-			 u##T b)					\
+			 size_t b)					\
 {									\
-  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar (a, b);	\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_si_scalar (a, b);\
+  else									\
+    return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_di_scalar (a, b);\
 }									\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 OP##_vx_i##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
 				vint##SEW##m##LMUL##_t maskedoff,	\
 				vint##SEW##m##LMUL##_t a,		\
-				u##T b)					\
+				size_t b)				\
 {									\
-  return __builtin_riscv_v##OP##int##SEW##m##LMUL##_scalar_mask (	\
-      mask, maskedoff, a, b);						\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_si_scalar_mask (	\
+		mask, maskedoff, a, b);					\
+  else									\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_di_scalar_mask (	\
+		mask, maskedoff, a, b);					\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 OP##_vx_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
 				vuint##SEW##m##LMUL##_t maskedoff,	\
 				vuint##SEW##m##LMUL##_t a,		\
-				u##T b)					\
+				size_t b)				\
 {									\
-  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_scalar_mask (	\
-      mask, maskedoff, a, b);						\
+  if (__riscv_xlen == 32)						\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_si_scalar_mask (	\
+		mask, maskedoff, a, b);					\
+  else									\
+  return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_di_scalar_mask (	\
+		mask, maskedoff, a, b);					\
 }
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_VRGATHER, vrgather)
@@ -3996,19 +4010,26 @@ OP##_vv_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 OP##_vx_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,			\
-			 u##INT_T b)					\
+			 size_t b)					\
 {									\
-  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_scalar (a, b);	\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_si_scalar (a, b);	\
+  else									\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_di_scalar (a, b);	\
 }									\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 OP##_vx_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
 				vfloat##SEW##m##LMUL##_t maskedoff,	\
 				vfloat##SEW##m##LMUL##_t a,		\
-				u##INT_T b)				\
+				size_t b)				\
 {									\
-  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_scalar_mask (		\
-      mask, maskedoff, a, b);						\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_si_scalar_mask (	\
+		mask, maskedoff, a, b);					\
+  else									\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_di_scalar_mask (	\
+		mask, maskedoff, a, b);					\
 }
 
 _RVV_FLOAT_INT_ITERATOR_ARG (_RVV_FLOAT_VRGATHER, vrgather)

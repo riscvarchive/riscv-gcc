@@ -2301,11 +2301,17 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
   DIRECT_NAMED (OP##MODE, v##OP##uint##E##m##L,				\
 		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L,	\
 		vector),						\
-  DIRECT_NAMED (OP##MODE##_scalar, v##OP##int##E##m##L##_scalar,	\
-		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_U##SUBMODE,	\
+  DIRECT_NAMED (OP##MODE##si_scalar, v##OP##int##E##m##L##_si_scalar,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_SIZE,		\
 		vector),						\
-  DIRECT_NAMED (OP##MODE##_scalar, v##OP##uint##E##m##L##_scalar,	\
-		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_U##SUBMODE,	\
+  DIRECT_NAMED (OP##MODE##si_scalar, v##OP##uint##E##m##L##_si_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_SIZE,		\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##di_scalar, v##OP##int##E##m##L##_di_scalar,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_SIZE,		\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##di_scalar, v##OP##uint##E##m##L##_di_scalar,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_SIZE,		\
 		vector),						\
   DIRECT_NAMED (OP##MODE##_mask, v##OP##int##E##m##L##_mask,		\
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_VUI##E##M##L,\
@@ -2313,11 +2319,17 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
   DIRECT_NAMED (OP##MODE##_mask, v##OP##uint##E##m##L##_mask,		\
 		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_VUI##E##M##L,\
 		vector),						\
-  DIRECT_NAMED (OP##MODE##_scalar_mask, v##OP##int##E##m##L##_scalar_mask,\
-		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_U##SUBMODE,\
+  DIRECT_NAMED (OP##MODE##si_scalar_mask, v##OP##int##E##m##L##_si_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_SIZE,\
 		vector),						\
-  DIRECT_NAMED (OP##MODE##_scalar_mask, v##OP##uint##E##m##L##_scalar_mask,\
-		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_U##SUBMODE,\
+  DIRECT_NAMED (OP##MODE##si_scalar_mask, v##OP##uint##E##m##L##_si_scalar_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_SIZE,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##di_scalar_mask, v##OP##int##E##m##L##_di_scalar_mask,\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_SIZE,\
+		vector),						\
+  DIRECT_NAMED (OP##MODE##di_scalar_mask, v##OP##uint##E##m##L##_di_scalar_mask,\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##E##M##L##_SIZE,\
 		vector),
 
 #define VFLOAT_VRGATHER_BUILTINS(E, L, MLEN, FMODE, FSMODE,		\
@@ -2325,13 +2337,19 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
   DIRECT_NAMED (OP##FMODE, v##OP##f##E##m##L,				\
 		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_VUI##E##M##L,	\
 		vector),						\
-  DIRECT_NAMED (OP##FMODE##_scalar, v##OP##f##E##m##L##_scalar,		\
-		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_U##ISMODE,	\
+  DIRECT_NAMED (OP##FMODE##si_scalar, v##OP##f##E##m##L##_si_scalar,	\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_SIZE,		\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##di_scalar, v##OP##f##E##m##L##_di_scalar,	\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_SIZE,		\
 		vector),						\
   DIRECT_NAMED (OP##FMODE##_mask, v##OP##f##E##m##L##_mask,		\
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_VUI##E##M##L,\
 		vector),						\
-  DIRECT_NAMED (OP##FMODE##_scalar_mask, v##OP##f##E##m##L##_scalar_mask,\
+  DIRECT_NAMED (OP##FMODE##si_scalar_mask, v##OP##f##E##m##L##_si_scalar_mask,\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_U##ISMODE,\
+		vector),						\
+  DIRECT_NAMED (OP##FMODE##di_scalar_mask, v##OP##f##E##m##L##_di_scalar_mask,\
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_U##ISMODE,\
 		vector),
 

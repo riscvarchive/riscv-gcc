@@ -8484,12 +8484,12 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "vrgather<mode>_scalar"
+(define_expand "vrgather<VMODES:mode><P:mode>_scalar"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VMODES 0 "register_operand")
 		   (unspec:VMODES
 		     [(match_operand:VMODES 1 "register_operand")
-		      (match_operand:<VISUBMODE> 2 "reg_or_uimm5_operand")]
+		      (match_operand:P 2 "reg_or_uimm5_operand")]
 		     UNSPEC_VRGATHER))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
@@ -8497,11 +8497,11 @@
 {
 })
 
-(define_insn "*vrgather<mode>_scalar_nosetvl"
+(define_insn "*vrgather<VMODES:mode><P:mode>_scalar_nosetvl"
   [(set (match_operand:VMODES 0 "register_operand" "=&vr,&vr")
 	(unspec:VMODES
 	  [(match_operand:VMODES 1 "register_operand" "vr,vr")
-	   (match_operand:<VISUBMODE> 2 "reg_or_uimm5_operand" "r,K")]
+	   (match_operand:P 2 "reg_or_uimm5_operand" "r,K")]
 	   UNSPEC_VRGATHER))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
@@ -8512,14 +8512,14 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "vrgather<mode>_scalar_mask"
+(define_expand "vrgather<VMODES:mode><P:mode>_scalar_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VMODES 0 "register_operand")
 		   (if_then_else:VMODES
 		     (match_operand:<VCMPEQUIV> 1 "register_operand")
 		     (unspec:VMODES
 		       [(match_operand:VMODES 3 "register_operand")
-			(match_operand:<VISUBMODE> 4 "reg_or_uimm5_operand")]
+			(match_operand:P 4 "reg_or_uimm5_operand")]
 		      UNSPEC_VRGATHER)
 		     (match_operand:VMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
@@ -8528,13 +8528,13 @@
 {
 })
 
-(define_insn "*vrgather<mode>_scalar_mask_nosetvl"
+(define_insn "*vrgather<VMODES:mode><P:mode>_scalar_mask_nosetvl"
   [(set (match_operand:VMODES 0 "register_operand" "=&vr,&vr")
 	(if_then_else:VMODES
 	  (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
 	  (unspec:VMODES
 	    [(match_operand:VMODES 3 "register_operand" "vr,vr")
-	     (match_operand:<VISUBMODE> 4 "reg_or_uimm5_operand" "r,K")]
+	     (match_operand:P 4 "reg_or_uimm5_operand" "r,K")]
 	   UNSPEC_VRGATHER)
 	  (match_operand:VMODES 2 "register_operand" "0,0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))
