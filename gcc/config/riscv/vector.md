@@ -457,8 +457,8 @@
 
 (define_expand "vse<VMODES:mode>_<P:mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (mem:VMODES (match_operand:P 0 "register_operand"))
-		   (match_operand:VMODES 1 "register_operand"))
+   (parallel [(set (mem:VMODES (match_operand:P 1 "register_operand"))
+		   (match_operand:VMODES 0 "register_operand"))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
   "TARGET_VECTOR"
