@@ -50,6 +50,8 @@
 
 typedef int word_type __attribute__ ((mode (__word__)));
 typedef __fp16 float16_t;
+typedef float float32_t;
+typedef double float64_t;
 
 /* An iterator to call a macro with every supported SEW, LMUL, MLEN and
    corresponding scalar modes for integer operations.  */
