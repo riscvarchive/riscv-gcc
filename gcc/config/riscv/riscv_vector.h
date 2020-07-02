@@ -771,13 +771,19 @@ __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vle##SEW##_v_i##SEW##m##LMUL (const int##SEW##_t *a)			\
 {									\
-  return * (vint##SEW##m##LMUL##_t *) a;				\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vleint##SEW##m##LMUL##_si (a);		\
+  else									\
+    return __builtin_riscv_vleint##SEW##m##LMUL##_di (a);		\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vle##SEW##_v_u##SEW##m##LMUL (const uint##SEW##_t *a)			\
 {									\
-  return * (vuint##SEW##m##LMUL##_t *) a;				\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vleuint##SEW##m##LMUL##_si (a);		\
+  else									\
+    return __builtin_riscv_vleuint##SEW##m##LMUL##_di (a);		\
 }									\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -858,13 +864,19 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vse##SEW##_v_i##SEW##m##LMUL (const int##SEW##_t *a,			\
 			vint##SEW##m##LMUL##_t b)			\
 {									\
-  * (vint##SEW##m##LMUL##_t *) a = b;				\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseint##SEW##m##LMUL##_si(b, a);			\
+  else									\
+    __builtin_riscv_vseint##SEW##m##LMUL##_di(b, a);			\
 }									\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vse##SEW##_v_u##SEW##m##LMUL (const uint##SEW##_t *a, vuint##SEW##m##LMUL##_t b)\
 {									\
-  * (vuint##SEW##m##LMUL##_t *) a = b;				\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vseuint##SEW##m##LMUL##_si(b, a);			\
+  else									\
+    __builtin_riscv_vseuint##SEW##m##LMUL##_di(b, a);			\
 }									\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
