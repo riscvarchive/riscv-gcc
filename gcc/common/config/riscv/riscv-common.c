@@ -503,14 +503,22 @@ riscv_subset_list::parse_multiletter_ext (const char *p,
       char *q = subset;
       const char *end_of_version;
       bool explicit_version_p = false;
+      int default_major_version = 2;
+      int default_minor_version = 0;
 
       while (*++q != '\0' && *q != '_' && !ISDIGIT (*q))
 	;
 
+      if (strcmp(subset, "zfh") == 0)
+	{
+	  default_major_version = 0;
+	  default_minor_version = 1;
+	}
+
       end_of_version
 	= parsing_subset_version (q, &major_version, &minor_version,
-				  /* default_major_version= */ 2,
-				  /* default_minor_version= */ 0,
+				  default_major_version,
+				  default_minor_version,
 				  /* std_ext_p= */ FALSE,
 				  &explicit_version_p);
 
