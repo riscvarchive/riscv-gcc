@@ -1026,17 +1026,21 @@
      For example, split a load instruction that LMUL is 4.
      The assembly like this:
 
-       csrr op2, vlenb
+       mv   op2, mem_addr
+       csrr op3, vlenb
        vl1r subop0, op1
-       add  op3, op2, op1
+       add  op2, op2, op3
        vl1r subop0, op3
-       add  op3, op3, op2
+       add  op2, op2, op3
        vl1r subop0, op3
-       add  op3, op3, op2
+       add  op2, op2, op3
        vl1r subop0, op3
 
      To adjust address the base register from op1 replace to op3.
      And offset is vlenb, We use ADD instruction to adjust new address.  */
+
+  emit_move_insn (operands[2], XEXP (mem, 0));
+  emit_move_insn (operands[3], vlenb);
 
   for (unsigned int step = 0; step < <vector_count>; ++step)
     {
@@ -1046,25 +1050,10 @@
       rtx subreg = simplify_gen_subreg (<VSINGLE>mode, reg,
 					<VMODES:MODE>mode,
 					step * BYTES_PER_RVV_VECTOR);
-
-      /* The first round, just emit a load/store instruction.  */
-      if (step != 0)
-	{
-	  if (step == 1)
-	    {
-	      /* Emit a ADD instruction to adjust address,
-		 the address is base + vlenb.  */
-	      emit_move_insn (operands[3], vlenb);
-	      emit_insn (gen_rtx_SET (operands[2],
-				      gen_rtx_PLUS (Pmode, operands[3],
-						    XEXP (mem, 0))));
-	    }
-	  else
-	    emit_insn (gen_rtx_SET (operands[2],
-				    gen_rtx_PLUS (Pmode, operands[2],
-						  operands[3])));
-	}
-
+	if (step != 0)
+	  emit_insn (gen_rtx_SET (operands[2],
+				  gen_rtx_PLUS (Pmode, operands[2],
+						operands[3])));
       /* Emit a vector load/store instruction.  */
       if (load_p)
 	emit_insn (gen_whole_mov<vsingle>_lmul1 (subreg, submem));
