@@ -8572,7 +8572,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "vcompress.vm\t%0,%1,%3"
+  "vcompress.vm\t%0,%3,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
