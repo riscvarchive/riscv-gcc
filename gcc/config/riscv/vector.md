@@ -5364,7 +5364,7 @@
   (set_attr "mode" "none")])
 
 (define_insn "<misc_maskop><mode>"
-  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=&vr")
 	(unspec:VMASKMODES
 	  [(match_operand:VMASKMODES 1 "register_operand" "vr")]
 	  MISC_MASK_OP))
