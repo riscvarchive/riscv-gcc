@@ -2347,10 +2347,10 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_VUI##E##M##L,\
 		vector),						\
   DIRECT_NAMED (OP##FMODE##si_scalar_mask, v##OP##f##E##m##L##_si_scalar_mask,\
-		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_U##ISMODE,\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_SIZE,\
 		vector),						\
   DIRECT_NAMED (OP##FMODE##di_scalar_mask, v##OP##f##E##m##L##_di_scalar_mask,\
-		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_U##ISMODE,\
+		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_SIZE,\
 		vector),
 
 #define VINT_VCOMPRESS_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
