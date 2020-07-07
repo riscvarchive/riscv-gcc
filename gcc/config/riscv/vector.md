@@ -5090,7 +5090,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
- "vmerge.vvm\t%0,%2,%1,%3"
+ "vmerge.vvm\t%0,%1,%2,%3"
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
