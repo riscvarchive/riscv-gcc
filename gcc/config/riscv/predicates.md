@@ -257,6 +257,10 @@
   (ior (match_operand 0 "nonimmediate_operand")
        (match_test "const_vec_duplicate_p (op)")))
 
+(define_predicate "vector_move_int_operand"
+  (ior (match_operand 0 "nonimmediate_operand")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, -16, 15)")))
+
 (define_predicate "const_vector_shift_operand"
   (and (match_code "const_vector")
        (match_test "riscv_const_vec_all_same_in_range_p (op, 0, 31)")))
