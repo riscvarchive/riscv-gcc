@@ -226,6 +226,9 @@
 ;; All operation valid for all subtract.
 (define_code_iterator all_minus [minus ss_minus us_minus])
 
+;; All operation valid for minus and ss_minus.
+(define_code_iterator sub_and_ssub [minus ss_minus])
+
 ;; <reduc> expands to the name of the reduction that implements a
 ;; particular code.
 (define_code_attr reduc [(plus "sum") (umax "maxu") (smax "max") (umin "minu")
@@ -1330,7 +1333,7 @@
 (define_expand "<optab><mode>3"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VIMODES 0 "register_operand")
-		   (all_minus:VIMODES
+		   (sub_and_ssub:VIMODES
 		     (match_operand:VIMODES 1 "register_operand")
 		     (match_operand:VIMODES 2 "neg_vector_arith_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
@@ -1341,7 +1344,7 @@
 
 (define_insn "*<optab><mode>3_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
-	(all_minus:VIMODES
+	(sub_and_ssub:VIMODES
 	  (match_operand:VIMODES 1 "register_operand" "vr,vr")
 	  (match_operand:VIMODES 2 "neg_vector_arith_operand" "vr,vj")))
    (use (reg:<VLMODE> VTYPE_REGNUM))
@@ -1350,6 +1353,30 @@
   "@
    v<insn>.vv\t%0,%1,%2
    v<neg_add>.vi\t%0,%1,%V2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "ussub<mode>3"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (us_minus:VIMODES
+		     (match_operand:VIMODES 1 "register_operand")
+		     (match_operand:VIMODES 2 "register_operand")))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))
+	      (use (reg:SI VL_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*ussub<mode>3_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(us_minus:VIMODES
+	  (match_operand:VIMODES 1 "register_operand" "vr")
+	  (match_operand:VIMODES 2 "register_operand" "vr")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))
+   (use (reg:SI VL_REGNUM))]
+  "TARGET_VECTOR"
+  "v<insn>.vv\t%0,%1,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
