@@ -5220,10 +5220,14 @@
 })
 
 ;; Misc Vector Mask-Register Operations
+;; XXX: The popcount operation will be optimize from its scalar mode,
+;; instead operands[1]'s vector mode. There is problem, we get wrong
+;; upper bound value from mode of popcount operation.
 (define_insn "popc<VMASKMODES:mode>2_<P:mode>"
   [(set (match_operand:P 0 "register_operand" "=r")
-	(popcount:P
-	  (match_operand:VMASKMODES 1 "register_operand" "vr")))
+	(unspec:P
+	  [(match_operand:VMASKMODES 1 "register_operand" "vr")]
+	 UNSPEC_VPOPCOUNT))
    (use (reg:SI VL_REGNUM))]
  "TARGET_VECTOR"
  "vpopc.m\t%0,%1"
@@ -5232,10 +5236,11 @@
 
 (define_insn "popc<VMASKMODES:mode>2_<P:mode>_mask"
   [(set (match_operand:P 0 "register_operand" "=r")
-	(popcount:P
-	  (and:VMASKMODES
+	(unspec:P
+	  [(and:VMASKMODES
 	     (match_operand:VMASKMODES 1 "register_operand" "vm")
-	     (match_operand:VMASKMODES 2 "register_operand" "vr"))))
+	     (match_operand:VMASKMODES 2 "register_operand" "vr"))]
+	 UNSPEC_VPOPCOUNT))
    (use (reg:SI VL_REGNUM))]
  "TARGET_VECTOR"
  "vpopc.m\t%0,%2,%1.t"
