@@ -1376,7 +1376,7 @@
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
-  "v<insn>.vv\t%0,%1,%2"
+  "vssubu.vv\t%0,%1,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
