@@ -915,7 +915,8 @@
       /* We prefer emit whole register move instructions
 	 at register allocation pass. If emit normally
 	 vector move instructions, then may get wrong vtype.  */
-      if (!(MEM_P (operands[0]) && MEM_P (operands[1])))
+      if (reg_or_mem_operand (operands[0], <MODE>mode)
+	  && reg_or_mem_operand (operands[1], <MODE>mode))
 	{
 	  /* The whole register move load/store instructions
 	     only support in LMUL is 1. If LMUL more than 1, then spilt it. */
@@ -967,12 +968,12 @@
 
 (define_insn "mov<mode>_nosetvl"
   [(set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr,vr, m")
-	(match_operand:VIMODES 1 "vector_move_operand"  " vr,vi, m,vr"))
+	(match_operand:VIMODES 1 "vector_move_int_operand" " vr,vi, m,vr"))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR
-   && !(memory_operand (operands[0], <VIMODES:MODE>mode)
-        && const_vec_duplicate_p (operands[1]))"
+   && (!(MEM_P (operands[0])
+       && riscv_const_vec_all_same_in_range_p (operands[1], -16, 15)))"
   "@
    vmv.v.v\t%0,%1
    vmv.v.i\t%0,%1
