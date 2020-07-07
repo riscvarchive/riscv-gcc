@@ -4777,20 +4777,37 @@
 (define_expand "vec_cmp<mode><vmaskmode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
-		   (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+		   (match_operator:<VCMPEQUIV> 1 "ordered_comparison_operator"
 		     [(match_operand:VIMODES 2 "register_operand")
 		      (match_operand:VIMODES 3 "vector_arith_operand")]))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
  "TARGET_VECTOR"
 {
+  if (ltge_operator (operands[1], <VCMPEQUIV>mode)
+      && !ltge_vector_arith_operand(operands[3], <MODE>mode))
+    FAIL;
 })
 
 (define_insn "*vec_cmp<mode><vmaskmode>_nosetvl"
   [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr, &vr")
-	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
+	(match_operator:<VCMPEQUIV> 1 "vector_comparison_operator"
 			 [(match_operand:VIMODES 2 "register_operand" "vr, vr")
 			  (match_operand:VIMODES 3 "vector_arith_operand" "vr, vi")]))
+   (use (reg:<VLMODE> VTYPE_REGNUM))
+   (use (reg:SI VL_REGNUM))]
+ "TARGET_VECTOR"
+ "@
+  vms%B1.vv\t%0,%2,%3
+  vms%B1.vi\t%0,%2,%v3"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
+(define_insn "*ltge<mode><vmaskmode>_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr, &vr")
+	(match_operator:<VCMPEQUIV> 1 "ltge_operator"
+			 [(match_operand:VIMODES 2 "register_operand" "vr, vr")
+			  (match_operand:VIMODES 3 "ltge_vector_arith_operand" "vr, vj")]))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
  "TARGET_VECTOR"
@@ -4805,7 +4822,7 @@
    (parallel [(set (match_operand:<VCMPEQUIV> 0 "register_operand")
 		   (if_then_else:<VCMPEQUIV>
 		     (match_operand:<VCMPEQUIV> 5 "register_operand")
-		     (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+		     (match_operator:<VCMPEQUIV> 1 "ordered_comparison_operator"
 		       [(match_operand:VIMODES 2 "register_operand")
 			(match_operand:VIMODES 3 "vector_arith_operand")])
 		     (match_operand:<VCMPEQUIV> 4 "register_operand")))
@@ -4813,13 +4830,16 @@
 	      (use (reg:SI VL_REGNUM))])]
  "TARGET_VECTOR"
 {
+  if (ltge_operator (operands[1], <VCMPEQUIV>mode)
+      && !ltge_vector_arith_operand(operands[3], <MODE>mode))
+    FAIL;
 })
 
 (define_insn "*vec_cmp<mode><vmaskmode>_mask_nosetvl"
   [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr, &vr")
 	(if_then_else:<VCMPEQUIV>
 	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm, vm")
-	  (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+	  (match_operator:<VCMPEQUIV> 1 "vector_comparison_operator"
 	    [(match_operand:VIMODES 2 "register_operand" "vr, vr")
 	     (match_operand:VIMODES 3 "vector_arith_operand" "vr, vi")])
 	  (match_operand:<VCMPEQUIV> 4 "register_operand" "0, 0")))
@@ -4832,9 +4852,26 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
+(define_insn "*ltge<mode><vmaskmode>_mask_nosetvl"
+  [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr, &vr")
+	(if_then_else:<VCMPEQUIV>
+	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm, vm")
+	  (match_operator:<VCMPEQUIV> 1 "ltge_operator"
+	    [(match_operand:VIMODES 2 "register_operand" "vr, vr")
+	     (match_operand:VIMODES 3 "ltge_vector_arith_operand" "vr, vj")])
+	  (match_operand:<VCMPEQUIV> 4 "register_operand" "0, 0")))
+   (use (reg:<VLMODE> VTYPE_REGNUM))
+   (use (reg:SI VL_REGNUM))]
+ "TARGET_VECTOR"
+ "@
+  vms%B1.vv\t%0,%2,%3,%5.t
+  vms%B1.vi\t%0,%2,%v3,%5.t"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
 (define_insn "*vec_cmp<mode><vmaskmode>_scalar_nosetvl"
   [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
-	(match_operator:<VCMPEQUIV> 1 "comparison_operator"
+	(match_operator:<VCMPEQUIV> 1 "ordered_comparison_operator"
 			 [(match_operand:VIMODES 2 "register_operand" "vr")
 			  (vec_duplicate:VIMODES
 			    (match_operand:<VSUBMODE> 3 "register_operand" "r"))]))
@@ -4849,7 +4886,7 @@
   [(set (match_operand:<VCMPEQUIV> 0 "register_operand" "=&vr")
 	(if_then_else:<VCMPEQUIV>
 	  (match_operand:<VCMPEQUIV> 5 "register_operand" "vm")
-	  (match_operator:<VCMPEQUIV> 1 "comparison_operator"
+	  (match_operator:<VCMPEQUIV> 1 "ordered_comparison_operator"
 	    [(match_operand:VIMODES 2 "register_operand" "vr")
 	     (vec_duplicate:VIMODES
 	       (match_operand:<VSUBMODE> 3 "register_operand" "r"))])

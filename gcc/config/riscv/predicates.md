@@ -209,6 +209,12 @@
 (define_predicate "equality_operator"
   (match_code "eq,ne"))
 
+(define_predicate "ltge_operator"
+  (match_code "lt,ltu,ge,geu"))
+
+(define_predicate "vector_comparison_operator"
+  (match_code "eq,ne,le,leu,gt,gtu"))
+
 (define_predicate "order_operator"
   (match_code "eq,ne,lt,ltu,le,leu,ge,geu,gt,gtu"))
 
@@ -273,7 +279,7 @@
   (match_code "const_vector")
 {
   op = unwrap_const_vec_duplicate (op);
-  return CONST_INT_P (op) && IN_RANGE (INTVAL (op) + 1, -16, 15);
+  return CONST_INT_P (op) && IN_RANGE (INTVAL (op), -15, 16);
 })
 
 (define_predicate "ltge_vector_arith_operand"
