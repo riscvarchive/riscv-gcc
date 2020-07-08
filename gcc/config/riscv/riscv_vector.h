@@ -1216,7 +1216,10 @@ __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vle##SEW##_v_f##SEW##m##LMUL (const T *a)				\
 {									\
-  return * (vfloat##SEW##m##LMUL##_t *) a;				\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vlefloat##SEW##m##LMUL##_si (a);		\
+  else									\
+    return __builtin_riscv_vlefloat##SEW##m##LMUL##_di (a);		\
 }									\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -1257,9 +1260,12 @@ vlse##SEW##_v_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
 #define _RVVFLOATST(SEW, LMUL, MLEN, T)					\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vse##SEW##_v_f##SEW##m##LMUL (const T *a, vfloat##SEW##m##LMUL##_t b)		\
+vse##SEW##_v_f##SEW##m##LMUL (const T *a, vfloat##SEW##m##LMUL##_t b)	\
 {									\
-  * (vfloat##SEW##m##LMUL##_t *) a = b;					\
+  if (__riscv_xlen == 32)						\
+    __builtin_riscv_vsefloat##SEW##m##LMUL##_si (b, a);			\
+  else									\
+    __builtin_riscv_vsefloat##SEW##m##LMUL##_di (b, a);			\
 }									\
 __extension__ extern __inline void					\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
