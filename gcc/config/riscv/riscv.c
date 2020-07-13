@@ -2011,7 +2011,12 @@ riscv_output_move (rtx dest, rtx src)
       if (src_code == REG && FP_REG_P (REGNO (src)))
 	switch (width)
 	  {
-	  case 2: return "fmv.x.h\t%0,%1";
+	  case 2:
+	    if (TARGET_FP16)
+	      return "fmv.x.h\t%0,%1";
+	    else
+	      /* Using fmv.x.s + sign-extend to emulate.  */
+	      return "fmv.x.s\t%0,%1;slli\t%0,%0,16;srai\t%0,%0,16";
 	  case 4: return "fmv.x.s\t%0,%1";
 	  case 8: return "fmv.x.d\t%0,%1";
 	  }
@@ -2052,7 +2057,13 @@ riscv_output_move (rtx dest, rtx src)
 	    switch (width)
 	      {
 		case 2:
-		  return "fmv.h.x\t%0,%z1";
+		  if (TARGET_FP16)
+		    return "fmv.h.x\t%0,%z1";
+		  else
+		    /* High 16 bits should be all-1, otherwise HW will treated
+		       as a n-bit canonical NaN, but isn't matter for
+		       softfloat, because softfloat routines won't do that.  */
+		    return "fmv.s.x\t%0,%1";
 		case 4:
 		  return "fmv.s.x\t%0,%z1";
 		case 8:
