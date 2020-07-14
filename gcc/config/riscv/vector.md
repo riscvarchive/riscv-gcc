@@ -1101,25 +1101,23 @@
 ;; Integer Scalar Move Instructions.
 
 ;; XXX: we should support scalar move for XLEN is 32.
-(define_expand "vec_extract_sext<mode>"
+(define_expand "vec_extract<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_operand:DI 0 "register_operand")
-		   (sign_extend:DI
-		     (vec_select:<VSUBMODE>
-		       (match_operand:VIMODES 1 "register_operand")
-		       (parallel [(const_int 0)]))))
+   (parallel [(set (match_operand:<VSUBMODE> 0 "register_operand")
+		   (vec_select:<VSUBMODE>
+		     (match_operand:VIMODES 1 "register_operand")
+		     (parallel [(const_int 0)])))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
   "TARGET_VECTOR && TARGET_64BIT"
 {
 })
 
-(define_insn "vec_extract_sext<mode>_nosetvl"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(sign_extend:DI
-	  (vec_select:<VSUBMODE>
-	    (match_operand:VIMODES 1 "register_operand" "vr")
-	    (parallel [(const_int 0)]))))
+(define_insn "vec_extract<mode>_nosetvl"
+  [(set (match_operand:<VSUBMODE> 0 "register_operand" "=r")
+	(vec_select:<VSUBMODE>
+	  (match_operand:VIMODES 1 "register_operand" "vr")
+	  (parallel [(const_int 0)])))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR && TARGET_64BIT"

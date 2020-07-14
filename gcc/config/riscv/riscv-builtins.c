@@ -2862,7 +2862,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SCALAR_ONLY_BIN_OP_BUILTINS, rdiv)
   _RVV_INT_ITERATOR_ARG (VINT_MULH_BUILTINS, mulh)
 
-  _RVV_INT_ITERATOR_ARG (VINT_MV_X_S_BUILTINS, vec_extract_sext, mv_xs)
+  _RVV_INT_ITERATOR_ARG (VINT_MV_X_S_BUILTINS, vec_extract, mv_xs)
   _RVV_INT_ITERATOR_ARG (VINT_MV_S_X_BUILTINS, vec_set, mv_sx)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MV_F_S_BUILTINS, vec_extract_fext, mv_fs)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_MV_S_F_BUILTINS, vec_set, mv_sf)
