@@ -4300,11 +4300,8 @@ riscv_gen_load_poly_int (rtx target, rtx tmp1, rtx tmp2, poly_int64 value)
 	return gen_add3_insn (target, target, GEN_INT (scalar_offset));
       else
 	{
-	  HOST_WIDE_INT max_addi_value = IMM_REACH/2 - 1;
-	  emit_insn (gen_add3_insn (target, target,
-				    GEN_INT (max_addi_value)));
-	  return gen_add3_insn (target, target,
-				GEN_INT (scalar_offset - max_addi_value));
+	  rtx remainder = riscv_add_offset (target, target, scalar_offset);
+	  return gen_rtx_SET (target, remainder);
 	}
     }
   else
