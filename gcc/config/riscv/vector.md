@@ -1667,9 +1667,9 @@
 		   (if_then_else:VIMODES
 		     (match_operand:<VCMPEQUIV> 1 "register_operand")
 		     (any_bitwise:VIMODES
+		       (match_operand:VIMODES 3 "register_operand")
 		       (vec_duplicate:VIMODES
-			 (match_operand:<VSUBMODE> 4 "register_operand"))
-		       (match_operand:VIMODES 3 "register_operand"))
+			 (match_operand:<VSUBMODE> 4 "register_operand")))
 		     (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
@@ -1682,9 +1682,9 @@
 	(if_then_else:VIMODES
           (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	    (any_bitwise:VIMODES
+	      (match_operand:VIMODES 3 "register_operand" "vr")
 	      (vec_duplicate:VIMODES
-		(match_operand:<VSUBMODE> 4 "register_operand" "r"))
-	      (match_operand:VIMODES 3 "register_operand" "vr"))
+		(match_operand:<VSUBMODE> 4 "register_operand" "r")))
 	  (match_operand:VIMODES 2 "register_operand" "0")))
     (use (reg:<VLMODE> VTYPE_REGNUM))
     (use (reg:SI VL_REGNUM))]
