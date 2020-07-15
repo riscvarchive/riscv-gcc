@@ -5013,8 +5013,8 @@
    (parallel [(set (match_operand:VIMODES 0 "register_operand")
 		(if_then_else:VIMODES
 		  (match_operand:<VCMPEQUIV> 1 "register_operand")
-		  (match_operand:VIMODES 2 "register_operand")
-		  (match_operand:VIMODES 3 "vector_arith_operand")))
+		  (match_operand:VIMODES 3 "vector_arith_operand")
+		  (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
  "TARGET_VECTOR"
@@ -5025,8 +5025,8 @@
   [(set (match_operand:VIMODES 0 "register_operand" "=vd,vd")
 	(if_then_else:VIMODES
 	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm,vm")
-	  (match_operand:VIMODES 1 "register_operand" "vr,vr")
-	  (match_operand:VIMODES 2 "vector_arith_operand" "vr, vi")))
+	  (match_operand:VIMODES 2 "vector_arith_operand" "vr, vi")
+	  (match_operand:VIMODES 1 "register_operand" "vr,vr")))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
  "TARGET_VECTOR"
@@ -5041,9 +5041,9 @@
    (parallel [(set (match_operand:VIMODES 0 "register_operand")
 		(if_then_else:VIMODES
 		  (match_operand:<VCMPEQUIV> 1 "register_operand")
-		  (match_operand:VIMODES 2 "register_operand")
 		  (vec_duplicate:VIMODES
-		    (match_operand:<VSUBMODE> 3 "register_operand"))))
+		    (match_operand:<VSUBMODE> 3 "register_operand"))
+		  (match_operand:VIMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
  "TARGET_VECTOR"
@@ -5054,9 +5054,9 @@
   [(set (match_operand:VIMODES 0 "register_operand" "=vd")
 	(if_then_else:VIMODES
 	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
-	  (match_operand:VIMODES 1 "register_operand" "vr")
 	  (vec_duplicate:VIMODES
-	    (match_operand:<VSUBMODE> 2 "register_operand" "r"))))
+	    (match_operand:<VSUBMODE> 2 "register_operand" "r"))
+	  (match_operand:VIMODES 1 "register_operand" "vr")))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
  "TARGET_VECTOR"
@@ -5071,8 +5071,8 @@
    (parallel [(set (match_operand:VFMODES 0 "register_operand")
 	      (if_then_else:VFMODES
 		(match_operand:<VCMPEQUIV> 1 "register_operand")
-		(match_operand:VFMODES 2 "register_operand")
-		(match_operand:VFMODES 3 "register_operand")))
+		(match_operand:VFMODES 3 "register_operand")
+		(match_operand:VFMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
@@ -5083,8 +5083,8 @@
   [(set (match_operand:VFMODES 0 "register_operand" "=vd")
 	(if_then_else:VFMODES
 	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
-	  (match_operand:VFMODES 1 "register_operand" "vr")
-	  (match_operand:VFMODES 2 "register_operand" "vr")))
+	  (match_operand:VFMODES 2 "register_operand" "vr")
+	  (match_operand:VFMODES 1 "register_operand" "vr")))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
@@ -5097,9 +5097,9 @@
    (parallel [(set (match_operand:VFMODES 0 "register_operand")
 		(if_then_else:VFMODES
 		  (match_operand:<VCMPEQUIV> 1 "register_operand")
-		  (match_operand:VFMODES 2 "register_operand")
 		  (vec_duplicate:VFMODES
-		    (match_operand:<VSUBMODE> 3 "register_operand"))))
+		    (match_operand:<VSUBMODE> 3 "register_operand"))
+		  (match_operand:VFMODES 2 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
@@ -5110,9 +5110,9 @@
   [(set (match_operand:VFMODES 0 "register_operand" "=vd")
 	(if_then_else:VFMODES
 	  (match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
-	  (match_operand:VFMODES 1 "register_operand" "vr")
 	  (vec_duplicate:VFMODES
-	    (match_operand:<VSUBMODE> 2 "register_operand" "f"))))
+	    (match_operand:<VSUBMODE> 2 "register_operand" "f"))
+	  (match_operand:VFMODES 1 "register_operand" "vr")))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
  "TARGET_VECTOR && TARGET_HARD_FLOAT"
