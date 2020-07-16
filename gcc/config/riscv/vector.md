@@ -4588,21 +4588,16 @@
 
 ;; Integer merge instructions.
 
-(define_insn_and_split "vec_duplicate<mode>"
+(define_expand "vec_duplicate<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VIMODES 0 "register_operand" "=vr")
-	(vec_duplicate:VIMODES
-	 (match_operand:<VSUBMODE> 1 "register_operand" "r")))]
-  "TARGET_VECTOR"
-  "#"
-  "&& 1"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_dup 0) (vec_duplicate:VIMODES (match_dup 1)))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (vec_duplicate:VIMODES
+		     (match_operand:<VSUBMODE> 1 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
-  ""
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
+  "TARGET_VECTOR"
+{
+})
 
 (define_insn "vec_duplicate<mode>_nosetvl"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr")
@@ -4617,21 +4612,16 @@
 
 ;; FP merge instructions.
 
-(define_insn_and_split "vec_duplicate<mode>"
+(define_expand "vec_duplicate<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VFMODES 0 "register_operand" "=vr,*vr")
-	(vec_duplicate:VFMODES
-	 (match_operand:<VSUBMODE> 1 "register_operand" "f,r")))]
-  "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "#"
-  "&& 1"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_dup 0) (vec_duplicate:VFMODES (match_dup 1)))
+   (parallel [(set (match_operand:VFMODES 0 "register_operand")
+		   (vec_duplicate:VFMODES
+		     (match_operand:<VSUBMODE> 1 "register_operand")))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
-  ""
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
+  "TARGET_VECTOR && TARGET_HARD_FLOAT"
+{
+})
 
 (define_insn "vec_duplicate<mode>_nosetvl"
   [(set (match_operand:VFMODES 0 "register_operand" "=vr,*vr")
