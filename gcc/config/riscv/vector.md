@@ -937,7 +937,38 @@
 	  DONE;
 	}
       else
-	gcc_unreachable ();
+	{
+	  gcc_assert (can_create_pseudo_p ());
+	  rtx dup_value;
+
+	  if ((satisfies_constraint_vi (operands[1])
+	       && const_vec_duplicate_p (operands[1], &dup_value)
+	       && INTEGRAL_MODE_P (<MODE>mode))
+	      || ((const_vec_duplicate_p (operands[1], &dup_value))
+		  && FLOAT_MODE_P (<MODE>mode)))
+	    {
+	      rtx vtype_reg = gen_rtx_REG (Pmode, VTYPE_REGNUM);
+	      rtx save_reg = gen_reg_rtx (Pmode);
+	      rtx tmp_reg = gen_reg_rtx (<VSUBMODE>mode);
+
+	      emit_insn (gen_rtx_SET (save_reg,
+				      gen_rtx_UNSPEC (Pmode,
+						      gen_rtvec (1, vtype_reg),
+						      UNSPEC_READ_VTYPE)));
+	      emit_move_insn (tmp_reg, dup_value);
+	      emit_insn (gen_vsetvli_x0_<vlmode>());
+	      emit_insn (gen_vec_duplicate<mode>_nosetvl (operands[0], tmp_reg));
+	      emit_insn (gen_rtx_SET (vtype_reg,
+				      gen_rtx_UNSPEC (Pmode,
+						      gen_rtvec (1, save_reg),
+						      UNSPEC_WRITE_VTYPE)));
+	      DONE;
+	    }
+	  else
+	    {
+	      gcc_unreachable ();
+	    }
+	}
     }
   else
     {
@@ -9139,6 +9170,25 @@
 	(unspec_volatile:P [(reg:P VL_REGNUM)] UNSPEC_READ_VL))]
   "TARGET_VECTOR"
   "csrr\t%0, vl"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Read Vtype
+(define_insn "read_vtype<mode>"
+  [(set (match_operand:P 0 "register_operand" "=r")
+	(unspec:P [(reg:P VTYPE_REGNUM)] UNSPEC_READ_VTYPE))]
+  "TARGET_VECTOR"
+  "csrr\t%0, vtype"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+;; Write Vtype
+(define_insn "write_vtype<mode>"
+  [(set (reg:P VTYPE_REGNUM)
+	(unspec:P [(match_operand:P 0 "register_operand" "r")]
+	 UNSPEC_WRITE_VTYPE))]
+  "TARGET_VECTOR"
+  "vsetvl\tx0, x0, %0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
