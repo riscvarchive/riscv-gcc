@@ -412,7 +412,7 @@
   [(set (match_operand:P 0 "register_operand" "=r")
 	(unspec_volatile:P [(match_operand:P 1 "register_operand" "r")]
 			   UNSPECV_VSETVL))
-   (set (reg:SI VL_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (reg:SI VL_REGNUM) (unspec_volatile:SI [(match_dup 1)] UNSPECV_VSETVL))
    (set (reg:VIMODES VTYPE_REGNUM) (const_int UNSPECV_VSETVL))]
   "TARGET_VECTOR"
   "vsetvli\t%0,%1,<VIMODES:vemode>,<VIMODES:vmmode>"
