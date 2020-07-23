@@ -4329,7 +4329,7 @@ riscv_adjust_frame (rtx target, poly_int64 offset)
     gen_rtx_SET (target,
 		 plus_constant (Pmode, target, offset));
 
-  dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA,
+  dwarf = alloc_reg_note (REG_FRAME_RELATED_EXPR,
 			  copy_rtx (adjust_frame_rtx), NULL_RTX);
 
   REG_NOTES (insn) = dwarf;
