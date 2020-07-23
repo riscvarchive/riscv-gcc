@@ -6078,7 +6078,7 @@ riscv_expand_vtuple_create (rtx *operands)
 			    VMODE_PREFIX_LOWER, X)			\
 	case E_##VMODE_PREFIX_UPPER##Imode:				\
 	  emit_insn (							\
-	    gen_vtuple_insert####VMODE_PREFIX_LOWER##i (		\
+	    gen_vtuple_insert##VMODE_PREFIX_LOWER##i (			\
 	      operands[0], operands[0],					\
 	      operands[i + 1], GEN_INT (i)));				\
 	  break;
@@ -6089,7 +6089,7 @@ riscv_expand_vtuple_create (rtx *operands)
 			      VMODE_PREFIX_LOWER, X)			\
 	case E_##VMODE_PREFIX_UPPER##Fmode:				\
 	  emit_insn (							\
-	    gen_vtuple_insert####VMODE_PREFIX_LOWER##f (		\
+	    gen_vtuple_insert##VMODE_PREFIX_LOWER##f (			\
 	      operands[0], operands[0],					\
 	      operands[i + 1], GEN_INT (i)));				\
 	  break;
