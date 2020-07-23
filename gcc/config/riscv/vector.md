@@ -1125,14 +1125,12 @@
 
 ;; move pattern for vector masking type.
 (define_insn "mov<mode>"
-  [(set (match_operand:VMASKMODES 0 "reg_or_mem_operand"  "=vr,vr,vr,vr,  m")
-	(match_operand:VMASKMODES 1 "vector_move_operand" " vr,v0,v1, m, vr"))
+  [(set (match_operand:VMASKMODES 0 "reg_or_mem_operand"  "=vr,vr, m")
+	(match_operand:VMASKMODES 1 "reg_or_mem_operand"  " vr, m, vr"))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
   "@
-   vmcpy.m\t%0,%1
-   vmclr.m\t%0
-   vmset.m\t%0
+   vmv1r.v\t%0, %1
    vl1r.v\t%0, %1
    vs1r.v\t%1, %0"
   [(set_attr "type" "vector")
@@ -5232,7 +5230,7 @@
 
 (define_expand "clr<mode>"
   [(parallel [(set (match_operand:VMASKMODES 0 "register_operand")
-		   (match_dup 1))
+		   (unspec:VMASKMODES [(match_dup 1)] UNSPEC_VCLR))
 	      (use (reg:SI VL_REGNUM))])]
   "TARGET_VECTOR"
 {
@@ -5242,9 +5240,20 @@
   operands[1] = gen_const_vec_duplicate (<MODE>mode, const0_rtx);
 })
 
+(define_insn "*clr<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(unspec:VMASKMODES
+	  [(match_operand:VMASKMODES 1 "const_vector_int_0_operand" "v0")]
+	 UNSPEC_VCLR))
+   (use (reg:SI VL_REGNUM))]
+  "TARGET_VECTOR"
+  "vmclr.m\t%0"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
+
 (define_expand "set<mode>"
   [(parallel [(set (match_operand:VMASKMODES 0 "register_operand")
-		   (match_dup 1))
+		   (unspec:VMASKMODES [(match_dup 1)] UNSPEC_VSET))
 	      (use (reg:SI VL_REGNUM))])]
   "TARGET_VECTOR"
 {
@@ -5253,6 +5262,17 @@
      as NUNIT of mode.  */
   operands[1] = gen_const_vec_duplicate (<MODE>mode, const1_rtx);
 })
+
+(define_insn "*set<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(unspec:VMASKMODES
+	  [(match_operand:VMASKMODES 1 "const_vector_int_1_operand" "v1")]
+	 UNSPEC_VSET))
+   (use (reg:SI VL_REGNUM))]
+  "TARGET_VECTOR"
+  "vmset.m\t%0"
+ [(set_attr "type" "vector")
+  (set_attr "mode" "none")])
 
 (define_insn "not<mode>"
   [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
