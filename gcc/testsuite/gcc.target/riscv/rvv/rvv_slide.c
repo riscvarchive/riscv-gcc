@@ -8,26 +8,26 @@
   void test_slideup_sx##VCLASS##EM (STYPE *x, long s) {		\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = vslideup_vx_##VCLASS##EM(vx, s);			\
-    VSTORE(VCLASS, SEW, EM, x, vx);					\
+    vx = vslideup_vx_##VCLASS##EM(vx, vx, s);			\
+    VSTORE(VCLASS, SEW, EM, x, vx);				\
   }								\
   void test_slidedown_sx##VCLASS##EM (STYPE *x, long s) {	\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = vslidedown_vx_##VCLASS##EM(vx, s);			\
-    VSTORE(VCLASS, SEW, EM, x, vx);					\
+    vx = vslidedown_vx_##VCLASS##EM(vx, vx, s);			\
+    VSTORE(VCLASS, SEW, EM, x, vx);				\
   }								\
   void test_slideup_si##VCLASS##EM (STYPE *x, long s) {		\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = vslideup_vx_##VCLASS##EM(vx, 11);			\
-    VSTORE(VCLASS, SEW, EM, x, vx);					\
+    vx = vslideup_vx_##VCLASS##EM(vx, vx, 11);			\
+    VSTORE(VCLASS, SEW, EM, x, vx);				\
   }								\
   void test_slidedown_si##VCLASS##EM (STYPE *x, long s) {	\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = vslidedown_vx_##VCLASS##EM(vx, 11);			\
-    VSTORE(VCLASS, SEW, EM, x, vx);					\
+    vx = vslidedown_vx_##VCLASS##EM(vx, vx, 11);		\
+    VSTORE(VCLASS, SEW, EM, x, vx);				\
   }								\
 
 
