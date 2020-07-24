@@ -44,7 +44,7 @@ int foo_rvv(float64_t *x, float64_t *y, int n) {
   vsetvlmax_e64m1();
   vfloat64m1_t vec_sum;
   vec_sum = vfmv_s_f_f64m1(vec_sum, 0.0); /* move scalar to vec_sum[0] */
-  vec_sum = vfredsum_vs_f64m1_f64m1(vec_t, vec_sum);  /* vec_sum[0] = sum(vec_sum[0] , vec_t[*] ) */
+  vec_sum = vfredsum_vs_f64m1_f64m1(vec_sum, vec_t, vec_sum);  /* vec_sum[0] = sum(vec_sum[0] , vec_t[*] ) */
   double t = vfmv_f_s_f64m1_f64(vec_sum);  /*rd = vs2[0]*/
   printf("sum=%lf\n", t);
   return count;

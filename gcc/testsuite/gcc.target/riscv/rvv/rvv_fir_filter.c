@@ -93,7 +93,7 @@ float *fir_kernel(float *pStateCurnt, float *pState, float *pCoeffs,
         // acc0 += *px * *pb;
         vfloat32m1_t vacc;
         vacc = vfmul_vv_f32m1(*vpx, *vpb);
-        vsum = vfredsum_vs_f32m1_f32m1(vacc, vsum); // reduction sum
+        vsum = vfredsum_vs_f32m1_f32m1(vsum, vacc, vsum); // reduction sum
 
         // acc0 = vacc[0];
         float tmp = vfmv_f_s_f32m1_f32(vsum);

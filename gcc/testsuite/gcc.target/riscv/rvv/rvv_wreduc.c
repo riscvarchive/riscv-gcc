@@ -12,7 +12,7 @@
     v##VCLASST##EM##_t vy;						\
     vx = VLOAD(VCLASS, WSEW, WEMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vx = vwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE (vy, vx);		\
+    vx = vwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE (vx, vy, vx);		\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 
@@ -22,7 +22,7 @@
     v##VCLASST##EM##_t vy;						\
     vx = VLOAD(VCLASS, WSEW, WEMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vx = vwredsumu_vs_##VCLASS##EM##_##VCLASS##WEMONE (vy, vx);		\
+    vx = vwredsumu_vs_##VCLASS##EM##_##VCLASS##WEMONE (vx, vy, vx);		\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 
@@ -32,8 +32,8 @@
     v##VCLASST##EM##_t vy;						\
     vx = VLOAD(VCLASS, WSEW, WEMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vx = vfwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE (vy, vx);		\
-    vx = vfwredosum_vs_##VCLASS##EM##_##VCLASS##WEMONE (vy, vx);	\
+    vx = vfwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE (vx, vy, vx);		\
+    vx = vfwredosum_vs_##VCLASS##EM##_##VCLASS##WEMONE (vx, vy, vx);	\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 

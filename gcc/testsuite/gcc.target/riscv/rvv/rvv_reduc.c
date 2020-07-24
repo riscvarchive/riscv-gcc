@@ -12,12 +12,12 @@
     v##VCLASST##EM##_t vy;						\
     vx = VLOAD (VCLASS, SEW, EMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vx = vredsum_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vredmax_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vredmin_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vredand_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vredor_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);			\
-    vx = vredxor_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);			\
+    vx = vredsum_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vredmax_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vredmin_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vredand_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vredor_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);		\
+    vx = vredxor_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
     VSTORE (VCLASS, SEW, EMONE, x, vx);					\
   }
 #define VREDUCU(STYPE, VCLASST, VCLASS, EM, EMONE, MLEN, SEW)		\
@@ -26,12 +26,12 @@
     v##VCLASST##EM##_t vy;						\
     vx = VLOAD (VCLASS, SEW, EMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vx = vredsum_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vredmaxu_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vredminu_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vredand_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vredor_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);			\
-    vx = vredxor_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
+    vx = vredsum_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vredmaxu_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vredminu_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vredand_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vredor_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);		\
+    vx = vredxor_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
     VSTORE (VCLASS, SEW, EMONE, x, vx);					\
   }
 
@@ -41,10 +41,10 @@
     v##VCLASST##EM##_t vy;						\
     vx = VLOAD (VCLASS, SEW, EMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vx = vfredsum_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vfredosum_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vfredmax_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
-    vx = vfredmin_vs_##VCLASS##EM##_##VCLASS##EMONE (vy, vx);				\
+    vx = vfredsum_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vfredosum_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vfredmax_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
+    vx = vfredmin_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx);	\
     VSTORE (VCLASS, SEW, EMONE, x, vx);					\
   }
 

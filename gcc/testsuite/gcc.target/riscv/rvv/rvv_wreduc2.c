@@ -15,7 +15,7 @@
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
     mask = vmslt_vv_##VCLASS##EM##_b##MLEN (vy, vz);		\
-    vx = vwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vy, vx);\
+    vx = vwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx);\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 #define VWREDUCU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEMONE, SEW, WSEW)		\
@@ -27,7 +27,7 @@
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
     mask = vmsltu_vv_##VCLASS##EM##_b##MLEN (vy, vz);		\
-    vx = vwredsumu_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vy, vx);\
+    vx = vwredsumu_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx);\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 #define VFWREDUC(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEMONE, SEW, WSEW)		\
@@ -39,8 +39,8 @@
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
     mask = MSET (MLEN);					\
-    vx = vfwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vy, vx);	\
-    vx = vfwredosum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vy, vx);	\
+    vx = vfwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx);	\
+    vx = vfwredosum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx);	\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 
