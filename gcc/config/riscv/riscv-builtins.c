@@ -3061,7 +3061,7 @@ riscv_vector_type (const char *name, tree elt_type, enum machine_mode mode)
   tree result = build_vector_type_for_mode (elt_type, mode);
 
   /* Copy so we don't give the canonical type a name.  */
-  result = build_variant_type_copy (result);
+  result = build_distinct_type_copy (result);
 
   (*lang_hooks.types.register_builtin_type) (result, name);
 
