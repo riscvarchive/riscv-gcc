@@ -41,5 +41,5 @@ void sub3(size_t n, const int*x, int*y, int *z)
     }
 }
 
-/* { dg-final { scan-assembler-times "vmerge.vvm" 3 } } */
+/* { dg-final { scan-assembler-times "vmerge.vvm" 1 } } */
 /* { dg-final { scan-assembler-times "vmin.vv" 1 } } */
