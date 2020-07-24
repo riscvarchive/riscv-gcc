@@ -5678,7 +5678,7 @@
 	      (use (reg:SI VL_REGNUM))])]
   "TARGET_VECTOR"
 {
-}) 
+})
 
 (define_insn "*reduc_<reduc><mode>_nosetvl"
   [(set (match_operand:<V1MODES> 0 "register_operand" "=vr")
@@ -8344,7 +8344,8 @@
    (parallel [(set (match_operand:VMODES 0 "register_operand")
 		   (unspec:VMODES
 		     [(match_operand:VMODES 1 "register_operand")
-		      (match_operand:X 2 "reg_or_uimm5_operand")]
+		      (match_operand:VMODES 2 "register_operand")
+		      (match_operand:X 3 "reg_or_uimm5_operand")]
 		     UNSPEC_VSLIDES))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))
 	      (use (reg:SI VL_REGNUM))])]
@@ -8355,15 +8356,16 @@
 (define_insn "*vslide<ud><VMODES:mode><X:mode>_nosetvl"
   [(set (match_operand:VMODES 0 "register_operand" "=&vr, &vr")
 	(unspec:VMODES
-	  [(match_operand:VMODES 1 "register_operand" "vr, vr")
-	   (match_operand:X 2 "reg_or_uimm5_operand" "r, K")]
+	  [(match_operand:VMODES 1 "register_operand" "0, 0")
+	   (match_operand:VMODES 2 "register_operand" "vr, vr")
+	   (match_operand:X 3 "reg_or_uimm5_operand" "r, K")]
 	  UNSPEC_VSLIDES))
    (use (reg:<VLMODE> VTYPE_REGNUM))
    (use (reg:SI VL_REGNUM))]
   "TARGET_VECTOR"
   "@
-   vslide<ud>.vx\t%0,%1,%2
-   vslide<ud>.vi\t%0,%1,%2"
+   vslide<ud>.vx\t%0,%2,%3
+   vslide<ud>.vi\t%0,%2,%3"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

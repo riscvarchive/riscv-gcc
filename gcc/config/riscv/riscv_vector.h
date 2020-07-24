@@ -3018,23 +3018,25 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, xor, xor)
 #define _RVV_INT_SLIDE(SEW, LMUL, MLEN, T, OP)				\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vx_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t a,			\
+v##OP##_vx_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t dst,			\
+			    vint##SEW##m##LMUL##_t a,			\
 			    size_t b)					\
 {									\
   if (__riscv_xlen == 32)						\
-    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_si (a, b);	\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_si (dst, a, b);	\
   else									\
-    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_di (a, b);	\
+    return __builtin_riscv_v##OP##int##SEW##m##LMUL##_di (dst, a, b);	\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vx_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t a,			\
+v##OP##_vx_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t dst,		\
+			    vuint##SEW##m##LMUL##_t a,			\
 			    size_t b)					\
 {									\
   if (__riscv_xlen == 32)						\
-    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_si (a, b);		\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_si (dst, a, b);	\
   else									\
-    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_di (a, b);		\
+    return __builtin_riscv_v##OP##u##SEW##m##LMUL##_di (dst, a, b);	\
 }									\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -3071,13 +3073,14 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_SLIDE, slidedown)
 #define _RVV_FLOAT_SLIDE(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vx_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,		\
+v##OP##_vx_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t dst,		\
+			    vfloat##SEW##m##LMUL##_t a,			\
 			    size_t b)					\
 {									\
   if (__riscv_xlen == 32)						\
-    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_si (a, b);		\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_si (dst, a, b);	\
   else									\
-    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_di (a, b);		\
+    return __builtin_riscv_v##OP##f##SEW##m##LMUL##_di (dst, a, b);	\
 }									\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\

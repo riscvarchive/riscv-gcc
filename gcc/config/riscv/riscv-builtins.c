@@ -2222,16 +2222,16 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 
 #define VINT_SLIDE_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)	\
   DIRECT_NAMED (OP##MODE##si, OP##int##E##m##L##_si,		\
-		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_SIZE,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L##_SIZE,	\
 		vector),					\
   DIRECT_NAMED (OP##MODE##di, OP##int##E##m##L##_di,		\
-		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_SIZE,	\
+		RISCV_VI##E##M##L##_FTYPE_VI##E##M##L##_VI##E##M##L##_SIZE,	\
 		vector),					\
   DIRECT_NAMED (OP##MODE##si, OP##u##E##m##L##_si,		\
-		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_SIZE,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L##_SIZE,	\
 		vector),					\
   DIRECT_NAMED (OP##MODE##di, OP##u##E##m##L##_di,		\
-		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_SIZE,	\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##E##M##L##_VUI##E##M##L##_SIZE,	\
 		vector),					\
   DIRECT_NAMED (OP##MODE##si_mask, OP##int##E##m##L##_si_mask,	\
 		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##E##M##L##_SIZE,\
@@ -2274,10 +2274,10 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 
 #define VFLOAT_SLIDE_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)	\
   DIRECT_NAMED (OP##MODE##si, OP##f##E##m##L##_si,		\
-		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_SIZE,	\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_VF##E##M##L##_SIZE,	\
 		vector),					\
   DIRECT_NAMED (OP##MODE##di, OP##f##E##m##L##_di,		\
-		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_SIZE,	\
+		RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_VF##E##M##L##_SIZE,	\
 		vector),					\
   DIRECT_NAMED (OP##MODE##si_mask, OP##f##E##m##L##_si_mask,	\
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_SIZE,\
