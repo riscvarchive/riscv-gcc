@@ -3657,36 +3657,40 @@ vwmul_vf_float16m4 (vfloat16m4_t a, const float16_t b)
 /* Reductions.  */
 
 #define _RVV_REDUC_OP(SEW, LMUL, MLEN, T, OP, OPU)			\
-__extension__ extern __inline vint##SEW##m1_t			\
+__extension__ extern __inline vint##SEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vred##OP##_vs_i##SEW##m##LMUL##_i##SEW##m1 (vint##SEW##m##LMUL##_t a,	\
-				    vint##SEW##m1_t b)		\
+vred##OP##_vs_i##SEW##m##LMUL##_i##SEW##m1 (vint##SEW##m1_t dst,	\
+					    vint##SEW##m##LMUL##_t a,	\
+					    vint##SEW##m1_t b)		\
 {									\
-  return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL (b, a);		\
+  return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL (dst, b, a);	\
 }									\
-__extension__ extern __inline vuint##SEW##m1_t			\
+__extension__ extern __inline vuint##SEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vred##OPU##_vs_u##SEW##m##LMUL##_u##SEW##m1 (vuint##SEW##m##LMUL##_t a,	\
-				      vuint##SEW##m1_t b)		\
+vred##OPU##_vs_u##SEW##m##LMUL##_u##SEW##m1 (vuint##SEW##m1_t dst,	\
+					     vuint##SEW##m##LMUL##_t a,	\
+					     vuint##SEW##m1_t b)	\
 {									\
-  return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL (b, a);	\
+  return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL (dst, b, a);	\
 }									\
-__extension__ extern __inline vint##SEW##m1_t			\
+__extension__ extern __inline vint##SEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vred##OP##_vs_i##SEW##m##LMUL##_i##SEW##m1_m (vbool##MLEN##_t mask,	\
-				    vint##SEW##m##LMUL##_t a,	\
-				    vint##SEW##m1_t b)		\
+					      vint##SEW##m1_t dst,	\
+					      vint##SEW##m##LMUL##_t a,	\
+					      vint##SEW##m1_t b)	\
 {									\
-  return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL##_mask (mask,	\
+  return __builtin_riscv_reduc_##OP##int##SEW##m##LMUL##_mask (mask, dst,\
 							       b, a);	\
 }									\
-__extension__ extern __inline vuint##SEW##m1_t			\
+__extension__ extern __inline vuint##SEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vred##OPU##_vs_u##SEW##m##LMUL##_u##SEW##m1_m (vbool##MLEN##_t mask,	\
-				      vuint##SEW##m##LMUL##_t a,	\
-				      vuint##SEW##m1_t b)		\
+					       vuint##SEW##m1_t dst,\
+					       vuint##SEW##m##LMUL##_t a,\
+					       vuint##SEW##m1_t b)	\
 {									\
-  return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL##_mask (mask,	\
+  return __builtin_riscv_reduc_##OPU##uint##SEW##m##LMUL##_mask (mask, dst,\
 								 b, a);	\
 }
 
@@ -3698,36 +3702,40 @@ _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, or, or)
 _RVV_INT_ITERATOR_ARG (_RVV_REDUC_OP, xor, xor)
 
 #define _RVV_WREDUC_OP(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP, OPU)	\
-__extension__ extern __inline vint##WSEW##m1_t			\
+__extension__ extern __inline vint##WSEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vwred##OP##_vs_i##SEW##m##LMUL##_i##WSEW##m1 (vint##SEW##m##LMUL##_t a,	\
-				     vint##WSEW##m1_t b)		\
+vwred##OP##_vs_i##SEW##m##LMUL##_i##WSEW##m1 (vint##WSEW##m1_t dst,	\
+					      vint##SEW##m##LMUL##_t a,	\
+					      vint##WSEW##m1_t b)	\
 {									\
-  return __builtin_riscv_wreduc_##OP##int##SEW##m##LMUL (b, a);		\
+  return __builtin_riscv_wreduc_##OP##int##SEW##m##LMUL (dst, b, a);	\
 }									\
-__extension__ extern __inline vuint##WSEW##m1_t			\
+__extension__ extern __inline vuint##WSEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vwred##OPU##_vs_u##SEW##m##LMUL##_u##WSEW##m1 (vuint##SEW##m##LMUL##_t a,\
-				       vuint##WSEW##m1_t b)		\
+vwred##OPU##_vs_u##SEW##m##LMUL##_u##WSEW##m1 (vuint##WSEW##m1_t dst,	\
+					       vuint##SEW##m##LMUL##_t a,\
+					       vuint##WSEW##m1_t b)	\
 {									\
-  return __builtin_riscv_wreduc_##OPU##uint##SEW##m##LMUL (b, a);	\
+  return __builtin_riscv_wreduc_##OPU##uint##SEW##m##LMUL (dst, b, a);	\
 }									\
-__extension__ extern __inline vint##WSEW##m1_t			\
+__extension__ extern __inline vint##WSEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vwred##OP##_vs_i##SEW##m##LMUL##_i##WSEW##m1_m (vbool##MLEN##_t mask,	\
-				    vint##SEW##m##LMUL##_t a,	\
-				    vint##WSEW##m1_t b)		\
+						vint##WSEW##m1_t dst,	\
+						vint##SEW##m##LMUL##_t a,\
+						vint##WSEW##m1_t b)	\
 {									\
-  return __builtin_riscv_wreduc_##OP##int##SEW##m##LMUL##_mask (mask,	\
+  return __builtin_riscv_wreduc_##OP##int##SEW##m##LMUL##_mask (mask, dst,\
 							     b, a);	\
 }									\
-__extension__ extern __inline vuint##WSEW##m1_t			\
+__extension__ extern __inline vuint##WSEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vwred##OPU##_vs_u##SEW##m##LMUL##_u##WSEW##m1_m (vbool##MLEN##_t mask,	\
-				      vuint##SEW##m##LMUL##_t a,	\
-				      vuint##WSEW##m1_t b)		\
+						 vuint##WSEW##m1_t dst, \
+						 vuint##SEW##m##LMUL##_t a,\
+						 vuint##WSEW##m1_t b)	\
 {									\
-  return __builtin_riscv_wreduc_##OPU##uint##SEW##m##LMUL##_mask (mask,	\
+  return __builtin_riscv_wreduc_##OPU##uint##SEW##m##LMUL##_mask (mask,	dst, \
 								 b, a);	\
 }
 
@@ -3736,19 +3744,21 @@ _RVV_WINT_ITERATOR_ARG (_RVV_WREDUC_OP, sum, sumu)
 #define _RVV_FREDUC_OP(SEW, LMUL, MLEN, T, OP)				\
 __extension__ extern __inline vfloat##SEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vfred##OP##_vs_f##SEW##m##LMUL##_f##SEW##m1 (vfloat##SEW##m##LMUL##_t a,\
-				       vfloat##SEW##m1_t b)		\
+vfred##OP##_vs_f##SEW##m##LMUL##_f##SEW##m1 (vfloat##SEW##m1_t dst,	\
+					     vfloat##SEW##m##LMUL##_t a,\
+					     vfloat##SEW##m1_t b)	\
 {									\
-  return __builtin_riscv_freduc_##OP##float##SEW##m##LMUL (b, a);	\
+  return __builtin_riscv_freduc_##OP##float##SEW##m##LMUL (dst, b, a);	\
 }									\
-__extension__ extern __inline vfloat##SEW##m1_t			\
+__extension__ extern __inline vfloat##SEW##m1_t				\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vfred##OP##_vs_f##SEW##m##LMUL##_f##SEW##m1_m (vbool##MLEN##_t mask,	\
-				    vfloat##SEW##m##LMUL##_t a,	\
-				    vfloat##SEW##m1_t b)		\
+					       vfloat##SEW##m1_t dst,	\
+					       vfloat##SEW##m##LMUL##_t a,\
+					       vfloat##SEW##m1_t b)	\
 {									\
-  return __builtin_riscv_freduc_##OP##float##SEW##m##LMUL##_mask (mask,\
-							     b, a);	\
+  return __builtin_riscv_freduc_##OP##float##SEW##m##LMUL##_mask (mask, dst, \
+								  b, a);\
 }
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, sum)
@@ -3759,19 +3769,21 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, min)
 #define _RVV_FWREDUC_OP(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP)	\
 __extension__ extern __inline vfloat##WSEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vfwred##OP##_vs_f##SEW##m##LMUL##_f##WSEW##m1 (vfloat##SEW##m##LMUL##_t a,	\
-					vfloat##WSEW##m1_t b)	\
+vfwred##OP##_vs_f##SEW##m##LMUL##_f##WSEW##m1 (vfloat##WSEW##m1_t dst,	\
+					       vfloat##SEW##m##LMUL##_t a,\
+					       vfloat##WSEW##m1_t b)	\
 {									\
-  return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL (b, a);	\
+  return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL (dst, b, a);	\
 }									\
 __extension__ extern __inline vfloat##WSEW##m1_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vfwred##OP##_vs_f##SEW##m##LMUL##_f##WSEW##m1_m (vbool##MLEN##_t mask,	\
-					       vfloat##SEW##m##LMUL##_t a,\
-					       vfloat##WSEW##m1_t b)	\
+						 vfloat##WSEW##m1_t dst, \
+						 vfloat##SEW##m##LMUL##_t a,\
+						 vfloat##WSEW##m1_t b)	\
 {									\
-  return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL##_mask (mask,\
-							     b, a);	\
+  return __builtin_riscv_fwreduc_##OP##float##SEW##m##LMUL##_mask (mask, dst, \
+								   b, a);\
 }									\
 
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, sum)

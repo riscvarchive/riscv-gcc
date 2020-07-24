@@ -2052,48 +2052,48 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 
 #define VINT_REDUC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, OPU)	\
   DIRECT_NAMED (reduc_##OP##MODE, reduc_##OP##int##E##m##L,		\
-		RISCV_VI##E##M1_FTYPE_VI##E##M1_VI##E##M##L,		\
+		RISCV_VI##E##M1_FTYPE_VI##E##M1_VI##E##M1_VI##E##M##L,	\
 		vector),						\
   DIRECT_NAMED (reduc_##OPU##MODE, reduc_##OPU##uint##E##m##L,		\
-		RISCV_VUI##E##M1_FTYPE_VUI##E##M1_VUI##E##M##L,		\
+		RISCV_VUI##E##M1_FTYPE_VUI##E##M1_VUI##E##M1_VUI##E##M##L,\
 		vector),						\
   DIRECT_NAMED (reduc_##OP##MODE##_mask, reduc_##OP##int##E##m##L##_mask, \
-		RISCV_VI##E##M1_FTYPE_VB##MLEN##_VI##E##M1_VI##E##M##L, \
+		RISCV_VI##E##M1_FTYPE_VB##MLEN##_VI##E##M1_VI##E##M1_VI##E##M##L, \
 		vector),						\
   DIRECT_NAMED (reduc_##OPU##MODE##_mask, reduc_##OPU##uint##E##m##L##_mask,\
-		RISCV_VUI##E##M1_FTYPE_VB##MLEN##_VUI##E##M1_VUI##E##M##L, \
+		RISCV_VUI##E##M1_FTYPE_VB##MLEN##_VUI##E##M1_VUI##E##M1_VUI##E##M##L, \
 		vector),
 
 #define VINT_WREDUC_OP_BUILTINS(SEW, LMUL, MLEN, VMODE, SDEMODE,	\
 				WSEW, WLMUL, WVMODE, WSMODE, OP, OPU)	\
   DIRECT_NAMED (wreduc_##OP##VMODE, wreduc_##OP##int##SEW##m##LMUL,	\
-		RISCV_VI##WSEW##M1_FTYPE_VI##WSEW##M1_VI##SEW##M##LMUL,	\
+		RISCV_VI##WSEW##M1_FTYPE_VI##WSEW##M1_VI##WSEW##M1_VI##SEW##M##LMUL,	\
 		vector),						\
   DIRECT_NAMED (wreduc_##OPU##VMODE, wreduc_##OPU##uint##SEW##m##LMUL,	\
-		RISCV_VUI##WSEW##M1_FTYPE_VUI##WSEW##M1_VUI##SEW##M##LMUL,	\
+		RISCV_VUI##WSEW##M1_FTYPE_VUI##WSEW##M1_VUI##WSEW##M1_VUI##SEW##M##LMUL,\
 		vector),						\
   DIRECT_NAMED (wreduc_##OP##VMODE##_mask, wreduc_##OP##int##SEW##m##LMUL##_mask, \
-		RISCV_VI##WSEW##M1_FTYPE_VB##MLEN##_VI##WSEW##M1_VI##SEW##M##LMUL, \
+		RISCV_VI##WSEW##M1_FTYPE_VB##MLEN##_VI##WSEW##M1_VI##WSEW##M1_VI##SEW##M##LMUL, \
 		vector),						\
   DIRECT_NAMED (wreduc_##OPU##VMODE##_mask, wreduc_##OPU##uint##SEW##m##LMUL##_mask,\
-		RISCV_VUI##WSEW##M1_FTYPE_VB##MLEN##_VUI##WSEW##M1_VUI##SEW##M##LMUL, \
+		RISCV_VUI##WSEW##M1_FTYPE_VB##MLEN##_VUI##WSEW##M1_VUI##WSEW##M1_VUI##SEW##M##LMUL, \
 		vector),
 
 #define VFLOAT_REDUC_OP_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP)		\
   DIRECT_NAMED (reduc_##OP##MODE, freduc_##OP##float##E##m##L,		\
-		RISCV_VF##E##M1_FTYPE_VF##E##M1_VF##E##M##L,		\
+		RISCV_VF##E##M1_FTYPE_VF##E##M1_VF##E##M1_VF##E##M##L,	\
 		vector),						\
   DIRECT_NAMED (reduc_##OP##MODE##_mask, freduc_##OP##float##E##m##L##_mask, \
-		RISCV_VF##E##M1_FTYPE_VB##MLEN##_VF##E##M1_VF##E##M##L, \
+		RISCV_VF##E##M1_FTYPE_VB##MLEN##_VF##E##M1_VF##E##M1_VF##E##M##L, \
 		vector),
 
 #define VFLOAT_WREDUC_OP_BUILTINS(SEW, LMUL, MLEN, VMODE, SDEMODE,	\
 				  WSEW, WLMUL, WVMODE, WSMODE, OP)	\
   DIRECT_NAMED (wreduc_##OP##VMODE, fwreduc_##OP##float##SEW##m##LMUL,	\
-		RISCV_VF##WSEW##M1_FTYPE_VF##WSEW##M1_VF##SEW##M##LMUL,	\
+		RISCV_VF##WSEW##M1_FTYPE_VF##WSEW##M1_VF##WSEW##M1_VF##SEW##M##LMUL,\
 		vector),						\
   DIRECT_NAMED (wreduc_##OP##VMODE##_mask, fwreduc_##OP##float##SEW##m##LMUL##_mask, \
-		RISCV_VF##WSEW##M1_FTYPE_VB##MLEN##_VF##WSEW##M1_VF##SEW##M##LMUL, \
+		RISCV_VF##WSEW##M1_FTYPE_VB##MLEN##_VF##WSEW##M1_VF##WSEW##M1_VF##SEW##M##LMUL, \
 		vector),
 
 #define VREINTERPRET_INT(E, L, MLEN, IMODE, ISUBMODE)			\
