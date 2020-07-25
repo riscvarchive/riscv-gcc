@@ -2902,33 +2902,33 @@ _RVV_QINT_ITERATOR_ARG (_RVV_MAC_WINT_MASK, qmacc)
 #define _RVV_INT_MERGE(SEW, LMUL, MLEN, T, OP)				\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vvm_i##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
-			    vint##SEW##m##LMUL##_t a,			\
-			    vint##SEW##m##LMUL##_t b)			\
+v##OP##_vvm_i##SEW##m##LMUL (vbool##MLEN##_t mask,			\
+			     vint##SEW##m##LMUL##_t a,			\
+			     vint##SEW##m##LMUL##_t b)			\
 {									\
   return __builtin_riscv_v##OP##i##SEW##m##LMUL##_mask (mask, a, b);	\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vvm_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
-			    vuint##SEW##m##LMUL##_t a,			\
-			    vuint##SEW##m##LMUL##_t b)			\
+v##OP##_vvm_u##SEW##m##LMUL (vbool##MLEN##_t mask,			\
+			     vuint##SEW##m##LMUL##_t a,			\
+			     vuint##SEW##m##LMUL##_t b)			\
 {									\
   return __builtin_riscv_v##OP##u##SEW##m##LMUL##_mask (mask, a, b);	\
 }									\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vxm_i##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
-				   vint##SEW##m##LMUL##_t a,		\
-				   T b)					\
+v##OP##_vxm_i##SEW##m##LMUL (vbool##MLEN##_t mask,			\
+			     vint##SEW##m##LMUL##_t a,			\
+			     T b)					\
 {									\
   return __builtin_riscv_v##OP##i##SEW##m##LMUL##_scalar_mask (mask, a, b);\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vxm_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
-				   vuint##SEW##m##LMUL##_t a,		\
-				   u##T b)				\
+v##OP##_vxm_u##SEW##m##LMUL (vbool##MLEN##_t mask,			\
+			     vuint##SEW##m##LMUL##_t a,			\
+			     u##T b)					\
 {									\
   return __builtin_riscv_v##OP##u##SEW##m##LMUL##_scalar_mask (mask, a, b);\
 }
@@ -2938,17 +2938,17 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_MERGE, merge)
 #define _RVV_FLOAT_MERGE(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-v##OP##_vvm_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
-				 vfloat##SEW##m##LMUL##_t a,		\
-				 vfloat##SEW##m##LMUL##_t b)		\
+v##OP##_vvm_f##SEW##m##LMUL (vbool##MLEN##_t mask,			\
+			     vfloat##SEW##m##LMUL##_t a,		\
+			     vfloat##SEW##m##LMUL##_t b)		\
 {									\
   return __builtin_riscv_v##OP##f##SEW##m##LMUL##_mask (mask, a, b);\
 }									\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vf##OP##_vfm_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
-				   vfloat##SEW##m##LMUL##_t a,		\
-				   _RVV_F##SEW##_TYPE b)		\
+vf##OP##_vfm_f##SEW##m##LMUL (vbool##MLEN##_t mask,			\
+			      vfloat##SEW##m##LMUL##_t a,		\
+			      _RVV_F##SEW##_TYPE b)			\
 {									\
   return __builtin_riscv_v##OP##f##SEW##m##LMUL##_scalar_mask (mask, a, b);\
 }
@@ -4054,18 +4054,18 @@ _RVV_FLOAT_INT_ITERATOR_ARG (_RVV_FLOAT_VRGATHER, vrgather)
 #define _RVV_INT_VCOMPRESS(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_vm_i##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
-				vint##SEW##m##LMUL##_t maskedoff,	\
-				vint##SEW##m##LMUL##_t a)		\
+OP##_vm_i##SEW##m##LMUL (vbool##MLEN##_t mask,				\
+			 vint##SEW##m##LMUL##_t maskedoff,		\
+			 vint##SEW##m##LMUL##_t a)			\
 {									\
   return __builtin_riscv_v##OP##int##SEW##m##LMUL##_mask (		\
 	  mask, maskedoff, a);						\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_vm_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
-				vuint##SEW##m##LMUL##_t maskedoff, 	\
-				vuint##SEW##m##LMUL##_t a)		\
+OP##_vm_u##SEW##m##LMUL (vbool##MLEN##_t mask,				\
+			 vuint##SEW##m##LMUL##_t maskedoff, 		\
+			 vuint##SEW##m##LMUL##_t a)			\
 {									\
   return __builtin_riscv_v##OP##uint##SEW##m##LMUL##_mask (		\
 	  mask, maskedoff, a);						\
@@ -4076,9 +4076,9 @@ _RVV_INT_ITERATOR_ARG (_RVV_INT_VCOMPRESS, vcompress)
 #define _RVV_FLOAT_VCOMPRESS(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_vm_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
-				vfloat##SEW##m##LMUL##_t maskedoff, 	\
-				vfloat##SEW##m##LMUL##_t a)		\
+OP##_vm_f##SEW##m##LMUL (vbool##MLEN##_t mask,				\
+			 vfloat##SEW##m##LMUL##_t maskedoff, 		\
+			 vfloat##SEW##m##LMUL##_t a)			\
 {									\
   return __builtin_riscv_v##OP##f##SEW##m##LMUL##_mask (		\
       mask, maskedoff, a);						\
