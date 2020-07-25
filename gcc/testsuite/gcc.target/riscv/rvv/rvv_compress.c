@@ -12,7 +12,7 @@
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     mask = MSET (MLEN);					\
-    vx = vcompress_vm_##VCLASS##EM##_m(mask, vx, vy);	\
+    vx = vcompress_vm_##VCLASS##EM(mask, vx, vy);	\
     VSTORE(VCLASS, SEW, EM, x, vx);					\
   }								\
 

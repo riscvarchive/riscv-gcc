@@ -13,7 +13,7 @@
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = vmerge_vvm_##VCLASS##EM##_m (mask, vx, vy);	\
+    vy = vmerge_vvm_##VCLASS##EM (mask, vx, vy);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }								\
   void rvv##VCLASS##EM##_s_builtin_test(size_t n, STYPE *x, 	\
@@ -24,7 +24,7 @@
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = vmerge_vxm_##VCLASS##EM##_m (mask, vx, z);	\
+    vy = vmerge_vxm_##VCLASS##EM (mask, vx, z);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }								\
   void rvv##VCLASS##EM##_i_builtin_test(size_t n, STYPE *x, 	\
@@ -35,7 +35,7 @@
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = vmerge_vxm_##VCLASS##EM##_m (mask, vx, 11);	\
+    vy = vmerge_vxm_##VCLASS##EM (mask, vx, 11);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
@@ -48,7 +48,7 @@
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = vfmerge_vfm_##VCLASS##EM##_m (mask, vx, z);	\
+    vy = vfmerge_vfm_##VCLASS##EM (mask, vx, z);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }								\
   void rvv##VCLASS##EM##_i_builtin_test(size_t n, STYPE *x, 	\
@@ -59,7 +59,7 @@
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = vfmerge_vfm_##VCLASS##EM##_m (mask, vx, 11);	\
+    vy = vfmerge_vfm_##VCLASS##EM (mask, vx, 11);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
