@@ -518,7 +518,7 @@ riscv_subset_list::parse_multiletter_ext (const char *p,
       while (*++q != '\0' && *q != '_' && !ISDIGIT (*q))
 	;
 
-      if (strcmp(subset, "zfh") == 0)
+      if (strncmp(subset, "zfh", strlen("zfh")) == 0)
 	{
 	  default_major_version = 0;
 	  default_minor_version = 1;
