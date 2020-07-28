@@ -53,6 +53,10 @@ IMPLIED_EXT = {
   # XXX: Not sure ZFH is implied F or not, because the spec is not clear,
   #      but add it could prevent invalid combination.
   "zfh" : ["f"],
+  # XXX: WORK-AROUND for v = zvbase + zvlsseg + zvamo.
+  #      We don't have formal name for zvbase yet, so just add zvlsseg and zvamo
+  #      to implied list for resolve multi-lib issue.
+  "v"   : ['zvlsseg', 'zvamo'],
 }
 
 def arch_canonicalize(arch):

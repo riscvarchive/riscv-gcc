@@ -57,6 +57,9 @@ struct riscv_implied_info_t
 riscv_implied_info_t riscv_implied_info[] =
 {
   {"d", "f"},
+  /* XXX: Work-around, zvbase + zvamo + zvlsseg, but zvbase not defined yet.  */
+  {"v", "zvamo"},
+  {"v", "zvlsseg"},
   {NULL, NULL}
 };
 
