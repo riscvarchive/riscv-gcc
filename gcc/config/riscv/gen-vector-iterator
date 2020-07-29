@@ -39,6 +39,11 @@ class VectorTypeInfo:
       self.scalar_mode = base_fp_modes[sew]
 
     self.scalar_int_mode = base_int_modes[sew]
+    self.scalar_uint_mode = "U" + base_int_modes[sew]
+    if sew in base_fp_modes:
+      self.scalar_float_mode = base_fp_modes[sew]
+    else:
+      self.scalar_float_mode = None
 
     self.scale = (base_scale // sew) * lmul
     self.mask_mode = "VNx%sBI" % (self.scale)
@@ -51,6 +56,30 @@ class VectorTypeInfo:
     self.mode = mode_name
 
     self.int_vector_mode = mode_name[:-1] + 'I'
+    self.mlen = self.sew // self.lmul
+
+    if self.int_p:
+      self.ft_vtype = "VI%sM%s" % (self.sew, self.lmul)
+      self.ft_m1_vtype = "VI%sM1" % (self.sew)
+      self.ft_vt_type = "VI%sM%sX%s" % (self.sew, self.lmul, self.nf)
+    else:
+      self.ft_vtype = "VF%sM%s" % (self.sew, self.lmul)
+      self.ft_m1_vtype = "VF%sM1" % (self.sew)
+      self.ft_vt_type = "VF%sM%sX%s" % (self.sew, self.lmul, self.nf)
+
+    self.ft_vftype = "VF%sM%s" % (self.sew, self.lmul)
+    self.ft_vitype = "VI%sM%s" % (self.sew, self.lmul)
+    self.ft_vutype = "VUI%sM%s" % (self.sew, self.lmul)
+
+    self.ft_vt_itype = "VI%sM%sX%s" % (self.sew, self.lmul, self.nf)
+    self.ft_vt_utype = "VUI%sM%sX%s" % (self.sew, self.lmul, self.nf)
+    self.ft_vt_ftype = "VF%sM%sX%s" % (self.sew, self.lmul, self.nf)
+
+    self.ft_m1_vftype = "VF%sM1" % (self.sew)
+    self.ft_m1_vitype = "VI%sM1" % (self.sew)
+    self.ft_m1_vutype = "VUI%sM1" % (self.sew)
+
+    self.ft_vmasktype = "VB%s" % (self.mlen)
 
     self.arg_map = {
       'SEW'    : self.sew,
@@ -59,12 +88,32 @@ class VectorTypeInfo:
       'IMODE': self.int_vector_mode.lower(),
       'NF'     : self.nf,
       'SUBMODE'  : self.scalar_mode,
-      'ISUBMODE'  : self.scalar_int_mode,
-      'MLEN'   : self.sew // self.lmul,
+      'MLEN'   : self.mlen,
       'SUBMODE_PREFIX_UPPER': self.scalar_mode[0].upper(),
       'SUBMODE_PREFIX_LOWER': self.scalar_mode[0].lower(),
       'MODE_PREFIX_UPPER' : self.mode[:-1],
       'MODE_PREFIX_LOWER' : self.mode[:-1].lower(),
+
+      'FT_MASK'  : self.ft_vmasktype,
+      'FT_VEC'  : self.ft_vtype,
+      'FT_F_VEC' : self.ft_vftype,
+      'FT_I_VEC' : self.ft_vitype,
+      'FT_U_VEC' : self.ft_vutype,
+
+      'FT_VEC_TUPLE'  : self.ft_vt_type,
+      'FT_F_VEC_TUPLE' : self.ft_vt_ftype,
+      'FT_I_VEC_TUPLE' : self.ft_vt_itype,
+      'FT_U_VEC_TUPLE' : self.ft_vt_utype,
+
+      'FT_VEC_M1'  : self.ft_m1_vtype,
+      'FT_VEC_M1_F' : self.ft_m1_vftype,
+      'FT_VEC_M1_I' : self.ft_m1_vitype,
+      'FT_VEC_M1_U' : self.ft_m1_vutype,
+
+      'FT_SCALAR' : self.scalar_mode,
+      'FT_F_SCALAR' : self.scalar_float_mode,
+      'FT_I_SCALAR' : self.scalar_int_mode,
+      'FT_U_SCALAR' : self.scalar_uint_mode,
     }
 
     if eew:
@@ -78,6 +127,8 @@ class VectorTypeInfo:
       self.arg_map["EEW_IMODE"] = eew_type.int_vector_mode.lower()
       self.arg_map["EEW_SUBMODE"] = eew_type.scalar_mode
       self.arg_map["EEW_ISUBMODE"] = eew_type.scalar_int_mode
+
+      self.arg_map["FT_INDEX"] = "VUI%sM%s" %(eew_type.sew, eew_type.lmul)
 
   def __getitem__(self, item):
     if item[0] == 'W':
@@ -662,12 +713,456 @@ def gen_c():
     )
 
 
+class FTtypes:
+  def __init__(self):
+    self.ftypes = set()
+
+  def add(self, arg_list_templates, vals, eew_index=False):
+    if eew_index:
+      new_vals = []
+      for val in vals:
+        for eew in SEWS:
+          if val.valid_eew_p(eew):
+            new_vals.append(VectorTypeInfo(val.sew, val.lmul, val.int_p,
+                                           val.nf, eew=eew))
+      vals = new_vals
+
+    for arg_list_template in arg_list_templates:
+      unsigned_version = False
+      # We should repeat again if there is FT_VEC for unsigned
+      # interger vector types.
+      if '{FT_VEC}' in arg_list_template:
+        unsigned_version = True
+      if '{WFT_VEC}' in arg_list_template:
+        unsigned_version = True
+      if '{QFT_VEC}' in arg_list_template:
+        unsigned_version = True
+      if '{EFT_VEC}' in arg_list_template:
+        unsigned_version = True
+      if '{FT_VEC_TUPLE}' in arg_list_template:
+        unsigned_version = True
+
+      for val in vals:
+        arg_list = []
+        for arg in arg_list_template:
+            arg = arg.format_map(val)
+            arg_list.append(arg)
+        self.ftypes.add(tuple(arg_list))
+
+        if unsigned_version and val.int_p:
+          arg_list = []
+          for arg in arg_list_template:
+	      # TODO: Clean up
+              if '{FT_VEC}' in arg:
+                arg = arg.replace("{FT_VEC}", "{FT_U_VEC}")
+              if '{WFT_VEC}' in arg:
+                arg = arg.replace("{WFT_VEC}", "{WFT_U_VEC}")
+              if '{QFT_VEC}' in arg:
+                arg = arg.replace("{QFT_VEC}", "{QFT_U_VEC}")
+              if '{EFT_VEC}' in arg:
+                arg = arg.replace("{EFT_VEC}", "{EFT_U_VEC}")
+
+              if '{FT_VEC_M1}' in arg:
+                arg = arg.replace("{FT_VEC_M1}", "{FT_VEC_M1_U}")
+              if '{WFT_VEC_M1}' in arg:
+                arg = arg.replace("{WFT_VEC_M1}", "{WFT_VEC_M1_U}")
+
+              if '{FT_VEC_TUPLE}' in arg:
+                arg = arg.replace("{FT_VEC_TUPLE}", "{FT_U_VEC_TUPLE}")
+
+              if '{FT_SCALAR}' in arg:
+                arg = arg.replace("{FT_SCALAR}", "{FT_U_SCALAR}")
+
+              arg = arg.format_map(val)
+              arg_list.append(arg)
+          self.ftypes.add(tuple(arg_list))
+
+  def gen(self):
+    print ("/* DO NOT EDIT, please edit generator instead.\n"
+           "   This file was generated by gen-vector-iterator with the command:\n"
+           "   $ ./gen-vector-iterator -ftype > riscv-vector-ftypes.def  */\n")
+    ftypes = sorted(list(self.ftypes))
+    for ftype in ftypes:
+      arg_num = len(ftype) - 1
+      args = ", ".join(ftype)
+      print ("DEF_RISCV_FTYPE (%d, (%s))" % (arg_num, args))
+
+def gen_ftype():
+  ft = FTtypes()
+
+  # Prototype for vector modes, both for integer and floating point
+  ft.add(
+    arg_list_templates=[
+      # 1 args.
+      ('{FT_VEC}', 'C_{FT_SCALAR}_PTR'),
+
+      # 2 args.
+      # Vector Binary Operations.
+      ('{FT_VEC}', '{FT_VEC}', '{FT_VEC}'),
+      # Vector Binary Operations with scalar.
+      ('{FT_VEC}', '{FT_VEC}', '{FT_SCALAR}'),
+
+      ('{FT_VEC}', '{FT_VEC}', 'SIZE'),
+      ('{FT_MASK}', '{FT_VEC}', '{FT_VEC}'),
+      ('{FT_MASK}', '{FT_VEC}', '{FT_SCALAR}'),
+
+      ('VOID', '{FT_VEC}', '{FT_SCALAR}_PTR'),
+
+      ('{FT_VEC}', 'C_{FT_SCALAR}_PTR', 'SI'),
+      ('{FT_VEC}', 'C_{FT_SCALAR}_PTR', 'DI'),
+
+      # 3 args.
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', 'C_{FT_SCALAR}_PTR'),
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', 'C_{FT_SCALAR}_PTR'),
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_VEC}'),
+
+      ('{FT_VEC}', '{FT_VEC}', '{FT_VEC}', '{FT_VEC}'),
+      ('{FT_VEC}', '{FT_VEC}', '{FT_SCALAR}', '{FT_VEC}'),
+      ('{FT_VEC}', '{FT_VEC}', '{FT_VEC}', 'SIZE'),
+
+      ('{FT_VEC_M1}', '{FT_VEC_M1}', '{FT_VEC_M1}', '{FT_VEC}'),
+
+      ('VOID', '{FT_MASK}', '{FT_VEC}', '{FT_SCALAR}_PTR'),
+      ('VOID', '{FT_VEC}', '{FT_SCALAR}_PTR', 'SI'),
+      ('VOID', '{FT_VEC}', '{FT_SCALAR}_PTR', 'DI'),
+
+      # 4 args.
+      ('{FT_VEC_M1}', '{FT_MASK}', '{FT_VEC_M1}', '{FT_VEC_M1}', '{FT_VEC}'),
+
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_VEC}', '{FT_VEC}'),
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_VEC}', '{FT_SCALAR}'),
+      ('{FT_MASK}', '{FT_MASK}', '{FT_MASK}', '{FT_VEC}', '{FT_VEC}'),
+      ('{FT_MASK}', '{FT_MASK}', '{FT_MASK}', '{FT_VEC}', '{FT_SCALAR}'),
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_VEC}', 'SIZE'),
+
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_SCALAR}', '{FT_VEC}'), # For masked mac
+
+      # Vector Strided Load.
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', 'C_{FT_SCALAR}_PTR', 'SI'),
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', 'C_{FT_SCALAR}_PTR', 'DI'),
+      # Vector Strided Store.
+      ('VOID', '{FT_MASK}', '{FT_VEC}', '{FT_SCALAR}_PTR', 'SI'),
+      ('VOID', '{FT_MASK}', '{FT_VEC}', '{FT_SCALAR}_PTR', 'DI'),
+    ],
+    vals=vector_modes)
+
+  # Same as above, but for widening vector.
+  ft.add(
+    arg_list_templates=[
+      # 2 args.
+      ('{WFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
+      ('{WFT_VEC}', '{FT_VEC}', '{FT_SCALAR}'),
+
+      ('{WFT_VEC}', '{WFT_VEC}', '{FT_VEC}'),
+      ('{WFT_VEC}', '{WFT_VEC}', '{FT_SCALAR}'),
+
+      # 3 args.
+      ('{WFT_VEC}', '{WFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
+      ('{WFT_VEC}', '{WFT_VEC}', '{FT_SCALAR}', '{FT_VEC}'),
+
+      ('{WFT_VEC_M1}', '{WFT_VEC_M1}', '{WFT_VEC_M1}', '{FT_VEC}'),
+
+      # 4 args.
+      ('{WFT_VEC_M1}', '{FT_MASK}', '{WFT_VEC_M1}', '{WFT_VEC_M1}', '{FT_VEC}'),
+
+      ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
+      ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_VEC}', '{FT_SCALAR}'),
+      ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{WFT_VEC}', '{FT_VEC}'),
+      ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{WFT_VEC}', '{FT_SCALAR}'),
+      ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_SCALAR}', '{FT_VEC}'), # For maksed wmac.
+    ],
+    vals = list(filter(lambda x: x.has_widen_type(), vector_modes)))
+
+  # Prototype for integer vector mode only
+  ft.add(
+    arg_list_templates=[
+      # 0 args.
+      ('{FT_U_VEC}',),
+      # 1 args.
+      ('{FT_VEC}', '{FT_VEC}'),
+      ('{FT_VEC}', '{FT_SCALAR}'),
+      ('{FT_SCALAR}', '{FT_VEC}'),
+      ('{FT_VEC}', '{FT_MASK}'),
+      ('{FT_I_VEC}', '{FT_U_VEC}'),
+      ('{FT_U_VEC}', '{FT_I_VEC}'),
+      # 2 args.
+      ('{FT_VEC}', '{FT_VEC}', 'LONG'),
+      ('{FT_I_VEC}', '{FT_I_VEC}', 'UQI'),
+      ('{FT_I_VEC}', '{FT_I_VEC}', '{FT_U_SCALAR}'),
+      ('{FT_U_VEC}', '{FT_U_VEC}', 'UQI'),
+      ('{FT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'),
+      ('{FT_MASK}', '{FT_I_VEC}', 'UQI'),
+      ('{FT_MASK}', '{FT_I_VEC}', '{FT_U_VEC}'),
+      ('{FT_MASK}', '{FT_I_VEC}', '{FT_MASK}'),
+
+      # Vector Element Index.
+      ('{FT_U_VEC}', '{FT_MASK}', '{FT_U_VEC}'), # For vid
+      # 3 args.
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_MASK}'),
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_SCALAR}'),
+
+      ('{FT_VEC}', '{FT_VEC}', '{FT_VEC}', '{FT_MASK}'),
+      ('{FT_MASK}', '{FT_VEC}', '{FT_VEC}', '{FT_MASK}'),
+      ('{FT_VEC}', '{FT_VEC}', '{FT_SCALAR}', '{FT_MASK}'),
+      ('{FT_MASK}', '{FT_VEC}', '{FT_SCALAR}', '{FT_MASK}'),
+
+      # 4 args.
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_VEC}', 'LONG'),
+
+      ('{FT_MASK}', '{FT_MASK}', '{FT_MASK}', '{FT_I_VEC}', '{FT_U_VEC}'),
+      ('{FT_MASK}', '{FT_MASK}', '{FT_MASK}', '{FT_I_VEC}', 'UQI'),
+
+      ('{FT_I_VEC}', '{FT_MASK}', '{FT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'),
+      ('{FT_I_VEC}', '{FT_MASK}', '{FT_I_VEC}', '{FT_I_VEC}', 'UQI'),
+      ('{FT_I_VEC}', '{FT_MASK}', '{FT_I_VEC}', '{FT_I_VEC}', '{FT_U_SCALAR}'), # For masked mulh.
+      # Masked Shift
+      ('{FT_U_VEC}', '{FT_MASK}', '{FT_U_VEC}', '{FT_U_VEC}', 'UQI'),
+    ],
+    vals=int_vector_modes)
+
+  # Same as above, but for widening vector.
+  ft.add(
+    arg_list_templates=[
+      # 1 args.
+      # Vector Integer Extension
+      ('{WFT_VEC}', '{FT_VEC}'),
+      # 2 args.
+      ('{WFT_I_VEC}', '{FT_I_VEC}', '{FT_U_SCALAR}'),
+      ('{WFT_I_VEC}', '{WFT_I_VEC}', '{FT_U_SCALAR}'),
+      ('{WFT_I_VEC}', '{WFT_I_VEC}', '{FT_U_VEC}'),
+      ('{WFT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'),
+
+      ('{FT_I_VEC}', '{WFT_I_VEC}', '{FT_U_VEC}'),
+      ('{FT_I_VEC}', '{WFT_I_VEC}', 'UQI'),
+
+      ('{FT_U_VEC}', '{WFT_U_VEC}', '{FT_U_VEC}'),
+      ('{FT_U_VEC}', '{WFT_U_VEC}', 'UQI'),
+
+      # 3 args.
+      ('{WFT_I_VEC}', '{WFT_I_VEC}', '{FT_U_SCALAR}', '{FT_I_VEC}'),
+      ('{WFT_I_VEC}', '{WFT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'),
+      ('{WFT_I_VEC}', '{WFT_I_VEC}', '{FT_SCALAR}', '{FT_U_VEC}'),
+
+      # Maksed Vector Integer Extension
+      ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_VEC}'),
+
+      # 4 args.
+      ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{WFT_VEC}', '{FT_VEC}'),
+      ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{WFT_VEC}', '{FT_SCALAR}'),
+
+      ('{WFT_I_VEC}', '{FT_MASK}', '{WFT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'),
+      ('{WFT_I_VEC}', '{FT_MASK}', '{WFT_I_VEC}', '{FT_I_VEC}', '{FT_U_SCALAR}'),
+
+      ('{WFT_I_VEC}', '{FT_MASK}', '{WFT_I_VEC}', '{FT_I_SCALAR}', '{FT_U_VEC}'), # For maksed wmac.
+      ('{WFT_I_VEC}', '{FT_MASK}', '{WFT_I_VEC}', '{FT_U_SCALAR}', '{FT_I_VEC}'), # For maksed wmac.
+
+      # Masked Narrowing Vector Arithmetic.
+      ('{FT_I_VEC}', '{FT_MASK}', '{FT_I_VEC}', '{WFT_I_VEC}', '{FT_U_VEC}'),
+      ('{FT_I_VEC}', '{FT_MASK}', '{FT_I_VEC}', '{WFT_I_VEC}', 'UQI'),
+
+      ('{FT_U_VEC}', '{FT_MASK}', '{FT_U_VEC}', '{WFT_U_VEC}', '{FT_U_VEC}'),
+      ('{FT_U_VEC}', '{FT_MASK}', '{FT_U_VEC}', '{WFT_U_VEC}', 'UQI'),
+    ],
+    vals = list(filter(lambda x: x.has_widen_type(), int_vector_modes)))
+
+  # Same as above, but for quad-widening vector.
+  ft.add(
+    arg_list_templates=[
+      # 1 args.
+      # Vector Integer Extension
+      ('{QFT_VEC}', '{FT_VEC}'),
+      # 2 args.
+      ('{QFT_I_VEC}', '{FT_I_VEC}', '{FT_U_SCALAR}'),
+      ('{QFT_I_VEC}', '{QFT_I_VEC}', '{FT_U_SCALAR}'),
+      ('{QFT_I_VEC}', '{QFT_I_VEC}', '{FT_U_VEC}'),
+      ('{QFT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'),
+      # 3 args.
+      ('{QFT_VEC}', '{QFT_VEC}', '{FT_SCALAR}', '{FT_VEC}'),
+      ('{QFT_VEC}', '{QFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
+      ('{QFT_I_VEC}', '{QFT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'),
+      ('{QFT_I_VEC}', '{QFT_I_VEC}', '{FT_I_SCALAR}', '{FT_U_VEC}'),
+      ('{QFT_I_VEC}', '{QFT_I_VEC}', '{FT_U_SCALAR}', '{FT_I_VEC}'),
+
+      # Maksed Vector Integer Extension
+      ('{QFT_VEC}', '{FT_MASK}', '{QFT_VEC}', '{FT_VEC}'),
+
+      # 4 args.
+      ('{QFT_VEC}', '{FT_MASK}', '{QFT_VEC}', '{FT_VEC}', '{FT_VEC}'), # For maksed qmac.
+      ('{QFT_VEC}', '{FT_MASK}', '{QFT_VEC}', '{FT_SCALAR}', '{FT_VEC}'), # For maksed qmac.
+      ('{QFT_I_VEC}', '{FT_MASK}', '{QFT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'), # For maksed qmac.
+      ('{QFT_I_VEC}', '{FT_MASK}', '{QFT_I_VEC}', '{FT_I_SCALAR}', '{FT_U_VEC}'), # For maksed qmac.
+      ('{QFT_I_VEC}', '{FT_MASK}', '{QFT_I_VEC}', '{FT_U_SCALAR}', '{FT_I_VEC}'), # For maksed qmac.
+    ],
+    vals = list(filter(lambda x: x.has_quad_widen_type(), int_vector_modes)))
+
+  # Same as above, but for eightfold-widening vector.
+  ft.add(
+    arg_list_templates=[
+      # 1 args.
+      # Vector Integer Extension
+      ('{EFT_VEC}', '{FT_VEC}'),
+      # 3 args.
+      # Maksed Vector Integer Extension
+      ('{EFT_VEC}', '{FT_MASK}', '{EFT_VEC}', '{FT_VEC}'),
+    ],
+    vals = list(filter(lambda x: x.has_eightfold_widen_type(), int_vector_modes)))
+
+  # Prototype for floating point vector mode only
+  ft.add(
+    arg_list_templates=[
+      # 1 args.
+      ('{FT_F_VEC}', '{FT_F_VEC}'),
+      ('{FT_SCALAR}', '{FT_F_VEC}'),
+      ('{FT_F_VEC}', '{FT_SCALAR}'),
+      ('{FT_F_VEC}', '{FT_I_VEC}'),
+      ('{FT_F_VEC}', '{FT_U_VEC}'),
+      ('{FT_I_VEC}', '{FT_F_VEC}'),
+      ('{FT_U_VEC}', '{FT_F_VEC}'),
+
+      # 2 args.
+      ('{FT_F_VEC}', '{FT_F_VEC}', '{FT_U_VEC}'),
+      ('{FT_F_VEC}', '{FT_F_VEC}', '{FT_U_SCALAR}'),
+
+      # 3 args.
+      ('{FT_I_VEC}', '{FT_MASK}', '{FT_I_VEC}', '{FT_F_VEC}'),
+      ('{FT_U_VEC}', '{FT_MASK}', '{FT_U_VEC}', '{FT_F_VEC}'),
+
+      ('{FT_F_VEC}', '{FT_MASK}', '{FT_F_VEC}', '{FT_F_SCALAR}'),
+      ('{FT_F_VEC}', '{FT_MASK}', '{FT_F_VEC}', '{FT_I_VEC}'),
+      ('{FT_F_VEC}', '{FT_MASK}', '{FT_F_VEC}', '{FT_U_VEC}'),
+
+      # 4 args.
+      # Vector Register Gather.
+      ('{FT_F_VEC}', '{FT_MASK}', '{FT_F_VEC}', '{FT_F_VEC}', '{FT_U_VEC}'),
+      ('{FT_F_VEC}', '{FT_MASK}', '{FT_F_VEC}', '{FT_F_VEC}', '{FT_U_SCALAR}'),
+    ],
+    vals=float_vector_modes)
+
+  # Same as above, but for widening vector.
+  ft.add(
+    arg_list_templates=[
+      # 1 args.
+      # Widening Floating-Point/Integer Type-Convert.
+      ('{WFT_F_VEC}', '{FT_F_VEC}'),
+      ('{WFT_F_VEC}', '{FT_I_VEC}'),
+      ('{WFT_F_VEC}', '{FT_U_VEC}'),
+
+      ('{WFT_I_VEC}', '{FT_F_VEC}'),
+      ('{WFT_U_VEC}', '{FT_F_VEC}'),
+
+      # Narrowing Floating-Point/Integer Type-Convert.
+      ('{FT_F_VEC}', '{WFT_F_VEC}'),
+      ('{FT_F_VEC}', '{WFT_I_VEC}'),
+      ('{FT_F_VEC}', '{WFT_U_VEC}'),
+
+      ('{FT_I_VEC}', '{WFT_F_VEC}'),
+      ('{FT_U_VEC}', '{WFT_F_VEC}'),
+
+      # 3 args.
+      # Masked Widening Floating-Point/Integer Type-Convert.
+      ('{WFT_F_VEC}', '{FT_MASK}', '{WFT_F_VEC}', '{FT_F_VEC}'),
+      ('{WFT_F_VEC}', '{FT_MASK}', '{WFT_F_VEC}', '{FT_I_VEC}'),
+      ('{WFT_F_VEC}', '{FT_MASK}', '{WFT_F_VEC}', '{FT_U_VEC}'),
+
+      ('{WFT_I_VEC}', '{FT_MASK}', '{WFT_I_VEC}', '{FT_F_VEC}'),
+      ('{WFT_U_VEC}', '{FT_MASK}', '{WFT_U_VEC}', '{FT_F_VEC}'),
+
+      # Masked Narrowing Floating-Point/Integer Type-Convert.
+      ('{FT_F_VEC}', '{FT_MASK}', '{FT_F_VEC}', '{WFT_I_VEC}'),
+      ('{FT_F_VEC}', '{FT_MASK}', '{FT_F_VEC}', '{WFT_U_VEC}'),
+      ('{FT_F_VEC}', '{FT_MASK}', '{FT_F_VEC}', '{WFT_F_VEC}'),
+
+      ('{FT_I_VEC}', '{FT_MASK}', '{FT_I_VEC}', '{WFT_F_VEC}'),
+      ('{FT_U_VEC}', '{FT_MASK}', '{FT_U_VEC}', '{WFT_F_VEC}'),
+    ],
+    vals = list(filter(lambda x: x.has_widen_type(), float_vector_modes)))
+
+  # Prototype for vector tuple modes, both for integer and floating point
+  ft.add(
+    arg_list_templates=[
+      # 1 args.
+      ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR'),
+
+      # 2 args.
+      ('VOID', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR'), # For vec tuple store
+
+      ('{FT_VEC}', '{FT_VEC_TUPLE}', 'SI'), # For vec tuple extraction.
+
+      ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', '{FT_U_VEC}'), # For vec tuple load
+      ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', 'PTRDIFF'), # For vec tuple indexed load
+
+      # 3 args.
+      # Vector Tuple Type Insertion
+      ('{FT_VEC_TUPLE}', '{FT_VEC_TUPLE}', '{FT_VEC}', 'SI'),
+
+      # Masked Unit-Stride Segment Load
+      ('{FT_VEC_TUPLE}', '{FT_MASK}', '{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR'),
+
+      # Vector Unit-Stride Segment Store.
+      ('VOID', '{FT_MASK}', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR'),
+      # Vector Indexed Segment Store.
+      ('VOID', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', '{FT_U_VEC}'),
+      # Vector Strided Segment Store.
+      ('VOID', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', 'PTRDIFF'),
+
+      # 4 args.
+      # Masked Vector Indexed Segment Load.
+      ('{FT_VEC_TUPLE}', '{FT_MASK}', '{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', 'PTRDIFF'),
+      # Masked Vector Indexed Segment Store.
+      ('VOID', '{FT_MASK}', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', '{FT_U_VEC}'),
+      # Masked Vector Strided Segment Load.
+      ('{FT_VEC_TUPLE}', '{FT_MASK}', '{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', 'PTRDIFF'),
+      # Masked Vector Strided Segment Store.
+      ('VOID', '{FT_MASK}', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', 'PTRDIFF'),
+    ],
+    vals=vector_tuple_modes)
+
+  # Prototype for vector modes, both for integer and floating point,
+  # and with EEW
+  ft.add(
+    arg_list_templates=[
+      # 2 args.
+      # Vector Indexed Load.
+      ('{FT_VEC}', 'C_{FT_SCALAR}_PTR', '{FT_INDEX}'),
+
+      # 3 args.
+      # Vector Indexed Store.
+      ('VOID', '{FT_SCALAR}_PTR', '{FT_INDEX}', '{FT_VEC}'),
+
+      # Vector AMO.
+      ('{FT_VEC}', 'C_{FT_SCALAR}_PTR', '{FT_INDEX}', '{FT_VEC}'),
+
+      # 4 args.
+      # Masked Vector Indexed Load.
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', 'C_{FT_SCALAR}_PTR', '{FT_INDEX}'),
+
+      # Masked Vector Indexed Store.
+      ('VOID', '{FT_MASK}', '{FT_SCALAR}_PTR', '{FT_INDEX}', '{FT_VEC}'),
+
+      # Masked Vector AMO.
+      ('{FT_VEC}', '{FT_MASK}', 'C_{FT_SCALAR}_PTR', '{FT_INDEX}', '{FT_VEC}'),
+    ],
+    vals=vector_modes,
+    eew_index=True)
+
+  # Prototype for Vector Tuple Type Creation.
+  for nf in NF:
+    args = ['{FT_VEC_TUPLE}'] + (['{FT_VEC}'] * nf)
+    ft.add(
+      arg_list_templates=[
+        tuple(args)
+      ],
+      vals=vector_tuple_modes)
+
+  ft.gen()
 
 if __name__ == '__main__':
   if sys.argv[1] == '-md':
     gen_md()
   elif sys.argv[1] == '-c':
     gen_c()
+  elif sys.argv[1] == '-ftype':
+    gen_ftype()
   else:
-    print ("Usage: %0 [-md]" % sys.argv[0])
+    print ("Usage: %s [-md]" % sys.argv[0])
     sys.exit(1)
