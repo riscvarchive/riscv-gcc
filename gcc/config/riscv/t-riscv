@@ -1,7 +1,8 @@
 riscv-builtins.o: $(srcdir)/config/riscv/riscv-builtins.c $(CONFIG_H) \
   $(SYSTEM_H) coretypes.h $(TM_H) $(RTL_H) $(TREE_H) $(RECOG_H) langhooks.h \
   $(DIAGNOSTIC_CORE_H) $(OPTABS_H) $(srcdir)/config/riscv/riscv-ftypes.def \
-  $(srcdir)/config/riscv/riscv-modes.def
+  $(srcdir)/config/riscv/riscv-modes.def \
+  $(srcdir)/config/riscv/riscv-vector-iterator.h
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 		$(srcdir)/config/riscv/riscv-builtins.c
 
@@ -22,5 +23,7 @@ riscv-d.o: $(srcdir)/config/riscv/riscv-d.c
 riscv-shorten-memrefs.o: $(srcdir)/config/riscv/riscv-shorten-memrefs.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
+
+riscv.o: $(srcdir)/config/riscv/riscv-vector-iterator.h
 
 PASSES_EXTRA += $(srcdir)/config/riscv/riscv-passes.def

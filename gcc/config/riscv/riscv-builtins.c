@@ -36,6 +36,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 #include "expr.h"
 #include "langhooks.h"
+#include "riscv-vector-iterator.h"
 
 /* We don't want the PTR definition from ansi-decl.h.  */
 #undef PTR
@@ -47,58 +48,6 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (16, HI)			\
   MACRO (32, SI)			\
   MACRO (64, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector and integer modes.  */
-#define _RVV_INT_ITERATOR(MACRO)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI)	\
-  MACRO ( 8, 8,  1,vnx128qi, QI)	\
-  MACRO (16, 1, 16,  vnx8hi, HI)	\
-  MACRO (16, 2,  8, vnx16hi, HI)	\
-  MACRO (16, 4,  4, vnx32hi, HI)	\
-  MACRO (16, 8,  2, vnx64hi, HI)	\
-  MACRO (32, 1, 32,  vnx4si, SI)	\
-  MACRO (32, 2, 16,  vnx8si, SI)	\
-  MACRO (32, 4,  8, vnx16si, SI)	\
-  MACRO (32, 8,  4, vnx32si, SI)	\
-  MACRO (64, 1, 64,  vnx2di, DI)	\
-  MACRO (64, 2, 32,  vnx4di, DI)	\
-  MACRO (64, 4, 16,  vnx8di, DI)	\
-  MACRO (64, 8,  8, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   except LMUL1, along with its corresponding vector and integer modes.  */
-#define _RVV_INT_ITERATOR_NOTM1(MACRO)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI)	\
-  MACRO ( 8, 8,  1,vnx128qi, QI)	\
-  MACRO (16, 2,  8, vnx16hi, HI)	\
-  MACRO (16, 4,  4, vnx32hi, HI)	\
-  MACRO (16, 8,  2, vnx64hi, HI)	\
-  MACRO (32, 2, 16,  vnx8si, SI)	\
-  MACRO (32, 4,  8, vnx16si, SI)	\
-  MACRO (32, 8,  4, vnx32si, SI)	\
-  MACRO (64, 2, 32,  vnx4di, DI)	\
-  MACRO (64, 4, 16,  vnx8di, DI)	\
-  MACRO (64, 8,  8, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   except SEW8, along with its corresponding vector and integer modes.  */
-#define _RVV_INT_ITERATOR_NO_SEW8(MACRO)\
-  MACRO (16, 1, 16,  vnx8hi, HI)	\
-  MACRO (16, 2,  8, vnx16hi, HI)	\
-  MACRO (16, 4,  4, vnx32hi, HI)	\
-  MACRO (16, 8,  2, vnx64hi, HI)	\
-  MACRO (32, 1, 32,  vnx4si, SI)	\
-  MACRO (32, 2, 16,  vnx8si, SI)	\
-  MACRO (32, 4,  8, vnx16si, SI)	\
-  MACRO (32, 8,  4, vnx32si, SI)	\
-  MACRO (64, 1, 64,  vnx2di, DI)	\
-  MACRO (64, 2, 32,  vnx4di, DI)	\
-  MACRO (64, 4, 16,  vnx8di, DI)	\
-  MACRO (64, 8,  8, vnx16di, DI)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    for shift operations, along with its corresponding vector
@@ -113,435 +62,6 @@ along with GCC; see the file COPYING3.  If not see
   MACRO (64, 2, 32,  vnx4di, DI)	\
   MACRO (64, 4, 16,  vnx8di, DI)	\
   MACRO (64, 8,  8, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes and extra arguments.  */
-#define _RVV_INT_ITERATOR_ARG(MACRO, ...)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 8,  1,vnx128qi, QI, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hi, HI, __VA_ARGS__)	\
-  MACRO (16, 8,  2, vnx64hi, HI, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4si, SI, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8si, SI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16si, SI, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32si, SI, __VA_ARGS__)	\
-  MACRO (64, 1, 64,  vnx2di, DI, __VA_ARGS__)	\
-  MACRO (64, 2, 32,  vnx4di, DI, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16di, DI, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes, and info for
-   corresponding widening vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
-#define _RVV_WINT_ITERATOR(MACRO)			\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8si, SI)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI)	\
-  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI)	\
-  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4di, DI)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI)	\
-  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes, and info for
-   corresponding quad-widening vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, QSEW, QLMUL, QVMODE, QSMODE)  */
-#define _RVV_QINT_ITERATOR(MACRO)			\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 32, 4, vnx16si, SI)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 32, 8, vnx32si, SI)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 64, 4,  vnx8di, DI)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes, and info for
-   corresponding 8 times vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, QSEW, QLMUL, QVMODE, QSMODE)  */
-#define _RVV_EINT_ITERATOR(MACRO)			\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 64, 8, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   except LMUL1, along with its corresponding vector, integer modes, and
-   info for corresponding widening vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
-#define _RVV_WINT_ITERATOR_NOTM1(MACRO)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI)	\
-  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI)	\
-  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes, and info for
-   corresponding widening vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
-#define _RVV_WINT_ITERATOR_ARG(MACRO, ...)				\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI, __VA_ARGS__)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI, __VA_ARGS__)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8si, SI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4di, DI, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes, and info for
-   corresponding quad-widening vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, QSEW, QLMUL, QVMODE, QSMODE)  */
-#define _RVV_QINT_ITERATOR_ARG(MACRO, ...)				\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 32, 4, vnx16si, SI, __VA_ARGS__)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 32, 8, vnx32si, SI, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes, and info for
-   corresponding eighth-widening vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, ESEW, ELMUL, EVMODE, ESMODE)  */
-#define _RVV_EINT_ITERATOR_ARG(MACRO, ...)				\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 64, 8, vnx16di, DI, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes and floating point
-   modes. */
-#define _RVV_INT_FLOAT_ITERATOR(MACRO)	\
-  MACRO (16, 1, 16,  vnx8hi, HI,  vnx8hf, HF)	\
-  MACRO (16, 2,  8, vnx16hi, HI, vnx16hf, HF)	\
-  MACRO (16, 4,  4, vnx32hi, HI, vnx32hf, HF)	\
-  MACRO (16, 8,  2, vnx64hi, HI, vnx64hf, HF)	\
-  MACRO (32, 1, 32,  vnx4si, SI,  vnx4sf, SF)	\
-  MACRO (32, 2, 16,  vnx8si, SI,  vnx8sf, SF)	\
-  MACRO (32, 4,  8, vnx16si, SI, vnx16sf, SF)	\
-  MACRO (32, 8,  4, vnx32si, SI, vnx32sf, SF)	\
-  MACRO (64, 1, 64,  vnx2di, DI,  vnx2df, DF)	\
-  MACRO (64, 2, 32,  vnx4di, DI,  vnx4df, DF)	\
-  MACRO (64, 4, 16,  vnx8di, DI,  vnx8df, DF)	\
-  MACRO (64, 8,  8, vnx16di, DI, vnx16df, DF)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector and floating point modes.  */
-#define _RVV_FLOAT_ITERATOR(MACRO)	\
-  MACRO (16, 1, 16,  vnx8hf, HF)	\
-  MACRO (16, 2,  8, vnx16hf, HF)	\
-  MACRO (16, 4,  4, vnx32hf, HF)	\
-  MACRO (16, 8,  2, vnx64hf, HF)	\
-  MACRO (32, 1, 32,  vnx4sf, SF)	\
-  MACRO (32, 2, 16,  vnx8sf, SF)	\
-  MACRO (32, 4,  8, vnx16sf, SF)	\
-  MACRO (32, 8,  4, vnx32sf, SF)	\
-  MACRO (64, 1, 64,  vnx2df, DF)	\
-  MACRO (64, 2, 32,  vnx4df, DF)	\
-  MACRO (64, 4, 16,  vnx8df, DF)	\
-  MACRO (64, 8,  8, vnx16df, DF)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, floating point modes, and info for
-   corresponding integer vector type and extra arguments.  */
-#define _RVV_FLOAT_INT_ITERATOR(MACRO)		\
-  MACRO (16, 1, 16,  vnx8hf, HF,  vnx8hi, HI)	\
-  MACRO (16, 2,  8, vnx16hf, HF, vnx16hi, HI)	\
-  MACRO (16, 4,  4, vnx32hf, HF, vnx32hi, HI)	\
-  MACRO (16, 8,  2, vnx64hf, HF, vnx64hi, HI)	\
-  MACRO (32, 1, 32,  vnx4sf, SF,  vnx4si, SI)	\
-  MACRO (32, 2, 16,  vnx8sf, SF,  vnx8si, SI)	\
-  MACRO (32, 4,  8, vnx16sf, SF, vnx16si, SI)	\
-  MACRO (32, 8,  4, vnx32sf, SF, vnx32si, SI)	\
-  MACRO (64, 1, 64,  vnx2df, DF,  vnx2di, DI)	\
-  MACRO (64, 2, 32,  vnx4df, DF,  vnx4di, DI)	\
-  MACRO (64, 4, 16,  vnx8df, DF,  vnx8di, DI)	\
-  MACRO (64, 8,  8, vnx16df, DF, vnx16di, DI)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   except LMUL1, along with its corresponding vector and floating point
-   modes.  */
-#define _RVV_FLOAT_ITERATOR_NOTM1(MACRO)	\
-  MACRO (16, 2,  8, vnx16hf, HF)		\
-  MACRO (16, 4,  4, vnx32hf, HF)		\
-  MACRO (16, 8,  2, vnx64hf, HF)		\
-  MACRO (32, 2, 16,  vnx8sf, SF)		\
-  MACRO (32, 4,  8, vnx16sf, SF)		\
-  MACRO (32, 8,  4, vnx32sf, SF)		\
-  MACRO (64, 2, 32,  vnx4df, DF)		\
-  MACRO (64, 4, 16,  vnx8df, DF)		\
-  MACRO (64, 8,  8, vnx16df, DF)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, floating point modes and extra
-   arguments.  */
-#define _RVV_FLOAT_ITERATOR_ARG(MACRO, ...)	\
-  MACRO (16, 1, 16,  vnx8hf, HF, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hf, HF, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hf, HF, __VA_ARGS__)	\
-  MACRO (16, 8,  2, vnx64hf, HF, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4sf, SF, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16sf, SF, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32sf, SF, __VA_ARGS__)	\
-  MACRO (64, 1, 64,  vnx2df, DF, __VA_ARGS__)	\
-  MACRO (64, 2, 32,  vnx4df, DF, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8df, DF, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16df, DF, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, floating point modes, and info for
-   corresponding widening vector type.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
-#define _RVV_WFLOAT_ITERATOR(MACRO)			\
-  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8sf, SF)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16sf, SF)	\
-  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32sf, SF)	\
-  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4df, DF)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8df, DF)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16df, DF)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, floating point modes, and info for
-   corresponding widening vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, VMODE, SMODE, WSEW, WLMUL, WVMODE, WSMODE)  */
-#define _RVV_WFLOAT_ITERATOR_ARG(MACRO, ...)				\
-  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8sf, SF, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16sf, SF, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32sf, SF, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4df, DF, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8df, DF, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16df, DF, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, floating point modes, and info for
-   corresponding widening integer vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, FMODE, FSMODE, WSEW, WLMUL, WIMODE, WISMODE)  */
-#define _RVV_FLOAT_WINT_ITERATOR_ARG(MACRO, ...)			\
-  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8si, SI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16si, SI, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32si, SI, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4di, DI, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16di, DI, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes, and info for
-   corresponding widening floating point vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, IMODE, ISMODE, WSEW, WLMUL, WFMODE, WFSMODE)  */
-#define _RVV_WFLOAT_INT_ITERATOR_ARG(MACRO, ...)			\
-  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8sf, SF, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16sf, SF, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32sf, SF, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4df, DF, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8df, DF, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16df, DF, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, floating point modes, and info for
-   corresponding integer vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, FMODE, FSMODE, IMODE, ISMODE)  */
-#define _RVV_FLOAT_INT_ITERATOR_ARG(MACRO, ...)	\
-  MACRO (16, 1, 16,  vnx8hf, HF,  vnx8hi, HI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hf, HF, vnx16hi, HI, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hf, HF, vnx32hi, HI, __VA_ARGS__)	\
-  MACRO (16, 8,  2, vnx64hf, HF, vnx64hi, HI, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4sf, SF,  vnx4si, SI, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8sf, SF,  vnx8si, SI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16sf, SF, vnx16si, SI, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32sf, SF, vnx32si, SI, __VA_ARGS__)	\
-  MACRO (64, 1, 64,  vnx2df, DF,  vnx2di, DI, __VA_ARGS__)	\
-  MACRO (64, 2, 32,  vnx4df, DF,  vnx4di, DI, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8df, DF,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16df, DF, vnx16di, DI, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, integer modes, and info for
-   corresponding indexed load and store vector type and extra arguments.
-
-   MACRO (SEW, LMUL, MLEN, MODE, SMODE, ISEW, ILMUL, IMODE, ISMODE)  */
-#define _RVV_INT_INDEX_ITERATOR(MACRO)			\
-  MACRO ( 8, 1,  8, vnx16qi, QI,  8, 1, vnx16qi, QI)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 32, 4, vnx16si, SI)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 64, 8, vnx16di, DI)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI,  8, 2, vnx32qi, QI)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 32, 8, vnx32si, SI)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI,  8, 4, vnx64qi, QI)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI)	\
-  MACRO ( 8, 8,  1,vnx128qi, QI,  8, 8,vnx128qi, QI)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 16, 1,  vnx8hi, HI)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8si, SI)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 64, 4,  vnx8di, DI)	\
-  MACRO (16, 2,  8, vnx16hi, HI,  8, 1, vnx16qi, QI)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 16, 2, vnx16hi, HI)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI)	\
-  MACRO (16, 4,  4, vnx32hi, HI,  8, 2, vnx32qi, QI)	\
-  MACRO (16, 4,  4, vnx32hi, HI, 16, 4, vnx32hi, HI)	\
-  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI)	\
-  MACRO (16, 8,  2, vnx64hi, HI,  8, 4, vnx64qi, QI)	\
-  MACRO (16, 8,  2, vnx64hi, HI, 16, 8, vnx64hi, HI)	\
-  MACRO (32, 1, 32,  vnx4si, SI, 32, 1,  vnx4si, SI)	\
-  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4di, DI)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 16, 1,  vnx8hi, HI)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 32, 2,  vnx8si, SI)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI)	\
-  MACRO (32, 4,  8, vnx16si, SI,  8, 1, vnx16qi, QI)	\
-  MACRO (32, 4,  8, vnx16si, SI, 16, 2, vnx16hi, HI)	\
-  MACRO (32, 4,  8, vnx16si, SI, 32, 4, vnx16si, SI)	\
-  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI)	\
-  MACRO (32, 8,  4, vnx32si, SI,  8, 2, vnx32qi, QI)	\
-  MACRO (32, 8,  4, vnx32si, SI, 16, 4, vnx32hi, HI)	\
-  MACRO (32, 8,  4, vnx32si, SI, 32, 8, vnx32si, SI)	\
-  MACRO (64, 1, 64,  vnx2di, DI, 64, 1,  vnx2di, DI)	\
-  MACRO (64, 2, 32,  vnx4di, DI, 32, 1,  vnx4si, SI)	\
-  MACRO (64, 2, 32,  vnx4di, DI, 64, 2,  vnx4di, DI)	\
-  MACRO (64, 4, 16,  vnx8di, DI, 16, 1,  vnx8hi, HI)	\
-  MACRO (64, 4, 16,  vnx8di, DI, 32, 2,  vnx8si, SI)	\
-  MACRO (64, 4, 16,  vnx8di, DI, 64, 4,  vnx8di, DI)	\
-  MACRO (64, 8,  8, vnx16di, DI,  8, 1, vnx16qi, QI)	\
-  MACRO (64, 8,  8, vnx16di, DI, 16, 2, vnx16hi, HI)	\
-  MACRO (64, 8,  8, vnx16di, DI, 32, 4, vnx16si, SI)	\
-  MACRO (64, 8,  8, vnx16di, DI, 64, 8, vnx16di, DI)
-
-#define _RVV_INT_INDEX_ITERATOR_ARG(MACRO, ...)				\
-  MACRO ( 8, 1,  8, vnx16qi, QI,  8, 1, vnx16qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 16, 2, vnx16hi, HI, __VA_ARGS__)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 32, 4, vnx16si, SI, __VA_ARGS__)	\
-  MACRO ( 8, 1,  8, vnx16qi, QI, 64, 8, vnx16di, DI, __VA_ARGS__)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI,  8, 2, vnx32qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 16, 4, vnx32hi, HI, __VA_ARGS__)	\
-  MACRO ( 8, 2,  4, vnx32qi, QI, 32, 8, vnx32si, SI, __VA_ARGS__)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI,  8, 4, vnx64qi, QI, __VA_ARGS__)	\
-  MACRO ( 8, 4,  2, vnx64qi, QI, 16, 8, vnx64hi, HI, __VA_ARGS__)	\
-  MACRO ( 8, 8,  1,vnx128qi, QI,  8, 8,vnx128qi, QI, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 16, 1,  vnx8hi, HI, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 32, 2,  vnx8si, SI, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hi, HI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI,  8, 1, vnx16qi, QI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 16, 2, vnx16hi, HI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 32, 4, vnx16si, SI, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hi, HI, 64, 8, vnx16di, DI, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hi, HI,  8, 2, vnx32qi, QI, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hi, HI, 16, 4, vnx32hi, HI, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hi, HI, 32, 8, vnx32si, SI, __VA_ARGS__)	\
-  MACRO (16, 8,  2, vnx64hi, HI,  8, 4, vnx64qi, QI, __VA_ARGS__)	\
-  MACRO (16, 8,  2, vnx64hi, HI, 16, 8, vnx64hi, HI, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4si, SI, 32, 1,  vnx4si, SI, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4si, SI, 64, 2,  vnx4di, DI, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 16, 1,  vnx8hi, HI, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 32, 2,  vnx8si, SI, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8si, SI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16si, SI,  8, 1, vnx16qi, QI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16si, SI, 16, 2, vnx16hi, HI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16si, SI, 32, 4, vnx16si, SI, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16si, SI, 64, 8, vnx16di, DI, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32si, SI,  8, 2, vnx32qi, QI, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32si, SI, 16, 4, vnx32hi, HI, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32si, SI, 32, 8, vnx32si, SI, __VA_ARGS__)	\
-  MACRO (64, 1, 64,  vnx2di, DI, 64, 1,  vnx2di, DI, __VA_ARGS__)	\
-  MACRO (64, 2, 32,  vnx4di, DI, 32, 1,  vnx4si, SI, __VA_ARGS__)	\
-  MACRO (64, 2, 32,  vnx4di, DI, 64, 2,  vnx4di, DI, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8di, DI, 16, 1,  vnx8hi, HI, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8di, DI, 32, 2,  vnx8si, SI, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8di, DI, 64, 4,  vnx8di, DI, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16di, DI,  8, 1, vnx16qi, QI, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16di, DI, 16, 2, vnx16hi, HI, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16di, DI, 32, 4, vnx16si, SI, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16di, DI, 64, 8, vnx16di, DI, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, floating-point modes, and info for
-   corresponding indexed load and store vector type and extra arguments.
-   MACRO (SEW, LMUL, MLEN, MODE, SMODE, ISEW, ILMUL, IMODE, ISMODE)  */
-
-#define _RVV_FLOAT_INDEX_ITERATOR(MACRO)		\
-  MACRO (16, 1, 16,  vnx8hf, HF, 16, 1,  vnx8hi, HF)	\
-  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8si, SF)	\
-  MACRO (16, 1, 16,  vnx8hf, HF, 64, 4,  vnx8di, DF)	\
-  MACRO (16, 2,  8, vnx16hf, HF,  8, 1, vnx16qi, HF)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 16, 2, vnx16hi, HF)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16si, SF)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 64, 8, vnx16di, DF)	\
-  MACRO (16, 4,  4, vnx32hf, HF,  8, 2, vnx32qi, HF)	\
-  MACRO (16, 4,  4, vnx32hf, HF, 16, 4, vnx32hi, HF)	\
-  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32si, SF)	\
-  MACRO (16, 8,  2, vnx64hf, HF,  8, 4, vnx64qi, HF)	\
-  MACRO (16, 8,  2, vnx64hf, HF, 16, 8, vnx64hi, HF)	\
-  MACRO (32, 1, 32,  vnx4sf, SF, 32, 1,  vnx4si, SF)	\
-  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4di, DF)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 16, 1,  vnx8hi, HF)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 32, 2,  vnx8si, SF)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8di, DF)	\
-  MACRO (32, 4,  8, vnx16sf, SF,  8, 1, vnx16qi, HF)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 16, 2, vnx16hi, HF)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 32, 4, vnx16si, SF)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16di, DF)	\
-  MACRO (32, 8,  4, vnx32sf, SF,  8, 2, vnx32qi, HF)	\
-  MACRO (32, 8,  4, vnx32sf, SF, 16, 4, vnx32hi, HF)	\
-  MACRO (32, 8,  4, vnx32sf, SF, 32, 8, vnx32si, SF)	\
-  MACRO (64, 1, 64,  vnx2df, DF, 64, 1,  vnx2di, DF)	\
-  MACRO (64, 2, 32,  vnx4df, DF, 32, 1,  vnx4si, SF)	\
-  MACRO (64, 2, 32,  vnx4df, DF, 64, 2,  vnx4di, DF)	\
-  MACRO (64, 4, 16,  vnx8df, DF, 16, 1,  vnx8hi, HF)	\
-  MACRO (64, 4, 16,  vnx8df, DF, 32, 2,  vnx8si, SF)	\
-  MACRO (64, 4, 16,  vnx8df, DF, 64, 4,  vnx8di, DF)	\
-  MACRO (64, 8,  8, vnx16df, DF,  8, 1, vnx16qi, HF)	\
-  MACRO (64, 8,  8, vnx16df, DF, 16, 2, vnx16hi, HF)	\
-  MACRO (64, 8,  8, vnx16df, DF, 32, 4, vnx16si, SF)	\
-  MACRO (64, 8,  8, vnx16df, DF, 64, 8, vnx16di, DF)
-
-#define _RVV_FLOAT_INDEX_ITERATOR_ARG(MACRO, ...)			\
-  MACRO (16, 1, 16,  vnx8hf, HF, 16, 1,  vnx8hi, HF, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hf, HF, 32, 2,  vnx8si, SF, __VA_ARGS__)	\
-  MACRO (16, 1, 16,  vnx8hf, HF, 64, 4,  vnx8di, DF, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hf, HF,  8, 1, vnx16qi, HF, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 16, 2, vnx16hi, HF, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 32, 4, vnx16si, SF, __VA_ARGS__)	\
-  MACRO (16, 2,  8, vnx16hf, HF, 64, 8, vnx16di, DF, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hf, HF,  8, 2, vnx32qi, HF, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hf, HF, 16, 4, vnx32hi, HF, __VA_ARGS__)	\
-  MACRO (16, 4,  4, vnx32hf, HF, 32, 8, vnx32si, SF, __VA_ARGS__)	\
-  MACRO (16, 8,  2, vnx64hf, HF,  8, 4, vnx64qi, HF, __VA_ARGS__)	\
-  MACRO (16, 8,  2, vnx64hf, HF, 16, 8, vnx64hi, HF, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4sf, SF, 32, 1,  vnx4si, SF, __VA_ARGS__)	\
-  MACRO (32, 1, 32,  vnx4sf, SF, 64, 2,  vnx4di, DF, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 16, 1,  vnx8hi, HF, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 32, 2,  vnx8si, SF, __VA_ARGS__)	\
-  MACRO (32, 2, 16,  vnx8sf, SF, 64, 4,  vnx8di, DF, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16sf, SF,  8, 1, vnx16qi, HF, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 16, 2, vnx16hi, HF, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 32, 4, vnx16si, SF, __VA_ARGS__)	\
-  MACRO (32, 4,  8, vnx16sf, SF, 64, 8, vnx16di, DF, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32sf, SF,  8, 2, vnx32qi, HF, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32sf, SF, 16, 4, vnx32hi, HF, __VA_ARGS__)	\
-  MACRO (32, 8,  4, vnx32sf, SF, 32, 8, vnx32si, SF, __VA_ARGS__)	\
-  MACRO (64, 1, 64,  vnx2df, DF, 64, 1,  vnx2di, DF, __VA_ARGS__)	\
-  MACRO (64, 2, 32,  vnx4df, DF, 32, 1,  vnx4si, SF, __VA_ARGS__)	\
-  MACRO (64, 2, 32,  vnx4df, DF, 64, 2,  vnx4di, DF, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8df, DF, 16, 1,  vnx8hi, HF, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8df, DF, 32, 2,  vnx8si, SF, __VA_ARGS__)	\
-  MACRO (64, 4, 16,  vnx8df, DF, 64, 4,  vnx8di, DF, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16df, DF,  8, 1, vnx16qi, HF, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16df, DF, 16, 2, vnx16hi, HF, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16df, DF, 32, 4, vnx16si, SF, __VA_ARGS__)	\
-  MACRO (64, 8,  8, vnx16df, DF, 64, 8, vnx16di, DF, __VA_ARGS__)
 
 /* An iterator to call a macro with every supported MLEN and internal
    type numbering on VNx<N>BI for vector masking modes.  */
@@ -2106,7 +1626,7 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 		RISCV_VUI##E##M##L##_FTYPE_VI##E##M##L,			\
 		vector),
 
-#define VREINTERPRET(E, L, MLEN, IMODE, ISUBMODE, FMODE, FSUBMODE)	\
+#define VREINTERPRET(E, L, MLEN, FMODE, FSUBMODE, IMODE, ISUBMODE)	\
   DIRECT_NAMED (reinterpret_##FMODE##IMODE,				\
 		vreinterpret_f##E##_i##E##_v_##E##m##L,			\
 		RISCV_VF##E##M##L##_FTYPE_VI##E##M##L,			\
@@ -2366,7 +1886,7 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 		RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L,\
 		vector),
 
-#define _VINT_SEG_LOAD_STORE(E, L, NF, MLEN, MODE, SUBMODE,	\
+#define _VSEG_LOAD_STORE(E, L, NF, MLEN, MODE, SUBMODE,	\
 			     PNAME, PMODE, SUBTYPE, VCLASS)\
   DIRECT_NAMED (							\
     vseg_load##MODE##_##PNAME,				\
@@ -2387,26 +1907,6 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
     vseg_store##MODE##_##PNAME##_mask,					\
     vseg_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
     RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR,	\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_idx_load##MODE##_##PNAME,				\
-    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_VUI##E##M##L,		\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_idx_load##MODE##_##PNAME##_mask,					\
-    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_VUI##E##M##L,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_idx_store##MODE##_##PNAME,				\
-    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
-    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_idx_store##MODE##_##PNAME##_mask,					\
-    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
-    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,	\
     vector),								\
   DIRECT_NAMED (							\
     vseg_strided_load##MODE##_##PNAME,					\
@@ -2439,98 +1939,48 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
     RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR,	\
     vector),								\
 
+#define _VSEG_INDEX_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,	\
+					    IE, IL, IMODE, ISUBMODE,	\
+					    PNAME, TYPE_US, VCLASS)	\
+  DIRECT_NAMED (							\
+    vseg_idx_load##MODE##_##IMODE##_##PNAME,				\
+    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##IE##_##PNAME,	\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_VUI##IE##M##L,\
+    vector),								\
+  DIRECT_NAMED (							\
+    vseg_idx_load##MODE##_##IMODE##_##PNAME##_mask,			\
+    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##IE##_##PNAME##_mask,	\
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_VUI##IE##M##L,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_idx_store##MODE##_##IMODE##_##PNAME,				\
+    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##IE##_##PNAME,		\
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##IE##M##L,	\
+    vector),								\
+  DIRECT_NAMED_NO_TARGET (						\
+    vseg_idx_store##MODE##_##IMODE##_##PNAME##_mask,			\
+    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##IE##_##PNAME##_mask,	\
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##IE##M##L,	\
+    vector),
 
 #define VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN,			\
 			    SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
 			    VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
-  _VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, SMODE_PREFIX_UPPER##I, si, SI,\
+  _VSEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, SMODE_PREFIX_UPPER##I, si, SI,\
 		       int, VI)						\
-  _VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, SMODE_PREFIX_UPPER##I, di, DI,\
+  _VSEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, SMODE_PREFIX_UPPER##I, di, DI,\
 		       int, VI)						\
-  _VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, U##SMODE_PREFIX_UPPER##I, si, SI,\
+  _VSEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, U##SMODE_PREFIX_UPPER##I, si, SI,\
 		       uint, VUI)					\
-  _VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, U##SMODE_PREFIX_UPPER##I, di, DI,\
+  _VSEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##i, U##SMODE_PREFIX_UPPER##I, di, DI,\
 		       uint, VUI)
-
-#define _VFLOAT_SEG_LOAD_STORE(E, L, NF, MLEN, MODE, SUBMODE,	\
-			     PNAME, PMODE, SUBTYPE, VCLASS)\
-  DIRECT_NAMED (							\
-    vseg_load##MODE##_##PNAME,				\
-    vseg_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR,		\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_load##MODE##_##PNAME##_mask,					\
-    vseg_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_store##MODE##_##PNAME,				\
-    vseg_store##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
-    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_store##MODE##_##PNAME##_mask,					\
-    vseg_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
-    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR,	\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_idx_load##MODE##_##PNAME,				\
-    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_VUI##E##M##L,\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_idx_load##MODE##_##PNAME##_mask,				\
-    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_VUI##E##M##L,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_idx_store##MODE##_##PNAME,				\
-    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
-    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_idx_store##MODE##_##PNAME##_mask,					\
-    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
-    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,	\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_strided_load##MODE##_##PNAME,					\
-    vseg_strided_load##SUBTYPE##E##m##L##x##NF##_##PNAME,		\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_PTRDIFF,		\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_strided_load##MODE##_##PNAME##_mask,					\
-    vseg_strided_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_PTRDIFF,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_strided_store##MODE##_##PNAME,					\
-    vseg_strided_store##SUBTYPE##E##m##L##x##NF##_##PNAME,		\
-    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_PTRDIFF,\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_strided_store##MODE##_##PNAME##_mask,				\
-    vseg_strided_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,	\
-    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_PTRDIFF,	\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_ff_load##MODE##_##PNAME,					\
-    vseg_ff_load##SUBTYPE##E##m##L##x##NF##_##PNAME,			\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR,		\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_ff_load##MODE##_##PNAME##_mask,				\
-    vseg_ff_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR,	\
-    vector),
 
 #define VFLOAT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN,			\
 			      SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
 			      VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)\
-  _VFLOAT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##f, SMODE_PREFIX_UPPER##F, si, SI,\
+  _VSEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##f, SMODE_PREFIX_UPPER##F, si, SI,\
 			 float, VF)						\
-  _VFLOAT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##f, SMODE_PREFIX_UPPER##F, di, DI,\
+  _VSEG_LOAD_STORE(SEW, LMUL, NF, MLEN, VMODE_PREFIX_LOWER##f, SMODE_PREFIX_UPPER##F, di, DI,\
 			 float, VF)
 
 #define VINT_SEG_INSERT(SEW, LMUL, NF, MLEN,				\
@@ -2983,7 +2433,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_INDEX_ITERATOR_ARG (VFLOAT_AMO_BUILTINS, vamominuei)
   _RVV_FLOAT_INDEX_ITERATOR_ARG (VFLOAT_AMO_BUILTINS, vamomaxuei)
 
-  _RVV_INT_FLOAT_ITERATOR (VREINTERPRET)
+  _RVV_FLOAT_INT_ITERATOR (VREINTERPRET)
   _RVV_INT_ITERATOR (VREINTERPRET_INT)
 
   /* Segment load/store.  */

@@ -59,6 +59,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "cfg.h"
 #include "cfgrtl.h"
+#include "riscv-vector-iterator.h"
 
 /* True if X is an UNSPEC wrapper around a SYMBOL_REF or LABEL_REF.  */
 #define UNSPEC_ADDRESS_P(X)					\
