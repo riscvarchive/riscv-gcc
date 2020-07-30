@@ -1938,29 +1938,25 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
     vseg_ff_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,		\
     RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR,	\
     vector),								\
-
-#define _VSEG_INDEX_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,	\
-					    IE, IL, IMODE, ISUBMODE,	\
-					    PNAME, TYPE_US, VCLASS)	\
-  DIRECT_NAMED (							\
-    vseg_idx_load##MODE##_##IMODE##_##PNAME,				\
-    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##IE##_##PNAME,	\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_VUI##IE##M##L,\
-    vector),								\
-  DIRECT_NAMED (							\
-    vseg_idx_load##MODE##_##IMODE##_##PNAME##_mask,			\
-    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##IE##_##PNAME##_mask,	\
-    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_VUI##IE##M##L,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_idx_store##MODE##_##IMODE##_##PNAME,				\
-    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##IE##_##PNAME,		\
-    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##IE##M##L,	\
-    vector),								\
-  DIRECT_NAMED_NO_TARGET (						\
-    vseg_idx_store##MODE##_##IMODE##_##PNAME##_mask,			\
-    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##IE##_##PNAME##_mask,	\
-    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##IE##M##L,	\
+  DIRECT_NAMED (                                                       \
+    vseg_idx_load##MODE##_##PNAME,                             \
+    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME,                  \
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_C_##SUBMODE##_PTR_VUI##E##M##L,\
+    vector),                                                           \
+  DIRECT_NAMED (                                                       \
+    vseg_idx_load##MODE##_##PNAME##_mask,                              \
+    vseg_idx_load##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,           \
+    RISCV_##VCLASS##E##M##L##X##NF##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_C_##SUBMODE##_PTR_VUI##E##M##L,       \
+    vector),                                                           \
+  DIRECT_NAMED_NO_TARGET (                                             \
+    vseg_idx_store##MODE##_##PNAME,                            \
+    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME,                 \
+    RISCV_VOID_FTYPE_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,  \
+    vector),                                                           \
+  DIRECT_NAMED_NO_TARGET (                                             \
+    vseg_idx_store##MODE##_##PNAME##_mask,                                     \
+    vseg_idx_store##SUBTYPE##E##m##L##x##NF##_##PNAME##_mask,          \
+    RISCV_VOID_FTYPE_VB##MLEN##_##VCLASS##E##M##L##X##NF##_##SUBMODE##_PTR_VUI##E##M##L,       \
     vector),
 
 #define VINT_SEG_LOAD_STORE(SEW, LMUL, NF, MLEN,			\

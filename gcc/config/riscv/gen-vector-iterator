@@ -88,6 +88,7 @@ class VectorTypeInfo:
       'IMODE': self.int_vector_mode.lower(),
       'NF'     : self.nf,
       'SUBMODE'  : self.scalar_mode,
+      'ISUBMODE' : self.scalar_int_mode,
       'MLEN'   : self.mlen,
       'SUBMODE_PREFIX_UPPER': self.scalar_mode[0].upper(),
       'SUBMODE_PREFIX_LOWER': self.scalar_mode[0].lower(),
@@ -118,7 +119,7 @@ class VectorTypeInfo:
 
     if eew:
       assert (self.valid_eew_p(eew))
-      self.eew_type = VectorTypeInfo(sew=eew, lmul=self.emul(eew), int_p=int_p)
+      self.eew_type = VectorTypeInfo(sew=eew, lmul=self.emul(eew), int_p=True)
       eew_type = self.eew_type
 
       self.arg_map["EEW"] = eew_type.sew
@@ -212,7 +213,7 @@ class VectorTypeInfo:
       return self.int_vector_mode
 
   def emul(self, eew):
-    return (eew // self.sew) * self.lmul
+    return int((eew / self.sew) * self.lmul)
 
   def valid_eew_p(self, eew):
     if eew == self.sew:
@@ -1107,7 +1108,7 @@ def gen_ftype():
 
       # 4 args.
       # Masked Vector Indexed Segment Load.
-      ('{FT_VEC_TUPLE}', '{FT_MASK}', '{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', 'PTRDIFF'),
+      ('{FT_VEC_TUPLE}', '{FT_MASK}', '{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', '{FT_U_VEC}'),
       # Masked Vector Indexed Segment Store.
       ('VOID', '{FT_MASK}', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', '{FT_U_VEC}'),
       # Masked Vector Strided Segment Load.
