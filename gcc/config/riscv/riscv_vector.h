@@ -34,15 +34,6 @@
 #error "Vector intrinsics require the vector extension."
 #else
 
-#define M1 (0x0)
-#define M2 (0x1)
-#define M4 (0x2)
-#define M8 (0x3)
-
-#define E8  (0x0 << 2)
-#define E16 (01x << 2)
-#define E32 (0x2 << 2)
-
 /* Uitl type for easier expand floating point functions.  */
 #define _RVV_F16_TYPE float16_t
 #define _RVV_F32_TYPE float
@@ -92,49 +83,6 @@ typedef double float64_t;
   MACRO (64, 2, 32, int64_t, __VA_ARGS__)	\
   MACRO (64, 4, 16, int64_t, __VA_ARGS__)	\
   MACRO (64, 8,  8, int64_t, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, scalar modes, info for
-   all corresponding widening vector type.
-
-   MACRO (SEW, LMUL, MLEN, TYPE, NSEW, NTYPE_LETTER)  */
-#define _RVV_INT_LOAD_ITERATOR(MACRO)	\
-  MACRO (8, 1,   8,   int8_t,  8, b)	\
-  MACRO (8, 2,   4,   int8_t,  8, b)	\
-  MACRO (8, 4,   2,   int8_t,  8, b)	\
-  MACRO (8, 8,   1,   int8_t,  8, b)	\
-  MACRO (16, 1, 16, int16_t,  8, b)	\
-  MACRO (16, 2,  8, int16_t,  8, b)	\
-  MACRO (16, 4,  4, int16_t,  8, b)	\
-  MACRO (16, 8,  2, int16_t,  8, b)	\
-  MACRO (16, 1, 16, int16_t, 16, h)	\
-  MACRO (16, 2,  8, int16_t, 16, h)	\
-  MACRO (16, 4,  4, int16_t, 16, h)	\
-  MACRO (16, 8,  2, int16_t, 16, h)	\
-  MACRO (32, 1, 32, int32_t,  8, b)	\
-  MACRO (32, 2, 16, int32_t,  8, b)	\
-  MACRO (32, 4,  8, int32_t,  8, b)	\
-  MACRO (32, 8,  4, int32_t,  8, b)	\
-  MACRO (32, 1, 32, int32_t, 16, h)	\
-  MACRO (32, 2, 16, int32_t, 16, h)	\
-  MACRO (32, 4,  8, int32_t, 16, h)	\
-  MACRO (32, 8,  4, int32_t, 16, h)	\
-  MACRO (32, 1, 32, int32_t, 32, w)	\
-  MACRO (32, 2, 16, int32_t, 32, w)	\
-  MACRO (32, 4,  8, int32_t, 32, w)	\
-  MACRO (32, 8,  4, int32_t, 32, w)	\
-  MACRO (64, 1, 64, int64_t,  8, b)	\
-  MACRO (64, 2, 32, int64_t,  8, b)	\
-  MACRO (64, 4, 16, int64_t,  8, b)	\
-  MACRO (64, 8,  8, int64_t,  8, b)	\
-  MACRO (64, 1, 64, int64_t, 16, h)	\
-  MACRO (64, 2, 32, int64_t, 16, h)	\
-  MACRO (64, 4, 16, int64_t, 16, h)	\
-  MACRO (64, 8,  8, int64_t, 16, h)	\
-  MACRO (64, 1, 64, int64_t, 32, w)	\
-  MACRO (64, 2, 32, int64_t, 32, w)	\
-  MACRO (64, 4, 16, int64_t, 32, w)	\
-  MACRO (64, 8,  8, int64_t, 32, w)
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer modes, and info for
@@ -309,21 +257,6 @@ typedef double float64_t;
   MACRO (64, 8,  8,    double, 16, 2, __VA_ARGS__)	\
   MACRO (64, 8,  8,    double, 32, 4, __VA_ARGS__)	\
   MACRO (64, 8,  8,    double, 64, 8, __VA_ARGS__)
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   along with its corresponding vector, scalar modes, info for
-   all corresponding widening vector type.
-
-   MACRO (SEW, LMUL, MLEN, TYPE, NSEW, ADDR_TYPE_LETTER)  */
-#define _RVV_INT_AMOW_ITERATOR_ARG(MACRO, ...)	\
-  MACRO (32, 1, 32, int32_t, 32, u, __VA_ARGS__)	\
-  MACRO (32, 2, 16, int32_t, 32, u, __VA_ARGS__)	\
-  MACRO (32, 4,  8, int32_t, 32, u, __VA_ARGS__)	\
-  MACRO (32, 8,  4, int32_t, 32, u, __VA_ARGS__)	\
-  MACRO (64, 1, 64, int64_t, 32,  , __VA_ARGS__)	\
-  MACRO (64, 2, 32, int64_t, 32,  , __VA_ARGS__)	\
-  MACRO (64, 4, 16, int64_t, 32,  , __VA_ARGS__)	\
-  MACRO (64, 8,  8, int64_t, 32,  , __VA_ARGS__)	\
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, scalar modes, info for
