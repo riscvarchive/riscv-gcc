@@ -635,7 +635,17 @@ def gen_usr_c():
               "   along with its corresponding vector, floating point modes, and info for\n"
               "   corresponding floating point and vector tuple type.  */",
     arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {CTYPE}",
-    vals = int_vector_tuple_modes
+    vals = int_vector_tuple_modes,
+  )
+
+  dump_c_iterator(
+    name = "_RVV_INT_TUPLE_INDEX_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported NF, SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, floating point modes, and info for\n"
+              "   corresponding floating point and vector tuple type.  */",
+    arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {CTYPE}, {EEW}, {EMUL}",
+    vals = int_vector_tuple_modes,
+    eew_index=True
   )
 
   for nf in range(2, 9):
@@ -654,8 +664,19 @@ def gen_usr_c():
               "   along with its corresponding vector, floating point modes, and info for\n"
               "   corresponding floating point and vector tuple type.  */",
     arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {CTYPE}",
-    vals = float_vector_tuple_modes
+    vals = float_vector_tuple_modes,
   )
+
+  dump_c_iterator(
+    name = "_RVV_FLOAT_TUPLE_INDEX_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported NF, SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, floating point modes, and info for\n"
+              "   corresponding floating point and vector tuple type.  */",
+    arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {CTYPE}, {EEW}, {EMUL}",
+    vals = float_vector_tuple_modes,
+    eew_index=True
+  )
+
   for nf in range(2, 9):
     dump_c_iterator(
       name = "_RVV_FLOAT_TUPLE_NF%d_ITERATOR" % nf,
@@ -665,7 +686,6 @@ def gen_usr_c():
       arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {CTYPE}",
       vals = list(filter(lambda x: x.nf == nf, float_vector_tuple_modes))
     )
-
 
 # -------------------------------------------------
 #  Generation for riscv-vector-iterator.h
@@ -794,6 +814,18 @@ def gen_c():
                         "{MODE_PREFIX_UPPER}, {MODE_PREFIX_LOWER}",
     vals = int_vector_tuple_modes
   )
+
+  dump_c_iterator(
+    name = "_RVV_SEG_INT_INDEX_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, integer tuple modes, and info for\n"
+              "   corresponding integer and vector type.  */",
+    arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {MODE}, {SUBMODE}, "
+                        "{EEW}, {EMUL}, {EEW_MODE}, {EEW_SUBMODE}",
+    vals = int_vector_tuple_modes,
+    eew_index=True
+  )
+
   for nf in range(2, 9):
     dump_c_iterator(
       name = "_RVV_SEG_NF%d" % nf,
@@ -816,6 +848,18 @@ def gen_c():
                         "{MODE_PREFIX_UPPER}, {MODE_PREFIX_LOWER}",
     vals = float_vector_tuple_modes
   )
+
+  dump_c_iterator(
+    name = "_RVV_SEG_FLOAT_INDEX_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, float-point tuple modes, and info for\n"
+              "   corresponding integer and vector type.  */",
+    arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {MODE}, {SUBMODE}, "
+                        "{EEW}, {EMUL}, {EEW_MODE}, {EEW_SUBMODE}",
+    vals = float_vector_tuple_modes,
+    eew_index=True
+  )
+
   for nf in range(2, 9):
     dump_c_iterator(
       name = "_RVV_SEG_NF%d_NO_SEW8" % nf,
@@ -1197,14 +1241,13 @@ def gen_ftype():
   ft.add(
     arg_list_templates=[
       # 1 args.
-      ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR'),
+      ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR'), # For vec tuple load
 
       # 2 args.
       ('VOID', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR'), # For vec tuple store
 
       ('{FT_VEC}', '{FT_VEC_TUPLE}', 'SI'), # For vec tuple extraction.
 
-      ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', '{FT_U_VEC}'), # For vec tuple load
       ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', 'PTRDIFF'), # For vec tuple indexed load
 
       # 3 args.
@@ -1216,16 +1259,11 @@ def gen_ftype():
 
       # Vector Unit-Stride Segment Store.
       ('VOID', '{FT_MASK}', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR'),
-      # Vector Indexed Segment Store.
-      ('VOID', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', '{FT_U_VEC}'),
+
       # Vector Strided Segment Store.
       ('VOID', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', 'PTRDIFF'),
 
       # 4 args.
-      # Masked Vector Indexed Segment Load.
-      ('{FT_VEC_TUPLE}', '{FT_MASK}', '{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', '{FT_U_VEC}'),
-      # Masked Vector Indexed Segment Store.
-      ('VOID', '{FT_MASK}', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', '{FT_U_VEC}'),
       # Masked Vector Strided Segment Load.
       ('{FT_VEC_TUPLE}', '{FT_MASK}', '{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', 'PTRDIFF'),
       # Masked Vector Strided Segment Store.
@@ -1269,6 +1307,26 @@ def gen_ftype():
         tuple(args)
       ],
       vals=vector_tuple_modes)
+
+  # Prototype for Vector Indexed Segment Loads and Stores.
+  ft.add(
+    arg_list_templates=[
+      # 2 args.
+      # Vector Indexed Segment Load.
+      ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', '{FT_INDEX}'),
+
+      # 3 args.
+      # Vector Indexed Segment Store.
+      ('VOID', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', '{FT_INDEX}'),
+
+      # 4 args.
+      # Masked Vector Indexed Segment Load.
+      ('{FT_VEC_TUPLE}', '{FT_MASK}', '{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR', '{FT_INDEX}'),
+      # Masked Vector Indexed Segment Store.
+      ('VOID', '{FT_MASK}', '{FT_VEC_TUPLE}', '{FT_SCALAR}_PTR', '{FT_INDEX}'),
+    ],
+    vals=vector_tuple_modes,
+    eew_index=True)
 
   ft.gen()
 
