@@ -540,8 +540,8 @@ riscv_subset_list::parse_std_ext (const char *p)
 
       if (*p == 'v')
 	{
-	  default_major_version = 0;
-	  default_minor_version = 9;
+	  default_major_version = 1;
+	  default_minor_version = 0;
 	}
 
       p++;
@@ -631,6 +631,13 @@ riscv_subset_list::parse_multiletter_ext (const char *p,
 	{
 	  default_major_version = 0;
 	  default_minor_version = 1;
+	}
+
+      /* All default version for zv* extension is 1p0.  */
+      if (strncmp(subset, "zv", strlen("zv")) == 0)
+	{
+	  default_major_version = 1;
+	  default_minor_version = 0;
 	}
 
       end_of_version
