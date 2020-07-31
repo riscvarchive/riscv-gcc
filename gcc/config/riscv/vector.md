@@ -609,7 +609,7 @@
   [(set (mem:BLK (scratch))
 	(unspec:BLK
 	  [(unspec:BLK
-	     [(match_operand:VMODES 0 "register_operand" "=vr")
+	     [(match_operand:VMODES 0 "register_operand" "vr")
 	      (match_operand:P 1 "register_operand" "r")
 	      (match_operand:P 2 "register_operand" "r")]
 	    UNSPEC_STRIDED_STORE)
@@ -643,7 +643,7 @@
 	(unspec:BLK
 	  [(unspec:BLK
 	     [(match_operand:<VCMPEQUIV> 3 "register_operand" "vm")
-	      (match_operand:VMODES 0 "register_operand" "=vr")
+	      (match_operand:VMODES 0 "register_operand" "vr")
 	      (match_operand:P 1 "register_operand" "r")
 	      (match_operand:P 2 "register_operand" "r")]
 	    UNSPEC_STRIDED_STORE)
