@@ -137,6 +137,73 @@ riscv_subset_list::~riscv_subset_list ()
     }
 }
 
+/* Get the rank for multi-char subsets, lower value meaing higer priority.  */
+
+static int
+multi_char_subset_rank (const char *subset)
+{
+  /* The order between multi-char extensions: s -> h -> z -> x.  */
+  switch (subset[0])
+    {
+    case 's': return 0;
+    case 'h': return 1;
+    case 'z': return 2;
+    case 'x': return 3;
+    default:
+      gcc_unreachable ();
+      return -1;
+    }
+}
+
+/* subset compare
+
+  Returns an integral value indicating the relationship between the subsets:
+  Return value  indicates
+  -1            B has higher order than A.
+  0             A and B are same subset.
+  1             A has higher order than B.
+
+*/
+
+static int
+subset_cmp (const std::string &a, const std::string &b)
+{
+  if (a == b)
+    return 0;
+
+  /* Single-char extension always get higher order than
+     multi-char extension.  */
+  if (a.length() == 1 && b.length() != 1)
+    return 1;
+
+  if (a.length() != 1 && b.length() == 1)
+    return -1;
+
+  if (a.length() == 1 && b.length() == 1)
+    {
+      /* Check the canonical ordering if both are single-char extension.  */
+      const char *order_a = strchr (riscv_supported_std_ext(), a[0]);
+      const char *order_b = strchr (riscv_supported_std_ext(), b[0]);
+
+      gcc_assert (order_a != NULL && order_b != NULL);
+      if (order_a < order_b)
+	return 1;
+      else
+	return -1;
+    }
+  else
+    {
+      int rank_a = multi_char_subset_rank(a.c_str());
+      int rank_b = multi_char_subset_rank(b.c_str());
+
+      if (rank_a == rank_b)
+	/* The return value of strcmp has opposite meaning.  */
+	return -strcmp (a.c_str(), b.c_str());
+      else
+	return (rank_a < rank_b) ? 1 : -1;
+    }
+}
+
 /* Add new subset to list.  */
 
 void
@@ -144,6 +211,7 @@ riscv_subset_list::add (const char *subset, int major_version,
 			int minor_version, bool explicit_version_p)
 {
   riscv_subset_t *s = new riscv_subset_t ();
+  riscv_subset_t *itr;
 
   if (m_head == NULL)
     m_head = s;
@@ -154,9 +222,45 @@ riscv_subset_list::add (const char *subset, int major_version,
   s->explicit_version_p = explicit_version_p;
   s->next = NULL;
 
-  if (m_tail != NULL)
-    m_tail->next = s;
+  if (m_tail == NULL)
+    {
+      m_tail = s;
+      return;
+    }
 
+  /* e, i or g should be first subext, never come here.  */
+  gcc_assert (subset[0] != 'e'
+	      && subset[0] != 'i'
+	      && subset[0] != 'g');
+
+  if (m_tail == m_head)
+    {
+      gcc_assert (m_head->next == NULL);
+      m_head->next = s;
+      m_tail = s;
+      return;
+    }
+
+  gcc_assert (m_head->next != NULL);
+
+  /* Subset list must in canonical order, but implied subset won't
+     add in canonical order.  */
+  for (itr = m_head->next; itr->next != NULL; itr = itr->next)
+    {
+      riscv_subset_t *next = itr->next;
+      int cmp = subset_cmp (s->name, next->name);
+      gcc_assert (cmp != 0);
+
+      if (cmp > 0)
+	{
+	  s->next = next;
+	  itr->next = s;
+	  return;
+	}
+    }
+
+  /* Insert at tail of the list.  */
+  itr->next = s;
   m_tail = s;
 }
 
@@ -442,9 +546,6 @@ riscv_subset_list::parse_std_ext (const char *p)
 
       subset[0] = std_ext;
 
-      handle_implied_ext (subset, major_version,
-			  minor_version, explicit_version_p);
-
       add (subset, major_version, minor_version, explicit_version_p);
     }
   return p;
@@ -554,6 +655,7 @@ riscv_subset_list *
 riscv_subset_list::parse (const char *arch, location_t loc)
 {
   riscv_subset_list *subset_list = new riscv_subset_list (arch, loc);
+  riscv_subset_t *itr;
   const char *p = arch;
   if (strncmp (p, "rv32", 4) == 0)
     {
@@ -607,6 +709,12 @@ riscv_subset_list::parse (const char *arch, location_t loc)
       error_at (loc, "%<-march=%s%>: unexpected ISA string at end: %qs",
                arch, p);
       goto fail;
+    }
+
+  for (itr = subset_list->m_head; itr != NULL; itr = itr->next)
+    {
+      subset_list->handle_implied_ext (itr->name.c_str (), itr->major_version,
+				       itr->minor_version, false);
     }
 
   return subset_list;
