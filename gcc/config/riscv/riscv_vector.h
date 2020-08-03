@@ -44,6 +44,21 @@ typedef __fp16 float16_t;
 typedef float float32_t;
 typedef double float64_t;
 
+typedef __fp16 __float16_t;
+typedef float __float32_t;
+typedef double __float64_t;
+
+/* An iterator to call a macro with every supported MLEN for masking
+   operations.  */
+#define _RVV_MASK_ITERATOR(MACRO, ...)				\
+  MACRO ( 1, __VA_ARGS__)					\
+  MACRO ( 2, __VA_ARGS__)					\
+  MACRO ( 4, __VA_ARGS__)					\
+  MACRO ( 8, __VA_ARGS__)					\
+  MACRO (16, __VA_ARGS__)					\
+  MACRO (32, __VA_ARGS__)					\
+  MACRO (64, __VA_ARGS__)					\
+
 #include <riscv_vector_itr.h>
 
 /* Define the setvl intrinsics.  Use the int iterator because it is a
