@@ -1205,8 +1205,35 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+(define_expand "mov<mode>"
+  [(set (match_operand:VMASKMODES 0 "reg_or_mem_operand")
+	(unspec:VMASKMODES
+	  [(match_operand:VMASKMODES 1 "vector_move_operand")
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))]
+  "TARGET_VECTOR"
+{
+  rtx ele;
+  if (const_vec_duplicate_p (operands[1], &ele))
+    {
+      gcc_assert (CONST_INT_P (ele));
+      switch (INTVAL (ele))
+	{
+	case 0:
+	  emit_insn (gen_clr<mode> (operands[0]));
+	  break;
+	case 1:
+	  emit_insn (gen_set<mode> (operands[0]));
+	  break;
+	default:
+	  gcc_unreachable ();
+	}
+      DONE;
+    }
+})
+
 ;; move pattern for vector masking type.
-(define_insn "mov<mode>"
+(define_insn "*mov<mode>"
   [(set (match_operand:VMASKMODES 0 "reg_or_mem_operand"  "=vr,vr, m")
 	(unspec:VMASKMODES
 	  [(match_operand:VMASKMODES 1 "reg_or_mem_operand"  " vr, m, vr")
