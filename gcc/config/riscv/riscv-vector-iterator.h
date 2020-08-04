@@ -41,38 +41,6 @@
   MACRO (64, 8, 8, vnx16di, DI, __VA_ARGS__) \
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   except SEW=8, along with its corresponding vector and integer modes.  */
-#define _RVV_INT_ITERATOR_NO_SEW8(MACRO) \
-  MACRO (16, 1, 16, vnx8hi, HI) \
-  MACRO (16, 2, 8, vnx16hi, HI) \
-  MACRO (16, 4, 4, vnx32hi, HI) \
-  MACRO (16, 8, 2, vnx64hi, HI) \
-  MACRO (32, 1, 32, vnx4si, SI) \
-  MACRO (32, 2, 16, vnx8si, SI) \
-  MACRO (32, 4, 8, vnx16si, SI) \
-  MACRO (32, 8, 4, vnx32si, SI) \
-  MACRO (64, 1, 64, vnx2di, DI) \
-  MACRO (64, 2, 32, vnx4di, DI) \
-  MACRO (64, 4, 16, vnx8di, DI) \
-  MACRO (64, 8, 8, vnx16di, DI) \
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   except LMUL1, along with its corresponding vector and integer modes.  */
-#define _RVV_INT_ITERATOR_NOTM1(MACRO) \
-  MACRO (8, 2, 4, vnx32qi, QI) \
-  MACRO (8, 4, 2, vnx64qi, QI) \
-  MACRO (8, 8, 1, vnx128qi, QI) \
-  MACRO (16, 2, 8, vnx16hi, HI) \
-  MACRO (16, 4, 4, vnx32hi, HI) \
-  MACRO (16, 8, 2, vnx64hi, HI) \
-  MACRO (32, 2, 16, vnx8si, SI) \
-  MACRO (32, 4, 8, vnx16si, SI) \
-  MACRO (32, 8, 4, vnx32si, SI) \
-  MACRO (64, 2, 32, vnx4di, DI) \
-  MACRO (64, 4, 16, vnx8di, DI) \
-  MACRO (64, 8, 8, vnx16di, DI) \
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer modes, and info for
    corresponding widening vector type.  */
 #define _RVV_WINT_ITERATOR(MACRO) \
@@ -250,20 +218,6 @@
   MACRO (64, 2, 32, vnx4df, DF, __VA_ARGS__) \
   MACRO (64, 4, 16, vnx8df, DF, __VA_ARGS__) \
   MACRO (64, 8, 8, vnx16df, DF, __VA_ARGS__) \
-
-/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
-   except LMUL1, along with its corresponding vector and floating point
-   modes.  */
-#define _RVV_FLOAT_ITERATOR_NOTM1(MACRO) \
-  MACRO (16, 2, 8, vnx16hf, HF) \
-  MACRO (16, 4, 4, vnx32hf, HF) \
-  MACRO (16, 8, 2, vnx64hf, HF) \
-  MACRO (32, 2, 16, vnx8sf, SF) \
-  MACRO (32, 4, 8, vnx16sf, SF) \
-  MACRO (32, 8, 4, vnx32sf, SF) \
-  MACRO (64, 2, 32, vnx4df, DF) \
-  MACRO (64, 4, 16, vnx8df, DF) \
-  MACRO (64, 8, 8, vnx16df, DF) \
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, floating modes, and info for

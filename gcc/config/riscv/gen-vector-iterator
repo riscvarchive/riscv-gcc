@@ -685,24 +685,6 @@ def gen_c():
   )
 
   dump_c_iterator(
-    name = "_RVV_INT_ITERATOR_NO_SEW8",
-    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
-              "   except SEW=8, along with its corresponding vector and integer modes.  */",
-    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}",
-    vals = list(filter(lambda x: x.sew != 8, int_vector_modes)),
-    gen_arg_version_p = False
-  )
-
-  dump_c_iterator(
-    name = "_RVV_INT_ITERATOR_NOTM1",
-    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
-              "   except LMUL1, along with its corresponding vector and integer modes.  */",
-    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}",
-    vals = list(filter(lambda x: x.lmul != 1, int_vector_modes)),
-    gen_arg_version_p = False
-  )
-
-  dump_c_iterator(
     name = "_RVV_WINT_ITERATOR",
     comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
               "   along with its corresponding vector, integer modes, and info for\n"
@@ -749,16 +731,6 @@ def gen_c():
               "   along with its corresponding vector and floating point modes.  */",
     arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}",
     vals = float_vector_modes
-  )
-
-  dump_c_iterator(
-    name = "_RVV_FLOAT_ITERATOR_NOTM1",
-    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
-              "   except LMUL1, along with its corresponding vector and floating point\n"
-	      "   modes.  */",
-    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}",
-    vals = list(filter(lambda x: x.lmul != 1, float_vector_modes)),
-    gen_arg_version_p = False
   )
 
   dump_c_iterator(
