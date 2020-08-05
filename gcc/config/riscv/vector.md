@@ -536,7 +536,7 @@
 })
 
 (define_insn "*vlse<VMODES:mode>_<P:mode>_nosetvl"
-  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
 	(unspec:VMODES
 	  [(unspec:VMODES
 	     [(match_operand:P 1 "register_operand" "r")
@@ -679,7 +679,7 @@
 })
 
 (define_insn "*gather_load<VMODES:mode><VIMODES:mode>_<P:mode>"
-  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
 	(unspec:VMODES
 	  [(unspec:VMODES
 	     [(match_operand:P 1 "register_operand" "r")
@@ -720,7 +720,7 @@
 })
 
 (define_insn "*mask_gather_load<VMODES:mode><VIMODES:mode>_<P:mode>"
-  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
 	(unspec:VMODES
 	  [(unspec:VMODES
 	     [(match_operand:<VMODES:VCMPEQUIV> 5 "register_operand" "vm")
@@ -761,7 +761,7 @@
 })
 
 (define_insn "*vlxei<VMODES:mode><VIMODES:mode>_<P:mode>_nosetvl"
-  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
 	(unspec:VMODES
 	  [(unspec:VMODES
 	     [(match_operand:P 1 "register_operand" "r")
