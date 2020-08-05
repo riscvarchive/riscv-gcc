@@ -57,6 +57,9 @@ IMPLIED_EXT = {
   #      We don't have formal name for zvbase yet, so just add zvlsseg and zvamo
   #      to implied list for resolve multi-lib issue.
   "v"   : ['zvlsseg', 'zvamo'],
+  # XXX: WORK-AROUND for zvqmac, zvqmac need v, which mean we also implied
+  #      zvlsseg and zvamo
+  "zvqmac"   : ['v', 'zvlsseg', 'zvamo'],
 }
 
 def arch_canonicalize(arch):

@@ -60,6 +60,11 @@ riscv_implied_info_t riscv_implied_info[] =
   /* XXX: Work-around, zvbase + zvamo + zvlsseg, but zvbase not defined yet.  */
   {"v", "zvamo"},
   {"v", "zvlsseg"},
+
+  /* XXX: Work-around, zvqmac need v, and v implied zvamo and zvlsseg.  */
+  {"zvqmac", "v"},
+  {"zvqmac", "zvamo"},
+  {"zvqmac", "zvlsseg"},
   {NULL, NULL}
 };
 
