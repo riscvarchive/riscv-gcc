@@ -4507,21 +4507,28 @@ riscv_expand_epilogue (int style)
       riscv_emit_stack_tie ();
       need_barrier_p = false;
 
-      rtx adjust = GEN_INT (-frame->hard_frame_pointer_offset.to_constant ());
-      if (!SMALL_OPERAND (INTVAL (adjust)))
+      poly_int64 adjust = -frame->hard_frame_pointer_offset;
+      rtx adjust_rtx = NULL_RTX;
+
+      if (!adjust.is_constant ()
+	  || (adjust.is_constant () && !SMALL_OPERAND (adjust.is_constant())))
 	{
-	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
-	  adjust = RISCV_PROLOGUE_TEMP (Pmode);
+	  rtx tmp1 = RISCV_PROLOGUE_TEMP (Pmode);
+	  rtx tmp2 = RISCV_PROLOGUE_TEMP2 (Pmode);
+	  emit_insn (riscv_gen_load_poly_int (tmp1, tmp1, tmp2, adjust));
+	  adjust_rtx = tmp1;
 	}
+      else
+	adjust_rtx = GEN_INT (adjust.to_constant ());
 
       insn = emit_insn (
 	       gen_add3_insn (stack_pointer_rtx, hard_frame_pointer_rtx,
-			      adjust));
+			      adjust_rtx));
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_value = gen_rtx_PLUS (
 			       Pmode, hard_frame_pointer_rtx,
-			       GEN_INT (-(frame->hard_frame_pointer_offset.to_constant())));
+			       gen_int_mode (-frame->hard_frame_pointer_offset, Pmode));
       rtx cfa_adjust_rtx = gen_rtx_SET (stack_pointer_rtx, cfa_adjust_value);
       dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
