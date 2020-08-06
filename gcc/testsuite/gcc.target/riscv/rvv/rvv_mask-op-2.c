@@ -113,6 +113,5 @@ RVV_UINT_TEST(VIOTA)
 RVV_UINT_TEST(VID)
 
 /* { dg-final { scan-assembler-times "vpopc.m" 48 } } */
-/* { dg-final { scan-assembler-not "vmand" } } */
 /* { dg-final { scan-assembler-times "vfirst.m" 32 } } */
 /* { dg-final { scan-assembler-times "vid.v" 32 } } */

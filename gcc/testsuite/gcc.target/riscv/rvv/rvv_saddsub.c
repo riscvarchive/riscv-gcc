@@ -14,8 +14,8 @@ RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_IMM_TEST, ssubu)
 /* { dg-final { scan-assembler-times "vsadd.vi" 32 } } */
 /* { dg-final { scan-assembler-times "vsaddu.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vsaddu.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vsaddu.vi" 32 } } */
+/* { dg-final { scan-assembler-times "vsaddu.vi" 16 } } */
 /* { dg-final { scan-assembler-times "vssub.vv" 16 } } */
 /* { dg-final { scan-assembler-times "vssub.vx" 16 } } */
 /* { dg-final { scan-assembler-times "vssubu.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vssubu.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vssubu.vx" 32 } } */

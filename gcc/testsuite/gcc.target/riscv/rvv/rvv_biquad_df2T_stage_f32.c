@@ -143,6 +143,7 @@ void riscv_biquad_df2T_stage_f32(const float32_t *pIn, float32_t *pOut,
     v_slide = vcopy_v_f32m1(v_d);
 
     v_d = vslidedown_vx_f32m1(
+	vundefined_f32m1 (),
         v_slide,
         0x1); // v_d = {b1 * x[n] + d2, b2 * x[n] + 0x0, nan}
 

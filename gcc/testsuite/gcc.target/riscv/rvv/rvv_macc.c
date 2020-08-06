@@ -69,5 +69,5 @@ RVV_FLOAT_TEST(VMACC_IMM)
 /* { dg-final { scan-assembler-times "v(?:nmsac|nmsub)\.vv" 64 } } */
 /* { dg-final { scan-assembler-times "v(?:nmsac|nmsub)\.vx" 64 } } */
 
-/* { dg-final { scan-assembler-times "vf(?:macc|madd)\.vv" 12 } } */
-/* { dg-final { scan-assembler-times "vf(?:macc|madd)\.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vf(?:macc|madd)\.vv" 24 } } */
+/* { dg-final { scan-assembler-times "vf(?:macc|madd)\.vf" 0 } } */
