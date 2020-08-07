@@ -245,7 +245,7 @@ riscv_subset_list::add (const char *subset, int major_version,
 
   /* Subset list must in canonical order, but implied subset won't
      add in canonical order.  */
-  for (itr = m_head->next; itr->next != NULL; itr = itr->next)
+  for (itr = m_head; itr->next != NULL; itr = itr->next)
     {
       riscv_subset_t *next = itr->next;
       int cmp = subset_cmp (s->name, next->name);
