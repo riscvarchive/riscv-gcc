@@ -11,7 +11,7 @@
     vfloat##EM##_t vx;							\
     vuint##EM##_t vy;							\
     vx = VFLOAD(SEW, EM, x);						\
-    vy = vreinterpret_u##SEW##_f##SEW##_u##EM (vx);			\
+    vy = vreinterpret_v_f##EM##_u##EM (vx);				\
     VUSTORE(SEW, EM, y, vy);						\
   }									\
   void rvreintif##SEW##EM##_v_nomask_builtin_test(size_t n, STYPE *x,	\
@@ -20,7 +20,7 @@
     vfloat##EM##_t vx;							\
     vint##EM##_t vy;							\
     vx = VFLOAD(SEW, EM, x);						\
-    vy = vreinterpret_i##SEW##_f##SEW##_i##EM (vx);			\
+    vy = vreinterpret_v_f##EM##_i##EM (vx);				\
     VISTORE(SEW, EM, y, vy);						\
   }									\
   void rvreintfu##SEW##EM##_v_nomask_builtin_test(size_t n, ISTYPE *x,\
@@ -29,7 +29,7 @@
     vfloat##EM##_t vy;							\
     vuint##EM##_t vx;							\
     vx = VULOAD(SEW, EM, x);						\
-    vy = vreinterpret_f##SEW##_u##SEW##_f##EM (vx);			\
+    vy = vreinterpret_v_u##EM##_f##EM (vx);				\
     VFSTORE(SEW, EM, y, vy);						\
   }									\
   void rvreintfi##SEW##EM##_v_nomask_builtin_test(size_t n, ISTYPE *x,	\
@@ -38,18 +38,18 @@
     vfloat##EM##_t vy;							\
     vint##EM##_t vx;							\
     vx = VILOAD(SEW, EM, x);						\
-    vy = vreinterpret_f##SEW##_i##SEW##_f##EM (vx);			\
+    vy = vreinterpret_v_i##EM##_f##EM (vx);				\
     VFSTORE(SEW, EM, y, vy);						\
   }
 
-#define RVV_REINT_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)		\
+#define RVV_REINT_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)	\
   void rvreintui##SEW##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
 					       u##STYPE *y, STYPE z)	\
   {									\
     vint##EM##_t vx;							\
     vuint##EM##_t vy;							\
     vx = VILOAD(SEW, EM, x);						\
-    vy = vreinterpret_u##SEW##_i##SEW##_u##EM (vx);			\
+    vy = vreinterpret_v_i##EM##_u##EM (vx);				\
     VUSTORE(SEW, EM, y, vy);						\
   }									\
   void rvreintiu##SEW##EM##_v_nomask_builtin_test(size_t n, u##STYPE *x,\
@@ -58,7 +58,7 @@
     vuint##EM##_t vx;							\
     vint##EM##_t vy;							\
     vx = VULOAD(SEW, EM, x);						\
-    vy = vreinterpret_i##SEW##_u##SEW##_i##EM (vx);			\
+    vy = vreinterpret_v_u##EM##_i##EM (vx);				\
     VISTORE(SEW, EM, y, vy);						\
   }
 
