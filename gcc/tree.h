@@ -3855,13 +3855,13 @@ TYPE_VECTOR_SUBPARTS (const_tree node)
       /* See the corresponding code in SET_TYPE_VECTOR_SUBPARTS for a
 	 description of the encoding.  */
       poly_uint64 res = 0;
-      res.coeffs[0] = (precision & 0x7fffffff);
-      if (precision & 0x80000000)
-	res.coeffs[1] = (precision & 0x7fffffff);
+      res.coeffs[0] = HOST_WIDE_INT_1U << (precision & 0xff);
+      if (precision & 0x100)
+	res.coeffs[1] = HOST_WIDE_INT_1U << (precision & 0xff);
       return res;
     }
   else
-    return precision;
+    return HOST_WIDE_INT_1U << precision;
 }
 
 /* Set the number of elements in VECTOR_TYPE NODE to SUBPARTS, which must
@@ -3872,8 +3872,8 @@ SET_TYPE_VECTOR_SUBPARTS (tree node, poly_uint64 subparts)
 {
   STATIC_ASSERT (NUM_POLY_INT_COEFFS <= 2);
   unsigned HOST_WIDE_INT coeff0 = subparts.coeffs[0];
-  unsigned HOST_WIDE_INT index = coeff0;
-  gcc_assert (index < 0x80000000);
+  int index = exact_log2 (coeff0);
+  gcc_assert (index >= 0);
   if (NUM_POLY_INT_COEFFS == 2)
     {
       /* We have two coefficients that are each in the range 1 << [0, 63],
@@ -3894,7 +3894,7 @@ SET_TYPE_VECTOR_SUBPARTS (tree node, poly_uint64 subparts)
       unsigned HOST_WIDE_INT coeff1 = subparts.coeffs[1];
       gcc_assert (coeff1 == 0 || coeff1 == coeff0);
       VECTOR_TYPE_CHECK (node)->type_common.precision
-	= index + (coeff1 != 0 ? 0x80000000 : 0);
+	= index + (coeff1 != 0 ? 0x100 : 0);
     }
   else
     VECTOR_TYPE_CHECK (node)->type_common.precision = index;
@@ -3907,6 +3907,8 @@ static inline bool
 valid_vector_subparts_p (poly_uint64 subparts)
 {
   unsigned HOST_WIDE_INT coeff0 = subparts.coeffs[0];
+  if (!pow2p_hwi (coeff0))
+    return false;
   if (NUM_POLY_INT_COEFFS == 2)
     {
       unsigned HOST_WIDE_INT coeff1 = subparts.coeffs[1];

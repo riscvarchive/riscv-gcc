@@ -1599,7 +1599,7 @@ struct GTY(()) tree_type_common {
   tree attributes;
   unsigned int uid;
 
-  unsigned int precision;
+  unsigned int precision : 10;
   unsigned no_force_blk_flag : 1;
   unsigned needs_constructing_flag : 1;
   unsigned transparent_aggr_flag : 1;
