@@ -1616,6 +1616,46 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 		RISCV_VF##WSEW##M1_FTYPE_VB##MLEN##_VF##WSEW##M1_VF##WSEW##M1_VF##SEW##M##LMUL, \
 		vector),
 
+
+#define VUNDEFINED_INT(E, L, MLEN, MODE, SUBMODE)			\
+  DIRECT_NAMED (vundefined_##MODE,					\
+		vundefined_i##E##m##L,					\
+		RISCV_VI##E##M##L##_FTYPE,				\
+		vector),						\
+  DIRECT_NAMED (vundefined_##MODE,					\
+		vundefined_u##E##m##L,					\
+		RISCV_VUI##E##M##L##_FTYPE,				\
+		vector),
+
+#define VUNDEFINED_FLOAT(E, L, MLEN, MODE, SUBMODE)			\
+  DIRECT_NAMED (vundefined_##MODE,					\
+		vundefined_f##E##m##L,					\
+		RISCV_VF##E##M##L##_FTYPE,				\
+		vector),						\
+
+#define VUNDEFINED_VT_INT(SEW, LMUL, NF, MLEN,				\
+			  SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)	\
+  DIRECT_NAMED (							\
+    vundefined_##VMODE_PREFIX_LOWER##i,					\
+    vundefined_i##SEW##m##LMUL##x##NF,					\
+    RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE,				\
+    vector),								\
+  DIRECT_NAMED (							\
+    vundefined_##VMODE_PREFIX_LOWER##i,					\
+    vundefined_u##SEW##m##LMUL##x##NF,					\
+    RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE,				\
+    vector),								\
+
+#define VUNDEFINED_VT_FLOAT(SEW, LMUL, NF, MLEN,			\
+			    SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			    VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)	\
+  DIRECT_NAMED (							\
+    vundefined_##VMODE_PREFIX_LOWER##f,					\
+    vundefined_f##SEW##m##LMUL##x##NF,					\
+    RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE,				\
+    vector),
+
 #define VREINTERPRET_INT(E, L, MLEN, IMODE, ISUBMODE)			\
   DIRECT_NAMED (mov##IMODE,						\
 		vreinterpret_i##E##_u##E##_v_##E##m##L,			\
@@ -2483,6 +2523,12 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_SEG_NF6_NO_SEW8_ARG(VFLOAT_SEG_CREATE6, )
   _RVV_SEG_NF7_NO_SEW8_ARG(VFLOAT_SEG_CREATE7, )
   _RVV_SEG_NF8_NO_SEW8_ARG(VFLOAT_SEG_CREATE8, )
+
+  _RVV_INT_ITERATOR(VUNDEFINED_INT)
+  _RVV_FLOAT_ITERATOR(VUNDEFINED_FLOAT)
+
+  _RVV_SEG (VUNDEFINED_VT_INT)
+  _RVV_SEG_NO_SEW8 (VUNDEFINED_VT_FLOAT)
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the

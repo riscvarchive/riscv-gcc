@@ -11053,3 +11053,15 @@
   riscv_expand_vtuple_create (operands);
   DONE;
 })
+
+(define_expand "vundefined_<mode>"
+  [(clobber (match_operand:VMODES 0 "register_operand"))]
+  "TARGET_VECTOR"
+{
+})
+
+(define_expand "vundefined_<mode>"
+  [(clobber (match_operand:VTMODES 0 "register_operand"))]
+  "TARGET_VECTOR"
+{
+})

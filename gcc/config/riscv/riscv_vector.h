@@ -129,6 +129,18 @@ vcopy_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##x##NF##_t a)	\
 {									\
   return a;								\
 }									\
+__extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vundefined_i##SEW##m##LMUL##x##NF ()					\
+{									\
+  return __builtin_riscv_vundefined_i##SEW##m##LMUL##x##NF ();		\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vundefined_u##SEW##m##LMUL##x##NF ()					\
+{									\
+  return __builtin_riscv_vundefined_u##SEW##m##LMUL##x##NF ();		\
+}									\
 
 _RVV_INT_TUPLE_ITERATOR_ARG (_RVVINT_TUPLE_COPY, )
 
@@ -138,6 +150,12 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vcopy_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##x##NF##_t a)	\
 {									\
   return a;								\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vundefined_f##SEW##m##LMUL##x##NF ()					\
+{									\
+  return __builtin_riscv_vundefined_f##SEW##m##LMUL##x##NF ();		\
 }									\
 
 _RVV_FLOAT_TUPLE_ITERATOR_ARG (_RVVFLOAT_TUPLE_COPY, )
@@ -759,7 +777,7 @@ __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vundefined_f##SEW##m##LMUL ()						\
 {									\
-  return vsplat_s_f##SEW##m##LMUL (0.0);				\
+  return __builtin_riscv_vundefined_f##SEW##m##LMUL ();		\
 }
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_SPLAT_OP, vec_duplicate)
@@ -799,7 +817,7 @@ __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vundefined_i##SEW##m##LMUL ()						\
 {									\
-  return vsplat_s_i##SEW##m##LMUL (0);					\
+  return __builtin_riscv_vundefined_i##SEW##m##LMUL ();			\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -811,7 +829,7 @@ __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vundefined_u##SEW##m##LMUL ()						\
 {									\
-  return vsplat_s_u##SEW##m##LMUL (0);					\
+  return __builtin_riscv_vundefined_u##SEW##m##LMUL ();			\
 }
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_UNARY_SPLAT_OP, vec_duplicate)

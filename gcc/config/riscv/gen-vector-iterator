@@ -953,6 +953,8 @@ def gen_ftype():
   # Prototype for vector modes, both for integer and floating point
   ft.add(
     arg_list_templates=[
+      # 0 args.
+      ('{FT_VEC}',),
       # 1 args.
       ('{FT_VEC}', 'C_{FT_SCALAR}_PTR'),
 
@@ -1036,8 +1038,6 @@ def gen_ftype():
   # Prototype for integer vector mode only
   ft.add(
     arg_list_templates=[
-      # 0 args.
-      ('{FT_U_VEC}',),
       # 1 args.
       ('{FT_VEC}', '{FT_VEC}'),
       ('{FT_VEC}', '{FT_SCALAR}'),
@@ -1240,6 +1240,8 @@ def gen_ftype():
   # Prototype for vector tuple modes, both for integer and floating point
   ft.add(
     arg_list_templates=[
+      # 0 args.
+      ('{FT_VEC_TUPLE}',),
       # 1 args.
       ('{FT_VEC_TUPLE}', 'C_{FT_SCALAR}_PTR'), # For vec tuple load
 
