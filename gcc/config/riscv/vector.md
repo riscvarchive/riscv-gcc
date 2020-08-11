@@ -1025,7 +1025,6 @@
 	}
       else
 	{
-	  gcc_assert (can_create_pseudo_p ());
 	  rtx dup_value;
 
 	  if ((satisfies_constraint_vi (operands[1])
@@ -1034,6 +1033,7 @@
 	      || ((const_vec_duplicate_p (operands[1], &dup_value))
 		  && FLOAT_MODE_P (<MODE>mode)))
 	    {
+	      gcc_assert (can_create_pseudo_p ());
 	      rtx vtype_reg = gen_rtx_REG (Pmode, VTYPE_REGNUM);
 	      rtx save_reg = gen_reg_rtx (Pmode);
 	      rtx tmp_reg = gen_reg_rtx (<VSUBMODE>mode);
@@ -1059,8 +1059,6 @@
     }
   else
     {
-      gcc_assert (can_create_pseudo_p ());
-
       rtx dup_value;
 
       /* If we have a const vector, then we have to load it's value into the
@@ -1071,6 +1069,7 @@
 	  || ((const_vec_duplicate_p (operands[1], &dup_value))
 	      && FLOAT_MODE_P (<MODE>mode)))
 	{
+	  gcc_assert (can_create_pseudo_p ());
 	  rtx tmp_reg = gen_reg_rtx (<VSUBMODE>mode);
 
 	  emit_move_insn (tmp_reg, dup_value);
