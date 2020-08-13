@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 import sys
+import os
+import subprocess
 # -------------------------------------------------
 #   Prepare datas
 # -------------------------------------------------
@@ -1332,6 +1334,15 @@ def gen_ftype():
 
   ft.gen()
 
+def gen(mode, filename):
+  this_script = os.path.abspath(__file__)
+  cwd = os.path.dirname(this_script)
+  py = sys.executable
+  output_path = os.path.join(cwd, filename)
+  subprocess.call([py, this_script, mode],
+                   stdout=open(output_path, 'w'),
+                  cwd=cwd)
+
 if __name__ == '__main__':
   if sys.argv[1] == '-md':
     gen_md()
@@ -1341,6 +1352,11 @@ if __name__ == '__main__':
     gen_ftype()
   elif sys.argv[1] == '-usr-c':
     gen_usr_c()
+  elif sys.argv[1] == '-all':
+    gen('-md', 'vector-iterator.md')
+    gen('-c', 'riscv-vector-iterator.h')
+    gen('-ftype', 'riscv-vector-ftypes.def')
+    gen('-usr-c', 'riscv_vector_itr.h')
   else:
-    print ("Usage: %s [-md]" % sys.argv[0])
+    print ("Usage: %s [-md|-c|-ftype|-usr-c|-all]" % sys.argv[0])
     sys.exit(1)
