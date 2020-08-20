@@ -148,7 +148,7 @@ riscv_subset_list::~riscv_subset_list ()
 /* Get the rank for multi-char subsets, lower value meaing higer priority.  */
 
 static int
-multi_char_subset_rank (const char *subset)
+multiletter_subset_rank (const char *subset)
 {
   /* The order between multi-char extensions: s -> h -> z -> x.  */
   switch (subset[0])
@@ -201,8 +201,8 @@ subset_cmp (const std::string &a, const std::string &b)
     }
   else
     {
-      int rank_a = multi_char_subset_rank(a.c_str());
-      int rank_b = multi_char_subset_rank(b.c_str());
+      int rank_a = multiletter_subset_rank(a.c_str());
+      int rank_b = multiletter_subset_rank(b.c_str());
 
       if (rank_a == rank_b)
 	/* The return value of strcmp has opposite meaning.  */
