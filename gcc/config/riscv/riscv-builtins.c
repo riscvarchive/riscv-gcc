@@ -1667,6 +1667,24 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 		RISCV_VUI##E##M##L##_FTYPE_VI##E##M##L,			\
 		vector),
 
+#define VREINTERPRET_XSEW_INT(E, L, MLEN, IMODE, ISUBMODE, XE, XMODE)	\
+  DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
+		vreinterpret_i##E##_u##XE##_v_##E##m##L,		\
+		RISCV_VI##E##M##L##_FTYPE_VUI##XE##M##L,		\
+		vector),						\
+  DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
+		vreinterpret_u##E##_i##XE##_v_##E##m##L,		\
+		RISCV_VUI##E##M##L##_FTYPE_VI##XE##M##L,		\
+		vector),						\
+  DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
+		vreinterpret_u##E##_u##XE##_v_##E##m##L,		\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##XE##M##L,		\
+		vector),						\
+  DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
+		vreinterpret_i##E##_i##XE##_v_##E##m##L,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##XE##M##L,			\
+		vector),
+
 #define VREINTERPRET(E, L, MLEN, FMODE, FSUBMODE, IMODE, ISUBMODE)	\
   DIRECT_NAMED (reinterpret_##FMODE##IMODE,				\
 		vreinterpret_f##E##_i##E##_v_##E##m##L,			\
@@ -2495,6 +2513,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_FLOAT_INT_ITERATOR (VREINTERPRET)
   _RVV_INT_ITERATOR (VREINTERPRET_INT)
+  _RVV_INT_REINT_ITERATOR (VREINTERPRET_XSEW_INT)
 
   /* Segment load/store.  */
   _RVV_SEG_ARG(VINT_SEG_LOAD_STORE, )

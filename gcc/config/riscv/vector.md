@@ -6621,6 +6621,17 @@
   DONE;
 })
 
+(define_expand "reinterpret_<VIMODES2:mode><VIMODES:mode>"
+  [(set (match_operand:VIMODES2 0 "register_operand")
+	(subreg:VIMODES2 (match_operand:VIMODES 1 "register_operand") 0))]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_mov<VIMODES2:mode> (operands[0],
+	     simplify_gen_subreg (<VIMODES2:MODE>mode, operands[1],
+				  <VIMODES:MODE>mode, 0)));
+  DONE;
+})
+
 (define_expand "read_vlenb"
   [(match_operand 0 "register_operand")]
   "TARGET_VECTOR"

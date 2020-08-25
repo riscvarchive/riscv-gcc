@@ -26,6 +26,14 @@
   VNx2DI VNx4DI VNx8DI VNx16DI
 ])
 
+;; Same as VIMODES, used for combination.
+(define_mode_iterator VIMODES2 [
+  VNx16QI VNx32QI VNx64QI VNx128QI
+  VNx8HI VNx16HI VNx32HI VNx64HI
+  VNx4SI VNx8SI VNx16SI VNx32SI
+  VNx2DI VNx4DI VNx8DI VNx16DI
+])
+
 ;; All vector modes supported for widening integer alu.
 (define_mode_iterator VWIMODES [
   VNx16QI VNx32QI VNx64QI VNx8HI

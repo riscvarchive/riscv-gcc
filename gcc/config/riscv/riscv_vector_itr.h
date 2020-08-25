@@ -353,6 +353,110 @@
   MACRO (64, 8, 8, __float64_t, 32, 4, __VA_ARGS__) \
   MACRO (64, 8, 8, __float64_t, 64, 8, __VA_ARGS__) \
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer types, and info for
+   corresponding integer and vector type.  */
+#define _RVV_INT_REINT_ITERATOR(MACRO) \
+  MACRO (8, 1, 8, int8_t, 16) \
+  MACRO (8, 1, 8, int8_t, 32) \
+  MACRO (8, 1, 8, int8_t, 64) \
+  MACRO (8, 2, 4, int8_t, 16) \
+  MACRO (8, 2, 4, int8_t, 32) \
+  MACRO (8, 2, 4, int8_t, 64) \
+  MACRO (8, 4, 2, int8_t, 16) \
+  MACRO (8, 4, 2, int8_t, 32) \
+  MACRO (8, 4, 2, int8_t, 64) \
+  MACRO (8, 8, 1, int8_t, 16) \
+  MACRO (8, 8, 1, int8_t, 32) \
+  MACRO (8, 8, 1, int8_t, 64) \
+  MACRO (16, 1, 16, int16_t, 8) \
+  MACRO (16, 1, 16, int16_t, 32) \
+  MACRO (16, 1, 16, int16_t, 64) \
+  MACRO (16, 2, 8, int16_t, 8) \
+  MACRO (16, 2, 8, int16_t, 32) \
+  MACRO (16, 2, 8, int16_t, 64) \
+  MACRO (16, 4, 4, int16_t, 8) \
+  MACRO (16, 4, 4, int16_t, 32) \
+  MACRO (16, 4, 4, int16_t, 64) \
+  MACRO (16, 8, 2, int16_t, 8) \
+  MACRO (16, 8, 2, int16_t, 32) \
+  MACRO (16, 8, 2, int16_t, 64) \
+  MACRO (32, 1, 32, int32_t, 8) \
+  MACRO (32, 1, 32, int32_t, 16) \
+  MACRO (32, 1, 32, int32_t, 64) \
+  MACRO (32, 2, 16, int32_t, 8) \
+  MACRO (32, 2, 16, int32_t, 16) \
+  MACRO (32, 2, 16, int32_t, 64) \
+  MACRO (32, 4, 8, int32_t, 8) \
+  MACRO (32, 4, 8, int32_t, 16) \
+  MACRO (32, 4, 8, int32_t, 64) \
+  MACRO (32, 8, 4, int32_t, 8) \
+  MACRO (32, 8, 4, int32_t, 16) \
+  MACRO (32, 8, 4, int32_t, 64) \
+  MACRO (64, 1, 64, int64_t, 8) \
+  MACRO (64, 1, 64, int64_t, 16) \
+  MACRO (64, 1, 64, int64_t, 32) \
+  MACRO (64, 2, 32, int64_t, 8) \
+  MACRO (64, 2, 32, int64_t, 16) \
+  MACRO (64, 2, 32, int64_t, 32) \
+  MACRO (64, 4, 16, int64_t, 8) \
+  MACRO (64, 4, 16, int64_t, 16) \
+  MACRO (64, 4, 16, int64_t, 32) \
+  MACRO (64, 8, 8, int64_t, 8) \
+  MACRO (64, 8, 8, int64_t, 16) \
+  MACRO (64, 8, 8, int64_t, 32) \
+
+/* Same as above but with an extra argument.  */
+#define _RVV_INT_REINT_ITERATOR_ARG(MACRO, ...) \
+  MACRO (8, 1, 8, int8_t, 16, __VA_ARGS__) \
+  MACRO (8, 1, 8, int8_t, 32, __VA_ARGS__) \
+  MACRO (8, 1, 8, int8_t, 64, __VA_ARGS__) \
+  MACRO (8, 2, 4, int8_t, 16, __VA_ARGS__) \
+  MACRO (8, 2, 4, int8_t, 32, __VA_ARGS__) \
+  MACRO (8, 2, 4, int8_t, 64, __VA_ARGS__) \
+  MACRO (8, 4, 2, int8_t, 16, __VA_ARGS__) \
+  MACRO (8, 4, 2, int8_t, 32, __VA_ARGS__) \
+  MACRO (8, 4, 2, int8_t, 64, __VA_ARGS__) \
+  MACRO (8, 8, 1, int8_t, 16, __VA_ARGS__) \
+  MACRO (8, 8, 1, int8_t, 32, __VA_ARGS__) \
+  MACRO (8, 8, 1, int8_t, 64, __VA_ARGS__) \
+  MACRO (16, 1, 16, int16_t, 8, __VA_ARGS__) \
+  MACRO (16, 1, 16, int16_t, 32, __VA_ARGS__) \
+  MACRO (16, 1, 16, int16_t, 64, __VA_ARGS__) \
+  MACRO (16, 2, 8, int16_t, 8, __VA_ARGS__) \
+  MACRO (16, 2, 8, int16_t, 32, __VA_ARGS__) \
+  MACRO (16, 2, 8, int16_t, 64, __VA_ARGS__) \
+  MACRO (16, 4, 4, int16_t, 8, __VA_ARGS__) \
+  MACRO (16, 4, 4, int16_t, 32, __VA_ARGS__) \
+  MACRO (16, 4, 4, int16_t, 64, __VA_ARGS__) \
+  MACRO (16, 8, 2, int16_t, 8, __VA_ARGS__) \
+  MACRO (16, 8, 2, int16_t, 32, __VA_ARGS__) \
+  MACRO (16, 8, 2, int16_t, 64, __VA_ARGS__) \
+  MACRO (32, 1, 32, int32_t, 8, __VA_ARGS__) \
+  MACRO (32, 1, 32, int32_t, 16, __VA_ARGS__) \
+  MACRO (32, 1, 32, int32_t, 64, __VA_ARGS__) \
+  MACRO (32, 2, 16, int32_t, 8, __VA_ARGS__) \
+  MACRO (32, 2, 16, int32_t, 16, __VA_ARGS__) \
+  MACRO (32, 2, 16, int32_t, 64, __VA_ARGS__) \
+  MACRO (32, 4, 8, int32_t, 8, __VA_ARGS__) \
+  MACRO (32, 4, 8, int32_t, 16, __VA_ARGS__) \
+  MACRO (32, 4, 8, int32_t, 64, __VA_ARGS__) \
+  MACRO (32, 8, 4, int32_t, 8, __VA_ARGS__) \
+  MACRO (32, 8, 4, int32_t, 16, __VA_ARGS__) \
+  MACRO (32, 8, 4, int32_t, 64, __VA_ARGS__) \
+  MACRO (64, 1, 64, int64_t, 8, __VA_ARGS__) \
+  MACRO (64, 1, 64, int64_t, 16, __VA_ARGS__) \
+  MACRO (64, 1, 64, int64_t, 32, __VA_ARGS__) \
+  MACRO (64, 2, 32, int64_t, 8, __VA_ARGS__) \
+  MACRO (64, 2, 32, int64_t, 16, __VA_ARGS__) \
+  MACRO (64, 2, 32, int64_t, 32, __VA_ARGS__) \
+  MACRO (64, 4, 16, int64_t, 8, __VA_ARGS__) \
+  MACRO (64, 4, 16, int64_t, 16, __VA_ARGS__) \
+  MACRO (64, 4, 16, int64_t, 32, __VA_ARGS__) \
+  MACRO (64, 8, 8, int64_t, 8, __VA_ARGS__) \
+  MACRO (64, 8, 8, int64_t, 16, __VA_ARGS__) \
+  MACRO (64, 8, 8, int64_t, 32, __VA_ARGS__) \
+
 /* An iterator to call a macro with every supported NF, SEW, LMUL and MLEN value,
    along with its corresponding vector, floating point modes, and info for
    corresponding floating point and vector tuple type.  */
