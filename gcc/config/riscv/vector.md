@@ -4886,7 +4886,7 @@
    (parallel [(set (match_operand:VIMODES 0 "register_operand")
 		   (unspec:VIMODES
 		     [(vec_duplicate:VIMODES
-			(match_operand:<VSUBMODE> 1 "register_operand"))
+			(match_operand:<VSUBMODE> 1 "reg_or_simm5_operand"))
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
@@ -4895,15 +4895,17 @@
 })
 
 (define_insn "vec_duplicate<mode>_nosetvl"
-  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
 	(unspec:VIMODES
 	  [(vec_duplicate:VIMODES
-	     (match_operand:<VSUBMODE> 1 "register_operand" "r"))
+	     (match_operand:<VSUBMODE> 1 "reg_or_simm5_operand" "r,Ws5"))
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vmv.v.x\t%0,%1"
+  "@
+   vmv.v.x\t%0,%1
+   vmv.v.i\t%0,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 

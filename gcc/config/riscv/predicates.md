@@ -73,6 +73,11 @@
 (define_predicate "reg_or_uimm5_operand"
   (match_operand 0 "csr_operand"))
 
+(define_predicate "reg_or_simm5_operand"
+  (ior (match_operand 0 "register_operand")
+       (and (match_operand 0 "const_int_operand")
+	    (match_test "IN_RANGE (INTVAL (op), -16, 15)"))))
+
 ;; Only use branch-on-bit sequences when the mask is not an ANDI immediate.
 (define_predicate "branch_on_bit_operand"
   (and (match_code "const_int")

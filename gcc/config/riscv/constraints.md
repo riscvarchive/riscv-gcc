@@ -79,6 +79,11 @@
   (and (match_code "const_int")
        (match_test "ival == 64")))
 
+(define_constraint "Ws5"
+  "Signed immediate 5-bit value"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), -16, 15)")))
+
 ;; Floating-point constant +0.0, used for FCVT-based moves when FMV is
 ;; not available in RV32.
 (define_constraint "G"
