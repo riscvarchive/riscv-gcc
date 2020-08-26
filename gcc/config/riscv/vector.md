@@ -315,12 +315,26 @@
    (parallel [(set (mem:VMODES (match_operand:P 1 "register_operand"))
 		   (unspec:VMODES
 		     [(match_operand:VMODES 0 "register_operand")
+		      (mem:VMODES (match_dup 1))
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
 })
+
+(define_insn "*vse<VMODES:mode>_nosetvl"
+  [(set (match_operand:VMODES 1 "memory_operand" "+m")
+	(unspec:VMODES
+	  [(match_operand:VMODES 0 "register_operand" "vr")
+	   (match_dup 1)
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vse<sew>.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
 
 (define_expand "vse<VMODES:mode>_<P:mode>_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
@@ -339,7 +353,7 @@
 })
 
 (define_insn "*vse<VMODES:mode>_mask_nosetvl"
-  [(set (match_operand:VMODES 0 "memory_operand" "=m")
+  [(set (match_operand:VMODES 0 "memory_operand" "+m")
 	(unspec:VMODES
 	  [(unspec:VMODES
 	     [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
