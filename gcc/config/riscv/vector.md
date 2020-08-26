@@ -850,220 +850,43 @@
 ;; If operand 1 is a const_vector, then we can't split until after reload,
 ;; to ensure that the scratch operand has been allocated a reg first.
 (define_expand "mov<mode>"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VMODES 0 "nonimmediate_operand")
+  [(set (match_operand:VMODES 0 "reg_or_mem_operand")
 	(unspec:VMODES
 	  [(match_operand:VMODES 1 "vector_move_operand")
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))]
   "TARGET_VECTOR"
 {
-
   /* Need to force register if mem <- !reg.  */
   if (MEM_P (operands[0]) && !REG_P (operands[1]))
     operands[1] = force_reg (<MODE>mode, operands[1]);
 
-  if (lra_in_progress || reload_in_progress)
+  rtx dup_value;
+
+  /* If we have a const vector, then we have to load it's value into the
+     scratch reg, and then create a vec_duplicate of it.  */
+  if (const_vec_duplicate_p (operands[1], &dup_value))
     {
-      /* We prefer emit whole register move instructions
-	 at register allocation pass. If emit normally
-	 vector move instructions, then may get wrong vtype.  */
-      if (reg_or_mem_operand (operands[0], <MODE>mode)
-	  && reg_or_mem_operand (operands[1], <MODE>mode))
-	{
-	  /* The whole register move load/store instructions
-	     only support in LMUL is 1. If LMUL more than 1, then spilt it. */
-	  if (<lmul> == 1)
-	    emit_insn (gen_whole_mov<vsingle>_lmul1 (operands[0], operands[1]));
-	  else
-	    {
-	      if (TARGET_64BIT)
-		emit_insn (gen_whole_mov<mode>di_split (operands[0],
-							operands[1]));
-	      else
-		emit_insn (gen_whole_mov<mode>si_split (operands[0],
-							operands[1]));
-	    }
-	  DONE;
-	}
-      else
-	{
-	  rtx dup_value;
-
-	  if ((satisfies_constraint_vi (operands[1])
-	       && const_vec_duplicate_p (operands[1], &dup_value)
-	       && INTEGRAL_MODE_P (<MODE>mode))
-	      || ((const_vec_duplicate_p (operands[1], &dup_value))
-		  && FLOAT_MODE_P (<MODE>mode)))
-	    {
-	      gcc_assert (can_create_pseudo_p ());
-	      rtx vtype_reg = gen_rtx_REG (Pmode, VTYPE_REGNUM);
-	      rtx save_reg = gen_reg_rtx (Pmode);
-	      rtx tmp_reg = gen_reg_rtx (<VSUBMODE>mode);
-
-	      emit_insn (gen_rtx_SET (save_reg,
-				      gen_rtx_UNSPEC (Pmode,
-						      gen_rtvec (1, vtype_reg),
-						      UNSPEC_READ_VTYPE)));
-	      emit_move_insn (tmp_reg, dup_value);
-	      emit_insn (gen_vsetvli_x0_<vlmode>());
-	      emit_insn (gen_vec_duplicate<mode>_nosetvl (operands[0], tmp_reg));
-	      emit_insn (gen_rtx_SET (vtype_reg,
-				      gen_rtx_UNSPEC (Pmode,
-						      gen_rtvec (1, save_reg),
-						      UNSPEC_WRITE_VTYPE)));
-	      DONE;
-	    }
-	  else
-	    {
-	      gcc_unreachable ();
-	    }
-	}
-    }
-  else
-    {
-      rtx dup_value;
-
-      /* If we have a const vector, then we have to load it's value into the
- 	 scratch reg, and then create a vec_duplicate of it.  */
-      if ((!satisfies_constraint_vi (operands[1])
-	   && const_vec_duplicate_p (operands[1], &dup_value)
-	   && INTEGRAL_MODE_P (<MODE>mode))
-	  || ((const_vec_duplicate_p (operands[1], &dup_value))
-	      && FLOAT_MODE_P (<MODE>mode)))
-	{
-	  gcc_assert (can_create_pseudo_p ());
-	  rtx tmp_reg = gen_reg_rtx (<VSUBMODE>mode);
-
-	  emit_move_insn (tmp_reg, dup_value);
-	  emit_insn (gen_vsetvli_x0_<vlmode>());
-	  emit_insn (gen_vec_duplicate<mode>_nosetvl (operands[0], tmp_reg));
-	  DONE;
-	}
-      else
-	{
-	  emit_insn (gen_vsetvli_x0_<vlmode>());
-	  emit_insn (gen_mov<mode>_nosetvl (operands[0], operands[1]));
-	  DONE;
-	}
+      gcc_assert (can_create_pseudo_p ());
+      rtx tmp_reg = gen_reg_rtx (<VSUBMODE>mode);
+      emit_move_insn (tmp_reg, dup_value);
+      emit_insn (gen_vsetvli_x0_<vlmode>());
+      emit_insn (gen_vec_duplicate<mode>_nosetvl (operands[0], tmp_reg));
+      DONE;
     }
 })
 
-(define_insn "mov<mode>_nosetvl"
-  [(set (match_operand:VIMODES 0 "nonimmediate_operand" "=vr,vr,vr, m")
-	(unspec:VIMODES
-	  [(match_operand:VIMODES 1 "vector_move_int_operand" " vr,vi, m,vr")
+(define_insn "*mov<mode>"
+  [(set (match_operand:VMODES 0 "reg_or_mem_operand"  "=vr,vr,m")
+	(unspec:VMODES
+	  [(match_operand:VMODES 1 "reg_or_mem_operand"  "vr,m,vr")
 	   (reg:SI VL_REGNUM)]
-	 UNSPEC_USEVL))
-   (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && (!(MEM_P (operands[0])
-       && riscv_const_vec_all_same_in_range_p (operands[1], -16, 15)))"
-  "@
-   vmv.v.v\t%0,%1
-   vmv.v.i\t%0,%1
-   vle<sew>.v\t%0,%1
-   vse<sew>.v\t%1,%0"
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
-
-(define_insn "mov<mode>_nosetvl"
-  [(set (match_operand:VFMODES 0 "nonimmediate_operand" "=vr,vr, m")
-	(unspec:VFMODES
-	  [(match_operand:VFMODES 1 "nonimmediate_operand" " vr, m,vr")
-	   (reg:SI VL_REGNUM)]
-	 UNSPEC_USEVL))
-   (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "@
-   vmv.v.v\t%0,%1
-   vle<sew>.v\t%0,%1
-   vse<sew>.v\t%1,%0"
-  [(set_attr "type" "vector")
-   (set_attr "mode" "none")])
-
-;; Whole regiser move
-(define_insn_and_split "whole_mov<VMODES:mode><P:mode>_split"
-  [(set (match_operand:VMODES 0 "reg_or_mem_operand" "=vr,vr,m")
-       	(unspec:VMODES
-	  [(match_operand:VMODES 1 "reg_or_mem_operand" "vr,m,vr")]
-	 UNSPEC_WHOLE_MOVE))
-   (clobber (match_scratch:P 2 "=X,r,r"))
-   (clobber (match_scratch:P 3 "=X,r,r"))]
-  "TARGET_VECTOR
-   && !(memory_operand (operands[0], <VMODES:MODE>mode)
-        && memory_operand (operands[1], <VMODES:MODE>mode))"
+	 UNSPEC_USEVL))]
+  "TARGET_VECTOR"
   "@
    vmv<lmul>r.v\t%0,%1
-   #
-   #"
-  "&& reload_completed
-   && ((register_operand (operands[0], <VMODES:MODE>mode)
-        && memory_operand (operands[1], <VMODES:MODE>mode))
-       || (memory_operand (operands[0], <VMODES:MODE>mode)
-	   && register_operand (operands[1], <VMODES:MODE>mode)))"
-  [(const_int 0)]
-{
-  int load_p = REG_P (operands[0]) ? 1 : 0;
-  rtx reg = load_p ? operands[0] : operands[1];
-  rtx mem = load_p ? operands[1] : operands[0];
-  rtx vlenb = gen_int_mode (UNITS_PER_V_REG, Pmode);
-
-  /* Spiltting a load/store instruction when LMUL is 2,4,8.
-     For example, split a load instruction that LMUL is 4.
-     The assembly like this:
-
-       mv   op2, mem_addr
-       csrr op3, vlenb
-       vl1r subop0, op1
-       add  op2, op2, op3
-       vl1r subop0, op3
-       add  op2, op2, op3
-       vl1r subop0, op3
-       add  op2, op2, op3
-       vl1r subop0, op3
-
-     To adjust address the base register from op1 replace to op3.
-     And offset is vlenb, We use ADD instruction to adjust new address.  */
-
-  emit_move_insn (operands[2], XEXP (mem, 0));
-  emit_move_insn (operands[3], vlenb);
-
-  for (unsigned int step = 0; step < <lmul>; ++step)
-    {
-      rtx submem = adjust_automodify_address (mem, <VSINGLE>mode,
-					      operands[2],
-					      step * BYTES_PER_RVV_VECTOR);
-      rtx subreg = simplify_gen_subreg (<VSINGLE>mode, reg,
-					<VMODES:MODE>mode,
-					step * BYTES_PER_RVV_VECTOR);
-	if (step != 0)
-	  emit_insn (gen_rtx_SET (operands[2],
-				  gen_rtx_PLUS (Pmode, operands[2],
-						operands[3])));
-      /* Emit a vector load/store instruction.  */
-      if (load_p)
-	emit_insn (gen_whole_mov<vsingle>_lmul1 (subreg, submem));
-      else
-	emit_insn (gen_whole_mov<vsingle>_lmul1 (submem, subreg));
-    }
-
-  DONE;
-})
-
-;; Whole regiser move when LMUL is 1.
-(define_insn "whole_mov<mode>_lmul1"
-  [(set (match_operand:V1_FIMODES 0 "reg_or_mem_operand" "=vr,vr,m")
-       	(unspec:V1_FIMODES
-	  [(match_operand:V1_FIMODES 1 "reg_or_mem_operand" "vr,m,vr")]
-	 UNSPEC_WHOLE_MOVE))]
-  "TARGET_VECTOR
-   && !(memory_operand (operands[0], <MODE>mode)
-        && memory_operand (operands[1], <MODE>mode))"
-  "@
-   vmv1r.v\t%0,%1
-   vl1r.v\t%0,%1
-   vs1r.v\t%1,%0"
+   vl<lmul>r.v\t%0,%1
+   vs<lmul>r.v\t%1,%0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
