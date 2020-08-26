@@ -279,6 +279,18 @@
 {
 })
 
+(define_insn "*vle<VMODES:mode>_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+	(unspec:VMODES
+	  [(match_operand:VMODES 1 "memory_operand" "m")
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vle<sew>.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 (define_expand "vle<VMODES:mode>_<P:mode>_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VMODES 0 "register_operand")
