@@ -425,12 +425,6 @@ def gen_md():
   )
 
   dump_md_iterator(
-    name = "V1_FIMODES",
-    comment = "All vector modes with LMUL 1.",
-    vals = filter(lambda x : x.lmul == 1, vector_modes)
-  )
-
-  dump_md_iterator(
     name = "VIMODES",
     comment = "All vector modes supported for integer load/store/alu.",
     vals = int_vector_modes
