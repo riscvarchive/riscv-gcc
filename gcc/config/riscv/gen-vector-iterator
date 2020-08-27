@@ -43,7 +43,9 @@ class VectorTypeInfo:
   def __str__(self):
     return "%s (%s)" %(self.ft_vtype, self.mode)
 
-  def __init__(self, sew, lmul, int_p, nf = 1, eew=None, check=False, eew_reinterpret=False):
+  def __init__(self, sew, lmul, int_p, nf = 1,
+               eew=None, elmul=None, check=False, eew_reinterpret=False):
+    assert (elmul is None) or eew_reinterpret
     self.sew = sew
     self.sew_letter = SEW_LETTERS[sew]
     self.lmul = lmul
@@ -144,13 +146,17 @@ class VectorTypeInfo:
 
     if eew:
       if eew_reinterpret:
-        self.eew_type = VectorTypeInfo(sew=eew, lmul=self.lmul, int_p=True)
+        if elmul is None:
+          elmul = self.lmul
+        self.eew_type = VectorTypeInfo(sew=eew, lmul=elmul, int_p=self.int_p)
         eew_type = self.eew_type
         self.arg_map["EEW"] = eew_type.sew
+        self.arg_map["EMUL"] = eew_type.lmul
         self.arg_map["EEW_MODE"] = eew_type.mode.lower()
         self.arg_map["EEW_IMODE"] = eew_type.int_vector_mode.lower()
         self.arg_map['FT_I_XVEC'] = eew_type.ft_vitype
         self.arg_map['FT_U_XVEC'] = eew_type.ft_vutype
+        self.arg_map['FT_XVEC'] = eew_type.ft_vtype
       else:
         assert (self.valid_eew_p(eew))
         self.eew_type = VectorTypeInfo(sew=eew, lmul=self.emul(eew), int_p=True)
@@ -392,10 +398,15 @@ def expand_eew_types(vals, eew_index=False, eew_reinterpret=False):
   if eew_reinterpret:
     new_vals = []
     for val in vals:
-      for eew in SEWS:
-        if eew != val.sew:
+      if val.int_p:
+        for eew in SEWS:
+          if eew != val.sew:
+            new_vals.append(VectorTypeInfo(val.sew, val.lmul, val.int_p,
+                                           val.nf, eew=eew, eew_reinterpret=True))
+      for elmul in LMULs:
+        if elmul != val.lmul:
           new_vals.append(VectorTypeInfo(val.sew, val.lmul, val.int_p,
-                                         val.nf, eew=eew, eew_reinterpret=True))
+                                         val.nf, eew=val.sew, elmul=elmul, eew_reinterpret=True))
     vals = new_vals
   return vals
 
@@ -458,6 +469,12 @@ def gen_md():
   dump_md_iterator(
     name = "VFMODES",
     comment = "All vector modes supported for FP load/store/alu.",
+    vals = float_vector_modes
+  )
+
+  dump_md_iterator(
+    name = "VFMODES2",
+    comment = "Same as VFMODES, used for combination.",
     vals = float_vector_modes
   )
 
@@ -770,8 +787,18 @@ def gen_usr_c():
     comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
               "   along with its corresponding vector, integer types, and info for\n"
               "   corresponding integer and vector type.  */",
-    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {CTYPE}, {EEW}",
+    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {CTYPE}, {EEW}, {EMUL}",
     vals = int_vector_modes,
+    eew_reinterpret=True
+  )
+
+  dump_c_iterator(
+    name = "_RVV_FLOAT_REINT_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, floating point types, and info for\n"
+              "   corresponding floating and vector type.  */",
+    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {CTYPE}, {EEW}, {EMUL}",
+    vals = float_vector_modes,
     eew_reinterpret=True
   )
 
@@ -897,7 +924,7 @@ def gen_c():
               "   along with its corresponding vector, integer point modes, and info for\n"
               "   corresponding integer and vector type.  */",
     arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}, "
-                        "{EEW}, {EEW_MODE}",
+                        "{EEW}, {EMUL}, {EEW_MODE}",
     vals = int_vector_modes,
     eew_reinterpret=True
   )
@@ -960,6 +987,16 @@ def gen_c():
     eew_index=True
   )
 
+  dump_c_iterator(
+    name = "_RVV_FLOAT_REINT_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, integer point modes, and info for\n"
+              "   corresponding integer and vector type.  */",
+    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}, "
+                        "{EEW}, {EMUL}, {EEW_MODE}",
+    vals = float_vector_modes,
+    eew_reinterpret=True
+  )
 
   dump_c_iterator(
     name = "_RVV_SEG",
@@ -1329,7 +1366,6 @@ def gen_ftype():
     vals=int_vector_modes,
     eew_reinterpret=True)
 
-
   # Prototype for floating point vector mode only
   ft.add(
     arg_list_templates=[
@@ -1399,6 +1435,15 @@ def gen_ftype():
       ('{FT_U_VEC}', '{FT_MASK}', '{FT_U_VEC}', '{WFT_F_VEC}'),
     ],
     vals = list(filter(lambda x: x.has_widen_type(), float_vector_modes)))
+
+  # Reinterpret Prototype for floating point vector mode only
+  ft.add(
+    arg_list_templates=[
+      # 1 args.
+      ('{FT_VEC}', '{FT_XVEC}'),
+    ],
+    vals=float_vector_modes,
+    eew_reinterpret=True)
 
   # Prototype for vector tuple modes, both for integer and floating point
   ft.add(

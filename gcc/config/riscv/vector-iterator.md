@@ -52,6 +52,13 @@
   VNx2DF VNx4DF VNx8DF VNx16DF
 ])
 
+;; Same as VFMODES, used for combination.
+(define_mode_iterator VFMODES2 [
+  VNx8HF VNx16HF VNx32HF VNx64HF
+  VNx4SF VNx8SF VNx16SF VNx32SF
+  VNx2DF VNx4DF VNx8DF VNx16DF
+])
+
 ;; All vector modes supported for widening floating point alu.
 (define_mode_iterator VWFMODES [
   VNx8HF VNx16HF VNx32HF VNx4SF

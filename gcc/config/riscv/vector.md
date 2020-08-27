@@ -6483,6 +6483,29 @@
   DONE;
 })
 
+(define_expand "reinterpret_<VFMODES2:mode><VFMODES:mode>"
+  [(set (match_operand:VFMODES2 0 "register_operand")
+	(subreg:VFMODES2 (match_operand:VFMODES 1 "register_operand") 0))]
+  "TARGET_VECTOR"
+{
+  rtx tmp_src, tmp_dst;
+  tmp_src = gen_reg_rtx(<VFMODES:VINTEQUIV>mode);
+  tmp_dst = gen_reg_rtx(<VFMODES2:VINTEQUIV>mode);
+  emit_insn (gen_mov<VFMODES:vintequiv> (tmp_src,
+	     simplify_gen_subreg (<VFMODES:VINTEQUIV>mode, operands[1],
+				  <VFMODES:MODE>mode, 0)));
+
+  emit_insn (gen_mov<VFMODES2:vintequiv> (tmp_dst,
+	     simplify_gen_subreg (<VFMODES2:VINTEQUIV>mode, tmp_src,
+				  <VFMODES:VINTEQUIV>mode, 0)));
+
+  emit_insn (gen_mov<VFMODES2:mode> (operands[0],
+	     simplify_gen_subreg (<VFMODES2:MODE>mode, tmp_dst,
+				  <VFMODES2:VINTEQUIV>mode, 0)));
+  DONE;
+})
+
+
 (define_expand "read_vlenb"
   [(match_operand 0 "register_operand")]
   "TARGET_VECTOR"

@@ -1659,47 +1659,53 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 
 #define VREINTERPRET_INT(E, L, MLEN, IMODE, ISUBMODE)			\
   DIRECT_NAMED (mov##IMODE,						\
-		vreinterpret_i##E##_u##E##_v_##E##m##L,			\
+		vreinterpret_v_u##E##m##L##_i##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VUI##E##M##L,			\
 		vector),						\
   DIRECT_NAMED (mov##IMODE,						\
-		vreinterpret_u##E##_i##E##_v_##E##m##L,			\
+		vreinterpret_v_i##E##m##L##_u##E##m##L,			\
 		RISCV_VUI##E##M##L##_FTYPE_VI##E##M##L,			\
 		vector),
 
-#define VREINTERPRET_XSEW_INT(E, L, MLEN, IMODE, ISUBMODE, XE, XMODE)	\
+#define VREINTERPRET_XSEW_INT(E, L, MLEN, IMODE, ISUBMODE, XE, XL, XMODE)\
   DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
-		vreinterpret_i##E##_u##XE##_v_##E##m##L,		\
-		RISCV_VI##E##M##L##_FTYPE_VUI##XE##M##L,		\
+		vreinterpret_v_u##XE##m##XL##_i##E##m##L,		\
+		RISCV_VI##E##M##L##_FTYPE_VUI##XE##M##XL,		\
 		vector),						\
   DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
-		vreinterpret_u##E##_i##XE##_v_##E##m##L,		\
-		RISCV_VUI##E##M##L##_FTYPE_VI##XE##M##L,		\
+		vreinterpret_v_i##XE##m##XL##_u##E##m##L,		\
+		RISCV_VUI##E##M##L##_FTYPE_VI##XE##M##XL,		\
 		vector),						\
   DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
-		vreinterpret_u##E##_u##XE##_v_##E##m##L,		\
-		RISCV_VUI##E##M##L##_FTYPE_VUI##XE##M##L,		\
+		vreinterpret_v_u##XE##m##XL##_u##E##m##L,		\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##XE##M##XL,		\
 		vector),						\
   DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
-		vreinterpret_i##E##_i##XE##_v_##E##m##L,		\
-		RISCV_VI##E##M##L##_FTYPE_VI##XE##M##L,			\
+		vreinterpret_v_i##XE##m##XL##_i##E##m##L,		\
+		RISCV_VI##E##M##L##_FTYPE_VI##XE##M##XL,		\
+		vector),
+
+#define VREINTERPRET_XSEW_FLOAT(E, L, MLEN, IMODE, ISUBMODE, XE, XL, XMODE)\
+  DIRECT_NAMED (reinterpret_##IMODE##XMODE,				\
+		vreinterpret_v_f##XE##m##XL##_f##E##m##L,		\
+		RISCV_VF##E##M##L##_FTYPE_VF##XE##M##XL,		\
 		vector),
 
 #define VREINTERPRET(E, L, MLEN, FMODE, FSUBMODE, IMODE, ISUBMODE)	\
   DIRECT_NAMED (reinterpret_##FMODE##IMODE,				\
-		vreinterpret_f##E##_i##E##_v_##E##m##L,			\
+		vreinterpret_v_i##E##m##L##_f##E##m##L,			\
 		RISCV_VF##E##M##L##_FTYPE_VI##E##M##L,			\
 		vector),						\
   DIRECT_NAMED (reinterpret_##FMODE##IMODE,				\
-		vreinterpret_f##E##_u##E##_v_##E##m##L,			\
+		vreinterpret_v_u##E##m##L##_f##E##m##L,			\
 		RISCV_VF##E##M##L##_FTYPE_VUI##E##M##L,			\
 		vector),						\
   DIRECT_NAMED (reinterpret_##IMODE##FMODE,				\
-		vreinterpret_i##E##_f##E##_v_##E##m##L,			\
+		vreinterpret_v_f##E##m##L##_i##E##m##L,			\
 		RISCV_VI##E##M##L##_FTYPE_VF##E##M##L,			\
 		vector),						\
   DIRECT_NAMED (reinterpret_##IMODE##FMODE,				\
-		vreinterpret_u##E##_f##E##_v_##E##m##L,			\
+		vreinterpret_v_f##E##m##L##_u##E##m##L,			\
 		RISCV_VUI##E##M##L##_FTYPE_VF##E##M##L,			\
 		vector),
 
@@ -2513,6 +2519,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_FLOAT_INT_ITERATOR (VREINTERPRET)
   _RVV_INT_ITERATOR (VREINTERPRET_INT)
+  _RVV_FLOAT_REINT_ITERATOR (VREINTERPRET_XSEW_FLOAT)
   _RVV_INT_REINT_ITERATOR (VREINTERPRET_XSEW_INT)
 
   /* Segment load/store.  */
