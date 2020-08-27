@@ -59,6 +59,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "cfg.h"
 #include "cfgrtl.h"
+#include "langhooks.h"
 #include "riscv-vector-iterator.h"
 
 /* True if X is an UNSPEC wrapper around a SYMBOL_REF or LABEL_REF.  */
@@ -6108,6 +6109,78 @@ riscv_expand_vtuple_create (rtx *operands)
       }
 }
 
+static bool
+riscv_verify_type_context (location_t loc, type_context_kind context,
+			   const_tree type, bool silent_p)
+{
+  if (type == error_mark_node)
+    return true;
+
+  if (GET_MODE_SIZE (TYPE_MODE (type)).is_constant ())
+    return true;
+
+  switch (context)
+    {
+    case TCTX_SIZEOF:
+    case TCTX_STATIC_STORAGE:
+      if (!silent_p)
+	error_at (loc, "RVV type %qT does not have a fixed size", type);
+      return false;
+
+    case TCTX_ALIGNOF:
+      if (!silent_p)
+	error_at (loc, "RVV type %qT does not have a defined alignment", type);
+      return false;
+
+    case TCTX_THREAD_STORAGE:
+      if (!silent_p)
+	error_at (loc, "variables of type %qT cannot have thread-local"
+		  " storage duration", type);
+      return false;
+
+    case TCTX_POINTER_ARITH:
+      if (!silent_p)
+	error_at (loc, "arithmetic on pointer to RVV type %qT", type);
+      return false;
+
+    case TCTX_FIELD:
+      if (silent_p)
+	;
+      else if (lang_GNU_CXX ())
+	error_at (loc, "member variables cannot have RVV type %qT", type);
+      else
+	error_at (loc, "fields cannot have RVV type %qT", type);
+      return false;
+
+    case TCTX_ARRAY_ELEMENT:
+      if (!silent_p)
+	error_at (loc, "array elements cannot have RVV type %qT", type);
+      return false;
+
+    case TCTX_ALLOCATION:
+      if (!silent_p)
+	error_at (loc, "cannot allocate objects with RVV type %qT", type);
+      return false;
+
+    case TCTX_DEALLOCATION:
+      if (!silent_p)
+	error_at (loc, "cannot delete objects with RVV type %qT", type);
+      return false;
+
+    case TCTX_EXCEPTIONS:
+      if (!silent_p)
+	error_at (loc, "cannot throw or catch RVV type %qT", type);
+      return false;
+
+    case TCTX_CAPTURE_BY_COPY:
+      if (!silent_p)
+	error_at (loc, "capture by copy of RVV type %qT", type);
+      return false;
+    }
+  gcc_unreachable ();
+
+}
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
@@ -6317,6 +6390,9 @@ riscv_expand_vtuple_create (rtx *operands)
 #undef TARGET_DWARF_POLY_INDETERMINATE_VALUE
 #define TARGET_DWARF_POLY_INDETERMINATE_VALUE \
   riscv_dwarf_poly_indeterminate_value
+
+#undef TARGET_VERIFY_TYPE_CONTEXT
+#define TARGET_VERIFY_TYPE_CONTEXT riscv_verify_type_context
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
