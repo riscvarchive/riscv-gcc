@@ -30,9 +30,7 @@ if ![info exists DEFAULT_CFLAGS] then {
     set DEFAULT_CFLAGS " -ansi -pedantic-errors"
 }
 
-#set rvv_flags "-O2 -march=rv64gcv_zfh -mabi=lp64 -std=gnu99"
-set rvv_flags ""
-set DEFAULT_CFLAGS " -O2 -march=rv64gcv_zfh -mabi=lp64 -std=gnu99"
+set rvv_flags "-O2 -march=rv64gcv_zfh -mabi=lp64 -std=gnu99"
 
 # Initialize `dg'.
 dg-init
