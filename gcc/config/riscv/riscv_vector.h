@@ -63,16 +63,16 @@ unsigned long vread_csr(enum RVV_CSR csr)
   switch (csr)
     {
     case RVV_VSTART:
-      asm volatile ("csrr\t%0,vstart" : "=r"(rv) : : "memory");
+      __asm__ __volatile__ ("csrr\t%0,vstart" : "=r"(rv) : : "memory");
       break;
     case RVV_VXSAT:
-      asm volatile ("csrr\t%0,vxsat" : "=r"(rv) : : "memory");
+      __asm__ __volatile__ ("csrr\t%0,vxsat" : "=r"(rv) : : "memory");
       break;
     case RVV_VXRM:
-      asm volatile ("csrr\t%0,vxrm" : "=r"(rv) : : "memory");
+      __asm__ __volatile__ ("csrr\t%0,vxrm" : "=r"(rv) : : "memory");
       break;
     case RVV_VCSR:
-      asm volatile ("csrr\t%0,vcsr" : "=r"(rv) : : "memory");
+      __asm__ __volatile__ ("csrr\t%0,vcsr" : "=r"(rv) : : "memory");
       break;
     }
   return rv;
@@ -85,16 +85,16 @@ void vwrite_csr(enum RVV_CSR csr, unsigned long value)
   switch (csr)
     {
     case RVV_VSTART:
-      asm volatile ("csrw\tvstart,%z0" : : "rJ"(value) : "memory");
+      __asm__ __volatile__ ("csrw\tvstart,%z0" : : "rJ"(value) : "memory");
       break;
     case RVV_VXSAT:
-      asm volatile ("csrw\tvxsat,%z0" : : "rJ"(value) : "memory");
+      __asm__ __volatile__ ("csrw\tvxsat,%z0" : : "rJ"(value) : "memory");
       break;
     case RVV_VXRM:
-      asm volatile ("csrw\tvxrm,%z0" : : "rJ"(value) : "memory");
+      __asm__ __volatile__ ("csrw\tvxrm,%z0" : : "rJ"(value) : "memory");
       break;
     case RVV_VCSR:
-      asm volatile ("csrw\tvcsr,%z0" : : "rJ"(value) : "memory");
+      __asm__ __volatile__ ("csrw\tvcsr,%z0" : : "rJ"(value) : "memory");
       break;
     }
 }
