@@ -6,7 +6,7 @@
 
 #define RVV_FREINT_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, ISTYPE, IVCLASST, IVCLASS, SEW)	\
   void rvreintuf##SEW##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       ISTYPE *y, STYPE z)	\
+					       u##ISTYPE *y, STYPE z)	\
   {									\
     vfloat##EM##_t vx;							\
     vuint##EM##_t vy;							\
@@ -23,7 +23,7 @@
     vy = vreinterpret_v_f##EM##_i##EM (vx);				\
     VISTORE(SEW, EM, y, vy);						\
   }									\
-  void rvreintfu##SEW##EM##_v_nomask_builtin_test(size_t n, ISTYPE *x,\
+  void rvreintfu##SEW##EM##_v_nomask_builtin_test(size_t n, u##ISTYPE *x,\
 					       STYPE *y, STYPE z)	\
   {									\
     vfloat##EM##_t vy;							\

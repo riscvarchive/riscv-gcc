@@ -25,8 +25,10 @@
 ----
 */
 
-void *memcpy(void *dest, const void *src, size_t n) {
+void *memcpy(void *vdest, const void *vsrc, size_t n) {
   size_t vl;
+  uint8_t *dest = (uint8_t *)vdest;
+  uint8_t *src = (uint8_t *)vsrc;
   for (; vl = vsetvl_e8m8(n); n -= vl) {
     *(vint8m8_t *)dest = *(vint8m8_t *)src;
     src += vl;

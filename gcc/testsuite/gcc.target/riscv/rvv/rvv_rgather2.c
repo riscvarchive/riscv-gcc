@@ -37,7 +37,7 @@
     vx = vrgather_vx_##VCLASS##EM##_m(mask, vz, vx, 11);	\
     VSTORE(VCLASS, SEW, EM, x, vx);					\
   }								\
-  void test_rgather_svu##EM (u##STYPE *x, u##STYPE *y, STYPE *z, long s) {\
+  void test_rgather_svu##EM (u##STYPE *x, u##STYPE *y, u##STYPE *z, long s) {\
     vuint##EM##_t vx;					\
     vuint##EM##_t vz;					\
     vuint##EM##_t vy;					\
@@ -49,7 +49,7 @@
     vx = vrgather_vv_u##EM##_m(mask, vz, vx, vy);	\
     VUSTORE(SEW, EM, x, vx);				\
   }								\
-  void test_rgather_sxu##EM (u##STYPE *x, STYPE *z, long s) {\
+  void test_rgather_sxu##EM (u##STYPE *x, u##STYPE *z, long s) {\
     vuint##EM##_t vx;					\
     vuint##EM##_t vz;					\
     vbool##MLEN##_t mask;					\
@@ -59,7 +59,7 @@
     vx = vrgather_vx_u##EM##_m(mask, vz, vx, s);	\
     VUSTORE(SEW, EM, x, vx);				\
   }								\
-  void test_rgather_siu##EM (u##STYPE *x, STYPE *z, long s) {\
+  void test_rgather_siu##EM (u##STYPE *x, u##STYPE *z, long s) {\
     vuint##EM##_t vx;					\
     vuint##EM##_t vz;					\
     vbool##MLEN##_t mask;					\
