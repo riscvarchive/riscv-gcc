@@ -45,11 +45,11 @@ TEST (double, float, 64m2)
 TEST (double, float, 64m4)
 TEST (double, float, 64m8)
 
-/* { dg-final { scan-assembler-times "vle8\.v" 4 } } */
-/* { dg-final { scan-assembler-times "vle16\.v" 8 } } */
-/* { dg-final { scan-assembler-times "vle32\.v" 8 } } */
-/* { dg-final { scan-assembler-times "vle64\.v" 8 } } */
-/* { dg-final { scan-assembler-times "vse8.v\t" 4 } } */
-/* { dg-final { scan-assembler-times "vse16.v\t" 8 } } */
-/* { dg-final { scan-assembler-times "vse32.v\t" 8 } } */
-/* { dg-final { scan-assembler-times "vse64.v\t" 8 } } */
+/* { dg-final { scan-assembler-times "vl1r\.v" 7 } } */
+/* { dg-final { scan-assembler-times "vl2r\.v" 7 } } */
+/* { dg-final { scan-assembler-times "vl4r\.v" 7 } } */
+/* { dg-final { scan-assembler-times "vl8r\.v" 7 } } */
+/* { dg-final { scan-assembler-times "vs1r\.v" 7 } } */
+/* { dg-final { scan-assembler-times "vs2r\.v" 7 } } */
+/* { dg-final { scan-assembler-times "vs4r\.v" 7 } } */
+/* { dg-final { scan-assembler-times "vs8r\.v" 7 } } */
