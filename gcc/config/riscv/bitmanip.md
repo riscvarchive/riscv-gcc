@@ -127,7 +127,7 @@
 (define_insn "*sbset<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(ior:X (ashift:X (const_int 1)
-			 (match_operand:QI 2 "register_operand" "=r"))
+			 (match_operand:QI 2 "register_operand" "r"))
 	       (match_operand:X 1 "register_operand" "r")))]
   "TARGET_BITMANIP"
   "sbset\t%0,%1,%2"
@@ -147,16 +147,24 @@
 	 (subreg:SI
 	  (ior:DI (subreg:DI
 		   (ashift:SI (const_int 1)
-			      (match_operand:QI 2 "register_operand" "=r")) 0)
+			      (match_operand:QI 2 "register_operand" "r")) 0)
 		  (match_operand:DI 1 "register_operand" "r")) 0)))]
   "TARGET_64BIT && TARGET_BITMANIP"
   "sbsetw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
+(define_insn "*sbsetiw"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(ior:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
+		(match_operand 2 "single_bit_mask_operand" "i")))]
+  "TARGET_64BIT && TARGET_BITMANIP"
+  "sbsetiw\t%0,%1,%S2"
+  [(set_attr "type" "bitmanip")])
+
 (define_insn "*sbclr<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(and:X (rotate:X (const_int -2)
-			 (match_operand:QI 2 "register_operand" "=r"))
+			 (match_operand:QI 2 "register_operand" "r"))
 	       (match_operand:X 1 "register_operand" "r")))]
   "TARGET_BITMANIP"
   "sbclr\t%0,%1,%2"
@@ -177,16 +185,24 @@
 	  (and:DI
 	   (not:DI (subreg:DI
 		    (ashift:SI (const_int 1)
-			       (match_operand:QI 2 "register_operand" "=r")) 0))
+			       (match_operand:QI 2 "register_operand" "r")) 0))
 	   (match_operand:DI 1 "register_operand" "r")) 0)))]
   "TARGET_64BIT && TARGET_BITMANIP"
   "sbclrw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
+(define_insn "*sbclriw"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(and:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
+		(match_operand 2 "not_single_bit_mask_operand" "i")))]
+  "TARGET_64BIT && TARGET_BITMANIP"
+  "sbclriw\t%0,%1,%T2"
+  [(set_attr "type" "bitmanip")])
+
 (define_insn "*sbinv<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(xor:X (ashift:X (const_int 1)
-			 (match_operand:QI 2 "register_operand" "=r"))
+			 (match_operand:QI 2 "register_operand" "r"))
 	       (match_operand:X 1 "register_operand" "r")))]
   "TARGET_BITMANIP"
   "sbinv\t%0,%1,%2"
@@ -206,10 +222,18 @@
 	 (subreg:SI
 	  (xor:DI (subreg:DI
 		   (ashift:SI (const_int 1)
-			      (match_operand:QI 2 "register_operand" "=r")) 0)
+			      (match_operand:QI 2 "register_operand" "r")) 0)
 		  (match_operand:DI 1 "register_operand" "r")) 0)))]
   "TARGET_64BIT && TARGET_BITMANIP"
   "sbinvw\t%0,%1,%2"
+  [(set_attr "type" "bitmanip")])
+
+(define_insn "*sbinviw"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(xor:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
+		(match_operand 2 "single_bit_mask_operand" "i")))]
+  "TARGET_64BIT && TARGET_BITMANIP"
+  "sbinviw\t%0,%1,%S2"
   [(set_attr "type" "bitmanip")])
 
 (define_insn "*sbext<mode>"
