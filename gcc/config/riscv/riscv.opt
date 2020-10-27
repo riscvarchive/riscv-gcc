@@ -157,3 +157,6 @@ Enum(riscv_align_data) String(xlen) Value(riscv_align_data_type_xlen)
 
 EnumValue
 Enum(riscv_align_data) String(natural) Value(riscv_align_data_type_natural)
+
+TargetVariable
+int riscv_bitmanip_subext

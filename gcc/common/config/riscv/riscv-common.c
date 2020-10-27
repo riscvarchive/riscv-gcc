@@ -57,6 +57,14 @@ struct riscv_implied_info_t
 riscv_implied_info_t riscv_implied_info[] =
 {
   {"d", "f"},
+  {"b", "zbb"},
+  {"b", "zbs"},
+  {"b", "zba"},
+  {"b", "zbp"},
+  {"b", "zbe"},
+  {"b", "zbf"},
+  {"b", "zbc"},
+  {"b", "zbm"},
   {NULL, NULL}
 };
 
@@ -646,6 +654,16 @@ static const riscv_ext_flag_table_t riscv_ext_flag_table[] =
   {"d", &gcc_options::x_target_flags, MASK_DOUBLE_FLOAT},
   {"c", &gcc_options::x_target_flags, MASK_RVC},
   {"b", &gcc_options::x_target_flags, MASK_BITMANIP},
+  {"zba", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBA},
+  {"zbb", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBB},
+  {"zbs", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBS},
+  {"zbp", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBP},
+  {"zbr", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBP},
+  {"zbe", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBE},
+  {"zbf", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBF},
+  {"zbc", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBC},
+  {"zbm", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBM},
+  {"zbt", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBT},
   {NULL, NULL, 0}
 };
 
