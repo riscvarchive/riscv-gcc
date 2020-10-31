@@ -269,7 +269,7 @@
 (define_insn "rotrsi3"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(rotatert:SI (match_operand:SI 1 "register_operand" "r")
-		     (match_operand:SI 2 "arith_operand" "rI")))]
+		     (match_operand:QI 2 "arith_operand" "rI")))]
   "TARGET_BITMANIP"
   { return TARGET_64BIT ? "ror%i2w\t%0,%1,%2" : "ror%i2\t%0,%1,%2"; }
   [(set_attr "type" "bitmanip")])
@@ -277,7 +277,7 @@
 (define_insn "rotrdi3"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(rotatert:DI (match_operand:DI 1 "register_operand" "r")
-		     (match_operand:DI 2 "arith_operand" "rI")))]
+		     (match_operand:QI 2 "arith_operand" "rI")))]
   "TARGET_64BIT && TARGET_BITMANIP"
   "ror%i2\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
@@ -295,7 +295,7 @@
 (define_insn "rotlsi3"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(rotate:SI (match_operand:SI 1 "register_operand" "r")
-		   (match_operand:SI 2 "register_operand" "r")))]
+		   (match_operand:QI 2 "register_operand" "r")))]
   "TARGET_BITMANIP"
   { return TARGET_64BIT ? "rolw\t%0,%1,%2" : "rol\t%0,%1,%2"; }
   [(set_attr "type" "bitmanip")])
@@ -303,7 +303,7 @@
 (define_insn "rotldi3"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(rotate:DI (match_operand:DI 1 "register_operand" "r")
-		   (match_operand:DI 2 "register_operand" "r")))]
+		   (match_operand:QI 2 "register_operand" "r")))]
   "TARGET_64BIT && TARGET_BITMANIP"
   "rol\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
@@ -311,7 +311,7 @@
 (define_insn "rotlsi3_sext"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(sign_extend:DI (rotate:SI (match_operand:SI 1 "register_operand" "r")
-				   (match_operand:SI 2 "register_operand" "r"))))]
+				   (match_operand:QI 2 "register_operand" "r"))))]
   "TARGET_64BIT && TARGET_BITMANIP"
   "rolw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
