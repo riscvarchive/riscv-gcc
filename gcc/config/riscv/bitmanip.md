@@ -133,6 +133,14 @@
   "sbset\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
+(define_insn "*sbset<mode>_1"
+  [(set (match_operand:X 0 "register_operand" "=r")
+	(ashift:X (const_int 1)
+		  (match_operand:QI 1 "register_operand" "r")))]
+  "TARGET_BITMANIP"
+  "sbset\t%0,x0,%1"
+  [(set_attr "type" "bitmanip")])
+
 (define_insn "*sbseti<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(ior:X (match_operand:X 1 "register_operand" "r")
