@@ -4511,8 +4511,7 @@ riscv_expand_epilogue (int style)
       poly_int64 adjust = -frame->hard_frame_pointer_offset;
       rtx adjust_rtx = NULL_RTX;
 
-      if (!adjust.is_constant ()
-	  || (adjust.is_constant () && !SMALL_OPERAND (adjust.is_constant())))
+      if (!adjust.is_constant ())
 	{
 	  rtx tmp1 = RISCV_PROLOGUE_TEMP (Pmode);
 	  rtx tmp2 = RISCV_PROLOGUE_TEMP2 (Pmode);
@@ -4520,7 +4519,16 @@ riscv_expand_epilogue (int style)
 	  adjust_rtx = tmp1;
 	}
       else
-	adjust_rtx = GEN_INT (adjust.to_constant ());
+	{
+	  if (!SMALL_OPERAND (adjust.to_constant ()))
+	    {
+	      riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode),
+			       GEN_INT (adjust.to_constant ()));
+	      adjust_rtx = RISCV_PROLOGUE_TEMP (Pmode);
+	    }
+	  else
+	    adjust_rtx = GEN_INT (adjust.to_constant ());
+	}
 
       insn = emit_insn (
 	       gen_add3_insn (stack_pointer_rtx, hard_frame_pointer_rtx,
