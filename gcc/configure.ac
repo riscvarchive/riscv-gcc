@@ -1110,6 +1110,11 @@ AC_ARG_WITH(multilib-list,
 :,
 with_multilib_list=default)
 
+AC_ARG_WITH(multilib-generator,
+[AS_HELP_STRING([--with-multilib-generator], [Multi-libs configuration string (RISC-V only)])],
+:,
+with_multilib_generator=default)
+
 # -------------------------
 # Checks for other programs
 # -------------------------
@@ -1382,8 +1387,13 @@ LDFLAGS="$LDFLAGS $ZSTD_LDFLAGS"
 
 AC_MSG_CHECKING(for zstd.h)
 AC_CACHE_VAL(gcc_cv_header_zstd_h,
+# We require version 1.3.0 or later.  This is the first version that has
+# ZSTD_getFrameContentSize.
 [AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-[[#include <zstd.h>]])],
+[[#include <zstd.h>
+#if ZSTD_VERSION_NUMBER < 10300
+#error "need zstd 1.3.0 or better"
+#endif]])],
   [gcc_cv_header_zstd_h=yes],
   [gcc_cv_header_zstd_h=no])])
 AC_MSG_RESULT($gcc_cv_header_zstd_h)
