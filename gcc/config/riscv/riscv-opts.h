@@ -51,4 +51,10 @@ enum riscv_align_data {
   riscv_align_data_type_natural
 };
 
+#define MASK_ZICSR    (1 << 0)
+#define MASK_ZIFENCEI (1 << 1)
+
+#define TARGET_ZICSR    ((riscv_zi_subext & MASK_ZICSR) != 0)
+#define TARGET_ZIFENCEI ((riscv_zi_subext & MASK_ZIFENCEI) != 0)
+
 #endif /* ! GCC_RISCV_OPTS_H */

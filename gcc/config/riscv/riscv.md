@@ -1538,7 +1538,8 @@
 		     LCT_NORMAL, VOIDmode, operands[0], Pmode,
 		     operands[1], Pmode, const0_rtx, Pmode);
 #else
-  emit_insn (gen_fence_i ());
+  if (TARGET_ZIFENCEI)
+    emit_insn (gen_fence_i ());
 #endif
   DONE;
 })
@@ -1550,7 +1551,7 @@
 
 (define_insn "fence_i"
   [(unspec_volatile [(const_int 0)] UNSPECV_FENCE_I)]
-  ""
+  "TARGET_ZIFENCEI"
   "fence.i")
 
 ;;
