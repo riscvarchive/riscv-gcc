@@ -158,3 +158,26 @@ Enum(riscv_align_data) String(natural) Value(riscv_align_data_type_natural)
 
 TargetVariable
 int riscv_crypto_subext
+
+TargetVariable
+int riscv_bitmanip_subext
+
+TargetVariable
+int riscv_zi_subext
+
+Enum
+Name(isa_spec_class) Type(enum riscv_isa_spec_class)
+Supported ISA specs (for use with the -misa-spec= option):
+
+EnumValue
+Enum(isa_spec_class) String(2.2) Value(ISA_SPEC_CLASS_2P2)
+
+EnumValue
+Enum(isa_spec_class) String(20190608) Value(ISA_SPEC_CLASS_20190608)
+
+EnumValue
+Enum(isa_spec_class) String(20191213) Value(ISA_SPEC_CLASS_20191213)
+
+misa-spec=
+Target Report RejectNegative Joined Enum(isa_spec_class) Var(riscv_isa_spec) Init(TARGET_DEFAULT_ISA_SPEC)
+Set the version of RISC-V ISA spec.
