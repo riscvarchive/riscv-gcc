@@ -57,6 +57,8 @@ struct riscv_implied_info_t
 riscv_implied_info_t riscv_implied_info[] =
 {
   {"d", "f"},
+  {"f", "zicsr"},
+  {"d", "zicsr"},
   {"b", "zbb"},
   {"b", "zbs"},
   {"b", "zba"},
@@ -821,6 +823,10 @@ static const riscv_ext_flag_table_t riscv_ext_flag_table[] =
   {"d", &gcc_options::x_target_flags, MASK_DOUBLE_FLOAT},
   {"c", &gcc_options::x_target_flags, MASK_RVC},
   {"b", &gcc_options::x_target_flags, MASK_BITMANIP},
+
+  {"zicsr",    &gcc_options::x_riscv_zi_subext, MASK_ZICSR},
+  {"zifencei", &gcc_options::x_riscv_zi_subext, MASK_ZIFENCEI},
+
   {"zba", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBA},
   {"zbb", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBB},
   {"zbs", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBS},

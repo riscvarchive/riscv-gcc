@@ -73,4 +73,10 @@ enum riscv_align_data {
 #define TARGET_ZBM ((riscv_bitmanip_subext & MASK_ZBM) != 0)
 #define TARGET_ZBT ((riscv_bitmanip_subext & MASK_ZBT) != 0)
 
+#define MASK_ZICSR    (1 << 0)
+#define MASK_ZIFENCEI (1 << 1)
+
+#define TARGET_ZICSR    ((riscv_zi_subext & MASK_ZICSR) != 0)
+#define TARGET_ZIFENCEI ((riscv_zi_subext & MASK_ZIFENCEI) != 0)
+
 #endif /* ! GCC_RISCV_OPTS_H */
