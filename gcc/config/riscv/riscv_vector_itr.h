@@ -74,6 +74,38 @@
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer types, and info for
+   corresponding widening vector type but with LMUL 1.  */
+#define _RVV_WRED_INT_ITERATOR(MACRO) \
+  MACRO (8, 1, 8, int8_t, 16, 1, int16_t) \
+  MACRO (8, 2, 4, int8_t, 16, 1, int16_t) \
+  MACRO (8, 4, 2, int8_t, 16, 1, int16_t) \
+  MACRO (8, 8, 1, int8_t, 16, 1, int16_t) \
+  MACRO (16, 1, 16, int16_t, 32, 1, int32_t) \
+  MACRO (16, 2, 8, int16_t, 32, 1, int32_t) \
+  MACRO (16, 4, 4, int16_t, 32, 1, int32_t) \
+  MACRO (16, 8, 2, int16_t, 32, 1, int32_t) \
+  MACRO (32, 1, 32, int32_t, 64, 1, int64_t) \
+  MACRO (32, 2, 16, int32_t, 64, 1, int64_t) \
+  MACRO (32, 4, 8, int32_t, 64, 1, int64_t) \
+  MACRO (32, 8, 4, int32_t, 64, 1, int64_t) \
+
+/* Same as above but with an extra argument.  */
+#define _RVV_WRED_INT_ITERATOR_ARG(MACRO, ...) \
+  MACRO (8, 1, 8, int8_t, 16, 1, int16_t, __VA_ARGS__) \
+  MACRO (8, 2, 4, int8_t, 16, 1, int16_t, __VA_ARGS__) \
+  MACRO (8, 4, 2, int8_t, 16, 1, int16_t, __VA_ARGS__) \
+  MACRO (8, 8, 1, int8_t, 16, 1, int16_t, __VA_ARGS__) \
+  MACRO (16, 1, 16, int16_t, 32, 1, int32_t, __VA_ARGS__) \
+  MACRO (16, 2, 8, int16_t, 32, 1, int32_t, __VA_ARGS__) \
+  MACRO (16, 4, 4, int16_t, 32, 1, int32_t, __VA_ARGS__) \
+  MACRO (16, 8, 2, int16_t, 32, 1, int32_t, __VA_ARGS__) \
+  MACRO (32, 1, 32, int32_t, 64, 1, int64_t, __VA_ARGS__) \
+  MACRO (32, 2, 16, int32_t, 64, 1, int64_t, __VA_ARGS__) \
+  MACRO (32, 4, 8, int32_t, 64, 1, int64_t, __VA_ARGS__) \
+  MACRO (32, 8, 4, int32_t, 64, 1, int64_t, __VA_ARGS__) \
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer types, and info for
    corresponding quad widening vector type.  */
 #define _RVV_QINT_ITERATOR(MACRO) \
   MACRO (8, 1, 8, int8_t, 32, 4, int32_t) \
@@ -148,6 +180,30 @@
   MACRO (32, 1, 32, __float32_t, 64, 2, __float64_t, __VA_ARGS__) \
   MACRO (32, 2, 16, __float32_t, 64, 4, __float64_t, __VA_ARGS__) \
   MACRO (32, 4, 8, __float32_t, 64, 8, __float64_t, __VA_ARGS__) \
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating types, and info for
+   corresponding widening vector type but with LMUL 1.  */
+#define _RVV_WRED_FLOAT_ITERATOR(MACRO) \
+  MACRO (16, 1, 16, __float16_t, 32, 1, __float32_t) \
+  MACRO (16, 2, 8, __float16_t, 32, 1, __float32_t) \
+  MACRO (16, 4, 4, __float16_t, 32, 1, __float32_t) \
+  MACRO (16, 8, 2, __float16_t, 32, 1, __float32_t) \
+  MACRO (32, 1, 32, __float32_t, 64, 1, __float64_t) \
+  MACRO (32, 2, 16, __float32_t, 64, 1, __float64_t) \
+  MACRO (32, 4, 8, __float32_t, 64, 1, __float64_t) \
+  MACRO (32, 8, 4, __float32_t, 64, 1, __float64_t) \
+
+/* Same as above but with an extra argument.  */
+#define _RVV_WRED_FLOAT_ITERATOR_ARG(MACRO, ...) \
+  MACRO (16, 1, 16, __float16_t, 32, 1, __float32_t, __VA_ARGS__) \
+  MACRO (16, 2, 8, __float16_t, 32, 1, __float32_t, __VA_ARGS__) \
+  MACRO (16, 4, 4, __float16_t, 32, 1, __float32_t, __VA_ARGS__) \
+  MACRO (16, 8, 2, __float16_t, 32, 1, __float32_t, __VA_ARGS__) \
+  MACRO (32, 1, 32, __float32_t, 64, 1, __float64_t, __VA_ARGS__) \
+  MACRO (32, 2, 16, __float32_t, 64, 1, __float64_t, __VA_ARGS__) \
+  MACRO (32, 4, 8, __float32_t, 64, 1, __float64_t, __VA_ARGS__) \
+  MACRO (32, 8, 4, __float32_t, 64, 1, __float64_t, __VA_ARGS__) \
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, floating point modes, and info for

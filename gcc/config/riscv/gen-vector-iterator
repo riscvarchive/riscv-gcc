@@ -173,7 +173,10 @@ class VectorTypeInfo:
 
   def __getitem__(self, item):
     if item[0] == 'W':
-      return self.widen_type[item[1:]]
+      if item[1] == '1':
+        return self.widen_lmul_1_type[item[2:]]
+      else:
+        return self.widen_type[item[1:]]
     elif item[0] == 'Q':
       return self.quad_widen_type[item[1:]]
     elif item[0] == 'E' and not (item.startswith("EEW") or item == "EMUL"):
@@ -454,6 +457,13 @@ def gen_md():
   )
 
   dump_md_iterator(
+    name = "VWRED_IMODES",
+    comment = "All vector modes supported for widening integer point reduction operation.",
+    vals = filter(lambda x : x.has_widen_lmul_1_type(), int_vector_modes)
+  )
+
+
+  dump_md_iterator(
     name = "FCVT_VWIMODES",
     comment = "All vector modes supported for FP type-convert.",
     vals = list(map(lambda x: x.int_type,
@@ -482,6 +492,12 @@ def gen_md():
     name = "VWFMODES",
     comment = "All vector modes supported for widening floating point alu.",
     vals = filter(lambda x : x.has_widen_type(), float_vector_modes)
+  )
+
+  dump_md_iterator(
+    name = "VWRED_FMODES",
+    comment = "All vector modes supported for widening floating point reduction operation.",
+    vals = filter(lambda x : x.has_widen_lmul_1_type(), float_vector_modes)
   )
 
   dump_md_iterator(
@@ -714,6 +730,16 @@ def gen_usr_c():
   )
 
   dump_c_iterator(
+    name = "_RVV_WRED_INT_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, integer types, and info for\n"
+              "   corresponding widening vector type but with LMUL 1.  */",
+    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {CTYPE}, "
+                        "{W1SEW}, {W1LMUL}, {W1CTYPE}",
+    vals = list(filter(lambda x: x.has_widen_lmul_1_type(), int_vector_modes))
+  )
+
+  dump_c_iterator(
     name = "_RVV_QINT_ITERATOR",
     comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
               "   along with its corresponding vector, integer types, and info for\n"
@@ -749,6 +775,16 @@ def gen_usr_c():
     arg_list_template = "{SEW}, {LMUL}, {MLEN}, {CTYPE}, "
                         "{WSEW}, {WLMUL}, {WCTYPE}",
     vals = list(filter(lambda x: x.has_widen_type(), float_vector_modes))
+  )
+
+  dump_c_iterator(
+    name = "_RVV_WRED_FLOAT_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, floating types, and info for\n"
+              "   corresponding widening vector type but with LMUL 1.  */",
+    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {CTYPE}, "
+                        "{W1SEW}, {W1LMUL}, {W1CTYPE}",
+    vals = list(filter(lambda x: x.has_widen_lmul_1_type(), float_vector_modes))
   )
 
   dump_c_iterator(
@@ -888,6 +924,16 @@ def gen_c():
   )
 
   dump_c_iterator(
+    name = "_RVV_WRED_INT_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, integer modes, and info for\n"
+              "   corresponding widening vector type.  */",
+    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}, "
+                        "{W1SEW}, {W1LMUL}, {W1MODE}, {W1SUBMODE}",
+    vals = list(filter(lambda x: x.has_widen_lmul_1_type(), int_vector_modes))
+  )
+
+  dump_c_iterator(
     name = "_RVV_QINT_ITERATOR",
     comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
               "   along with its corresponding vector, integer modes, and info for\n"
@@ -945,6 +991,16 @@ def gen_c():
     arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}, "
                         "{WSEW}, {WLMUL}, {WMODE}, {WSUBMODE}",
     vals = list(filter(lambda x: x.has_widen_type(), float_vector_modes))
+  )
+
+  dump_c_iterator(
+    name = "_RVV_WRED_FLOAT_ITERATOR",
+    comment = "/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,\n"
+              "   along with its corresponding vector, floating modes, and info for\n"
+              "   corresponding widening vector type.  */",
+    arg_list_template = "{SEW}, {LMUL}, {MLEN}, {MODE}, {SUBMODE}, "
+                        "{W1SEW}, {W1LMUL}, {W1MODE}, {W1SUBMODE}",
+    vals = list(filter(lambda x: x.has_widen_lmul_1_type(), float_vector_modes))
   )
 
   dump_c_iterator(
@@ -1082,6 +1138,8 @@ class FTtypes:
         unsigned_version = True
       if '{WFT_VEC}' in arg_list_template:
         unsigned_version = True
+      if '{W1FT_VEC}' in arg_list_template:
+        unsigned_version = True
       if '{QFT_VEC}' in arg_list_template:
         unsigned_version = True
       if '{EFT_VEC}' in arg_list_template:
@@ -1104,6 +1162,8 @@ class FTtypes:
                 arg = arg.replace("{FT_VEC}", "{FT_U_VEC}")
               if '{WFT_VEC}' in arg:
                 arg = arg.replace("{WFT_VEC}", "{WFT_U_VEC}")
+              if '{W1FT_VEC}' in arg:
+                arg = arg.replace("{W1FT_VEC}", "{W1FT_U_VEC}")
               if '{QFT_VEC}' in arg:
                 arg = arg.replace("{QFT_VEC}", "{QFT_U_VEC}")
               if '{EFT_VEC}' in arg:
@@ -1209,11 +1269,7 @@ def gen_ftype():
       ('{WFT_VEC}', '{WFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
       ('{WFT_VEC}', '{WFT_VEC}', '{FT_SCALAR}', '{FT_VEC}'),
 
-      ('{WFT_VEC_M1}', '{WFT_VEC_M1}', '{WFT_VEC_M1}', '{FT_VEC}'),
-
       # 4 args.
-      ('{WFT_VEC_M1}', '{FT_MASK}', '{WFT_VEC_M1}', '{WFT_VEC_M1}', '{FT_VEC}'),
-
       ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
       ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_VEC}', '{FT_SCALAR}'),
       ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{WFT_VEC}', '{FT_VEC}'),
@@ -1221,6 +1277,20 @@ def gen_ftype():
       ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_SCALAR}', '{FT_VEC}'), # For maksed wmac.
     ],
     vals = list(filter(lambda x: x.has_widen_type(), vector_modes)))
+
+  # Same as above, but for widening vector with LMUL 1 (used for reduction
+  # operation).
+  ft.add(
+    arg_list_templates=[
+      # 2 args.
+      # Widening reduction vector operation.
+      ('{W1FT_VEC}', '{W1FT_VEC}', '{W1FT_VEC}', '{FT_VEC}'),
+
+      # 4 args.
+      # Masked widening reduction vector operation.
+      ('{W1FT_VEC}', '{FT_MASK}', '{W1FT_VEC}', '{W1FT_VEC}', '{FT_VEC}'),
+    ],
+    vals = list(filter(lambda x: x.has_widen_lmul_1_type(), vector_modes)))
 
   # Prototype for integer vector mode only
   ft.add(

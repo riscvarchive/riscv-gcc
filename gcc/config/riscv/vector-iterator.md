@@ -35,6 +35,13 @@
   VNx16HI VNx32HI VNx4SI VNx8SI
   VNx16SI])
 
+;; All vector modes supported for widening integer point reduction operation.
+(define_mode_iterator VWRED_IMODES [
+  VNx16QI VNx32QI VNx64QI VNx128QI
+  VNx8HI VNx16HI VNx32HI VNx64HI
+  VNx4SI VNx8SI VNx16SI VNx32SI
+])
+
 ;; All vector modes supported for FP type-convert.
 (define_mode_iterator FCVT_VWIMODES [
   VNx8HI VNx16HI VNx32HI VNx4SI
@@ -63,6 +70,12 @@
 (define_mode_iterator VWFMODES [
   VNx8HF VNx16HF VNx32HF VNx4SF
   VNx8SF VNx16SF])
+
+;; All vector modes supported for widening floating point reduction operation.
+(define_mode_iterator VWRED_FMODES [
+  VNx8HF VNx16HF VNx32HF VNx64HF
+  VNx4SF VNx8SF VNx16SF VNx32SF
+])
 
 ;; All vector tuple modes supported.
 (define_mode_iterator VTMODES [

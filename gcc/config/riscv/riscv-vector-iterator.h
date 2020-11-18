@@ -68,6 +68,38 @@
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, integer modes, and info for
+   corresponding widening vector type.  */
+#define _RVV_WRED_INT_ITERATOR(MACRO) \
+  MACRO (8, 1, 8, vnx16qi, QI, 16, 1, vnx8hi, HI) \
+  MACRO (8, 2, 4, vnx32qi, QI, 16, 1, vnx8hi, HI) \
+  MACRO (8, 4, 2, vnx64qi, QI, 16, 1, vnx8hi, HI) \
+  MACRO (8, 8, 1, vnx128qi, QI, 16, 1, vnx8hi, HI) \
+  MACRO (16, 1, 16, vnx8hi, HI, 32, 1, vnx4si, SI) \
+  MACRO (16, 2, 8, vnx16hi, HI, 32, 1, vnx4si, SI) \
+  MACRO (16, 4, 4, vnx32hi, HI, 32, 1, vnx4si, SI) \
+  MACRO (16, 8, 2, vnx64hi, HI, 32, 1, vnx4si, SI) \
+  MACRO (32, 1, 32, vnx4si, SI, 64, 1, vnx2di, DI) \
+  MACRO (32, 2, 16, vnx8si, SI, 64, 1, vnx2di, DI) \
+  MACRO (32, 4, 8, vnx16si, SI, 64, 1, vnx2di, DI) \
+  MACRO (32, 8, 4, vnx32si, SI, 64, 1, vnx2di, DI) \
+
+/* Same as above but with an extra argument.  */
+#define _RVV_WRED_INT_ITERATOR_ARG(MACRO, ...) \
+  MACRO (8, 1, 8, vnx16qi, QI, 16, 1, vnx8hi, HI, __VA_ARGS__) \
+  MACRO (8, 2, 4, vnx32qi, QI, 16, 1, vnx8hi, HI, __VA_ARGS__) \
+  MACRO (8, 4, 2, vnx64qi, QI, 16, 1, vnx8hi, HI, __VA_ARGS__) \
+  MACRO (8, 8, 1, vnx128qi, QI, 16, 1, vnx8hi, HI, __VA_ARGS__) \
+  MACRO (16, 1, 16, vnx8hi, HI, 32, 1, vnx4si, SI, __VA_ARGS__) \
+  MACRO (16, 2, 8, vnx16hi, HI, 32, 1, vnx4si, SI, __VA_ARGS__) \
+  MACRO (16, 4, 4, vnx32hi, HI, 32, 1, vnx4si, SI, __VA_ARGS__) \
+  MACRO (16, 8, 2, vnx64hi, HI, 32, 1, vnx4si, SI, __VA_ARGS__) \
+  MACRO (32, 1, 32, vnx4si, SI, 64, 1, vnx2di, DI, __VA_ARGS__) \
+  MACRO (32, 2, 16, vnx8si, SI, 64, 1, vnx2di, DI, __VA_ARGS__) \
+  MACRO (32, 4, 8, vnx16si, SI, 64, 1, vnx2di, DI, __VA_ARGS__) \
+  MACRO (32, 8, 4, vnx32si, SI, 64, 1, vnx2di, DI, __VA_ARGS__) \
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer modes, and info for
    corresponding quad widening vector type.  */
 #define _RVV_QINT_ITERATOR(MACRO) \
   MACRO (8, 1, 8, vnx16qi, QI, 32, 4, vnx16si, SI) \
@@ -438,6 +470,30 @@
   MACRO (32, 1, 32, vnx4sf, SF, 64, 2, vnx4df, DF, __VA_ARGS__) \
   MACRO (32, 2, 16, vnx8sf, SF, 64, 4, vnx8df, DF, __VA_ARGS__) \
   MACRO (32, 4, 8, vnx16sf, SF, 64, 8, vnx16df, DF, __VA_ARGS__) \
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, floating modes, and info for
+   corresponding widening vector type.  */
+#define _RVV_WRED_FLOAT_ITERATOR(MACRO) \
+  MACRO (16, 1, 16, vnx8hf, HF, 32, 1, vnx4sf, SF) \
+  MACRO (16, 2, 8, vnx16hf, HF, 32, 1, vnx4sf, SF) \
+  MACRO (16, 4, 4, vnx32hf, HF, 32, 1, vnx4sf, SF) \
+  MACRO (16, 8, 2, vnx64hf, HF, 32, 1, vnx4sf, SF) \
+  MACRO (32, 1, 32, vnx4sf, SF, 64, 1, vnx2df, DF) \
+  MACRO (32, 2, 16, vnx8sf, SF, 64, 1, vnx2df, DF) \
+  MACRO (32, 4, 8, vnx16sf, SF, 64, 1, vnx2df, DF) \
+  MACRO (32, 8, 4, vnx32sf, SF, 64, 1, vnx2df, DF) \
+
+/* Same as above but with an extra argument.  */
+#define _RVV_WRED_FLOAT_ITERATOR_ARG(MACRO, ...) \
+  MACRO (16, 1, 16, vnx8hf, HF, 32, 1, vnx4sf, SF, __VA_ARGS__) \
+  MACRO (16, 2, 8, vnx16hf, HF, 32, 1, vnx4sf, SF, __VA_ARGS__) \
+  MACRO (16, 4, 4, vnx32hf, HF, 32, 1, vnx4sf, SF, __VA_ARGS__) \
+  MACRO (16, 8, 2, vnx64hf, HF, 32, 1, vnx4sf, SF, __VA_ARGS__) \
+  MACRO (32, 1, 32, vnx4sf, SF, 64, 1, vnx2df, DF, __VA_ARGS__) \
+  MACRO (32, 2, 16, vnx8sf, SF, 64, 1, vnx2df, DF, __VA_ARGS__) \
+  MACRO (32, 4, 8, vnx16sf, SF, 64, 1, vnx2df, DF, __VA_ARGS__) \
+  MACRO (32, 8, 4, vnx32sf, SF, 64, 1, vnx2df, DF, __VA_ARGS__) \
 
 /* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
    along with its corresponding vector, floating point modes, and info for
