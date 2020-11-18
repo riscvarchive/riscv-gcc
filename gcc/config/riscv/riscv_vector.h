@@ -3238,7 +3238,7 @@ vwred##OPU##_vs_u##SEW##m##LMUL##_u##WSEW##m1_m (vbool##MLEN##_t mask,	\
 								 b, a);	\
 }
 
-_RVV_WINT_ITERATOR_ARG (_RVV_WREDUC_OP, sum, sumu)
+_RVV_WRED_INT_ITERATOR_ARG (_RVV_WREDUC_OP, sum, sumu)
 
 #define _RVV_FREDUC_OP(SEW, LMUL, MLEN, T, OP)				\
 __extension__ extern __inline vfloat##SEW##m1_t			\
@@ -3285,9 +3285,8 @@ vfwred##OP##_vs_f##SEW##m##LMUL##_f##WSEW##m1_m (vbool##MLEN##_t mask,	\
 								   b, a);\
 }									\
 
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, sum)
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, osum)
-
+_RVV_WRED_FLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, sum)
+_RVV_WRED_FLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, osum)
 
 #define _RVV_VREINTERPRET(SEW, LMUL, MLEN, T)				\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\

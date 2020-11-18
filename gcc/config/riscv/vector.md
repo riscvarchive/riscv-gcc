@@ -145,11 +145,16 @@
 (define_code_attr sz [(sign_extend "s") (zero_extend "z")])
 
 ;; Iterator and attributes for widening floating-point reduction instructions.
-(define_int_iterator WFREDUC_REDUC [UNSPEC_REDUC UNSPEC_ORDERED_REDUC])
+(define_int_iterator WFREDUC_REDUC [UNSPEC_REDUC_SUM UNSPEC_ORDERED_REDUC_SUM])
+
+;; Iterator and attributes for widening integer reduction instructions.
+(define_int_iterator WREDUC_REDUC [UNSPEC_REDUC_SUM UNSPEC_REDUC_USUM])
+
+(define_int_attr sumu [(UNSPEC_REDUC_SUM "") (UNSPEC_REDUC_USUM "u")])
 
 ;; <o> expands to an empty string when doing a unordered operation and
 ;; "o" when doing an ordered operation.
-(define_int_attr o [(UNSPEC_REDUC "") (UNSPEC_ORDERED_REDUC "o")])
+(define_int_attr o [(UNSPEC_REDUC_SUM "") (UNSPEC_ORDERED_REDUC_SUM "o")])
 
 ;; Iterator and attributes for misc mask instructions.
 (define_int_iterator MISC_MASK_OP [UNSPEC_SBF UNSPEC_SIF UNSPEC_SOF])
@@ -6142,18 +6147,15 @@
 
 ;; Widening Integer Reduction Instructions
 
-(define_expand "wreduc_sum<u><mode>"
+(define_expand "wreduc_sum<sumu><mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VW1MODES> 0 "register_operand")
 		   (unspec:<VW1MODES>
 		     [(unspec:<VW1MODES>
 			[(match_operand:<VW1MODES> 1 "register_operand")
-			 (plus:<VWMODE>
-			   (vec_duplicate:<VWMODE>
-			     (match_operand:<VW1MODES> 2 "register_operand"))
-			   (any_extend:<VWMODE>
-			     (match_operand:VWIMODES 3 "register_operand")))]
-		       UNSPEC_REDUC)
+			 (match_operand:<VW1MODES> 2 "register_operand")
+			 (match_operand:VWRED_IMODES 3 "register_operand")]
+		       WREDUC_REDUC)
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
@@ -6161,38 +6163,32 @@
 {
 })
 
-(define_insn "*wreduc_sum<u><mode>_nosetvl"
+(define_insn "*wreduc_sum<sumu><mode>_nosetvl"
   [(set (match_operand:<VW1MODES> 0 "register_operand" "=&vr")
 	(unspec:<VW1MODES>
 	  [(unspec:<VW1MODES>
 	     [(match_operand:<VW1MODES> 1 "register_operand" "0")
-	      (plus:<VWMODE>
-		(vec_duplicate:<VWMODE>
-		  (match_operand:<VW1MODES> 2 "register_operand" "vr"))
-		(any_extend:<VWMODE>
-		  (match_operand:VWIMODES 3 "register_operand" "vr")))]
-	    UNSPEC_REDUC)
+	      (match_operand:<VW1MODES> 2 "register_operand" "vr")
+	      (match_operand:VWRED_IMODES 3 "register_operand" "vr")]
+	    WREDUC_REDUC)
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vwredsum<u>.vs\t%0,%3,%2"
+  "vwredsum<sumu>.vs\t%0,%3,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "wreduc_sum<u><mode>_mask"
+(define_expand "wreduc_sum<sumu><mode>_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VW1MODES> 0 "register_operand")
 		   (unspec:<VW1MODES>
 		     [(unspec:<VW1MODES>
 			[(match_operand:<VCMPEQUIV> 1 "register_operand")
 			 (match_operand:<VW1MODES> 2 "register_operand")
-			 (plus:<VWMODE>
-			   (vec_duplicate:<VWMODE>
-			     (match_operand:<VW1MODES> 3 "register_operand"))
-			   (any_extend:<VWMODE>
-			     (match_operand:VWIMODES 4 "register_operand")))]
-		       UNSPEC_REDUC)
+			 (match_operand:<VW1MODES> 3 "register_operand")
+			 (match_operand:VWRED_IMODES 4 "register_operand")]
+		       WREDUC_REDUC)
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
@@ -6200,23 +6196,20 @@
 {
 })
 
-(define_insn "*wreduc_sum<u><mode>_mask_nosetvl"
+(define_insn "*wreduc_sum<sumu><mode>_mask_nosetvl"
   [(set (match_operand:<VW1MODES> 0 "register_operand" "=vr")
 	(unspec:<VW1MODES>
 	  [(unspec:<VW1MODES>
 	     [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	      (match_operand:<VW1MODES> 2 "register_operand" "0")
-	      (plus:<VWMODE>
-		(vec_duplicate:<VWMODE>
-		  (match_operand:<VW1MODES> 3 "register_operand" "vr"))
-		(any_extend:<VWMODE>
-		  (match_operand:VWIMODES 4 "register_operand" "vr")))]
-	    UNSPEC_REDUC)
+	      (match_operand:<VW1MODES> 3 "register_operand" "vr")
+	      (match_operand:VWRED_IMODES 4 "register_operand" "vr")]
+	    WREDUC_REDUC)
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vwredsum<u>.vs\t%0,%4,%3,%1.t"
+  "vwredsum<sumu>.vs\t%0,%4,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -6378,11 +6371,8 @@
 		   (unspec:<VW1MODES>
 		     [(unspec:<VW1MODES>
 			[(match_operand:<VW1MODES> 1 "register_operand")
-			 (plus:<VWMODE>
-			   (vec_duplicate:<VWMODE>
-			     (match_operand:<VW1MODES> 2 "register_operand"))
-			   (float_extend:<VWMODE>
-			     (match_operand:VWFMODES 3 "register_operand")))]
+			 (match_operand:<VW1MODES> 2 "register_operand")
+			 (match_operand:VWRED_FMODES 3 "register_operand")]
 		       WFREDUC_REDUC)
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
@@ -6396,11 +6386,8 @@
 	(unspec:<VW1MODES>
 	  [(unspec:<VW1MODES>
 	     [(match_operand:<VW1MODES> 1 "register_operand" "0")
-	      (plus:<VWMODE>
-		(vec_duplicate:<VWMODE>
-		  (match_operand:<VW1MODES> 2 "register_operand" "vr"))
-		(float_extend:<VWMODE>
-		  (match_operand:VWFMODES 3 "register_operand" "vr")))]
+	      (match_operand:<VW1MODES> 2 "register_operand" "vr")
+	      (match_operand:VWRED_FMODES 3 "register_operand" "vr")]
 	    WFREDUC_REDUC)
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
@@ -6417,11 +6404,8 @@
 		     [(unspec:<VW1MODES>
 			[(match_operand:<VCMPEQUIV> 1 "register_operand")
 			 (match_operand:<VW1MODES> 2 "register_operand")
-			 (plus:<VWMODE>
-			   (vec_duplicate:<VWMODE>
-			     (match_operand:<VW1MODES> 3 "register_operand"))
-			   (float_extend:<VWMODE>
-			     (match_operand:VWFMODES 4 "register_operand")))]
+			 (match_operand:<VW1MODES> 3 "register_operand")
+			 (match_operand:VWRED_FMODES 4 "register_operand")]
 		       WFREDUC_REDUC)
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
@@ -6436,11 +6420,8 @@
 	  [(unspec:<VW1MODES>
 	    [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
 	     (match_operand:<VW1MODES> 2 "register_operand" "0")
-	     (plus:<VWMODE>
-	       (vec_duplicate:<VWMODE>
-		 (match_operand:<VW1MODES> 3 "register_operand" "vr"))
-	       (float_extend:<VWMODE>
-		 (match_operand:VWFMODES 4 "register_operand" "vr")))]
+	     (match_operand:<VW1MODES> 3 "register_operand" "vr")
+	     (match_operand:VWRED_FMODES 4 "register_operand" "vr")]
 	    WFREDUC_REDUC)
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
