@@ -225,3 +225,11 @@
 (define_predicate "not_single_bit_mask_operand"
   (and (match_code "const_int")
        (match_test "pow2p_hwi (~INTVAL (op))")))
+
+(define_predicate "const31_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 31")))
+
+(define_predicate "const63_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 63")))
