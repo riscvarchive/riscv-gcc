@@ -31,6 +31,8 @@
 				 (umin "minu")
 				 (umax "maxu")])
 
+(define_mode_attr shiftm1 [(SI "const31_operand") (DI "const63_operand")])
+
 (define_insn "clzsi2"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(clz:SI (match_operand:SI 1 "register_operand" "r")))]
@@ -131,10 +133,31 @@
   "sbset\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
+(define_insn "*sbset<mode>_mask"
+  [(set (match_operand:X 0 "register_operand" "=r")
+	(ior:X (ashift:X (const_int 1)
+			 (subreg:QI
+			  (and:X (match_operand:X 2 "register_operand" "r")
+				 (match_operand 3 "<X:shiftm1>" "i")) 0))
+	       (match_operand:X 1 "register_operand" "r")))]
+  "TARGET_BITMANIP"
+  "sbset\t%0,%1,%2"
+  [(set_attr "type" "bitmanip")])
+
 (define_insn "*sbset<mode>_1"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(ashift:X (const_int 1)
 		  (match_operand:QI 1 "register_operand" "r")))]
+  "TARGET_BITMANIP"
+  "sbset\t%0,x0,%1"
+  [(set_attr "type" "bitmanip")])
+
+(define_insn "*sbset<mode>_1_mask"
+  [(set (match_operand:X 0 "register_operand" "=r")
+	(ashift:X (const_int 1)
+		  (subreg:QI
+		   (and:X (match_operand:X 1 "register_operand" "r")
+			  (match_operand 2 "<X:shiftm1>" "i")) 0)))]
   "TARGET_BITMANIP"
   "sbset\t%0,x0,%1"
   [(set_attr "type" "bitmanip")])
@@ -154,6 +177,21 @@
 	  (ior:DI (subreg:DI
 		   (ashift:SI (const_int 1)
 			      (match_operand:QI 2 "register_operand" "r")) 0)
+		  (match_operand:DI 1 "register_operand" "r")) 0)))]
+  "TARGET_64BIT && TARGET_BITMANIP"
+  "sbsetw\t%0,%1,%2"
+  [(set_attr "type" "bitmanip")])
+
+(define_insn "*sbsetw_mask"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(sign_extend:DI
+	 (subreg:SI
+	  (ior:DI (subreg:DI
+		   (ashift:SI
+		    (const_int 1)
+		    (subreg:QI
+		     (and:DI (match_operand:DI 2 "register_operand" "r")
+			     (match_operand 3 "const31_operand" "i")) 0)) 0)
 		  (match_operand:DI 1 "register_operand" "r")) 0)))]
   "TARGET_64BIT && TARGET_BITMANIP"
   "sbsetw\t%0,%1,%2"
