@@ -950,7 +950,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR && TARGET_64BIT"
+  "TARGET_VECTOR"
 {
 })
 
@@ -963,7 +963,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR && TARGET_64BIT"
+  "TARGET_VECTOR"
   "vmv.x.s\t%0,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -980,7 +980,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR && TARGET_64BIT"
+  "TARGET_VECTOR"
 {
 })
 
@@ -995,7 +995,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR && TARGET_64BIT"
+  "TARGET_VECTOR"
   "vmv.s.x\t%0,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
