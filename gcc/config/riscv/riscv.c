@@ -390,16 +390,16 @@ riscv_build_integer_1 (struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS],
 
   /* ??? Maybe there are also other bitmanip instructions useful for loading
      constants?  */
-  if (TARGET_64BIT && TARGET_BITMANIP)
+  if (TARGET_64BIT)
     {
-      if (ZERO_EXTENDED_SMALL_OPERAND (value))
+      if (TARGET_ZBB && ZERO_EXTENDED_SMALL_OPERAND (value))
 	{
 	  /* Simply ADDIWU.  */
 	  codes[0].code = UNKNOWN;
 	  codes[0].value = value;
 	  return 1;
 	}
-      else if (SINGLE_BIT_MASK_OPERAND (value))
+      if (TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (value))
 	{
 	  /* Simply SBSET.  */
 	  codes[0].code = UNKNOWN;
@@ -460,7 +460,7 @@ riscv_build_integer_1 (struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS],
 	}
     }
 
-  if (cost > 2 && TARGET_64BIT && TARGET_BITMANIP)
+  if (cost > 2 && TARGET_64BIT && (TARGET_ZBB || TARGET_ZBP))
     {
       int leading_ones = clz_hwi (~value);
       int trailing_ones = ctz_hwi (~value);
@@ -1799,7 +1799,7 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 	  return true;
 	}
       /* This is an sbext.  */
-      if (TARGET_BITMANIP && outer_code == SET
+      if (TARGET_ZBS && outer_code == SET
 	  && GET_CODE (XEXP (x, 1)) == CONST_INT
 	  && INTVAL (XEXP (x, 1)) == 1)
 	{
@@ -2098,12 +2098,12 @@ riscv_output_move (rtx dest, rtx src)
 	  if (SMALL_OPERAND (INTVAL (src)) || LUI_OPERAND (INTVAL (src)))
 	    return "li\t%0,%1";
 
-	  if (TARGET_BITMANIP && TARGET_64BIT)
+	  if (TARGET_64BIT)
 	    {
-	      if (ZERO_EXTENDED_SMALL_OPERAND (INTVAL (src)))
-		return "addiwu\t%0,zero,%s1";
-	      if (SINGLE_BIT_MASK_OPERAND (INTVAL (src)))
+	      if (TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (INTVAL (src)))
 		return "sbseti\t%0,zero,%S1";
+	      if (TARGET_ZBB && (ZERO_EXTENDED_SMALL_OPERAND (INTVAL (src))))
+		return "addiwu\t%0,zero,%s1";
 	    }
 
 	  /* Should never reach here.  */
