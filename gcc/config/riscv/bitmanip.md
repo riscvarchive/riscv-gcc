@@ -21,58 +21,48 @@
 
 (define_code_iterator any_minmax [smin smax umin umax])
 
+(define_code_iterator clz_ctz_pcnt [clz ctz popcount])
+
 (define_code_attr bitmanip_optab [(smin "smin")
 				  (smax "smax")
 				  (umin "umin")
-				  (umax "umax")])
+				  (umax "umax")
+				  (clz "clz")
+				  (ctz "ctz")
+				  (popcount "popcount")])
 
 (define_code_attr bitmanip_insn [(smin "min")
 				 (smax "max")
 				 (umin "minu")
-				 (umax "maxu")])
+				 (umax "maxu")
+				 (clz "clz")
+				 (ctz "ctz")
+				 (popcount "pcnt")])
 
 (define_mode_attr shiftm1 [(SI "const31_operand") (DI "const63_operand")])
 
-(define_insn "clzsi2"
+(define_insn "<bitmanip_optab>si2"
   [(set (match_operand:SI 0 "register_operand" "=r")
-	(clz:SI (match_operand:SI 1 "register_operand" "r")))]
+	(clz_ctz_pcnt:SI (match_operand:SI 1 "register_operand" "r")))]
   "TARGET_ZBB"
-  { return TARGET_64BIT ? "clzw\t%0,%1" : "clz\t%0,%1"; }
+  { return TARGET_64BIT ? "<bitmanip_insn>w\t%0,%1" : "<bitmanip_insn>\t%0,%1"; }
   [(set_attr "type" "bitmanip")])
 
-(define_insn "clzdi2"
+;; TODO: In theory zero_extend should be OK to combine too, since the output
+;;       range is 0 ~ 32, zero_extend or sign_extend will get same result.
+(define_insn "*<bitmanip_optab>disi2"
   [(set (match_operand:DI 0 "register_operand" "=r")
-	(clz:DI (match_operand:DI 1 "register_operand" "r")))]
+	(sign_extend:DI
+	  (clz_ctz_pcnt:SI (match_operand:SI 1 "register_operand" "r"))))]
   "TARGET_64BIT && TARGET_ZBB"
-  "clz\t%0,%1"
+  "<bitmanip_insn>w\t%0,%1"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "ctzsi2"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(ctz:SI (match_operand:SI 1 "register_operand" "r")))]
-  "TARGET_ZBB"
-  { return TARGET_64BIT ? "ctzw\t%0,%1" : "ctz\t%0,%1"; }
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "ctzdi2"
+(define_insn "<bitmanip_optab>di2"
   [(set (match_operand:DI 0 "register_operand" "=r")
-	(ctz:DI (match_operand:DI 1 "register_operand" "r")))]
+	(clz_ctz_pcnt:DI (match_operand:DI 1 "register_operand" "r")))]
   "TARGET_64BIT && TARGET_ZBB"
-  "ctz\t%0,%1"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "popcountsi2"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(popcount:SI (match_operand:SI 1 "register_operand" "r")))]
-  "TARGET_ZBB"
-  { return TARGET_64BIT ? "pcntw\t%0,%1" : "pcnt\t%0,%1"; }
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "popcountdi2"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(popcount:DI (match_operand:DI 1 "register_operand" "r")))]
-  "TARGET_64BIT && TARGET_ZBB"
-  "pcnt\t%0,%1"
+  "<bitmanip_insn>\t%0,%1"
   [(set_attr "type" "bitmanip")])
 
 (define_insn "*<optab>_not<mode>"
