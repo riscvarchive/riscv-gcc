@@ -83,26 +83,21 @@
  
 ;;; ??? pack
 
-;; ??? assembler doesn't support zext.h
 (define_insn "*zero_extendhi<GPR:mode>2_bitmanip"
   [(set (match_operand:GPR 0 "register_operand" "=r,r")
 	(zero_extend:GPR (match_operand:HI 1 "nonimmediate_operand" "r,m")))]
   "TARGET_ZBB || TARGET_ZBP"
-{
-  if (which_alternative == 0)
-   return TARGET_64BIT ? "packw\t%0,%1,x0" : "pack\t%0,%1,x0";
-  else
-   return "lhu\t%0,%1";
-}
+  "@
+   zext.h\t%0,%1
+   lhu\t%0,%1"
   [(set_attr "type" "bitmanip,load")])
 
-;; ??? assembler doesn't support zext.w
 (define_insn "*zero_extendsidi2_bitmanip"
   [(set (match_operand:DI 0 "register_operand" "=r,r")
 	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand" "r,m")))]
   "TARGET_64BIT && (TARGET_ZBB || TARGET_ZBP)"
   "@
-   pack\t%0,%1,x0
+   zext.w\t%0,%1,x0
    lwu\t%0,%1"
   [(set_attr "type" "bitmanip,load")])
 
