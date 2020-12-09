@@ -438,7 +438,7 @@
 	(plus:DI (zero_extend:DI
 		  (subreg:SI (match_operand:DI 2 "register_operand" "r") 0))
 		 (match_operand:DI 1 "register_operand" "r")))]
-  "TARGET_64BIT && TARGET_ZBB"
+  "TARGET_64BIT && TARGET_ZBA"
   "addu.w\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
@@ -456,7 +456,7 @@
 	(and:DI (ashift:DI (match_operand:DI 1 "register_operand" "r")
 			   (match_operand:QI 2 "immediate_operand" "I"))
 		(match_operand 3 "immediate_operand" "")))]
-  "TARGET_64BIT && TARGET_ZBB
+  "TARGET_64BIT && TARGET_ZBA
    && (INTVAL (operands[3]) >> INTVAL (operands[2])) == 0xffffffff"
   "slliu.w\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])

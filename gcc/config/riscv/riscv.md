@@ -1064,7 +1064,7 @@
   [(set (match_operand:DI     0 "register_operand"     "=r,r")
 	(zero_extend:DI
 	    (match_operand:SI 1 "nonimmediate_operand" " r,m")))]
-  "TARGET_64BIT && !(TARGET_ZBB || TARGET_ZBP)"
+  "TARGET_64BIT && !(TARGET_ZBA || TARGET_ZBB)"
   "@
    #
    lwu\t%0,%1"
@@ -1087,7 +1087,7 @@
   [(set (match_operand:GPR    0 "register_operand"     "=r,r")
 	(zero_extend:GPR
 	    (match_operand:HI 1 "nonimmediate_operand" " r,m")))]
-  "!(TARGET_ZBB || TARGET_ZBP)"
+  "!(TARGET_ZBA || TARGET_ZBB)"
   "@
    #
    lhu\t%0,%1"
@@ -1840,7 +1840,7 @@
 			   (match_operand:QI 2 "immediate_operand" "I"))
 		(match_operand 3 "immediate_operand" "")))
    (clobber (match_scratch:DI 4 "=&r"))]
-  "TARGET_64BIT && !(TARGET_ZBB || TARGET_ZBP)
+  "TARGET_64BIT && !(TARGET_ZBA || TARGET_ZBB)
    && ((INTVAL (operands[3]) >> INTVAL (operands[2])) == 0xffffffff)"
   "#"
   "&& reload_completed"
