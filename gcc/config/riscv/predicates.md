@@ -75,15 +75,9 @@
     return false;
 
   /* Check whether the constant can be loaded in a single
-     instruction with zb* extensions.  */
-  if (TARGET_64BIT)
-    {
-      if (TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (INTVAL (op)))
-	return false;
-
-      if (TARGET_ZBB && ZERO_EXTENDED_SMALL_OPERAND (INTVAL (op)))
-	return false;
-    }
+     instruction with zbs extensions.  */
+  if (TARGET_64BIT && TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (INTVAL (op)))
+    return false;
 
   /* Otherwise check whether the constant can be loaded in a single
      instruction.  */

@@ -501,12 +501,6 @@ enum reg_class
 
 /* The following macros use B extension instructions to load constants.  */
 
-/* If this is a negative 32-bit value zero-extended to 64-bits, then we
-   can load it with addiwu if it is close enough to -1.  */
-#define ZERO_EXTENDED_SMALL_OPERAND(VALUE) \
-  (((VALUE & 0xffffffff) == VALUE) && (VALUE & 0x80000000)		\
-   && SMALL_OPERAND (VALUE | (0xffffffffUL << 32)))
-
 /* If this is a single bit mask, then we can load it with sbseti.  But this
    is not useful for any of the low 31 bits because we can use addi or lui
    to load them.  It is wrong for loading SImode 0x80000000 on rv64 because it

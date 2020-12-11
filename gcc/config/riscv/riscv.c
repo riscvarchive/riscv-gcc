@@ -392,13 +392,6 @@ riscv_build_integer_1 (struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS],
      constants?  */
   if (TARGET_64BIT)
     {
-      if (TARGET_ZBB && ZERO_EXTENDED_SMALL_OPERAND (value))
-	{
-	  /* Simply ADDIWU.  */
-	  codes[0].code = UNKNOWN;
-	  codes[0].value = value;
-	  return 1;
-	}
       if (TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (value))
 	{
 	  /* Simply SBSET.  */
@@ -2098,13 +2091,9 @@ riscv_output_move (rtx dest, rtx src)
 	  if (SMALL_OPERAND (INTVAL (src)) || LUI_OPERAND (INTVAL (src)))
 	    return "li\t%0,%1";
 
-	  if (TARGET_64BIT)
-	    {
-	      if (TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (INTVAL (src)))
-		return "sbseti\t%0,zero,%S1";
-	      if (TARGET_ZBB && (ZERO_EXTENDED_SMALL_OPERAND (INTVAL (src))))
-		return "addiwu\t%0,zero,%s1";
-	    }
+	  if (TARGET_64BIT && TARGET_ZBS
+	      && SINGLE_BIT_MASK_OPERAND (INTVAL (src)))
+	    return "sbseti\t%0,zero,%S1";
 
 	  /* Should never reach here.  */
 	  abort ();
