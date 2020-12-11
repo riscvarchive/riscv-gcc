@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-march=rv64gcb -mabi=lp64 -O2" } */
+/* { dg-options "-march=rv64gc_zba -mabi=lp64 -O2" } */
 
 long
 foo (long i)

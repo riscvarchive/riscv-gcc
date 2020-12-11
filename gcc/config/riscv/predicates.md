@@ -74,12 +74,14 @@
   if (GET_MODE_SIZE (mode) > UNITS_PER_WORD)
     return false;
 
+  /* Check whether the constant can be loaded in a single
+     instruction with zbs extensions.  */
+  if (TARGET_64BIT && TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (INTVAL (op)))
+    return false;
+
   /* Otherwise check whether the constant can be loaded in a single
      instruction.  */
-  return (!LUI_OPERAND (INTVAL (op)) && !SMALL_OPERAND (INTVAL (op))
-	  && !(TARGET_64BIT && TARGET_BITMANIP
-	       && (ZERO_EXTENDED_SMALL_OPERAND (INTVAL (op))
-		   || SINGLE_BIT_MASK_OPERAND (INTVAL (op)))));
+  return !LUI_OPERAND (INTVAL (op)) && !SMALL_OPERAND (INTVAL (op));
 })
 
 (define_predicate "p2m1_shift_operand"
