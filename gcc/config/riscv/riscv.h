@@ -978,4 +978,9 @@ extern void riscv_remove_unneeded_save_restore_calls (void);
 
 #define TARGET_FP16 TARGET_RVZFH
 
+#ifndef USED_FOR_TARGET
+extern poly_uint16 riscv_rvv_chunks;
+#endif
+
+#define TARGET_SUPPORTS_WIDE_INT 1
 #endif /* ! GCC_RISCV_H */

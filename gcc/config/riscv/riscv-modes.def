@@ -24,3 +24,91 @@ FLOAT_MODE (TF, 16, ieee_quad_format);
 /* Half-precision floating point for __fp16.  */
 FLOAT_MODE (HF, 2, 0);
 ADJUST_FLOAT_FORMAT (HF, &ieee_half_format);
+
+/* Vector modes.  */
+
+/* Define vector modes for NVECS vectors.  VB, VH, VS and VD are the prefixes
+   for 8-bit, 16-bit, 32-bit and 64-bit elements respectively.  It isn't
+   strictly necessary to set the alignment here, since the default would
+   be clamped to BIGGEST_ALIGNMENT anyhow, but it seems clearer.  */
+#define RVV_MODES(NVECS, VB, VH, VS, VD) \
+  VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS, 0); \
+  VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 16 * NVECS, 0); \
+  \
+  ADJUST_NUNITS (VB##QI, riscv_rvv_chunks * NVECS * 8); \
+  ADJUST_NUNITS (VH##HI, riscv_rvv_chunks * NVECS * 4); \
+  ADJUST_NUNITS (VS##SI, riscv_rvv_chunks * NVECS * 2); \
+  ADJUST_NUNITS (VD##DI, riscv_rvv_chunks * NVECS); \
+  ADJUST_NUNITS (VH##HF, riscv_rvv_chunks * NVECS * 4); \
+  ADJUST_NUNITS (VS##SF, riscv_rvv_chunks * NVECS * 2); \
+  ADJUST_NUNITS (VD##DF, riscv_rvv_chunks * NVECS); \
+  \
+  ADJUST_ALIGNMENT (VB##QI, 1); \
+  ADJUST_ALIGNMENT (VH##HI, 2); \
+  ADJUST_ALIGNMENT (VS##SI, 4); \
+  ADJUST_ALIGNMENT (VD##DI, 8); \
+  ADJUST_ALIGNMENT (VH##HF, 2); \
+  ADJUST_ALIGNMENT (VS##SF, 4); \
+  ADJUST_ALIGNMENT (VD##DF, 8);
+
+/* Give vectors the names normally used for 128-bit vectors.
+   The actual number depends on command-line flags.  */
+RVV_MODES (1, VNx16, VNx8, VNx4, VNx2)
+RVV_MODES (2, VNx32, VNx16, VNx8, VNx4)
+RVV_MODES (4, VNx64, VNx32, VNx16, VNx8)
+RVV_MODES (8, VNx128, VNx64, VNx32, VNx16)
+RVV_MODES (16, VNx256, VNx128, VNx64, VNx32)
+
+#define RVV_TUPLE_MODES(NVECS, NSUBPART, VB, VH, VS, VD) \
+  VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS, NSUBPART); \
+  VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, FLOAT, 16 * NVECS, NSUBPART); \
+  \
+  ADJUST_NUNITS (VB##QI, riscv_rvv_chunks * NVECS * 8); \
+  ADJUST_NUNITS (VH##HI, riscv_rvv_chunks * NVECS * 4); \
+  ADJUST_NUNITS (VS##SI, riscv_rvv_chunks * NVECS * 2); \
+  ADJUST_NUNITS (VD##DI, riscv_rvv_chunks * NVECS); \
+  ADJUST_NUNITS (VH##HF, riscv_rvv_chunks * NVECS * 4); \
+  ADJUST_NUNITS (VS##SF, riscv_rvv_chunks * NVECS * 2); \
+  ADJUST_NUNITS (VD##DF, riscv_rvv_chunks * NVECS); \
+  \
+  ADJUST_ALIGNMENT (VB##QI, 1); \
+  ADJUST_ALIGNMENT (VH##HI, 2); \
+  ADJUST_ALIGNMENT (VS##SI, 4); \
+  ADJUST_ALIGNMENT (VD##DI, 8); \
+  ADJUST_ALIGNMENT (VH##HF, 2); \
+  ADJUST_ALIGNMENT (VS##SF, 4); \
+  ADJUST_ALIGNMENT (VD##DF, 8);
+
+#define RVV_MASK_MODES(NCOUNT) \
+  VECTOR_BOOL_MODE (VNx ## NCOUNT ## BI, NCOUNT, 16); \
+  ADJUST_NUNITS (VNx ## NCOUNT ## BI, riscv_rvv_chunks * (NCOUNT / 2)); \
+  ADJUST_BYTESIZE (VNx ## NCOUNT ## BI, riscv_rvv_chunks * 8); \
+  ADJUST_ALIGNMENT (VNx ## NCOUNT ## BI, 1);
+
+/* Mapping table between MLEN and masking type.
+   | Type     | MLEN |
+   | VNx2BI   | 64   |
+   | VNx4BI   | 32   |
+   | VNx8BI   | 16   |
+   | VNx16BI  | 8    |
+   | VNx32BI  | 4    |
+   | VNx64BI  | 2    |
+   | VNx128BI | 1    |  */
+
+RVV_MASK_MODES(2)
+RVV_MASK_MODES(4)
+RVV_MASK_MODES(8)
+RVV_MASK_MODES(16)
+RVV_MASK_MODES(32)
+RVV_MASK_MODES(64)
+RVV_MASK_MODES(128)
+
+/* A 8-tuple of RVV vectors with the maximum -mrvv-vector-bits= setting.
+   Note that this is a limit only on the compile-time sizes of modes;
+   it is not a limit on the runtime sizes, since VL-agnostic code
+   must work with arbitary vector lengths.  */
+#define MAX_BITSIZE_MODE_ANY_MODE (1024 * 8)
+
+/* Coefficient 1 is multiplied by the number of 64-bit chunks in a vector
+   minus one.  */
+#define NUM_POLY_INT_COEFFS 2
