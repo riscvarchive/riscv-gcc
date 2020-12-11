@@ -36,6 +36,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 #include "expr.h"
 #include "langhooks.h"
+#include "riscv-vector-iterator.h"
 
 /* Macros to create an enumeration identifier for a function prototype.  */
 #define RISCV_FTYPE_NAME0(A) RISCV_##A##_FTYPE
@@ -120,6 +121,21 @@ AVAIL (hard_float, TARGET_HARD_FLOAT)
 #define RISCV_ATYPE_VOID void_type_node
 #define RISCV_ATYPE_USI unsigned_intSI_type_node
 
+/* Declare vector type nodes.  */
+#define VECTOR_TYPE_NODES(SEW, LMUL, MODE, SMODE, TYPE) \
+  tree rvvtypes_##TYPE##SEW##m##LMUL##_t_node;
+_RVV_INT_TYPE_ITERATOR_ARG(VECTOR_TYPE_NODES, int)
+_RVV_INT_TYPE_ITERATOR_ARG(VECTOR_TYPE_NODES, uint)
+_RVV_FLOAT_TYPE_ITERATOR_ARG(VECTOR_TYPE_NODES, float)
+
+tree rvvbool1_t_node;
+tree rvvbool2_t_node;
+tree rvvbool4_t_node;
+tree rvvbool8_t_node;
+tree rvvbool16_t_node;
+tree rvvbool32_t_node;
+tree rvvbool64_t_node;
+
 /* RISCV_FTYPE_ATYPESN takes N RISCV_FTYPES-like type codes and lists
    their associated RISCV_ATYPEs.  */
 #define RISCV_FTYPE_ATYPES0(A) \
@@ -171,6 +187,22 @@ riscv_build_function_type (enum riscv_function_type type)
   return types[(int) type];
 }
 
+/* Create a builtin vector type with a name.  Taking care not to give
+   the canonical type a name.  */
+
+static tree
+riscv_vector_type (const char *name, tree elt_type, enum machine_mode mode)
+{
+  tree result = build_vector_type_for_mode (elt_type, mode);
+
+  /* Copy so we don't give the canonical type a name.  */
+  result = build_distinct_type_copy (result);
+
+  (*lang_hooks.types.register_builtin_type) (result, name);
+
+  return result;
+}
+
 /* Implement TARGET_INIT_BUILTINS.  */
 
 void
@@ -183,6 +215,23 @@ riscv_init_builtins (void)
   layout_type (fp16_type_node);
   (*lang_hooks.types.register_builtin_type) (fp16_type_node, "__fp16");
 
+  if (TARGET_VECTOR)
+    {
+      tree floatHF_type_node = fp16_type_node;
+      tree floatSF_type_node = float_type_node;
+      tree floatDF_type_node = double_type_node;
+
+      /* Init vector type nodes.  */
+#define VECTOR_TYPE_INIT(SEW, LMUL, MODE, SMODE,			\
+			 TYPE, SMODE_PREFIX)				\
+      rvvtypes_##TYPE##SEW##m##LMUL##_t_node =				\
+	riscv_vector_type ("__v" #TYPE #SEW "m" #LMUL "_t",		\
+			   SMODE_PREFIX##SMODE##_type_node, MODE##mode);
+
+      _RVV_INT_TYPE_ITERATOR_ARG(VECTOR_TYPE_INIT, int, int)
+      _RVV_INT_TYPE_ITERATOR_ARG(VECTOR_TYPE_INIT, uint, unsigned_int)
+      _RVV_FLOAT_TYPE_ITERATOR_ARG(VECTOR_TYPE_INIT, float, float)
+    }
   for (size_t i = 0; i < ARRAY_SIZE (riscv_builtins); i++)
     {
       const struct riscv_builtin_description *d = &riscv_builtins[i];
