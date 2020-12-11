@@ -136,6 +136,8 @@ Mask(DOUBLE_FLOAT)
 
 Mask(RVC)
 
+Mask(VECTOR)
+
 Mask(RVE)
 
 Mask(RVZFH)
@@ -160,6 +162,9 @@ Enum(riscv_align_data) String(natural) Value(riscv_align_data_type_natural)
 
 TargetVariable
 int riscv_zi_subext
+
+TargetVariable
+int riscv_zv_subext
 
 Enum
 Name(isa_spec_class) Type(enum riscv_isa_spec_class)

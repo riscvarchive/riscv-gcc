@@ -60,6 +60,9 @@ static const riscv_implied_info_t riscv_implied_info[] =
   {"d", "f"},
   {"f", "zicsr"},
   {"d", "zicsr"},
+
+  {"v", "zvamo"},
+  {"v", "zvlsseg"},
   {NULL, NULL}
 };
 
@@ -105,6 +108,8 @@ static const struct riscv_ext_version riscv_ext_version_table[] =
   {"c", ISA_SPEC_CLASS_20190608, 2, 0},
   {"c", ISA_SPEC_CLASS_2P2,      2, 0},
 
+  {"v", ISA_SPEC_CLASS_NONE,     1, 0},
+
   {"zicsr", ISA_SPEC_CLASS_20191213, 2, 0},
   {"zicsr", ISA_SPEC_CLASS_20190608, 2, 0},
 
@@ -112,6 +117,10 @@ static const struct riscv_ext_version riscv_ext_version_table[] =
   {"zifencei", ISA_SPEC_CLASS_20190608, 2, 0},
 
   {"zfh", ISA_SPEC_CLASS_NONE, 0, 1},
+
+  {"zvamo",   ISA_SPEC_CLASS_NONE, 1, 0},
+  {"zvlsseg", ISA_SPEC_CLASS_NONE, 1, 0},
+  {"zvqmac",  ISA_SPEC_CLASS_NONE, 1, 0},
 
   /* Terminate the list.  */
   {NULL, ISA_SPEC_CLASS_NONE, 0, 0}
@@ -959,12 +968,16 @@ static const riscv_ext_flag_table_t riscv_ext_flag_table[] =
   {"f", &gcc_options::x_target_flags, MASK_HARD_FLOAT},
   {"d", &gcc_options::x_target_flags, MASK_DOUBLE_FLOAT},
   {"c", &gcc_options::x_target_flags, MASK_RVC},
+  {"v", &gcc_options::x_target_flags, MASK_VECTOR},
 
   {"zicsr",    &gcc_options::x_riscv_zi_subext, MASK_ZICSR},
   {"zifencei", &gcc_options::x_riscv_zi_subext, MASK_ZIFENCEI},
 
   {"zfh", &gcc_options::x_target_flags, MASK_RVZFH},
 
+  {"zvamo",   &gcc_options::x_riscv_zv_subext, MASK_ZVAMO},
+  {"zvlsseg", &gcc_options::x_riscv_zv_subext, MASK_ZVLSSEG},
+  {"zvqmac",  &gcc_options::x_riscv_zv_subext, MASK_ZVQMAC},
   {NULL, NULL, 0}
 };
 

@@ -67,4 +67,13 @@ enum riscv_align_data {
 #define TARGET_ZICSR    ((riscv_zi_subext & MASK_ZICSR) != 0)
 #define TARGET_ZIFENCEI ((riscv_zi_subext & MASK_ZIFENCEI) != 0)
 
+#define MASK_ZVAMO   (1 << 0)
+#define MASK_ZVLSSEG (1 << 1)
+#define MASK_ZVQMAC  (1 << 2)
+
+#define TARGET_ZVAMO   ((riscv_zv_subext & MASK_ZVAMO) != 0)
+#define TARGET_ZVLSSEG ((riscv_zv_subext & MASK_ZVLSSEG) != 0)
+#define TARGET_ZVQMAC  ((riscv_zv_subext & MASK_ZVQMAC) != 0)
+
+
 #endif /* ! GCC_RISCV_OPTS_H */

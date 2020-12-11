@@ -59,6 +59,9 @@ riscv_cpu_cpp_builtins (cpp_reader *pfile)
   if (TARGET_FP16)
     builtin_define ("__riscv_zfh");
 
+  if (TARGET_VECTOR)
+    builtin_define ("__riscv_vector");
+
   if (TARGET_HARD_FLOAT && TARGET_FDIV)
     {
       builtin_define ("__riscv_fdiv");
