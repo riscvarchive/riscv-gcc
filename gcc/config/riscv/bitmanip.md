@@ -95,7 +95,7 @@
 (define_insn "*zero_extendsidi2_bitmanip"
   [(set (match_operand:DI 0 "register_operand" "=r,r")
 	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand" "r,m")))]
-  "TARGET_64BIT && (TARGET_ZBB || TARGET_ZBP)"
+  "TARGET_64BIT && (TARGET_ZBB || TARGET_ZBA)"
   "@
    zext.w\t%0,%1,x0
    lwu\t%0,%1"
@@ -412,22 +412,6 @@
   "sh%2addu.w\t%0,%1,%4"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*addwu"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(zero_extend:DI (plus:SI (match_operand:SI 1 "register_operand" "r")
-				 (match_operand:SI 2 "arith_operand" "rI"))))]
-  "TARGET_64BIT && TARGET_ZBB"
-  "add%i2wu\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "*subwu"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(zero_extend:DI (minus:SI (match_operand:SI 1 "register_operand" "r")
-				  (match_operand:SI 2 "register_operand" "r"))))]
-  "TARGET_64BIT && TARGET_ZBA"
-  "subwu\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
-
 (define_insn "*addu.w"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(plus:DI (zero_extend:DI
@@ -435,15 +419,6 @@
 		 (match_operand:DI 1 "register_operand" "r")))]
   "TARGET_64BIT && TARGET_ZBA"
   "addu.w\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "*subu.w"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(minus:DI (match_operand:DI 1 "register_operand" "r")
-		  (zero_extend:DI
-		   (subreg:SI (match_operand:DI 2 "register_operand" "r") 0))))]
-  "TARGET_64BIT && TARGET_ZBB"
-  "subu.w\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
 (define_insn "*slliuw"
