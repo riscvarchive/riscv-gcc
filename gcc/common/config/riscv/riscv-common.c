@@ -985,7 +985,7 @@ static const riscv_ext_flag_table_t riscv_ext_flag_table[] =
   {"zbb", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBB},
   {"zbs", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBS},
   {"zbp", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBP},
-  {"zbr", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBP},
+  {"zbr", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBR},
   {"zbe", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBE},
   {"zbf", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBF},
   {"zbc", &gcc_options::x_riscv_bitmanip_subext, MASK_ZBC},
