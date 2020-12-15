@@ -5579,7 +5579,7 @@ riscv_promote_function_mode (const_tree type ATTRIBUTE_UNUSED,
   scalar_mode smode = as_a <scalar_mode> (mode);
   PROMOTE_MODE (smode, unsignedp, type);
   *punsignedp = unsignedp;
-  return mode;
+  return smode;
 }
 
 /* Implement TARGET_MACHINE_DEPENDENT_REORG.  */
