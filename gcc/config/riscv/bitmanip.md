@@ -97,7 +97,7 @@
 	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand" "r,m")))]
   "TARGET_64BIT && (TARGET_ZBB || TARGET_ZBA)"
   "@
-   zext.w\t%0,%1,x0
+   zext.w\t%0,%1
    lwu\t%0,%1"
   [(set_attr "type" "bitmanip,load")])
 
