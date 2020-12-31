@@ -415,8 +415,8 @@
 (define_insn "*addu.w"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(plus:DI (zero_extend:DI
-		  (match_operand:SI 2 "register_operand" "r"))
-		 (match_operand:DI 1 "register_operand" "r")))]
+		  (match_operand:SI 1 "register_operand" "r"))
+		 (match_operand:DI 2 "register_operand" "r")))]
   "TARGET_64BIT && TARGET_ZBA"
   "addu.w\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
