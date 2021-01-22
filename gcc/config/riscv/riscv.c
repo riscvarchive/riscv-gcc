@@ -4302,7 +4302,7 @@ riscv_gen_load_poly_int (rtx target, rtx tmp1, rtx tmp2, poly_int64 value)
 	return gen_add3_insn (target, target, GEN_INT (scalar_offset));
       else
 	{
-	  rtx remainder = riscv_add_offset (target, target, scalar_offset);
+	  rtx remainder = riscv_add_offset (tmp2, target, scalar_offset);
 	  return gen_rtx_SET (target, remainder);
 	}
     }
