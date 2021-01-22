@@ -10191,7 +10191,7 @@
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vlseg<NF>eff.v\t%0, (%1)"
+  "vlseg<NF>e<sew>ff.v\t%0, (%1)"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -10225,7 +10225,7 @@
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vlseg<NF>eff.v\t%0, (%1), %2.t"
+  "vlseg<NF>e<sew>ff.v\t%0, (%1), %2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
