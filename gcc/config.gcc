@@ -2464,6 +2464,11 @@ riscv*-*-linux*)
 	tmake_file="${tmake_file} riscv/t-riscv riscv/t-linux"
 	gnu_ld=yes
 	gas=yes
+	case $target in
+	riscv32be-*|riscv64be-*)
+		tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1"
+		;;
+	esac
 	# Force .init_array support.  The configure script cannot always
 	# automatically detect that GAS supports it, yet we require it.
 	gcc_cv_initfini_array=yes
@@ -2487,6 +2492,11 @@ riscv*-*-elf* | riscv*-*-rtems*)
 	tmake_file="${tmake_file} riscv/t-riscv"
 	gnu_ld=yes
 	gas=yes
+	case $target in
+	riscv32be-*|riscv64be-*)
+		tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1"
+		;;
+	esac
 	# Force .init_array support.  The configure script cannot always
 	# automatically detect that GAS supports it, yet we require it.
 	gcc_cv_initfini_array=yes
@@ -2496,6 +2506,11 @@ riscv*-*-freebsd*)
 	tmake_file="${tmake_file} riscv/t-riscv"
 	gnu_ld=yes
 	gas=yes
+	case $target in
+	riscv32be-*|riscv64be-*)
+		tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1"
+		;;
+	esac
 	# Force .init_array support.  The configure script cannot always
 	# automatically detect that GAS supports it, yet we require it.
 	gcc_cv_initfini_array=yes
