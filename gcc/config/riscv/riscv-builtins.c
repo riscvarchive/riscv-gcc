@@ -672,6 +672,16 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
     vloxei##TYPE_US##E##m##L##_##IE##m##IL##_##PNAME##_mask,			\
     RISCV_##VCLASS##E##M##L##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
     vector),									\
+  DIRECT_NAMED (								\
+    vluxei##MODE##IMODE##_##PNAME,						\
+    vluxei##TYPE_US##E##m##L##_##IE##m##IL##_##PNAME,				\
+    RISCV_##VCLASS##E##M##L##_FTYPE_C_##SUBMODE##_PTR##_VUI##IE##M##IL,		\
+    vector),									\
+  DIRECT_NAMED (								\
+    vluxei##MODE##IMODE##_##PNAME##_mask,					\
+    vluxei##TYPE_US##E##m##L##_##IE##m##IL##_##PNAME##_mask,			\
+    RISCV_##VCLASS##E##M##L##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
+    vector),									\
   DIRECT_NAMED_NO_TARGET (							\
     vsxei##MODE##IMODE##_##PNAME,						\
     vsxei##TYPE_US##E##m##L##_##IE##m##IL##_##PNAME,				\
@@ -714,6 +724,16 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
   DIRECT_NAMED (								\
     vloxei##MODE##IMODE##_##PNAME##_mask,					\
     vloxeif##E##m##L##_##IE##m##IL##_##PNAME##_mask,				\
+    RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
+    vector),									\
+  DIRECT_NAMED (								\
+    vluxei##MODE##IMODE##_##PNAME,						\
+    vluxeif##E##m##L##_##IE##m##IL##_##PNAME,					\
+    RISCV_VF##E##M##L##_FTYPE_C_##SUBMODE##_PTR##_VUI##IE##M##IL,		\
+    vector),									\
+  DIRECT_NAMED (								\
+    vluxei##MODE##IMODE##_##PNAME##_mask,					\
+    vluxeif##E##m##L##_##IE##m##IL##_##PNAME##_mask,				\
     RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
     vector),									\
   DIRECT_NAMED_NO_TARGET (							\

@@ -561,6 +561,58 @@ vloxei##ISEW##_v_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
   else									\
     return __builtin_riscv_vloxeiu##SEW##m##LMUL##_##ISEW##m##ILMUL##_di_mask (\
 	     mask, maskedoff, a, indexed);				\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vluxei##ISEW##_v_i##SEW##m##LMUL (const T *a,				\
+			      vuint##ISEW##m##ILMUL##_t indexed, word_type vl)\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vluxeii##SEW##m##LMUL##_##ISEW##m##ILMUL##_si (a, indexed);\
+  else									\
+    return __builtin_riscv_vluxeii##SEW##m##LMUL##_##ISEW##m##ILMUL##_di (a, indexed);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vluxei##ISEW##_v_u##SEW##m##LMUL (const u##T *a,				\
+			      vuint##ISEW##m##ILMUL##_t indexed, word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vluxeiu##SEW##m##LMUL##_##ISEW##m##ILMUL##_si (a, indexed);\
+  else									\
+    return __builtin_riscv_vluxeiu##SEW##m##LMUL##_##ISEW##m##ILMUL##_di (a, indexed);\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vluxei##ISEW##_v_i##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
+				     vint##SEW##m##LMUL##_t maskedoff,	\
+				     const T *a,			\
+				     vuint##ISEW##m##ILMUL##_t indexed, word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vluxeii##SEW##m##LMUL##_##ISEW##m##ILMUL##_si_mask (\
+	     mask, maskedoff, a, indexed);				\
+  else									\
+    return __builtin_riscv_vluxeii##SEW##m##LMUL##_##ISEW##m##ILMUL##_di_mask (\
+	     mask, maskedoff, a, indexed);				\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vluxei##ISEW##_v_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
+				     vuint##SEW##m##LMUL##_t maskedoff,	\
+				     const u##T *a,			\
+				     vuint##ISEW##m##ILMUL##_t indexed, word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vluxeiu##SEW##m##LMUL##_##ISEW##m##ILMUL##_si_mask (\
+	     mask, maskedoff, a, indexed);				\
+  else									\
+    return __builtin_riscv_vluxeiu##SEW##m##LMUL##_##ISEW##m##ILMUL##_di_mask (\
+	     mask, maskedoff, a, indexed);				\
 }
 
 _RVV_INT_INDEX_ITERATOR (_RVVINTLD_INDEXED)
@@ -590,6 +642,32 @@ vloxei##ISEW##_v_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
 	   mask, maskedoff, a, indexed);				\
   else									\
   return __builtin_riscv_vloxeif##SEW##m##LMUL##_##ISEW##m##ILMUL##_di_mask (\
+	   mask, maskedoff, a, indexed);				\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vluxei##ISEW##_v_f##SEW##m##LMUL (const _RVV_F##SEW##_TYPE *a,		\
+			      vuint##ISEW##m##ILMUL##_t indexed, word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  if (__riscv_xlen == 32)						\
+    return __builtin_riscv_vluxeif##SEW##m##LMUL##_##ISEW##m##ILMUL##_si (a, indexed);\
+  else									\
+    return __builtin_riscv_vluxeif##SEW##m##LMUL##_##ISEW##m##ILMUL##_di (a, indexed);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vluxei##ISEW##_v_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
+				     vfloat##SEW##m##LMUL##_t maskedoff,\
+				     const _RVV_F##SEW##_TYPE *a,	\
+				     vuint##ISEW##m##ILMUL##_t indexed, word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  if (__riscv_xlen == 32)						\
+  return __builtin_riscv_vluxeif##SEW##m##LMUL##_##ISEW##m##ILMUL##_si_mask (\
+	   mask, maskedoff, a, indexed);				\
+  else									\
+  return __builtin_riscv_vluxeif##SEW##m##LMUL##_##ISEW##m##ILMUL##_di_mask (\
 	   mask, maskedoff, a, indexed);				\
 }
 
@@ -4325,7 +4403,7 @@ _RVV_INT_TUPLE_ITERATOR_ARG (_RVVINT_TUPLE_LDST, )
 #define _RVVINT_TUPLE_IDX_LDST(SEW, LMUL, NF, MLEN, T, ISEW, ILMUL)	\
 __extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vlxseg##NF##ei##ISEW##_v_i##SEW##m##LMUL##x##NF (const int##SEW##_t *a,	\
+vloxseg##NF##ei##ISEW##_v_i##SEW##m##LMUL##x##NF (const int##SEW##_t *a,	\
 					       vuint##ISEW##m##ILMUL##_t idx, word_type vl)	\
 {									\
   vsetvl_e##SEW##m##LMUL (vl);						\
@@ -4336,7 +4414,7 @@ vlxseg##NF##ei##ISEW##_v_i##SEW##m##LMUL##x##NF (const int##SEW##_t *a,	\
 }									\
 __extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vlxseg##NF##ei##ISEW##_v_i##SEW##m##LMUL##x##NF##_m (			\
+vloxseg##NF##ei##ISEW##_v_i##SEW##m##LMUL##x##NF##_m (			\
   vbool##MLEN##_t mask,							\
   vint##SEW##m##LMUL##x##NF##_t maskedoff,				\
   const int##SEW##_t *a,						\
@@ -4352,7 +4430,7 @@ vlxseg##NF##ei##ISEW##_v_i##SEW##m##LMUL##x##NF##_m (			\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vlxseg##NF##ei##ISEW##_v_u##SEW##m##LMUL##x##NF (const uint##SEW##_t *a, vuint##ISEW##m##ILMUL##_t idx, word_type vl)		\
+vloxseg##NF##ei##ISEW##_v_u##SEW##m##LMUL##x##NF (const uint##SEW##_t *a, vuint##ISEW##m##ILMUL##_t idx, word_type vl)		\
 {									\
   vsetvl_e##SEW##m##LMUL (vl);						\
   if (__riscv_xlen == 32)						\
@@ -4362,7 +4440,7 @@ vlxseg##NF##ei##ISEW##_v_u##SEW##m##LMUL##x##NF (const uint##SEW##_t *a, vuint##
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vlxseg##NF##ei##ISEW##_v_u##SEW##m##LMUL##x##NF##_m (				\
+vloxseg##NF##ei##ISEW##_v_u##SEW##m##LMUL##x##NF##_m (				\
   vbool##MLEN##_t mask,							\
   vuint##SEW##m##LMUL##x##NF##_t maskedoff,				\
   const uint##SEW##_t *a, vuint##ISEW##m##ILMUL##_t idx, word_type vl)			\
@@ -4576,7 +4654,7 @@ _RVV_FLOAT_TUPLE_ITERATOR_ARG (_RVVFLOAT_TUPLE_LDST, )
 #define _RVVFLOAT_TUPLE_IDX_LDST(SEW, LMUL, NF, MLEN, T, ISEW, ILMUL)	\
 __extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vlxseg##NF##ei##ISEW##_v_f##SEW##m##LMUL##x##NF (const _RVV_F##SEW##_TYPE *a, vuint##ISEW##m##ILMUL##_t idx, word_type vl)	\
+vloxseg##NF##ei##ISEW##_v_f##SEW##m##LMUL##x##NF (const _RVV_F##SEW##_TYPE *a, vuint##ISEW##m##ILMUL##_t idx, word_type vl)	\
 {									\
   vsetvl_e##SEW##m##LMUL (vl);						\
   if (__riscv_xlen == 32)						\
@@ -4586,7 +4664,7 @@ vlxseg##NF##ei##ISEW##_v_f##SEW##m##LMUL##x##NF (const _RVV_F##SEW##_TYPE *a, vu
 }									\
 __extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vlxseg##NF##ei##ISEW##_v_f##SEW##m##LMUL##x##NF##_m (				\
+vloxseg##NF##ei##ISEW##_v_f##SEW##m##LMUL##x##NF##_m (				\
   vbool##MLEN##_t mask,							\
   vfloat##SEW##m##LMUL##x##NF##_t maskedoff,				\
   const _RVV_F##SEW##_TYPE *a, vuint##ISEW##m##ILMUL##_t idx, word_type vl)		\
