@@ -111,9 +111,11 @@ class VectorTypeInfo:
       'LMUL'   : self.lmul,
       'MODE'   : self.mode.lower(),
       'IMODE': self.int_vector_mode.lower(),
+      'FMODE': self.float_vector_mode.lower(),
       'NF'     : self.nf,
       'SUBMODE'  : self.scalar_mode,
       'ISUBMODE' : self.scalar_int_mode,
+      'FSUBMODE' : self.scalar_float_mode,
       'CTYPE'  : self.scalar_ctype,
       'ICTYPE' : self.scalar_int_ctype,
       'MLEN'   : self.mlen,
@@ -219,6 +221,13 @@ class VectorTypeInfo:
     assert self.nf == 1 and (self.has_widen_type())
     return VectorTypeInfo(sew=(self.sew * 2), lmul=(self.lmul * 2),
                           int_p=self.int_p)
+
+  @property
+  def widen_float_type(self):
+    assert self.nf == 1 and (self.has_widen_type())
+    return VectorTypeInfo(sew=(self.sew * 2), lmul=(self.lmul * 2),
+                          int_p=False)
+
 
   @property
   def xwiden_type(self):
@@ -466,8 +475,7 @@ def gen_md():
   dump_md_iterator(
     name = "FCVT_VWIMODES",
     comment = "All vector modes supported for FP type-convert.",
-    vals = list(map(lambda x: x.int_type,
-                    filter(lambda x : x.has_widen_type(), float_vector_modes)))
+    vals = filter(lambda x : x.has_widen_type(), int_vector_modes)
   )
 
   dump_md_iterator(
@@ -535,6 +543,14 @@ def gen_md():
     comment = "Map a vector int or float mode to widening vector mode.",
     indexes = list(filter(lambda x : x.has_widen_type(), vector_modes)),
     val_func = lambda x: x.widen_type,
+    lower_version_p = True,
+  )
+
+  dump_md_attr(
+    name = "VWFMODE",
+    comment = "Map a vector int or float mode to widening vector mode.",
+    indexes = list(filter(lambda x : x.has_widen_type(), vector_modes)),
+    val_func = lambda x: x.widen_float_type,
     lower_version_p = True,
   )
 
@@ -662,7 +678,7 @@ def gen_md():
     comment = "Map a vector int mode to vector widening float mode.",
     indexes = list(map(lambda x: x.int_type,
                        filter(lambda x : x.has_widen_type(),
-                              float_vector_modes))),
+                              int_vector_modes))),
     val_func = lambda x: x.widen_type.float_vector_mode,
     lower_version_p = True
   )
@@ -1028,8 +1044,8 @@ def gen_c():
               "   along with its corresponding vector, floating point modes, and info for\n"
               "   corresponding floating point and vector type.  */",
     arg_list_template = "{SEW}, {LMUL}, {MLEN}, {IMODE}, {ISUBMODE}, "
-                        "{WSEW}, {WLMUL}, {WMODE}, {WSUBMODE}",
-    vals = list(filter(lambda x: x.has_widen_type(), float_vector_modes))
+                        "{WSEW}, {WLMUL}, {WFMODE}, {WFSUBMODE}",
+    vals = list(filter(lambda x: x.has_widen_type(), int_vector_modes))
   )
 
   dump_c_iterator(
@@ -1258,6 +1274,10 @@ def gen_ftype():
   # Same as above, but for widening vector.
   ft.add(
     arg_list_templates=[
+      # 1 args.
+      ('{FT_VEC}', '{WFT_VEC}'),
+      ('{FT_VEC}', '{WFT_F_VEC}'),
+
       # 2 args.
       ('{WFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
       ('{WFT_VEC}', '{FT_VEC}', '{FT_SCALAR}'),
@@ -1268,6 +1288,9 @@ def gen_ftype():
       # 3 args.
       ('{WFT_VEC}', '{WFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
       ('{WFT_VEC}', '{WFT_VEC}', '{FT_SCALAR}', '{FT_VEC}'),
+
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{WFT_VEC}'),
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{WFT_F_VEC}'),
 
       # 4 args.
       ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_VEC}', '{FT_VEC}'),
@@ -1355,6 +1378,8 @@ def gen_ftype():
       ('{FT_U_VEC}', '{WFT_U_VEC}', '{FT_U_VEC}'),
       ('{FT_U_VEC}', '{WFT_U_VEC}', 'UQI'),
 
+      ('{WFT_F_VEC}', '{FT_VEC}'),
+
       # 3 args.
       ('{WFT_I_VEC}', '{WFT_I_VEC}', '{FT_U_SCALAR}', '{FT_I_VEC}'),
       ('{WFT_I_VEC}', '{WFT_I_VEC}', '{FT_I_VEC}', '{FT_U_VEC}'),
@@ -1362,6 +1387,7 @@ def gen_ftype():
 
       # Maksed Vector Integer Extension
       ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{FT_VEC}'),
+      ('{WFT_F_VEC}', '{FT_MASK}', '{WFT_F_VEC}', '{FT_VEC}'),
 
       # 4 args.
       ('{WFT_VEC}', '{FT_MASK}', '{WFT_VEC}', '{WFT_VEC}', '{FT_VEC}'),

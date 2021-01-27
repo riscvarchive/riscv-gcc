@@ -1364,6 +1364,48 @@ OP##_wx_i##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
 	   mask, maskedoff, a, b);					\
 }
 
+#define _RVV_INT_BIN_NARROWING_CVT(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT)	\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vncvt_x_x_w_i##SEW##m##LMUL (vint##WSEW##m##WLMUL##_t a,		\
+			     word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vncvt##int##WSEW##m##WLMUL (a);		\
+}									\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vncvt_x_x_w_i##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
+				 vint##SEW##m##LMUL##_t maskedoff,	\
+				 vint##WSEW##m##WLMUL##_t a,	\
+				 word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vncvt##int##WSEW##m##WLMUL##_mask (		\
+	  mask, maskedoff, a);						\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vncvt_x_x_w_u##SEW##m##LMUL (vuint##WSEW##m##WLMUL##_t a,		\
+			     word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vncvt##uint##WSEW##m##WLMUL (a);		\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vncvt_x_x_w_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
+				 vuint##SEW##m##LMUL##_t maskedoff,	\
+				 vuint##WSEW##m##WLMUL##_t a,	\
+				 word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vncvt##uint##WSEW##m##WLMUL##_mask (		\
+	  mask, maskedoff, a);					\
+}
+
+
+
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, add, add)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP_SCALAR, add, add)
 _RVV_INT_ITERATOR_ARG (_RVV_INT_BIN_OP, sub, sub)
@@ -1395,6 +1437,8 @@ _RVV_WINT_ITERATOR_ARG (_RVV_UINT_BIN_NARROWING, vnclipu, vnclipu)
 _RVV_WINT_ITERATOR_ARG (_RVV_UINT_BIN_NARROWING_SCALAR, vnclipu, vnclipu)
 _RVV_WINT_ITERATOR_ARG (_RVV_INT_BIN_NARROWING, vnclip)
 _RVV_WINT_ITERATOR_ARG (_RVV_INT_BIN_NARROWING_SCALAR, vnclip)
+
+_RVV_WINT_ITERATOR (_RVV_INT_BIN_NARROWING_CVT)
 
 #define _RVV_INT_SAT_BIN_OP(SEW, LMUL, MLEN, T, NAME, OP)		\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
@@ -3218,7 +3262,7 @@ v##NAME##_f_x_v_f##WSEW##m##WLMUL##_m (			\
       mask, maskedoff, a);						\
 }
 
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_FLOAT_WCVT_FX, wfcvt_fx, fwcvt)
+_RVV_WINT_ITERATOR_ARG (_RVV_FLOAT_WCVT_FX, wfcvt_fx, fwcvt)
 
 #define _RVV_FLOAT_WCVT_FXU(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP, NAME)\
 __extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
@@ -3241,7 +3285,7 @@ v##NAME##_f_xu_v_f##WSEW##m##WLMUL##_m (			\
       mask, maskedoff, a);						\
 }
 
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_FLOAT_WCVT_FXU, wfcvt_fxu, fwcvt)
+_RVV_WINT_ITERATOR_ARG (_RVV_FLOAT_WCVT_FXU, wfcvt_fxu, fwcvt)
 
 #define _RVV_FLOAT_WCVT_FF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP, NAME)\
 __extension__ extern __inline vfloat##WSEW##m##WLMUL##_t		\
@@ -3287,8 +3331,8 @@ v##NAME##_x_f_w_i##SEW##m##LMUL##_m (					\
       mask, maskedoff, a);						\
 }
 
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_FLOAT_NCVT_XF, nfcvt_xf, fncvt)
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_FLOAT_NCVT_XF, nfcvt_rtz_xf, fncvt_rtz)
+_RVV_WINT_ITERATOR_ARG (_RVV_FLOAT_NCVT_XF, nfcvt_xf, fncvt)
+_RVV_WINT_ITERATOR_ARG (_RVV_FLOAT_NCVT_XF, nfcvt_rtz_xf, fncvt_rtz)
 
 #define _RVV_FLOAT_NCVT_XUF(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP, NAME)\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
@@ -3311,8 +3355,8 @@ v##NAME##_xu_f_w_u##SEW##m##LMUL##_m (					\
       mask, maskedoff, a);						\
 }
 
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_FLOAT_NCVT_XUF, nfcvt_xuf, fncvt)
-_RVV_WFLOAT_ITERATOR_ARG (_RVV_FLOAT_NCVT_XUF, nfcvt_rtz_xuf, fncvt_rtz)
+_RVV_WINT_ITERATOR_ARG (_RVV_FLOAT_NCVT_XUF, nfcvt_xuf, fncvt)
+_RVV_WINT_ITERATOR_ARG (_RVV_FLOAT_NCVT_XUF, nfcvt_rtz_xuf, fncvt_rtz)
 
 #define _RVV_FLOAT_NCVT_FX(SEW, LMUL, MLEN, T, WSEW, WLMUL, WT, OP, NAME)\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\

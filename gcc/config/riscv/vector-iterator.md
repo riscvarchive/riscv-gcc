@@ -44,8 +44,9 @@
 
 ;; All vector modes supported for FP type-convert.
 (define_mode_iterator FCVT_VWIMODES [
-  VNx8HI VNx16HI VNx32HI VNx4SI
-  VNx8SI VNx16SI])
+  VNx16QI VNx32QI VNx64QI VNx8HI
+  VNx16HI VNx32HI VNx4SI VNx8SI
+  VNx16SI])
 
 ;; All vector modes supported for quad-widening integer alu.
 (define_mode_iterator VQWIMODES [
@@ -174,6 +175,20 @@
   (VNx16QI "vnx16hi") (VNx32QI "vnx32hi") (VNx64QI "vnx64hi") (VNx8HI "vnx8si")
   (VNx16HI "vnx16si") (VNx32HI "vnx32si") (VNx4SI "vnx4di") (VNx8SI "vnx8di")
   (VNx16SI "vnx16di") (VNx8HF "vnx8sf") (VNx16HF "vnx16sf") (VNx32HF "vnx32sf")
+  (VNx4SF "vnx4df") (VNx8SF "vnx8df") (VNx16SF "vnx16df")])
+
+;; Map a vector int or float mode to widening vector mode.
+(define_mode_attr VWFMODE [
+  (VNx16QI "VNx16HF") (VNx32QI "VNx32HF") (VNx64QI "VNx64HF") (VNx8HI "VNx8SF")
+  (VNx16HI "VNx16SF") (VNx32HI "VNx32SF") (VNx4SI "VNx4DF") (VNx8SI "VNx8DF")
+  (VNx16SI "VNx16DF") (VNx8HF "VNx8SF") (VNx16HF "VNx16SF") (VNx32HF "VNx32SF")
+  (VNx4SF "VNx4DF") (VNx8SF "VNx8DF") (VNx16SF "VNx16DF")])
+
+;; Map a vector int or float mode to widening vector mode.
+(define_mode_attr vwfmode [
+  (VNx16QI "vnx16hf") (VNx32QI "vnx32hf") (VNx64QI "vnx64hf") (VNx8HI "vnx8sf")
+  (VNx16HI "vnx16sf") (VNx32HI "vnx32sf") (VNx4SI "vnx4df") (VNx8SI "vnx8df")
+  (VNx16SI "vnx16df") (VNx8HF "vnx8sf") (VNx16HF "vnx16sf") (VNx32HF "vnx32sf")
   (VNx4SF "vnx4df") (VNx8SF "vnx8df") (VNx16SF "vnx16df")])
 
 ;; Map a vector int or float mode to quad-widening vector mode.
@@ -541,13 +556,15 @@
 
 ;; Map a vector int mode to vector widening float mode.
 (define_mode_attr VIWFMODE [
-  (VNx8HI "VNx8SF") (VNx16HI "VNx16SF") (VNx32HI "VNx32SF") (VNx4SI "VNx4DF")
-  (VNx8SI "VNx8DF") (VNx16SI "VNx16DF")])
+  (VNx16QI "VNx16HF") (VNx32QI "VNx32HF") (VNx64QI "VNx64HF") (VNx8HI "VNx8SF")
+  (VNx16HI "VNx16SF") (VNx32HI "VNx32SF") (VNx4SI "VNx4DF") (VNx8SI "VNx8DF")
+  (VNx16SI "VNx16DF")])
 
 ;; Map a vector int mode to vector widening float mode.
 (define_mode_attr viwfmode [
-  (VNx8HI "vnx8sf") (VNx16HI "vnx16sf") (VNx32HI "vnx32sf") (VNx4SI "vnx4df")
-  (VNx8SI "vnx8df") (VNx16SI "vnx16df")])
+  (VNx16QI "vnx16hf") (VNx32QI "vnx32hf") (VNx64QI "vnx64hf") (VNx8HI "vnx8sf")
+  (VNx16HI "vnx16sf") (VNx32HI "vnx32sf") (VNx4SI "vnx4df") (VNx8SI "vnx8df")
+  (VNx16SI "vnx16df")])
 
 ;; Map a vector mode to SEW
 (define_mode_attr sew [

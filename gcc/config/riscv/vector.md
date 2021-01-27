@@ -7070,6 +7070,64 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+(define_expand "vncvt<mode>"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (unspec:VWIMODES
+		     [(truncate:VWIMODES
+			(match_operand:<VWMODE> 1 "register_operand"))
+		      (reg:SI VL_REGNUM)]
+		    UNSPEC_USEVL))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vncvt<mode>_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=&vr")
+	(unspec:VWIMODES
+	  [(truncate:VWIMODES
+	       (match_operand:<VWMODE> 1 "register_operand" "vr"))
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vncvt.x.x.w\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vncvt<mode>_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VWIMODES 0 "register_operand")
+		   (unspec:VWIMODES
+		     [(if_then_else:VWIMODES
+			(match_operand:<VCMPEQUIV> 1 "register_operand")
+			(truncate:VWIMODES
+			  (match_operand:<VWMODE> 3 "register_operand"))
+			(match_operand:VWIMODES 2 "register_operand"))
+		      (reg:SI VL_REGNUM)]
+		    UNSPEC_USEVL))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vncvt<mode>3_mask_nosetvl"
+  [(set (match_operand:VWIMODES 0 "register_operand" "=vr,vr")
+	(unspec:VWIMODES
+	  [(if_then_else:VWIMODES
+	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
+	     (truncate:VWIMODES
+	       (match_operand:<VWMODE> 3 "register_operand" "vr,vr"))
+	     (match_operand:VWIMODES 2 "register_operand" "0,0"))
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vncvt.x.x.w\t%0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Min and Max instructions
 
 (define_expand "<minmax><mode>3"

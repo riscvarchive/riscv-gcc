@@ -551,6 +551,9 @@
    along with its corresponding vector, floating point modes, and info for
    corresponding floating point and vector type.  */
 #define _RVV_WFLOAT_INT_ITERATOR(MACRO) \
+  MACRO (8, 1, 8, vnx16qi, QI, 16, 2, vnx16hf, HF) \
+  MACRO (8, 2, 4, vnx32qi, QI, 16, 4, vnx32hf, HF) \
+  MACRO (8, 4, 2, vnx64qi, QI, 16, 8, vnx64hf, HF) \
   MACRO (16, 1, 16, vnx8hi, HI, 32, 2, vnx8sf, SF) \
   MACRO (16, 2, 8, vnx16hi, HI, 32, 4, vnx16sf, SF) \
   MACRO (16, 4, 4, vnx32hi, HI, 32, 8, vnx32sf, SF) \
@@ -560,6 +563,9 @@
 
 /* Same as above but with an extra argument.  */
 #define _RVV_WFLOAT_INT_ITERATOR_ARG(MACRO, ...) \
+  MACRO (8, 1, 8, vnx16qi, QI, 16, 2, vnx16hf, HF, __VA_ARGS__) \
+  MACRO (8, 2, 4, vnx32qi, QI, 16, 4, vnx32hf, HF, __VA_ARGS__) \
+  MACRO (8, 4, 2, vnx64qi, QI, 16, 8, vnx64hf, HF, __VA_ARGS__) \
   MACRO (16, 1, 16, vnx8hi, HI, 32, 2, vnx8sf, SF, __VA_ARGS__) \
   MACRO (16, 2, 8, vnx16hi, HI, 32, 4, vnx16sf, SF, __VA_ARGS__) \
   MACRO (16, 4, 4, vnx32hi, HI, 32, 8, vnx32sf, SF, __VA_ARGS__) \

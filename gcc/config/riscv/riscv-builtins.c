@@ -1783,6 +1783,21 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 		    RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##WE##M##WL##_UQI,\
 		    vector),
 
+#define VINT_NARROWING_CONVERT_BUILTINS(E, L, MLEN, VMODE, SDEMODE,		\
+				        WE, WL, WVMODE, WSMODE, OP)		\
+  DIRECT_NAMED (OP##VMODE, OP##int##WE##m##WL,				\
+		RISCV_VI##E##M##L##_FTYPE_VI##WE##M##WL,			\
+		vector),							\
+  DIRECT_NAMED (OP##VMODE##_mask, OP##int##WE##m##WL##_mask,			\
+		RISCV_VI##E##M##L##_FTYPE_VB##MLEN##_VI##E##M##L##_VI##WE##M##WL, \
+		vector),							\
+  DIRECT_NAMED (OP##VMODE, OP##uint##WE##m##WL,				\
+		RISCV_VUI##E##M##L##_FTYPE_VUI##WE##M##WL,			\
+		vector),							\
+  DIRECT_NAMED (OP##VMODE##_mask, OP##uint##WE##m##WL##_mask,			\
+		RISCV_VUI##E##M##L##_FTYPE_VB##MLEN##_VUI##E##M##L##_VUI##WE##M##WL, \
+		vector),
+
 #define VUINT_NARROWING_SHIFT_BUILTINS_NOMASK(E, L, MLEN, VMODE, SDEMODE,	\
 					      WE, WL, WVMODE, WSMODE, OP)	\
   DIRECT_NAMED (OP##VMODE##3_nv, OP##uint##WE##m##WL,				\
@@ -2346,6 +2361,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_WINT_ITERATOR_ARG (VINT_NARROWING_SHIFT_BUILTINS, vnsra)
   _RVV_WINT_ITERATOR_ARG (VUINT_NARROWING_SHIFT_BUILTINS, vnclipu)
   _RVV_WINT_ITERATOR_ARG (VINT_NARROWING_SHIFT_BUILTINS, vnclip)
+  _RVV_WINT_ITERATOR_ARG (VINT_NARROWING_CONVERT_BUILTINS, vncvt)
 
   _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, adc)
   _RVV_INT_ITERATOR_ARG (VINT_ADC_SBC_BUILTINS, sbc)
