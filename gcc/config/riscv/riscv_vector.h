@@ -992,6 +992,8 @@ v##NAME##_v_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_UNARY_OP, one_cmpl, not)
 
+_RVV_INT_ITERATOR_ARG (_RVV_INT_UNARY_OP, neg, neg)
+
 /* ??? An intrinsic with sizeless type args that doesn't call a builtin fails
    in ipa because it doesn't handle sizeless types in predicates, as called
    from will_be_nonconstant_predicate.  So all of these must use a builtin.  */

@@ -1680,6 +1680,64 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+(define_expand "neg<mode>2"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		     [(neg:VIMODES
+			(match_operand:VIMODES 1 "register_operand"))
+		      (reg:SI VL_REGNUM)]
+		    UNSPEC_USEVL))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*neg<mode>2_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(unspec:VIMODES
+	  [(neg:VIMODES
+	     (match_operand:VIMODES 1 "register_operand" "vr"))
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vneg.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "neg<mode>2_mask"
+  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VIMODES 0 "register_operand")
+		   (unspec:VIMODES
+		     [(if_then_else:VIMODES
+			(match_operand:<VCMPEQUIV> 1 "register_operand")
+			(neg:VIMODES
+			  (match_operand:VIMODES 3 "register_operand"))
+			(match_operand:VIMODES 2 "register_operand"))
+		      (reg:SI VL_REGNUM)]
+		    UNSPEC_USEVL))
+	      (use (reg:<VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*neg<mode>2_mask_nosetvl"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+	(unspec:VIMODES
+	  [(if_then_else:VIMODES
+	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	     (neg:VIMODES
+	       (match_operand:VIMODES 3 "register_operand" "vr"))
+	     (match_operand:VIMODES 2 "register_operand" "0"))
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))
+   (use (reg:<VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "vneg.v\t%0,%3,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Vector Integer Add-with-Carry / Subtract-with-Borrow Instructions
 
 (define_expand "adc<mode>4"
