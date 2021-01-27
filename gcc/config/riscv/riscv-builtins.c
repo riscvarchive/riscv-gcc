@@ -663,13 +663,13 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 					IE, IL, IMODE, ISUBMODE,		\
 					PNAME, TYPE_US, VCLASS)			\
   DIRECT_NAMED (								\
-    vlxei##MODE##IMODE##_##PNAME,						\
-    vlxei##TYPE_US##E##m##L##_##IE##m##IL##_##PNAME,				\
+    vloxei##MODE##IMODE##_##PNAME,						\
+    vloxei##TYPE_US##E##m##L##_##IE##m##IL##_##PNAME,				\
     RISCV_##VCLASS##E##M##L##_FTYPE_C_##SUBMODE##_PTR##_VUI##IE##M##IL,		\
     vector),									\
   DIRECT_NAMED (								\
-    vlxei##MODE##IMODE##_##PNAME##_mask,					\
-    vlxei##TYPE_US##E##m##L##_##IE##m##IL##_##PNAME##_mask,			\
+    vloxei##MODE##IMODE##_##PNAME##_mask,					\
+    vloxei##TYPE_US##E##m##L##_##IE##m##IL##_##PNAME##_mask,			\
     RISCV_##VCLASS##E##M##L##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
     vector),									\
   DIRECT_NAMED_NO_TARGET (							\
@@ -707,13 +707,13 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 #define _VFLOAT_INDEX_LOAD_STORE_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
 					  IE, IL, IMODE, ISUBMODE, PNAME)	\
   DIRECT_NAMED (								\
-    vlxei##MODE##IMODE##_##PNAME,						\
-    vlxeif##E##m##L##_##IE##m##IL##_##PNAME,					\
+    vloxei##MODE##IMODE##_##PNAME,						\
+    vloxeif##E##m##L##_##IE##m##IL##_##PNAME,					\
     RISCV_VF##E##M##L##_FTYPE_C_##SUBMODE##_PTR##_VUI##IE##M##IL,		\
     vector),									\
   DIRECT_NAMED (								\
-    vlxei##MODE##IMODE##_##PNAME##_mask,					\
-    vlxeif##E##m##L##_##IE##m##IL##_##PNAME##_mask,				\
+    vloxei##MODE##IMODE##_##PNAME##_mask,					\
+    vloxeif##E##m##L##_##IE##m##IL##_##PNAME##_mask,				\
     RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_C_##SUBMODE##_PTR##_VUI##IE##M##IL,\
     vector),									\
   DIRECT_NAMED_NO_TARGET (							\

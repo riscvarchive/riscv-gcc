@@ -214,7 +214,7 @@
 			 (UNSPEC_VASUBU "vasubu") (UNSPEC_VASUB "vasub")
 			 (UNSPEC_VSMUL "vsmul")])
 
-;; Iterator and attributes for vsxei and vsuxei instructions.
+;; Iterator and attributes for vsoxei and vsuxei instructions.
 (define_int_iterator UNSPEC_INDEXED_STORE [UNSPEC_ORDERED_INDEXED_STORE
 					   UNSPEC_UNORDERED_INDEXED_STORE])
 
@@ -562,7 +562,7 @@
   "TARGET_VECTOR
    && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
 		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
-  "vlxei<VIMODES:sew>.v\t%0,(%1),%2"
+  "vloxei<VIMODES:sew>.v\t%0,(%1),%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -604,13 +604,13 @@
   "TARGET_VECTOR
    && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
 		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
-  "vlxei<VIMODES:sew>.v\t%0,(%1),%2,%5.t"
+  "vloxei<VIMODES:sew>.v\t%0,(%1),%2,%5.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
 ;; Vector Indexed Load instructions for builtin
 
-(define_expand "vlxei<VMODES:mode><VIMODES:mode>_<P:mode>"
+(define_expand "vloxei<VMODES:mode><VIMODES:mode>_<P:mode>"
   [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VMODES 0 "register_operand")
 		   (unspec:VMODES
@@ -628,7 +628,7 @@
 {
 })
 
-(define_insn "*vlxei<VMODES:mode><VIMODES:mode>_<P:mode>_nosetvl"
+(define_insn "*vloxei<VMODES:mode><VIMODES:mode>_<P:mode>_nosetvl"
   [(set (match_operand:VMODES 0 "register_operand" "=&vr")
 	(unspec:VMODES
 	  [(unspec:VMODES
@@ -642,11 +642,11 @@
   "TARGET_VECTOR
    && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
 		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
-  "vlxei<VIMODES:sew>.v\t%0,(%1),%2"
+  "vloxei<VIMODES:sew>.v\t%0,(%1),%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "vlxei<VMODES:mode><VIMODES:mode>_<P:mode>_mask"
+(define_expand "vloxei<VMODES:mode><VIMODES:mode>_<P:mode>_mask"
   [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VMODES 0 "register_operand")
 		   (unspec:VMODES
@@ -666,7 +666,7 @@
 {
 })
 
-(define_insn "*vlxei<VMODES:mode><VIMODES:mode>_<P:mode>_mask_nosetvl"
+(define_insn "*vloxei<VMODES:mode><VIMODES:mode>_<P:mode>_mask_nosetvl"
   [(set (match_operand:VMODES 0 "register_operand" "=vr")
 	(unspec:VMODES
 	  [(unspec:VMODES
@@ -682,7 +682,7 @@
   "TARGET_VECTOR
    && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
 		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
-  "vlxei<VIMODES:sew>.v\t%0,(%3),%4,%1.t"
+  "vloxei<VIMODES:sew>.v\t%0,(%3),%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -725,7 +725,7 @@
   "TARGET_VECTOR
    && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
 		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
-  "vsxei<VIMODES:sew>.v\t%4,(%0),%1"
+  "vsoxei<VIMODES:sew>.v\t%4,(%0),%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -767,7 +767,7 @@
   "TARGET_VECTOR
    && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
 		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
-  "vsxei<VIMODES:sew>.v\t%4,(%0),%1,%5.t"
+  "vsoxei<VIMODES:sew>.v\t%4,(%0),%1,%5.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -10677,7 +10677,7 @@
 	 UNSPEC_USEVL))
    (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vsxseg<NF>ei<VIMODES:sew>.v\t%1, (%0), %2"
+  "vsoxseg<NF>ei<VIMODES:sew>.v\t%1, (%0), %2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -10711,7 +10711,7 @@
 	 UNSPEC_USEVL))
    (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vsxseg<NF>ei<VIMODES:sew>.v\t%1, (%0), %3, %2.t"
+  "vsoxseg<NF>ei<VIMODES:sew>.v\t%1, (%0), %3, %2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
