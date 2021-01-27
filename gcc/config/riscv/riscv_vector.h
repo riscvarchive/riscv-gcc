@@ -2949,6 +2949,9 @@ vf##OP##_v_f##SEW##m##LMUL##_m (				\
 }
 
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, sqrt)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, rece7)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, rsqrte7)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, neg)
 
 #define _RVV_FLOAT_VFCLASS(SEW, LMUL, MLEN, T, OP, NAME)		\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
