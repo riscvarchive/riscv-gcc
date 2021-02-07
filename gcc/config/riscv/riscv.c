@@ -5458,6 +5458,19 @@ riscv_vector_alignment (const_tree type)
     return MIN (align, 128);
 }
 
+/* Return true if X is a const_vector with all duplicate elements, which is in
+   the range between MINVAL and MAXVAL.  */
+
+bool
+riscv_const_vec_all_same_in_range_p (rtx x, HOST_WIDE_INT minval,
+                                     HOST_WIDE_INT maxval)
+{
+  rtx elt;
+  return (const_vec_duplicate_p (x, &elt)
+	  && CONST_INT_P (elt)
+	  && IN_RANGE (INTVAL (elt), minval, maxval));
+}
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"

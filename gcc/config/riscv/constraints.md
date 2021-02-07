@@ -81,3 +81,49 @@
    A constant @code{move_operand}."
   (and (match_operand 0 "move_operand")
        (match_test "CONSTANT_P (op)")))
+
+;; Vector constraints.
+
+(define_register_constraint "vr" "TARGET_VECTOR ? VECTOR_REGS : NO_REGS"
+  "A vector register (if available).")
+
+;; TODO: This could be wrong if vector mask can use other than v0.
+(define_register_constraint "vd" "TARGET_VECTOR ? VECTOR_NO_MASK_REGS : NO_REGS"
+  "A vector register except mask register (if available).")
+
+;; ??? Not used yet.
+(define_register_constraint "vm" "TARGET_VECTOR ? VECTOR_MASK_REGS : NO_REGS"
+  "A vector mask register (if available).")
+
+(define_register_constraint "vt" "TARGET_VECTOR ? VTYPE_REGS : NO_REGS"
+  "VTYPE register (if available).")
+
+(define_constraint "vc"
+  "Any vector duplicate constant."
+  (and (match_code "const_vector")
+       (match_test "const_vec_duplicate_p (op)")))
+
+(define_constraint "vi"
+  "A vector 5-bit signed immediate."
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, -16, 15)")))
+
+(define_constraint "vk"
+  "A vector 5-bit unsigned immediate."
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, 0, 31)")))
+
+(define_constraint "v0"
+  "A vector with constant zero."
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, 0, 0)")))
+
+(define_constraint "v1"
+  "A vector with constant all bit set."
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, 1, 1)")))
+
+(define_constraint "vp"
+  "POLY_INT"
+  (and (match_code "const_poly_int")
+       (match_test "CONST_POLY_INT_COEFFS (op)[0] == UNITS_PER_V_REG.coeffs[0]")))

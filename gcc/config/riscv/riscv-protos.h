@@ -108,4 +108,7 @@ struct riscv_cpu_info {
 
 extern const riscv_cpu_info *riscv_find_cpu (const char *);
 
+/* Routines for vector support.  */
+bool riscv_const_vec_all_same_in_range_p (rtx, HOST_WIDE_INT, HOST_WIDE_INT);
+
 #endif /* ! GCC_RISCV_PROTOS_H */

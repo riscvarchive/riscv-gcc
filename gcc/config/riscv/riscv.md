@@ -45,6 +45,8 @@
 
   ;; Stack tie
   UNSPEC_TIE
+
+  UNSPEC_USEVL
 ])
 
 (define_c_enum "unspecv" [
@@ -84,6 +86,9 @@
    (S9_REGNUM			25)
    (S10_REGNUM			26)
    (S11_REGNUM			27)
+
+   (VL_REGNUM                   66)
+   (VTYPE_REGNUM                67)
 
    (NORMAL_RETURN		0)
    (SIBCALL_RETURN		1)
@@ -165,7 +170,7 @@
 (define_attr "type"
   "unknown,branch,jump,call,load,fpload,store,fpstore,
    mtc,mfc,const,arith,logical,shift,slt,imul,idiv,move,fmove,fadd,fmul,
-   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost"
+   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost,vector"
   (cond [(eq_attr "got" "load") (const_string "load")
 
 	 ;; If a doubleword move uses these expensive instructions,
@@ -2586,5 +2591,6 @@
 (include "sync.md")
 (include "peephole.md")
 (include "pic.md")
+(include "vector.md")
 (include "generic.md")
 (include "sifive-7.md")

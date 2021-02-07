@@ -212,3 +212,11 @@
 {
   return riscv_gpr_save_operation_p (op);
 })
+
+(define_predicate "reg_or_mem_operand"
+  (ior (match_operand 0 "memory_operand")
+       (match_operand 0 "register_operand")))
+
+(define_predicate "vector_move_operand"
+  (ior (match_operand 0 "nonimmediate_operand")
+       (match_test "const_vec_duplicate_p (op)")))
