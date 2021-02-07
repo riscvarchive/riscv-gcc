@@ -104,11 +104,10 @@ void riscv_register_vector_types (tree fp16_type_node)
   tree floatSF_type_node = float_type_node;
   tree floatDF_type_node = double_type_node;
   /* Init for all_vector_types.  */
-  for (auto type : integerTypes)
+  for (VecctorTypeInfo *type = &integerTypes[0]; type->vector_type_name; type++)
     {
-      if (!type.vector_type_name) break;
-      int unsignedp_idx = type.vector_type_name[0] == 'u';
-      all_vector_types[type.vector_mode][unsignedp_idx] = &type;
+      int unsignedp_idx = type->vector_type_name[0] == 'u';
+      all_vector_types[type->vector_mode][unsignedp_idx] = type;
     }
 
     /* FIXME: mask type isn't right.  */
@@ -125,7 +124,6 @@ void riscv_register_vector_types (tree fp16_type_node)
       _RVV_INT_TYPE_ITERATOR_ARG(VECTOR_TYPE_INIT, int, int, 0)
       _RVV_INT_TYPE_ITERATOR_ARG(VECTOR_TYPE_INIT, uint, unsigned_int, 1)
 //      _RVV_FLOAT_TYPE_ITERATOR_ARG(VECTOR_TYPE_INIT, float, float)
-
 }
 
 VecotrAddIntrinsic vadd;
