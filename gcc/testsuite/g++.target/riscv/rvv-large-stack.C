@@ -20,7 +20,7 @@ int main() {
   return 0;
 }
 
-/* { dg-final { scan-assembler "mul\tt0,t0,t2" } } */
+/* { dg-final { scan-assembler "mul\tt1,t1,t2" } } */
 /* { dg-final { scan-assembler "li\tt2,-4096" } } */
-/* { dg-final { scan-assembler "add\tt2,t2,t0" } } */
-/* { dg-final { scan-assembler "addi\tt0,t2,1552" } } */
+/* { dg-final { scan-assembler "add\tt2,t2,t1" } } */
+/* { dg-final { scan-assembler "addi\tt1,t2,1552" } } */
