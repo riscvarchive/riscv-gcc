@@ -37,6 +37,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "expr.h"
 #include "langhooks.h"
 #include "riscv-vector-iterator.h"
+#include "riscv-protos.h"
 #include "riscv-vector-builtins.h"
 
 /* Macros to create an enumeration identifier for a function prototype.  */
@@ -294,6 +295,9 @@ riscv_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
   unsigned int fcode = DECL_MD_FUNCTION_CODE (fndecl);
   const struct riscv_builtin_description *d = &riscv_builtins[fcode];
+
+  if (fcode >= FIRST_VECTOR_INTRINSIC_CODE)
+    return riscv_expand_vector_builtin (exp, target);
 
   switch (d->builtin_type)
     {

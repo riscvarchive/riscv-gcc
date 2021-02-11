@@ -411,6 +411,7 @@
 			 (xor "xor")
 			 (and "and")
 			 (plus "add")
+			 (mult "mul")
 			 (minus "sub")])
 
 ;; <insn> expands to the name of the insn that implements a particular code.
@@ -424,6 +425,8 @@
 			(ior "or")
 			(xor "xor")
 			(and "and")
+			(plus "add")
+			(mult "mul")
 			(plus "add")
 			(minus "sub")])
 

@@ -46,3 +46,20 @@
    vs<lmul>r.v\t%1,%0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+(define_code_iterator add_mul [plus mult])
+
+(define_insn "@rvv_<optab><mode>"
+  [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
+        (if_then_else:VIMODES
+          (ne (unspec:VIMODES [(match_operand:VIMODES 3 "register_operand" "vt,vt")] UNSPEC_USEVL) (const_int 0))
+          (add_mul:VIMODES
+            (match_operand:VIMODES 1 "register_operand" "vr,vr")
+            (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi"))
+          (match_dup 0)))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vv\t%0,%1,%2
+   v<insn>.vi\t%0,%1,%v2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
