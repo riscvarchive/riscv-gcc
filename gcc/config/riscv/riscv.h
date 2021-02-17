@@ -436,6 +436,7 @@ enum reg_class
   VECTOR_NO_MASK_REGS,		/* vector registers except mask registers */
   VECTOR_REGS,			/* vector registers */
   VTYPE_REGS,			/* vype register */
+  VL_REGS,			/* vype register */
   ALL_REGS,			/* all registers */
   LIM_REG_CLASSES		/* max value + 1 */
 };
@@ -460,6 +461,7 @@ enum reg_class
   "VECTOR_NO_MASK_REGS", 						\
   "VECTOR_REGS", 							\
   "VTYPE_REGS", 							\
+  "VL_REGS", 							\
   "ALL_REGS"								\
 }
 
@@ -482,10 +484,11 @@ enum reg_class
   { 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	/* GR_REGS */		\
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000 },	/* FP_REGS */		\
   { 0x00000000, 0x00000000, 0x00000003, 0x00000000 },	/* FRAME_REGS */	\
-  { 0x00000000, 0x00000000, 0x00000000, 0x00000001 },	/* VECTOR_MASK_REGS */\
+  { 0xffffffff, 0x00000000, 0x00000004, 0x00000001 },	/* VECTOR_MASK_REGS */\
   { 0x00000000, 0x00000000, 0x00000000, 0xfffffffe },	/* VECTOR_REGS */\
   { 0x00000000, 0x00000000, 0x00000000, 0xffffffff },	/* VECTOR_REGS */\
   { 0x00000000, 0x00000000, 0x00000008, 0x00000000 },	/* VTYPE_REGS */\
+  { 0x00000000, 0x00000000, 0x00000004, 0x00000000 },	/* VL_REGS */\
   { 0xffffffff, 0xffffffff, 0x0000000f, 0xffffffff }	/* ALL_REGS */		\
 }
 

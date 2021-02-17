@@ -271,7 +271,22 @@ const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
-  FRAME_REGS,	FRAME_REGS,
+  FRAME_REGS,	FRAME_REGS,	VL_REGS,	VTYPE_REGS,
+  NO_REGS,	NO_REGS,	NO_REGS,	NO_REGS,
+  NO_REGS,	NO_REGS,	NO_REGS,	NO_REGS,
+  NO_REGS,	NO_REGS,	NO_REGS,	NO_REGS,
+  NO_REGS,	NO_REGS,	NO_REGS,	NO_REGS,
+  NO_REGS,	NO_REGS,	NO_REGS,	NO_REGS,
+  NO_REGS,	NO_REGS,	NO_REGS,	NO_REGS,
+  NO_REGS,	NO_REGS,	NO_REGS,	NO_REGS,
+  VECTOR_MASK_REGS,VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,
+  VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,
+  VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,
+  VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,
+  VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,
+  VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,
+  VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,
+  VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,	VECTOR_REGS,
 };
 
 /* Costs to use when optimizing for rocket.  */
@@ -828,6 +843,9 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
 	      && riscv_valid_offset_p (info->offset, mode));
 
     case LO_SUM:
+      /* Vector load/store disallow LO_SUM.  */
+      if (TARGET_VECTOR && VECTOR_MODE_P (mode))
+	return false;
       info->type = ADDRESS_LO_SUM;
       info->reg = XEXP (x, 0);
       info->offset = XEXP (x, 1);
@@ -4535,16 +4553,52 @@ riscv_register_move_cost (machine_mode mode,
   return riscv_secondary_memory_needed (mode, from, to) ? 8 : 2;
 }
 
+/* Predicator function for supported vector mode.  */
+
+static bool
+riscv_vector_mode_p (machine_mode mode)
+{
+  scalar_mode inner = GET_MODE_INNER (mode);
+  if (VECTOR_MODE_P (mode)
+      && (inner == BImode
+	  || inner == QImode
+	  || inner == HImode
+	  || inner == HFmode
+	  || inner == SImode
+	  || inner == SFmode
+	  || inner == DImode
+	  || inner == DFmode))
+    return true;
+
+  return false;
+}
+
 /* Implement TARGET_HARD_REGNO_NREGS.  */
 
 static unsigned int
 riscv_hard_regno_nregs (unsigned int regno, machine_mode mode)
 {
+  /* mode for VL or VTYPE are just a marker, not holding value,
+     so it always consume one register.  */
+  if (riscv_vector_mode_p (mode) &&
+      (regno == VL_REGNUM || regno == VTYPE_REGNUM))
+    return 1;
+
+  /* riscv_hard_regno_mode_ok calls here first, so we must accept vector
+     modes in any register, but the result won't be used for non-vector
+     registers.  */
+  if (riscv_vector_mode_p (mode))
+    return exact_div (GET_MODE_SIZE (mode),
+		      BYTES_PER_RVV_VECTOR).to_constant ();
 
   HOST_WIDE_INT constant_size = GET_MODE_SIZE (mode).to_constant ();
 
   if (FP_REG_P (regno))
     return CEIL (constant_size, UNITS_PER_FP_REG);
+
+  /* Assume every valid non-vector mode fits in one vector register.  */
+  if (VECT_REG_P (regno))
+    return 1;
 
   /* All other registers are word-sized.  */
   return CEIL (constant_size, UNITS_PER_WORD);
@@ -4561,6 +4615,10 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
     {
       if (!GP_REG_P (regno + nregs - 1))
 	return false;
+#if 0
+      if (VECTOR_MODE_P (mode))
+	return false;
+#endif
     }
   else if (FP_REG_P (regno))
     {
@@ -4571,11 +4629,40 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	  && GET_MODE_CLASS (mode) != MODE_COMPLEX_FLOAT)
 	return false;
 
+      if (VECTOR_MODE_P (mode))
+	return false;
+
       /* Only use callee-saved registers if a potential callee is guaranteed
 	 to spill the requisite width.  */
       if (GET_MODE_UNIT_SIZE (mode) > UNITS_PER_FP_REG
 	  || (!call_used_or_fixed_reg_p (regno)
 	      && GET_MODE_UNIT_SIZE (mode) > UNITS_PER_FP_ARG))
+	return false;
+    }
+  else if (VECT_REG_P (regno))
+   {
+      int align = -1;
+      if (!VECT_REG_P (regno + nregs -1))
+	return false;
+
+      /* Assume only vector modes fit in vector registers.  */
+      if (!VECTOR_MODE_P (mode))
+	return false;
+
+      align = nregs;
+
+      /* Check alignment requirement for vector mode.  */
+      if ((regno & (align - 1)) != 0)
+	return false;
+    }
+  else if (regno == VTYPE_REGNUM || regno == VL_REGNUM)
+   {
+      /* Assume only vector modes fit in vector registers.  */
+      if (!VECTOR_MODE_P (mode))
+	return false;
+
+      /* Never hold value using more than 1 reg for VL and VTYPE.  */
+      if (nregs != 1)
 	return false;
     }
   else
@@ -4613,6 +4700,9 @@ riscv_class_max_nregs (reg_class_t rclass, machine_mode mode)
 
   if (reg_class_subset_p (GR_REGS, rclass))
     return riscv_hard_regno_nregs (GP_REG_FIRST, mode);
+
+  if (reg_class_subset_p (VECTOR_REGS, rclass))
+    return riscv_hard_regno_nregs (VECT_REG_FIRST, mode);
 
   return 0;
 }
@@ -4885,6 +4975,12 @@ riscv_conditional_register_usage (void)
     {
       for (int regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
 	call_used_regs[regno] = 1;
+    }
+
+  if (!TARGET_VECTOR)
+    {
+      for (int regno = VECT_REG_FIRST; regno <= VECT_REG_LAST; regno++)
+	fixed_regs[regno] = call_used_regs[regno] = 1;
     }
 }
 
@@ -5405,26 +5501,6 @@ riscv_floatn_mode (int n, bool extended)
   return default_floatn_mode (n, extended);
 }
 
-/* Predicator function for supported vector mode.  */
-
-static bool
-riscv_vector_mode_p (machine_mode mode)
-{
-  scalar_mode inner = GET_MODE_INNER (mode);
-  if (VECTOR_MODE_P (mode)
-      && (inner == BImode
-	  || inner == QImode
-	  || inner == HImode
-	  || inner == HFmode
-	  || inner == SImode
-	  || inner == SFmode
-	  || inner == DImode
-	  || inner == DFmode))
-    return true;
-
-  return false;
-}
-
 /* Implement TARGET_VECTOR_MODE_SUPPORTED_P.  */
 
 static bool
@@ -5471,6 +5547,26 @@ riscv_const_vec_all_same_in_range_p (rtx x, HOST_WIDE_INT minval,
 	  && IN_RANGE (INTVAL (elt), minval, maxval));
 }
 
+/* Implement TARGET_UNSPEC_MAY_TRAP_P.  */
+
+static int
+riscv_unspec_may_trap_p (const_rtx x, unsigned flags)
+{
+  switch (XINT (x, 1))
+    {
+    case UNSPEC_VSETVL:
+    case UNSPEC_USEVL:
+      return 0;
+    default:
+      break;
+    }
+
+  return default_unspec_may_trap_p (x, flags);
+}
+
+
+#undef TARGET_UNSPEC_MAY_TRAP_P
+#define TARGET_UNSPEC_MAY_TRAP_P riscv_unspec_may_trap_p
 
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP

@@ -4,70 +4,70 @@
 /* An iterator to call a macro with every supported SEW and LMUL,
    along with its corresponding vector and scalar modes in GCC.  */
 #define _RVV_INT_TYPE_ITERATOR(MACRO) \
-  MACRO (8, 1, VNx16QI, QI) \
-  MACRO (8, 2, VNx32QI, QI) \
-  MACRO (8, 4, VNx64QI, QI) \
-  MACRO (8, 8, VNx128QI, QI) \
-  MACRO (16, 1, VNx8HI, HI) \
-  MACRO (16, 2, VNx16HI, HI) \
-  MACRO (16, 4, VNx32HI, HI) \
-  MACRO (16, 8, VNx64HI, HI) \
-  MACRO (32, 1, VNx4SI, SI) \
-  MACRO (32, 2, VNx8SI, SI) \
-  MACRO (32, 4, VNx16SI, SI) \
-  MACRO (32, 8, VNx32SI, SI) \
-  MACRO (64, 1, VNx2DI, DI) \
-  MACRO (64, 2, VNx4DI, DI) \
-  MACRO (64, 4, VNx8DI, DI) \
-  MACRO (64, 8, VNx16DI, DI) \
+  MACRO (8, 1, VNx16QI, QI, VNx16BI) \
+  MACRO (8, 2, VNx32QI, QI, VNx32BI) \
+  MACRO (8, 4, VNx64QI, QI, VNx64BI) \
+  MACRO (8, 8, VNx128QI, QI, VNx128BI) \
+  MACRO (16, 1, VNx8HI, HI, VNx8BI) \
+  MACRO (16, 2, VNx16HI, HI, VNx16BI) \
+  MACRO (16, 4, VNx32HI, HI, VNx32BI) \
+  MACRO (16, 8, VNx64HI, HI, VNx64BI) \
+  MACRO (32, 1, VNx4SI, SI, VNx4BI) \
+  MACRO (32, 2, VNx8SI, SI, VNx8BI) \
+  MACRO (32, 4, VNx16SI, SI, VNx16BI) \
+  MACRO (32, 8, VNx32SI, SI, VNx32BI) \
+  MACRO (64, 1, VNx2DI, DI, VNx2BI) \
+  MACRO (64, 2, VNx4DI, DI, VNx4BI) \
+  MACRO (64, 4, VNx8DI, DI, VNx8BI) \
+  MACRO (64, 8, VNx16DI, DI, VNx16BI) \
 
 /* Same as above but with an extra argument.  */
 #define _RVV_INT_TYPE_ITERATOR_ARG(MACRO, ...) \
-  MACRO (8, 1, VNx16QI, QI, __VA_ARGS__) \
-  MACRO (8, 2, VNx32QI, QI, __VA_ARGS__) \
-  MACRO (8, 4, VNx64QI, QI, __VA_ARGS__) \
-  MACRO (8, 8, VNx128QI, QI, __VA_ARGS__) \
-  MACRO (16, 1, VNx8HI, HI, __VA_ARGS__) \
-  MACRO (16, 2, VNx16HI, HI, __VA_ARGS__) \
-  MACRO (16, 4, VNx32HI, HI, __VA_ARGS__) \
-  MACRO (16, 8, VNx64HI, HI, __VA_ARGS__) \
-  MACRO (32, 1, VNx4SI, SI, __VA_ARGS__) \
-  MACRO (32, 2, VNx8SI, SI, __VA_ARGS__) \
-  MACRO (32, 4, VNx16SI, SI, __VA_ARGS__) \
-  MACRO (32, 8, VNx32SI, SI, __VA_ARGS__) \
-  MACRO (64, 1, VNx2DI, DI, __VA_ARGS__) \
-  MACRO (64, 2, VNx4DI, DI, __VA_ARGS__) \
-  MACRO (64, 4, VNx8DI, DI, __VA_ARGS__) \
-  MACRO (64, 8, VNx16DI, DI, __VA_ARGS__) \
+  MACRO (8, 1, VNx16QI, QI, VNx16BI, __VA_ARGS__) \
+  MACRO (8, 2, VNx32QI, QI, VNx32BI, __VA_ARGS__) \
+  MACRO (8, 4, VNx64QI, QI, VNx64BI, __VA_ARGS__) \
+  MACRO (8, 8, VNx128QI, QI, VNx128BI, __VA_ARGS__) \
+  MACRO (16, 1, VNx8HI, HI, VNx8BI, __VA_ARGS__) \
+  MACRO (16, 2, VNx16HI, HI, VNx16BI, __VA_ARGS__) \
+  MACRO (16, 4, VNx32HI, HI, VNx32BI, __VA_ARGS__) \
+  MACRO (16, 8, VNx64HI, HI, VNx64BI, __VA_ARGS__) \
+  MACRO (32, 1, VNx4SI, SI, VNx4BI, __VA_ARGS__) \
+  MACRO (32, 2, VNx8SI, SI, VNx8BI, __VA_ARGS__) \
+  MACRO (32, 4, VNx16SI, SI, VNx16BI, __VA_ARGS__) \
+  MACRO (32, 8, VNx32SI, SI, VNx32BI, __VA_ARGS__) \
+  MACRO (64, 1, VNx2DI, DI, VNx2BI, __VA_ARGS__) \
+  MACRO (64, 2, VNx4DI, DI, VNx4BI, __VA_ARGS__) \
+  MACRO (64, 4, VNx8DI, DI, VNx8BI, __VA_ARGS__) \
+  MACRO (64, 8, VNx16DI, DI, VNx16BI, __VA_ARGS__) \
 
 /* An iterator to call a macro with every supported SEW and LMUL,
    along with its corresponding vector and scalar modes in GCC.  */
 #define _RVV_FLOAT_TYPE_ITERATOR(MACRO) \
-  MACRO (16, 1, VNx8HF, HF) \
-  MACRO (16, 2, VNx16HF, HF) \
-  MACRO (16, 4, VNx32HF, HF) \
-  MACRO (16, 8, VNx64HF, HF) \
-  MACRO (32, 1, VNx4SF, SF) \
-  MACRO (32, 2, VNx8SF, SF) \
-  MACRO (32, 4, VNx16SF, SF) \
-  MACRO (32, 8, VNx32SF, SF) \
-  MACRO (64, 1, VNx2DF, DF) \
-  MACRO (64, 2, VNx4DF, DF) \
-  MACRO (64, 4, VNx8DF, DF) \
-  MACRO (64, 8, VNx16DF, DF) \
+  MACRO (16, 1, VNx8HF, HF, VNx8BI) \
+  MACRO (16, 2, VNx16HF, HF, VNx16BI) \
+  MACRO (16, 4, VNx32HF, HF, VNx32BI) \
+  MACRO (16, 8, VNx64HF, HF, VNx64BI) \
+  MACRO (32, 1, VNx4SF, SF, VNx4BI) \
+  MACRO (32, 2, VNx8SF, SF, VNx8BI) \
+  MACRO (32, 4, VNx16SF, SF, VNx16BI) \
+  MACRO (32, 8, VNx32SF, SF, VNx32BI) \
+  MACRO (64, 1, VNx2DF, DF, VNx2BI) \
+  MACRO (64, 2, VNx4DF, DF, VNx4BI) \
+  MACRO (64, 4, VNx8DF, DF, VNx8BI) \
+  MACRO (64, 8, VNx16DF, DF, VNx16BI) \
 
 /* Same as above but with an extra argument.  */
 #define _RVV_FLOAT_TYPE_ITERATOR_ARG(MACRO, ...) \
-  MACRO (16, 1, VNx8HF, HF, __VA_ARGS__) \
-  MACRO (16, 2, VNx16HF, HF, __VA_ARGS__) \
-  MACRO (16, 4, VNx32HF, HF, __VA_ARGS__) \
-  MACRO (16, 8, VNx64HF, HF, __VA_ARGS__) \
-  MACRO (32, 1, VNx4SF, SF, __VA_ARGS__) \
-  MACRO (32, 2, VNx8SF, SF, __VA_ARGS__) \
-  MACRO (32, 4, VNx16SF, SF, __VA_ARGS__) \
-  MACRO (32, 8, VNx32SF, SF, __VA_ARGS__) \
-  MACRO (64, 1, VNx2DF, DF, __VA_ARGS__) \
-  MACRO (64, 2, VNx4DF, DF, __VA_ARGS__) \
-  MACRO (64, 4, VNx8DF, DF, __VA_ARGS__) \
-  MACRO (64, 8, VNx16DF, DF, __VA_ARGS__) \
+  MACRO (16, 1, VNx8HF, HF, VNx8BI, __VA_ARGS__) \
+  MACRO (16, 2, VNx16HF, HF, VNx16BI, __VA_ARGS__) \
+  MACRO (16, 4, VNx32HF, HF, VNx32BI, __VA_ARGS__) \
+  MACRO (16, 8, VNx64HF, HF, VNx64BI, __VA_ARGS__) \
+  MACRO (32, 1, VNx4SF, SF, VNx4BI, __VA_ARGS__) \
+  MACRO (32, 2, VNx8SF, SF, VNx8BI, __VA_ARGS__) \
+  MACRO (32, 4, VNx16SF, SF, VNx16BI, __VA_ARGS__) \
+  MACRO (32, 8, VNx32SF, SF, VNx32BI, __VA_ARGS__) \
+  MACRO (64, 1, VNx2DF, DF, VNx2BI, __VA_ARGS__) \
+  MACRO (64, 2, VNx4DF, DF, VNx4BI, __VA_ARGS__) \
+  MACRO (64, 4, VNx8DF, DF, VNx8BI, __VA_ARGS__) \
+  MACRO (64, 8, VNx16DF, DF, VNx16BI, __VA_ARGS__) \
 

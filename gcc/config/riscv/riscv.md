@@ -47,6 +47,7 @@
   UNSPEC_TIE
 
   UNSPEC_USEVL
+  UNSPEC_VSETVL
 ])
 
 (define_c_enum "unspecv" [

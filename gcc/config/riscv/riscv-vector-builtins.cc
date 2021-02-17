@@ -38,11 +38,13 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 #include "expr.h"
 #include "langhooks.h"
+#include "stringpool.h"
+#include "attribs.h"
 #include "riscv-vector-iterator.h"
 #include "riscv-vector-builtins.h"
 
 /* Declare vector type nodes.  */
-#define VECTOR_TYPE_NODES(SEW, LMUL, MODE, SMODE, TYPE) \
+#define VECTOR_TYPE_NODES(SEW, LMUL, MODE, SMODE, MMODE, TYPE) \
   tree rvvtypes_##TYPE##SEW##m##LMUL##_t_node;
 _RVV_INT_TYPE_ITERATOR_ARG(VECTOR_TYPE_NODES, int)
 _RVV_INT_TYPE_ITERATOR_ARG(VECTOR_TYPE_NODES, uint)
@@ -87,7 +89,7 @@ static VecctorTypeInfo *all_vector_types[NUM_MACHINE_MODES][2];
 
 static VecctorTypeInfo integerTypes[] =
 {
-#define VECTOR_TYPEINFO_INIT(SEW, LMUL, MODE, SMODE,			\
+#define VECTOR_TYPEINFO_INIT(SEW, LMUL, MODE, SMODE, MMODE,		\
 			     TYPE, SMODE_PREFIX)			\
   {#SMODE_PREFIX #SEW "m" #LMUL, E_##MODE##mode, NULL_TREE, "v" #TYPE #SEW "m" #LMUL "_t",\
    E_##SMODE##mode, NULL_TREE, #TYPE #SEW "_t", },
@@ -113,6 +115,48 @@ riscv_vector_type (const char *name, tree elt_type, enum machine_mode mode)
   return result;
 }
 
+
+static
+int mode2lmul (machine_mode mode)
+{
+    switch (mode)
+      {
+#define VECTOR_LMUL(SEW, LMUL, MODE, SMODE, MMODE) \
+      case E_##MODE##mode: return LMUL;
+_RVV_INT_TYPE_ITERATOR(VECTOR_LMUL)
+      }
+    gcc_unreachable ();
+    return 0;
+}
+
+
+
+static
+int mode2sew (machine_mode mode)
+{
+    switch (mode)
+      {
+#define VECTOR_SEW(SEW, LMUL, MODE, SMODE, MMODE) \
+      case E_##MODE##mode: return SEW;
+_RVV_INT_TYPE_ITERATOR(VECTOR_SEW)
+      }
+    gcc_unreachable ();
+    return 0;
+}
+
+static
+machine_mode mode2mask_mode (machine_mode mode)
+{
+    switch (mode)
+      {
+#define VECTOR_MASK_MODES(SEW, LMUL, MODE, SMODE, MMODE) \
+      case E_##MODE##mode: return E_##MMODE##mode;
+_RVV_INT_TYPE_ITERATOR(VECTOR_MASK_MODES)
+      }
+    gcc_unreachable ();
+    return E_VOIDmode;
+}
+
 /* Init vector type nodes.  */
 
 void riscv_register_vector_types (tree fp16_type_node)
@@ -129,7 +173,7 @@ void riscv_register_vector_types (tree fp16_type_node)
 
     /* FIXME: mask type not setup yet.  */
     /* FIXME: mask type isn't right.  */
-#define VECTOR_TYPE_INIT(SEW, LMUL, MODE, SMODE,			\
+#define VECTOR_TYPE_INIT(SEW, LMUL, MODE, SMODE, MMODE,			\
 			 TYPE, SMODE_PREFIX, UNSIGNED_P_INX)		\
       rvvtypes_##TYPE##SEW##m##LMUL##_t_node =				\
 	riscv_vector_type ("__v" #TYPE #SEW "m" #LMUL "_t",		\
@@ -206,6 +250,15 @@ VecotrIntrinsic<BASENAME_IDX, FUNCTION_TYPE, OP_TYPES, MASK_TYPE>
   return count;
 }
 
+/* Add attribute NAME to ATTRS.  */
+static tree
+add_attribute (const char *name, tree attrs)
+{
+  return tree_cons (get_identifier (name), NULL_TREE, attrs);
+}
+
+
+
 template <unsigned BASENAME_IDX, int FUNCTION_TYPE, int OP_TYPES, int MASK_TYPE>
 void
 VecotrIntrinsic<BASENAME_IDX, FUNCTION_TYPE, OP_TYPES, MASK_TYPE>
@@ -215,6 +268,11 @@ VecotrIntrinsic<BASENAME_IDX, FUNCTION_TYPE, OP_TYPES, MASK_TYPE>
   std::string func_name;
   std::string prefix = STRPOOL[BASENAME_IDX];
   int code = code_offset;
+  tree attrs = NULL_TREE;
+  attrs = add_attribute ("const", attrs);
+  attrs = add_attribute ("nothrow", attrs);
+  attrs = add_attribute ("leaf", attrs);
+
 
   tree func_type;
   if (OP_TYPES & INT_OP_TYPE)
@@ -237,14 +295,14 @@ VecotrIntrinsic<BASENAME_IDX, FUNCTION_TYPE, OP_TYPES, MASK_TYPE>
 	      func_type,
 	      code++,
 	      NULL,
-	      NULL_TREE);
+	      attrs);
 	  }
 	if (FUNCTION_TYPE & VX_FUNC_TYPE)
 	  {
 	    /* vx form. */
 	    func_name = prefix + "_vx_" + type.vector_type_name;
 	    func_type = riscv_build_vector_function_type (type, VX_FUNC_TYPE, unsignedp);
-	    simulate_builtin_function_decl (input_location, func_name.c_str(), func_type, code++, NULL, NULL_TREE);
+	    simulate_builtin_function_decl (input_location, func_name.c_str(), func_type, code++, NULL, attrs);
 	  }
       }
 }
@@ -315,6 +373,29 @@ riscv_expand_builtin_direct (enum insn_code icode, rtx target, tree exp,
   return riscv_expand_builtin_insn (icode, opno, ops, has_target_p);
 }
 #endif
+/* Take argument ARGNO from EXP's argument list and convert it into
+   an expand operand.  Store the operand in *OP.  */
+
+static void
+riscv_prepare_builtin_arg (struct expand_operand *op, tree exp, unsigned argno)
+{
+  tree arg = CALL_EXPR_ARG (exp, argno);
+  create_input_operand (op, expand_normal (arg), TYPE_MODE (TREE_TYPE (arg)));
+}
+
+
+static rtx
+riscv_expand_builtin_insn (enum insn_code icode, unsigned int n_ops,
+			   struct expand_operand *ops, bool has_target_p)
+{
+  if (!maybe_expand_insn (icode, n_ops, ops))
+    {
+      error ("invalid argument to built-in function");
+      return has_target_p ? gen_reg_rtx (ops[0].mode) : const0_rtx;
+    }
+
+  return has_target_p ? ops[0].value : const0_rtx;
+}
 
 rtx
 riscv_expand_vector_builtin (tree exp, rtx target)
@@ -322,17 +403,35 @@ riscv_expand_vector_builtin (tree exp, rtx target)
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
   unsigned int fcode = DECL_MD_FUNCTION_CODE (fndecl);
   struct expand_operand ops[MAX_RECOG_OPERANDS];
+  struct expand_operand vl_ops[4];
+
+  bool vl_arg = true;
+
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
 
   /* Map any target to operand 0.  */
   int opno = 0;
-    create_output_operand (&ops[opno++], target, TYPE_MODE (TREE_TYPE (exp)));
+  create_output_operand (&ops[opno++], target, TYPE_MODE (TREE_TYPE (exp)));
 
   for (int argno = 0; argno < call_expr_nargs (exp); argno++)
     riscv_prepare_builtin_arg (&ops[opno++], exp, argno);
 
-  emit_insn (maybe_gen_vsetvl (, ops[3]));
-  insn_code icode = maybe_code_for_rvv (PLUS, GET_MODE(TYPE_MODE (TREE_TYPE (exp))));
-  return NULL;
+  if (vl_arg)
+    {
+      machine_mode mask_mode = mode2mask_mode (mode);
+      int lmul = mode2lmul (mode);
+      int sew = mode2sew (mode);
+      rtx vl_reg = gen_reg_rtx (mask_mode);
+      create_output_operand (&vl_ops[0], vl_reg, mask_mode);
+      vl_ops[1] = ops[opno - 1];
+      insn_code icode_vsetvl = code_for_rvv_vsetvl (mask_mode, sew, lmul);
+      rtx vl_val = riscv_expand_builtin_insn (icode_vsetvl, 2, vl_ops, true);
+      ops[opno - 1] = vl_ops[0];
+    }
+
+  insn_code icode = maybe_code_for_rvv (PLUS, mode);
+  emit_clobber (ops[0].value);
+  return riscv_expand_builtin_insn (icode, opno, ops, true);;
 }
 
 void riscv_handle_riscv_vector_h()

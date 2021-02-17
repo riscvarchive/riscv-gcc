@@ -1,4 +1,8 @@
 (include "vector-iterator.md")
+(define_int_iterator LMUL [1 2 4 8])
+(define_int_iterator SEW [8 16 32 64])
+(define_int_attr lmul [(1 "1") (2 "2")  (4 "4")  (8 "8")])
+(define_int_attr sew [(8 "8") (16 "16")  (32 "32")  (64 "64")])
 
 ;; If operand 1 is a const_vector, then we can't split until after reload,
 ;; to ensure that the scratch operand has been allocated a reg first.
@@ -31,14 +35,14 @@
       gcc_unreachable ();
 #endif
     }
+  else
+    emit_insn (gen_rtx_SET (operands[0], operands[1]));
+  DONE;
 })
 
 (define_insn "*mov<mode>"
   [(set (match_operand:VMODES 0 "reg_or_mem_operand"  "=vr,vr,m")
-	(unspec:VMODES
-	  [(match_operand:VMODES 1 "reg_or_mem_operand"  "vr,m,vr")
-	   (reg:SI VL_REGNUM)]
-	 UNSPEC_USEVL))]
+	(match_operand:VMODES 1 "reg_or_mem_operand"  "vr,m,vr"))]
   "TARGET_VECTOR"
   "@
    vmv<lmul>r.v\t%0,%1
@@ -52,7 +56,7 @@
 (define_insn "@rvv_<optab><mode>"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
         (if_then_else:VIMODES
-          (ne (unspec:VIMODES [(match_operand:VIMODES 3 "register_operand" "vt,vt")] UNSPEC_USEVL) (const_int 0))
+          (unspec:<VCMPEQUIV> [(match_operand:<VCMPEQUIV> 3 "register_operand" "vl,vl")] UNSPEC_USEVL)
           (add_mul:VIMODES
             (match_operand:VIMODES 1 "register_operand" "vr,vr")
             (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi"))
@@ -63,3 +67,29 @@
    v<insn>.vi\t%0,%1,%v2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
+
+;; Vsetvl instructions.
+
+;; These use VIMODES because only the SEW and LMUL matter.  The int/float
+;; distinction does not.  Also, the int modes are a superset of the float
+;; modes.
+(define_insn "@rvv_vsetvl<mode><SEW:sew><LMUL:lmul>"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vl")
+        (unspec:VMASKMODES [(match_operand:DI 1 "register_operand" "r")
+			 (unspec [(const_int 0)] SEW)
+			 (unspec [(const_int 0)] LMUL)] UNSPEC_VSETVL))]
+  "TARGET_VECTOR"
+  "vsetvli\tx0,%1,e%1,m%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+
+(define_insn "mov<mode>"
+  [(set (match_operand:VMASKMODES 0 "nonimmediate_operand" "=r, r,vl")
+	(match_operand:VMASKMODES 1 "move_operand"         " r,vl, r"))]
+  ""
+  "@
+   mv %0, %1
+   csrr %0, vl
+   #")
+
