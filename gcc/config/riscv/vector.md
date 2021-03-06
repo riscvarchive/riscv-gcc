@@ -218,8 +218,10 @@
 (define_int_iterator UNSPEC_INDEXED_STORE [UNSPEC_ORDERED_INDEXED_STORE
 					   UNSPEC_UNORDERED_INDEXED_STORE])
 
-(define_int_attr order [(UNSPEC_ORDERED_INDEXED_STORE "")
-			(UNSPEC_UNORDERED_INDEXED_STORE "u")])
+(define_int_attr order
+ [(UNSPEC_ORDERED_INDEXED_STORE "o") (UNSPEC_UNORDERED_INDEXED_STORE "u")
+  (UNSPEC_SEG_LOAD "o") (UNSPEC_SEG_UNORDERED_LOAD "u")
+  (UNSPEC_SEG_STORE "o") (UNSPEC_SEG_UNORDERED_STORE "u")])
 
 ;; Iterator and attributes for integer multiply-add instructions.
 (define_int_iterator UNSPEC_MASK_VMACS [UNSPEC_MASK_VMADD UNSPEC_MASK_VMSUB
@@ -243,6 +245,10 @@
    (UNSPEC_VAMO_OR "vamoorei")     (UNSPEC_VAMO_MIN "vamominei")
    (UNSPEC_VAMO_MAX "vamomaxei")   (UNSPEC_VAMO_MINU "vamominuei")
    (UNSPEC_VAMO_MAXU "vamomaxuei")])
+
+;; Iterator and attributes for ordered and unordered index segment load instructions.
+(define_int_iterator UNSPEC_SEG_IDX_LOAD [UNSPEC_SEG_LOAD UNSPEC_SEG_UNORDERED_LOAD])
+(define_int_iterator UNSPEC_SEG_IDX_STORE [UNSPEC_SEG_STORE UNSPEC_SEG_UNORDERED_STORE])
 
 ;; Vsetvl instructions.
 
@@ -10585,7 +10591,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "vseg_idx_load<VTMODES:mode><VIMODES:mode>_<P:mode>"
+(define_expand "vseg_idx_<order>load<VTMODES:mode><VIMODES:mode>_<P:mode>"
   [(set (reg:<VTMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VTMODES 0 "register_operand")
 		   (unspec:VTMODES
@@ -10593,7 +10599,7 @@
 			[(match_operand:P 1 "register_operand")
 			 (match_operand:VIMODES 2 "register_operand")
 			 (mem:BLK (scratch))]
-		       UNSPEC_SEG_LOAD)
+		       UNSPEC_SEG_IDX_LOAD)
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))])]
@@ -10601,23 +10607,23 @@
 {
 })
 
-(define_insn "*vseg_idx_load<VTMODES:mode><VIMODES:mode>_<P:mode>"
+(define_insn "*vseg_idx_load<order><VTMODES:mode><VIMODES:mode>_<P:mode>"
   [(set (match_operand:VTMODES 0 "register_operand" "=vr")
 	(unspec:VTMODES
 	  [(unspec:VTMODES
 	     [(match_operand:P 1 "register_operand" "r")
 	      (match_operand:VIMODES 2 "register_operand")
 	      (mem:BLK (scratch))]
-	    UNSPEC_SEG_LOAD)
+	    UNSPEC_SEG_IDX_LOAD)
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vloxseg<NF>ei<VIMODES:sew>.v\t%0, (%1), %2"
+  "vl<order>xseg<NF>ei<VIMODES:sew>.v\t%0, (%1), %2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "vseg_idx_load<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
+(define_expand "vseg_idx_<order>load<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
   [(set (reg:<VTMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VTMODES 0 "register_operand")
 		   (unspec:VTMODES
@@ -10627,7 +10633,7 @@
 			 (match_operand:<VTMODES:VCMPEQUIV> 1 "register_operand")
 			 (match_operand:VTMODES 2 "register_operand")
 			 (mem:BLK (scratch))]
-		       UNSPEC_SEG_LOAD)
+		       UNSPEC_SEG_IDX_LOAD)
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))])]
@@ -10635,7 +10641,7 @@
 {
 })
 
-(define_insn "*vseg_idx_load<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
+(define_insn "*vseg_idx_<order>load<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
   [(set (match_operand:VTMODES 0 "register_operand" "=vr")
 	(unspec:VTMODES
 	  [(unspec:VTMODES
@@ -10644,12 +10650,12 @@
 	      (match_operand:<VTMODES:VCMPEQUIV> 2 "register_operand" "vm")
 	      (match_operand:VTMODES 3 "register_operand" "0")
 	      (mem:BLK (scratch))]
-	    UNSPEC_SEG_LOAD)
+	    UNSPEC_SEG_IDX_LOAD)
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vloxseg<NF>ei<VIMODES:sew>.v\t%0, (%1), %4, %2.t"
+  "vl<order>xseg<NF>ei<VIMODES:sew>.v\t%0, (%1), %4, %2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -10783,7 +10789,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "vseg_idx_store<VTMODES:mode><VIMODES:mode>_<P:mode>"
+(define_expand "vseg_idx_<order>store<VTMODES:mode><VIMODES:mode>_<P:mode>"
   [(set (reg:<VTMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (mem:BLK (scratch))
 		   (unspec:BLK
@@ -10791,7 +10797,7 @@
 			[(match_operand:P 1 "register_operand")
 			 (match_operand:VIMODES 2 "register_operand")
 			 (match_operand:VTMODES 0 "register_operand")]
-		       UNSPEC_SEG_STORE)
+		       UNSPEC_SEG_IDX_STORE)
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))])]
@@ -10799,23 +10805,23 @@
 {
 })
 
-(define_insn "*vseg_idx_store<VTMODES:mode><VIMODES:mode>_<P:mode>"
+(define_insn "*vseg_idx_<order>store<VTMODES:mode><VIMODES:mode>_<P:mode>"
   [(set (mem:BLK (scratch))
 	(unspec:BLK
 	  [(unspec:BLK
 	     [(match_operand:P 0 "register_operand" "r")
 	      (match_operand:VIMODES 2 "register_operand")
 	      (match_operand:VTMODES 1 "register_operand" "vr")]
-	    UNSPEC_SEG_STORE)
+	    UNSPEC_SEG_IDX_STORE)
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vsoxseg<NF>ei<VIMODES:sew>.v\t%1, (%0), %2"
+  "vs<order>xseg<NF>ei<VIMODES:sew>.v\t%1, (%0), %2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "vseg_idx_store<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
+(define_expand "vseg_idx_<order>store<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
   [(set (reg:<VTMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (mem:BLK (scratch))
 		   (unspec:BLK
@@ -10824,7 +10830,7 @@
 			 (match_operand:VIMODES 3 "register_operand")
 			 (match_operand:VTMODES 1 "register_operand")
 			 (match_operand:<VTMODES:VCMPEQUIV> 0 "register_operand")]
-		       UNSPEC_SEG_STORE)
+		       UNSPEC_SEG_IDX_STORE)
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))])]
@@ -10832,7 +10838,7 @@
 {
 })
 
-(define_insn "*vseg_idx_store<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
+(define_insn "*vseg_idx_<order>store<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
   [(set (mem:BLK (scratch))
 	(unspec:BLK
 	  [(unspec:BLK
@@ -10840,12 +10846,12 @@
 	      (match_operand:VIMODES 3 "register_operand")
 	      (match_operand:VTMODES 1 "register_operand" "vr")
 	      (match_operand:<VTMODES:VCMPEQUIV> 2 "register_operand" "vm")]
-	    UNSPEC_SEG_STORE)
+	    UNSPEC_SEG_IDX_STORE)
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VTMODES:VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vsoxseg<NF>ei<VIMODES:sew>.v\t%1, (%0), %3, %2.t"
+  "vs<order>xseg<NF>ei<VIMODES:sew>.v\t%1, (%0), %3, %2.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
