@@ -2610,7 +2610,7 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "rsqrte7<mode>2"
+(define_expand "rsqrt7<mode>2"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VFMODES 0 "register_operand")
 		   (unspec:VFMODES
@@ -2622,7 +2622,7 @@
 {
 })
 
-(define_insn "*rsqrte7<mode>2_nosetvl"
+(define_insn "*rsqrt7<mode>2_nosetvl"
   [(set (match_operand:VFMODES 0 "register_operand" "=vr")
 	(unspec:VFMODES
 	  [(match_operand:VFMODES 1 "register_operand" "vr")
@@ -2630,11 +2630,11 @@
 	 UNSPEC_RSQRTE7))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vfrsqrte7.v\t%0,%1"
+  "vfrsqrt7.v\t%0,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "rsqrte7<mode>2_mask"
+(define_expand "rsqrt7<mode>2_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VFMODES 0 "register_operand")
 		   (unspec:VFMODES
@@ -2648,7 +2648,7 @@
 {
 })
 
-(define_insn "*rsqrte7<mode>2_mask_nosetvl"
+(define_insn "*rsqrt7<mode>2_mask_nosetvl"
   [(set (match_operand:VFMODES 0 "register_operand" "=vr")
 	(unspec:VFMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -2658,7 +2658,7 @@
 	 UNSPEC_RSQRTE7))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vfrsqrte7.v\t%0,%3,%1.t"
+  "vfrsqrt7.v\t%0,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -2675,7 +2675,7 @@
 {
 })
 
-(define_expand "rece7<mode>2"
+(define_expand "rec7<mode>2"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VFMODES 0 "register_operand")
 		   (unspec:VFMODES
@@ -2687,7 +2687,7 @@
 {
 })
 
-(define_insn "*rece7<mode>2_nosetvl"
+(define_insn "*rec7<mode>2_nosetvl"
   [(set (match_operand:VFMODES 0 "register_operand" "=vr")
 	(unspec:VFMODES
 	  [(match_operand:VFMODES 1 "register_operand" "vr")
@@ -2695,11 +2695,11 @@
 	 UNSPEC_RECE7))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vfrece7.v\t%0,%1"
+  "vfrec7.v\t%0,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "rece7<mode>2_mask"
+(define_expand "rec7<mode>2_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VFMODES 0 "register_operand")
 		   (unspec:VFMODES
@@ -2713,7 +2713,7 @@
 {
 })
 
-(define_insn "*rece7<mode>2_mask_nosetvl"
+(define_insn "*rec7<mode>2_mask_nosetvl"
   [(set (match_operand:VFMODES 0 "register_operand" "=vr")
 	(unspec:VFMODES
 	  [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -2723,7 +2723,7 @@
 	 UNSPEC_RECE7))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vrece7.v\t%0,%3,%1.t"
+  "vrec7.v\t%0,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
