@@ -789,6 +789,28 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
   _VINT_AMO_BUILTINS (E, L, MLEN, MODE, U##SUBMODE,		\
 		      IE, IL, IMODE, ISUBMODE, di, u, VUI, OP)
 
+#define _VINT_VRGATHEREI_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
+			   IE, IL, IMODE, ISUBMODE,		\
+			   TYPE_US, VCLASS, OP)		\
+  DIRECT_NAMED (						\
+    OP##MODE##IMODE,					\
+    OP##TYPE_US##E##m##L##_##IE##m##IL,		\
+    RISCV_##VCLASS##E##M##L##_FTYPE_##VCLASS##E##M##L##_VUI##IE##M##IL,\
+    vector),							\
+  DIRECT_NAMED (						\
+    OP##MODE##IMODE##_mask,				\
+    OP##TYPE_US##E##m##L##_##IE##m##IL##_mask,	\
+    RISCV_##VCLASS##E##M##L##_FTYPE_VB##MLEN##_##VCLASS##E##M##L##_##VCLASS##E##M##L##_VUI##IE##M##IL,\
+    vector),
+
+
+#define VINT_VRGATHEREI_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
+				 IE, IL, IMODE, ISUBMODE, OP)		\
+  _VINT_VRGATHEREI_BUILTINS (E, L, MLEN, MODE, SUBMODE,		\
+		      IE, IL, IMODE, ISUBMODE, i, VI, OP)	\
+  _VINT_VRGATHEREI_BUILTINS (E, L, MLEN, MODE, SUBMODE,		\
+		     IE, IL, IMODE, ISUBMODE, u, VUI, OP)	\
+
 #define _VFLOAT_AMO_BUILTINS(E, L, MLEN, MODE, SUBMODE,				\
 			     IE, IL, IMODE, ISUBMODE,				\
 			     PNAME, OP)						\
@@ -809,6 +831,25 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 			IE, IL, IMODE, ISUBMODE, si, OP)	\
   _VFLOAT_AMO_BUILTINS (E, L, MLEN, MODE, SUBMODE,		\
 			IE, IL, IMODE, ISUBMODE, di, OP)
+
+#define _VFLOAT_VRGATHEREI_BUILTINS(E, L, MLEN, MODE, SUBMODE,			\
+			     IE, IL, IMODE, ISUBMODE,				\
+			     OP)						\
+  DIRECT_NAMED (								\
+    OP##MODE##IMODE,							\
+    OP##f##E##m##L##_##IE##m##IL,					\
+    RISCV_VF##E##M##L##_FTYPE_VF##E##M##L##_VUI##IE##M##IL,		\
+    vector),									\
+  DIRECT_NAMED (								\
+    OP##MODE##IMODE##_mask,						\
+    OP##f##E##m##L##_##IE##m##IL##_mask,				\
+    RISCV_VF##E##M##L##_FTYPE_VB##MLEN##_VF##E##M##L##_VF##E##M##L##_VUI##IE##M##IL,\
+    vector),
+
+#define VFLOAT_VRGATHEREI_BUILTINS(E, L, MLEN, MODE, SUBMODE,		\
+			    IE, IL, IMODE, ISUBMODE, OP)	\
+  _VFLOAT_VRGATHEREI_BUILTINS (E, L, MLEN, MODE, SUBMODE,		\
+			IE, IL, IMODE, ISUBMODE, OP)	\
 
 #define VINT_MV_X_S_BUILTINS(E, L, MLEN, MODE, SUBMODE, OP, NAME)	\
   MV_XS_NAMED (OP##MODE, v##NAME##i##E##m##L,				\
@@ -2419,6 +2460,8 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE1_BUILTINS, vfslide1up)
   _RVV_FLOAT_ITERATOR_ARG (VFLOAT_SLIDE1_BUILTINS, vfslide1down)
 
+  _RVV_INT_INDEX_ITERATOR_ARG (VINT_VRGATHEREI_BUILTINS, vrgatherei)
+  _RVV_FLOAT_INDEX_ITERATOR_ARG (VFLOAT_VRGATHEREI_BUILTINS, vrgatherei)
   _RVV_INT_ITERATOR_ARG (VINT_VRGATHER_BUILTINS, vrgather)
   _RVV_FLOAT_INT_ITERATOR_ARG (VFLOAT_VRGATHER_BUILTINS, vrgather)
 

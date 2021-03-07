@@ -1584,6 +1584,7 @@ def gen_ftype():
       # 2 args.
       # Vector Indexed Load.
       ('{FT_VEC}', 'C_{FT_SCALAR}_PTR', '{FT_INDEX}'),
+      ('{FT_VEC}', '{FT_VEC}', '{FT_INDEX}'),
 
       # 3 args.
       # Vector Indexed Store.
@@ -1595,6 +1596,7 @@ def gen_ftype():
       # 4 args.
       # Masked Vector Indexed Load.
       ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', 'C_{FT_SCALAR}_PTR', '{FT_INDEX}'),
+      ('{FT_VEC}', '{FT_MASK}', '{FT_VEC}', '{FT_VEC}', '{FT_INDEX}'),
 
       # Masked Vector Indexed Store.
       ('VOID', '{FT_MASK}', '{FT_SCALAR}_PTR', '{FT_INDEX}', '{FT_VEC}'),

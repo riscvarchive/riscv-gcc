@@ -9761,6 +9761,78 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+(define_expand "vrgatherei<VMODES:mode><VIMODES:mode>"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec:VMODES
+		     [(unspec:VMODES
+			[(match_operand:VMODES 1 "register_operand")
+			 (match_operand:VIMODES 2 "register_operand")]
+		       UNSPEC_VRGATHER)
+		      (reg:SI VL_REGNUM)]
+		    UNSPEC_USEVL))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*vrgatherei<VMODES:mode><VIMODES:mode>_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
+	(unspec:VMODES
+	  [(unspec:VMODES
+	     [(match_operand:VMODES 1 "register_operand" "vr")
+	      (match_operand:VIMODES 2 "register_operand" "vr")]
+	    UNSPEC_VRGATHER)
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vrgatherei<VIMODES:sew>.vv\t%0,%1,%2"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "vrgatherei<VMODES:mode><VIMODES:mode>_mask"
+  [(set (reg:<VMODES:VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:VMODES 0 "register_operand")
+		   (unspec:VMODES
+		     [(if_then_else:VMODES
+			(match_operand:<VMODES:VCMPEQUIV> 1 "register_operand")
+			(unspec:VMODES
+			  [(match_operand:VMODES 3 "register_operand")
+			   (match_operand:VIMODES 4 "register_operand")]
+			 UNSPEC_VRGATHER)
+			(match_operand:VMODES 2 "register_operand"))
+		      (reg:SI VL_REGNUM)]
+		    UNSPEC_USEVL))
+	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+{
+})
+
+(define_insn "*vrgatherei<VMODES:mode><VIMODES:mode>_mask_nosetvl"
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
+	(unspec:VMODES
+	  [(if_then_else:VMODES
+	     (match_operand:<VMODES:VCMPEQUIV> 1 "register_operand" "vm")
+	     (unspec:VMODES
+	       [(match_operand:VMODES 3 "register_operand" "vr")
+		(match_operand:VIMODES 4 "register_operand" "vr")]
+	      UNSPEC_VRGATHER)
+	     (match_operand:VMODES 2 "register_operand" "0"))
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))
+   (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
+  "TARGET_VECTOR
+   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
+		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "vrgatherei<VIMODES:sew>.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 (define_expand "vrgather<VMODES:mode><P:mode>_scalar"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:VMODES 0 "register_operand")

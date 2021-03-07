@@ -3969,26 +3969,52 @@ OP##_vx_u##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
 
 _RVV_INT_ITERATOR_ARG (_RVV_INT_VRGATHER, vrgather)
 
+#define _RVV_INT_VRGATHER_VV(SEW, LMUL, MLEN, T, ISEW, ILMUL, TYPE_PREFIX, SIGN) \
+__extension__ extern __inline v##TYPE_PREFIX##int##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vrgatherei##ISEW##_vv_##SIGN##SEW##m##LMUL (v##TYPE_PREFIX##int##SEW##m##LMUL##_t a,	\
+				       vuint##ISEW##m##ILMUL##_t indexed,\
+				       word_type vl)			\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vrgatherei##SIGN##SEW##m##LMUL##_##ISEW##m##ILMUL (a, indexed);\
+}									\
+__extension__ extern __inline v##TYPE_PREFIX##int##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vrgatherei##ISEW##_vv_##SIGN##SEW##m##LMUL##_m (\
+	vbool##MLEN##_t mask,\
+	v##TYPE_PREFIX##int##SEW##m##LMUL##_t maskedoff,	\
+	v##TYPE_PREFIX##int##SEW##m##LMUL##_t a,	\
+	vuint##ISEW##m##ILMUL##_t indexed,\
+	word_type vl)			\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vrgatherei##SIGN##SEW##m##LMUL##_##ISEW##m##ILMUL##_mask (mask, maskedoff,a, indexed);\
+}									\
+
+_RVV_INT_INDEX_ITERATOR_ARG (_RVV_INT_VRGATHER_VV,  , i)
+_RVV_INT_INDEX_ITERATOR_ARG (_RVV_INT_VRGATHER_VV, u, u)
+
 #define _RVV_FLOAT_VRGATHER(SEW, LMUL, MLEN, T, INT_T, OP)		\
-__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,			\
-			 vuint##SEW##m##LMUL##_t b, word_type vl)			\
-{									\
-  vsetvl_e##SEW##m##LMUL (vl);						\
-  return __builtin_riscv_v##OP##f##SEW##m##LMUL (a, b);			\
-}									\
-__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
-__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-OP##_vv_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
-				vfloat##SEW##m##LMUL##_t maskedoff, 	\
-				vfloat##SEW##m##LMUL##_t a,		\
-				vuint##SEW##m##LMUL##_t b, word_type vl)		\
-{									\
-  vsetvl_e##SEW##m##LMUL (vl);						\
-  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_mask (		\
-      mask, maskedoff, a, b);						\
-}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t                   \
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))    \
+OP##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,                     \
+                        vuint##SEW##m##LMUL##_t b, word_type vl)                       \
+{                                                                      \
+  vsetvl_e##SEW##m##LMUL (vl);                                         \
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL (a, b);            \
+}                                                                      \
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t                   \
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))    \
+OP##_vv_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,                     \
+                             vfloat##SEW##m##LMUL##_t maskedoff,       \
+                             vfloat##SEW##m##LMUL##_t a,               \
+                               vuint##SEW##m##LMUL##_t b, word_type vl)      \
+{                                                                      \
+  vsetvl_e##SEW##m##LMUL (vl);                                         \
+  return __builtin_riscv_v##OP##f##SEW##m##LMUL##_mask (             \
+         mask, maskedoff, a, b);                                       \
+}                                                                      \
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 OP##_vx_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,			\
@@ -4017,6 +4043,31 @@ OP##_vx_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,			\
 }
 
 _RVV_FLOAT_INT_ITERATOR_ARG (_RVV_FLOAT_VRGATHER, vrgather)
+
+#define _RVV_FLOAT_VRGATHER_VV(SEW, LMUL, MLEN, T, ISEW, ILMUL) \
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t    \
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vrgatherei##ISEW##_vv_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a,	\
+				       vuint##ISEW##m##ILMUL##_t indexed,\
+				       word_type vl)			\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vrgathereif##SEW##m##LMUL##_##ISEW##m##ILMUL (a, indexed);\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vrgatherei##ISEW##_vv_f##SEW##m##LMUL##_m (\
+	vbool##MLEN##_t mask,\
+	vfloat##SEW##m##LMUL##_t maskedoff,	\
+	vfloat##SEW##m##LMUL##_t a,	\
+	vuint##ISEW##m##ILMUL##_t indexed,\
+	word_type vl)			\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vrgathereif##SEW##m##LMUL##_##ISEW##m##ILMUL##_mask (mask, maskedoff,a, indexed);\
+}									\
+
+_RVV_FLOAT_INDEX_ITERATOR (_RVV_FLOAT_VRGATHER_VV)
 
 #define _RVV_INT_VCOMPRESS(SEW, LMUL, MLEN, T, OP)			\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
