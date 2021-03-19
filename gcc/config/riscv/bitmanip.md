@@ -385,6 +385,18 @@
   "cmix\t%0,%2,%1,%3"
   [(set_attr "type" "bitmanip")])
 
+;; ??? Can we do this by using the % communtative constraint?
+
+(define_insn "*cmix2"
+  [(set (match_operand:X 0 "register_operand" "=r")
+	(xor:X (and:X (xor:X (match_operand:X 1 "register_operand" "r")
+			     (match_operand:X 3 "register_operand" "r"))
+		      (match_operand:X 2 "register_operand" "r"))
+	       (match_dup 1)))]
+  "TARGET_ZBT"
+  "cmix\t%0,%2,%3,%1"
+  [(set_attr "type" "bitmanip")])
+
 ;;; ??? cmov
 
 ;;; ??? fs[lr]
