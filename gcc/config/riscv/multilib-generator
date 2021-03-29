@@ -48,7 +48,7 @@ abis = collections.OrderedDict()
 required = []
 reuse = []
 
-canonical_order = "mafdgqlcbjtpvn"
+canonical_order = "mafdgqlcbjktpvn"
 LONG_EXT_PREFIXES = ['z', 's', 'h', 'x']
 
 #
