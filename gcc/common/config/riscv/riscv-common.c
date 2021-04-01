@@ -57,6 +57,17 @@ struct riscv_implied_info_t
 riscv_implied_info_t riscv_implied_info[] =
 {
   {"d", "f"},
+  {"k", "zkn"},
+  {"k", "zkr"},
+  {"zkn", "zkne"},
+  {"zkn", "zknd"},
+  {"zkn", "zknh"},
+  {"zkn", "zkg"},
+  {"zkn", "zkb"},
+  {"zks", "zksed"},
+  {"zks", "zksh"},
+  {"zks", "zkg"},
+  {"zks", "zkb"},
   {NULL, NULL}
 };
 
@@ -747,12 +758,6 @@ riscv_subset_list::parse (const char *arch, location_t loc)
   if (p == NULL)
     goto fail;
 
-  /* Parsing crypto extension.  */
-  p = subset_list->parse_multiletter_ext (p, "k", "crypto extension");
-
-  if (p == NULL)
-    goto fail;
-
   /* Parsing sub-extensions.  */
   p = subset_list->parse_multiletter_ext (p, "z", "sub-extension");
 
@@ -819,15 +824,12 @@ static const riscv_ext_flag_table_t riscv_ext_flag_table[] =
   {"d", &gcc_options::x_target_flags, MASK_DOUBLE_FLOAT},
   {"c", &gcc_options::x_target_flags, MASK_RVC},
 
-  {"k", &gcc_options::x_riscv_crypto_subext, MASK_ZKNE | MASK_ZKND | MASK_ZKNH | MASK_ZKG | MASK_ZKB | MASK_ZKR},
   {"zkg", &gcc_options::x_riscv_crypto_subext, MASK_ZKG},
   {"zkb", &gcc_options::x_riscv_crypto_subext, MASK_ZKB},
   {"zkr", &gcc_options::x_riscv_crypto_subext, MASK_ZKR},
-  {"zkn", &gcc_options::x_riscv_crypto_subext, MASK_ZKNE | MASK_ZKND | MASK_ZKNH | MASK_ZKG | MASK_ZKB},
   {"zkne", &gcc_options::x_riscv_crypto_subext, MASK_ZKNE},
   {"zknd", &gcc_options::x_riscv_crypto_subext, MASK_ZKND},
   {"zknh", &gcc_options::x_riscv_crypto_subext, MASK_ZKNH},
-  {"zks", &gcc_options::x_riscv_crypto_subext, MASK_ZKSED | MASK_ZKSH | MASK_ZKG | MASK_ZKB},
   {"zksed", &gcc_options::x_riscv_crypto_subext, MASK_ZKSED},
   {"zksh", &gcc_options::x_riscv_crypto_subext, MASK_ZKSH},
 
