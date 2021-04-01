@@ -43,9 +43,6 @@
   UNSPEC_LRINT
   UNSPEC_LROUND
 
-  ;; Crypto extension unspecs.
-  UNSPEC_CRYPTO
-
   ;; Stack tie
   UNSPEC_TIE
 ])
