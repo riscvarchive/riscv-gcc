@@ -108,22 +108,22 @@ static inline int64_t _rv64_maxu(int64_t rs1, int64_t rs2) { int64_t rd; __asm__
 #endif
 
 #ifdef RVINTRIN_RV32
-static inline int32_t _rv32_sbset (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbseti %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("sbset %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int32_t _rv32_sbclr (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbclri %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("sbclr %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int32_t _rv32_sbinv (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbinvi %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("sbinv %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int32_t _rv32_sbext (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbexti %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("sbext %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_bset (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bseti %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("bset %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_bclr (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bclri %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("bclr %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_binv (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("binvi %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("binv %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_bext (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bexti %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("bext %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
 #endif
 
 #ifdef RVINTRIN_RV64
-static inline int32_t _rv32_sbset (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbsetiw %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("sbsetw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int32_t _rv32_sbclr (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbclriw %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("sbclrw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int32_t _rv32_sbinv (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbinviw %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("sbinvw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int32_t _rv32_sbext (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbexti  %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("sbextw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_bset (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bsetiw %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("bsetw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_bclr (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bclriw %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("bclrw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_binv (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("binviw %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("binvw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int32_t _rv32_bext (int32_t rs1, int32_t rs2) { int32_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bexti  %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(31 & rs2)); else __asm__ ("bextw %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
 
-static inline int64_t _rv64_sbset (int64_t rs1, int64_t rs2) { int64_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbseti %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(63 & rs2)); else __asm__ ("sbset %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int64_t _rv64_sbclr (int64_t rs1, int64_t rs2) { int64_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbclri %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(63 & rs2)); else __asm__ ("sbclr %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int64_t _rv64_sbinv (int64_t rs1, int64_t rs2) { int64_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbinvi %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(63 & rs2)); else __asm__ ("sbinv %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
-static inline int64_t _rv64_sbext (int64_t rs1, int64_t rs2) { int64_t rd; if (__builtin_constant_p(rs2)) __asm__ ("sbexti %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(63 & rs2)); else __asm__ ("sbext %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int64_t _rv64_bset (int64_t rs1, int64_t rs2) { int64_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bseti %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(63 & rs2)); else __asm__ ("bset %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int64_t _rv64_bclr (int64_t rs1, int64_t rs2) { int64_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bclri %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(63 & rs2)); else __asm__ ("bclr %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int64_t _rv64_binv (int64_t rs1, int64_t rs2) { int64_t rd; if (__builtin_constant_p(rs2)) __asm__ ("binvi %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(63 & rs2)); else __asm__ ("binv %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
+static inline int64_t _rv64_bext (int64_t rs1, int64_t rs2) { int64_t rd; if (__builtin_constant_p(rs2)) __asm__ ("bexti %0, %1, %2" : "=r"(rd) : "r"(rs1), "i"(63 & rs2)); else __asm__ ("bext %0, %1, %2" : "=r"(rd) : "r"(rs1), "r"(rs2)); return rd; }
 #endif
 
 #ifdef RVINTRIN_RV32
@@ -376,15 +376,15 @@ static inline int64_t _rv64_minu(int64_t rs1, int64_t rs2) { return (uint64_t)rs
 static inline int64_t _rv64_max (int64_t rs1, int64_t rs2) { return rs1 > rs2 ? rs1 : rs2; }
 static inline int64_t _rv64_maxu(int64_t rs1, int64_t rs2) { return (uint64_t)rs1 > (uint64_t)rs2 ? rs1 : rs2; }
 
-static inline int32_t _rv32_sbset (int32_t rs1, int32_t rs2) { return rs1 |  (1   << (rs2 & 31)); }
-static inline int32_t _rv32_sbclr (int32_t rs1, int32_t rs2) { return rs1 & ~(1   << (rs2 & 31)); }
-static inline int32_t _rv32_sbinv (int32_t rs1, int32_t rs2) { return rs1 ^  (1   << (rs2 & 31)); }
-static inline int32_t _rv32_sbext (int32_t rs1, int32_t rs2) { return 1   &  (rs1 >> (rs2 & 31)); }
+static inline int32_t _rv32_bset (int32_t rs1, int32_t rs2) { return rs1 |  (1   << (rs2 & 31)); }
+static inline int32_t _rv32_bclr (int32_t rs1, int32_t rs2) { return rs1 & ~(1   << (rs2 & 31)); }
+static inline int32_t _rv32_binv (int32_t rs1, int32_t rs2) { return rs1 ^  (1   << (rs2 & 31)); }
+static inline int32_t _rv32_bext (int32_t rs1, int32_t rs2) { return 1   &  (rs1 >> (rs2 & 31)); }
 
-static inline int64_t _rv64_sbset (int64_t rs1, int64_t rs2) { return rs1 |  (1LL << (rs2 & 63)); }
-static inline int64_t _rv64_sbclr (int64_t rs1, int64_t rs2) { return rs1 & ~(1LL << (rs2 & 63)); }
-static inline int64_t _rv64_sbinv (int64_t rs1, int64_t rs2) { return rs1 ^  (1LL << (rs2 & 63)); }
-static inline int64_t _rv64_sbext (int64_t rs1, int64_t rs2) { return 1LL &  (rs1 >> (rs2 & 63)); }
+static inline int64_t _rv64_bset (int64_t rs1, int64_t rs2) { return rs1 |  (1LL << (rs2 & 63)); }
+static inline int64_t _rv64_bclr (int64_t rs1, int64_t rs2) { return rs1 & ~(1LL << (rs2 & 63)); }
+static inline int64_t _rv64_binv (int64_t rs1, int64_t rs2) { return rs1 ^  (1LL << (rs2 & 63)); }
+static inline int64_t _rv64_bext (int64_t rs1, int64_t rs2) { return 1LL &  (rs1 >> (rs2 & 63)); }
 
 static inline int32_t _rv32_sll    (int32_t rs1, int32_t rs2) { return rs1 << (rs2 & 31); }
 static inline int32_t _rv32_srl    (int32_t rs1, int32_t rs2) { return (uint32_t)rs1 >> (rs2 & 31); }
@@ -801,10 +801,10 @@ static inline long _rv_min    (long rs1, long rs2) { return _rv32_min    (rs1, r
 static inline long _rv_minu   (long rs1, long rs2) { return _rv32_minu   (rs1, rs2); }
 static inline long _rv_max    (long rs1, long rs2) { return _rv32_max    (rs1, rs2); }
 static inline long _rv_maxu   (long rs1, long rs2) { return _rv32_maxu   (rs1, rs2); }
-static inline long _rv_sbset  (long rs1, long rs2) { return _rv32_sbset  (rs1, rs2); }
-static inline long _rv_sbclr  (long rs1, long rs2) { return _rv32_sbclr  (rs1, rs2); }
-static inline long _rv_sbinv  (long rs1, long rs2) { return _rv32_sbinv  (rs1, rs2); }
-static inline long _rv_sbext  (long rs1, long rs2) { return _rv32_sbext  (rs1, rs2); }
+static inline long _rv_bset  (long rs1, long rs2) { return _rv32_bset  (rs1, rs2); }
+static inline long _rv_bclr  (long rs1, long rs2) { return _rv32_bclr  (rs1, rs2); }
+static inline long _rv_binv  (long rs1, long rs2) { return _rv32_binv  (rs1, rs2); }
+static inline long _rv_bext  (long rs1, long rs2) { return _rv32_bext  (rs1, rs2); }
 static inline long _rv_sll    (long rs1, long rs2) { return _rv32_sll    (rs1, rs2); }
 static inline long _rv_srl    (long rs1, long rs2) { return _rv32_srl    (rs1, rs2); }
 static inline long _rv_sra    (long rs1, long rs2) { return _rv32_sra    (rs1, rs2); }
@@ -842,10 +842,10 @@ static inline long _rv_min    (long rs1, long rs2) { return _rv64_min    (rs1, r
 static inline long _rv_minu   (long rs1, long rs2) { return _rv64_minu   (rs1, rs2); }
 static inline long _rv_max    (long rs1, long rs2) { return _rv64_max    (rs1, rs2); }
 static inline long _rv_maxu   (long rs1, long rs2) { return _rv64_maxu   (rs1, rs2); }
-static inline long _rv_sbset  (long rs1, long rs2) { return _rv64_sbset  (rs1, rs2); }
-static inline long _rv_sbclr  (long rs1, long rs2) { return _rv64_sbclr  (rs1, rs2); }
-static inline long _rv_sbinv  (long rs1, long rs2) { return _rv64_sbinv  (rs1, rs2); }
-static inline long _rv_sbext  (long rs1, long rs2) { return _rv64_sbext  (rs1, rs2); }
+static inline long _rv_bset  (long rs1, long rs2) { return _rv64_bset  (rs1, rs2); }
+static inline long _rv_bclr  (long rs1, long rs2) { return _rv64_bclr  (rs1, rs2); }
+static inline long _rv_binv  (long rs1, long rs2) { return _rv64_binv  (rs1, rs2); }
+static inline long _rv_bext  (long rs1, long rs2) { return _rv64_bext  (rs1, rs2); }
 static inline long _rv_sll    (long rs1, long rs2) { return _rv64_sll    (rs1, rs2); }
 static inline long _rv_srl    (long rs1, long rs2) { return _rv64_srl    (rs1, rs2); }
 static inline long _rv_sra    (long rs1, long rs2) { return _rv64_sra    (rs1, rs2); }
