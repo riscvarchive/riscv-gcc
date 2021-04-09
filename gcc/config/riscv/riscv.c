@@ -1791,7 +1791,7 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 	  *total = COSTS_N_INSNS (SINGLE_SHIFT_COST);
 	  return true;
 	}
-      /* This is an sbext.  */
+      /* This is an bext.  */
       if (TARGET_ZBS && outer_code == SET
 	  && GET_CODE (XEXP (x, 1)) == CONST_INT
 	  && INTVAL (XEXP (x, 1)) == 1)
@@ -2093,7 +2093,7 @@ riscv_output_move (rtx dest, rtx src)
 
 	  if (TARGET_64BIT && TARGET_ZBS
 	      && SINGLE_BIT_MASK_OPERAND (INTVAL (src)))
-	    return "sbseti\t%0,zero,%S1";
+	    return "bseti\t%0,zero,%S1";
 
 	  /* Should never reach here.  */
 	  abort ();

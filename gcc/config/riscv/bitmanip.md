@@ -37,7 +37,7 @@
 				 (umax "maxu")
 				 (clz "clz")
 				 (ctz "ctz")
-				 (popcount "pcnt")])
+				 (popcount "cpop")])
 
 (define_mode_attr shiftm1 [(SI "const31_operand") (DI "const63_operand")])
 
@@ -109,16 +109,16 @@
   "<bitmanip_insn>\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbset<mode>"
+(define_insn "*bset<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(ior:X (ashift:X (const_int 1)
 			 (match_operand:QI 2 "register_operand" "r"))
 	       (match_operand:X 1 "register_operand" "r")))]
   "TARGET_ZBS"
-  "sbset\t%0,%1,%2"
+  "bset\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbset<mode>_mask"
+(define_insn "*bset<mode>_mask"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(ior:X (ashift:X (const_int 1)
 			 (subreg:QI
@@ -126,36 +126,36 @@
 				 (match_operand 3 "<X:shiftm1>" "i")) 0))
 	       (match_operand:X 1 "register_operand" "r")))]
   "TARGET_ZBS"
-  "sbset\t%0,%1,%2"
+  "bset\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbset<mode>_1"
+(define_insn "*bset<mode>_1"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(ashift:X (const_int 1)
 		  (match_operand:QI 1 "register_operand" "r")))]
   "TARGET_ZBS"
-  "sbset\t%0,x0,%1"
+  "bset\t%0,x0,%1"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbset<mode>_1_mask"
+(define_insn "*bset<mode>_1_mask"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(ashift:X (const_int 1)
 		  (subreg:QI
 		   (and:X (match_operand:X 1 "register_operand" "r")
 			  (match_operand 2 "<X:shiftm1>" "i")) 0)))]
   "TARGET_ZBS"
-  "sbset\t%0,x0,%1"
+  "bset\t%0,x0,%1"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbseti<mode>"
+(define_insn "*bseti<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(ior:X (match_operand:X 1 "register_operand" "r")
 	       (match_operand 2 "single_bit_mask_operand" "i")))]
   "TARGET_ZBS"
-  "sbseti\t%0,%1,%S2"
+  "bseti\t%0,%1,%S2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbsetw"
+(define_insn "*bsetw"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(sign_extend:DI
 	 (subreg:SI
@@ -164,10 +164,10 @@
 			      (match_operand:QI 2 "register_operand" "r")) 0)
 		  (match_operand:DI 1 "register_operand" "r")) 0)))]
   "TARGET_64BIT && TARGET_ZBS"
-  "sbsetw\t%0,%1,%2"
+  "bsetw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbsetw_mask"
+(define_insn "*bsetw_mask"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(sign_extend:DI
 	 (subreg:SI
@@ -179,35 +179,35 @@
 			     (match_operand 3 "const31_operand" "i")) 0)) 0)
 		  (match_operand:DI 1 "register_operand" "r")) 0)))]
   "TARGET_64BIT && TARGET_ZBS"
-  "sbsetw\t%0,%1,%2"
+  "bsetw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbsetiw"
+(define_insn "*bsetiw"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(ior:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
 		(match_operand 2 "single_bit_mask_operand" "i")))]
   "TARGET_64BIT && TARGET_ZBS"
-  "sbsetiw\t%0,%1,%S2"
+  "bsetiw\t%0,%1,%S2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbclr<mode>"
+(define_insn "*bclr<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(and:X (rotate:X (const_int -2)
 			 (match_operand:QI 2 "register_operand" "r"))
 	       (match_operand:X 1 "register_operand" "r")))]
   "TARGET_ZBS"
-  "sbclr\t%0,%1,%2"
+  "bclr\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbclri<mode>"
+(define_insn "*bclri<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(and:X (match_operand:X 1 "register_operand" "r")
 	       (match_operand 2 "not_single_bit_mask_operand" "i")))]
   "TARGET_ZBS"
-  "sbclri\t%0,%1,%T2"
+  "bclri\t%0,%1,%T2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbclrw"
+(define_insn "*bclrw"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(sign_extend:DI
 	 (subreg:SI
@@ -217,35 +217,35 @@
 			       (match_operand:QI 2 "register_operand" "r")) 0))
 	   (match_operand:DI 1 "register_operand" "r")) 0)))]
   "TARGET_64BIT && TARGET_ZBS"
-  "sbclrw\t%0,%1,%2"
+  "bclrw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbclriw"
+(define_insn "*bclriw"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(and:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
 		(match_operand 2 "not_single_bit_mask_operand" "i")))]
   "TARGET_64BIT && TARGET_ZBS"
-  "sbclriw\t%0,%1,%T2"
+  "bclriw\t%0,%1,%T2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbinv<mode>"
+(define_insn "*binv<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(xor:X (ashift:X (const_int 1)
 			 (match_operand:QI 2 "register_operand" "r"))
 	       (match_operand:X 1 "register_operand" "r")))]
   "TARGET_ZBS"
-  "sbinv\t%0,%1,%2"
+  "binv\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbinvi<mode>"
+(define_insn "*binvi<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(xor:X (match_operand:X 1 "register_operand" "r")
 	       (match_operand 2 "single_bit_mask_operand" "i")))]
   "TARGET_ZBS"
-  "sbinvi\t%0,%1,%S2"
+  "binvi\t%0,%1,%S2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbinvw"
+(define_insn "*binvw"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(sign_extend:DI
 	 (subreg:SI
@@ -254,46 +254,46 @@
 			      (match_operand:QI 2 "register_operand" "r")) 0)
 		  (match_operand:DI 1 "register_operand" "r")) 0)))]
   "TARGET_64BIT && TARGET_ZBS"
-  "sbinvw\t%0,%1,%2"
+  "binvw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbinviw"
+(define_insn "*binviw"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(xor:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
 		(match_operand 2 "single_bit_mask_operand" "i")))]
   "TARGET_64BIT && TARGET_ZBS"
-  "sbinviw\t%0,%1,%S2"
+  "binviw\t%0,%1,%S2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbext<mode>"
+(define_insn "*bext<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(zero_extract:X (match_operand:X 1 "register_operand" "r")
 			(const_int 1)
 			(zero_extend:X
 			 (match_operand:QI 2 "register_operand" "r"))))]
   "TARGET_ZBS"
-  "sbext\t%0,%1,%2"
+  "bext\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbexti"
+(define_insn "*bexti"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(zero_extract:X (match_operand:X 1 "register_operand" "r")
 			(const_int 1)
 			(match_operand 2 "immediate_operand" "i")))]
   "TARGET_ZBS"
-  "sbexti\t%0,%1,%2"
+  "bexti\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*sbextw"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(and:DI
-	 (subreg:DI
-	  (lshiftrt:SI (match_operand:SI 1 "register_operand" "r")
-		       (match_operand:QI 2 "register_operand" "r")) 0)
-	 (const_int 1)))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "sbextw\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
+;;;(define_insn "*bextw"
+;;;  [(set (match_operand:DI 0 "register_operand" "=r")
+;;;	(and:DI
+;;;	 (subreg:DI
+;;;	  (lshiftrt:SI (match_operand:SI 1 "register_operand" "r")
+;;;		       (match_operand:QI 2 "register_operand" "r")) 0)
+;;;	 (const_int 1)))]
+;;;  "TARGET_64BIT && TARGET_ZBS"
+;;;  "bextw\t%0,%1,%2"
+;;;  [(set_attr "type" "bitmanip")])
 
 ;;; ??? s[lr]o*
 
@@ -421,16 +421,16 @@
   "TARGET_64BIT && TARGET_ZBA
    && (INTVAL (operands[2]) >= 1) && (INTVAL (operands[2]) <= 3)
    && (INTVAL (operands[3]) >> INTVAL (operands[2])) == 0xffffffff"
-  "sh%2addu.w\t%0,%1,%4"
+  "sh%2add.uw\t%0,%1,%4"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*addu.w"
+(define_insn "*add.uw"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(plus:DI (zero_extend:DI
 		  (match_operand:SI 1 "register_operand" "r"))
 		 (match_operand:DI 2 "register_operand" "r")))]
   "TARGET_64BIT && TARGET_ZBA"
-  "addu.w\t%0,%1,%2"
+  "add.uw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
 (define_insn "*slliuw"
@@ -440,7 +440,7 @@
 		(match_operand 3 "immediate_operand" "")))]
   "TARGET_64BIT && TARGET_ZBA
    && (INTVAL (operands[3]) >> INTVAL (operands[2])) == 0xffffffff"
-  "slliu.w\t%0,%1,%2"
+  "slli.uw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
 ;; ??? bfxp

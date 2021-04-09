@@ -501,7 +501,7 @@ enum reg_class
 
 /* The following macros use B extension instructions to load constants.  */
 
-/* If this is a single bit mask, then we can load it with sbseti.  But this
+/* If this is a single bit mask, then we can load it with bseti.  But this
    is not useful for any of the low 31 bits because we can use addi or lui
    to load them.  It is wrong for loading SImode 0x80000000 on rv64 because it
    needs to be sign-extended.  So we restrict this to the upper 32-bits
