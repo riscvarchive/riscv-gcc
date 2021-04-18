@@ -34,16 +34,16 @@ char *strcpy(char *dst, const char* src) {
   char *old_dst = dst;
   int zero_find = -1;
   while (zero_find < 0) {
-    vsetvlmax_e8m1();
+    word_type old_vl = vsetvlmax_e8m1();
+    word_type vl = 0;
     vuint8m1_t value;
-    value = vle8ff_v_u8m1((uint8_t *)src);
-    size_t vl =vreadvl();
+    value = vle8ff_v_u8m1((uint8_t *)src, &vl, old_vl);
     vbool8_t cmp;
-    cmp = vmseq_vx_u8m1_b8(value, 0);
-    zero_find = vfirst_m_b8(cmp); // if no zero than return -1
+    cmp = vmseq_vx_u8m1_b8(value, 0, vl);
+    zero_find = vfirst_m_b8(cmp, vl); // if no zero than return -1
     vbool8_t mask;
-    mask = vmsif_m_b8(cmp); // set mask up to and including zero byte
-    vse8_v_u8m1_m(mask, (uint8_t *)dst, value);
+    mask = vmsif_m_b8(cmp, vl); // set mask up to and including zero byte
+    vse8_v_u8m1_m(mask, (uint8_t *)dst, value, vl);
     src+=vl;
     dst+=vl;
   }

@@ -5,30 +5,30 @@
 #include "rvv-common.h"
 
 #define RVV_TEST_AMO(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, IEM, ISEW, OP, OPU)	\
-  void test_amo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, int##SEW##_t *y) {\
+  void test_amo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, int##SEW##_t *y, word_type vl) {\
     vint##EM##_t vy;						\
     vuint##IEM##_t vindex;					\
     vindex = VULOAD(ISEW, IEM, index);				\
     vy = VILOAD(SEW, EM, y);					\
-    vy = vamo##OP##i##ISEW##_v_i##EM(y, vindex, vy);		\
+    vy = vamo##OP##i##ISEW##_v_i##EM(y, vindex, vy, vl);		\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }								\
-  void test_uamo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, uint##SEW##_t *y) {\
+  void test_uamo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, uint##SEW##_t *y, word_type vl) {\
     vuint##EM##_t vy;						\
     vuint##IEM##_t vindex;					\
     vindex = VULOAD(ISEW, IEM, index);				\
     vy = VULOAD(SEW, EM, y);					\
-    vy = vamo##OPU##i##ISEW##_v_u##EM(y, vindex, vy);		\
+    vy = vamo##OPU##i##ISEW##_v_u##EM(y, vindex, vy, vl);		\
     VUSTORE(SEW, EM, y, vy);					\
   }								\
 
 #define RVV_TEST_FAMO(STYPE, VCLASST, VCLASS, EM, MLEN, SEW, IEM, ISEW, OP)	\
-  void test_amo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, STYPE *y) {	\
+  void test_amo##IEM##_##OP##e_##VCLASS##EM (uint##ISEW##_t *index, STYPE *y, word_type vl) {	\
     v##VCLASST##EM##_t vy;					\
     vuint##IEM##_t vindex;					\
     vindex = VULOAD(ISEW, IEM, index);				\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vy = vamo##OP##i##ISEW##_v_##VCLASS##EM(y, vindex, vy);	\
+    vy = vamo##OP##i##ISEW##_v_##VCLASS##EM(y, vindex, vy, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 

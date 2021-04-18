@@ -20,14 +20,14 @@ void foo1(double *a, double *b, double *c, int n) {
   size_t vl;
   vfloat64m2_t vec_n_double, vec_b, vec_c;
   // set VLMAX and init vector arrary
-  vsetvlmax_e32m1();
-  vuint32m1_t vec_i = vid_v_u32m1();
+  vl = vsetvlmax_e32m1();
+  vuint32m1_t vec_i = vid_v_u32m1(vl);
   for (; vl = vsetvl_e64m2(n); n -= vl) {
-    vec_n_double = vfwcvt_f_xu_v_f64m2 (vec_i);
-    vec_b = vle64_v_f64m2(b);
-    vec_c = vle64_v_f64m2(c);
+    vec_n_double = vfwcvt_f_xu_v_f64m2 (vec_i, vl);
+    vec_b = vle64_v_f64m2(b, vl);
+    vec_c = vle64_v_f64m2(c, vl);
     *(vfloat64m2_t *)a = vec_b + vec_n_double * vec_c;
-    vec_i = vadd_vx_u32m1(vec_i, vl);
+    vec_i = vadd_vx_u32m1(vec_i, vl, vl);
     a += vl;
     b += vl;
     c += vl;

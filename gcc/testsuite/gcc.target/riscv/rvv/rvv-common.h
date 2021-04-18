@@ -604,59 +604,59 @@
   MACRO ( 8, 2, 4,  4, __VA_ARGS__)     \
   MACRO ( 8, 4, 2,  2, __VA_ARGS__)
 
-#define VLOAD(VCLASS, SEW, EM, x) vle##SEW##_v_##VCLASS##EM (x)
+#define VLOAD(VCLASS, SEW, EM, x) vle##SEW##_v_##VCLASS##EM (x, vl)
 #define VILOAD(SEW, EM, x) VLOAD(i, SEW, EM, x)
 #define VULOAD(SEW, EM, x) VLOAD(u, SEW, EM, x)
 #define VFLOAD(SEW, EM, x) VLOAD(f, SEW, EM, x)
 
-#define VSTORE(VCLASS, SEW, EM, dst, x) vse##SEW##_v_##VCLASS##EM (dst, x)
+#define VSTORE(VCLASS, SEW, EM, dst, x) vse##SEW##_v_##VCLASS##EM (dst, x, vl)
 #define VISTORE(SEW, EM, dst, x) VSTORE(i, SEW, EM, dst, x)
 #define VUSTORE(SEW, EM, dst, x) VSTORE(u, SEW, EM, dst, x)
 #define VFSTORE(SEW, EM, dst, x) VSTORE(f, SEW, EM, dst, x)
 
 #define VWSTORE vse##WSEW##_v_##VCLASS##WEM
 
-#define MSET(MLEN) vmset_m_b##MLEN ()
+#define MSET(MLEN) vmset_m_b##MLEN (vl)
 
 #define RVV_UNARY_BUILTIN_VEC_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)	\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       STYPE *y, STYPE z)\
+					       STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx, vy;				\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vy = v##OP##_v_##VCLASS##EM (vx);			\
+    vy = v##OP##_v_##VCLASS##EM (vx, vl);			\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_UNARY_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASST, VCLASS,	\
 					  EM, MLEN, STYPEC, SEW, OP)		\
   void rvv##OP##VCLASS##EM##_v_m_builtin_test(		\
-	 size_t n, STYPE *x, STYPE *y, STYPE z)			\
+	 size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl)			\
   {								\
     v##VCLASST##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_v_##VCLASS##EM##_m (mask, vy, vx);	\
+    vy = v##OP##_v_##VCLASS##EM##_m (mask, vy, vx, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_BIN_BUILTIN_VEC_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)	\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       STYPE *y, STYPE z)\
+					       STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
-    vy = v##OP##_vv_##VCLASS##EM (vx, vy);			\
+    vy = v##OP##_vv_##VCLASS##EM (vx, vy, vl);			\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_BIN_OPERATOR_VEC_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, \
 				  SEW, OP, OPERATOR)			\
   void rvv##OP##VCLASS##EM##_v_nomask_operator_test(		\
-	 size_t n, STYPE *x, STYPE *y, STYPE z)			\
+	 size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl)			\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
@@ -668,32 +668,32 @@
 #define RVV_BIN_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASST, VCLASS,		\
 					EM, MLEN, STYPEC, SEW, OP)	\
   void rvv##OP##VCLASS##EM##_v_m_builtin_test(		\
-	 size_t n, STYPE *x, STYPE *y, STYPE z)			\
+	 size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl)			\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vbool##MLEN##_t mask;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_vv_##VCLASS##EM##_m (mask, vy, vx, vy);	\
+    vy = v##OP##_vv_##VCLASS##EM##_m (mask, vy, vx, vy, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_BIN_BUILTIN_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)\
   void rvv##OP##VCLASS##EM##_s_nomask_builtin_test(size_t n, STYPE *x,\
-					       STYPE *y, STYPE z)\
+					       STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
-    vy = v##OP##_v##STYPEC##_##VCLASS##EM (vx, z);			\
+    vy = v##OP##_v##STYPEC##_##VCLASS##EM (vx, z, vl);			\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_BIN_OPERATOR_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, 	\
 				     SEW, OP, OPERATOR)		\
   void rvv##OP##VCLASS##EM##_s_nomask_operator_test(size_t n, STYPE *x,\
-						STYPE *y, STYPE z)\
+						STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
@@ -705,33 +705,33 @@
 #define RVV_BIN_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS,	\
 					   EM, MLEN, STYPEC, SEW, OP)	\
   void rvv##OP##VCLASS##EM##_s_m_builtin_test(size_t n, STYPE *x,\
-					     STYPE *y, STYPE z)	\
+					     STYPE *y, STYPE z, word_type vl)	\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vbool##MLEN##_t mask;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_v##STYPEC##_##VCLASS##EM##_m (mask, vy, vx, z);	\
+    vy = v##OP##_v##STYPEC##_##VCLASS##EM##_m (mask, vy, vx, z, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 
 #define RVV_BIN_BUILTIN_IMM_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)	\
   void rvv##OP##VCLASS##EM##_i_nomask_builtin_test(size_t n, STYPE *x,\
-					       STYPE *y, STYPE z)\
+					       STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
-    vy = v##OP##_v##STYPEC##_##VCLASS##EM (vx, 11);			\
+    vy = v##OP##_v##STYPEC##_##VCLASS##EM (vx, 11, vl);			\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_BIN_OPERATOR_IMM_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,	\
 				  STYPEC, SEW, OP, OPERATOR)		\
   void rvv##OP##VCLASS##EM##_i_nomask_operator_test(size_t n, STYPE *x,\
-					        STYPE *y, STYPE z)\
+					        STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
@@ -743,14 +743,14 @@
 #define RVV_BIN_BUILTIN_IMM_MASKED_TEST(STYPE, VCLASST, VCLASS,		\
 					EM, MLEN, STYPEC, SEW, OP)	\
   void rvv##OP##VCLASS##EM##_i_m_builtin_test(size_t n, STYPE *x,\
-					     STYPE *y, STYPE z)	\
+					     STYPE *y, STYPE z, word_type vl)	\
   {								\
     v##VCLASST##EM##_t vx, vy;					\
     vbool##MLEN##_t mask;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_vx_##VCLASS##EM##_m (mask, vy, vx, 11);	\
+    vy = v##OP##_vx_##VCLASS##EM##_m (mask, vy, vx, 11, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
@@ -787,103 +787,103 @@
 
 #define RVV_TER_BUILTIN_VEC_TEST(STYPE, VCLASST, VCLASS,	EM, MLEN, STYPEC, SEW, OP)		\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,	\
-						   STYPE *y, STYPE *z)	\
+						   STYPE *y, STYPE *z, word_type vl)	\
   {									\
     v##VCLASST##EM##_t vx, vy, vz;					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
-    vz = v##OP##_vv_##VCLASS##EM (vx, vy, vz);			\
+    vz = v##OP##_vv_##VCLASS##EM (vx, vy, vz, vl);			\
     VSTORE(VCLASS, SEW, EM, z, vz);						\
   }
 
 #define RVV_TER_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASST, VCLASS,			\
 					EM, MLEN, STYPEC, SEW, OP)			\
   void rvv##OP##VCLASS##EM##_v_m_builtin_test(			\
-	 size_t n, STYPE *x, STYPE *y, STYPE z)				\
+	 size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl)				\
   {									\
     v##VCLASST##EM##_t vx, vy;					\
     vbool##MLEN##_t mask;						\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     mask = MSET (MLEN);					\
-    vy = v##OP##_vv_##VCLASS##EM##_m (mask, vy, vy, vx, vy);	\
+    vy = v##OP##_vv_##VCLASS##EM##_m (mask, vy, vy, vx, vy, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);						\
   }
 
 #define RVV_TER_BUILTIN_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)\
   void rvv##OP##VCLASS##EM##_s_nomask_builtin_test(size_t n, STYPE *x,\
-					       STYPE *y, STYPE z)\
+					       STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx, vy;				\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
-    vy = v##OP##_vx_##VCLASS##EM (vy, vx, z);		\
+    vy = v##OP##_vx_##VCLASS##EM (vy, vx, z, vl);		\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_TER_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS,	\
 					   EM, MLEN, STYPEC, SEW, OP)	\
   void rvv##OP##VCLASS##EM##_s_m_builtin_test(size_t n, STYPE *x,\
-					     STYPE *y, STYPE z)	\
+					     STYPE *y, STYPE z, word_type vl)	\
   {								\
     v##VCLASST##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_vx_##VCLASS##EM##_m (mask, vy, vy, vx, z);\
+    vy = v##OP##_vx_##VCLASS##EM##_m (mask, vy, vy, vx, z, vl);\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_MAC_BUILTIN_VEC_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)		\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,	\
-						   STYPE *y, STYPE *z)	\
+						   STYPE *y, STYPE *z, word_type vl)	\
   {									\
     v##VCLASST##EM##_t vx, vy, vz;					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
-    vz = v##OP##_vv_##VCLASS##EM (vx, vy, vz);			\
+    vz = v##OP##_vv_##VCLASS##EM (vx, vy, vz, vl);			\
     VSTORE(VCLASS, SEW, EM, z, vz);						\
   }
 
 #define RVV_MAC_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASST, VCLASS,			\
 					EM, MLEN, STYPEC, SEW, OP)			\
   void rvv##OP##VCLASS##EM##_v_m_builtin_test(			\
-	 size_t n, STYPE *x, STYPE *y, STYPE z)				\
+	 size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl)				\
   {									\
     v##VCLASST##EM##_t vx, vy;					\
     vbool##MLEN##_t mask;						\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     mask = MSET (MLEN);					\
-    vy = v##OP##_vv_##VCLASS##EM##_m (mask, vy, vx, vy);		\
+    vy = v##OP##_vv_##VCLASS##EM##_m (mask, vy, vx, vy, vl);		\
     VSTORE(VCLASS, SEW, EM, y, vy);						\
   }
 
 #define RVV_MAC_BUILTIN_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)\
   void rvv##OP##VCLASS##EM##_s_nomask_builtin_test(size_t n, STYPE *x,\
-					       STYPE *y, STYPE z)\
+					       STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx, vy;				\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
-    vy = v##OP##_v##STYPEC##_##VCLASS##EM (vy, z, vx);		\
+    vy = v##OP##_v##STYPEC##_##VCLASS##EM (vy, z, vx, vl);		\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_MAC_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS,	\
 					   EM, MLEN, STYPEC, SEW, OP)	\
   void rvv##OP##VCLASS##EM##_s_m_builtin_test(size_t n, STYPE *x,\
-					     STYPE *y, STYPE z)	\
+					     STYPE *y, STYPE z, word_type vl)	\
   {								\
     v##VCLASST##EM##_t vx, vy;				\
     vbool##MLEN##_t mask;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_v##STYPEC##_##VCLASS##EM##_m (mask, vy, z, vx);	\
+    vy = v##OP##_v##STYPEC##_##VCLASS##EM##_m (mask, vy, z, vx, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
@@ -905,20 +905,20 @@
 #define RVV_NINT_BIN_BUILTIN_VEC_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,		\
 				      WSTYPE, WEM, STYPEC, SEW, WSEW, OP)	\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, WSTYPE *x,	\
-					       STYPE *y, STYPE z)	\
+					       STYPE *y, STYPE z, word_type vl)	\
   {									\
     v##VCLASST##WEM##_t vx;						\
     v##VCLASST##EM##_t vy;						\
     vx = VLOAD(VCLASS, WSEW, WEM, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vy = v##OP##_wv_##VCLASS##EM (vx, vy);				\
+    vy = v##OP##_wv_##VCLASS##EM (vx, vy, vl);				\
     VSTORE(VCLASS, SEW, EM, y, vy);						\
   }
 
 #define RVV_NINT_BIN_BUILTIN_VEC_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,	\
 					     WSTYPE, WEM, STYPEC, SEW, WSEW, OP)\
   void rvv##OP##VCLASS##EM##_v_m_builtin_test(		\
-	 size_t n, WSTYPE *x, STYPE *y, STYPE z)			\
+	 size_t n, WSTYPE *x, STYPE *y, STYPE z, word_type vl)			\
   {								\
     v##VCLASST##WEM##_t vx;					\
     v##VCLASST##EM##_t vy;					\
@@ -926,27 +926,27 @@
     vx = VLOAD(VCLASS, WSEW, WEM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_wv_##VCLASS##EM##_m (mask, vy, vx, vy);	\
+    vy = v##OP##_wv_##VCLASS##EM##_m (mask, vy, vx, vy, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_NINT_BIN_BUILTIN_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,\
 				      WSTYPE, WEM, STYPEC, SEW, WSEW, OP)	\
   void rvv##OP##VCLASS##EM##_s_nomask_builtin_test(size_t n, WSTYPE *x,\
-					       STYPE *y, STYPE z)\
+					       STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##WEM##_t vx;					\
     v##VCLASST##EM##_t vy;					\
     vx = VLOAD(VCLASS, WSEW, WEM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
-    vy = v##OP##_w##STYPEC##_##VCLASS##EM (vx, z);			\
+    vy = v##OP##_w##STYPEC##_##VCLASS##EM (vx, z, vl);			\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_NINT_BIN_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,\
 				      WSTYPE, WEM, STYPEC, SEW, WSEW, OP)		\
   void rvv##OP##VCLASS##EM##_s_m_builtin_test(size_t n, WSTYPE *x,\
-					     STYPE *y, STYPE z)	\
+					     STYPE *y, STYPE z, word_type vl)	\
   {								\
     v##VCLASST##WEM##_t vx;					\
     v##VCLASST##EM##_t vy;					\
@@ -954,27 +954,27 @@
     vx = VLOAD(VCLASS, WSEW, WEM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_w##STYPEC##_##VCLASS##EM##_m (mask, vy, vx, z);	\
+    vy = v##OP##_w##STYPEC##_##VCLASS##EM##_m (mask, vy, vx, z, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_NINT_BIN_BUILTIN_IMM_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,\
 				      WSTYPE, WEM, STYPEC, SEW, WSEW, OP)	\
   void rvv##OP##VCLASS##EM##_i_nomask_builtin_test(size_t n, WSTYPE *x,\
-					       STYPE *y, STYPE z)\
+					       STYPE *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##WEM##_t vx;					\
     v##VCLASST##EM##_t vy;					\
     vx = VLOAD(VCLASS, WSEW, WEM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
-    vy = v##OP##_w##STYPEC##_##VCLASS##EM (vx, 11);			\
+    vy = v##OP##_w##STYPEC##_##VCLASS##EM (vx, 11, vl);			\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
 #define RVV_NINT_BIN_BUILTIN_IMM_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,\
 				      WSTYPE, WEM, STYPEC, SEW, WSEW, OP)	\
   void rvv##OP##VCLASS##EM##_i_m_builtin_test(size_t n, WSTYPE *x,\
-					     STYPE *y, STYPE z)	\
+					     STYPE *y, STYPE z, word_type vl)	\
   {								\
     v##VCLASST##WEM##_t vx;					\
     v##VCLASST##EM##_t vy;					\
@@ -982,7 +982,7 @@
     vx = VLOAD(VCLASS, WSEW, WEM, x);				\
     vy = VLOAD(VCLASS, SEW, EM, y);				\
     mask = MSET (MLEN);				\
-    vy = v##OP##_w##STYPEC##_##VCLASS##EM##_m (mask, vy, vx, 11);	\
+    vy = v##OP##_w##STYPEC##_##VCLASS##EM##_m (mask, vy, vx, 11, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }
 
@@ -1002,20 +1002,20 @@
 
 #define RVV_SHIFT_VEC_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       uint##SEW##_t *y, STYPE z)\
+					       uint##SEW##_t *y, STYPE z, word_type vl)\
   {								\
     v##VCLASST##EM##_t vx;					\
     vuint##EM##_t vy;						\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
     vy = VULOAD(SEW, EM, y);				\
-    vx = v##OP##_vv_##VCLASS##EM (vx, vy);			\
+    vx = v##OP##_vv_##VCLASS##EM (vx, vy, vl);			\
     VSTORE(VCLASS, SEW, EM, x, vx);					\
   }								\
   RVV_BIN_BUILTIN_SCALAR_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)
 
 #define RVV_SHIFT_VEC_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)\
   void rvv##OP##VCLASS##EM##_v_m_builtin_test(		\
-	 size_t n, uint##SEW##_t *x, STYPE *y, STYPE z)		\
+	 size_t n, uint##SEW##_t *x, STYPE *y, STYPE z, word_type vl)		\
   {								\
     v##VCLASST##EM##_t vy;					\
     vuint##EM##_t vx;						\
@@ -1023,7 +1023,7 @@
     vx = VULOAD(SEW, EM, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     mask = MSET (MLEN);					\
-    vy = v##OP##_vv_##VCLASS##EM##_m (mask, vy, vy, vx);	\
+    vy = v##OP##_vv_##VCLASS##EM##_m (mask, vy, vy, vx, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }								\
   RVV_BIN_BUILTIN_SCALAR_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)
@@ -1031,14 +1031,14 @@
 #define RVV_NINT_SHIFT_BUILTIN_VEC_SCALAR_IMM_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,\
 						   WSTYPE, WEM, STYPEC, SEW, WSEW, OP)\
   void rvv##OP##VCLASS##EM##_v_nomask_builtin_test(size_t n, WSTYPE *x,	\
-					       uint##SEW##_t *z, STYPE *y)\
+					       uint##SEW##_t *z, STYPE *y, word_type vl)\
   {									\
     v##VCLASST##WEM##_t vx;						\
     v##VCLASST##EM##_t vy;						\
     vuint##EM##_t vz;							\
     vx = VLOAD(VCLASS, WSEW, WEM, x);					\
     vz = VULOAD(SEW, EM, z);						\
-    vy = v##OP##_wv_##VCLASS##EM (vx, vz);				\
+    vy = v##OP##_wv_##VCLASS##EM (vx, vz, vl);				\
     VSTORE(VCLASS, SEW, EM, y, vy);						\
   }									\
   RVV_NINT_BIN_BUILTIN_IMM_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)\
@@ -1047,7 +1047,7 @@
 #define RVV_NINT_SHIFT_BUILTIN_VEC_SCALAR_IMM_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN,\
 							  WSTYPE, WEM, STYPEC, SEW, WSEW, OP)	\
   void rvv##OP##VCLASS##EM##_v_m_builtin_test(		\
-	 size_t n, WSTYPE *x, STYPE *y, uint##SEW##_t *z)	\
+	 size_t n, WSTYPE *x, STYPE *y, uint##SEW##_t *z, word_type vl)	\
   {								\
     v##VCLASST##WEM##_t vx;					\
     v##VCLASST##EM##_t vy;					\
@@ -1057,7 +1057,7 @@
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VULOAD(SEW, EM, z);					\
     mask = MSET (MLEN);					\
-    vy = v##OP##_wv_##VCLASS##EM##_m (mask, vy, vx, vz);	\
+    vy = v##OP##_wv_##VCLASS##EM##_m (mask, vy, vx, vz, vl);	\
     VSTORE(VCLASS, SEW, EM, y, vy);					\
   }								\
   RVV_NINT_BIN_BUILTIN_IMM_MASKED_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)\

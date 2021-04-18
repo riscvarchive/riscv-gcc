@@ -7,23 +7,23 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VWADD(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW)         \
-  void vwadd##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z) {           \
+  void vwadd##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z, word_type vl) {           \
     v##VCLASST##EM##_t vy;                                                   \
     v##VCLASST##WEM##_t vx, vz;                                              \
     vx = VLOAD(VCLASS, WSEW, WEM, x);                                              \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
-    vz = vwadd_wv_##VCLASS##WEM (vx, vy);                                    \
+    vz = vwadd_wv_##VCLASS##WEM (vx, vy, vl);                                    \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }
 
 #define VWADDU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW)        \
   void vwaddu##EM(size_t n, WSTYPE *x, STYPE *y,                       \
-                          WSTYPE *z) {                                         \
+                          WSTYPE *z, word_type vl) {                                         \
     v##VCLASST##EM##_t vy;                                                   \
     v##VCLASST##WEM##_t vx, vz;                                              \
     vx = VLOAD(VCLASS, WSEW, WEM, x);                                              \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
-    vz = vwaddu_wv_##VCLASS##WEM (vx, vy);                                    \
+    vz = vwaddu_wv_##VCLASS##WEM (vx, vy, vl);                                    \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }
 

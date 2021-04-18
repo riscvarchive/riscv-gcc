@@ -7,42 +7,42 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VCOMPARE_VV(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)                               \
-  void v##OP##VCLASS##EM##_vv(size_t n, STYPE *x, STYPE *y, STYPE *z) {        \
+  void v##OP##VCLASS##EM##_vv(size_t n, STYPE *x, STYPE *y, STYPE *z, word_type vl) {        \
     v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                                   \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
     vz = VLOAD(VCLASS, SEW, EM, z);                                               \
     mask = MSET (MLEN);                                             \
-    mask = vms##OP##_vv_##VCLASS##EM##_b##MLEN##_m(mask, mask, vx, vz);              \
-    vx = vadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy);                    \
+    mask = vms##OP##_vv_##VCLASS##EM##_b##MLEN##_m(mask, mask, vx, vz, vl);              \
+    vx = vadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy, vl);                    \
     VSTORE(VCLASS, SEW, EM, x, vx);                                                \
   }
 
 #define VCOMPARE_VX(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)                               \
-  void v##OP##VCLASS##EM##_vx(size_t n, STYPE *x, STYPE *y, STYPE *z) {        \
+  void v##OP##VCLASS##EM##_vx(size_t n, STYPE *x, STYPE *y, STYPE *z, word_type vl) {        \
     v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                                   \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
     vz = VLOAD(VCLASS, SEW, EM, z);                                               \
     mask = MSET (MLEN);                                             \
-    mask = vms##OP##_vx_##VCLASS##EM##_b##MLEN##_m(mask, mask, vx, *z);              \
-    vx = vadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy);                    \
+    mask = vms##OP##_vx_##VCLASS##EM##_b##MLEN##_m(mask, mask, vx, *z, vl);              \
+    vx = vadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy, vl);                    \
     VSTORE(VCLASS, SEW, EM, x, vx);                                                \
   }
 
 
 #define VCOMPARE_VI(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)                               \
-  void v##OP##VCLASS##EM##_vi(size_t n, STYPE *x, STYPE *y, STYPE *z) {        \
+  void v##OP##VCLASS##EM##_vi(size_t n, STYPE *x, STYPE *y, STYPE *z, word_type vl) {        \
     v##VCLASST##EM##_t vx, vy, vz;                                           \
     vbool##MLEN##_t mask;                                                   \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
     vz = VLOAD(VCLASS, SEW, EM, z);                                               \
     mask = MSET (MLEN);                                             \
-    mask = vms##OP##_vx_##VCLASS##EM##_b##MLEN##_m(mask, mask, vx, 10);              \
-    vx = vadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy);                    \
+    mask = vms##OP##_vx_##VCLASS##EM##_b##MLEN##_m(mask, mask, vx, 10, vl);              \
+    vx = vadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy, vl);                    \
     VSTORE(VCLASS, SEW, EM, x, vx);                                                \
   }
 

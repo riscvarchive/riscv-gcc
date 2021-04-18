@@ -8,7 +8,7 @@
    the e and m value.  */
 #define VWMAC_VV(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)		\
   void v##OP##VCLASS##EM(size_t n, STYPE *op1, STYPE *op2, WSTYPE * op0,\
-			 WSTYPE *mo)					\
+			 WSTYPE *mo, word_type vl)					\
   {									\
     v##VCLASST##EM##_t vop1;						\
     v##VCLASST##EM##_t vop2;						\
@@ -20,13 +20,13 @@
     vop1 = VLOAD(VCLASS, SEW, EM, op1);					\
     vop2 = VLOAD(VCLASS, SEW, EM, op2);					\
     vop0 = v##OP##_vv_##VCLASS##WEM##_m (mask, vop0, vop1,		\
-					      vop2);			\
+					      vop2, vl);			\
     VSTORE(VCLASS, WSEW, WEM, op0, vop0);					\
   }
 
 #define VWMAC_VX(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)		\
   void x##OP##VCLASS##EM(size_t n, STYPE  op1, STYPE *op2, WSTYPE * op0,\
-			 WSTYPE *mo)					\
+			 WSTYPE *mo, word_type vl)					\
   {									\
     v##VCLASST##EM##_t vop2;						\
     v##VCLASST##WEM##_t vop0, vmo;					\
@@ -36,7 +36,7 @@
     vmo = VLOAD(VCLASS, WSEW, WEM, mo);					\
     vop2 = VLOAD(VCLASS, SEW, EM, op2);					\
     vop0 = v##OP##_vf_##VCLASS##WEM##_m (mask, vop0, op1,		\
-					      vop2);			\
+					      vop2, vl);			\
     VSTORE(VCLASS, WSEW, WEM, op0, vop0);					\
   }
 

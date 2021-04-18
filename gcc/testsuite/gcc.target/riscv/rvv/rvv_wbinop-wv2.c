@@ -7,7 +7,7 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VWADDSUB(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)                     \
-  void v##OP##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z) {           \
+  void v##OP##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z, word_type vl) {           \
     v##VCLASST##EM##_t vy;                                                   \
     v##VCLASST##WEM##_t vx, vz;                                              \
     vbool##MLEN##_t mask;                                                   \
@@ -15,22 +15,22 @@
     vx = VLOAD(VCLASS, WSEW, WEM, x);                                              \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                              \
-    vz = v##OP##_wv_##VCLASS##WEM##_m (mask, vz, vx, vy);                \
+    vz = v##OP##_wv_##VCLASS##WEM##_m (mask, vz, vx, vy, vl);                \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }                                                                            \
-  void v##OP##VCLASS##EM##_s(size_t n, WSTYPE *x, STYPE y, WSTYPE *z) {        \
+  void v##OP##VCLASS##EM##_s(size_t n, WSTYPE *x, STYPE y, WSTYPE *z, word_type vl) {        \
     v##VCLASST##EM##_t vy;                                                   \
     v##VCLASST##WEM##_t vx, vz;                                              \
     vbool##MLEN##_t mask;                                                   \
     mask = MSET (MLEN);                                             \
     vx = VLOAD(VCLASS, WSEW, WEM, x);                                              \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                              \
-    vz = v##OP##_w##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y);                 \
+    vz = v##OP##_w##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y, vl);                 \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }
 
 #define VWADDSUBU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)                    \
-  void v##OP##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z) {        \
+  void v##OP##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, WSTYPE *z, word_type vl) {        \
     v##VCLASST##EM##_t vy;                                                  \
     v##VCLASST##WEM##_t vx, vz;                                             \
     vbool##MLEN##_t mask;                                                   \
@@ -38,17 +38,17 @@
     vx = VLOAD(VCLASS, WSEW, WEM, x);                                             \
     vy = VLOAD(VCLASS, SEW, EM, y);                                              \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                             \
-    vz = v##OP##_wv_##VCLASS##WEM##_m (mask, vz, vx, vy);              \
+    vz = v##OP##_wv_##VCLASS##WEM##_m (mask, vz, vx, vy, vl);              \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                              \
   }                                                                            \
-  void v##OP##VCLASS##EM##_s(size_t n, WSTYPE *x, STYPE y, WSTYPE *z) {     \
+  void v##OP##VCLASS##EM##_s(size_t n, WSTYPE *x, STYPE y, WSTYPE *z, word_type vl) {     \
     v##VCLASST##EM##_t vy;                                                  \
     v##VCLASST##WEM##_t vx, vz;                                             \
     vbool##MLEN##_t mask;                                                   \
     mask = MSET (MLEN);                                             \
     vx = VLOAD(VCLASS, WSEW, WEM, x);                                             \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                             \
-    vz = v##OP##_w##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y);               \
+    vz = v##OP##_w##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y, vl);               \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                              \
   }
 

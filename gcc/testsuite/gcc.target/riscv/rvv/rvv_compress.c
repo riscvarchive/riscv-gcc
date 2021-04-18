@@ -5,14 +5,14 @@
 #include "rvv-common.h"
 
 #define RVV_TEST_COMPRESS(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)	\
-  void test_compress_##VCLASS##EM (STYPE *x, STYPE *y, long s) {\
+  void test_compress_##VCLASS##EM (STYPE *x, STYPE *y, long s, word_type vl) {\
     v##VCLASST##EM##_t vx;					\
     v##VCLASST##EM##_t vy;					\
     vbool##MLEN##_t mask;					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     mask = MSET (MLEN);					\
-    vx = vcompress_vm_##VCLASS##EM(mask, vx, vy);	\
+    vx = vcompress_vm_##VCLASS##EM(mask, vx, vy, vl);	\
     VSTORE(VCLASS, SEW, EM, x, vx);					\
   }								\
 

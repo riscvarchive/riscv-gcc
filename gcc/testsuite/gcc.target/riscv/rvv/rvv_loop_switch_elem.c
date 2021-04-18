@@ -38,11 +38,11 @@ void foo2(int16_t *a1, int32_t *a2, int32_t x10, int n) {
   size_t vl;
   for (; vl = vsetvl_e16m4(n); n -= vl) {
     vint16m4_t v4;
-    v4 = vle16_v_i16m4(a1);
+    v4 = vle16_v_i16m4(a1, vl);
     vint32m8_t v8;
-    v8 = vwmul_vx_i32m8(v4, x10);
-    v8 = vsra_vx_i32m8(v8, 3);
-    vse32_v_i32m8(a2, v8);
+    v8 = vwmul_vx_i32m8(v4, x10, vl);
+    v8 = vsra_vx_i32m8(v8, 3, vl);
+    vse32_v_i32m8(a2, v8, vl);
     a1 += vl;
     a2 += vl;
   }

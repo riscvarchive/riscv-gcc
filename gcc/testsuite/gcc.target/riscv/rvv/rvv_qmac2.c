@@ -11,7 +11,7 @@
                                                  OP1T##STYPE *op1,             \
                                                  OP2T##STYPE *op2,             \
                                                  OP0T##WSTYPE * mo,            \
-                                                 OP0T##WSTYPE * op0) {         \
+                                                 OP0T##WSTYPE * op0, word_type vl) {         \
     v##OP1T##int##EM##_t vop1;                                           \
     v##OP2T##int##EM##_t vop2;                                           \
     v##OP0T##int##WEM##_t vop0, vmo;                                         \
@@ -21,7 +21,7 @@
     vmo = VLOAD(OP0U, WSEW, WEM, mo);                                      \
     vop1 = VLOAD(OP1U, SEW, EM, op1);                                     \
     vop2 = VLOAD(OP2U, SEW, EM, op2);                                     \
-    vop0 = v##OP##_vv_##OP0U##WEM##_m (mask, vop0, vop1, vop2);   \
+    vop0 = v##OP##_vv_##OP0U##WEM##_m (mask, vop0, vop1, vop2, vl);   \
     VSTORE(OP0U, WSEW, WEM, op0, vop0);                                     \
   }
 
@@ -30,7 +30,7 @@
                                                  OP1T##STYPE  op1,             \
                                                  OP2T##STYPE *op2,             \
 						 OP0T##WSTYPE * mo,            \
-                                                 OP0T##WSTYPE * op0) {         \
+                                                 OP0T##WSTYPE * op0, word_type vl) {         \
     v##OP2T##int##EM##_t vop2;                                           \
     v##OP0T##int##WEM##_t vop0, vmo;                                          \
     vbool##MLEN##_t mask;                                                   \
@@ -38,7 +38,7 @@
     vop0 = VLOAD(OP0U, WSEW, WEM, op0);                                    \
     vmo = VLOAD(OP0U, WSEW, WEM, mo);                                      \
     vop2 = VLOAD(OP2U, SEW, EM, op2);                                     \
-    vop0 = v##OP##_vx_##OP0U##WEM##_m (mask, vop0, op1, vop2);    \
+    vop0 = v##OP##_vx_##OP0U##WEM##_m (mask, vop0, op1, vop2, vl);    \
     VSTORE(OP0U, WSEW, WEM, op0, vop0);                                     \
   }
 

@@ -7,55 +7,55 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VWADDSUB(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)                     \
-  void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {            \
+  void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z, word_type vl) {            \
     v##VCLASST##EM##_t vx, vy;                                               \
     v##VCLASST##WEM##_t vz;                                                  \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
-    vz = v##OP##_vv_##VCLASS##WEM (vx, vy);                                 \
+    vz = v##OP##_vv_##VCLASS##WEM (vx, vy, vl);                                 \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }                                                                            \
-  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {         \
+  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z, word_type vl) {         \
     v##VCLASST##EM##_t vx, vy;                                               \
     v##VCLASST##WEM##_t vz;                                                  \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
-    vz = v##OP##_v##STYPEC##_##VCLASS##WEM (vx, y);                                  \
+    vz = v##OP##_v##STYPEC##_##VCLASS##WEM (vx, y, vl);                                  \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }
 
 #define VWADDSUBU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)    \
-  void v##OP##u##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {         \
+  void v##OP##u##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z, word_type vl) {         \
     v##VCLASST##EM##_t vx, vy;                                              \
     v##VCLASST##WEM##_t vz;                                                 \
     vx = VLOAD(VCLASS, SEW, EM, x);                                              \
     vy = VLOAD(VCLASS, SEW, EM, y);                                              \
-    vz = v##OP##_vv_##VCLASS##WEM (vx, vy);                                \
+    vz = v##OP##_vv_##VCLASS##WEM (vx, vy, vl);                                \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                              \
   }                                                                            \
-  void v##OP##u##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
+  void v##OP##u##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z, word_type vl) {      \
     v##VCLASST##EM##_t vx, vy;                                              \
     v##VCLASST##WEM##_t vz;                                                 \
     vx = VLOAD(VCLASS, SEW, EM, x);                                              \
-    vz = v##OP##_v##STYPEC##_##VCLASS##WEM (vx, y);                                \
+    vz = v##OP##_v##STYPEC##_##VCLASS##WEM (vx, y, vl);                                \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                              \
   }
 
 #define VWMULSU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)      \
-  void v##OP##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z) {         \
+  void v##OP##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z, word_type vl) {         \
     v##VCLASST##EM##_t vx;                                                   \
     vuint##EM##_t vy;                                                  \
     v##VCLASST##WEM##_t vz;                                                  \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VULOAD(SEW, EM, y);                                              \
-    vz = v##OP##_vv_##VCLASS##WEM (vx, vy);                                 \
+    vz = v##OP##_vv_##VCLASS##WEM (vx, vy, vl);                                 \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }                                                                            \
-  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z) {      \
+  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z, word_type vl) {      \
     v##VCLASST##EM##_t vx;                                                   \
     vuint##EM##_t vy;                                                  \
     v##VCLASST##WEM##_t vz;                                                  \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
-    vz = v##OP##_v##STYPEC##_##VCLASS##WEM (vx, y);                                  \
+    vz = v##OP##_v##STYPEC##_##VCLASS##WEM (vx, y, vl);                                  \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }
 

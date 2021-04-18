@@ -7,41 +7,41 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VREDUC(STYPE, VCLASST, VCLASS, EM, EMONE, MLEN, SEW)			\
-  void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
+  void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##EMONE##_t vx;						\
     v##VCLASST##EM##_t vy, vz;						\
     vbool##MLEN##_t mask;						\
     vx = VLOAD (VCLASS, SEW, EMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
-    mask = vmslt_vv_##VCLASS##EM##_b##MLEN (vy, vz);				\
-    vx = vredsum_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredmax_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredmin_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredand_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredor_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredxor_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
+    mask = vmslt_vv_##VCLASS##EM##_b##MLEN (vy, vz, vl);				\
+    vx = vredsum_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredmax_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredmin_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredand_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredor_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredxor_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
     VSTORE (VCLASS, SEW, EMONE, x, vx);					\
   }
 #define VREDUCU(STYPE, VCLASST, VCLASS, EM, EMONE, MLEN, SEW)		\
-  void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
+  void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##EMONE##_t vx;						\
     v##VCLASST##EM##_t vy, vz;						\
     vbool##MLEN##_t mask;						\
     vx = VLOAD (VCLASS, SEW, EMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
-    mask = vmsltu_vv_##VCLASS##EM##_b##MLEN (vy, vz);				\
-    vx = vredsum_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredmaxu_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredminu_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredand_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredor_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vredxor_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
+    mask = vmsltu_vv_##VCLASS##EM##_b##MLEN (vy, vz, vl);				\
+    vx = vredsum_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredmaxu_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredminu_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredand_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredor_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vredxor_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
     VSTORE (VCLASS, SEW, EMONE, x, vx);					\
   }
 #define VFREDUC(STYPE, VCLASST, VCLASS, EM, EMONE, MLEN, SEW)			\
-  void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
+  void vreduc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##EMONE##_t vx;						\
     v##VCLASST##EM##_t vy, vz;					\
     vbool##MLEN##_t mask;						\
@@ -49,10 +49,10 @@
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
     mask = MSET (MLEN);					\
-    vx = vfredsum_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vfredosum_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vfredmax_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
-    vx = vfredmin_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx);		\
+    vx = vfredsum_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vfredosum_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vfredmax_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
+    vx = vfredmin_vs_##VCLASS##EM##_##VCLASS##EMONE##_m (mask, vx, vy, vx, vl);		\
     VSTORE (VCLASS, SEW, EMONE, x, vx);					\
   }
 

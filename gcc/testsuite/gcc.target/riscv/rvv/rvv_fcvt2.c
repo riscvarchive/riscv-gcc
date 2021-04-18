@@ -6,7 +6,7 @@
 
 #define RVV_FCVT_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, ISTYPE, IVCLASST, IVCLASS, SEW)	\
   void rvvcvtfi##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       ISTYPE *y, STYPE z)	\
+					       ISTYPE *y, STYPE z, word_type vl)	\
   {									\
     v##VCLASST##EM##_t vx;						\
     v##IVCLASST##EM##_t vy;						\
@@ -14,11 +14,11 @@
     mask = MSET (MLEN);					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(IVCLASS, SEW, EM, y);					\
-    vy = vfcvt_x_f_v_i##EM##_m (mask, vy, vx);	\
+    vy = vfcvt_x_f_v_i##EM##_m (mask, vy, vx, vl);	\
     VSTORE(IVCLASS, SEW, EM, y, vy);					\
   }									\
   void rvvcvtfui##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-						u##ISTYPE *y, STYPE z)	\
+						u##ISTYPE *y, STYPE z, word_type vl)	\
   {									\
     v##VCLASST##EM##_t vx;						\
     vuint##EM##_t vy;						\
@@ -26,11 +26,11 @@
     mask = MSET (MLEN);					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VULOAD(SEW, EM, y);					\
-    vy = vfcvt_xu_f_v_u##EM##_m (mask, vy, vx);	\
+    vy = vfcvt_xu_f_v_u##EM##_m (mask, vy, vx, vl);	\
     VUSTORE(SEW, EM, y, vy);					\
   }									\
   void rvvcvtrtzfi##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       ISTYPE *y, STYPE z)	\
+					       ISTYPE *y, STYPE z, word_type vl)	\
   {									\
     v##VCLASST##EM##_t vx;						\
     v##IVCLASST##EM##_t vy;						\
@@ -38,11 +38,11 @@
     mask = MSET (MLEN);					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(IVCLASS, SEW, EM, y);					\
-    vy = vfcvt_rtz_x_f_v_i##EM##_m (mask, vy, vx);	\
+    vy = vfcvt_rtz_x_f_v_i##EM##_m (mask, vy, vx, vl);	\
     VSTORE(IVCLASS, SEW, EM, y, vy);					\
   }									\
   void rvvcvtrtzfui##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-						u##ISTYPE *y, STYPE z)	\
+						u##ISTYPE *y, STYPE z, word_type vl)	\
   {									\
     v##VCLASST##EM##_t vx;						\
     vuint##EM##_t vy;						\
@@ -50,11 +50,11 @@
     mask = MSET (MLEN);					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VULOAD(SEW, EM, y);					\
-    vy = vfcvt_rtz_xu_f_v_u##EM##_m (mask, vy, vx);	\
+    vy = vfcvt_rtz_xu_f_v_u##EM##_m (mask, vy, vx, vl);	\
     VUSTORE(SEW, EM, y, vy);					\
   }									\
   void rvvcvtif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       ISTYPE *y, STYPE z)	\
+					       ISTYPE *y, STYPE z, word_type vl)	\
   {									\
     v##VCLASST##EM##_t vx;						\
     v##IVCLASST##EM##_t vy;						\
@@ -62,11 +62,11 @@
     mask = MSET (MLEN);					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VLOAD(IVCLASS, SEW, EM, y);					\
-    vx = vfcvt_f_x_v_f##EM##_m (mask, vx, vy);	\
+    vx = vfcvt_f_x_v_f##EM##_m (mask, vx, vy, vl);	\
     VSTORE(VCLASS, SEW, EM, x, vx);						\
   }									\
   void rvvcvtuif##SEW##VCLASS##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-						u##ISTYPE *y, STYPE z)	\
+						u##ISTYPE *y, STYPE z, word_type vl)	\
   {									\
     v##VCLASST##EM##_t vx;						\
     vuint##EM##_t vy;						\
@@ -74,7 +74,7 @@
     mask = MSET (MLEN);					\
     vx = VLOAD(VCLASS, SEW, EM, x);					\
     vy = VULOAD(SEW, EM, y);					\
-    vx = vfcvt_f_xu_v_f##EM##_m (mask, vx, vy);	\
+    vx = vfcvt_f_xu_v_f##EM##_m (mask, vx, vy, vl);	\
     VSTORE(VCLASS, SEW, EM, x, vx);						\
   }									\
 

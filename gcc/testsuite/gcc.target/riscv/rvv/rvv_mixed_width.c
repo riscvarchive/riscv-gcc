@@ -40,9 +40,9 @@ void mixedwidth_m(int8_t *a, int32_t * b, int32_t* c, size_t n) {
   vbool8_t mask;
   vint32m4_t const_one, vec_c;
   for (; vl = vsetvl_e8m1(n); n -= vl) {
-    mask = vmslt_vx_i8m1_b8(*(vint8m1_t *)a, 5);
-    const_one = vsplat_s_i32m4(1);
-    vec_c = vle32_v_i32m4_m(mask, const_one /*maskedoff*/, c);
+    mask = vmslt_vx_i8m1_b8(*(vint8m1_t *)a, 5, vl);
+    const_one = vmv_v_x_i32m4(1, vl);
+    vec_c = vle32_v_i32m4_m(mask, const_one /*maskedoff*/, c, vl);
     *(vint32m4_t *)b = vec_c;
     /* in Jim's test case,
      https://github.com/sifive/riscv-gcc-internal/pull/3/commits/6afe672655fb05d7472147b617edf8ef6cccc459#diff-0c8f8f39238398a98aca2cee450facc9R57

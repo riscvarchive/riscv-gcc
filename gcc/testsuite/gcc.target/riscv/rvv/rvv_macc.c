@@ -7,7 +7,7 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VMACC(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)				\
-  void vmacc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
+  void vmacc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##EM##_t vx, vy, vz;					\
     vx = VLOAD(VCLASS, SEW, EM, x);						\
     vy = VLOAD(VCLASS, SEW, EM, y);						\
@@ -17,7 +17,7 @@
   }
 
 #define VMACC_IMM(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)			\
-  void vmacc##VCLASS##EM##_imm(size_t n, STYPE x, STYPE *y, STYPE *z) {	\
+  void vmacc##VCLASS##EM##_imm(size_t n, STYPE x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##EM##_t vx, vy, vz;					\
     vy = VLOAD(VCLASS, SEW, EM, y);						\
     vz = VLOAD(VCLASS, SEW, EM, z);						\
@@ -26,21 +26,21 @@
   }
 
 #define VINT_MAC(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)			\
-  void v##OP##_##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z) {	\
+  void v##OP##_##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##EM##_t vx, vy, vz;					\
     vx = VLOAD(VCLASS, SEW, EM, x);						\
     vy = VLOAD(VCLASS, SEW, EM, y);						\
     vz = VLOAD(VCLASS, SEW, EM, z);						\
-    vz = v##OP##_vv_##VCLASS##EM (vz, vx, vy);				\
+    vz = v##OP##_vv_##VCLASS##EM (vz, vx, vy, vl);				\
     VSTORE(VCLASS, SEW, EM, z, vz);						\
   }
 
 #define VINT_MAC_IMM(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)		\
-  void v##OP##_##VCLASS##EM##_imm(size_t n, STYPE x, STYPE *y, STYPE *z) {\
+  void v##OP##_##VCLASS##EM##_imm(size_t n, STYPE x, STYPE *y, STYPE *z, word_type vl) {\
     v##VCLASST##EM##_t vx, vy, vz;					\
     vy = VLOAD(VCLASS, SEW, EM, y);						\
     vz = VLOAD(VCLASS, SEW, EM, z);						\
-    vz = v##OP##_vx_##VCLASS##EM (vz, x, vy);				\
+    vz = v##OP##_vx_##VCLASS##EM (vz, x, vy, vl);				\
     VSTORE(VCLASS, SEW, EM, z, vz);						\
   }
 

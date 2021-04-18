@@ -10,22 +10,22 @@ RVV_FLOAT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, fsub)
 
 /* Same for reverse subtract.  */
 #define VRSUB(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)                                         \
-  void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
+  void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl) {              \
     v##VCLASST##EM##_t vx, vy;                                                \
     vx = VLOAD(VCLASS, SEW, EM, x);                                                 \
     vy = VLOAD(VCLASS, SEW, EM, y);                                                 \
-    vy = vrsub_vx_##VCLASS##EM (vy, z);                                     \
+    vy = vrsub_vx_##VCLASS##EM (vy, z, vl);                                     \
     VSTORE(VCLASS, SEW, EM, y, vy);                                                  \
-    vx = vrsub_vx_##VCLASS##EM (vx, 1);                                     \
+    vx = vrsub_vx_##VCLASS##EM (vx, 1, vl);                                     \
     VSTORE(VCLASS, SEW, EM, x, vx);                                                  \
   }
 /* Same as above without the immediate for reverse subtract.  */
 #define VRSUB_NO_IMM(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)                                  \
-  void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {              \
+  void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl) {              \
     v##VCLASST##EM##_t vx, vy;                                                \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
-    vy = vfrsub_vf_##VCLASS##EM (vy, z);                                     \
+    vy = vfrsub_vf_##VCLASS##EM (vy, z, vl);                                     \
     VSTORE(VCLASS, SEW, EM, y, vy);                                                  \
   }
 

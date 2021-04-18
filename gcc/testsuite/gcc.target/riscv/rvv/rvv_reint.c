@@ -6,7 +6,7 @@
 
 #define RVV_FREINT_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, ISTYPE, IVCLASST, IVCLASS, SEW)	\
   void rvreintuf##SEW##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       u##ISTYPE *y, STYPE z)	\
+					       u##ISTYPE *y, STYPE z, word_type vl)	\
   {									\
     vfloat##EM##_t vx;							\
     vuint##EM##_t vy;							\
@@ -15,7 +15,7 @@
     VUSTORE(SEW, EM, y, vy);						\
   }									\
   void rvreintif##SEW##EM##_v_nomask_builtin_test(size_t n, STYPE *x,	\
-					       ISTYPE *y, STYPE z)	\
+					       ISTYPE *y, STYPE z, word_type vl)	\
   {									\
     vfloat##EM##_t vx;							\
     vint##EM##_t vy;							\
@@ -24,7 +24,7 @@
     VISTORE(SEW, EM, y, vy);						\
   }									\
   void rvreintfu##SEW##EM##_v_nomask_builtin_test(size_t n, u##ISTYPE *x,\
-					       STYPE *y, STYPE z)	\
+					       STYPE *y, STYPE z, word_type vl)	\
   {									\
     vfloat##EM##_t vy;							\
     vuint##EM##_t vx;							\
@@ -33,7 +33,7 @@
     VFSTORE(SEW, EM, y, vy);						\
   }									\
   void rvreintfi##SEW##EM##_v_nomask_builtin_test(size_t n, ISTYPE *x,	\
-					       STYPE *y, STYPE z)	\
+					       STYPE *y, STYPE z, word_type vl)	\
   {									\
     vfloat##EM##_t vy;							\
     vint##EM##_t vx;							\
@@ -44,7 +44,7 @@
 
 #define RVV_REINT_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)	\
   void rvreintui##SEW##EM##_v_nomask_builtin_test(size_t n, STYPE *x,\
-					       u##STYPE *y, STYPE z)	\
+					       u##STYPE *y, STYPE z, word_type vl)	\
   {									\
     vint##EM##_t vx;							\
     vuint##EM##_t vy;							\
@@ -53,7 +53,7 @@
     VUSTORE(SEW, EM, y, vy);						\
   }									\
   void rvreintiu##SEW##EM##_v_nomask_builtin_test(size_t n, u##STYPE *x,\
-					       STYPE *y, STYPE z)	\
+					       STYPE *y, STYPE z, word_type vl)	\
   {									\
     vuint##EM##_t vx;							\
     vint##EM##_t vy;							\

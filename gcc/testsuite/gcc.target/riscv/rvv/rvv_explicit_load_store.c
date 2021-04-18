@@ -7,7 +7,7 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)                                          \
-  void vadd##VCLASS##EM(STYPE *x, STYPE *y) {                                  \
+  void vadd##VCLASS##EM(STYPE *x, STYPE *y, word_type vl) {                                  \
     v##VCLASST##EM##_t vx;                                                    \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     VSTORE(VCLASS, SEW, EM, y, vx);                                                  \
