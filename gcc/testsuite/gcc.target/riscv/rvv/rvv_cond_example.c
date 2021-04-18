@@ -38,11 +38,11 @@ void cond_example(int16_t *x, int16_t *a, int16_t *b, int16_t *z, size_t n) {
   vint16m1_t v0, maskedoff, result;
   vbool16_t mask;
   for (; vl = vsetvl_e16m1(n); n -= vl) {
-    v0 = vle16_v_i16m1(x);
-    mask = vmslt_vx_i16m1_b16(v0, 5);
-    result = vle16_v_i16m1_m(mask, maskedoff, a);
-    mask = vmnot_m_b16(mask);
-    result = vle16_v_i16m1_m(mask, result, b);
+    v0 = vle16_v_i16m1(x, vl);
+    mask = vmslt_vx_i16m1_b16(v0, 5, vl);
+    result = vle16_v_i16m1_m(mask, maskedoff, a, vl);
+    mask = vmnot_m_b16(mask, vl);
+    result = vle16_v_i16m1_m(mask, result, b, vl);
     *(vint16m1_t *)z = result;
     a += vl;
     b += vl;

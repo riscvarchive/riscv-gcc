@@ -7,24 +7,24 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VCOMPARE_VV(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)                               \
-  void v##OP##VCLASS##EM##_vv(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
+  void v##OP##VCLASS##EM##_vv(size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl) {         \
     v##VCLASST##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
-    mask = vmf##OP##_vv_##VCLASS##EM##_b##MLEN(vx, vy);                           \
-    vx = vfadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy);                    \
+    mask = vmf##OP##_vv_##VCLASS##EM##_b##MLEN(vx, vy, vl);                           \
+    vx = vfadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy, vl);                    \
     VSTORE(VCLASS, SEW, EM, x, vx);                                                \
   }
 
 #define VCOMPARE_VF(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)                               \
-  void v##OP##VCLASS##EM##_vx(size_t n, STYPE *x, STYPE *y, STYPE z) {         \
+  void v##OP##VCLASS##EM##_vx(size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl) {         \
     v##VCLASST##EM##_t vx, vy;                                               \
     vbool##MLEN##_t mask;                                                   \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
-    mask = vmf##OP##_vf_##VCLASS##EM##_b##MLEN(vx, z);                                 \
-    vx = vfadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy);                    \
+    mask = vmf##OP##_vf_##VCLASS##EM##_b##MLEN(vx, z, vl);                                 \
+    vx = vfadd_vv_##VCLASS##EM##_m (mask, vy, vx, vy, vl);                    \
     VSTORE(VCLASS, SEW, EM, x, vx);                                                \
   }
 

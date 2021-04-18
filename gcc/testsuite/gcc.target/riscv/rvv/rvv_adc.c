@@ -7,13 +7,13 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VADC(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)             \
-  void vadc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {               \
+  void vadc##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl) {               \
     v##VCLASST##EM##_t vx, vy;                                                \
     vbool##MLEN##_t carryin;                                                 \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
     carryin = MSET (MLEN);                                          \
-    vy = vadc_vvm_##VCLASS##EM (vx, vy, carryin);                            \
+    vy = vadc_vvm_##VCLASS##EM (vx, vy, carryin, vl);                            \
     VSTORE(VCLASS, SEW, EM, y, vy);                                                  \
   }
 

@@ -38,13 +38,13 @@ size_t strlen(const char *str) {
   const char *start = str;
   int32_t first_set = -1;
   while (first_set < 0) {
-    vsetvlmax_e8m1(); // setvm max
+    word_type old_vl = vsetvlmax_e8m1(); // setvm max
+    word_type vl = 0;
     vuint8m1_t value;
-    value = vle8ff_v_u8m1((const uint8_t *)str);
-    size_t vl = vreadvl();
+    value = vle8ff_v_u8m1((const uint8_t *)str, &vl, old_vl);
     vbool8_t cmp;
-    cmp = vmseq_vx_u8m1_b8(value, 0);
-    first_set = vfirst_m_b8(cmp); /* reutrn -1 mean not found */
+    cmp = vmseq_vx_u8m1_b8(value, 0, vl);
+    first_set = vfirst_m_b8(cmp, vl); /* reutrn -1 mean not found */
     str += vl;
   }
   return str - start;

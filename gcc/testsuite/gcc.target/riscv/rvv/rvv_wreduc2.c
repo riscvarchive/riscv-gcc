@@ -7,31 +7,31 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VWREDUC(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEMONE, SEW, WSEW)		\
-  void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
+  void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##WEMONE##_t vx;						\
     v##VCLASST##EM##_t vy, vz;						\
     vbool##MLEN##_t mask;						\
     vx = VLOAD(VCLASS, WSEW, WEMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
-    mask = vmslt_vv_##VCLASS##EM##_b##MLEN (vy, vz);		\
-    vx = vwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx);\
+    mask = vmslt_vv_##VCLASS##EM##_b##MLEN (vy, vz, vl);		\
+    vx = vwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx, vl);\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 #define VWREDUCU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEMONE, SEW, WSEW)		\
-  void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
+  void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##WEMONE##_t vx;						\
     v##VCLASST##EM##_t vy, vz;						\
     vbool##MLEN##_t mask;						\
     vx = VLOAD(VCLASS, WSEW, WEMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
-    mask = vmsltu_vv_##VCLASS##EM##_b##MLEN (vy, vz);		\
-    vx = vwredsumu_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx);\
+    mask = vmsltu_vv_##VCLASS##EM##_b##MLEN (vy, vz, vl);		\
+    vx = vwredsumu_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx, vl);\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 #define VFWREDUC(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEMONE, SEW, WSEW)		\
-  void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z) {	\
+  void vreduc##VCLASS##EM(size_t n, WSTYPE *x, STYPE *y, STYPE *z, word_type vl) {	\
     v##VCLASST##WEMONE##_t vx;						\
     v##VCLASST##EM##_t vy, vz;						\
     vbool##MLEN##_t mask;						\
@@ -39,8 +39,8 @@
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
     mask = MSET (MLEN);					\
-    vx = vfwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx);	\
-    vx = vfwredosum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx);	\
+    vx = vfwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx, vl);	\
+    vx = vfwredosum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx, vl);	\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
 

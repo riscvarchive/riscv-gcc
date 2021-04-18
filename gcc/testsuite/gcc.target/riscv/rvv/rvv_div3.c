@@ -11,13 +11,13 @@ RVV_FLOAT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, fdiv)
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VRDIV(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)            \
-  void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z) {       \
+  void vrsub##VCLASS##EM(size_t n, STYPE *x, STYPE *y, STYPE z, word_type vl) {       \
     v##VCLASST##EM##_t vx, vy;                                          \
     vbool##MLEN##_t mask;                                               \
     mask = MSET (MLEN);                                                 \
     vx = VLOAD(VCLASS, SEW, EM, x);                                     \
     vy = VLOAD(VCLASS, SEW, EM, y);                                     \
-    vy = vfrdiv_vf_##VCLASS##EM##_m (mask, vx, vy, z);			\
+    vy = vfrdiv_vf_##VCLASS##EM##_m (mask, vx, vy, z, vl);			\
     VSTORE(VCLASS, SEW, EM, y, vy);                                     \
   }
 

@@ -7,7 +7,7 @@
 /* Takes the scalar type STYPE, vector class VCLASS (int or float), and
    the e and m value.  */
 #define VWADDSUB(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)                     \
-  void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {            \
+  void v##OP##VCLASS##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z, word_type vl) {            \
     v##VCLASST##EM##_t vx, vy;                                               \
     v##VCLASST##WEM##_t vz;                                                  \
     vbool##MLEN##_t mask;                                                   \
@@ -15,22 +15,22 @@
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VLOAD(VCLASS, SEW, EM, y);                                               \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                              \
-    vz = v##OP##_vv_##VCLASS##WEM##_m (mask, vz, vx, vy);                \
+    vz = v##OP##_vv_##VCLASS##WEM##_m (mask, vz, vx, vy, vl);                \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }                                                                            \
-  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {         \
+  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z, word_type vl) {         \
     v##VCLASST##EM##_t vx, vy;                                               \
     v##VCLASST##WEM##_t vz;                                                  \
     vbool##MLEN##_t mask;                                                   \
     mask = MSET (MLEN);                                             \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                              \
-    vz = v##OP##_v##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y);                 \
+    vz = v##OP##_v##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y, vl);                 \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }
 
 #define VWADDSUBU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)    \
-  void v##OP##u##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z) {         \
+  void v##OP##u##EM(size_t n, STYPE *x, STYPE *y, WSTYPE *z, word_type vl) {         \
     v##VCLASST##EM##_t vx, vy;                                              \
     v##VCLASST##WEM##_t vz;                                                 \
     vbool##MLEN##_t mask;                                                   \
@@ -38,22 +38,22 @@
     vx = VLOAD(VCLASS, SEW, EM, x);                                              \
     vy = VLOAD(VCLASS, SEW, EM, y);                                              \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                             \
-    vz = v##OP##_vv_##VCLASS##WEM##_m (mask, vz, vx, vy);              \
+    vz = v##OP##_vv_##VCLASS##WEM##_m (mask, vz, vx, vy, vl);              \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                              \
   }                                                                            \
-  void v##OP##u##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z) {      \
+  void v##OP##u##EM##_s(size_t n, STYPE *x, STYPE y, WSTYPE *z, word_type vl) {      \
     v##VCLASST##EM##_t vx, vy;                                              \
     v##VCLASST##WEM##_t vz;                                                 \
     vbool##MLEN##_t mask;                                                   \
     mask = MSET (MLEN);                                             \
     vx = VLOAD(VCLASS, SEW, EM, x);                                              \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                             \
-    vz = v##OP##_v##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y);               \
+    vz = v##OP##_v##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y, vl);               \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                              \
   }
 
 #define VWMULSU(STYPE, VCLASST, VCLASS, EM, MLEN, WSTYPE, WEM, STYPEC, SEW, WSEW, OP)      \
-  void v##OP##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z) {         \
+  void v##OP##VCLASS##EM(size_t n, STYPE *x, u##STYPE *y, WSTYPE *z, word_type vl) {         \
     v##VCLASST##EM##_t vx;                                                   \
     vuint##EM##_t vy;                                                  \
     v##VCLASST##WEM##_t vz;                                                  \
@@ -62,10 +62,10 @@
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vy = VULOAD(SEW, EM, y);                                              \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                              \
-    vz = v##OP##_vv_##VCLASS##WEM##_m (mask, vz, vx, vy);                \
+    vz = v##OP##_vv_##VCLASS##WEM##_m (mask, vz, vx, vy, vl);                \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }                                                                            \
-  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z) {      \
+  void v##OP##VCLASS##EM##_s(size_t n, STYPE *x, u##STYPE y, WSTYPE *z, word_type vl) {      \
     v##VCLASST##EM##_t vx;                                                   \
     vuint##EM##_t vy;                                                  \
     v##VCLASST##WEM##_t vz;                                                  \
@@ -73,7 +73,7 @@
     mask = MSET (MLEN);                                             \
     vx = VLOAD(VCLASS, SEW, EM, x);                                               \
     vz = VLOAD(VCLASS, WSEW, WEM, z);                                              \
-    vz = v##OP##_v##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y);                 \
+    vz = v##OP##_v##STYPEC##_##VCLASS##WEM##_m (mask, vz, vx, y, vl);                 \
     VSTORE(VCLASS, WSEW, WEM, z, vz);                                               \
   }
 

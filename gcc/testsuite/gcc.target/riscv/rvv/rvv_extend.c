@@ -6,21 +6,21 @@
 
 #define RVV_WFCVT_TEST(EM, WEM, MLEN, SEW, WSEW, NAME)					\
   void rvv_s##NAME##_v_i##WEM##_v_nomask_builtin_test(size_t n, int##SEW##_t *x,	\
-						      int##WSEW##_t *y, int##WSEW##_t z)\
+						      int##WSEW##_t *y, int##WSEW##_t z, word_type vl)\
   {											\
     vint##EM##_t vx;									\
     vint##WEM##_t vy;									\
     vx = VILOAD(SEW, EM, x);								\
-    vy = vs##NAME##_i##WEM (vx);							\
+    vy = vs##NAME##_i##WEM (vx, vl);							\
     VISTORE(WSEW, WEM, y, vy);								\
   }											\
   void rvv_z##NAME##_v_u##WEM##_v_nomask_builtin_test(size_t n, uint##WSEW##_t *x,	\
-						      uint##SEW##_t *y, uint##WSEW##_t z)\
+						      uint##SEW##_t *y, uint##WSEW##_t z, word_type vl)\
   {											\
     vuint##WEM##_t vx;									\
     vuint##EM##_t vy;									\
     vy = VULOAD(SEW, EM, y);								\
-    vx = vz##NAME##_u##WEM(vy);							\
+    vx = vz##NAME##_u##WEM(vy, vl);							\
     VUSTORE(WSEW, WEM, x, vx);								\
   }
 

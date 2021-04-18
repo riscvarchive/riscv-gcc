@@ -6,7 +6,7 @@
 
 #define RVV_MULHSU_TEST(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)		\
   void rvvmulhsu##EM##_svv(size_t n, STYPE *x,		\
-				 u##STYPE *y, STYPE z)		\
+				 u##STYPE *y, STYPE z, word_type vl)		\
   {								\
     v##VCLASST##EM##_t vx;					\
     vuint##EM##_t vy;					\
@@ -14,11 +14,11 @@
     mask = MSET (MLEN);				\
     vx = VILOAD(SEW, EM, x);					\
     vy = VULOAD(SEW, EM, y);					\
-    vx = vmulhsu_vv_##VCLASS##EM##_m (mask, vx, vx, vy);	\
+    vx = vmulhsu_vv_##VCLASS##EM##_m (mask, vx, vx, vy, vl);	\
     VSTORE(VCLASS, SEW, EM, x, vx);					\
   }								\
   void rvvmulhsu##EM##_svx(size_t n, STYPE *x,		\
-				 u##STYPE *y, STYPE z)		\
+				 u##STYPE *y, STYPE z, word_type vl)		\
   {								\
     v##VCLASST##EM##_t vx;					\
     vuint##EM##_t vy;					\
@@ -26,7 +26,7 @@
     mask = MSET (MLEN);				\
     vx = VILOAD(SEW, EM, x);					\
     vy = VULOAD(SEW, EM, y);					\
-    vx = vmulhsu_vx_##VCLASS##EM##_m (mask, vx, vx, z);	\
+    vx = vmulhsu_vx_##VCLASS##EM##_m (mask, vx, vx, z, vl);	\
     VSTORE(VCLASS, SEW, EM, x, vx);					\
   }
 

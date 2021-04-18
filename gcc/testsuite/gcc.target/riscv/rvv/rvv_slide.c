@@ -5,43 +5,43 @@
 #include "rvv-common.h"
 
 #define RVV_TEST_SLIDEUPDOWN(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW)		\
-  void test_slideup_sx##VCLASS##EM (STYPE *x, long s) {		\
+  void test_slideup_sx##VCLASS##EM (STYPE *x, long s, word_type vl) {		\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = vslideup_vx_##VCLASS##EM(vx, vx, s);			\
+    vx = vslideup_vx_##VCLASS##EM(vx, vx, s, vl);			\
     VSTORE(VCLASS, SEW, EM, x, vx);				\
   }								\
-  void test_slidedown_sx##VCLASS##EM (STYPE *x, long s) {	\
+  void test_slidedown_sx##VCLASS##EM (STYPE *x, long s, word_type vl) {	\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = vslidedown_vx_##VCLASS##EM(vx, vx, s);			\
+    vx = vslidedown_vx_##VCLASS##EM(vx, vx, s, vl);			\
     VSTORE(VCLASS, SEW, EM, x, vx);				\
   }								\
-  void test_slideup_si##VCLASS##EM (STYPE *x, long s) {		\
+  void test_slideup_si##VCLASS##EM (STYPE *x, long s, word_type vl) {		\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = vslideup_vx_##VCLASS##EM(vx, vx, 11);			\
+    vx = vslideup_vx_##VCLASS##EM(vx, vx, 11, vl);			\
     VSTORE(VCLASS, SEW, EM, x, vx);				\
   }								\
-  void test_slidedown_si##VCLASS##EM (STYPE *x, long s) {	\
+  void test_slidedown_si##VCLASS##EM (STYPE *x, long s, word_type vl) {	\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = vslidedown_vx_##VCLASS##EM(vx, vx, 11);		\
+    vx = vslidedown_vx_##VCLASS##EM(vx, vx, 11, vl);		\
     VSTORE(VCLASS, SEW, EM, x, vx);				\
   }								\
 
 
 #define RVV_TEST_SLIDE1UPDOWN(STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, PREFIX)	\
-  void test_slide1up_sx##VCLASS##EM (STYPE *x, STYPE s) {	\
+  void test_slide1up_sx##VCLASS##EM (STYPE *x, STYPE s, word_type vl) {	\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = v##PREFIX##slide1up_v##STYPEC##_##VCLASS##EM(vx, s);		\
+    vx = v##PREFIX##slide1up_v##STYPEC##_##VCLASS##EM(vx, s, vl);		\
     VSTORE(VCLASS, SEW, EM, x, vx);					\
   }								\
-  void test_slide1down_sx##VCLASS##EM (STYPE *x, STYPE s) {	\
+  void test_slide1down_sx##VCLASS##EM (STYPE *x, STYPE s, word_type vl) {	\
     v##VCLASST##EM##_t vx;					\
     vx = VLOAD(VCLASS, SEW, EM, x);				\
-    vx = v##PREFIX##slide1down_v##STYPEC##_##VCLASS##EM(vx, s);		\
+    vx = v##PREFIX##slide1down_v##STYPEC##_##VCLASS##EM(vx, s, vl);		\
     VSTORE(VCLASS, SEW, EM, x, vx);					\
   }
 
