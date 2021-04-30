@@ -81,3 +81,13 @@
    A constant @code{move_operand}."
   (and (match_operand 0 "move_operand")
        (match_test "CONSTANT_P (op)")))
+
+(define_constraint "u05"
+  "Unsigned immediate 5-bit value"
+  (and (match_code "const_int")
+       (match_test "ival < (1 << 5) && ival >= 0")))
+
+(define_constraint "u06"
+  "Unsigned immediate 6-bit value"
+  (and (match_code "const_int")
+       (match_test "ival < (1 << 6) && ival >= 0")))

@@ -31,6 +31,9 @@
 (define_mode_attr VNHALF [(V2SI "SI") (V2HI "HI")])
 (define_mode_attr VSH_EXT [(V2SI "DI") (V2HI "HI")])
 
+;; clz, clrs
+(define_code_iterator unop [clrsb clz])
+
 ;; add/sub iterator
 (define_code_iterator all_plus [plus ss_plus us_plus])
 (define_code_iterator all_minus [minus ss_minus us_minus])
@@ -41,6 +44,14 @@
 (define_code_attr uk
   [(plus "") (ss_plus "k") (us_plus "uk")
    (minus "") (ss_minus "k") (us_minus "uk")])
+
+;; <rvp_optab> expands to the name of the optab for a particular code.
+(define_code_attr rvp_optab [(clrsb "clrsb")
+       (clz "clz")])
+
+;; <rvp_insn> expands to the name of the insn that implements a particular code.
+(define_code_attr rvp_insn [(clrsb "clrs")
+			(clz "clz")])
 
 ;; kabs
 (define_insn "kabsw"
@@ -167,3 +178,118 @@
   "<karth_insn>\t%0, %1, %2"
   [(set_attr "type" "dsp")
    (set_attr "mode" "SI")])
+
+;; ave
+(define_insn "ave"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(truncate:SI
+	  (ashiftrt:DI
+	    (plus:DI
+	      (plus:DI
+		(sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
+		(sign_extend:DI (match_operand:SI 2 "register_operand" "r")))
+	      (const_int 1))
+	  (const_int 1))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "ave\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "SI")])
+
+(define_insn "avedi"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(truncate:DI
+	  (ashiftrt:TI
+	    (plus:TI
+	      (plus:TI
+		(sign_extend:TI (match_operand:DI 1 "register_operand" "r"))
+		(sign_extend:TI (match_operand:DI 2 "register_operand" "r")))
+	      (const_int 1))
+	  (const_int 1))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "ave\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "DI")])
+
+;; bitrev
+(define_insn "bitrevsi"
+  [(set (match_operand:SI 0 "register_operand"             "=r,   r")
+	(unspec:SI [(match_operand:SI 1 "register_operand" " r,   r")
+		    (match_operand:SI 2 "rimm5u_operand"   " r, u05")]
+		   UNSPEC_BITREV))]
+  "TARGET_ZPN && !TARGET_64BIT && !TARGET_ZBPBO"
+  "@
+   bitrev\t%0, %1, %2
+   bitrevi\t%0, %1, %2"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "SI")])
+
+(define_insn "bitrevdi"
+  [(set (match_operand:DI 0 "register_operand"             "=r,   r")
+	(unspec:DI [(match_operand:DI 1 "register_operand" " r,   r")
+		    (match_operand:SI 2 "rimm6u_operand"   " r, u06")]
+		   UNSPEC_BITREV))]
+  "TARGET_ZPN && TARGET_64BIT && !TARGET_ZBPBO"
+  "@
+   bitrev\t%0, %1, %2
+   bitrevi\t%0, %1, %2"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "SI")])
+
+;; cmix
+(define_insn "cmix<X:mode>"
+  [(set (match_operand:X 0 "register_operand"       "=r")
+	  (ior:X
+	    (and:X
+	      (match_operand:X 1 "register_operand" " r")
+	      (match_operand:X 3 "register_operand" " r"))
+	    (and:X
+	      (match_operand:X 2 "register_operand" " r")
+	      (not:X (match_dup 3)))))]
+  "TARGET_ZBPBO"
+  "cmix\t%0, %3, %1, %2"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "<MODE>")])
+
+;; clrov
+(define_insn "clrov<X:mode>"
+  [(unspec_volatile:X [(const_int 0)] UNSPEC_CLROV)]
+  "TARGET_ZPN"
+  "csrrci zero, vxsat, 1"
+  [(set_attr "mode" "<MODE>")])
+
+;; clrs, clz
+(define_insn "<rvp_optab><mode>2"
+  [(set (match_operand:VECI 0 "register_operand" "=r")
+        (unop:VECI (match_operand:VECI 1 "register_operand" "r")))]
+  "TARGET_ZPN"
+  "<rvp_insn><bits>\t%0, %1"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])
+
+;; clrs32, clz32
+(define_insn "clrsbsi2"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+        (clrsb:SI (match_operand:SI 1 "register_operand" "r")))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "clrs32\t%0, %1"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "SI")])
+
+(define_insn "clzsi2"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+        (clz:SI (match_operand:SI 1 "register_operand" "r")))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  { return TARGET_ZBPBO ? "clz\t%0, %1" : "clz32\t%0, %1"; }
+  [(set_attr "type" "simd")
+   (set_attr "mode" "SI")])
+
+;; simd integer compare equal
+(define_insn "cmpeq<mode>"
+  [(set (match_operand:VQIHI 0 "register_operand"                          "=r")
+	(unspec:VQIHI [(eq:VQIHI (match_operand:VQIHI 1 "register_operand" " r")
+				 (match_operand:VQIHI 2 "register_operand" " r"))]
+		       UNSPEC_VEC_COMPARE))]
+  "TARGET_ZPN"
+  "cmpeq<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])
