@@ -48,6 +48,14 @@
 
   ;; rvp
   UNSPEC_KABS
+  UNSPEC_KADDW
+  UNSPEC_KSUBW
+  UNSPEC_KADDH
+  UNSPEC_KSUBH
+  UNSPEC_UKADDW
+  UNSPEC_UKSUBW
+  UNSPEC_UKADDH
+  UNSPEC_UKSUBH
 ])
 
 (define_c_enum "unspecv" [
@@ -460,7 +468,12 @@
   [(set_attr "type" "arith")
    (set_attr "mode" "SI")])
 
-(define_insn "adddi3"
+(define_expand "adddi3"
+  [(set (match_operand:DI          0 "register_operand")
+	(plus:DI (match_operand:DI 1 "register_operand")
+		 (match_operand:DI 2 "arith_operand"   )))])
+
+(define_insn "*adddi3_riscv"
   [(set (match_operand:DI          0 "register_operand" "=r,r")
 	(plus:DI (match_operand:DI 1 "register_operand" " r,r")
 		 (match_operand:DI 2 "arith_operand"    " r,I")))]
