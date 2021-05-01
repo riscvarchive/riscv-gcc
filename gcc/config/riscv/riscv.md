@@ -69,6 +69,9 @@
   UNSPEC_KDMBB
   UNSPEC_KHM
   UNSPEC_KHMX
+  UNSPEC_ROUND
+  UNSPEC_KMMWU
+  UNSPEC_KMMW
 ])
 
 (define_c_enum "unspecv" [
