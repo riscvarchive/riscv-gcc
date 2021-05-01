@@ -2815,3 +2815,139 @@
   "kslraw.u\t%0, %1, %2"
   [(set_attr "type" "dsp")
    (set_attr "mode" "DI")])
+
+;; KSTAS16|32, KSTSA16|32
+(define_expand "kstas<mode>"
+  [(match_operand:VSHI 0 "register_operand" "")
+   (match_operand:VSHI 1 "register_operand" "")
+   (match_operand:VSHI 2 "register_operand" "")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_kstas<mode>_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "kstas<mode>_le"
+  [(set (match_operand:VSHI 0 "register_operand"         "=r")
+	(vec_merge:VSHI
+	  (vec_duplicate:VSHI
+	    (ss_minus:<VNHALF>
+	      (vec_select:<VNHALF>
+		(match_operand:VSHI 1 "register_operand" " r")
+		(parallel [(const_int 0)]))
+	      (vec_select:<VNHALF>
+		(match_operand:VSHI 2 "register_operand" " r")
+		(parallel [(const_int 0)]))))
+	  (vec_duplicate:VSHI
+	    (ss_plus:<VNHALF>
+	      (vec_select:<VNHALF>
+		(match_dup 2)
+		(parallel [(const_int 1)]))
+	      (vec_select:<VNHALF>
+		(match_dup 1)
+		(parallel [(const_int 1)]))))
+	  (const_int 1)))]
+  "TARGET_ZPN"
+  "kstas<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")]
+)
+
+;; rv64 kstas16
+(define_expand "kstas16_64"
+  [(match_operand:V4HI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_kstas16_64_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "kstas16_64_le"
+  [(set (match_operand:V4HI 0 "register_operand"         "=r")
+	(vec_concat:V4HI
+	  (vec_concat:V2HI
+	    (ss_minus:HI (vec_select:HI (match_operand:V4HI 1 "register_operand" " r")
+					(parallel [(const_int 0)]))
+			 (vec_select:HI (match_operand:V4HI 2 "register_operand" " r")
+					(parallel [(const_int 0)])))
+	    (ss_plus:HI (vec_select:HI (match_dup 1) (parallel [(const_int 1)]))
+			(vec_select:HI (match_dup 2) (parallel [(const_int 1)]))))
+	  (vec_concat:V2HI
+	    (ss_minus:HI (vec_select:HI (match_dup 1) (parallel [(const_int 2)]))
+			 (vec_select:HI (match_dup 2) (parallel [(const_int 2)])))
+	    (ss_plus:HI  (vec_select:HI (match_dup 1) (parallel [(const_int 3)]))
+			 (vec_select:HI (match_dup 2) (parallel [(const_int 3)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kstas16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+(define_expand "kstsa<mode>"
+  [(match_operand:VSHI 0 "register_operand" "")
+   (match_operand:VSHI 1 "register_operand" "")
+   (match_operand:VSHI 2 "register_operand" "")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_kstsa<mode>_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "kstsa<mode>_le"
+  [(set (match_operand:VSHI 0 "register_operand"         "=r")
+	(vec_merge:VSHI
+	  (vec_duplicate:VSHI
+	    (ss_minus:<VNHALF>
+	      (vec_select:<VNHALF>
+		(match_operand:VSHI 1 "register_operand" " r")
+		(parallel [(const_int 0)]))
+	      (vec_select:<VNHALF>
+		(match_operand:VSHI 2 "register_operand" " r")
+		(parallel [(const_int 0)]))))
+	  (vec_duplicate:VSHI
+	    (ss_plus:<VNHALF>
+	      (vec_select:<VNHALF>
+		(match_dup 1)
+		(parallel [(const_int 1)]))
+	      (vec_select:<VNHALF>
+		(match_dup 2)
+		(parallel [(const_int 1)]))))
+	  (const_int 2)))]
+  "TARGET_ZPN"
+  "kstsa<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")]
+)
+
+(define_expand "kstsa16_64"
+  [(match_operand:V4HI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_kstsa16_64_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "kstsa16_64_le"
+  [(set (match_operand:V4HI 0 "register_operand"         "=r")
+	(vec_concat:V4HI
+	  (vec_concat:V2HI
+	    (ss_plus:HI (vec_select:HI (match_operand:V4HI 1 "register_operand" " r")
+				       (parallel [(const_int 0)]))
+			(vec_select:HI (match_operand:V4HI 2 "register_operand" " r")
+				       (parallel [(const_int 0)])))
+	    (ss_minus:HI (vec_select:HI (match_dup 1) (parallel [(const_int 1)]))
+			 (vec_select:HI (match_dup 2) (parallel [(const_int 1)]))))
+	  (vec_concat:V2HI
+	    (ss_plus:HI (vec_select:HI (match_dup 1) (parallel [(const_int 2)]))
+			(vec_select:HI (match_dup 2) (parallel [(const_int 2)])))
+	    (ss_minus:HI  (vec_select:HI (match_dup 1) (parallel [(const_int 3)]))
+			  (vec_select:HI (match_dup 2) (parallel [(const_int 3)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kstsa16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
