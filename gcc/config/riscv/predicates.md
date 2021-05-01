@@ -266,6 +266,11 @@
        (ior (match_test "satisfies_constraint_C00 (op)")
 	    (match_test "satisfies_constraint_C01 (op)"))))
 
+(define_predicate "imm_1_2_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (match_test "satisfies_constraint_C01 (op)")
+	    (match_test "satisfies_constraint_C02 (op)"))))
+
 (define_predicate "imm_2_3_operand"
   (and (match_operand 0 "const_int_operand")
        (ior (match_test "satisfies_constraint_C02 (op)")

@@ -3063,3 +3063,194 @@
   "min\t%0, %1, %2"
   [(set_attr "type" "dsp")
    (set_attr "mode" "SI")])
+
+;; PBSAD, PBSADA
+(define_insn "pbsad<mode>"
+  [(set (match_operand:GPR 0 "register_operand" "=r")
+	(unspec:GPR [(match_operand:GPR 1 "register_operand" "r")
+		     (match_operand:GPR 2 "register_operand" "r")] UNSPEC_PBSAD))]
+  "TARGET_ZPN"
+  "pbsad\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "pbsada<mode>"
+  [(set (match_operand:GPR 0 "register_operand" "=r")
+	(unspec:GPR [(match_operand:GPR 1 "register_operand" "0")
+		     (match_operand:GPR 2 "register_operand" "r")
+		     (match_operand:GPR 3 "register_operand" "r")] UNSPEC_PBSADA))]
+  "TARGET_ZPN"
+  "pbsada\t%0, %2, %3"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "<MODE>")])
+
+;; PKBB[16|32], PKBT[16|32], PKTT[16|32], PKTB[16|32]
+(define_insn "vec_merge<mode>"
+  [(set (match_operand:VSHI 0 "register_operand"               "= r,   r,   r,   r,   r,   r,   r,   r")
+	(vec_merge:VSHI
+	  (vec_duplicate:VSHI
+	    (vec_select:<VNHALF>
+	      (match_operand:VSHI 1 "register_operand"         "  r,   r,   r,   r,   r,   r,   r,   r")
+	      (parallel [(match_operand:SI 4 "imm_0_1_operand" "C00, C00, C01, C01, C00, C00, C01, C01")])))
+	  (vec_duplicate:VSHI
+	    (vec_select:<VNHALF>
+	      (match_operand:VSHI 2 "register_operand"         "  r,   r,   r,   r,   r,   r,   r,   r")
+	      (parallel [(match_operand:SI 5 "imm_0_1_operand" "C00, C01, C01, C00, C00, C01, C01, C00")])))
+	  (match_operand:SI 3 "imm_1_2_operand"                "C01, C01, C01, C01, C02, C02, C02, C02")))]
+  "TARGET_ZPN"
+  {
+    const char *pats[] = {
+		TARGET_ZBPBO ? "pack\t%0, %2, %1" : "pkbb<bits>\t%0, %2, %1",
+        "pktb<bits>\t%0, %2, %1",
+        TARGET_ZBPBO ? "packu\t%0, %2, %1" : "pktt<bits>\t%0, %2, %1",
+        "pkbt<bits>\t%0, %2, %1",
+        TARGET_ZBPBO ? "pack\t%0, %1, %2" : "pkbb<bits>\t%0, %1, %2",
+        "pkbt<bits>\t%0, %1, %2",
+        TARGET_ZBPBO ? "packu\t%0, %1, %2" : "pktt<bits>\t%0, %1, %2",
+        "pktb<bits>\t%0, %1, %2" };
+    return pats[which_alternative];
+  }
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "<MODE>")])
+
+(define_expand "pkbb<mode>"
+  [(match_operand:VSHI 0 "register_operand")
+   (match_operand:VSHI 1 "register_operand")
+   (match_operand:VSHI 2 "register_operand")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_vec_merge<mode> (operands[0], operands[1], operands[2],
+				  GEN_INT (2), GEN_INT (0), GEN_INT (0)));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "pkbt<mode>"
+  [(match_operand:VSHI 0 "register_operand")
+   (match_operand:VSHI 1 "register_operand")
+   (match_operand:VSHI 2 "register_operand")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_vec_merge<mode> (operands[0], operands[1], operands[2],
+				  GEN_INT (2), GEN_INT (0), GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "pktt<mode>"
+  [(match_operand:VSHI 0 "register_operand")
+   (match_operand:VSHI 1 "register_operand")
+   (match_operand:VSHI 2 "register_operand")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_vec_merge<mode> (operands[0], operands[1], operands[2],
+				  GEN_INT (2), GEN_INT (1), GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "pktb<mode>"
+  [(match_operand:VSHI 0 "register_operand")
+   (match_operand:VSHI 1 "register_operand")
+   (match_operand:VSHI 2 "register_operand")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_vec_merge<mode> (operands[0], operands[1], operands[2],
+				  GEN_INT (2), GEN_INT (1), GEN_INT (0)));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+;; pkbb16 rv64p
+(define_expand "pkbb64"
+  [(match_operand:V4HI 0 "register_operand")
+   (match_operand:V4HI 1 "register_operand")
+   (match_operand:V4HI 2 "register_operand")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_vec_pkbb64 (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "vec_pkbb64"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(vec_select:V4HI
+	 (vec_concat:V8HI (match_operand:V4HI 1 "register_operand" "r")
+			  (match_operand:V4HI 2 "register_operand" "r"))
+	 (parallel [(const_int 0) (const_int 4)
+		    (const_int 2) (const_int 6)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "pkbb16\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "V4HI")])
+
+(define_expand "pkbt64"
+  [(match_operand:V4HI 0 "register_operand")
+   (match_operand:V4HI 1 "register_operand")
+   (match_operand:V4HI 2 "register_operand")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_vec_pkbt64 (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "vec_pkbt64"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(vec_select:V4HI
+	 (vec_concat:V8HI (match_operand:V4HI 1 "register_operand" "r")
+			  (match_operand:V4HI 2 "register_operand" "r"))
+	 (parallel [(const_int 0) (const_int 5)
+		    (const_int 2) (const_int 7)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "pkbt16\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "V4HI")])
+
+(define_expand "pktt64"
+  [(match_operand:V4HI 0 "register_operand")
+   (match_operand:V4HI 1 "register_operand")
+   (match_operand:V4HI 2 "register_operand")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_vec_pktt64 (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "vec_pktt64"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(vec_select:V4HI
+	 (vec_concat:V8HI (match_operand:V4HI 1 "register_operand" "r")
+			  (match_operand:V4HI 2 "register_operand" "r"))
+	 (parallel [(const_int 1) (const_int 5)
+		    (const_int 3) (const_int 7)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "pktt16\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "V4HI")])
+
+(define_expand "pktb64"
+  [(match_operand:V4HI 0 "register_operand")
+   (match_operand:V4HI 1 "register_operand")
+   (match_operand:V4HI 2 "register_operand")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_vec_pktb64 (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "vec_pktb64"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(vec_select:V4HI
+	 (vec_concat:V8HI (match_operand:V4HI 1 "register_operand" "r")
+			  (match_operand:V4HI 2 "register_operand" "r"))
+	 (parallel [(const_int 1) (const_int 4)
+		    (const_int 3) (const_int 6)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "pktb16\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "V4HI")])
+
