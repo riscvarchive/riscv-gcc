@@ -3639,3 +3639,186 @@
   "scmplt<bits>\t%0, %1, %2"
   [(set_attr "type" "simd")
    (set_attr "mode" "<MODE>")])
+
+;; SMAL
+(define_insn "smal"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(plus:DI (match_operand:DI 1 "register_operand"    " r")
+	  (sign_extend:DI
+	    (mult:SI
+	      (sign_extend:SI
+		(vec_select:HI
+		  (match_operand:V2HI 2 "register_operand" " r")
+		  (parallel [(const_int 0)])))
+	      (sign_extend:SI
+		(vec_select:HI
+		  (match_dup 2)
+		  (parallel [(const_int 1)])))))))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "smal\t%0, %1, %2"
+  [(set_attr "type" "psimd")
+   (set_attr "mode" "DI")])
+
+(define_insn "smal_64"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(plus:DI (match_operand:DI 1 "register_operand"    " r")
+	  (plus:DI
+	    (sign_extend:DI
+	      (mult:SI
+		(sign_extend:SI
+		  (vec_select:HI
+		    (match_operand:V4HI 2 "register_operand" " r")
+		    (parallel [(const_int 0)])))
+		(sign_extend:SI
+		  (vec_select:HI (match_dup 2) (parallel [(const_int 1)])))))
+	    (sign_extend:DI
+	      (mult:SI
+		(sign_extend:SI
+		  (vec_select:HI (match_dup 2) (parallel [(const_int 2)])))
+		(sign_extend:SI
+		  (vec_select:HI (match_dup 2) (parallel [(const_int 3)]))))))))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "smal\t%0, %1, %2"
+  [(set_attr "type" "psimd")
+   (set_attr "mode" "DI")])
+
+;; SMALBB, SMALBT, SMALTT
+(define_expand "smalbb"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")
+   (match_operand:V2HI 3 "register_operand" "")]
+  "TARGET_ZPSF && !TARGET_64BIT"
+{
+  emit_insn (gen_smaddhidi (operands[0], operands[2],
+			    operands[3], operands[1],
+			    GEN_INT (0), GEN_INT (0)));
+  DONE;
+}
+[(set_attr "type" "dsp64")])
+
+(define_expand "smalbt"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")
+   (match_operand:V2HI 3 "register_operand" "")]
+  "TARGET_ZPSF && !TARGET_64BIT"
+{
+  emit_insn (gen_smaddhidi (operands[0], operands[2],
+			    operands[3], operands[1],
+			    GEN_INT (0), GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "dsp64")])
+
+(define_expand "smaltt"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")
+   (match_operand:V2HI 3 "register_operand" "")]
+  "TARGET_ZPSF && !TARGET_64BIT"
+{
+  emit_insn (gen_smaddhidi (operands[0], operands[2],
+			    operands[3], operands[1],
+			    GEN_INT (1), GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "dsp64")])
+
+(define_insn "smaddhidi"
+  [(set (match_operand:DI 0 "register_operand"                   "=  r,   r,   r,   r")
+	(plus:DI
+	  (match_operand:DI 3 "register_operand"                 "   0,   0,   0,   0")
+	  (mult:DI
+	    (sign_extend:DI
+	      (vec_select:HI
+		(match_operand:V2HI 1 "register_operand"         "   r,   r,   r,   r")
+		(parallel [(match_operand:SI 4 "imm_0_1_operand" " C00, C00, C01, C01")])))
+	    (sign_extend:DI
+	      (vec_select:HI
+		(match_operand:V2HI 2 "register_operand"         "   r,   r,   r,   r")
+		(parallel [(match_operand:SI 5 "imm_0_1_operand" " C00, C01, C01, C00")]))))))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "@
+   smalbb\t%0, %1, %2
+   smalbt\t%0, %1, %2
+   smaltt\t%0, %1, %2
+   smalbt\t%0, %2, %1"
+[(set_attr "type" "dsp64")])
+
+;; 64 Bit
+(define_expand "smalbb64"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")
+   (match_operand:V4HI 3 "register_operand" "")]
+  "TARGET_ZPSF && TARGET_64BIT"
+{
+  emit_insn (gen_smaddhidi64 (operands[0], operands[2],
+			      operands[3], operands[1],
+			      GEN_INT (0), GEN_INT (0),
+			      GEN_INT (2), GEN_INT (2)));
+  DONE;
+}
+[(set_attr "type" "dsp64")])
+
+(define_expand "smalbt64"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")
+   (match_operand:V4HI 3 "register_operand" "")]
+  "TARGET_ZPSF && TARGET_64BIT"
+{
+  emit_insn (gen_smaddhidi64 (operands[0], operands[2],
+			      operands[3], operands[1],
+			      GEN_INT (0), GEN_INT (1),
+			      GEN_INT (2), GEN_INT (3)));
+  DONE;
+}
+[(set_attr "type" "dsp64")])
+
+(define_expand "smaltt64"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")
+   (match_operand:V4HI 3 "register_operand" "")]
+  "TARGET_ZPSF && TARGET_64BIT"
+{
+  emit_insn (gen_smaddhidi64 (operands[0], operands[2],
+			      operands[3], operands[1],
+			      GEN_INT (1), GEN_INT (1),
+			      GEN_INT (3), GEN_INT (3)));
+  DONE;
+}
+[(set_attr "type" "dsp64")])
+
+(define_insn "smaddhidi64"
+  [(set (match_operand:DI 0 "register_operand"                   "=  r,   r,   r,   r")
+	(plus:DI
+	  (match_operand:DI 3 "register_operand"                 "   0,   0,   0,   0")
+	  (plus:DI
+	    (mult:DI
+	      (sign_extend:DI
+		(vec_select:HI
+		  (match_operand:V4HI 1 "register_operand"         "   r,   r,   r,   r")
+		  (parallel [(match_operand:SI 4 "imm_0_1_operand" " C00, C00, C01, C01")])))
+	      (sign_extend:DI
+		(vec_select:HI
+		  (match_operand:V4HI 2 "register_operand"         "   r,   r,   r,   r")
+		  (parallel [(match_operand:SI 5 "imm_0_1_operand" " C00, C01, C01, C00")]))))
+	    (mult:DI
+	      (sign_extend:DI
+		(vec_select:HI
+		  (match_dup 1)
+		  (parallel [(match_operand:SI 6 "imm_2_3_operand" " C02, C02, C03, C03")])))
+	      (sign_extend:DI
+		(vec_select:HI
+		  (match_dup 2)
+		  (parallel [(match_operand:SI 7 "imm_2_3_operand" " C02, C03, C03, C02")])))))))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "@
+   smalbb\t%0, %1, %2
+   smalbt\t%0, %1, %2
+   smaltt\t%0, %1, %2
+   smalbt\t%0, %2, %1"
+  [(set_attr "type" "dsp64")])
