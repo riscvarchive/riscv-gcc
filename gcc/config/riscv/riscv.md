@@ -72,6 +72,8 @@
   UNSPEC_ROUND
   UNSPEC_KMMWU
   UNSPEC_KMMW
+  UNSPEC_KSLRAW
+  UNSPEC_KSLRAWU
 ])
 
 (define_c_enum "unspecv" [

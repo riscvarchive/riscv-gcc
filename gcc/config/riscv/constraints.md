@@ -82,6 +82,16 @@
   (and (match_operand 0 "move_operand")
        (match_test "CONSTANT_P (op)")))
 
+(define_constraint "u03"
+  "Unsigned immediate 3-bit value"
+  (and (match_code "const_int")
+       (match_test "ival < (1 << 3) && ival >= 0")))
+
+(define_constraint "u04"
+  "Unsigned immediate 4-bit value"
+  (and (match_code "const_int")
+       (match_test "ival < (1 << 4) && ival >= 0")))
+
 (define_constraint "u05"
   "Unsigned immediate 5-bit value"
   (and (match_code "const_int")
