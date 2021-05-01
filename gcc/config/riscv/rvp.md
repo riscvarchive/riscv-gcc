@@ -26,6 +26,7 @@
 (define_mode_iterator VSHI [(V2HI "!TARGET_64BIT") (V2SI "TARGET_64BIT")])
 (define_mode_iterator VHI  [(V2HI "!TARGET_64BIT") (V4HI "TARGET_64BIT")])
 (define_mode_iterator VQI [(V4QI "!TARGET_64BIT") (V8QI "TARGET_64BIT")])
+(define_mode_iterator VD_SI [(SI "!TARGET_64BIT") (V2SI "TARGET_64BIT")])
 
 ;; <bits> for specific bit number in 'simd' type instruction
 (define_mode_attr bits [(V8QI "8") (V4QI "8") (QI "8") (V4HI "16") (V2HI "16")
@@ -3586,3 +3587,55 @@
   "rstsa16\t%0, %1, %2"
   [(set_attr "type" "simd")
    (set_attr "mode" "V4HI")])
+
+;; SCLIP8, SCLIP16
+(define_insn "sclip8<mode>"
+  [(set (match_operand:VQI 0 "register_operand"              "=  r")
+	(unspec:VQI [(match_operand:VQI 1 "register_operand" "   r")
+		      (match_operand:SI 2 "imm3u_operand"    " u03")]
+		     UNSPEC_CLIPS))]
+  "TARGET_ZPN"
+  "sclip8\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "sclip16<mode>"
+  [(set (match_operand:VHI 0 "register_operand"              "=   r")
+	(unspec:VHI [(match_operand:VHI 1 "register_operand" "    r")
+		     (match_operand:SI 2 "imm4u_operand"     " u04")]
+		     UNSPEC_CLIPS))]
+  "TARGET_ZPN"
+  "sclip16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "sclip32<VD_SI:mode><X:mode>"
+  [(set (match_operand:VD_SI 0 "register_operand" "=r")
+	(unspec:VD_SI [(match_operand:VD_SI 1 "register_operand" "r")
+		       (match_operand:X 2 "immediate_operand" "i")] UNSPEC_CLIPS_OV))]
+  "TARGET_ZPN"
+  "sclip32\t%0, %1, %2"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode" "<VD_SI:MODE>")])
+
+;; SCMPLE8, SCMPLE16
+(define_insn "scmple<mode>"
+  [(set (match_operand:VQIHI 0 "register_operand"                          "=r")
+	(unspec:VQIHI [(le:VQIHI (match_operand:VQIHI 1 "register_operand" " r")
+				 (match_operand:VQIHI 2 "register_operand" " r"))]
+		       UNSPEC_VEC_COMPARE))]
+  "TARGET_ZPN"
+  "scmple<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])
+
+;; SCMPLT8, SCMPLT16
+(define_insn "scmplt<mode>"
+  [(set (match_operand:VQIHI 0 "register_operand"                          "=r")
+	(unspec:VQIHI [(lt:VQIHI (match_operand:VQIHI 1 "register_operand" " r")
+				 (match_operand:VQIHI 2 "register_operand" " r"))]
+		       UNSPEC_VEC_COMPARE))]
+  "TARGET_ZPN"
+  "scmplt<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])

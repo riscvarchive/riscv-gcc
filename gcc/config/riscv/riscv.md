@@ -77,6 +77,8 @@
   UNSPEC_PBSAD
   UNSPEC_PBSADA
   UNSPEC_RDOV
+  UNSPEC_CLIPS
+  UNSPEC_CLIPS_OV
 ])
 
 (define_c_enum "unspecv" [
