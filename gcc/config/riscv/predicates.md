@@ -228,3 +228,29 @@
 (define_predicate "rimm6u_operand"
   (ior (match_operand 0 "register_operand")
        (match_operand 0 "imm6u_operand")))
+
+(define_predicate "const_insb64_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 7)")))
+
+(define_predicate "imm_1_2_4_8_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (ior (match_test "satisfies_constraint_C01 (op)")
+		 (match_test "satisfies_constraint_C02 (op)"))
+	    (ior (match_test "satisfies_constraint_C04 (op)")
+		 (match_test "satisfies_constraint_C08 (op)")))))
+
+(define_predicate "pwr_7_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) != 0
+		    && (unsigned) exact_log2 (INTVAL (op)) <= 7")))
+
+(define_predicate "imm_0_1_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (match_test "satisfies_constraint_C00 (op)")
+	    (match_test "satisfies_constraint_C01 (op)"))))
+
+(define_predicate "imm_2_3_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (match_test "satisfies_constraint_C02 (op)")
+	    (match_test "satisfies_constraint_C03 (op)"))))
