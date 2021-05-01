@@ -2951,3 +2951,115 @@
   "kstsa16\t%0, %1, %2"
   [(set_attr "type" "simd")
    (set_attr "mode" "V4HI")])
+
+;; KWMMUL[.u]
+(define_insn "kwmmul"
+  [(set (match_operand:SI 0 "register_operand"                       "=r")
+	(truncate:SI
+	  (lshiftrt:DI
+	    (ss_mult:DI
+	      (mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" " r")) (const_int 2))
+	      (mult:DI (sign_extend:DI (match_operand:SI 2 "register_operand" " r")) (const_int 2)))
+	    (const_int 32))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "kwmmul\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+(define_insn "kwmmul_64"
+  [(set (match_operand:V2SI 0 "register_operand"                       "=r")
+	(truncate:V2SI
+	  (lshiftrt:V2DI
+	    (ss_mult:V2DI
+	      (mult:V2DI (sign_extend:V2DI (match_operand:V2SI 1 "register_operand" " r")) (const_int 2))
+	      (mult:V2DI (sign_extend:V2DI (match_operand:V2SI 2 "register_operand" " r")) (const_int 2)))
+	    (const_int 32))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kwmmul\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+(define_insn "kwmmul_round"
+  [(set (match_operand:SI 0 "register_operand"                       "=r")
+	(truncate:SI
+	  (lshiftrt:DI
+	    (unspec:DI [
+	      (ss_mult:DI
+		(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" " r")) (const_int 2))
+		(mult:DI (sign_extend:DI (match_operand:SI 2 "register_operand" " r")) (const_int 2)))]
+	      UNSPEC_ROUND)
+	    (const_int 32))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "kwmmul.u\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+(define_insn "kwmmul64_round"
+  [(set (match_operand:V2SI 0 "register_operand"                       "=r")
+	(truncate:V2SI
+	  (lshiftrt:V2DI
+	    (unspec:V2DI [
+	      (ss_mult:V2DI
+		(mult:V2DI (sign_extend:V2DI (match_operand:V2SI 1 "register_operand" " r")) (const_int 2))
+		(mult:V2DI (sign_extend:V2DI (match_operand:V2SI 2 "register_operand" " r")) (const_int 2)))]
+	      UNSPEC_ROUND)
+	    (const_int 32))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kwmmul.u\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+;; MADDR32, MSUBR32
+(define_insn "maddr32"
+  [(set (match_operand:SI 0 "register_operand"                   "=r")
+	(plus:SI (mult:SI (match_operand:SI 1 "register_operand" " r")
+			  (match_operand:SI 2 "register_operand" " r"))
+		 (match_operand:SI 3 "register_operand"          " 0")))]
+  "TARGET_ZPN"
+  "maddr32\t%0, %1, %2"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "SI")])
+
+(define_insn "msubr32"
+  [(set (match_operand:SI 0 "register_operand"                    "=r")
+	(minus:SI (match_operand:SI 3 "register_operand"          " 0")
+		  (mult:SI (match_operand:SI 1 "register_operand" " r")
+			   (match_operand:SI 2 "register_operand" " r"))))]
+  "TARGET_ZPN"
+  "msubr32\t%0, %1, %2"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "SI")])
+
+;; MULR64, MULSR64
+(define_insn "rvp_umulsidi3"
+  [(set (match_operand:DI 0 "register_operand"                          "=r")
+	(mult:DI (zero_extend:DI (match_operand:SI 1 "register_operand" " r"))
+		 (zero_extend:DI (match_operand:SI 2 "register_operand" " r"))))]
+  "TARGET_ZPSF"
+  "mulr64\t%0, %1, %2"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "DI")])
+
+(define_insn "rvp_mulsidi3"
+  [(set (match_operand:DI 0 "register_operand"                          "=r")
+	(mult:DI (sign_extend:DI (match_operand:SI 1 "register_operand" " r"))
+		 (sign_extend:DI (match_operand:SI 2 "register_operand" " r"))))]
+  "TARGET_ZPSF"
+  "mulsr64\t%0, %1, %2"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "DI")])
+
+;; MAX, MIN
+(define_insn "smaxsi3"
+  [(set (match_operand:SI 0 "register_operand"          "=r")
+	(smax:SI (match_operand:SI 1 "register_operand" " r")
+		 (match_operand:SI 2 "register_operand" " r")))]
+  "TARGET_ZBPBO"
+  "max\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "SI")])
+
+(define_insn "sminsi3"
+  [(set (match_operand:SI 0 "register_operand"          "=r")
+	(smin:SI (match_operand:SI 1 "register_operand" " r")
+		 (match_operand:SI 2 "register_operand" " r")))]
+  "TARGET_ZBPBO"
+  "min\t%0, %1, %2"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "SI")])

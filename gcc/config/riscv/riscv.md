@@ -750,11 +750,18 @@
 		   (match_operand:SI 2 "register_operand" " r"))))]
   "TARGET_MUL && !TARGET_64BIT"
 {
-  rtx temp = gen_reg_rtx (SImode);
-  emit_insn (gen_mulsi3 (temp, operands[1], operands[2]));
-  emit_insn (gen_<u>mulsi3_highpart (riscv_subword (operands[0], true),
-				     operands[1], operands[2]));
-  emit_insn (gen_movsi (riscv_subword (operands[0], false), temp));
+  if (TARGET_ZPN)
+    {
+      emit_insn (gen_rvp_<u>mulsidi3 (operands[0], operands[1], operands[2]));
+    }
+  else
+    {
+      rtx temp = gen_reg_rtx (SImode);
+      emit_insn (gen_mulsi3 (temp, operands[1], operands[2]));
+      emit_insn (gen_<u>mulsi3_highpart (riscv_subword (operands[0], true),
+                operands[1], operands[2]));
+      emit_insn (gen_movsi (riscv_subword (operands[0], false), temp));
+    }
   DONE;
 })
 
