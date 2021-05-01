@@ -46,6 +46,13 @@
 (define_code_iterator saturation_minus [ss_minus us_minus])
 (define_code_iterator plus_minus [plus minus])
 
+(define_code_attr opcode [(plus "add")
+   (minus "sub")
+   (smax "smax")
+   (umax "umax")
+   (smin "smin")
+   (umin "umin")])
+
 ;; <uk> expands to (un)signed (saturating) arithmetic operations
 (define_code_attr uk
   [(plus "") (ss_plus "k") (us_plus "uk")
@@ -3383,3 +3390,199 @@
   "TARGET_ZPN"
   "ur<opcode>w\t%0, %1, %2"
   [(set_attr "type" "dsp")])
+
+;; RDOV
+(define_insn "rdov<X:mode>"
+  [(set (match_operand:X 0 "register_operand" "=r")
+	(unspec_volatile:X [(const_int 0)] UNSPEC_RDOV))]
+  "TARGET_ZPN"
+  "csrr \t%0, vxsat, zero"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "<MODE>")])
+
+;; RSTAS[16|32], RSTSA[16|32]
+(define_expand "rstas<mode>"
+  [(match_operand:VSHI 0 "register_operand" "")
+   (match_operand:VSHI 1 "register_operand" "")
+   (match_operand:VSHI 2 "register_operand" "")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_rstas<mode>_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "rstas<mode>_le"
+  [(set (match_operand:VSHI 0 "register_operand"           "=r")
+	(vec_merge:VSHI
+	  (vec_duplicate:VSHI
+	    (truncate:<VNHALF>
+	      (ashiftrt:<VSH_EXT>
+		(minus:<VSH_EXT>
+		  (sign_extend:<VSH_EXT>
+		    (vec_select:<VNHALF>
+		      (match_operand:VSHI 1 "register_operand" " r")
+		      (parallel [(const_int 0)])))
+		  (sign_extend:<VSH_EXT>
+		    (vec_select:<VNHALF>
+		      (match_operand:VSHI 2 "register_operand" " r")
+		      (parallel [(const_int 0)]))))
+		(const_int 1))))
+	  (vec_duplicate:VSHI
+	    (truncate:<VNHALF>
+	      (ashiftrt:<VSH_EXT>
+		(plus:<VSH_EXT>
+		  (sign_extend:<VSH_EXT>
+		    (vec_select:<VNHALF>
+		      (match_dup 2)
+		      (parallel [(const_int 1)])))
+		  (sign_extend:SI
+		    (vec_select:<VNHALF>
+		      (match_dup 1)
+		      (parallel [(const_int 1)]))))
+		(const_int 1))))
+	  (const_int 1)))]
+  "TARGET_ZPN"
+  "rstas<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")]
+)
+
+(define_expand "rstas16_64"
+  [(match_operand:V4HI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_rstas16_64_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "rstas16_64_le"
+  [(set (match_operand:V4HI 0 "register_operand"         "=r")
+	(vec_concat:V4HI
+	  (vec_concat:V2HI
+	    (truncate:HI
+	      (ashiftrt:SI
+		(minus:SI
+		  (sign_extend:SI (vec_select:HI (match_operand:V4HI 1 "register_operand" " r")
+						 (parallel [(const_int 0)])))
+		  (sign_extend:SI (vec_select:HI (match_operand:V4HI 2 "register_operand" " r")
+						  (parallel [(const_int 0)]))))
+		(const_int 1)))
+	    (truncate:HI
+	      (ashiftrt:SI
+		(plus:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 1) (parallel [(const_int 1)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 1)]))))
+		(const_int 1))))
+	  (vec_concat:V2HI
+	    (truncate:HI
+	      (ashiftrt:SI
+		(minus:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 1) (parallel [(const_int 2)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 2)]))))
+		(const_int 1)))
+	    (truncate:HI
+	      (ashiftrt:SI
+		(plus:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 1) (parallel [(const_int 3)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 3)]))))
+		(const_int 1))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "rstas16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+(define_expand "rstsa<mode>"
+  [(match_operand:VSHI 0 "register_operand" "")
+   (match_operand:VSHI 1 "register_operand" "")
+   (match_operand:VSHI 2 "register_operand" "")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_rstsa<mode>_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "rstsa<mode>_le"
+  [(set (match_operand:VSHI 0 "register_operand"           "=r")
+	(vec_merge:VSHI
+	  (vec_duplicate:VSHI
+	    (truncate:<VNHALF>
+	      (ashiftrt:<VSH_EXT>
+	        (minus:<VSH_EXT>
+		  (sign_extend:<VSH_EXT>
+		    (vec_select:<VNHALF>
+		      (match_operand:VSHI 1 "register_operand" " r")
+		      (parallel [(const_int 0)])))
+		  (sign_extend:<VSH_EXT>
+		    (vec_select:<VNHALF>
+		      (match_operand:VSHI 2 "register_operand" " r")
+		      (parallel [(const_int 0)]))))
+		(const_int 1))))
+	  (vec_duplicate:VSHI
+	    (truncate:<VNHALF>
+	      (ashiftrt:<VSH_EXT>
+		(plus:<VSH_EXT>
+		  (sign_extend:<VSH_EXT>
+		    (vec_select:<VNHALF>
+		      (match_dup 1)
+		      (parallel [(const_int 1)])))
+		  (sign_extend:<VSH_EXT>
+		    (vec_select:<VNHALF>
+		      (match_dup 2)
+		      (parallel [(const_int 1)]))))
+		(const_int 1))))
+	  (const_int 2)))]
+  "TARGET_ZPN"
+  "rstsa<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")]
+)
+
+(define_expand "rstsa16_64"
+  [(match_operand:V4HI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_rstsa16_64_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "rstsa16_64_le"
+  [(set (match_operand:V4HI 0 "register_operand"         "=r")
+	(vec_concat:V4HI
+	  (vec_concat:V2HI
+	    (truncate:HI
+	      (ashiftrt:SI
+		(plus:SI
+		  (sign_extend:SI (vec_select:HI (match_operand:V4HI 1 "register_operand" " r")
+						 (parallel [(const_int 0)])))
+		  (sign_extend:SI (vec_select:HI (match_operand:V4HI 2 "register_operand" " r")
+						  (parallel [(const_int 0)]))))
+		(const_int 1)))
+	    (truncate:HI
+	      (ashiftrt:SI
+		(minus:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 1) (parallel [(const_int 1)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 1)]))))
+		(const_int 1))))
+	  (vec_concat:V2HI
+	    (truncate:HI
+	      (ashiftrt:SI
+		(plus:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 1) (parallel [(const_int 2)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 2)]))))
+		(const_int 1)))
+	    (truncate:HI
+	      (ashiftrt:SI
+		(minus:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 1) (parallel [(const_int 3)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 3)]))))
+		(const_int 1))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "rstsa16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
