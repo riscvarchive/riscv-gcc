@@ -4411,3 +4411,175 @@
   "smaqa.su\t%0, %2, %3"
   [(set_attr "type" "dsp")
    (set_attr "mode" "V2SI")])
+
+;; SMBB16, SMBT16, SMTT16
+;; 32 BIT smbb16
+(define_expand "smbb"
+  [(match_operand:SI 0 "register_operand" "")
+   (match_operand:V2HI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_mulhisi3v (operands[0], operands[1], operands[2],
+			    GEN_INT (0), GEN_INT (0)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "smbt"
+  [(match_operand:SI 0 "register_operand" "")
+   (match_operand:V2HI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_mulhisi3v (operands[0], operands[1], operands[2],
+			    GEN_INT (0), GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "smtt"
+  [(match_operand:SI 0 "register_operand" "")
+   (match_operand:V2HI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_mulhisi3v (operands[0], operands[1], operands[2],
+			    GEN_INT (1), GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "mulhisi3v"
+  [(set (match_operand:SI 0 "register_operand"                  "=  r,   r,   r,   r")
+	(mult:SI
+	  (sign_extend:SI
+	     (vec_select:HI
+	       (match_operand:V2HI 1 "register_operand"         "   r,   r,   r,   r")
+	       (parallel [(match_operand:SI 3 "imm_0_1_operand" " C00, C00, C01, C01")])))
+	  (sign_extend:SI (vec_select:HI
+	       (match_operand:V2HI 2 "register_operand"         "   r,   r,   r,   r")
+	       (parallel [(match_operand:SI 4 "imm_0_1_operand" " C00, C01, C01, C00")])))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "@
+   smbb16\t%0, %1, %2
+   smbt16\t%0, %1, %2
+   smtt16\t%0, %1, %2
+   smbt16\t%0, %2, %1"
+  [(set_attr "type"   "simd")
+   (set_attr "mode"   "SI")])
+
+;; 64 Bit smbb16
+(define_expand "smbb64"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_mulv2hiv2si3v (operands[0], operands[1], operands[2],
+				GEN_INT (0), GEN_INT (2), GEN_INT (0), GEN_INT (2)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "smbt64"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_mulv2hiv2si3v (operands[0], operands[1], operands[2],
+				GEN_INT (0), GEN_INT (2), GEN_INT (1), GEN_INT (3)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "smtt64"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_mulv2hiv2si3v (operands[0], operands[1], operands[2],
+				GEN_INT (1), GEN_INT (3), GEN_INT (1), GEN_INT (3)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "mulv2hiv2si3v"
+  [(set (match_operand:V2SI 0 "register_operand" "=r, r, r")
+        (mult:V2SI
+	 (sign_extend:V2SI
+	  (vec_select:V2HI
+	   (match_operand:V4HI 1 "register_operand" "r, r, r")
+	   (parallel [(match_operand:SI 3 "imm2u_operand" " C00, C00, C01")
+		      (match_operand:SI 4 "imm2u_operand" " C02, C02, C03")])))
+	 (sign_extend:V2SI
+	  (vec_select:V2HI
+	   (match_operand:V4HI 2 "register_operand" "r, r, r")
+	   (parallel [(match_operand:SI 5 "imm2u_operand" " C00, C01, C01")
+		      (match_operand:SI 6 "imm2u_operand" " C02, C03, C03")])))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "@
+   smbb16\t%0, %1, %2
+   smbt16\t%0, %1, %2
+   smtt16\t%0, %1, %2"
+  [(set_attr "type"   "simd")
+   (set_attr "mode"   "DI")])
+
+;; SMBB32, SMBT32, SMTT32
+;; SMBB32, SMBT32, SMTT32
+(define_expand "smbb32"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V2SI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_mulsidi3v (operands[0], operands[1], operands[2],
+			    GEN_INT (0), GEN_INT (0)));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "smbt32"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V2SI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_mulsidi3v (operands[0], operands[1], operands[2],
+			    GEN_INT (0), GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "smtt32"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V2SI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_mulsidi3v (operands[0], operands[1], operands[2],
+			    GEN_INT (1), GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "mulsidi3v"
+  [(set (match_operand:DI 0 "register_operand"                  "=  r,   r,   r,   r")
+	(mult:DI
+	  (sign_extend:DI
+	     (vec_select:SI
+	       (match_operand:V2SI 1 "register_operand"         "   r,   r,   r,   r")
+	       (parallel [(match_operand:SI 3 "imm_0_1_operand" " C00, C00, C01, C01")])))
+	  (sign_extend:DI (vec_select:SI
+	       (match_operand:V2SI 2 "register_operand"         "   r,   r,   r,   r")
+	       (parallel [(match_operand:SI 4 "imm_0_1_operand" " C00, C01, C01, C00")])))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "@
+   smbb32\t%0, %1, %2
+   smbt32\t%0, %1, %2
+   smtt32\t%0, %1, %2
+   smbt32\t%0, %2, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "DI")])
