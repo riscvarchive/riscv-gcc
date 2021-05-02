@@ -5031,3 +5031,155 @@
    smmwb.u\t%0, %1, %2
    smmwt.u\t%0, %1, %2"
 [(set_attr "type" "simd")])
+
+;; SMSLDA, SMSLXDA
+;; rv32p smslda
+(define_insn "smslda1"
+  [(set (match_operand:DI 0 "register_operand"                             "=r")
+	(minus:DI
+	  (minus:DI
+	    (match_operand:DI 1 "register_operand"                         " 0")
+	    (sign_extend:DI
+	      (mult:SI
+		(sign_extend:SI (vec_select:HI
+				  (match_operand:V2HI 2 "register_operand" " r")
+				  (parallel [(const_int 1)])))
+		(sign_extend:SI (vec_select:HI
+				  (match_operand:V2HI 3 "register_operand" " r")
+				  (parallel [(const_int 1)]))))))
+	  (sign_extend:DI
+	    (mult:SI
+	      (sign_extend:SI (vec_select:HI
+				(match_dup 2)
+				(parallel [(const_int 0)])))
+	      (sign_extend:SI (vec_select:HI
+				(match_dup 3)
+				(parallel [(const_int 0)])))))))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "smslda\t%0, %2, %3"
+  [(set_attr "type" "dsp64")])
+
+;; rv64p smslda
+(define_insn "smslda64"
+  [(set (match_operand:DI 0 "register_operand"                             "=r")
+	(minus:DI
+	  (minus:DI
+	    (match_operand:DI 1 "register_operand"                           " 0")
+	    (sign_extend:DI
+	      (minus:SI
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI
+				    (match_operand:V4HI 2 "register_operand" " r")
+				    (parallel [(const_int 0)])))
+		  (sign_extend:SI (vec_select:HI
+				    (match_operand:V4HI 3 "register_operand" " r")
+				    (parallel [(const_int 0)]))))
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 1)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 3) (parallel [(const_int 1)])))))))
+	    (sign_extend:DI
+	      (minus:SI
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 2)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 3) (parallel [(const_int 2)]))))
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 3)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 3) (parallel [(const_int 3)]))))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smslda\t%0, %2, %3"
+  [(set_attr "type" "dsp64")])
+
+;; rv32p smslxda
+(define_insn "smslxda1"
+  [(set (match_operand:DI 0 "register_operand"                               "=r")
+	(minus:DI
+	  (minus:DI
+	    (match_operand:DI 1 "register_operand"                           " 0")
+	      (sign_extend:DI
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI
+				    (match_operand:V2HI 2 "register_operand" " r")
+				    (parallel [(const_int 1)])))
+		  (sign_extend:SI (vec_select:HI
+				    (match_operand:V2HI 3 "register_operand" " r")
+				    (parallel [(const_int 0)]))))))
+	  (sign_extend:DI
+	    (mult:SI
+	      (sign_extend:SI (vec_select:HI
+				(match_dup 2)
+				(parallel [(const_int 0)])))
+	      (sign_extend:SI (vec_select:HI
+				(match_dup 3)
+				(parallel [(const_int 1)])))))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "smslxda\t%0, %2, %3"
+  [(set_attr "type" "dsp64")])
+
+;; rv64p smslxda
+(define_insn "smslxda64"
+  [(set (match_operand:DI 0 "register_operand"                             "=r")
+	(minus:DI
+	  (minus:DI
+	    (match_operand:DI 1 "register_operand"                           " 0")
+	    (sign_extend:DI
+	      (minus:SI
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI
+				    (match_operand:V4HI 2 "register_operand" " r")
+				    (parallel [(const_int 0)])))
+		  (sign_extend:SI (vec_select:HI
+				    (match_operand:V4HI 3 "register_operand" " r")
+				    (parallel [(const_int 1)]))))
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 1)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 3) (parallel [(const_int 0)])))))))
+	    (sign_extend:DI
+	      (minus:SI
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 2)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 3) (parallel [(const_int 3)]))))
+		(mult:SI
+		  (sign_extend:SI (vec_select:HI (match_dup 2) (parallel [(const_int 3)])))
+		  (sign_extend:SI (vec_select:HI (match_dup 3) (parallel [(const_int 2)]))))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smslxda\t%0, %2, %3"
+  [(set_attr "type" "dsp64")])
+
+;; SMSR64, UMSR64
+(define_insn "<su>msr64"
+  [(set (match_operand:DI 0 "register_operand"       "=r")
+	(minus:DI
+	  (match_operand:DI 1 "register_operand"     " 0")
+	  (mult:DI
+	    (any_extend:DI
+	      (match_operand:SI 2 "register_operand" " r"))
+	    (any_extend:DI
+	      (match_operand:SI 3 "register_operand" " r")))))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "<su>msr64\t%0, %2, %3"
+  [(set_attr "type" "dsp64")
+   (set_attr "mode" "DI")])
+
+(define_insn "v<su>msr64"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(minus:DI
+	  (minus:DI
+	  (match_operand:DI 1 "register_operand"    " 0")
+	    (mult:DI
+	      (any_extend:DI
+		(vec_select:SI
+		  (match_operand:V2SI 2 "register_operand" " r")
+		  (parallel [(const_int 0)])))
+	      (any_extend:DI
+		(vec_select:SI
+		  (match_operand:V2SI 3 "register_operand" " r")
+		  (parallel [(const_int 0)])))))
+	    (mult:DI
+	      (any_extend:DI
+		(vec_select:SI (match_dup 2) (parallel [(const_int 1)])))
+	      (any_extend:DI
+		(vec_select:SI (match_dup 3) (parallel [(const_int 1)]))))))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "<su>msr64\t%0, %2, %3"
+  [(set_attr "type" "dsp64")
+   (set_attr "mode" "DI")])
