@@ -47,6 +47,10 @@
 (define_code_iterator saturation_minus [ss_minus us_minus])
 (define_code_iterator plus_minus [plus minus])
 
+;; smax[8|16] and umax[8|16]
+(define_code_iterator sumax [smax umax])
+(define_code_iterator sumin [smin umin])
+
 ;; smalxd[s|a] smald[s|a]
 (define_code_attr add_sub [(plus "a") (minus "s")])
 (define_code_attr opcode [(plus "add")
@@ -4101,3 +4105,59 @@
   "TARGET_ZPSF && TARGET_64BIT"
   "smaldrs\t%0, %2, %3"
   [(set_attr "type" "dsp64")])
+
+;; SMAR64, UMAR64
+(define_insn "<su>mar64_1"
+  [(set (match_operand:DI 0 "register_operand"       "=r")
+	(plus:DI
+	  (match_operand:DI 1 "register_operand"     " 0")
+	  (mult:DI
+	    (any_extend:DI
+	      (match_operand:SI 2 "register_operand" " r"))
+	    (any_extend:DI
+	      (match_operand:SI 3 "register_operand" " r")))))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "<su>mar64\t%0, %2, %3"
+  [(set_attr "type"   "dsp64")
+   (set_attr "mode"   "DI")])
+
+(define_insn "v<su>mar64_1"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(plus:DI (match_operand:DI 1 "register_operand"    " 0")
+	  (plus:DI
+	    (mult:DI
+	      (any_extend:DI
+		(vec_select:SI
+		  (match_operand:V2SI 2 "register_operand" " r")
+		  (parallel [(const_int 0)])))
+	      (any_extend:DI
+		(vec_select:SI
+		  (match_operand:V2SI 3 "register_operand" " r")
+		  (parallel [(const_int 0)]))))
+	    (mult:DI
+	      (any_extend:DI
+		(vec_select:SI (match_dup 2) (parallel [(const_int 1)])))
+	      (any_extend:DI
+		(vec_select:SI (match_dup 3) (parallel [(const_int 1)])))))))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "<su>mar64\t%0, %2, %3"
+  [(set_attr "type" "dsp64")
+   (set_attr "mode" "DI")])
+
+;; smax[8|16] and umax[8|16]
+(define_insn "<opcode><mode>3"
+  [(set (match_operand:VECI 0 "register_operand"             "=r")
+	(sumax:VECI (match_operand:VECI 1 "register_operand" " r")
+		    (match_operand:VECI 2 "register_operand" " r")))]
+  "TARGET_ZPN"
+  "<opcode><bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+;; smin[8|16] and umin[8|16]
+(define_insn "<opcode><mode>3"
+  [(set (match_operand:VECI 0 "register_operand"             "=r")
+	(sumin:VECI (match_operand:VECI 1 "register_operand" " r")
+		    (match_operand:VECI 2 "register_operand" " r")))]
+  "TARGET_ZPN"
+  "<opcode><bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")])
