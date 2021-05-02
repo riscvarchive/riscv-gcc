@@ -4583,3 +4583,194 @@
    smbt32\t%0, %2, %1"
   [(set_attr "type" "dsp")
    (set_attr "mode" "DI")])
+
+;; SMDS, SMDRS, SMXDS
+(define_insn "smds"
+  [(set (match_operand:SI 0 "register_operand"                         "=r")
+	(minus:SI
+	  (mult:SI
+	    (sign_extend:SI (vec_select:HI
+			      (match_operand:V2HI 1 "register_operand" " r")
+			      (parallel [(const_int 1)])))
+	    (sign_extend:SI (vec_select:HI
+			      (match_operand:V2HI 2 "register_operand" " r")
+			      (parallel [(const_int 1)]))))
+	  (mult:SI
+	    (sign_extend:SI (vec_select:HI
+			      (match_dup 1)
+			      (parallel [(const_int 0)])))
+	    (sign_extend:SI (vec_select:HI
+			      (match_dup 2)
+			      (parallel [(const_int 0)]))))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "smds\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+(define_insn "smds64"
+  [(set (match_operand:V2SI 0 "register_operand"                      "=r")
+	(minus:V2SI
+	  (mult:V2SI
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_operand:V4HI 1 "register_operand" "r")
+				(parallel [(const_int 1) (const_int 3)])))
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_operand:V4HI 2 "register_operand" "r")
+				(parallel [(const_int 1) (const_int 3)]))))
+	  (mult:V2SI
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_dup 1)
+				(parallel [(const_int 0) (const_int 2)])))
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_dup 2)
+				(parallel [(const_int 0) (const_int 2)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smds\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+(define_insn "smdrs"
+  [(set (match_operand:SI 0 "register_operand"                         "=r")
+	(minus:SI
+	  (mult:SI
+	    (sign_extend:SI (vec_select:HI
+			      (match_operand:V2HI 1 "register_operand" " r")
+			      (parallel [(const_int 0)])))
+	    (sign_extend:SI (vec_select:HI
+			      (match_operand:V2HI 2 "register_operand" " r")
+			      (parallel [(const_int 0)]))))
+	  (mult:SI
+	    (sign_extend:SI (vec_select:HI
+			      (match_dup 1)
+			      (parallel [(const_int 1)])))
+	    (sign_extend:SI (vec_select:HI
+			      (match_dup 2)
+			      (parallel [(const_int 1)]))))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "smdrs\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+(define_insn "smdrs64"
+  [(set (match_operand:V2SI 0 "register_operand"                      "=r")
+	(minus:V2SI
+	  (mult:V2SI
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_operand:V4HI 1 "register_operand" "r")
+				(parallel [(const_int 0) (const_int 2)])))
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_operand:V4HI 2 "register_operand" "r")
+				(parallel [(const_int 0) (const_int 2)]))))
+	  (mult:V2SI
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_dup 1)
+				(parallel [(const_int 1) (const_int 3)])))
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_dup 2)
+				(parallel [(const_int 1) (const_int 3)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smdrs\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+(define_insn "smxdsv"
+  [(set (match_operand:SI 0 "register_operand"                         "=r")
+	(minus:SI
+	  (mult:SI
+	    (sign_extend:SI (vec_select:HI
+			      (match_operand:V2HI 1 "register_operand" " r")
+			      (parallel [(const_int 1)])))
+	    (sign_extend:SI (vec_select:HI
+			      (match_operand:V2HI 2 "register_operand" " r")
+			      (parallel [(const_int 0)]))))
+	  (mult:SI
+	    (sign_extend:SI (vec_select:HI
+			      (match_dup 1)
+			      (parallel [(const_int 0)])))
+	    (sign_extend:SI (vec_select:HI
+			      (match_dup 2)
+			      (parallel [(const_int 1)]))))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "smxds\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+(define_insn "smxds64"
+  [(set (match_operand:V2SI 0 "register_operand"                      "=r")
+	(minus:V2SI
+	  (mult:V2SI
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_operand:V4HI 1 "register_operand" "r")
+				(parallel [(const_int 1) (const_int 3)])))
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_operand:V4HI 2 "register_operand" "r")
+				(parallel [(const_int 0) (const_int 2)]))))
+	  (mult:V2SI
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_dup 1)
+				(parallel [(const_int 0) (const_int 2)])))
+	    (sign_extend:V2SI (vec_select:V2HI
+				(match_dup 2)
+				(parallel [(const_int 1) (const_int 3)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smxds\t%0, %1, %2"
+  [(set_attr "type" "simd")])
+
+;; SMDS32, SMDRS32, SMXDS32
+(define_insn "smxds32"
+  [(set (match_operand:DI 0 "register_operand"                         "=r")
+	(minus:DI
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 1 "register_operand" " r")
+			      (parallel [(const_int 1)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 2 "register_operand" " r")
+			      (parallel [(const_int 0)]))))
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 1)
+			      (parallel [(const_int 0)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 2)
+			      (parallel [(const_int 1)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smxds32\t%0, %1, %2"
+  [(set_attr "type" "dsp")])
+
+(define_insn "smds32"
+  [(set (match_operand:DI 0 "register_operand"                         "=r")
+	(minus:DI
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 1 "register_operand" " r")
+			      (parallel [(const_int 1)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 2 "register_operand" " r")
+			      (parallel [(const_int 1)]))))
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 1)
+			      (parallel [(const_int 0)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 2)
+			      (parallel [(const_int 0)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smds32\t%0, %1, %2"
+  [(set_attr "type" "dsp")])
+
+(define_insn "smdrs32"
+  [(set (match_operand:DI 0 "register_operand"                         "=r")
+	(minus:DI
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 1 "register_operand" " r")
+			      (parallel [(const_int 0)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 2 "register_operand" " r")
+			      (parallel [(const_int 0)]))))
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 1)
+			      (parallel [(const_int 1)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 2)
+			      (parallel [(const_int 1)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smdrs32\t%0, %1, %2"
+  [(set_attr "type" "dsp")])
