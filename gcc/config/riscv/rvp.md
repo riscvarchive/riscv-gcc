@@ -4774,3 +4774,260 @@
   "TARGET_ZPN && TARGET_64BIT"
   "smdrs32\t%0, %1, %2"
   [(set_attr "type" "dsp")])
+
+;; SMMUL, SMMUL.u
+;; rv32p smmul
+(define_insn "smulsi3_highpart"
+  [(set (match_operand:SI 0 "register_operand"                       "=r")
+	(truncate:SI
+	  (lshiftrt:DI
+	    (mult:DI
+	      (sign_extend:DI (match_operand:SI 1 "register_operand" " r"))
+	      (sign_extend:DI (match_operand:SI 2 "register_operand" " r")))
+	    (const_int 32))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "smmul\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "HI")])
+
+(define_insn "smmul_round"
+  [(set (match_operand:SI 0 "register_operand"                       "=r")
+	(truncate:SI
+	  (lshiftrt:DI
+	    (unspec:DI [(mult:DI
+			  (sign_extend:DI (match_operand:SI 1 "register_operand" " r"))
+			  (sign_extend:DI (match_operand:SI 2 "register_operand" " r")))]
+		       UNSPEC_ROUND)
+	    (const_int 32))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "smmul.u\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "HI")])
+
+;; rv64p smmul
+(define_insn "smulv2si3_highpart"
+  [(set (match_operand:V2SI 0 "register_operand" "=r")
+	(truncate:V2SI
+	  (lshiftrt:V2DI
+	    (mult:V2DI (sign_extend:V2DI (match_operand:V2SI 1 "register_operand" " r"))
+		       (sign_extend:V2DI (match_operand:V2SI 2 "register_operand" " r")))
+	    (const_int 32))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smmul\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V2SI")])
+
+(define_insn "smmulv2si3_round"
+  [(set (match_operand:V2SI 0 "register_operand" "=r")
+	(truncate:V2SI
+	  (lshiftrt:V2DI
+	    (unspec:V2DI [(mult:V2DI
+			    (sign_extend:V2DI (match_operand:V2SI 1 "register_operand" " r"))
+			    (sign_extend:V2DI (match_operand:V2SI 2 "register_operand" " r")))]
+			  UNSPEC_ROUND)
+	    (const_int 32))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smmul.u\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "DI")])
+
+;; SMMWB, SMMWT
+(define_expand "smmwb"
+  [(match_operand:SI 0 "register_operand" "")
+   (match_operand:SI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_smulhisi3_highpart_1 (operands[0], operands[1], operands[2], GEN_INT (0)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "smmwt"
+  [(match_operand:SI 0 "register_operand" "")
+   (match_operand:SI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_smulhisi3_highpart_1 (operands[0], operands[1], operands[2], GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "smulhisi3_highpart_1"
+  [(set (match_operand:SI 0 "register_operand"                       "= r,   r")
+	(truncate:SI
+	  (lshiftrt:DI
+	    (mult:DI
+	      (sign_extend:DI (match_operand:SI 1 "register_operand" "  r,   r"))
+	      (sign_extend:DI
+	        (vec_select:HI
+		  (match_operand:V2HI 2 "register_operand"           "  r,   r")
+		  (parallel [(match_operand:SI 3 "imm_0_1_operand"   "C00, C01")]))))
+	    (const_int 16))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "@
+  smmwb\t%0, %1, %2
+  smmwt\t%0, %1, %2"
+[(set_attr "type" "simd")])
+
+;; RV64P smmwb
+(define_expand "smmwb64"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_smulhisi3_highpart_64 (operands[0], operands[1], operands[2],
+					GEN_INT (0), GEN_INT (2)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "smmwt64"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_smulhisi3_highpart_64 (operands[0], operands[1], operands[2],
+					GEN_INT (1), GEN_INT (3)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "smulhisi3_highpart_64"
+  [(set (match_operand:V2SI 0 "register_operand"                       "=r,    r")
+	(vec_concat:V2SI
+	  (truncate:SI
+	    (lshiftrt:DI
+	      (mult:DI
+		(sign_extend:DI
+		  (vec_select:SI
+		    (match_operand:V2SI 1 "register_operand"           "  r,   r")
+		      (parallel [(const_int 0)])))
+		(sign_extend:DI
+		  (vec_select:HI
+		    (match_operand:V4HI 2 "register_operand"           "  r,   r")
+		      (parallel [(match_operand:SI 3 "imm_0_1_operand"   "C00, C01")]))))
+	      (const_int 16)))
+	  (truncate:SI
+	    (lshiftrt:DI
+	      (mult:DI
+		(sign_extend:DI
+		  (vec_select:SI
+		    (match_dup 1)
+		      (parallel [(const_int 1)])))
+		(sign_extend:DI
+		  (vec_select:HI
+		    (match_dup 2)
+		      (parallel [(match_operand:SI 4 "imm_2_3_operand"   "C02, C03")]))))
+	      (const_int 16)))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "@
+   smmwb\t%0, %1, %2
+   smmwt\t%0, %1, %2"
+[(set_attr "type" "simd")])
+
+;; SMMWB.u, SMMWT.u
+(define_expand "smmwb_round"
+  [(match_operand:SI 0 "register_operand" "")
+   (match_operand:SI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_smmw_round_internal (operands[0], operands[1], operands[2], GEN_INT (0)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "smmwt_round"
+  [(match_operand:SI 0 "register_operand" "")
+   (match_operand:SI 1 "register_operand" "")
+   (match_operand:V2HI 2 "register_operand" "")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_smmw_round_internal (operands[0], operands[1], operands[2], GEN_INT (1)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "smmw_round_internal"
+  [(set (match_operand:SI 0 "register_operand"                          "=  r,   r")
+	(truncate:SI
+	  (lshiftrt:DI
+	    (unspec:DI
+	      [(mult:DI
+		 (sign_extend:DI (match_operand:SI 1 "register_operand" "   r,   r"))
+		 (sign_extend:DI
+		   (vec_select:HI
+		     (match_operand:V2HI 2 "register_operand"           "   r,   r")
+		     (parallel [(match_operand:SI 3 "imm_0_1_operand"   " C00, C01")]))))]
+	      UNSPEC_ROUND)
+	    (const_int 16))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "@
+   smmwb.u\t%0, %1, %2
+   smmwt.u\t%0, %1, %2"
+[(set_attr "type" "simd")])
+
+(define_expand "smmwb64_round"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_smmw64_round_internal (operands[0], operands[1], operands[2],
+					GEN_INT (0), GEN_INT (2)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "smmwt64_round"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_smmw64_round_internal (operands[0], operands[1], operands[2],
+					GEN_INT (1), GEN_INT (3)));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "smmw64_round_internal"
+  [(set (match_operand:V2SI 0 "register_operand"                       "=r,    r")
+	(vec_concat:V2SI
+	  (truncate:SI
+	    (lshiftrt:DI
+	      (unspec:DI
+	        [(mult:DI
+		  (sign_extend:DI
+		    (vec_select:SI
+		      (match_operand:V2SI 1 "register_operand"           "  r,   r")
+		      (parallel [(const_int 0)])))
+		  (sign_extend:DI
+		    (vec_select:HI
+		      (match_operand:V4HI 2 "register_operand"           "  r,   r")
+		      (parallel [(match_operand:SI 3 "imm_0_1_operand"   "C00, C01")]))))]
+	        UNSPEC_ROUND)
+	      (const_int 16)))
+	  (truncate:SI
+	    (lshiftrt:DI
+	      (unspec:DI
+		[(mult:DI
+		  (sign_extend:DI
+		    (vec_select:SI
+		      (match_dup 1)
+		      (parallel [(const_int 1)])))
+		  (sign_extend:DI
+		    (vec_select:HI
+		      (match_dup 2)
+		      (parallel [(match_operand:SI 4 "imm_2_3_operand"   "C02, C03")]))))]
+	        UNSPEC_ROUND)
+	      (const_int 16)))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "@
+   smmwb.u\t%0, %1, %2
+   smmwt.u\t%0, %1, %2"
+[(set_attr "type" "simd")])
