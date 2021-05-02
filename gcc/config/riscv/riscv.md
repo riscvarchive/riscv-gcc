@@ -87,6 +87,7 @@
   UNSPEC_SMULX16
   UNSPEC_UMUL16
   UNSPEC_UMULX16
+  UNSPEC_ROUND64
 ])
 
 (define_c_enum "unspecv" [
