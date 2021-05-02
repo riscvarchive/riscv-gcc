@@ -5183,3 +5183,129 @@
   "<su>msr64\t%0, %2, %3"
   [(set_attr "type" "dsp64")
    (set_attr "mode" "DI")])
+
+;; SMUL 8|16, SMULX 8|16, UMUL 8|16, UMULX 8|16
+;; SMUL8
+(define_insn "smul8"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:SI 1 "register_operand" " r")
+		    (match_operand:SI 2 "register_operand" " r")]
+		    UNSPEC_SMUL8))]
+  "TARGET_ZPSF"
+  "smul8\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+;; SMULX8
+(define_insn "smulx8"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:SI 1 "register_operand" " r")
+		    (match_operand:SI 2 "register_operand" " r")]
+		    UNSPEC_SMULX8))]
+  "TARGET_ZPSF"
+  "smulx8\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+;; UMUL8
+(define_insn "umul8"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:SI 1 "register_operand" " r")
+		    (match_operand:SI 2 "register_operand" " r")]
+		    UNSPEC_UMUL8))]
+  "TARGET_ZPSF"
+  "umul8\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+;; UMULX8
+(define_insn "umulx8"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:SI 1 "register_operand" " r")
+		    (match_operand:SI 2 "register_operand" " r")]
+		    UNSPEC_UMULX8))]
+  "TARGET_ZPSF"
+  "umulx8\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+;; S|U MUL16
+(define_insn "<su>mul16"
+  [(set (match_operand:V2SI 0 "register_operand"                             "=r")
+	(mult:V2SI (any_extend:V2SI (match_operand:V2HI 1 "register_operand" "%r"))
+		   (any_extend:V2SI (match_operand:V2HI 2 "register_operand" " r"))))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "<su>mul16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V2SI")])
+
+(define_insn "smul16_64"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:SI 1 "register_operand" " r")
+		    (match_operand:SI 2 "register_operand" " r")]
+		    UNSPEC_SMUL16))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "smul16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "DI")])
+
+(define_insn "umul16_64"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:SI 1 "register_operand" " r")
+		    (match_operand:SI 2 "register_operand" " r")]
+		    UNSPEC_UMUL16))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "umul16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "DI")])
+
+;; S|U MULX16
+(define_insn "<su>mulx16"
+  [(set (match_operand:V2SI 0 "register_operand"         "=r")
+	(vec_merge:V2SI
+	  (vec_duplicate:V2SI
+	    (mult:SI
+	      (any_extend:SI
+		(vec_select:HI
+		  (match_operand:V2HI 1 "register_operand" " r")
+		  (parallel [(const_int 0)])))
+	      (any_extend:SI
+		(vec_select:HI
+		  (match_operand:V2HI 2 "register_operand" " r")
+		  (parallel [(const_int 1)])))))
+	  (vec_duplicate:V2SI
+	    (mult:SI
+	      (any_extend:SI
+		(vec_select:HI
+		  (match_dup 1)
+		  (parallel [(const_int 1)])))
+	      (any_extend:SI
+		(vec_select:HI
+		  (match_dup 2)
+		  (parallel [(const_int 0)])))))
+	  (const_int 1)))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "<su>mulx16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V2SI")])
+
+;; RV64P
+(define_insn "smulx16_64"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:SI 1 "register_operand" " r")
+		    (match_operand:SI 2 "register_operand" " r")]
+		    UNSPEC_SMULX16))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "smulx16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "DI")])
+
+(define_insn "umulx16_64"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:SI 1 "register_operand" " r")
+		    (match_operand:SI 2 "register_operand" " r")]
+		    UNSPEC_UMULX16))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "umulx16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "DI")])
