@@ -4161,3 +4161,253 @@
   "TARGET_ZPN"
   "<opcode><bits>\t%0, %1, %2"
   [(set_attr "type" "simd")])
+
+;; SMAQA, SMAQA.SU, UMAQA, UMAQA.SU
+(define_expand "smaqa"
+  [(match_operand:SI 0 "register_operand")
+   (match_operand:SI 1 "register_operand")
+   (match_operand:V4QI 2 "register_operand")
+   (match_operand:V4QI 3 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_smaqav4qi (operands[0], operands[1],
+			    operands[2], operands[3]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "umaqa"
+  [(match_operand:SI 0 "register_operand")
+   (match_operand:SI 1 "register_operand")
+   (match_operand:V4QI 2 "register_operand")
+   (match_operand:V4QI 3 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_umaqav4qi (operands[0], operands[1],
+			    operands[2], operands[3]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "<su>maqav4qi"
+  [(set (match_operand:SI 0 "register_operand"             "=r")
+	(plus:SI (match_operand:SI 1 "register_operand"    " 0")
+	  (plus:SI (plus:SI
+	    (sign_extend:SI
+	      (mult:HI
+		(any_extend:HI
+		  (vec_select:QI
+		    (match_operand:V4QI 2 "register_operand" "r")
+		    (parallel [(const_int 0)])))
+		(any_extend:HI
+		  (vec_select:QI
+		    (match_operand:V4QI 3 "register_operand" "r")
+		    (parallel [(const_int 0)])))))
+	    (sign_extend:SI
+	      (mult:HI
+		(any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 1)])))
+		(any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 1)]))))))
+	  (plus:SI
+	    (sign_extend:SI
+	      (mult:HI
+		(any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 2)])))
+		(any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 2)])))))
+	    (sign_extend:SI
+	      (mult:HI
+		(any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 3)])))
+		(any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 3)])))))))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "<su>maqa\t%0, %2, %3"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "DI")])
+
+(define_expand "smaqa64"
+  [(match_operand:V2SI 0 "register_operand")
+   (match_operand:V2SI 1 "register_operand")
+   (match_operand:V8QI 2 "register_operand")
+   (match_operand:V8QI 3 "register_operand")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_smaqav8qi (operands[0], operands[1],
+			    operands[2], operands[3]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "umaqa64"
+  [(match_operand:V2SI 0 "register_operand")
+   (match_operand:V2SI 1 "register_operand")
+   (match_operand:V8QI 2 "register_operand")
+   (match_operand:V8QI 3 "register_operand")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_umaqav8qi (operands[0], operands[1],
+			    operands[2], operands[3]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "<su>maqav8qi"
+  [(set (match_operand:V2SI 0 "register_operand"             "=r")
+	(plus:V2SI (match_operand:V2SI 1 "register_operand"  " 0")
+	  (vec_concat:V2SI
+	    (plus:SI
+	      (plus:SI
+		(sign_extend:SI
+		  (mult:HI
+		    (any_extend:HI
+		      (vec_select:QI
+			(match_operand:V8QI 2 "register_operand" "r")
+			(parallel [(const_int 0)])))
+		    (any_extend:HI
+		      (vec_select:QI
+			(match_operand:V8QI 3 "register_operand" "r")
+			(parallel [(const_int 0)])))))
+		(sign_extend:SI
+		  (mult:HI
+		    (any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 1)])))
+		    (any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 1)]))))))
+	      (plus:SI
+		(sign_extend:SI
+		  (mult:HI
+		    (any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 2)])))
+		    (any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 2)])))))
+		(sign_extend:SI
+		  (mult:HI
+		    (any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 3)])))
+		    (any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 3)])))))))
+	    (plus:SI
+	      (plus:SI
+		(sign_extend:SI
+		  (mult:HI
+		    (any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 4)])))
+		    (any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 4)])))))
+		(sign_extend:SI
+		  (mult:HI
+		    (any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 5)])))
+		    (any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 5)]))))))
+	      (plus:SI
+		(sign_extend:SI
+		  (mult:HI
+		    (any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 6)])))
+		    (any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 6)])))))
+		(sign_extend:SI
+		  (mult:HI
+		    (any_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 7)])))
+		    (any_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 7)]))))))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "<su>maqa\t%0, %2, %3"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "V2SI")])
+
+(define_expand "sumaqa"
+  [(match_operand:SI 0 "register_operand")
+   (match_operand:SI 1 "register_operand")
+   (match_operand:V4QI 2 "register_operand")
+   (match_operand:V4QI 3 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_sumaqav4qi (operands[0], operands[1],
+			     operands[2], operands[3]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "sumaqav4qi"
+  [(set (match_operand:SI 0 "register_operand"             "=r")
+	(plus:SI (match_operand:SI 1 "register_operand"    " 0")
+	  (plus:SI (plus:SI
+	    (sign_extend:SI
+	      (mult:HI
+		(sign_extend:HI
+		  (vec_select:QI
+		    (match_operand:V4QI 2 "register_operand" "r")
+		    (parallel [(const_int 0)])))
+		(zero_extend:HI
+		  (vec_select:QI
+		    (match_operand:V4QI 3 "register_operand" "r")
+		    (parallel [(const_int 0)])))))
+	    (sign_extend:SI
+	      (mult:HI
+		(sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 1)])))
+		(zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 1)]))))))
+
+	  (plus:SI
+	    (sign_extend:SI
+	      (mult:HI
+		(sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 2)])))
+		(zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 2)])))))
+	    (sign_extend:SI
+	      (mult:HI
+		(sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 3)])))
+		(zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 3)])))))))))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "smaqa.su\t%0, %2, %3"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "SI")])
+
+(define_expand "sumaqa64"
+  [(match_operand:V2SI 0 "register_operand")
+   (match_operand:V2SI 1 "register_operand")
+   (match_operand:V8QI 2 "register_operand")
+   (match_operand:V8QI 3 "register_operand")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_sumaqav8qi (operands[0], operands[1],
+			     operands[2], operands[3]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "sumaqav8qi"
+  [(set (match_operand:V2SI 0 "register_operand"             "=r")
+	(plus:V2SI (match_operand:V2SI 1 "register_operand"  " 0")
+	  (vec_concat:V2SI
+	    (plus:SI
+	      (plus:SI
+		(sign_extend:SI
+		  (mult:HI
+		    (sign_extend:HI
+		      (vec_select:QI
+			(match_operand:V8QI 2 "register_operand" "r")
+			(parallel [(const_int 0)])))
+		    (zero_extend:HI
+		      (vec_select:QI
+			(match_operand:V8QI 3 "register_operand" "r")
+			(parallel [(const_int 0)])))))
+		(sign_extend:SI
+		  (mult:HI
+		    (sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 1)])))
+		    (zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 1)]))))))
+	      (plus:SI
+		(sign_extend:SI
+		  (mult:HI
+		    (sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 2)])))
+		    (zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 2)])))))
+		(sign_extend:SI
+		  (mult:HI
+		    (sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 3)])))
+		    (zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 3)])))))))
+	    (plus:SI
+	      (plus:SI
+		(sign_extend:SI
+		  (mult:HI
+		    (sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 4)])))
+		    (zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 4)])))))
+		(sign_extend:SI
+		  (mult:HI
+		    (sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 5)])))
+		    (zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 5)]))))))
+	      (plus:SI
+		(sign_extend:SI
+		  (mult:HI
+		    (sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 6)])))
+		    (zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 6)])))))
+		(sign_extend:SI
+		  (mult:HI
+		    (sign_extend:HI (vec_select:QI (match_dup 2) (parallel [(const_int 7)])))
+		    (zero_extend:HI (vec_select:QI (match_dup 3) (parallel [(const_int 7)]))))))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "smaqa.su\t%0, %2, %3"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "V2SI")])
