@@ -122,6 +122,18 @@ static const struct riscv_ext_version riscv_ext_version_table[] =
   {"zifencei", ISA_SPEC_CLASS_20191213, 2, 0},
   {"zifencei", ISA_SPEC_CLASS_20190608, 2, 0},
 
+  {"k",    ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zkb",  ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zkg",  ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zkn",  ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zkne", ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zknd", ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zknh", ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zkr",  ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zks",  ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zksed",ISA_SPEC_CLASS_NONE, 0, 90},
+  {"zksh", ISA_SPEC_CLASS_NONE, 0, 90},
+
   /* Terminate the list.  */
   {NULL, ISA_SPEC_CLASS_NONE, 0, 0}
 };
