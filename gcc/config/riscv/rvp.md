@@ -6444,3 +6444,110 @@
    wexti\t%0, %1, %2"
   [(set_attr "type" "dsp")
    (set_attr "mode" "DI")])
+
+;; KDMBB16, KDMBT16, KDMTT16
+(define_insn "kdmbb16"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(unspec:V4HI [(match_operand:V4HI 1 "register_operand" "r")
+		      (match_operand:V4HI 2 "register_operand" "r")] UNSPEC_KDMBB16))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kdmbb16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+(define_insn "kdmbt16"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(unspec:V4HI [(match_operand:V4HI 1 "register_operand" "r")
+		      (match_operand:V4HI 2 "register_operand" "r")] UNSPEC_KDMBT16))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kdmbt16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+(define_insn "kdmtt16"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(unspec:V4HI [(match_operand:V4HI 1 "register_operand" "r")
+		      (match_operand:V4HI 2 "register_operand" "r")] UNSPEC_KDMTT16))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kdmtt16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+;; KDMABB16, KDMABT16, KDMATT16
+(define_expand "kdmabb16"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")
+   (match_operand:V4HI 3 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_vkdma_internal (operands[0], operands[2], operands[3],
+				 GEN_INT (0), GEN_INT (0), GEN_INT (2),
+				 GEN_INT (2), operands[1]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "kdmabt16"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")
+   (match_operand:V4HI 3 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_vkdma_internal (operands[0], operands[2], operands[3],
+				 GEN_INT (0), GEN_INT (1), GEN_INT (2),
+				 GEN_INT (3), operands[1]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "kdmatt16"
+  [(match_operand:V2SI 0 "register_operand" "")
+   (match_operand:V2SI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")
+   (match_operand:V4HI 3 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_vkdma_internal (operands[0], operands[2], operands[3],
+				 GEN_INT (1), GEN_INT (1), GEN_INT (3),
+				 GEN_INT (3), operands[1]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "vkdma_internal"
+  [(set (match_operand:V2SI 0 "register_operand"                      "=   r,   r,   r,   r")
+	(ss_plus:V2SI
+	  (vec_concat:V2SI
+	    (ashift:SI
+	      (mult:SI
+		(sign_extend:SI
+		  (vec_select:HI
+		    (match_operand:V4HI 1 "register_operand"          "   r,   r,   r,   r")
+		    (parallel [(match_operand:SI 3 "imm_0_1_operand"  " C00, C00, C01, C01")])))
+		(sign_extend:SI
+		  (vec_select:HI
+		    (match_operand:V4HI 2 "register_operand"          "   r,   r,   r,   r")
+		    (parallel [(match_operand:SI 4 "imm_0_1_operand"  " C00, C01, C01, C00")]))))
+	      (const_int 1))
+	    (ashift:SI
+	      (mult:SI
+		(sign_extend:SI
+		  (vec_select:HI
+		    (match_dup 1)
+		    (parallel [(match_operand:SI 5 "imm_2_3_operand"  " C02, C02, C03, C03")])))
+		(sign_extend:SI
+		  (vec_select:HI
+		    (match_dup 2)
+		    (parallel [(match_operand:SI 6 "imm_2_3_operand"  " C02, C03, C03, C02")]))))
+	      (const_int 1)))
+	  (match_operand:V2SI 7 "register_operand"                    "   0,   0,   0,   0")))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "@
+   kdmabb16\t%0, %1, %2
+   kdmabt16\t%0, %1, %2
+   kdmatt16\t%0, %1, %2
+   kdmabt16\t%0, %2, %1"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V2SI")])
