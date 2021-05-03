@@ -56,6 +56,9 @@
 
 ;; smalxd[s|a] smald[s|a]
 (define_code_attr add_sub [(plus "a") (minus "s")])
+;; (un)signed unpacking patterns
+(define_code_attr zs [(sign_extend "s") (zero_extend "z")])
+
 (define_code_attr opcode [(plus "add")
    (minus "sub")
    (smax "smax")
@@ -5669,3 +5672,269 @@
   "stsa16\t%0, %1, %2"
   [(set_attr "type" "simd")
    (set_attr "mode" "V4HI")])
+
+;; SUNPKD810, ZUNPKD810
+(define_insn "<zs>unpkd810_imp"
+  [(set (match_operand:V2HI 0 "register_operand"                     "=r")
+	(vec_merge:V2HI
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_operand:V4QI 1 "register_operand"             " r")
+		(parallel [(const_int 1)]))))
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_dup 1)
+		(parallel [(const_int 0)]))))
+	  (const_int 2)))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "<zs>unpkd810\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V2HI")])
+
+;; SUNPKD810 in RV32P
+(define_expand "sunpkd810"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_sunpkd810_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "zunpkd810"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_zunpkd810_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+;; ZUNPKD810 and SUNPKD810 in RV32P
+(define_insn "<zs>unpkd810_64"
+  [(set (match_operand:V4HI 0 "register_operand"                    "=r")
+	(vec_select:V4HI
+	  (any_extend:V8HI (match_operand:V8QI 1 "register_operand" "r"))
+	  (parallel [(const_int 0) (const_int 1)
+		     (const_int 4) (const_int 5)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "<zs>unpkd810\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V4HI")])
+
+;; SUNPKD820, ZUNPKD820
+(define_insn "<zs>unpkd820_imp"
+  [(set (match_operand:V2HI 0 "register_operand"                     "=r")
+	(vec_merge:V2HI
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_operand:V4QI 1 "register_operand"             " r")
+		(parallel [(const_int 2)]))))
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_dup 1)
+		(parallel [(const_int 0)]))))
+	  (const_int 2)))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "<zs>unpkd820\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V2HI")])
+
+;; ZUNPKD820 RV32P
+(define_expand "zunpkd820"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_zunpkd820_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+;; SUNPKD820 RV32P
+(define_expand "sunpkd820"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_sunpkd820_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+;; SUNPKD820, ZUNPKD820 in RV64P
+(define_insn "<zs>unpkd820_64"
+  [(set (match_operand:V4HI 0 "register_operand"                    "=r")
+	(vec_select:V4HI
+	  (any_extend:V8HI (match_operand:V8QI 1 "register_operand" "r"))
+	  (parallel [(const_int 0) (const_int 2)
+		     (const_int 4) (const_int 6)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "<zs>unpkd820\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V4HI")])
+
+;; SUNPKD830, ZUNPKD830
+;; RV32P
+(define_insn "<zs>unpkd830_imp"
+  [(set (match_operand:V2HI 0 "register_operand"                     "=r")
+	(vec_merge:V2HI
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_operand:V4QI 1 "register_operand"             " r")
+		(parallel [(const_int 3)]))))
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_dup 1)
+		(parallel [(const_int 0)]))))
+	  (const_int 2)))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "<zs>unpkd830\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V2HI")])
+
+(define_expand "sunpkd830"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_sunpkd830_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "zunpkd830"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_zunpkd830_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+;; RV64P
+(define_insn "<zs>unpkd830_64"
+  [(set (match_operand:V4HI 0 "register_operand"                    "=r")
+	(vec_select:V4HI
+	  (any_extend:V8HI (match_operand:V8QI 1 "register_operand" "r"))
+	  (parallel [(const_int 0) (const_int 3)
+		     (const_int 4) (const_int 7)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "<zs>unpkd830\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V4HI")])
+
+;; SUNPKD831, ZUNPKD831
+;; RV32P
+(define_expand "sunpkd831"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_sunpkd831_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "zunpkd831"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_zunpkd831_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "<zs>unpkd831_imp"
+  [(set (match_operand:V2HI 0 "register_operand"                     "=r")
+	(vec_merge:V2HI
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_operand:V4QI 1 "register_operand"             " r")
+		(parallel [(const_int 3)]))))
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_dup 1)
+		(parallel [(const_int 1)]))))
+	  (const_int 2)))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "<zs>unpkd831\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V2HI")])
+
+;; RV64P
+(define_insn "<zs>unpkd831_64"
+  [(set (match_operand:V4HI 0 "register_operand"                    "=r")
+	(vec_select:V4HI
+	  (any_extend:V8HI (match_operand:V8QI 1 "register_operand" "r"))
+	  (parallel [(const_int 1) (const_int 3)
+		     (const_int 5) (const_int 7)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "<zs>unpkd831\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V4HI")])
+
+;; SUNPKD832, ZUNPKD832
+;; RV32P
+(define_expand "sunpkd832"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_sunpkd832_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_expand "zunpkd832"
+  [(match_operand:V2HI 0 "register_operand")
+   (match_operand:V4QI 1 "register_operand")]
+  "TARGET_ZPN && !TARGET_64BIT"
+{
+  emit_insn (gen_zunpkd832_imp (operands[0], operands[1]));
+  DONE;
+}
+[(set_attr "type" "dsp")])
+
+(define_insn "<zs>unpkd832_imp"
+  [(set (match_operand:V2HI 0 "register_operand"                     "=r")
+	(vec_merge:V2HI
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_operand:V4QI 1 "register_operand"             " r")
+		(parallel [(const_int 3)]))))
+	  (vec_duplicate:V2HI
+	    (any_extend:HI
+	      (vec_select:QI
+		(match_dup 1)
+		(parallel [(const_int 2)]))))
+	  (const_int 2)))]
+  "TARGET_ZPN && !TARGET_64BIT"
+  "<zs>unpkd832\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V2HI")])
+
+;; RV64P
+(define_insn "<zs>unpkd832_64"
+  [(set (match_operand:V4HI 0 "register_operand"                    "=r")
+	(vec_select:V4HI
+	  (any_extend:V8HI (match_operand:V8QI 1 "register_operand" "r"))
+	  (parallel [(const_int 2) (const_int 3)
+		     (const_int 6) (const_int 7)])))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "<zs>unpkd832\t%0, %1"
+  [(set_attr "type" "dsp")
+   (set_attr "mode"  "V4HI")])
