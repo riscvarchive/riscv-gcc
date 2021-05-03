@@ -5938,3 +5938,20 @@
   "<zs>unpkd832\t%0, %1"
   [(set_attr "type" "dsp")
    (set_attr "mode"  "V4HI")])
+
+;; SWAP8
+(define_insn "bswap8"
+  [(set (match_operand:V4QI 0 "register_operand" "=r")
+	(unspec:V4QI [(match_operand:V4QI 1 "register_operand" "r")] UNSPEC_BSWAP))]
+  "TARGET_ZPN"
+  { return TARGET_ZBPBO ? "rev8.h\t%0, %1" : "swap8\t%0, %1"; }
+  [(set_attr "type"  "dsp")
+   (set_attr "mode"  "V4QI")])
+
+(define_insn "bswap8_64"
+  [(set (match_operand:V8QI 0 "register_operand" "=r")
+	(unspec:V8QI [(match_operand:V8QI 1 "register_operand" "r")] UNSPEC_BSWAP))]
+  "TARGET_ZPN"
+   { return TARGET_ZBPBO ? "rev8.h\t%0, %1" : "swap8\t%0, %1"; }
+  [(set_attr "type"  "dsp")
+   (set_attr "mode"  "V8QI")])
