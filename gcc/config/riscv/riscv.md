@@ -89,6 +89,8 @@
   UNSPEC_UMULX16
   UNSPEC_ROUND64
   UNSPEC_BSWAP
+  UNSPEC_UCLIP
+  UNSPEC_UCLIP_OV
 ])
 
 (define_c_enum "unspecv" [

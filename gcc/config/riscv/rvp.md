@@ -5955,3 +5955,55 @@
    { return TARGET_ZBPBO ? "rev8.h\t%0, %1" : "swap8\t%0, %1"; }
   [(set_attr "type"  "dsp")
    (set_attr "mode"  "V8QI")])
+
+;; UCLIP8|16|32
+(define_insn "uclip8<mode>"
+  [(set (match_operand:VQI 0 "register_operand"               "=  r")
+	(unspec:VQI [(match_operand:VQI 1 "register_operand"  "   r")
+		     (match_operand:SI 2 "imm3u_operand"      " u03")]
+		     UNSPEC_UCLIP))]
+  "TARGET_ZPN"
+  "uclip8\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "uclip16<mode>"
+  [(set (match_operand:VHI 0 "register_operand"               "=   r")
+	(unspec:VHI [(match_operand:VHI 1 "register_operand"  "    r")
+		      (match_operand:SI 2 "imm4u_operand"     " u04")]
+		     UNSPEC_UCLIP))]
+  "TARGET_ZPN"
+  "uclip16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "uclip32<VD_SI:mode><X:mode>"
+  [(set (match_operand:VD_SI 0 "register_operand" "=r")
+	(unspec:VD_SI [(match_operand:VD_SI 1 "register_operand" "r")
+		       (match_operand:X 2 "immediate_operand" "i")] UNSPEC_UCLIP_OV))]
+  "TARGET_ZPN"
+  "uclip32\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<VD_SI:MODE>")])
+
+;; UCMPLE8|16
+(define_insn "ucmple<mode>"
+  [(set (match_operand:VQIHI 0 "register_operand"                          "=r")
+	(unspec:VQIHI [(leu:VQIHI (match_operand:VQIHI 1 "register_operand" " r")
+				  (match_operand:VQIHI 2 "register_operand" " r"))]
+		       UNSPEC_VEC_COMPARE))]
+  "TARGET_ZPN"
+  "ucmple<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "<MODE>")])
+
+;; UCMPLT8|16
+(define_insn "ucmplt<mode>"
+  [(set (match_operand:VQIHI 0 "register_operand"                          "=r")
+	(unspec:VQIHI [(ltu:VQIHI (match_operand:VQIHI 1 "register_operand" " r")
+				  (match_operand:VQIHI 2 "register_operand" " r"))]
+		       UNSPEC_VEC_COMPARE))]
+  "TARGET_ZPN"
+  "ucmplt<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "SI")])
