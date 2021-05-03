@@ -6551,3 +6551,186 @@
    kdmabt16\t%0, %2, %1"
   [(set_attr "type" "simd")
    (set_attr "mode" "V2SI")])
+
+;; KHMBB16, KHMBT16, KHMTT16
+(define_insn "khmbb16"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(unspec:V4HI [(match_operand:V4HI 1 "register_operand" "r")
+		      (match_operand:V4HI 2 "register_operand" "r")] UNSPEC_KHMBB16))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "khmbb16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+(define_insn "khmbt16"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(unspec:V4HI [(match_operand:V4HI 1 "register_operand" "r")
+		      (match_operand:V4HI 2 "register_operand" "r")] UNSPEC_KHMBT16))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "khmbt16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+(define_insn "khmtt16"
+  [(set (match_operand:V4HI 0 "register_operand" "=r")
+	(unspec:V4HI [(match_operand:V4HI 1 "register_operand" "r")
+		      (match_operand:V4HI 2 "register_operand" "r")] UNSPEC_KHMTT16))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "khmtt16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+;; KMABB32, KMABT32, KMATT32
+(define_expand "kmabb32"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V2SI 2 "register_operand" "")
+   (match_operand:V2SI 3 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_kma32_internal (operands[0], operands[2], operands[3],
+				 GEN_INT (0), GEN_INT (0),
+				 operands[1]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "kmabt32"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V2SI 2 "register_operand" "")
+   (match_operand:V2SI 3 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_kma32_internal (operands[0], operands[2], operands[3],
+				 GEN_INT (0), GEN_INT (1),
+				 operands[1]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_expand "kmatt32"
+  [(match_operand:DI 0 "register_operand" "")
+   (match_operand:DI 1 "register_operand" "")
+   (match_operand:V2SI 2 "register_operand" "")
+   (match_operand:V2SI 3 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_kma32_internal (operands[0], operands[2], operands[3],
+				 GEN_INT (1), GEN_INT (1),
+				 operands[1]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "kma32_internal"
+  [(set (match_operand:DI 0 "register_operand"                   "=   r,   r,   r,   r")
+	(ss_plus:DI
+	  (mult:DI
+	    (sign_extend:DI
+	      (vec_select:SI
+		(match_operand:V2SI 1 "register_operand"         "   r,   r,   r,   r")
+	        (parallel [(match_operand:SI 3 "imm_0_1_operand" " C00, C00, C01, C01")])))
+	    (sign_extend:DI
+	      (vec_select:SI
+	        (match_operand:V2SI 2 "register_operand"         "   r,   r,   r,   r")
+	        (parallel [(match_operand:SI 4 "imm_0_1_operand" " C00, C01, C01, C00")]))))
+	  (match_operand:DI 5 "register_operand"                 "   0,   0,   0,   0")))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "@
+  kmabb32\t%0, %1, %2
+  kmabt32\t%0, %1, %2
+  kmatt32\t%0, %1, %2
+  kmabt32\t%0, %2, %1"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "DI")])
+
+;; KMADA32, KMAXDA32
+(define_insn "kmada32"
+  [(set (match_operand:DI 0 "register_operand"                           "=r")
+	(ss_plus:DI
+	  (match_operand:DI 1 "register_operand"                         " 0")
+	  (ss_plus:DI
+	    (mult:DI
+	      (sign_extend:DI (vec_select:SI
+				(match_operand:V2SI 2 "register_operand" " r")
+				(parallel [(const_int 1)])))
+	      (sign_extend:DI (vec_select:SI
+				(match_operand:V2SI 3 "register_operand" " r")
+				(parallel [(const_int 1)]))))
+	    (mult:DI
+	      (sign_extend:DI (vec_select:SI
+				(match_dup 2)
+				(parallel [(const_int 0)])))
+	      (sign_extend:DI (vec_select:SI
+				(match_dup 3)
+				(parallel [(const_int 0)])))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kmada32\t%0, %2, %3"
+  [(set_attr "type" "dsp")])
+
+(define_insn "kmaxda32"
+  [(set (match_operand:DI 0 "register_operand"                           "=r")
+	(ss_plus:DI
+	  (match_operand:DI 1 "register_operand"                         " 0")
+	  (ss_plus:DI
+	    (mult:DI
+	      (sign_extend:DI (vec_select:SI
+				(match_operand:V2SI 2 "register_operand" " r")
+				(parallel [(const_int 1)])))
+	      (sign_extend:DI (vec_select:SI
+				(match_operand:V2SI 3 "register_operand" " r")
+				(parallel [(const_int 0)]))))
+	    (mult:DI
+	      (sign_extend:DI (vec_select:SI
+				(match_dup 2)
+				(parallel [(const_int 0)])))
+	      (sign_extend:DI (vec_select:SI
+				(match_dup 3)
+				(parallel [(const_int 1)])))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kmaxda32\t%0, %2, %3"
+  [(set_attr "type" "dsp")])
+
+;; KMDA32, KMXDA32
+(define_insn "kmda32"
+  [(set (match_operand:DI 0 "register_operand"                         "=r")
+	(ss_plus:DI
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 1 "register_operand" "r")
+			      (parallel [(const_int 1)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 2 "register_operand" "r")
+			      (parallel [(const_int 1)]))))
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 1)
+			      (parallel [(const_int 0)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 2)
+			      (parallel [(const_int 0)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kmda32\t%0, %1, %2"
+  [(set_attr "type" "dsp")])
+
+(define_insn "kmxda32"
+  [(set (match_operand:DI 0 "register_operand"                        "=r")
+	(ss_plus:DI
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 1 "register_operand" "r")
+			      (parallel [(const_int 1)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_operand:V2SI 2 "register_operand" "r")
+			      (parallel [(const_int 0)]))))
+	  (mult:DI
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 1)
+			      (parallel [(const_int 0)])))
+	    (sign_extend:DI (vec_select:SI
+			      (match_dup 2)
+			      (parallel [(const_int 1)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "kmxda32\t%0, %1, %2"
+  [(set_attr "type" "dsp")])
