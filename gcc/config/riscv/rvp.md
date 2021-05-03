@@ -6007,3 +6007,222 @@
   "ucmplt<bits>\t%0, %1, %2"
   [(set_attr "type" "simd")
    (set_attr "mode" "SI")])
+
+;; ukmar64
+(define_insn "ukmar64_1"
+  [(set (match_operand:DI 0 "register_operand"       "=r")
+	(us_plus:DI
+	  (match_operand:DI 1 "register_operand"     " 0")
+	  (mult:DI
+	    (zero_extend:DI
+	      (match_operand:SI 2 "register_operand" " r"))
+	    (zero_extend:DI
+	      (match_operand:SI 3 "register_operand" " r")))))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "ukmar64\t%0, %2, %3"
+  [(set_attr "type" "dsp64")
+   (set_attr "mode" "DI")])
+
+;; RV64P
+(define_insn "vukmar64"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(us_plus:DI (match_operand:DI 1 "register_operand"    " 0")
+	  (plus:DI
+	    (mult:DI
+	      (zero_extend:DI
+		(vec_select:SI
+		  (match_operand:V2SI 2 "register_operand" " r")
+		  (parallel [(const_int 0)])))
+	      (zero_extend:DI
+		(vec_select:SI
+		  (match_operand:V2SI 3 "register_operand" " r")
+		  (parallel [(const_int 0)]))))
+	    (mult:DI
+	      (sign_extend:DI
+		(vec_select:SI (match_dup 2) (parallel [(const_int 1)])))
+	      (sign_extend:DI
+		(vec_select:SI (match_dup 3) (parallel [(const_int 1)])))))))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "ukmar64\t%0, %2, %3"
+  [(set_attr "type" "dsp64")
+   (set_attr "mode" "DI")])
+
+;; ukmsr64
+(define_insn "ukmsr64"
+  [(set (match_operand:DI 0 "register_operand"       "=r")
+	(us_minus:DI
+	  (match_operand:DI 1 "register_operand"     " 0")
+	  (mult:DI
+	    (zero_extend:DI
+	      (match_operand:SI 2 "register_operand" " r"))
+	    (zero_extend:DI
+	      (match_operand:SI 3 "register_operand" " r")))))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "ukmsr64\t%0, %2, %3"
+  [(set_attr "type" "dsp64")
+   (set_attr "mode" "DI")])
+
+;; RV64P
+(define_insn "vukmsr64"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(us_minus:DI
+	  (minus:DI
+	    (match_operand:DI 1 "register_operand"    " 0")
+	    (mult:DI
+	      (zero_extend:DI
+		(vec_select:SI
+		  (match_operand:V2SI 2 "register_operand" " r")
+		  (parallel [(const_int 0)])))
+	      (zero_extend:DI
+		(vec_select:SI
+		  (match_operand:V2SI 3 "register_operand" " r")
+		  (parallel [(const_int 0)])))))
+	    (mult:DI
+	      (sign_extend:DI
+		(vec_select:SI (match_dup 2) (parallel [(const_int 1)])))
+	      (sign_extend:DI
+		(vec_select:SI (match_dup 3) (parallel [(const_int 1)]))))))]
+  "TARGET_ZPSF && TARGET_64BIT"
+  "ukmsr64\t%0, %2, %3"
+  [(set_attr "type" "dsp64")
+   (set_attr "mode" "DI")])
+
+;; UKSTAS 16|32
+(define_expand "ukstas<mode>"
+  [(match_operand:VSHI 0 "register_operand" "")
+   (match_operand:VSHI 1 "register_operand" "")
+   (match_operand:VSHI 2 "register_operand" "")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_ukstas<mode>_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "ukstas<mode>_le"
+  [(set (match_operand:VSHI 0 "register_operand"         "=r")
+	(vec_merge:VSHI
+	  (vec_duplicate:VSHI
+	    (us_minus:<VNHALF>
+	      (vec_select:<VNHALF>
+		(match_operand:VSHI 1 "register_operand" " r")
+		(parallel [(const_int 0)]))
+	      (vec_select:<VNHALF>
+		(match_operand:VSHI 2 "register_operand" " r")
+		(parallel [(const_int 0)]))))
+	  (vec_duplicate:VSHI
+	    (us_plus:<VNHALF>
+	      (vec_select:<VNHALF>
+		(match_dup 2)
+		(parallel [(const_int 1)]))
+	      (vec_select:<VNHALF>
+		(match_dup 1)
+		(parallel [(const_int 1)]))))
+	  (const_int 1)))]
+  "TARGET_ZPN"
+  "ukstas<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")]
+)
+
+;; RV64P ukstas16
+(define_expand "ukstas16_64"
+  [(match_operand:V4HI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_ukstas16_64_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "ukstas16_64_le"
+  [(set (match_operand:V4HI 0 "register_operand"         "=r")
+	(vec_concat:V4HI
+	  (vec_concat:V2HI
+	    (us_minus:HI (vec_select:HI (match_operand:V4HI 1 "register_operand" " r")
+					(parallel [(const_int 0)]))
+			 (vec_select:HI (match_operand:V4HI 2 "register_operand" " r")
+					(parallel [(const_int 0)])))
+	    (us_plus:HI (vec_select:HI (match_dup 1) (parallel [(const_int 1)]))
+			(vec_select:HI (match_dup 2) (parallel [(const_int 1)]))))
+	  (vec_concat:V2HI
+	    (us_minus:HI (vec_select:HI (match_dup 1) (parallel [(const_int 2)]))
+			 (vec_select:HI (match_dup 2) (parallel [(const_int 2)])))
+	    (us_plus:HI  (vec_select:HI (match_dup 1) (parallel [(const_int 3)]))
+			 (vec_select:HI (match_dup 2) (parallel [(const_int 3)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "ukstas16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
+
+;; UKSTSA 16|32
+;; ukstsav2si for ukstsa16
+;; ukstsav2si for ukstsa32
+(define_expand "ukstsa<mode>"
+  [(match_operand:VSHI 0 "register_operand" "")
+   (match_operand:VSHI 1 "register_operand" "")
+   (match_operand:VSHI 2 "register_operand" "")]
+  "TARGET_ZPN"
+{
+  emit_insn (gen_ukstsa<mode>_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "ukstsa<mode>_le"
+  [(set (match_operand:VSHI 0 "register_operand"         "=r")
+	(vec_merge:VSHI
+	  (vec_duplicate:VSHI
+	    (us_minus:<VNHALF>
+	      (vec_select:<VNHALF>
+		(match_operand:VSHI 1 "register_operand" " r")
+		(parallel [(const_int 0)]))
+	      (vec_select:<VNHALF>
+		(match_operand:VSHI 2 "register_operand" " r")
+		(parallel [(const_int 0)]))))
+	  (vec_duplicate:VSHI
+	    (us_plus:<VNHALF>
+	      (vec_select:<VNHALF>
+		(match_dup 1)
+		(parallel [(const_int 1)]))
+	      (vec_select:<VNHALF>
+		(match_dup 2)
+		(parallel [(const_int 1)]))))
+	  (const_int 2)))]
+  "TARGET_ZPN"
+  "ukstsa<bits>\t%0, %1, %2"
+  [(set_attr "type" "simd")]
+)
+
+;; RV64P ukstsa16
+(define_expand "ukstsa16_64"
+  [(match_operand:V4HI 0 "register_operand" "")
+   (match_operand:V4HI 1 "register_operand" "")
+   (match_operand:V4HI 2 "register_operand" "")]
+  "TARGET_ZPN && TARGET_64BIT"
+{
+  emit_insn (gen_ukstsa16_64_le (operands[0], operands[1], operands[2]));
+  DONE;
+}
+[(set_attr "type" "simd")])
+
+(define_insn "ukstsa16_64_le"
+  [(set (match_operand:V4HI 0 "register_operand"         "=r")
+	(vec_concat:V4HI
+	  (vec_concat:V2HI
+	    (us_plus:HI (vec_select:HI (match_operand:V4HI 1 "register_operand" " r")
+				       (parallel [(const_int 0)]))
+			(vec_select:HI (match_operand:V4HI 2 "register_operand" " r")
+				       (parallel [(const_int 0)])))
+	    (us_minus:HI (vec_select:HI (match_dup 1) (parallel [(const_int 1)]))
+			 (vec_select:HI (match_dup 2) (parallel [(const_int 1)]))))
+	  (vec_concat:V2HI
+	    (us_plus:HI (vec_select:HI (match_dup 1) (parallel [(const_int 2)]))
+			(vec_select:HI (match_dup 2) (parallel [(const_int 2)])))
+	    (us_minus:HI  (vec_select:HI (match_dup 1) (parallel [(const_int 3)]))
+			  (vec_select:HI (match_dup 2) (parallel [(const_int 3)]))))))]
+  "TARGET_ZPN && TARGET_64BIT"
+  "ukstsa16\t%0, %1, %2"
+  [(set_attr "type" "simd")
+   (set_attr "mode" "V4HI")])
