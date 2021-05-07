@@ -390,6 +390,9 @@
 			    (DF "TARGET_DOUBLE_FLOAT")
 			    (HF "TARGET_FP16")])
 
+(define_mode_iterator SFDF [(SF "TARGET_HARD_FLOAT")
+			    (DF "TARGET_DOUBLE_FLOAT")])
+
 ;; Iterator for floating-point modes that can be loaded into X registers.
 (define_mode_iterator SOFTF [SF (DF "TARGET_64BIT") (HF "TARGET_FP16")])
 
@@ -1060,8 +1063,8 @@
 ;;  ....................
 
 (define_insn "abs<mode>2"
-  [(set (match_operand:ANYF           0 "register_operand" "=f")
-	(abs:ANYF (match_operand:ANYF 1 "register_operand" " f")))]
+  [(set (match_operand:SFDF           0 "register_operand" "=f")
+	(abs:SFDF (match_operand:SFDF 1 "register_operand" " f")))]
   "TARGET_HARD_FLOAT"
   "fabs.<fmt>\t%0,%1"
   [(set_attr "type" "fmove")
