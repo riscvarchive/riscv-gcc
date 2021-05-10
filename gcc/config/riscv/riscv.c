@@ -4516,6 +4516,14 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	!= call_used_or_fixed_reg_p (regno + i))
       return false;
 
+  /* use even/odd pair of registers in rv32 zpsf subset */
+  if (TARGET_ZPSF && !TARGET_64BIT)
+    {
+      if ((GET_MODE_CLASS (mode) == MODE_INT ||
+		GET_MODE_CLASS (mode) == MODE_VECTOR_INT) &&
+		GET_MODE_UNIT_SIZE (mode) == GET_MODE_SIZE (DImode))
+        return !(regno & 1);
+    }
   return true;
 }
 
