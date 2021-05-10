@@ -36,6 +36,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 #include "expr.h"
 #include "langhooks.h"
+#include "function.h"
+#include "emit-rtl.h"
+#include "explow.h"
 
 /* Macros to create an enumeration identifier for a function prototype.  */
 #define RISCV_FTYPE_NAME0(A) RISCV_##A##_FTYPE
@@ -304,10 +307,47 @@ riscv_builtin_decl (unsigned int code, bool initialize_p ATTRIBUTE_UNUSED)
    an expand operand.  Store the operand in *OP.  */
 
 static void
-riscv_prepare_builtin_arg (struct expand_operand *op, tree exp, unsigned argno)
+riscv_prepare_builtin_arg (struct expand_operand *op, tree exp, unsigned argno,
+			   enum insn_code icode, bool has_target_p)
 {
-  tree arg = CALL_EXPR_ARG (exp, argno);
-  create_input_operand (op, expand_normal (arg), TYPE_MODE (TREE_TYPE (arg)));
+  rtx arg_rtx = expand_normal (CALL_EXPR_ARG (exp, argno));
+  enum machine_mode mode = insn_data[icode].operand[argno + has_target_p].mode;
+
+  if (!(*insn_data[icode].operand[argno + has_target_p].predicate) (arg_rtx, mode))
+    {
+      rtx tmp_rtx = gen_reg_rtx (mode);
+      if (GET_MODE_SIZE (mode) < GET_MODE_SIZE (GET_MODE (arg_rtx)))
+	{
+	  tmp_rtx = simplify_gen_subreg (mode, arg_rtx, GET_MODE (arg_rtx), 0);
+	  arg_rtx = tmp_rtx;
+	}
+      else if (VECTOR_MODE_P (mode) && CONST_INT_P (arg_rtx))
+	{
+	  /* Handle CONST_INT covert to CONST_VECTOR.  */
+	  int nunits = GET_MODE_NUNITS (mode);
+	  int i, shift = 0;
+	  rtvec v = rtvec_alloc (nunits);
+	  HOST_WIDE_INT val = INTVAL (arg_rtx);
+	  enum machine_mode val_mode = GET_MODE_INNER (mode);
+	  int shift_acc = GET_MODE_BITSIZE (val_mode);
+	  unsigned HOST_WIDE_INT mask = GET_MODE_MASK (val_mode);
+	  HOST_WIDE_INT tmp_val = val;
+	  for (i = 0; i < nunits; i++)
+	    {
+	      tmp_val = (val >> shift) & mask;
+	      RTVEC_ELT (v, i) = gen_int_mode (tmp_val, val_mode);
+	      shift += shift_acc;
+	    }
+
+	  arg_rtx = copy_to_mode_reg (mode, gen_rtx_CONST_VECTOR (mode, v));
+	}
+      else
+	{
+	  convert_move (tmp_rtx, arg_rtx, false);
+	  arg_rtx = tmp_rtx;
+	}
+    }
+  create_input_operand (op, arg_rtx, mode);
 }
 
 /* Expand instruction ICODE as part of a built-in function sequence.
@@ -343,14 +383,28 @@ riscv_expand_builtin_direct (enum insn_code icode, rtx target, tree exp,
 
   /* Map any target to operand 0.  */
   int opno = 0;
+  enum machine_mode insn_return_mode = insn_data[icode].operand[opno].mode;
+  enum machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+
   if (has_target_p)
-    create_output_operand (&ops[opno++], target, TYPE_MODE (TREE_TYPE (exp)));
+    {
+      /* p extension vector and scalar mode convension */
+      if ((!target
+	  || GET_MODE (target) != insn_return_mode
+	  || ! (*insn_data[icode].operand[opno].predicate) (target, insn_return_mode)))
+	{
+	  mode = insn_return_mode;
+	  target = gen_reg_rtx (mode);
+	}
+
+      create_output_operand (&ops[opno++], target, mode);
+    }
 
   /* Map the arguments to the other operands.  */
   gcc_assert (opno + call_expr_nargs (exp)
 	      == insn_data[icode].n_generator_args);
   for (int argno = 0; argno < call_expr_nargs (exp); argno++)
-    riscv_prepare_builtin_arg (&ops[opno++], exp, argno);
+    riscv_prepare_builtin_arg (&ops[opno++], exp, argno, icode, has_target_p);
 
   return riscv_expand_builtin_insn (icode, opno, ops, has_target_p);
 }
