@@ -168,7 +168,7 @@
 (define_attr "type"
   "unknown,branch,jump,call,load,fpload,store,fpstore,
    mtc,mfc,const,arith,logical,shift,slt,imul,idiv,move,fmove,fadd,fmul,
-   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost,bitmanip"
+   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost,bitmanip,packh"
   (cond [(eq_attr "got" "load") (const_string "load")
 
 	 ;; If a doubleword move uses these expensive instructions,
@@ -2547,3 +2547,43 @@
 (include "pic.md")
 (include "generic.md")
 (include "sifive-7.md")
+
+
+;; Look for a QI load disguised as a HI load
+;; and a logical right shift by 8
+;; Shouldn't happen, but some fall trhough the cracks
+;; Effectively an 'early peephole' in the
+;; instruction-matching phase
+(define_insn_and_split "*hidden_load_bytesi"
+[(set (match_operand:SI 0 "register_operand" "=r")
+      (lshiftrt:SI (subreg:SI (mem:HI (plus:SI (match_operand:SI 1 "register_operand" "r")
+                                               (match_operand 2 "immediate_operand" ""))) 0)
+                   (const_int 8)))]
+"INTVAL(operands[2]) < 2047"
+"#"
+"1"
+[(set (match_dup 0)
+      (zero_extend:SI (mem:QI (plus:SI (match_dup 1)
+                                       (match_dup 2)))))]
+{
+ operands[2] = GEN_INT(INTVAL(operands[2]) + 1);
+}
+[(set_attr "length" "4")
+ (set_attr "type" "load")])
+;; Identical, but if the offset is zero there
+;; is no plus operator so we need to handle that
+(define_insn_and_split "*hidden_load_bytesi"
+[(set (match_operand:SI 0 "register_operand" "=r")
+      (lshiftrt:SI (subreg:SI (mem:HI (match_operand:SI 1 "register_operand" "r")) 0)
+                   (const_int 8)))]
+"INTVAL(operands[2]) < 2047"
+"#"
+"1"
+[(set (match_dup 0)
+      (zero_extend:SI (mem:QI (plus:SI (match_dup 1)
+                                       (match_dup 2)))))]
+{
+ operands[2] = GEN_INT(1);
+}
+[(set_attr "length" "4")
+ (set_attr "type" "load")])
