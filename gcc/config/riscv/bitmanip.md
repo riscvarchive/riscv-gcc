@@ -83,6 +83,55 @@
  
 ;;; ??? pack
 
+(define_insn "riscv_bitmanip_packsi"
+ [(set (match_operand:SI 0 "register_operand" "=r")
+       (ior:SI (and:SI (match_operand:SI 1 "register_operand" "r") (const_int 65280))
+               (ashift:SI (match_operand:SI 2 "register_operand" "r") (const_int 16))))]
+  "TARGET_ZBP"
+  { return TARGET_64BIT ? "packw\t%0,%1,%2" : "pack\t%0,%1,%2"; }
+  [(set_attr "type" "bitmanip")
+   (set_attr "length" "4")])
+
+(define_insn "riscv_bitmanip_packdi"
+ [(set (match_operand:DI 0 "register_operand" "=r")
+       (ior:DI (and:SI (match_operand:DI 1 "register_operand" "r") (const_int 65280))
+               (ashift:DI (match_operand:DI 2 "register_operand" "r") (const_int 32))))]
+  "TARGET_ZBP && TARGET_64BIT"
+  "pack\t%0,%1,%2"
+  [(set_attr "type" "bitmanip")
+   (set_attr "length" "4")])
+
+(define_insn "riscv_bitmanip_packusi"
+ [(set (match_operand:SI 0 "register_operand" "=r")
+       (ior:SI (ashiftrt:SI (match_operand:SI 1 "register_operand" "r") (const_int 16))
+	           (and:SI (match_operand:SI 2 "register_operand" "r") (const_int 65280))))]
+  "TARGET_ZBP"
+  { return TARGET_64BIT ? "packuw\t%0,%1,%2" : "packu\t%0,%1,%2"; }
+  [(set_attr "type" "bitmanip")
+   (set_attr "length" "4")])
+
+(define_insn "riscv_bitmanip_packudi"
+ [(set (match_operand:DI 0 "register_operand" "=r")
+       (ior:DI (ashiftrt:DI (match_operand:DI 1 "register_operand" "r") (const_int 32))
+	           (and:DI (match_operand:SI 2 "register_operand" "r") (const_int 65280))))]
+  "TARGET_ZBP && TARGET_64BIT"
+  "packu\t%0,%1,%2"
+  [(set_attr "type" "bitmanip")
+   (set_attr "length" "4")])
+
+(define_insn "riscv_bitmanip_packh<mode>"
+[(set (match_operand:X 0 "register_operand" "=r")
+      (ior:X (and:X (match_operand:X 1 "register_operand" "r")
+	                (const_int 255))
+		     (ashift:X (and:X (match_operand:X 2 "register_operand" "r")
+	                          (const_int 255))
+							  (const_int 8))))]
+  "TARGET_ZBP"
+  "packh\t%0,%1,%2"
+  [(set_attr "type" "packh")
+   (set_attr "length" "4")]
+)
+
 (define_insn "*zero_extendhi<GPR:mode>2_bitmanip"
   [(set (match_operand:GPR 0 "register_operand" "=r,r")
 	(zero_extend:GPR (match_operand:HI 1 "nonimmediate_operand" "r,m")))]
@@ -480,3 +529,76 @@
    l<SHORT:size>\t%0,%1"
   [(set_attr "type" "bitmanip")
    (set_attr "length" "4")])
+
+;; By the time we reach this, gcc has changed
+;; `(a&0ff)<<8` into `(a<<8)&0xFF00`, despite the fact
+;; it's worse on RISC-V (need to set up the constant
+;; for the shift vs. andi/slli)
+;; Keep an easily recognizable subtree
+(define_insn_and_split "*extractB0toB1"
+[(set (match_operand:SI 0 "register_operand" "=r")
+      (and:SI (ashift:SI (match_operand:SI 1 "register_operand" "r")
+	                     (const_int 8))
+              (const_int 65280)))]
+"!TARGET_64BIT"
+"#"
+"!TARGET_64BIT"
+[(set (match_dup 0) (and:SI (match_dup 1) (const_int 255)))
+ (set (match_dup 0) (ashift:SI (match_dup 0) (const_int 8)))
+]
+""
+)
+
+(define_insn_and_split "*extractB0toB2"
+[(set (match_operand:SI 0 "register_operand" "=r")
+      (and:SI (ashift:SI (match_operand:SI 1 "register_operand" "r")
+	                     (const_int 16))
+              (const_int 16711680)))]
+"!TARGET_64BIT"
+"#"
+"!TARGET_64BIT"
+[(set (match_dup 0) (and:SI (match_dup 1) (const_int 255)))
+ (set (match_dup 0) (ashift:SI (match_dup 0) (const_int 16)))
+]
+""
+)
+
+;; remove useless bswap after packh/packh/pack
+;; just permute the operands and remove the bswap
+(define_peephole2
+  [(set (match_operand:SI 5 "register_operand")
+        (ior:SI (and:SI (match_operand:SI 1 "register_operand")
+                        (const_int 255))
+                    (ashift:SI (and:SI (match_operand:SI 2 "register_operand")
+                                   (const_int 255))
+                               (const_int 8))))
+   (set (match_operand:SI 6 "register_operand")
+        (ior:SI (and:SI (match_operand:SI 3 "register_operand")
+                        (const_int 255))
+                    (ashift:SI (and:SI (match_operand:SI 4 "register_operand")
+                                       (const_int 255))
+                                           (const_int 8))))
+   (set (match_operand:SI 7 "register_operand")
+       (ior:SI (and:SI (match_dup 6) (const_int 65280))
+               (ashift:SI (match_dup 5) (const_int 16))))
+   (set (match_operand:SI 0 "register_operand")
+        (bswap:SI (match_dup 7)))]
+ "TARGET_ZBP &&
+ !TARGET_64BIT &&
+ (REGNO (operands[5]) == REGNO (operands[0]) ||
+  peep2_reg_dead_p (4, operands[5])) &&
+ (REGNO (operands[6]) == REGNO (operands[0]) ||
+  peep2_reg_dead_p (4, operands[6])) &&
+ (REGNO (operands[7]) == REGNO (operands[0]) ||
+  peep2_reg_dead_p (4, operands[7])) &&
+  REGNO (operands[5]) != REGNO (operands[3]) &&
+  REGNO (operands[5]) != REGNO (operands[4]) &&
+  REGNO (operands[5]) != REGNO (operands[6])"
+  [(set (match_dup 0) (plus:SI (match_dup 2) (match_dup 1)))]
+{
+  emit_insn(gen_riscv_bitmanip_packhsi(operands[5], operands[2], operands[1]));
+  emit_insn(gen_riscv_bitmanip_packhsi(operands[6], operands[4], operands[3]));
+  emit_insn(gen_riscv_bitmanip_packsi(operands[0], operands[5], operands[6]));
+  //printf("matched %d [packh/packh/pack/bswap = packh/packh/pack]\n", 0);
+  DONE;
+})
