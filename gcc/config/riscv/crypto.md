@@ -24,13 +24,17 @@
   UNSPEC_AES_DSM
   UNSPEC_AES_ES
   UNSPEC_AES_ESM
-  UNSPEC_AES_K
+  UNSPEC_AES_IM
+  UNSPEC_AES_KS1
+  UNSPEC_AES_KS2
   UNSPEC_SHA_256_SIG0
   UNSPEC_SHA_256_SIG1
   UNSPEC_SHA_256_SUM0
   UNSPEC_SHA_256_SUM1
   UNSPEC_SHA_512_SIG0
+  UNSPEC_SHA_512_SIG0_2
   UNSPEC_SHA_512_SIG1
+  UNSPEC_SHA_512_SIG1_2
   UNSPEC_SHA_512_SUM0
   UNSPEC_SHA_512_SUM1
   UNSPEC_SM3_P0
@@ -114,7 +118,7 @@
 (define_insn "riscv_aes64im"
   [(set (match_operand:DI 0 "register_operand" "=r")
         (unspec:DI [(match_operand:DI 1 "register_operand" "r")]
-                   UNSPEC_AES_K))]
+                   UNSPEC_AES_IM))]
   "TARGET_ZKND && TARGET_64BIT"
   "aes64im\t%0,%1")
 
@@ -122,7 +126,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
         (unspec:DI [(match_operand:DI 1 "register_operand" "r")
                    (match_operand:DI 2 "immediate_operand" "")]
-                   UNSPEC_AES_K))]
+                   UNSPEC_AES_KS1))]
   "TARGET_ZKNE && TARGET_64BIT"
   "aes64ks1i\t%0,%1,%2")
 
@@ -130,7 +134,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
         (unspec:DI [(match_operand:DI 1 "register_operand" "r")
                    (match_operand:DI 2 "register_operand" "r")]
-                   UNSPEC_AES_K))]
+                   UNSPEC_AES_KS2))]
   "TARGET_ZKNE && TARGET_64BIT"
   "aes64ks2\t%0,%1,%2")
 
@@ -180,7 +184,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
                    (match_operand:SI 2 "register_operand" "r")]
-                   UNSPEC_SHA_512_SIG0))]
+                   UNSPEC_SHA_512_SIG0_2))]
   "TARGET_ZKNH && !TARGET_64BIT"
   "sha512sig0l\t%0,%1,%2")
 
@@ -196,7 +200,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
                    (match_operand:SI 2 "register_operand" "r")]
-                   UNSPEC_SHA_512_SIG1))]
+                   UNSPEC_SHA_512_SIG1_2))]
   "TARGET_ZKNH && !TARGET_64BIT"
   "sha512sig1l\t%0,%1,%2")
 
@@ -212,7 +216,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
                    (match_operand:SI 2 "register_operand" "r")]
-                   UNSPEC_SHA_512_SUM0))]
+                   UNSPEC_SHA_512_SUM1))]
   "TARGET_ZKNH && !TARGET_64BIT"
   "sha512sum1r\t%0,%1,%2")
 
