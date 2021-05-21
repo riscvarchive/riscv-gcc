@@ -7,4 +7,4 @@ foo (long i)
   return (long)(unsigned int)i << 10;
 }
 
-/* { dg-final { scan-assembler "slliu.w" } } */
+/* { dg-final { scan-assembler "slli.uw" } } */

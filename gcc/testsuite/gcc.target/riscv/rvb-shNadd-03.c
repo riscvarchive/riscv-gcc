@@ -26,6 +26,6 @@ int ufooll(long long *x, unsigned int n){
 /* { dg-final { scan-assembler-times "sh1add\t" 1 } } */
 /* { dg-final { scan-assembler-times "sh2add\t" 1 } } */
 /* { dg-final { scan-assembler-times "sh3add\t" 1 } } */
-/* { dg-final { scan-assembler-times "sh3addu.w" 1 } } */
-/* { dg-final { scan-assembler-times "sh3addu.w" 1 } } */
-/* { dg-final { scan-assembler-times "sh3addu.w" 1 } } */
+/* { dg-final { scan-assembler-times "sh3add.uw" 1 } } */
+/* { dg-final { scan-assembler-times "sh3add.uw" 1 } } */
+/* { dg-final { scan-assembler-times "sh3add.uw" 1 } } */

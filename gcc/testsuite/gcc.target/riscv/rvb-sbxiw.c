@@ -11,6 +11,6 @@ int foo3(int x, int y){
     return (x + y) & (~0x8000);
 }
 
-/* { dg-final { scan-assembler-times "sbsetiw" 1 } } */
-/* { dg-final { scan-assembler-times "sbinviw" 1 } } */
-/* { dg-final { scan-assembler-times "sbclriw" 1 } } */
+/* { dg-final { scan-assembler-times "bsetiw" 1 } } */
+/* { dg-final { scan-assembler-times "binviw" 1 } } */
+/* { dg-final { scan-assembler-times "bclriw" 1 } } */
