@@ -68,6 +68,8 @@ riscv_implied_info_t riscv_implied_info[] =
   {"b", "zbf"},
   {"b", "zbc"},
   {"b", "zbm"},
+  {"b", "zbr"},
+  {"b", "zbt"},
   {NULL, NULL}
 };
 
@@ -119,17 +121,17 @@ static const struct riscv_ext_version riscv_ext_version_table[] =
   {"zifencei", ISA_SPEC_CLASS_20191213, 2, 0},
   {"zifencei", ISA_SPEC_CLASS_20190608, 2, 0},
 
-  {"b",   ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zba", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbb", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbc", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbe", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbf", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbr", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbm", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbs", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbt", ISA_SPEC_CLASS_NONE, 0, 92},
-  {"zbp", ISA_SPEC_CLASS_NONE, 0, 92},
+  {"b",   ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zba", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbb", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbc", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbe", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbf", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbr", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbm", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbs", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbt", ISA_SPEC_CLASS_NONE, 0, 93},
+  {"zbp", ISA_SPEC_CLASS_NONE, 0, 93},
   /* Terminate the list.  */
   {NULL, ISA_SPEC_CLASS_NONE, 0, 0}
 };

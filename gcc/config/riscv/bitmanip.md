@@ -284,16 +284,16 @@
   "bexti\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
-;;;(define_insn "*bextw"
-;;;  [(set (match_operand:DI 0 "register_operand" "=r")
-;;;	(and:DI
-;;;	 (subreg:DI
-;;;	  (lshiftrt:SI (match_operand:SI 1 "register_operand" "r")
-;;;		       (match_operand:QI 2 "register_operand" "r")) 0)
-;;;	 (const_int 1)))]
-;;;  "TARGET_64BIT && TARGET_ZBS"
-;;;  "bextw\t%0,%1,%2"
-;;;  [(set_attr "type" "bitmanip")])
+(define_insn "*bextw"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(and:DI
+	 (subreg:DI
+	  (lshiftrt:SI (match_operand:SI 1 "register_operand" "r")
+		       (match_operand:QI 2 "register_operand" "r")) 0)
+	 (const_int 1)))]
+  "TARGET_64BIT && TARGET_ZBS"
+  "bextw\t%0,%1,%2"
+  [(set_attr "type" "bitmanip")])
 
 ;;; ??? s[lr]o*
 
