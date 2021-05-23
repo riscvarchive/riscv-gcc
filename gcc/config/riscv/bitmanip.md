@@ -467,3 +467,16 @@
   [(set_attr "type" "bitmanip")])
 
 ;; ??? bfxp
+
+;; sext
+
+(define_insn "*extend<SHORT:mode><SUPERQI:mode>2_bitmanip"
+  [(set (match_operand:SUPERQI 0 "register_operand" "=r,r")
+	(sign_extend:SUPERQI
+	    (match_operand:SHORT 1 "nonimmediate_operand" " r,m")))]
+  "TARGET_ZBB"
+  "@
+   sext.<SHORT:size>\t%0,%1
+   l<SHORT:size>\t%0,%1"
+  [(set_attr "type" "bitmanip")
+   (set_attr "length" "4")])
