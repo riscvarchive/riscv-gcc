@@ -1138,7 +1138,7 @@
   [(set (match_operand:SUPERQI   0 "register_operand"     "=r,r")
 	(sign_extend:SUPERQI
 	    (match_operand:SHORT 1 "nonimmediate_operand" " r,m")))]
-  ""
+  "!TARGET_ZBB"
   "@
    #
    l<SHORT:size>\t%0,%1"
