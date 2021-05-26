@@ -1134,7 +1134,12 @@
   [(set_attr "move_type" "move,load")
    (set_attr "mode" "DI")])
 
-(define_insn_and_split "extend<SHORT:mode><SUPERQI:mode>2"
+(define_expand "extend<SHORT:mode><SUPERQI:mode>2"
+  [(set (match_operand:SUPERQI 0 "register_operand" "")
+    (sign_extend:SUPERQI
+	    (match_operand:SHORT 1 "nonimmediate_operand" "")))])
+
+(define_insn_and_split "*extend<SHORT:mode><SUPERQI:mode>2"
   [(set (match_operand:SUPERQI   0 "register_operand"     "=r,r")
 	(sign_extend:SUPERQI
 	    (match_operand:SHORT 1 "nonimmediate_operand" " r,m")))]
