@@ -399,6 +399,26 @@
 
 ;;; ??? cmov
 
+(define_insn "*mov<X:mode>cc_ne_bitmanip"
+  [(set (match_operand:X 0 "register_operand" "=r")
+	(if_then_else:X
+	 (ne (match_operand:X 1 "register_operand" "r") (const_int 0))
+	 (match_operand:X 2 "register_operand" "r")
+	 (match_operand:X 3 "register_operand" "r")))]
+  "TARGET_ZBT"
+  "cmov\t%0,%1,%2,%3"
+  [(set_attr "type" "bitmanip")])
+
+(define_insn "*mov<X:mode>cc_eq_bitmanip"
+  [(set (match_operand:X 0 "register_operand" "=r")
+	(if_then_else:X
+	 (eq (match_operand:X 1 "register_operand" "r") (const_int 0))
+	 (match_operand:X 2 "register_operand" "r")
+	 (match_operand:X 3 "register_operand" "r")))]
+  "TARGET_ZBT"
+  "cmov\t%0,%1,%3,%2"
+  [(set_attr "type" "bitmanip")])
+
 ;;; ??? fs[lr]
 
 (define_insn "*shNadd"
