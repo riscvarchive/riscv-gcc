@@ -52,6 +52,13 @@ riscv_cpu_cpp_builtins (cpp_reader *pfile)
   if (TARGET_DIV && TARGET_MUL)
     builtin_define ("__riscv_muldiv");
 
+  if (TARGET_ZPN)
+    builtin_define ("__riscv_zpn");
+  if (TARGET_ZPSF)
+    builtin_define ("__riscv_zpsf");
+  if (TARGET_ZBPBO)
+    builtin_define ("__riscv_zbpbo");
+
   builtin_define_with_int_value ("__riscv_xlen", UNITS_PER_WORD * 8);
   if (TARGET_HARD_FLOAT)
     builtin_define_with_int_value ("__riscv_flen", UNITS_PER_FP_REG * 8);
