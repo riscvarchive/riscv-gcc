@@ -842,11 +842,11 @@ __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vle##SEW##ff_v_f##SEW##m##LMUL (const T *a, word_type *new_vl, word_type vl)\
 {									\
   vsetvl_e##SEW##m##LMUL (vl);						\
-  vfloat##SEW##m##LMUL##_t rv;\
+  vfloat##SEW##m##LMUL##_t rv;						\
   if (__riscv_xlen == 32)						\
-    return __builtin_riscv_vlefffloat##SEW##m##LMUL##_si (a);		\
+    rv = __builtin_riscv_vlefffloat##SEW##m##LMUL##_si (a);		\
   else									\
-    return __builtin_riscv_vlefffloat##SEW##m##LMUL##_di (a);		\
+    rv = __builtin_riscv_vlefffloat##SEW##m##LMUL##_di (a);		\
   if (new_vl)								\
     {									\
     if (__riscv_xlen == 32)						\
@@ -863,12 +863,12 @@ vle##SEW##ff_v_f##SEW##m##LMUL##_m (vbool##MLEN##_t mask,		\
 			      const T *a, word_type *new_vl, word_type vl)\
 {									\
   vsetvl_e##SEW##m##LMUL (vl);						\
-  vfloat##SEW##m##LMUL##_t rv;\
+  vfloat##SEW##m##LMUL##_t rv;						\
   if (__riscv_xlen == 32)						\
-    return __builtin_riscv_vlefffloat##SEW##m##LMUL##_si_mask (		\
+    rv = __builtin_riscv_vlefffloat##SEW##m##LMUL##_si_mask (		\
 	     mask, maskedoff, a);					\
   else									\
-    return __builtin_riscv_vlefffloat##SEW##m##LMUL##_di_mask (		\
+    rv = __builtin_riscv_vlefffloat##SEW##m##LMUL##_di_mask (		\
 	     mask, maskedoff, a);					\
   if (new_vl)								\
     {									\
