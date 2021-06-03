@@ -349,20 +349,34 @@
 
 ;;; ??? grev
 
-;;; ??? assembler doesn't accept rev8
-(define_insn "bswapsi2"
+(define_expand "bswapsi2"
+  [(set (match_operand:SI 0 "register_operand")
+	(bswap:SI (match_operand:SI 1 "register_operand")))]
+  ""
+{
+  if (!(TARGET_ZBP || (TARGET_ZBB && !TARGET_64BIT)))
+    FAIL;
+})
+
+(define_insn "bswapsi2_32"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(bswap:SI (match_operand:SI 1 "register_operand" "r")))]
-  "TARGET_ZBP"
-  { return TARGET_64BIT ? "greviw\t%0,%1,0x18" : "grevi\t%0,%1,0x18"; }
+  "!TARGET_64BIT && (TARGET_ZBB || TARGET_ZBP)"
+  { return "rev8\t%0,%1"; }
   [(set_attr "type" "bitmanip")])
 
-;;; ??? assembler doesn't accept rev8
+(define_insn "bswapsi2_64"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(bswap:SI (match_operand:SI 1 "register_operand" "r")))]
+  "TARGET_64BIT && TARGET_ZBP"
+  { return "rev8.w\t%0,%1"; }
+  [(set_attr "type" "bitmanip")])
+
 (define_insn "bswapdi2"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(bswap:DI (match_operand:DI 1 "register_operand" "r")))]
-  "TARGET_64BIT && TARGET_ZBP"
-  "grevi\t%0,%1,0x38"
+  "TARGET_64BIT && (TARGET_ZBB || TARGET_ZBP)"
+  "rev8\t%0,%1"
   [(set_attr "type" "bitmanip")])
 
 ;;; ??? shfl/unshfl
