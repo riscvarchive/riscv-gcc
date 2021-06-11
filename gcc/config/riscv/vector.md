@@ -56,7 +56,7 @@
 (define_insn "@rvv_<optab><mode>"
   [(set (match_operand:VIMODES 0 "register_operand" "=vr,vr")
         (if_then_else:VIMODES
-          (unspec:<VCMPEQUIV> [(match_operand:<VCMPEQUIV> 3 "register_operand" "vl,vl")] UNSPEC_USEVL)
+	  (reg:<VCMPEQUIV> VL_REGNUM)
           (add_mul:VIMODES
             (match_operand:VIMODES 1 "register_operand" "vr,vr")
             (match_operand:VIMODES 2 "vector_arith_operand" "vr,vi"))
@@ -83,6 +83,15 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+(define_insn "@rvv_h_vsetvl<mode><SEW:sew><LMUL:lmul>"
+  [(set (reg:VMASKMODES VL_REGNUM)
+        (unspec:VMASKMODES [(match_operand:DI 0 "register_operand" "r")
+			 (unspec [(const_int 0)] SEW)
+			 (unspec [(const_int 0)] LMUL)] UNSPEC_VSETVL))]
+  "TARGET_VECTOR"
+  "vsetvli\tx0,%1,e%1,m%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
 
 (define_insn "mov<mode>"
   [(set (match_operand:VMASKMODES 0 "nonimmediate_operand" "=r, r,vl")

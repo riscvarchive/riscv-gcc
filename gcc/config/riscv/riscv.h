@@ -1041,5 +1041,5 @@ extern poly_uint16 riscv_rvv_chunks;
 
 
 #define TARGET_SUPPORTS_WIDE_INT 1
-#define FIRST_VECTOR_INTRINSIC_CODE 0x100000
+#define FIRST_VECTOR_INTRINSIC_CODE (0x1u << 31)
 #endif /* ! GCC_RISCV_H */

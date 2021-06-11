@@ -4573,6 +4573,18 @@ riscv_vector_mode_p (machine_mode mode)
   return false;
 }
 
+static bool
+riscv_vector_bool_mode_p (machine_mode mode)
+{
+  scalar_mode inner = GET_MODE_INNER (mode);
+  if (VECTOR_MODE_P (mode)
+      && inner == BImode)
+    return true;
+
+  return false;
+}
+
+
 /* Implement TARGET_HARD_REGNO_NREGS.  */
 
 static unsigned int

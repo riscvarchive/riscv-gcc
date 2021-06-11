@@ -124,6 +124,8 @@ int mode2lmul (machine_mode mode)
 #define VECTOR_LMUL(SEW, LMUL, MODE, SMODE, MMODE) \
       case E_##MODE##mode: return LMUL;
 _RVV_INT_TYPE_ITERATOR(VECTOR_LMUL)
+      default:
+	break;
       }
     gcc_unreachable ();
     return 0;
@@ -139,6 +141,8 @@ int mode2sew (machine_mode mode)
 #define VECTOR_SEW(SEW, LMUL, MODE, SMODE, MMODE) \
       case E_##MODE##mode: return SEW;
 _RVV_INT_TYPE_ITERATOR(VECTOR_SEW)
+      default:
+	break;
       }
     gcc_unreachable ();
     return 0;
@@ -152,6 +156,8 @@ machine_mode mode2mask_mode (machine_mode mode)
 #define VECTOR_MASK_MODES(SEW, LMUL, MODE, SMODE, MMODE) \
       case E_##MODE##mode: return E_##MMODE##mode;
 _RVV_INT_TYPE_ITERATOR(VECTOR_MASK_MODES)
+      default:
+	break;
       }
     gcc_unreachable ();
     return E_VOIDmode;
@@ -188,18 +194,42 @@ void riscv_register_vector_types (tree fp16_type_node)
 //      _RVV_FLOAT_TYPE_ITERATOR_ARG(VECTOR_TYPE_INIT, float, float)
 }
 
-VecotrAddIntrinsic vadd;
 
-const char *STRPOOL[] = {"vadd"};
 const int STR_INX_VADD = 0;
+enum STRING_INDEX{
+#define VFUNC(NAME, OPCODE, BASE_CLASS, ...) \
+  NAME##_STR_IDX,
+#include "riscv-vector-builtins.def"
+#undef VFUNC
+  NUM_IND
+};
+
+static const char *STRPOOL[] = {
+#define VFUNC(NAME, OPCODE, BASE_CLASS, ...) \
+  OPCODE,
+#include "riscv-vector-builtins.def"
+#undef VFUNC
+  NULL
+};
+
 
 template <unsigned BASENAME_IDX, int FUNCTION_TYPE, int OP_TYPES, int MASK_TYPE>
 class VecotrIntrinsic{
 public:
+  const char *opcode;
+  VecotrIntrinsic()
+   : opcode (STRPOOL[BASENAME_IDX])
+  {
+  }
   static void init (int code_offset);
   static void expand ();
   static int function_count ();
 };
+
+#define VFUNC(NAME, OPCODE, BASE_CLASS, ...) \
+  typedef BASE_CLASS<NAME##_STR_IDX, __VA_ARGS__> NAME##_t;
+#include "riscv-vector-builtins.def"
+#undef VFUNC
 
 static tree
 riscv_build_vector_function_type (
@@ -321,7 +351,7 @@ VecotrAddIntrinsic::init (int icode)
 {
   /* build up */
   std::string func_name;
-  std::string prefix = "vadd_";
+  //std::string prefix = std::string(this->opcode) + "_";
 
 #if 0
           tree type = riscv_build_function_type (d->prototype);
