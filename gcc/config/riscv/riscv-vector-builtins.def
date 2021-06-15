@@ -1,0 +1,1 @@
+VFUNC(VADD, "vadd", VecotrIntrinsic, VV_FUNC_TYPE | VX_FUNC_TYPE, INT_OP_TYPE, MASK_TYPE)
