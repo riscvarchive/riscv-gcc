@@ -4807,7 +4807,7 @@ _RVV_FLOAT_TUPLE_INDEX_ITERATOR_ARG (_RVVFLOAT_TUPLE_IDX_LDST, u)
 __extension__ extern __inline vint##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vset_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##x##NF##_t vt,		\
-			     unsigned idx,				\
+			     const int idx,				\
 			     vint##SEW##m##LMUL##_t v)			\
 {									\
   return __builtin_riscv_vtuple_insertint##SEW##m##LMUL##x##NF (vt, v, idx);\
@@ -4815,7 +4815,7 @@ vset_i##SEW##m##LMUL##x##NF (vint##SEW##m##LMUL##x##NF##_t vt,		\
 __extension__ extern __inline vuint##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vset_u##SEW##m##LMUL##x##NF (vuint##SEW##m##LMUL##x##NF##_t vt,		\
-			     unsigned idx,				\
+			     const int idx,				\
 			     vuint##SEW##m##LMUL##_t v)			\
 {									\
   return __builtin_riscv_vtuple_insertuint##SEW##m##LMUL##x##NF (vt, v, idx);\
@@ -4827,7 +4827,7 @@ _RVV_INT_TUPLE_ITERATOR_ARG (_RVVINT_TUPLE_INSERT, )
 __extension__ extern __inline vfloat##SEW##m##LMUL##x##NF##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vset_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##x##NF##_t vt,	\
-			     unsigned idx,				\
+			     const int idx,				\
 			     vfloat##SEW##m##LMUL##_t v)		\
 {									\
   return __builtin_riscv_vtuple_insertfloat##SEW##m##LMUL##x##NF (vt, v, idx);\
@@ -4838,14 +4838,14 @@ _RVV_FLOAT_TUPLE_ITERATOR_ARG (_RVVFLOAT_TUPLE_INSERT, )
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vget_i##SEW##m##LMUL##x##NF##_i##SEW##m##LMUL (vint##SEW##m##LMUL##x##NF##_t vt,		\
-			     unsigned idx)				\
+			     const int idx)				\
 {									\
   return __builtin_riscv_vtuple_extractint##SEW##m##LMUL##x##NF (vt, idx);\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vget_u##SEW##m##LMUL##x##NF##_u##SEW##m##LMUL (vuint##SEW##m##LMUL##x##NF##_t vt,		\
-			     unsigned idx)				\
+			     const int idx)				\
 {									\
   return __builtin_riscv_vtuple_extractuint##SEW##m##LMUL##x##NF (vt, idx);\
 }
@@ -4856,7 +4856,7 @@ _RVV_INT_TUPLE_ITERATOR_ARG (_RVVINT_TUPLE_EXTRACT, )
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vget_f##SEW##m##LMUL##x##NF##_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##x##NF##_t vt,	\
-			     unsigned idx)				\
+			     const int idx)				\
 {									\
   return __builtin_riscv_vtuple_extractfloat##SEW##m##LMUL##x##NF (vt, idx);\
 }
