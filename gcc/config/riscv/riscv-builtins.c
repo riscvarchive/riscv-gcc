@@ -1718,6 +1718,52 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
     RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE,				\
     vector),
 
+#define VINT_VEC_INSERT(SEW, WLMUL, LMUL, MLEN,				\
+			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
+			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)         \
+  DIRECT_NAMED (							\
+    vector_insert##VMODE_PREFIX_LOWER##i,				\
+    vector_insertint##SEW##m##LMUL##m##WLMUL,				\
+    RISCV_VI##SEW##M##WLMUL##_FTYPE_VI##SEW##M##WLMUL##_VI##SEW##M##LMUL##_SI,\
+    vector),								\
+  DIRECT_NAMED (							\
+    vector_insert##VMODE_PREFIX_LOWER##i,				\
+    vector_insertuint##SEW##m##LMUL##m##WLMUL,				\
+    RISCV_VUI##SEW##M##WLMUL##_FTYPE_VUI##SEW##M##WLMUL##_VUI##SEW##M##LMUL##_SI,\
+    vector),
+
+#define VFLOAT_VEC_INSERT(SEW, WLMUL, LMUL, MLEN,				\
+			  SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
+			  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)	\
+  DIRECT_NAMED (							\
+    vector_insert##VMODE_PREFIX_LOWER##f,				\
+    vector_insertfloat##SEW##m##LMUL##m##WLMUL,				\
+    RISCV_VF##SEW##M##WLMUL##_FTYPE_VF##SEW##M##WLMUL##_VF##SEW##M##LMUL##_SI,\
+    vector),
+
+#define VINT_VEC_EXTRACT(SEW, WLMUL, LMUL, MLEN,				\
+			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
+			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)	\
+  DIRECT_NAMED (							\
+    vector_extract##VMODE_PREFIX_LOWER##i,				\
+    vector_extractint##SEW##m##WLMUL##m##LMUL,				\
+    RISCV_VI##SEW##M##LMUL##_FTYPE_VI##SEW##M##WLMUL##_SI,	\
+    vector),								\
+  DIRECT_NAMED (							\
+    vector_extract##VMODE_PREFIX_LOWER##i,				\
+    vector_extractuint##SEW##m##WLMUL##m##LMUL,				\
+    RISCV_VUI##SEW##M##LMUL##_FTYPE_VUI##SEW##M##WLMUL##_SI,	\
+    vector),
+
+#define VFLOAT_VEC_EXTRACT(SEW, WLMUL, LMUL, MLEN,				\
+			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
+			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)	\
+  DIRECT_NAMED (							\
+    vector_extract##VMODE_PREFIX_LOWER##f,				\
+    vector_extractfloat##SEW##m##WLMUL##m##LMUL,				\
+    RISCV_VF##SEW##M##LMUL##_FTYPE_VF##SEW##M##WLMUL##_SI,	\
+    vector),
+
 #define VREINTERPRET_INT(E, L, MLEN, IMODE, ISUBMODE)			\
   DIRECT_NAMED (mov##IMODE,						\
 		vreinterpret_v_u##E##m##L##_i##E##m##L,			\
@@ -2641,6 +2687,11 @@ static const struct riscv_builtin_description riscv_builtins[] = {
 
   _RVV_SEG (VUNDEFINED_VT_INT)
   _RVV_SEG_NO_SEW8 (VUNDEFINED_VT_FLOAT)
+
+  _RVV_WLMUL (VINT_VEC_INSERT)
+  _RVV_WLMUL_NO_SEW8 (VFLOAT_VEC_INSERT)
+  _RVV_WLMUL (VINT_VEC_EXTRACT)
+  _RVV_WLMUL_NO_SEW8 (VFLOAT_VEC_EXTRACT)
 };
 
 /* Index I is the function declaration for riscv_builtins[I], or null if the
