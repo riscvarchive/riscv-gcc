@@ -11201,3 +11201,41 @@
   "TARGET_VECTOR"
 {
 })
+
+(define_expand "vector_insert<mode>"
+  [(match_operand:VMODES 0 "register_operand")
+   (match_operand:VMODES 1 "register_operand")
+   (match_operand 2 "register_operand")
+   (match_operand:SI 3 "const_int_operand" "")]
+  "TARGET_VECTOR"
+{
+  if (INTVAL (operands[3]) < 0)
+    {
+      gcc_unreachable ();
+      FAIL;
+    }
+  poly_int64 offset = INTVAL (operands[3]) * GET_MODE_SIZE (GET_MODE (operands[2]));
+  emit_move_insn (operands[0], operands[1]);
+  rtx subreg = simplify_gen_subreg (GET_MODE (operands[2]), operands[0],
+				    <MODE>mode, offset);
+  emit_move_insn (subreg, operands[2]);
+  DONE;
+})
+
+(define_expand "vector_extract<mode>"
+  [(match_operand 0 "register_operand")
+   (match_operand:VMODES 1 "register_operand")
+   (match_operand:SI 2 "const_int_operand")]
+  "TARGET_VECTOR"
+{
+  if (INTVAL (operands[2]) < 0)
+    {
+      gcc_unreachable ();
+      FAIL;
+    }
+  poly_int64 offset = INTVAL (operands[2]) * GET_MODE_SIZE (GET_MODE (operands[0]));
+  rtx subreg = simplify_gen_subreg (GET_MODE (operands[0]), operands[1],
+				    <MODE>mode, offset);
+  emit_move_insn (operands[0], subreg);
+  DONE;
+})

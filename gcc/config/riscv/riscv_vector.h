@@ -213,6 +213,66 @@ vundefined_f##SEW##m##LMUL##x##NF ()					\
 
 _RVV_FLOAT_TUPLE_ITERATOR_ARG (_RVVFLOAT_TUPLE_COPY, )
 
+
+#define _RVVINT_VECTOR_INSERT(SEW, WLMUL, LMUL, MLEN, T)		\
+__extension__ extern __inline vint##SEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset_v_i##SEW##m##LMUL##_i##SEW##m##WLMUL (vint##SEW##m##WLMUL##_t vt,		\
+			     const int idx,				\
+			     vint##SEW##m##LMUL##_t v)			\
+{									\
+  return __builtin_riscv_vector_insertint##SEW##m##LMUL##m##WLMUL (vt, v, idx);\
+}									\
+__extension__ extern __inline vuint##SEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset_v_u##SEW##m##LMUL##_u##SEW##m##WLMUL (vuint##SEW##m##WLMUL##_t vt,		\
+			     const int idx,				\
+			     vuint##SEW##m##LMUL##_t v)			\
+{									\
+  return __builtin_riscv_vector_insertuint##SEW##m##LMUL##m##WLMUL (vt, v, idx);\
+}
+
+_RVV_INT_WLMUL_ITERATOR (_RVVINT_VECTOR_INSERT)
+
+#define _RVVFLOAT_VECTOR_INSERT(SEW, WLMUL, LMUL, MLEN, T)		\
+__extension__ extern __inline vfloat##SEW##m##WLMUL##_t		\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vset_v_f##SEW##m##LMUL##_f##SEW##m##WLMUL (vfloat##SEW##m##WLMUL##_t vt,	\
+			     const int idx,				\
+			     vfloat##SEW##m##LMUL##_t v)		\
+{									\
+  return __builtin_riscv_vector_insertfloat##SEW##m##LMUL##m##WLMUL (vt, v, idx);\
+}
+_RVV_FLOAT_WLMUL_ITERATOR (_RVVFLOAT_VECTOR_INSERT)
+
+#define _RVVINT_VECTOR_EXTRACT(SEW, WLMUL, LMUL, MLEN, T)		\
+__extension__ extern __inline vint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vget_v_i##SEW##m##WLMUL##_i##SEW##m##LMUL (vint##SEW##m##WLMUL##_t vt,		\
+			     const int idx)				\
+{									\
+  return __builtin_riscv_vector_extractint##SEW##m##WLMUL##m##LMUL (vt, idx);\
+}									\
+__extension__ extern __inline vuint##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vget_v_u##SEW##m##WLMUL##_u##SEW##m##LMUL (vuint##SEW##m##WLMUL##_t vt,		\
+			     const int idx)				\
+{									\
+  return __builtin_riscv_vector_extractuint##SEW##m##WLMUL##m##LMUL (vt, idx);\
+}
+
+_RVV_INT_WLMUL_ITERATOR (_RVVINT_VECTOR_EXTRACT)
+
+#define _RVVFLOAT_VECTOR_EXTRACT(SEW, WLMUL, LMUL, MLEN, T)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vget_v_f##SEW##m##WLMUL##_f##SEW##m##LMUL (vfloat##SEW##m##WLMUL##_t vt,	\
+			     const int idx)				\
+{									\
+  return __builtin_riscv_vector_extractfloat##SEW##m##WLMUL##m##LMUL (vt, idx);\
+}
+_RVV_FLOAT_WLMUL_ITERATOR (_RVVFLOAT_VECTOR_EXTRACT)
+
 /* Define the ld/st intrinsics.  */
 
 #define _RVVINTLD_FF(SEW, LMUL, MLEN, T)				\

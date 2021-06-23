@@ -689,6 +689,58 @@
   MACRO (64, 8, 8, __float64_t, 64, 2, __VA_ARGS__) \
   MACRO (64, 8, 8, __float64_t, 64, 4, __VA_ARGS__) \
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer types, and info for
+   corresponding widening vector LMUL.  */
+#define _RVV_INT_WLMUL_ITERATOR(MACRO) \
+  MACRO (8, 2, 1, 8, int8_t) \
+  MACRO (8, 4, 2, 4, int8_t) \
+  MACRO (8, 8, 4, 2, int8_t) \
+  MACRO (16, 2, 1, 16, int16_t) \
+  MACRO (16, 4, 2, 8, int16_t) \
+  MACRO (16, 8, 4, 4, int16_t) \
+  MACRO (32, 2, 1, 32, int32_t) \
+  MACRO (32, 4, 2, 16, int32_t) \
+  MACRO (32, 8, 4, 8, int32_t) \
+  MACRO (64, 2, 1, 64, int64_t) \
+  MACRO (64, 4, 2, 32, int64_t) \
+  MACRO (64, 8, 4, 16, int64_t) \
+  MACRO (8, 4, 1, 8, int8_t) \
+  MACRO (8, 8, 2, 4, int8_t) \
+  MACRO (16, 4, 1, 16, int16_t) \
+  MACRO (16, 8, 2, 8, int16_t) \
+  MACRO (32, 4, 1, 32, int32_t) \
+  MACRO (32, 8, 2, 16, int32_t) \
+  MACRO (64, 4, 1, 64, int64_t) \
+  MACRO (64, 8, 2, 32, int64_t) \
+  MACRO (8, 8, 1, 8, int8_t) \
+  MACRO (16, 8, 1, 16, int16_t) \
+  MACRO (32, 8, 1, 32, int32_t) \
+  MACRO (64, 8, 1, 64, int64_t) \
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, float types, and info for
+   corresponding widening vector LMUL.  */
+#define _RVV_FLOAT_WLMUL_ITERATOR(MACRO) \
+  MACRO (16, 2, 1, 16, __float16_t) \
+  MACRO (16, 4, 2, 8, __float16_t) \
+  MACRO (16, 8, 4, 4, __float16_t) \
+  MACRO (32, 2, 1, 32, __float32_t) \
+  MACRO (32, 4, 2, 16, __float32_t) \
+  MACRO (32, 8, 4, 8, __float32_t) \
+  MACRO (64, 2, 1, 64, __float64_t) \
+  MACRO (64, 4, 2, 32, __float64_t) \
+  MACRO (64, 8, 4, 16, __float64_t) \
+  MACRO (16, 4, 1, 16, __float16_t) \
+  MACRO (16, 8, 2, 8, __float16_t) \
+  MACRO (32, 4, 1, 32, __float32_t) \
+  MACRO (32, 8, 2, 16, __float32_t) \
+  MACRO (64, 4, 1, 64, __float64_t) \
+  MACRO (64, 8, 2, 32, __float64_t) \
+  MACRO (16, 8, 1, 16, __float16_t) \
+  MACRO (32, 8, 1, 32, __float32_t) \
+  MACRO (64, 8, 1, 64, __float64_t) \
+
 /* An iterator to call a macro with every supported NF, SEW, LMUL and MLEN value,
    along with its corresponding vector, floating point modes, and info for
    corresponding floating point and vector tuple type.  */

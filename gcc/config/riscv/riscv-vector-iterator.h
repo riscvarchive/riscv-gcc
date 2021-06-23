@@ -729,6 +729,58 @@
   MACRO (64, 8, 8, vnx16df, DF, 64, 2, vnx4df, __VA_ARGS__) \
   MACRO (64, 8, 8, vnx16df, DF, 64, 4, vnx8df, __VA_ARGS__) \
 
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, integer types, and info for
+   corresponding widening vector LMUL.  */
+#define _RVV_WLMUL(MACRO) \
+  MACRO (8, 2, 1, 8, Q, q,VNx32Q, vnx32q) \
+  MACRO (8, 4, 2, 4, Q, q,VNx64Q, vnx64q) \
+  MACRO (8, 8, 4, 2, Q, q,VNx128Q, vnx128q) \
+  MACRO (16, 2, 1, 16, H, h,VNx16H, vnx16h) \
+  MACRO (16, 4, 2, 8, H, h,VNx32H, vnx32h) \
+  MACRO (16, 8, 4, 4, H, h,VNx64H, vnx64h) \
+  MACRO (32, 2, 1, 32, S, s,VNx8S, vnx8s) \
+  MACRO (32, 4, 2, 16, S, s,VNx16S, vnx16s) \
+  MACRO (32, 8, 4, 8, S, s,VNx32S, vnx32s) \
+  MACRO (64, 2, 1, 64, D, d,VNx4D, vnx4d) \
+  MACRO (64, 4, 2, 32, D, d,VNx8D, vnx8d) \
+  MACRO (64, 8, 4, 16, D, d,VNx16D, vnx16d) \
+  MACRO (8, 4, 1, 8, Q, q,VNx64Q, vnx64q) \
+  MACRO (8, 8, 2, 4, Q, q,VNx128Q, vnx128q) \
+  MACRO (16, 4, 1, 16, H, h,VNx32H, vnx32h) \
+  MACRO (16, 8, 2, 8, H, h,VNx64H, vnx64h) \
+  MACRO (32, 4, 1, 32, S, s,VNx16S, vnx16s) \
+  MACRO (32, 8, 2, 16, S, s,VNx32S, vnx32s) \
+  MACRO (64, 4, 1, 64, D, d,VNx8D, vnx8d) \
+  MACRO (64, 8, 2, 32, D, d,VNx16D, vnx16d) \
+  MACRO (8, 8, 1, 8, Q, q,VNx128Q, vnx128q) \
+  MACRO (16, 8, 1, 16, H, h,VNx64H, vnx64h) \
+  MACRO (32, 8, 1, 32, S, s,VNx32S, vnx32s) \
+  MACRO (64, 8, 1, 64, D, d,VNx16D, vnx16d) \
+
+/* An iterator to call a macro with every supported SEW, LMUL and MLEN value,
+   along with its corresponding vector, float types, and info for
+   corresponding widening vector LMUL.  */
+#define _RVV_WLMUL_NO_SEW8(MACRO) \
+  MACRO (16, 2, 1, 16, H, h,VNx16H, vnx16h) \
+  MACRO (16, 4, 2, 8, H, h,VNx32H, vnx32h) \
+  MACRO (16, 8, 4, 4, H, h,VNx64H, vnx64h) \
+  MACRO (32, 2, 1, 32, S, s,VNx8S, vnx8s) \
+  MACRO (32, 4, 2, 16, S, s,VNx16S, vnx16s) \
+  MACRO (32, 8, 4, 8, S, s,VNx32S, vnx32s) \
+  MACRO (64, 2, 1, 64, D, d,VNx4D, vnx4d) \
+  MACRO (64, 4, 2, 32, D, d,VNx8D, vnx8d) \
+  MACRO (64, 8, 4, 16, D, d,VNx16D, vnx16d) \
+  MACRO (16, 4, 1, 16, H, h,VNx32H, vnx32h) \
+  MACRO (16, 8, 2, 8, H, h,VNx64H, vnx64h) \
+  MACRO (32, 4, 1, 32, S, s,VNx16S, vnx16s) \
+  MACRO (32, 8, 2, 16, S, s,VNx32S, vnx32s) \
+  MACRO (64, 4, 1, 64, D, d,VNx8D, vnx8d) \
+  MACRO (64, 8, 2, 32, D, d,VNx16D, vnx16d) \
+  MACRO (16, 8, 1, 16, H, h,VNx64H, vnx64h) \
+  MACRO (32, 8, 1, 32, S, s,VNx32S, vnx32s) \
+  MACRO (64, 8, 1, 64, D, d,VNx16D, vnx16d) \
+
 /* An iterator to call a macro with every supported NF, SEW, LMUL and MLEN value,
    along with its corresponding vector, floating point modes, and info for
    corresponding floating point and vector tuple type.  */
