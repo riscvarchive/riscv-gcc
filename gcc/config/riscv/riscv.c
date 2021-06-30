@@ -5800,6 +5800,30 @@ riscv_vector_alignment (const_tree type)
     return MIN (align, 128);
 }
 
+/* Implement the TARGET_DWARF_POLY_INDETERMINATE_VALUE hook.  */
+
+static unsigned int
+riscv_dwarf_poly_indeterminate_value (unsigned int i, unsigned int *factor,
+				      int *offset)
+{
+  /* Polynomial invariant 1 == (VLENB / 8) - 1.  */
+  /* XXX: It's might not correct for ELEN=32 system.  */
+  gcc_assert (i == 1);
+  *factor = 8;
+  *offset = 1;
+  return RISCV_DWARF_VLEN;
+}
+
+/* Implement REGMODE_NATURAL_SIZE.  */
+
+poly_uint64
+riscv_regmode_natural_size (machine_mode mode)
+{
+  if (TARGET_VECTOR && VECTOR_MODE_P (mode))
+    return BYTES_PER_RVV_VECTOR;
+  return UNITS_PER_WORD;
+}
+
 /* Return true if X is a const_vector with all duplicate elements, which is in
    the range between MINVAL and MAXVAL.  */
 
@@ -6033,6 +6057,10 @@ riscv_unspec_may_trap_p (const_rtx x, unsigned flags)
 
 #undef TARGET_VECTOR_ALIGNMENT
 #define TARGET_VECTOR_ALIGNMENT riscv_vector_alignment
+
+#undef TARGET_DWARF_POLY_INDETERMINATE_VALUE
+#define TARGET_DWARF_POLY_INDETERMINATE_VALUE \
+  riscv_dwarf_poly_indeterminate_value
 
 #undef TARGET_VECTOR_MODE_SUPPORTED_P
 #define TARGET_VECTOR_MODE_SUPPORTED_P riscv_vector_mode_supported_p

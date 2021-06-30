@@ -1046,7 +1046,8 @@ extern poly_uint16 riscv_rvv_chunks;
 
 #define UNITS_PER_V_REG (GET_MODE_SIZE (VNx2DImode))
 
-
+#define RISCV_DWARF_VLEN (4096 + 0xc22)
 #define TARGET_SUPPORTS_WIDE_INT 1
 #define FIRST_VECTOR_INTRINSIC_CODE (0x1u << 31)
+
 #endif /* ! GCC_RISCV_H */
