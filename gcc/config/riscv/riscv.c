@@ -4820,10 +4820,9 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
     {
       if (!GP_REG_P (regno + nregs - 1))
 	return false;
-#if 0
+
       if (VECTOR_MODE_P (mode))
 	return false;
-#endif
     }
   else if (FP_REG_P (regno))
     {
