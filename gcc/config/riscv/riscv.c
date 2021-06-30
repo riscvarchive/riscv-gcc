@@ -1574,7 +1574,7 @@ riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
 {
   if (GET_CODE (src) == CONST_POLY_INT)
     {
-      if (satisfies_constraint_vp (src))
+      if (satisfies_constraint_vp (src) && register_operand (dest, mode))
 	return false;
 
       poly_int64 value = rtx_to_poly_int64 (src);
@@ -4234,7 +4234,14 @@ riscv_gen_load_poly_int (rtx target, rtx tmp1, rtx tmp2, poly_int64 value)
   if (scalar_offset)
     {
       emit_insn (insn);
-      return gen_add3_insn (target, target, GEN_INT (scalar_offset));
+
+      if (SMALL_OPERAND (scalar_offset))
+	return gen_add3_insn (target, target, GEN_INT (scalar_offset));
+      else
+	{
+	  rtx remainder = riscv_add_offset (tmp2, target, scalar_offset);
+	  return gen_rtx_SET (target, remainder);
+	}
     }
   else
     return insn;
@@ -4245,7 +4252,7 @@ riscv_adjust_frame (rtx target, poly_int64 offset)
 {
   rtx temp_reg1 = RISCV_PROLOGUE_TEMP (Pmode);
   rtx temp_reg2 = RISCV_PROLOGUE_TEMP2 (Pmode);
-  rtx insn;
+  rtx insn, dwarf, adjust_frame_rtx;
 
   emit_insn (riscv_gen_load_poly_int (temp_reg1, temp_reg1, temp_reg2, offset));
 
@@ -4253,7 +4260,18 @@ riscv_adjust_frame (rtx target, poly_int64 offset)
 			target,
 			temp_reg1);
 
-  RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
+  insn = emit_insn (insn);
+
+  RTX_FRAME_RELATED_P (insn) = 1;
+
+  adjust_frame_rtx =
+    gen_rtx_SET (target,
+		 plus_constant (Pmode, target, offset));
+
+  dwarf = alloc_reg_note (REG_FRAME_RELATED_EXPR,
+			  copy_rtx (adjust_frame_rtx), NULL_RTX);
+
+  REG_NOTES (insn) = dwarf;
 }
 
 /* Expand the "prologue" pattern.  */
@@ -4427,21 +4445,36 @@ riscv_expand_epilogue (int style)
       riscv_emit_stack_tie ();
       need_barrier_p = false;
 
-      rtx adjust = GEN_INT (-frame->hard_frame_pointer_offset.to_constant ());
-      if (!SMALL_OPERAND (INTVAL (adjust)))
+      poly_int64 adjust = -frame->hard_frame_pointer_offset;
+      rtx adjust_rtx = NULL_RTX;
+
+      if (!adjust.is_constant ())
 	{
-	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
-	  adjust = RISCV_PROLOGUE_TEMP (Pmode);
+	  rtx tmp1 = RISCV_PROLOGUE_TEMP (Pmode);
+	  rtx tmp2 = RISCV_PROLOGUE_TEMP2 (Pmode);
+	  emit_insn (riscv_gen_load_poly_int (tmp1, tmp1, tmp2, adjust));
+	  adjust_rtx = tmp1;
+	}
+      else
+	{
+	  if (!SMALL_OPERAND (adjust.to_constant ()))
+	    {
+	      riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode),
+			       GEN_INT (adjust.to_constant ()));
+	      adjust_rtx = RISCV_PROLOGUE_TEMP (Pmode);
+	    }
+	  else
+	    adjust_rtx = GEN_INT (adjust.to_constant ());
 	}
 
       insn = emit_insn (
 	       gen_add3_insn (stack_pointer_rtx, hard_frame_pointer_rtx,
-			      adjust));
+			      adjust_rtx));
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_value = gen_rtx_PLUS (
 			       Pmode, hard_frame_pointer_rtx,
-			       GEN_INT (-(frame->hard_frame_pointer_offset.to_constant())));
+			       gen_int_mode (-frame->hard_frame_pointer_offset, Pmode));
       rtx cfa_adjust_rtx = gen_rtx_SET (stack_pointer_rtx, cfa_adjust_value);
       dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
@@ -4468,7 +4501,7 @@ riscv_expand_epilogue (int style)
 	{
 	  poly_int64 adj_offset = step1;
 	  adj_offset.coeffs[0] = step1.coeffs[1];
-	  riscv_adjust_frame (stack_pointer_rtx, step1);
+	  riscv_adjust_frame (stack_pointer_rtx, adj_offset);
 	  step1 -= adj_offset;
 	}
 	{
