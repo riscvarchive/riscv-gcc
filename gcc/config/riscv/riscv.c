@@ -5633,6 +5633,68 @@ riscv_mangle_type (const_tree type)
   if (TREE_CODE (type) == REAL_TYPE && TYPE_PRECISION (type) == 16)
     return "Dh";
 
+  /* Mangle all vector type for vector extension.  */
+  /* XXX: Revise this later, we don't write down this into spec yet.  */
+  if (TARGET_VECTOR && VECTOR_MODE_P (TYPE_MODE (type)))
+    switch (TYPE_MODE (type))
+      {
+      case E_VNx16QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m1_t" : "_vint8m1_t";
+      case E_VNx32QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m2_t" : "_vint8m2_t";
+      case E_VNx64QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m4_t" : "_vint8m4_t";
+      case E_VNx128QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8m8_t" : "_vint8m8_t";
+      case E_VNx8HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m1_t" : "_vint16m1_t";
+      case E_VNx16HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m2_t" : "_vint16m2_t";
+      case E_VNx32HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m4_t" : "_vint16m4_t";
+      case E_VNx64HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16m8_t" : "_vint16m8_t";
+      case E_VNx4SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m1_t" : "_vint32m1_t";
+      case E_VNx8SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m2_t" : "_vint32m2_t";
+      case E_VNx16SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m4_t" : "_vint32m4_t";
+      case E_VNx32SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32m8_t" : "_vint32m8_t";
+      case E_VNx2DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m1_t" : "_vint64m1_t";
+      case E_VNx4DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m2_t" : "_vint64m2_t";
+      case E_VNx8DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m4_t" : "_vint64m4_t";
+      case E_VNx16DImode:
+	return TYPE_UNSIGNED(type) ? "_vuint64m8_t" : "_vint64m8_t";
+#if 0
+      case E_VNx8HFmode:   return "_vfloat16m1_t";
+      case E_VNx16HFmode:  return "_vfloat16m2_t";
+      case E_VNx32HFmode:  return "_vfloat16m4_t";
+      case E_VNx64HFmode:  return "_vfloat16m8_t";
+      case E_VNx4SFmode:   return "_vfloat32m1_t";
+      case E_VNx8SFmode:   return "_vfloat32m2_t";
+      case E_VNx16SFmode:  return "_vfloat32m4_t";
+      case E_VNx32SFmode:  return "_vfloat32m8_t";
+      case E_VNx2DFmode:   return "_vfloat64m1_t";
+      case E_VNx4DFmode:   return "_vfloat64m2_t";
+      case E_VNx8DFmode:   return "_vfloat64m4_t";
+      case E_VNx16DFmode:  return "_vfloat64m8_t";
+#endif
+      case E_VNx2BImode:   return "_vbool64_t";
+      case E_VNx4BImode:   return "_vbool32_t";
+      case E_VNx8BImode:   return "_vbool16_t";
+      case E_VNx16BImode:  return "_vbool8_t";
+      case E_VNx32BImode:  return "_vbool4_t";
+      case E_VNx64BImode:  return "_vbool2_t";
+      case E_VNx128BImode: return "_vbool1_t";
+      default:
+	break;
+      }
+
   /* Use the default mangling.  */
   return NULL;
 }
