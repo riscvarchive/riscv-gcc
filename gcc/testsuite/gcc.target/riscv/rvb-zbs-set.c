@@ -57,5 +57,5 @@ sub7 (long i)
   return (int)i | (1 << 20);
 }
 
-/* { dg-final { scan-assembler-times "sbset" 8 } } */
+/* { dg-final { scan-assembler-times "bset" 8 } } */
 /* { dg-final { scan-assembler-not "andi" } } */
