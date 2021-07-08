@@ -1,16 +1,16 @@
 /* { dg-do compile } */
 /* { dg-options "-march=rv32gc_zbb -mabi=ilp32 -O2" } */
 
-unsigned long rol(unsigned long rs1, unsigned long rs2)
+unsigned int foo1(unsigned int rs1, unsigned int rs2)
 {
-int shamt = rs2 & (64 - 1);
-return (rs1 << shamt) | (rs1 >> ((64 - shamt) & (64 - 1)));
+    unsigned int shamt = rs2 & (32 - 1);
+    return (rs1 << shamt) | (rs1 >> ((32 - shamt) & (32 - 1)));
 }
-unsigned long ror(unsigned long rs1, unsigned long rs2)
+unsigned int foo2(unsigned int rs1, unsigned int rs2)
 {
-int shamt = rs2 & (64 - 1);
-return (rs1 >> shamt) | (rs1 << ((64 - shamt) & (64 - 1)));
+    unsigned int shamt = rs2 & (32 - 1);
+    return (rs1 >> shamt) | (rs1 << ((32 - shamt) & (32 - 1)));
 }
 
-/* { dg-final { scan-assembler-times "roli" 1 } } */
-/* { dg-final { scan-assembler-times "rori" 1 } } */
+/* { dg-final { scan-assembler-times "rol" 2 } } */
+/* { dg-final { scan-assembler-times "ror" 2 } } */

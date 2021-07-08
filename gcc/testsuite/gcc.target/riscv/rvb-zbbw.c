@@ -22,4 +22,4 @@ popcount (int i)
 
 /* { dg-final { scan-assembler-times "clzw" 1 } } */
 /* { dg-final { scan-assembler-times "ctzw" 1 } } */
-/* { dg-final { scan-assembler-times "pcntw" 1 } } */
+/* { dg-final { scan-assembler-times "cpopw" 1 } } */
