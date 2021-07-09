@@ -18,10 +18,10 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 // Zkne&Zknd - AES (RV32)
-DIRECT_BUILTIN (aes32dsi, RISCV_SI_FTYPE_SI_SI, crypto_zknd32),
-DIRECT_BUILTIN (aes32dsmi, RISCV_SI_FTYPE_SI_SI, crypto_zknd32),
-DIRECT_BUILTIN (aes32esi, RISCV_SI_FTYPE_SI_SI, crypto_zkne32),
-DIRECT_BUILTIN (aes32esmi, RISCV_SI_FTYPE_SI_SI, crypto_zkne32),
+DIRECT_BUILTIN (aes32dsi, RISCV_SI_FTYPE_SI_SI_SI, crypto_zknd32),
+DIRECT_BUILTIN (aes32dsmi, RISCV_SI_FTYPE_SI_SI_SI, crypto_zknd32),
+DIRECT_BUILTIN (aes32esi, RISCV_SI_FTYPE_SI_SI_SI, crypto_zkne32),
+DIRECT_BUILTIN (aes32esmi, RISCV_SI_FTYPE_SI_SI_SI, crypto_zkne32),
 
 // Zkne&Zknd - AES(RV64)
 DIRECT_BUILTIN (aes64ds, RISCV_DI_FTYPE_DI_DI, crypto_zknd64),

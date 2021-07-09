@@ -51,34 +51,38 @@
 (define_insn "riscv_aes32dsi"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
-                   (match_operand:SI 2 "immediate_operand" "")]
+                   (match_operand:SI 2 "register_operand" "r")
+                   (match_operand:SI 3 "immediate_operand" "")]
                    UNSPEC_AES_DS))]
   "TARGET_ZKND && !TARGET_64BIT"
-  "aes32dsi\t%0,%1,%2")
+  "aes32dsi\t%0,%1,%2,%3")
 
 (define_insn "riscv_aes32dsmi"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
-                   (match_operand:SI 2 "immediate_operand" "")]
+                   (match_operand:SI 2 "register_operand" "r")
+                   (match_operand:SI 3 "immediate_operand" "")]
                    UNSPEC_AES_DSM))]
   "TARGET_ZKND && !TARGET_64BIT"
-  "aes32dsmi\t%0,%1,%2")
+  "aes32dsmi\t%0,%1,%2,%3")
 
 (define_insn "riscv_aes32esi"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
-                   (match_operand:SI 2 "immediate_operand" "")]
+                   (match_operand:SI 2 "register_operand" "")
+                   (match_operand:SI 3 "immediate_operand" "")]
                    UNSPEC_AES_ES))]
   "TARGET_ZKNE && !TARGET_64BIT"
-  "aes32esi\t%0,%1,%2")
+  "aes32esi\t%0,%1,%2,%3")
 
 (define_insn "riscv_aes32esmi"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
-                   (match_operand:SI 2 "immediate_operand" "")]
+                   (match_operand:SI 2 "register_operand" "r")
+                   (match_operand:SI 3 "immediate_operand" "")]
                    UNSPEC_AES_ESM))]
   "TARGET_ZKNE && !TARGET_64BIT"
-  "aes32esmi\t%0,%1,%2")
+  "aes32esmi\t%0,%1,%2,%3")
 
 
 ;; Zkne&Zknd - AES (RV64)
