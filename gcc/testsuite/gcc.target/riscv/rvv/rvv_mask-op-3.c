@@ -37,6 +37,6 @@ RVV_INT_TEST_ARG(VMMISC, msbf)
 RVV_INT_TEST_ARG(VMMISC, msif)
 RVV_INT_TEST_ARG(VMMISC, msof)
 
-/* { dg-final { scan-assembler-times "vmsbf.m" 32 } } */
-/* { dg-final { scan-assembler-times "vmsif.m" 32 } } */
-/* { dg-final { scan-assembler-times "vmsof.m" 32 } } */
+/* { dg-final { scan-assembler-times "vmsbf.m" 44 } } */
+/* { dg-final { scan-assembler-times "vmsif.m" 44 } } */
+/* { dg-final { scan-assembler-times "vmsof.m" 44 } } */

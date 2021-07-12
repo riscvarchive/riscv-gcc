@@ -10,6 +10,18 @@
 #define _RVV_F64_TYPE double
 
 #define RVV_INT_INDEX_TEST(MACRO)			\
+  MACRO ( int8_t, int, i,  8mf8,  64,  8,  8mf8,  8)	\
+  MACRO ( int8_t, int, i,  8mf8,  64,  8, 16mf4, 16)	\
+  MACRO ( int8_t, int, i,  8mf8,  64,  8, 32mf2, 32)	\
+  MACRO ( int8_t, int, i,  8mf8,  64,  8,  64m1, 64)	\
+  MACRO ( int8_t, int, i,  8mf4,  32,  8,  8mf4,  8)	\
+  MACRO ( int8_t, int, i,  8mf4,  32,  8, 16mf2, 16)	\
+  MACRO ( int8_t, int, i,  8mf4,  32,  8,  32m1, 32)	\
+  MACRO ( int8_t, int, i,  8mf4,  32,  8,  64m2, 64)	\
+  MACRO ( int8_t, int, i,  8mf2,  16,  8,  8mf2,  8)	\
+  MACRO ( int8_t, int, i,  8mf2,  16,  8,  16m1, 16)	\
+  MACRO ( int8_t, int, i,  8mf2,  16,  8,  32m2, 32)	\
+  MACRO ( int8_t, int, i,  8mf2,  16,  8,  64m4, 64)	\
   MACRO ( int8_t, int, i,  8m1,  8,  8,  8m1,  8)	\
   MACRO ( int8_t, int, i,  8m1,  8,  8, 16m2, 16)	\
   MACRO ( int8_t, int, i,  8m1,  8,  8, 32m4, 32)	\
@@ -20,6 +32,12 @@
   MACRO ( int8_t, int, i,  8m4,  2,  8,  8m4,  8)	\
   MACRO ( int8_t, int, i,  8m4,  2,  8, 16m8, 16)	\
   MACRO ( int8_t, int, i,  8m8,  1,  8,  8m8,  8)	\
+  MACRO (int16_t, int, i, 16mf4, 64, 16, 16mf4, 16)	\
+  MACRO (int16_t, int, i, 16mf4, 64, 16, 32mf2, 32)	\
+  MACRO (int16_t, int, i, 16mf4, 64, 16,  64m1, 64)	\
+  MACRO (int16_t, int, i, 16mf2, 32, 16, 16mf2, 16)	\
+  MACRO (int16_t, int, i, 16mf2, 32, 16,  32m1, 32)	\
+  MACRO (int16_t, int, i, 16mf2, 32, 16,  64m2, 64)	\
   MACRO (int16_t, int, i, 16m1, 16, 16, 16m1, 16)	\
   MACRO (int16_t, int, i, 16m1, 16, 16, 32m2, 32)	\
   MACRO (int16_t, int, i, 16m1, 16, 16, 64m4, 64)	\
@@ -32,6 +50,8 @@
   MACRO (int16_t, int, i, 16m4,  4, 16, 32m8, 32)	\
   MACRO (int16_t, int, i, 16m8,  2, 16,  8m4,  8)	\
   MACRO (int16_t, int, i, 16m8,  2, 16, 16m8, 16)	\
+  MACRO (int32_t, int, i, 32mf2, 64, 32, 32mf2, 32)	\
+  MACRO (int32_t, int, i, 32mf2, 64, 32,  64m1, 64)	\
   MACRO (int32_t, int, i, 32m1, 32, 32, 32m1, 32)	\
   MACRO (int32_t, int, i, 32m1, 32, 32, 64m2, 64)	\
   MACRO (int32_t, int, i, 32m2, 16, 32, 16m1, 16)	\
@@ -56,6 +76,18 @@
   MACRO (int64_t, int, i, 64m8,  8, 64, 64m8, 64)
 
 #define RVV_UINT_INDEX_TEST(MACRO)			\
+  MACRO ( uint8_t, uint, u,  8mf8,  64,  8,  8mf8,  8)	\
+  MACRO ( uint8_t, uint, u,  8mf8,  64,  8, 16mf4, 16)	\
+  MACRO ( uint8_t, uint, u,  8mf8,  64,  8, 32mf2, 32)	\
+  MACRO ( uint8_t, uint, u,  8mf8,  64,  8,  64m1, 64)	\
+  MACRO ( uint8_t, uint, u,  8mf4,  32,  8,  8mf4,  8)	\
+  MACRO ( uint8_t, uint, u,  8mf4,  32,  8, 16mf2, 16)	\
+  MACRO ( uint8_t, uint, u,  8mf4,  32,  8,  32m1, 32)	\
+  MACRO ( uint8_t, uint, u,  8mf4,  32,  8,  64m2, 64)	\
+  MACRO ( uint8_t, uint, u,  8mf2,  16,  8,  8mf2,  8)	\
+  MACRO ( uint8_t, uint, u,  8mf2,  16,  8,  16m1, 16)	\
+  MACRO ( uint8_t, uint, u,  8mf2,  16,  8,  32m2, 32)	\
+  MACRO ( uint8_t, uint, u,  8mf2,  16,  8,  64m4, 64)	\
   MACRO ( uint8_t, uint, u,  8m1,  8,  8,  8m1,  8)	\
   MACRO ( uint8_t, uint, u,  8m1,  8,  8, 16m2, 16)	\
   MACRO ( uint8_t, uint, u,  8m1,  8,  8, 32m4, 32)	\
@@ -66,6 +98,12 @@
   MACRO ( uint8_t, uint, u,  8m4,  2,  8,  8m4,  8)	\
   MACRO ( uint8_t, uint, u,  8m4,  2,  8, 16m8, 16)	\
   MACRO ( uint8_t, uint, u,  8m8,  1,  8,  8m8,  8)	\
+  MACRO (uint16_t, uint, u, 16mf4, 64, 16, 16mf4, 16)	\
+  MACRO (uint16_t, uint, u, 16mf4, 64, 16, 32mf2, 32)	\
+  MACRO (uint16_t, uint, u, 16mf4, 64, 16,  64m1, 64)	\
+  MACRO (uint16_t, uint, u, 16mf2, 32, 16, 16mf2, 16)	\
+  MACRO (uint16_t, uint, u, 16mf2, 32, 16,  32m1, 32)	\
+  MACRO (uint16_t, uint, u, 16mf2, 32, 16,  64m2, 64)	\
   MACRO (uint16_t, uint, u, 16m1, 16, 16, 16m1, 16)	\
   MACRO (uint16_t, uint, u, 16m1, 16, 16, 32m2, 32)	\
   MACRO (uint16_t, uint, u, 16m1, 16, 16, 64m4, 64)	\
@@ -78,6 +116,8 @@
   MACRO (uint16_t, uint, u, 16m4,  4, 16, 32m8, 32)	\
   MACRO (uint16_t, uint, u, 16m8,  2, 16,  8m4,  8)	\
   MACRO (uint16_t, uint, u, 16m8,  2, 16, 16m8, 16)	\
+  MACRO (uint32_t, uint, u, 32mf2, 64, 32, 32mf2, 32)	\
+  MACRO (uint32_t, uint, u, 32mf2, 64, 32,  64m1, 64)	\
   MACRO (uint32_t, uint, u, 32m1, 32, 32, 32m1, 32)	\
   MACRO (uint32_t, uint, u, 32m1, 32, 32, 64m2, 64)	\
   MACRO (uint32_t, uint, u, 32m2, 16, 32, 16m1, 16)	\
@@ -102,6 +142,12 @@
   MACRO (uint64_t, uint, u, 64m8,  8, 64, 64m8, 64)
 
 #define RVV_FLOAT_INDEX_TEST(MACRO)			\
+  MACRO (float16_t, float, f, 16mf4, 64, 16, 16mf4, 16)	\
+  MACRO (float16_t, float, f, 16mf4, 64, 16, 32mf2, 32)	\
+  MACRO (float16_t, float, f, 16mf4, 64, 16,  64m1, 64)	\
+  MACRO (float16_t, float, f, 16mf2, 32, 16, 16mf2, 16)	\
+  MACRO (float16_t, float, f, 16mf2, 32, 16,  32m1, 32)	\
+  MACRO (float16_t, float, f, 16mf2, 32, 16,  64m2, 64)	\
   MACRO (float16_t, float, f, 16m1, 16, 16, 16m1, 16)	\
   MACRO (float16_t, float, f, 16m1, 16, 16, 32m2, 32)	\
   MACRO (float16_t, float, f, 16m1, 16, 16, 64m4, 64)	\
@@ -111,6 +157,8 @@
   MACRO (float16_t, float, f, 16m4,  4, 16, 16m4, 16)	\
   MACRO (float16_t, float, f, 16m4,  4, 16, 32m8, 32)	\
   MACRO (float16_t, float, f, 16m8,  2, 16, 16m8, 16)	\
+  MACRO (    float, float, f, 32mf2, 64, 32, 32mf2, 32)	\
+  MACRO (    float, float, f, 32mf2, 64, 32,  64m1, 64)	\
   MACRO (    float, float, f, 32m1, 32, 32, 32m1, 32)	\
   MACRO (    float, float, f, 32m1, 32, 32, 64m2, 64)	\
   MACRO (    float, float, f, 32m2, 16, 32, 16m1, 16)	\
@@ -132,6 +180,18 @@
   MACRO (   double, float, f, 64m8,  8, 64, 64m8, 64)
 
 #define RVV_INT_INDEX_TEST_ARG(MACRO, ...)			\
+  MACRO ( int8_t, int, i,  8mf8,  64,  8,  8mf8,  8, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf8,  64,  8, 16mf4, 16, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf8,  64,  8, 32mf2, 32, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf8,  64,  8,  64m1, 64, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf4,  32,  8,  8mf4,  8, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf4,  32,  8, 16mf2, 16, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf4,  32,  8,  32m1, 32, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf4,  32,  8,  64m2, 64, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf2,  16,  8,  8mf2,  8, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf2,  16,  8,  16m1, 16, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf2,  16,  8,  32m2, 32, __VA_ARGS__)	\
+  MACRO ( int8_t, int, i,  8mf2,  16,  8,  64m4, 64, __VA_ARGS__)	\
   MACRO ( int8_t, int, i,  8m1,  8,  8,  8m1,  8, __VA_ARGS__)	\
   MACRO ( int8_t, int, i,  8m1,  8,  8, 16m2, 16, __VA_ARGS__)	\
   MACRO ( int8_t, int, i,  8m1,  8,  8, 32m4, 32, __VA_ARGS__)	\
@@ -142,6 +202,12 @@
   MACRO ( int8_t, int, i,  8m4,  2,  8,  8m4,  8, __VA_ARGS__)	\
   MACRO ( int8_t, int, i,  8m4,  2,  8, 16m8, 16, __VA_ARGS__)	\
   MACRO ( int8_t, int, i,  8m8,  1,  8,  8m8,  8, __VA_ARGS__)	\
+  MACRO (int16_t, int, i, 16mf4, 64, 16, 16mf4, 16, __VA_ARGS__)	\
+  MACRO (int16_t, int, i, 16mf4, 64, 16, 32mf2, 32, __VA_ARGS__)	\
+  MACRO (int16_t, int, i, 16mf4, 64, 16,  64m1, 64, __VA_ARGS__)	\
+  MACRO (int16_t, int, i, 16mf2, 32, 16, 16mf2, 16, __VA_ARGS__)	\
+  MACRO (int16_t, int, i, 16mf2, 32, 16,  32m1, 32, __VA_ARGS__)	\
+  MACRO (int16_t, int, i, 16mf2, 32, 16,  64m2, 64, __VA_ARGS__)	\
   MACRO (int16_t, int, i, 16m1, 16, 16, 16m1, 16, __VA_ARGS__)	\
   MACRO (int16_t, int, i, 16m1, 16, 16, 32m2, 32, __VA_ARGS__)	\
   MACRO (int16_t, int, i, 16m1, 16, 16, 64m4, 64, __VA_ARGS__)	\
@@ -154,6 +220,8 @@
   MACRO (int16_t, int, i, 16m4,  4, 16, 32m8, 32, __VA_ARGS__)	\
   MACRO (int16_t, int, i, 16m8,  2, 16,  8m4,  8, __VA_ARGS__)	\
   MACRO (int16_t, int, i, 16m8,  2, 16, 16m8, 16, __VA_ARGS__)	\
+  MACRO (int32_t, int, i, 32mf2, 64, 32, 32mf2, 32, __VA_ARGS__)	\
+  MACRO (int32_t, int, i, 32mf2, 64, 32,  64m1, 64, __VA_ARGS__)	\
   MACRO (int32_t, int, i, 32m1, 32, 32, 32m1, 32, __VA_ARGS__)	\
   MACRO (int32_t, int, i, 32m1, 32, 32, 64m2, 64, __VA_ARGS__)	\
   MACRO (int32_t, int, i, 32m2, 16, 32, 16m1, 16, __VA_ARGS__)	\
@@ -178,6 +246,12 @@
   MACRO (int64_t, int, i, 64m8,  8, 64, 64m8, 64, __VA_ARGS__)
 
 #define RVV_FLOAT_INDEX_TEST_ARG(MACRO, ...)			\
+  MACRO (float16_t, float, f, 16mf4, 64, 16, 16mf4, 16, __VA_ARGS__)	\
+  MACRO (float16_t, float, f, 16mf4, 64, 16, 32mf2, 32, __VA_ARGS__)	\
+  MACRO (float16_t, float, f, 16mf4, 64, 16,  64m1, 64, __VA_ARGS__)	\
+  MACRO (float16_t, float, f, 16mf2, 32, 16, 16mf2, 16, __VA_ARGS__)	\
+  MACRO (float16_t, float, f, 16mf2, 32, 16,  32m1, 32, __VA_ARGS__)	\
+  MACRO (float16_t, float, f, 16mf2, 32, 16,  64m2, 64, __VA_ARGS__)	\
   MACRO (float16_t, float, f, 16m1, 16, 16, 16m1, 16, __VA_ARGS__)	\
   MACRO (float16_t, float, f, 16m1, 16, 16, 32m2, 32, __VA_ARGS__)	\
   MACRO (float16_t, float, f, 16m1, 16, 16, 64m4, 64, __VA_ARGS__)	\
@@ -187,6 +261,8 @@
   MACRO (float16_t, float, f, 16m4,  4, 16, 16m4, 16, __VA_ARGS__)	\
   MACRO (float16_t, float, f, 16m4,  4, 16, 32m8, 32, __VA_ARGS__)	\
   MACRO (float16_t, float, f, 16m8,  2, 16, 16m8, 16, __VA_ARGS__)	\
+  MACRO (    float, float, f, 32mf2, 64, 32, 32mf2, 32, __VA_ARGS__)	\
+  MACRO (    float, float, f, 32mf2, 64, 32,  64m1, 64, __VA_ARGS__)	\
   MACRO (    float, float, f, 32m1, 32, 32, 32m1, 32, __VA_ARGS__)	\
   MACRO (    float, float, f, 32m1, 32, 32, 64m2, 64, __VA_ARGS__)	\
   MACRO (    float, float, f, 32m2, 16, 32, 16m1, 16, __VA_ARGS__)	\
@@ -208,14 +284,20 @@
   MACRO (   double, float, f, 64m8,  8, 64, 64m8, 64, __VA_ARGS__)
 
 #define RVV_INT_TEST(MACRO)	\
+  MACRO( int8_t, int, i,  8mf8,  64, x,  8)	\
+  MACRO( int8_t, int, i,  8mf4,  32, x,  8)	\
+  MACRO( int8_t, int, i,  8mf2,  16, x,  8)	\
   MACRO( int8_t, int, i,  8m1,  8, x,  8)	\
   MACRO( int8_t, int, i,  8m2,  4, x,  8)	\
   MACRO( int8_t, int, i,  8m4,  2, x,  8)	\
   MACRO( int8_t, int, i,  8m8,  1, x,  8)	\
+  MACRO(int16_t, int, i, 16mf4, 64, x, 16)	\
+  MACRO(int16_t, int, i, 16mf2, 32, x, 16)	\
   MACRO(int16_t, int, i, 16m1, 16, x, 16)	\
   MACRO(int16_t, int, i, 16m2,  8, x, 16)	\
   MACRO(int16_t, int, i, 16m4,  4, x, 16)	\
   MACRO(int16_t, int, i, 16m8,  2, x, 16)	\
+  MACRO(int32_t, int, i, 32mf2, 64, x, 32)	\
   MACRO(int32_t, int, i, 32m1, 32, x, 32)	\
   MACRO(int32_t, int, i, 32m2, 16, x, 32)	\
   MACRO(int32_t, int, i, 32m4,  8, x, 32)	\
@@ -226,14 +308,20 @@
   MACRO(int64_t, int, i, 64m8,  8, x, 64)
 
 #define RVV_INT_TEST_ARG(MACRO, ...)		\
+  MACRO( int8_t, int, i,  8mf8,  64, x,  8, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8mf4,  32, x,  8, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8mf2,  16, x,  8, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m1,  8, x, 8, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m2,  4, x, 8, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m4,  2, x, 8, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m8,  1, x, 8, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16mf4, 64, x, 16, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16mf2, 32, x, 16, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m1, 16, x, 16, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m2,  8, x, 16, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m4,  4, x, 16, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m8,  2, x, 16, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32mf2, 64, x, 32, __VA_ARGS__)	\
   MACRO(int32_t, int, i, 32m1, 32, x, 32, __VA_ARGS__)	\
   MACRO(int32_t, int, i, 32m2, 16, x, 32, __VA_ARGS__)	\
   MACRO(int32_t, int, i, 32m4,  8, x, 32, __VA_ARGS__)	\
@@ -244,14 +332,20 @@
   MACRO(int64_t, int, i, 64m8,  8, x, 64, __VA_ARGS__)
 
 #define RVV_UINT_TEST_ARG(MACRO, ...)		\
+  MACRO( uint8_t, uint, u,  8mf8,  64, x,  8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8mf4,  32, x,  8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8mf2,  16, x,  8, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m1,  8, x,  8, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m2,  4, x,  8, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m4,  2, x,  8, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m8,  1, x,  8, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16mf4, 64, x, 16, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16mf2, 32, x, 16, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m1, 16, x, 16, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m2,  8, x, 16, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m4,  4, x, 16, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m8,  2, x, 16, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32mf2, 64, x, 32, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m1, 32, x, 32, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m2, 16, x, 32, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m4,  8, x, 32, __VA_ARGS__)	\
@@ -262,14 +356,20 @@
   MACRO(uint64_t, uint, u, 64m8,  8, x, 64, __VA_ARGS__)
 
 #define RVV_UINT_TEST(MACRO)	\
+  MACRO( uint8_t, uint, u,  8mf8,  64, x,  8)	\
+  MACRO( uint8_t, uint, u,  8mf4,  32, x,  8)	\
+  MACRO( uint8_t, uint, u,  8mf2,  16, x,  8)	\
   MACRO( uint8_t, uint, u,  8m1,  8, x, 8)	\
   MACRO( uint8_t, uint, u,  8m2,  4, x, 8)	\
   MACRO( uint8_t, uint, u,  8m4,  2, x, 8)	\
   MACRO( uint8_t, uint, u,  8m8,  1, x, 8)	\
+  MACRO(uint16_t, uint, u, 16mf4, 64, x, 16)	\
+  MACRO(uint16_t, uint, u, 16mf2, 32, x, 16)	\
   MACRO(uint16_t, uint, u, 16m1, 16, x, 16)	\
   MACRO(uint16_t, uint, u, 16m2,  8, x, 16)	\
   MACRO(uint16_t, uint, u, 16m4,  4, x, 16)	\
   MACRO(uint16_t, uint, u, 16m8,  2, x, 16)	\
+  MACRO(uint32_t, uint, u, 32mf2, 64, x, 32)	\
   MACRO(uint32_t, uint, u, 32m1, 32, x, 32)	\
   MACRO(uint32_t, uint, u, 32m2, 16, x, 32)	\
   MACRO(uint32_t, uint, u, 32m4,  8, x, 32)	\
@@ -280,62 +380,94 @@
   MACRO(uint64_t, uint, u, 64m8,  8, x, 64)
 
 #define RVV_WINT_TEST(MACRO)				\
+  MACRO( int8_t, int, i,  8mf8,  64, int16_t, 16mf4, x,  8, 16)	\
+  MACRO( int8_t, int, i,  8mf4,  32, int16_t, 16mf2, x,  8, 16)	\
+  MACRO( int8_t, int, i,  8mf2,  16, int16_t, 16m1, x,  8, 16)	\
   MACRO( int8_t, int, i,  8m1,  8, int16_t, 16m2, x,  8, 16)	\
   MACRO( int8_t, int, i,  8m2,  4, int16_t, 16m4, x,  8, 16)	\
   MACRO( int8_t, int, i,  8m4,  2, int16_t, 16m8, x,  8, 16)	\
+  MACRO(int16_t, int, i, 16mf4, 64, int32_t, 32mf2, x, 16, 32)	\
+  MACRO(int16_t, int, i, 16mf2, 32, int32_t, 32m1, x, 16, 32)	\
   MACRO(int16_t, int, i, 16m1, 16, int32_t, 32m2, x, 16, 32)	\
   MACRO(int16_t, int, i, 16m2,  8, int32_t, 32m4, x, 16, 32)	\
   MACRO(int16_t, int, i, 16m4,  4, int32_t, 32m8, x, 16, 32)	\
+  MACRO(int32_t, int, i, 32mf2, 64, int64_t, 64m1, x, 32, 64)	\
   MACRO(int32_t, int, i, 32m1, 32, int64_t, 64m2, x, 32, 64)	\
   MACRO(int32_t, int, i, 32m2, 16, int64_t, 64m4, x, 32, 64)	\
   MACRO(int32_t, int, i, 32m4,  8, int64_t, 64m8, x, 32, 64)
 
 /* The unsigned is added in the macro that we call.  */
 #define RVV_WUINT_TEST(MACRO)				\
+  MACRO( uint8_t, uint, u,  8mf8,  64, uint16_t, 16mf4, x,  8, 16)	\
+  MACRO( uint8_t, uint, u,  8mf4,  32, uint16_t, 16mf2, x,  8, 16)	\
+  MACRO( uint8_t, uint, u,  8mf2,  16, uint16_t, 16m1, x,  8, 16)	\
   MACRO( uint8_t, uint, u,  8m1,  8, uint16_t, 16m2, x,  8, 16)	\
   MACRO( uint8_t, uint, u,  8m2,  4, uint16_t, 16m4, x,  8, 16)	\
   MACRO( uint8_t, uint, u,  8m4,  2, uint16_t, 16m8, x,  8, 16)	\
+  MACRO(uint16_t, uint, u, 16mf4, 64, uint32_t, 32mf2, x, 16, 32)	\
+  MACRO(uint16_t, uint, u, 16mf2, 32, uint32_t, 32m1, x, 16, 32)	\
   MACRO(uint16_t, uint, u, 16m1, 16, uint32_t, 32m2, x, 16, 32)	\
   MACRO(uint16_t, uint, u, 16m2,  8, uint32_t, 32m4, x, 16, 32)	\
   MACRO(uint16_t, uint, u, 16m4,  4, uint32_t, 32m8, x, 16, 32)	\
+  MACRO(uint32_t, uint, u, 32mf2, 64, uint64_t, 64m1, x, 32, 64)	\
   MACRO(uint32_t, uint, u, 32m1, 32, uint64_t, 64m2, x, 32, 64)	\
   MACRO(uint32_t, uint, u, 32m2, 16, uint64_t, 64m4, x, 32, 64)	\
   MACRO(uint32_t, uint, u, 32m4,  8, uint64_t, 64m8, x, 32, 64)
 
 #define RVV_WINT_TEST_ARG(MACRO, ...)			\
+  MACRO( int8_t, int, i,  8mf8,  64, int16_t, 16mf4, x,  8, 16, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8mf4,  32, int16_t, 16mf2, x,  8, 16, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8mf2,  16, int16_t, 16m1, x,  8, 16, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m1,  8, int16_t, 16m2, x,  8, 16, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m2,  4, int16_t, 16m4, x,  8, 16, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m4,  2, int16_t, 16m8, x,  8, 16, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16mf4, 64, int32_t, 32mf2, x, 16, 32, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16mf2, 32, int32_t, 32m1, x, 16, 32, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m1, 16, int32_t, 32m2, x, 16, 32, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m2,  8, int32_t, 32m4, x, 16, 32, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m4,  4, int32_t, 32m8, x, 16, 32, __VA_ARGS__)	\
+  MACRO(int32_t, int, i, 32mf2, 64, int64_t, 64m1, x, 32, 64, __VA_ARGS__)	\
   MACRO(int32_t, int, i, 32m1, 32, int64_t, 64m2, x, 32, 64, __VA_ARGS__)	\
   MACRO(int32_t, int, i, 32m2, 16, int64_t, 64m4, x, 32, 64, __VA_ARGS__)	\
   MACRO(int32_t, int, i, 32m4,  8, int64_t, 64m8, x, 32, 64, __VA_ARGS__)
 
 /* The unsigned is added in the macro that we call.  */
 #define RVV_WUINT_TEST_ARG(MACRO, ...)				\
+  MACRO( uint8_t, uint, u,  8mf8,  64, uint16_t, 16mf4, x,  8, 16, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8mf4,  32, uint16_t, 16mf2, x,  8, 16, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8mf2,  16, uint16_t, 16m1, x,  8, 16, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m1,  8, uint16_t, 16m2, x,  8, 16, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m2,  4, uint16_t, 16m4, x,  8, 16, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m4,  2, uint16_t, 16m8, x,  8, 16, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16mf4, 64, uint32_t, 32mf2, x, 16, 32, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16mf2, 32, uint32_t, 32m1, x, 16, 32, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m1, 16, uint32_t, 32m2, x, 16, 32, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m2,  8, uint32_t, 32m4, x, 16, 32, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m4,  4, uint32_t, 32m8, x, 16, 32, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32mf2, 64, uint64_t, 64m1, x, 32, 64, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m1, 32, uint64_t, 64m2, x, 32, 64, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m2, 16, uint64_t, 64m4, x, 32, 64, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m4,  8, uint64_t, 64m8, x, 32, 64, __VA_ARGS__)
 
 #define RVV_QINT_TEST_ARG(MACRO, ...)				\
+  MACRO( int8_t, int, i,  8mf8,  64, int32_t, 32mf2, x,  8, 32, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8mf4,  32, int32_t, 32m1, x,  8, 32, __VA_ARGS__)	\
+  MACRO( int8_t, int, i,  8mf2,  16, int32_t, 32m2, x,  8, 32, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m1,  8, int32_t, 32m4, x,  8, 32, __VA_ARGS__)	\
   MACRO( int8_t, int, i,  8m2,  4, int32_t, 32m8, x,  8, 32, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16mf4, 64, int64_t, 64m1, x, 16, 64, __VA_ARGS__)	\
+  MACRO(int16_t, int, i, 16mf2, 32, int64_t, 64m2, x, 16, 64, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m1, 16, int64_t, 64m4, x, 16, 64, __VA_ARGS__)	\
   MACRO(int16_t, int, i, 16m2,  8, int64_t, 64m8, x, 16, 64, __VA_ARGS__)	\
 
 #define RVV_FLOAT_TEST(MACRO)     	\
+  MACRO(float16_t, float, f, 16mf4,  64, f, 16)	\
+  MACRO(float16_t, float, f, 16mf2,  32, f, 16)	\
   MACRO(float16_t, float, f, 16m1, 16, f, 16)	\
   MACRO(float16_t, float, f, 16m2,  8, f, 16)	\
   MACRO(float16_t, float, f, 16m4,  4, f, 16)	\
   MACRO(float16_t, float, f, 16m8,  2, f, 16)	\
+  MACRO(    float, float, f, 32mf2, 64, f, 32)	\
   MACRO(    float, float, f, 32m1, 32, f, 32)	\
   MACRO(    float, float, f, 32m2, 16, f, 32)	\
   MACRO(    float, float, f, 32m4,  8, f, 32)	\
@@ -346,10 +478,13 @@
   MACRO(   double, float, f, 64m8,  8, f, 64)
 
 #define RVV_FLOAT_TEST_ARG(MACRO, ...)     	\
+  MACRO(float16_t, float, f, 16mf4, 64, f, 16, __VA_ARGS__)	\
+  MACRO(float16_t, float, f, 16mf2, 32, f, 16, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m1, 16, f, 16, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m2,  8, f, 16, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m4,  4, f, 16, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m8,  2, f, 16, __VA_ARGS__)	\
+  MACRO(    float, float, f, 32mf2, 64, f, 32, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m1, 32, f, 32, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m2, 16, f, 32, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m4,  8, f, 32, __VA_ARGS__)	\
@@ -360,10 +495,13 @@
   MACRO(   double, float, f, 64m8,  8, f, 64, __VA_ARGS__)
 
 #define RVV_FLOAT_INT_TEST(MACRO)     	\
+  MACRO(float16_t, float, f, 16mf4, 64, int16_t, int, 16)	\
+  MACRO(float16_t, float, f, 16mf2, 32, int16_t, int, 16)	\
   MACRO(float16_t, float, f, 16m1, 16, int16_t, int, 16)	\
   MACRO(float16_t, float, f, 16m2,  8, int16_t, int, 16)	\
   MACRO(float16_t, float, f, 16m4,  4, int16_t, int, 16)	\
   MACRO(float16_t, float, f, 16m8,  2, int16_t, int, 16)	\
+  MACRO(    float, float, f, 32mf2, 64, int32_t, int, 32)	\
   MACRO(    float, float, f, 32m1, 32, int32_t, int, 32)	\
   MACRO(    float, float, f, 32m2, 16, int32_t, int, 32)	\
   MACRO(    float, float, f, 32m4,  8, int32_t, int, 32)	\
@@ -374,10 +512,13 @@
   MACRO(   double, float, f, 64m8,  8, int64_t, int, 64)
 
 #define RVV_FLOAT_INT_TEST_ARG(MACRO, ...)			\
+  MACRO(float16_t, float, f, 16mf4, 64, int16_t, int, 16, __VA_ARGS__)	\
+  MACRO(float16_t, float, f, 16mf2, 32, int16_t, int, 16, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m1, 16, int16_t, int, 16, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m2,  8, int16_t, int, 16, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m4,  4, int16_t, int, 16, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m8,  2, int16_t, int, 16, __VA_ARGS__)	\
+  MACRO(    float, float, f, 32mf2, 64, int32_t, int, 32, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m1, 32, int32_t, int, 32, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m2, 16, int32_t, int, 32, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m4,  8, int32_t, int, 32, __VA_ARGS__)	\
@@ -388,10 +529,13 @@
   MACRO(   double, float, f, 64m8,  8, int64_t, int, 64, __VA_ARGS__)
 
 #define RVV_FLOAT_CVT_INT_TEST(MACRO)     	\
+  MACRO(float16_t, float, f, 16mf4, 64, int16_t, int, i, 16)	\
+  MACRO(float16_t, float, f, 16mf2, 32, int16_t, int, i, 16)	\
   MACRO(float16_t, float, f, 16m1, 16, int16_t, int, i, 16)	\
   MACRO(float16_t, float, f, 16m2,  8, int16_t, int, i, 16)	\
   MACRO(float16_t, float, f, 16m4,  4, int16_t, int, i, 16)	\
   MACRO(float16_t, float, f, 16m8,  2, int16_t, int, i, 16)	\
+  MACRO(    float, float, f, 32mf2, 64, int32_t, int, i, 32)	\
   MACRO(    float, float, f, 32m1, 32, int32_t, int, i, 32)	\
   MACRO(    float, float, f, 32m2, 16, int32_t, int, i, 32)	\
   MACRO(    float, float, f, 32m4,  8, int32_t, int, i, 32)	\
@@ -402,69 +546,104 @@
   MACRO(   double, float, f, 64m8,  8, int64_t, int, i, 64)
 
 #define RVV_INT_WNCVT_INT_TEST(MACRO)	\
+  MACRO( 8mf8, 16mf4,  64,  8, 16)		\
+  MACRO( 8mf4, 16mf2,  32,  8, 16)		\
+  MACRO( 8mf2, 16m1,  16,  8, 16)		\
   MACRO( 8m1, 16m2,  8,  8, 16)		\
   MACRO( 8m2, 16m4,  4,  8, 16)		\
   MACRO( 8m4, 16m8,  2,  8, 16)		\
+  MACRO(16mf4, 32mf2, 64, 16, 32)		\
+  MACRO(16mf2, 32m1, 32, 16, 32)		\
   MACRO(16m1, 32m2, 16, 16, 32)		\
   MACRO(16m2, 32m4,  8, 16, 32)		\
   MACRO(16m4, 32m8,  4, 16, 32)		\
+  MACRO(32mf2, 64m1, 64, 32, 64)		\
   MACRO(32m1, 64m2, 32, 32, 64)		\
   MACRO(32m2, 64m4, 16, 32, 64)		\
   MACRO(32m4, 64m8,  8, 32, 64)
 
 #define RVV_WINT_EXTEND_TEST(MACRO, ...)	\
+  MACRO( 8mf8, 16mf4,  64,  8, 16, __VA_ARGS__)	\
+  MACRO( 8mf4, 16mf2,  32,  8, 16, __VA_ARGS__)	\
+  MACRO( 8mf2, 16m1,  16,  8, 16, __VA_ARGS__)	\
   MACRO( 8m1, 16m2,  8,  8, 16, __VA_ARGS__)	\
   MACRO( 8m2, 16m4,  4,  8, 16, __VA_ARGS__)	\
   MACRO( 8m4, 16m8,  2,  8, 16, __VA_ARGS__)	\
+  MACRO(16mf4, 32mf2, 64, 16, 32, __VA_ARGS__)	\
+  MACRO(16mf2, 32m1, 32, 16, 32, __VA_ARGS__)	\
   MACRO(16m1, 32m2, 16, 16, 32, __VA_ARGS__)	\
   MACRO(16m2, 32m4,  8, 16, 32, __VA_ARGS__)	\
   MACRO(16m4, 32m8,  4, 16, 32, __VA_ARGS__)	\
+  MACRO(32mf2, 64m1, 64, 32, 64, __VA_ARGS__)	\
   MACRO(32m1, 64m2, 32, 32, 64, __VA_ARGS__)	\
   MACRO(32m2, 64m4, 16, 32, 64, __VA_ARGS__)	\
   MACRO(32m4, 64m8,  8, 32, 64, __VA_ARGS__)
 
 #define RVV_QINT_EXTEND_TEST(MACRO, ...)	\
+  MACRO( 8mf8, 32mf2,  64,  8, 32, __VA_ARGS__)	\
+  MACRO( 8mf4, 32m1,  32,  8, 32, __VA_ARGS__)	\
+  MACRO( 8mf2, 32m2,  16,  8, 32, __VA_ARGS__)	\
   MACRO( 8m1, 32m4,  8,  8, 32, __VA_ARGS__)	\
   MACRO( 8m2, 32m8,  4,  8, 32, __VA_ARGS__)	\
+  MACRO(16mf4, 64m1, 64, 16, 64, __VA_ARGS__)	\
+  MACRO(16mf2, 64m2, 32, 16, 64, __VA_ARGS__)	\
   MACRO(16m1, 64m4, 16, 16, 64, __VA_ARGS__)	\
   MACRO(16m2, 64m8,  8, 16, 64, __VA_ARGS__)
 
 #define RVV_EINT_EXTEND_TEST(MACRO, ...)	\
+  MACRO( 8mf8, 64m1,  64,  8, 64, __VA_ARGS__)  \
+  MACRO( 8mf4, 64m2,  32,  8, 64, __VA_ARGS__)  \
+  MACRO( 8mf2, 64m4,  16,  8, 64, __VA_ARGS__)  \
   MACRO( 8m1, 64m8,  8,  8, 64, __VA_ARGS__)
 
 #define RVV_FLOAT_WNCVT_INT_TEST(MACRO)	\
+  MACRO(16mf4, 32mf2, 64, 16, 32)		\
+  MACRO(16mf2, 32m1, 32, 16, 32)		\
   MACRO(16m1, 32m2, 16, 16, 32)		\
   MACRO(16m2, 32m4,  8, 16, 32)		\
   MACRO(16m4, 32m8,  4, 16, 32)		\
+  MACRO(32mf2, 64m1, 64, 32, 64)		\
   MACRO(32m1, 64m2, 32, 32, 64)		\
   MACRO(32m2, 64m4, 16, 32, 64)		\
   MACRO(32m4, 64m8,  8, 32, 64)
 
 #define RVV_WFLOAT_TEST(MACRO)				\
+  MACRO(float16_t, float, f, 16mf4,  64,  float, 32mf2)	\
+  MACRO(float16_t, float, f, 16mf2,  32,  float, 32m1)	\
   MACRO(float16_t, float, f, 16m1,  16,  float, 32m2)	\
   MACRO(float16_t, float, f, 16m2,   8,  float, 32m4)	\
   MACRO(float16_t, float, f, 16m4,   4,  float, 32m8)	\
+  MACRO(    float, float, f, 32mf2,  64, double, 64m1)	\
   MACRO(    float, float, f, 32m1,  32, double, 64m2)	\
   MACRO(    float, float, f, 32m2,  16, double, 64m4)	\
   MACRO(    float, float, f, 32m4,   8, double, 64m8)
 
 #define RVV_WFLOAT_TEST_ARG(MACRO, ...)				\
+  MACRO(float16_t, float, f, 16mf4,  64,  float, 32mf2, f, 16, 32, __VA_ARGS__)	\
+  MACRO(float16_t, float, f, 16mf2,  32,  float, 32m1, f, 16, 32, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m1,  16,  float, 32m2, f, 16, 32, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m2,   8,  float, 32m4, f, 16, 32, __VA_ARGS__)	\
   MACRO(float16_t, float, f, 16m4,   4,  float, 32m8, f, 16, 32, __VA_ARGS__)	\
+  MACRO(    float, float, f, 32mf2,  64, double, 64m1, f, 32, 64, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m1,  32, double, 64m2, f, 32, 64, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m2,  16, double, 64m4, f, 32, 64, __VA_ARGS__)	\
   MACRO(    float, float, f, 32m4,   8, double, 64m8, f, 32, 64, __VA_ARGS__)
 
 #define RVV_INT_REDUC_TEST(MACRO)	\
+  MACRO( int8_t, int, i,  8mf8,  8m1,  64,  8)	\
+  MACRO( int8_t, int, i,  8mf4,  8m1,  32,  8)	\
+  MACRO( int8_t, int, i,  8mf2,  8m1,  16,  8)	\
   MACRO( int8_t, int, i,  8m1,  8m1,  8,  8)	\
   MACRO( int8_t, int, i,  8m2,  8m1,  4,  8)	\
   MACRO( int8_t, int, i,  8m4,  8m1,  2,  8)	\
   MACRO( int8_t, int, i,  8m8,  8m1,  1,  8)	\
+  MACRO(int16_t, int, i, 16mf4, 16m1, 64, 16)	\
+  MACRO(int16_t, int, i, 16mf2, 16m1, 32, 16)	\
   MACRO(int16_t, int, i, 16m1, 16m1, 16, 16)	\
   MACRO(int16_t, int, i, 16m2, 16m1,  8, 16)	\
   MACRO(int16_t, int, i, 16m4, 16m1,  4, 16)	\
   MACRO(int16_t, int, i, 16m8, 16m1,  2, 16)	\
+  MACRO(int32_t, int, i, 32mf2, 32m1, 64, 32)	\
   MACRO(int32_t, int, i, 32m1, 32m1, 32, 32)	\
   MACRO(int32_t, int, i, 32m2, 32m1, 16, 32)	\
   MACRO(int32_t, int, i, 32m4, 32m1,  8, 32)	\
@@ -475,14 +654,20 @@
   MACRO(int64_t, int, i, 64m8, 64m1,  8, 64)
 
 #define RVV_UINT_REDUC_TEST(MACRO)	\
+  MACRO( uint8_t, uint, u,  8mf8,  8m1,  64,  8)	\
+  MACRO( uint8_t, uint, u,  8mf4,  8m1,  32,  8)	\
+  MACRO( uint8_t, uint, u,  8mf2,  8m1,  16,  8)	\
   MACRO( uint8_t, uint, u,  8m1,  8m1,  8,  8)	\
   MACRO( uint8_t, uint, u,  8m2,  8m1,  4,  8)	\
   MACRO( uint8_t, uint, u,  8m4,  8m1,  2,  8)	\
   MACRO( uint8_t, uint, u,  8m8,  8m1,  1,  8)	\
+  MACRO(uint16_t, uint, u, 16mf4, 16m1, 64, 16)	\
+  MACRO(uint16_t, uint, u, 16mf2, 16m1, 32, 16)	\
   MACRO(uint16_t, uint, u, 16m1, 16m1, 16, 16)	\
   MACRO(uint16_t, uint, u, 16m2, 16m1,  8, 16)	\
   MACRO(uint16_t, uint, u, 16m4, 16m1,  4, 16)	\
   MACRO(uint16_t, uint, u, 16m8, 16m1,  2, 16)	\
+  MACRO(uint32_t, uint, u, 32mf2, 32m1, 64, 32)	\
   MACRO(uint32_t, uint, u, 32m1, 32m1, 32, 32)	\
   MACRO(uint32_t, uint, u, 32m2, 32m1, 16, 32)	\
   MACRO(uint32_t, uint, u, 32m4, 32m1,  8, 32)	\
@@ -493,14 +678,20 @@
   MACRO(uint64_t, uint, u, 64m8, 64m1,  8, 64)
 
 #define RVV_UINT_REDUC_TEST_ARG(MACRO, ...)		\
+  MACRO( uint8_t, uint, u,  8mf8,  8m1,  64,  8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8mf4,  8m1,  32,  8, __VA_ARGS__)	\
+  MACRO( uint8_t, uint, u,  8mf2,  8m1,  16,  8, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m1,  8m1,  8, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m2,  8m1,  4, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m4,  8m1,  2, __VA_ARGS__)	\
   MACRO( uint8_t, uint, u,  8m8,  8m1,  1, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16mf4, 16m1, 64, 16, __VA_ARGS__)	\
+  MACRO(uint16_t, uint, u, 16mf2, 16m1, 32, 16, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m1, 16m1, 16, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m2, 16m1,  8, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m4, 16m1,  4, __VA_ARGS__)	\
   MACRO(uint16_t, uint, u, 16m8, 16m1,  2, __VA_ARGS__)	\
+  MACRO(uint32_t, uint, u, 32mf2, 32m1, 64, 32, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m1, 32m1, 32, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m2, 32m1, 16, __VA_ARGS__)	\
   MACRO(uint32_t, uint, u, 32m4, 32m1,  8, __VA_ARGS__)	\
@@ -511,33 +702,48 @@
   MACRO(uint64_t, uint, u, 64m8, 64m1,  8, __VA_ARGS__)
 
 #define RVV_WINT_REDUC_TEST(MACRO)		\
+  MACRO( int8_t, int, i,  8mf8,  64, int16_t, 16m1,  8, 16)	\
+  MACRO( int8_t, int, i,  8mf4,  32, int16_t, 16m1,  8, 16)	\
+  MACRO( int8_t, int, i,  8mf2,  16, int16_t, 16m1,  8, 16)	\
   MACRO( int8_t, int, i,  8m1,  8, int16_t, 16m1,  8, 16)	\
   MACRO( int8_t, int, i,  8m2,  4, int16_t, 16m1,  8, 16)	\
   MACRO( int8_t, int, i,  8m4,  2, int16_t, 16m1,  8, 16)	\
+  MACRO(int16_t, int, i, 16mf4, 64, int32_t, 32m1, 16, 32)	\
+  MACRO(int16_t, int, i, 16mf2, 32, int32_t, 32m1, 16, 32)	\
   MACRO(int16_t, int, i, 16m1, 16, int32_t, 32m1, 16, 32)	\
   MACRO(int16_t, int, i, 16m2,  8, int32_t, 32m1, 16, 32)	\
   MACRO(int16_t, int, i, 16m4,  4, int32_t, 32m1, 16, 32)	\
+  MACRO(int32_t, int, i, 32mf2, 64, int64_t, 64m1, 32, 64)	\
   MACRO(int32_t, int, i, 32m1, 32, int64_t, 64m1, 32, 64)	\
   MACRO(int32_t, int, i, 32m2, 16, int64_t, 64m1, 32, 64)	\
   MACRO(int32_t, int, i, 32m4,  8, int64_t, 64m1, 32, 64)
 
 #define RVV_WUINT_REDUC_TEST(MACRO)			\
+  MACRO( uint8_t, uint, u,  8mf8,  64, uint16_t, 16m1,  8, 16)	\
+  MACRO( uint8_t, uint, u,  8mf4,  32, uint16_t, 16m1,  8, 16)	\
+  MACRO( uint8_t, uint, u,  8mf2,  16, uint16_t, 16m1,  8, 16)	\
   MACRO( uint8_t, uint, u,  8m1,  8, uint16_t, 16m1,  8, 16)	\
   MACRO( uint8_t, uint, u,  8m2,  4, uint16_t, 16m1,  8, 16)	\
   MACRO( uint8_t, uint, u,  8m4,  2, uint16_t, 16m1,  8, 16)	\
+  MACRO(uint16_t, uint, u, 16mf4, 64, uint32_t, 32m1, 16, 32)	\
+  MACRO(uint16_t, uint, u, 16mf2, 32, uint32_t, 32m1, 16, 32)	\
   MACRO(uint16_t, uint, u, 16m1, 16, uint32_t, 32m1, 16, 32)	\
   MACRO(uint16_t, uint, u, 16m2,  8, uint32_t, 32m1, 16, 32)	\
   MACRO(uint16_t, uint, u, 16m4,  4, uint32_t, 32m1, 16, 32)	\
+  MACRO(uint32_t, uint, u, 32mf2, 64, uint64_t, 64m1, 32, 64)	\
   MACRO(uint32_t, uint, u, 32m1, 32, uint64_t, 64m1, 32, 64)	\
   MACRO(uint32_t, uint, u, 32m2, 16, uint64_t, 64m1, 32, 64)	\
   MACRO(uint32_t, uint, u, 32m4,  8, uint64_t, 64m1, 32, 64)
 
 
 #define RVV_FLOAT_REDUC_TEST(MACRO)		\
+  MACRO(float16_t, float, f, 16mf4, 16m1, 64, 16)	\
+  MACRO(float16_t, float, f, 16mf2, 16m1, 32, 16)	\
   MACRO(float16_t, float, f, 16m1, 16m1, 16, 16)	\
   MACRO(float16_t, float, f, 16m2, 16m1,  8, 16)	\
   MACRO(float16_t, float, f, 16m4, 16m1,  4, 16)	\
   MACRO(float16_t, float, f, 16m8, 16m1,  2, 16)	\
+  MACRO(    float, float, f, 32mf2, 32m1, 64, 32)	\
   MACRO(    float, float, f, 32m1, 32m1, 32, 32)	\
   MACRO(    float, float, f, 32m2, 32m1, 16, 32)	\
   MACRO(    float, float, f, 32m4, 32m1,  8, 32)	\
@@ -548,9 +754,12 @@
   MACRO(   double, float, f, 64m8, 64m1,  8, 64)
 
 #define RVV_WFLOAT_REDUC_TEST(MACRO)			\
+  MACRO(float16_t, float, f, 16mf4,  64,  float, 32m1, 16, 32)	\
+  MACRO(float16_t, float, f, 16mf2,  32,  float, 32m1, 16, 32)	\
   MACRO(float16_t, float, f, 16m1,  16,  float, 32m1, 16, 32)	\
   MACRO(float16_t, float, f, 16m2,   8,  float, 32m1, 16, 32)	\
   MACRO(float16_t, float, f, 16m4,   4,  float, 32m1, 16, 32)	\
+  MACRO(    float, float, f, 32mf2,  64, double, 64m1, 32, 64)	\
   MACRO(    float, float, f, 32m1,  32, double, 64m1, 32, 64)	\
   MACRO(    float, float, f, 32m2,  16, double, 64m1, 32, 64)	\
   MACRO(    float, float, f, 32m4,   8, double, 64m1, 32, 64)

@@ -60,15 +60,15 @@ RVV_INT_REDUC_TEST(VREDUC)
 RVV_UINT_REDUC_TEST(VREDUCU)
 RVV_FLOAT_REDUC_TEST(VFREDUC)
 
-/* { dg-final { scan-assembler-times "vredsum.vs" 32 } } */
-/* { dg-final { scan-assembler-times "vredmaxu.vs" 16 } } */
-/* { dg-final { scan-assembler-times "vredmax.vs" 16 } } */
-/* { dg-final { scan-assembler-times "vredminu.vs" 16 } } */
-/* { dg-final { scan-assembler-times "vredmin.vs" 16 } } */
-/* { dg-final { scan-assembler-times "vredand.vs" 32 } } */
-/* { dg-final { scan-assembler-times "vredor.vs" 32 } } */
-/* { dg-final { scan-assembler-times "vredxor.vs" 32 } } */
-/* { dg-final { scan-assembler-times "vfredsum.vs" 12 } } */
-/* { dg-final { scan-assembler-times "vfredosum.vs" 12 } } */
-/* { dg-final { scan-assembler-times "vfredmax.vs" 12 } } */
-/* { dg-final { scan-assembler-times "vfredmin.vs" 12 } } */
+/* { dg-final { scan-assembler-times "vredsum.vs" 44 } } */
+/* { dg-final { scan-assembler-times "vredmaxu.vs" 22 } } */
+/* { dg-final { scan-assembler-times "vredmax.vs" 22 } } */
+/* { dg-final { scan-assembler-times "vredminu.vs" 22 } } */
+/* { dg-final { scan-assembler-times "vredmin.vs" 22 } } */
+/* { dg-final { scan-assembler-times "vredand.vs" 44 } } */
+/* { dg-final { scan-assembler-times "vredor.vs" 44 } } */
+/* { dg-final { scan-assembler-times "vredxor.vs" 44 } } */
+/* { dg-final { scan-assembler-times "vfredsum.vs" 15 } } */
+/* { dg-final { scan-assembler-times "vfredosum.vs" 15 } } */
+/* { dg-final { scan-assembler-times "vfredmax.vs" 15 } } */
+/* { dg-final { scan-assembler-times "vfredmin.vs" 15 } } */

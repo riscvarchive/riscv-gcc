@@ -60,15 +60,15 @@ RVV_WUINT_TEST_ARG(VWADDSUBU, wsubu)
 RVV_WFLOAT_TEST_ARG(VWADDSUB, fwadd)
 RVV_WFLOAT_TEST_ARG(VWADDSUB, fwsub)
 
-/* { dg-final { scan-assembler-times "vwadd.wv" 9 } } */
-/* { dg-final { scan-assembler-times "vwaddu.wv" 9 } } */
-/* { dg-final { scan-assembler-times "vwadd.wx" 9 } } */
-/* { dg-final { scan-assembler-times "vwaddu.wx" 9 } } */
-/* { dg-final { scan-assembler-times "vwsub.wv" 9 } } */
-/* { dg-final { scan-assembler-times "vwsubu.wv" 9 } } */
-/* { dg-final { scan-assembler-times "vwsub.wx" 9 } } */
-/* { dg-final { scan-assembler-times "vwsubu.wx" 9 } } */
-/* { dg-final { scan-assembler-times "vfwadd.wv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwadd.wf" 6 } } */
-/* { dg-final { scan-assembler-times "vfwsub.wv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwsub.wf" 6 } } */
+/* { dg-final { scan-assembler-times "vwadd.wv" 15 } } */
+/* { dg-final { scan-assembler-times "vwaddu.wv" 15 } } */
+/* { dg-final { scan-assembler-times "vwadd.wx" 15 } } */
+/* { dg-final { scan-assembler-times "vwaddu.wx" 15 } } */
+/* { dg-final { scan-assembler-times "vwsub.wv" 15 } } */
+/* { dg-final { scan-assembler-times "vwsubu.wv" 15 } } */
+/* { dg-final { scan-assembler-times "vwsub.wx" 15 } } */
+/* { dg-final { scan-assembler-times "vwsubu.wx" 15 } } */
+/* { dg-final { scan-assembler-times "vfwadd.wv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwadd.wf" 9 } } */
+/* { dg-final { scan-assembler-times "vfwsub.wv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwsub.wf" 9 } } */

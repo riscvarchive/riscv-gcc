@@ -43,10 +43,10 @@ RVV_WINT_TEST_ARG(VWMAC,     wmaccu, u, u, u, u, u, u)
 RVV_WINT_TEST_ARG(VWMAC,    wmaccsu, i, i, u,  ,  , u)
 RVV_WINT_TEST_ARG(VWMAC_VX, wmaccus, i, u, i,  , u,  )
 
-/* { dg-final { scan-assembler-times "vwmacc.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwmacc.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwmaccu.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwmaccu.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwmaccsu.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwmaccsu.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwmaccus.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vwmacc.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwmacc.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwmaccu.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwmaccu.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwmaccsu.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwmaccsu.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwmaccus.vx" 15 } } */

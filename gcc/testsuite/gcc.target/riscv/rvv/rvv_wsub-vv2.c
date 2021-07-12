@@ -36,5 +36,5 @@
 RVV_WINT_TEST(VWSUB)
 RVV_WUINT_TEST(VWSUBU)
 
-/* { dg-final { scan-assembler-times "vwsub.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwsubu.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vwsub.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwsubu.vv" 15 } } */

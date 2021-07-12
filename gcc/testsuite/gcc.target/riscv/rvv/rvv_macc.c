@@ -64,10 +64,10 @@ RVV_UINT_TEST_ARG (VINT_MAC_IMM, nmsub)
 RVV_FLOAT_TEST(VMACC)
 RVV_FLOAT_TEST(VMACC_IMM)
 
-/* { dg-final { scan-assembler-times "v(?:macc|madd)\.vv" 64 } } */
-/* { dg-final { scan-assembler-times "v(?:macc|madd)\.vx" 64 } } */
-/* { dg-final { scan-assembler-times "v(?:nmsac|nmsub)\.vv" 64 } } */
-/* { dg-final { scan-assembler-times "v(?:nmsac|nmsub)\.vx" 64 } } */
+/* { dg-final { scan-assembler-times "v(?:macc|madd)\.vv" 88 } } */
+/* { dg-final { scan-assembler-times "v(?:macc|madd)\.vx" 88 } } */
+/* { dg-final { scan-assembler-times "v(?:nmsac|nmsub)\.vv" 88 } } */
+/* { dg-final { scan-assembler-times "v(?:nmsac|nmsub)\.vx" 88 } } */
 
-/* { dg-final { scan-assembler-times "vf(?:macc|madd)\.vv" 24 } } */
+/* { dg-final { scan-assembler-times "vf(?:macc|madd)\.vv" 30 } } */
 /* { dg-final { scan-assembler-times "vf(?:macc|madd)\.vf" 0 } } */

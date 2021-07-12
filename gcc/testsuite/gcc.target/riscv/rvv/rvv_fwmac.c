@@ -39,11 +39,11 @@ RVV_WFLOAT_TEST_ARG(VWMAC, fwnmacc)
 RVV_WFLOAT_TEST_ARG(VWMAC, fwmsac)
 RVV_WFLOAT_TEST_ARG(VWMAC, fwnmsac)
 
-/* { dg-final { scan-assembler-times "vfwmacc.vv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwmacc.vf" 6 } } */
-/* { dg-final { scan-assembler-times "vfwnmacc.vv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwnmacc.vf" 6 } } */
-/* { dg-final { scan-assembler-times "vfwmsac.vv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwmsac.vf" 6 } } */
-/* { dg-final { scan-assembler-times "vfwnmsac.vv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwnmsac.vf" 6 } } */
+/* { dg-final { scan-assembler-times "vfwmacc.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwmacc.vf" 9 } } */
+/* { dg-final { scan-assembler-times "vfwnmacc.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwnmacc.vf" 9 } } */
+/* { dg-final { scan-assembler-times "vfwmsac.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwmsac.vf" 9 } } */
+/* { dg-final { scan-assembler-times "vfwnmsac.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwnmsac.vf" 9 } } */

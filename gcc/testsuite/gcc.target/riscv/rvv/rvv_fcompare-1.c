@@ -33,18 +33,18 @@
   VCOMPARE_VF (STYPE, VCLASST, VCLASS, EM, MLEN, STYPEC, SEW, OP)
 
 RVV_FLOAT_TEST_ARG(TEST_COMPARE, eq)
-/* { dg-final { scan-assembler-times "vmfeq.vv" 12 } } */
-/* { dg-final { scan-assembler-times "vmfeq.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vmfeq.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vmfeq.vf" 15 } } */
 RVV_FLOAT_TEST_ARG(TEST_COMPARE, ne)
-/* { dg-final { scan-assembler-times "vmfne.vv" 12 } } */
-/* { dg-final { scan-assembler-times "vmfne.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vmfne.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vmfne.vf" 15 } } */
 RVV_FLOAT_TEST_ARG(TEST_COMPARE, lt)
-/* { dg-final { scan-assembler-times "vmflt.vv" 12 } } */
-/* { dg-final { scan-assembler-times "vmflt.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vmflt.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vmflt.vf" 15 } } */
 RVV_FLOAT_TEST_ARG(TEST_COMPARE, le)
-/* { dg-final { scan-assembler-times "vmfle.vv" 12 } } */
-/* { dg-final { scan-assembler-times "vmfle.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vmfle.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vmfle.vf" 15 } } */
 RVV_FLOAT_TEST_ARG(VCOMPARE_VF, gt)
-/* { dg-final { scan-assembler-times "vmfgt.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vmfgt.vf" 15 } } */
 RVV_FLOAT_TEST_ARG(VCOMPARE_VF, ge)
-/* { dg-final { scan-assembler-times "vmfge.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vmfge.vf" 15 } } */

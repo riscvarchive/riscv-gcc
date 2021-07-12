@@ -21,7 +21,7 @@ RVV_INT_INDEX_TEST(VSLOADSTORE)
 RVV_UINT_INDEX_TEST(VSLOADSTORE)
 RVV_FLOAT_INDEX_TEST(VSLOADSTORE)
 
-/* { dg-final { scan-assembler-times "vloxei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vloxei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vloxei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vloxei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vloxei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vloxei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vloxei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vloxei64.v" 44 } } */

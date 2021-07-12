@@ -28,9 +28,9 @@ RVV_WINT_EXTEND_TEST(RVV_WFCVT_TEST, ext_vf2)
 RVV_QINT_EXTEND_TEST(RVV_WFCVT_TEST, ext_vf4)
 RVV_EINT_EXTEND_TEST(RVV_WFCVT_TEST, ext_vf8)
 
-/* { dg-final { scan-assembler-times "vsext.vf2" 9 } } */
-/* { dg-final { scan-assembler-times "vzext.vf2" 9 } } */
-/* { dg-final { scan-assembler-times "vsext.vf4" 4 } } */
-/* { dg-final { scan-assembler-times "vzext.vf4" 4 } } */
+/* { dg-final { scan-assembler-times "vsext.vf2" 15 } } */
+/* { dg-final { scan-assembler-times "vzext.vf2" 15 } } */
+/* { dg-final { scan-assembler-times "vsext.vf4" 9 } } */
+/* { dg-final { scan-assembler-times "vzext.vf4" 9 } } */
 /* { dg-final { scan-assembler "vsext.vf8"} } */
 /* { dg-final { scan-assembler "vzext.vf8"} } */

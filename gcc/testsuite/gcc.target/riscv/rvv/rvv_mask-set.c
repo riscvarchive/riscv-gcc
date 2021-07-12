@@ -20,4 +20,4 @@
 
 RVV_INT_TEST(VSET)
 
-/* { dg-final { scan-assembler-times "vmset.m" 16 } } */
+/* { dg-final { scan-assembler-times "vmset.m" 22 } } */

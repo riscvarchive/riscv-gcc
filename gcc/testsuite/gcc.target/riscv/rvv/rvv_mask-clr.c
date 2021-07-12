@@ -20,4 +20,4 @@
 
 RVV_INT_TEST(VCLR)
 
-/* { dg-final { scan-assembler-times "vmclr.m" 16 } } */
+/* { dg-final { scan-assembler-times "vmclr.m" 22 } } */

@@ -68,7 +68,7 @@ RVV_INT_TEST(RVV_INT_MERGE_TEST)
 RVV_UINT_TEST(RVV_INT_MERGE_TEST)
 RVV_FLOAT_TEST(RVV_FLOAT_MERGE_TEST)
 
-/* { dg-final { scan-assembler-times "vmerge.vvm" 32 } } */
-/* { dg-final { scan-assembler-times "vmerge.vxm" 32 } } */
-/* { dg-final { scan-assembler-times "vmerge.vim" 32 } } */
-/* { dg-final { scan-assembler-times "vfmerge.vfm" 24 } } */
+/* { dg-final { scan-assembler-times "vmerge.vvm" 44 } } */
+/* { dg-final { scan-assembler-times "vmerge.vxm" 44 } } */
+/* { dg-final { scan-assembler-times "vmerge.vim" 44 } } */
+/* { dg-final { scan-assembler-times "vfmerge.vfm" 30 } } */

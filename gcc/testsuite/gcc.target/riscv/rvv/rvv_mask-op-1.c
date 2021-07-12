@@ -75,12 +75,12 @@ RVV_INT_TEST_ARG(VMNBIN, mornot)
 /* XXX: vmnot can't generate by oprator now, GCC will ICE.  */
 RVV_INT_TEST(VMNOT)
 
-/* { dg-final { scan-assembler-times "vmand.mm" 32 } } */
-/* { dg-final { scan-assembler-times "vmor.mm" 32 } } */
-/* { dg-final { scan-assembler-times "vmxor.mm" 32 } } */
-/* { dg-final { scan-assembler-times "vmnand.mm" 16 } } */
-/* { dg-final { scan-assembler-times "vmnor.mm" 16 } } */
-/* { dg-final { scan-assembler-times "vmxnor.mm" 16 } } */
-/* { dg-final { scan-assembler-times "vmandnot.mm" 16 } } */
-/* { dg-final { scan-assembler-times "vmornot.mm" 16 } } */
-/* { dg-final { scan-assembler-times "vmnot.m" 16 } } */
+/* { dg-final { scan-assembler-times "vmand.mm" 44 } } */
+/* { dg-final { scan-assembler-times "vmor.mm" 44 } } */
+/* { dg-final { scan-assembler-times "vmxor.mm" 44 } } */
+/* { dg-final { scan-assembler-times "vmnand.mm" 22 } } */
+/* { dg-final { scan-assembler-times "vmnor.mm" 22 } } */
+/* { dg-final { scan-assembler-times "vmxnor.mm" 22 } } */
+/* { dg-final { scan-assembler-times "vmandnot.mm" 22 } } */
+/* { dg-final { scan-assembler-times "vmornot.mm" 22 } } */
+/* { dg-final { scan-assembler-times "vmnot.m" 22 } } */

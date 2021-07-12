@@ -43,8 +43,8 @@
 RVV_INT_TEST_ARG(VADCSBC, madc)
 RVV_INT_TEST_ARG(VADCSBC, msbc)
 
-/* { dg-final { scan-assembler-times "vmadc.vvm" 16 } } */
-/* { dg-final { scan-assembler-times "vmadc.vxm" 16 } } */
-/* { dg-final { scan-assembler-times "vmadc.vim" 16 } } */
-/* { dg-final { scan-assembler-times "vmsbc.vvm" 16 } } */
-/* { dg-final { scan-assembler-times "vmsbc.vxm" 32 } } */
+/* { dg-final { scan-assembler-times "vmadc.vvm" 22 } } */
+/* { dg-final { scan-assembler-times "vmadc.vxm" 22 } } */
+/* { dg-final { scan-assembler-times "vmadc.vim" 22 } } */
+/* { dg-final { scan-assembler-times "vmsbc.vvm" 22 } } */
+/* { dg-final { scan-assembler-times "vmsbc.vxm" 44 } } */

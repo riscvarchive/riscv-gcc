@@ -27,16 +27,16 @@
   }								\
 
 RVV_INT_TEST(RVV_MULHSU_TEST)
-/* { dg-final { scan-assembler-times "vmulhsu.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmulhsu.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vmulhsu.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vmulhsu.vx" 22 } } */
 
 RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, mulh)
 RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, mulhu)
 RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_TEST, smul)
 
-/* { dg-final { scan-assembler-times "vmulh.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmulh.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vmulhu.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmulhu.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vsmul.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vsmul.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vmulh.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vmulh.vx" 22 } } */
+/* { dg-final { scan-assembler-times "vmulhu.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vmulhu.vx" 22 } } */
+/* { dg-final { scan-assembler-times "vsmul.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vsmul.vx" 22 } } */

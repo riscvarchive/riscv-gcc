@@ -20,4 +20,4 @@ RVV_INT_TEST (RVV_TEST_COMPRESS)
 RVV_UINT_TEST (RVV_TEST_COMPRESS)
 RVV_FLOAT_TEST (RVV_TEST_COMPRESS)
 
-/* { dg-final { scan-assembler-times "vcompress.vm" 44 } } */
+/* { dg-final { scan-assembler-times "vcompress.vm" 59 } } */

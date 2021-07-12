@@ -64,9 +64,9 @@
 
 RVV_FLOAT_CVT_INT_TEST(RVV_FCVT_TEST)
 
-/* { dg-final { scan-assembler-times "vfcvt.xu.f.v" 12 } } */
-/* { dg-final { scan-assembler-times "vfcvt.x.f.v" 12 } } */
-/* { dg-final { scan-assembler-times "vfcvt.rtz.xu.f.v" 12 } } */
-/* { dg-final { scan-assembler-times "vfcvt.rtz.x.f.v" 12 } } */
-/* { dg-final { scan-assembler-times "vfcvt.f.xu.v" 12 } } */
-/* { dg-final { scan-assembler-times "vfcvt.f.x.v" 12 } } */
+/* { dg-final { scan-assembler-times "vfcvt.xu.f.v" 15 } } */
+/* { dg-final { scan-assembler-times "vfcvt.x.f.v" 15 } } */
+/* { dg-final { scan-assembler-times "vfcvt.rtz.xu.f.v" 15 } } */
+/* { dg-final { scan-assembler-times "vfcvt.rtz.x.f.v" 15 } } */
+/* { dg-final { scan-assembler-times "vfcvt.f.xu.v" 15 } } */
+/* { dg-final { scan-assembler-times "vfcvt.f.x.v" 15 } } */

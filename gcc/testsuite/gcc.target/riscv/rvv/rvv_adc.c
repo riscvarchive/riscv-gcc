@@ -19,4 +19,4 @@
 
 RVV_INT_TEST(VADC)
 
-/* { dg-final { scan-assembler-times "vadc.vv" 16 } } */
+/* { dg-final { scan-assembler-times "vadc.vv" 22 } } */

@@ -41,7 +41,7 @@ RVV_WINT_REDUC_TEST(VWREDUC)
 RVV_WUINT_REDUC_TEST(VWREDUCU)
 RVV_WFLOAT_REDUC_TEST(VFWREDUC)
 
-/* { dg-final { scan-assembler-times "vwredsum.vs" 9 } } */
-/* { dg-final { scan-assembler-times "vwredsumu.vs" 9 } } */
-/* { dg-final { scan-assembler-times "vfwredsum.vs" 6 } } */
-/* { dg-final { scan-assembler-times "vfwredosum.vs" 6 } } */
+/* { dg-final { scan-assembler-times "vwredsum.vs" 15 } } */
+/* { dg-final { scan-assembler-times "vwredsumu.vs" 15 } } */
+/* { dg-final { scan-assembler-times "vfwredsum.vs" 9 } } */
+/* { dg-final { scan-assembler-times "vfwredosum.vs" 9 } } */
