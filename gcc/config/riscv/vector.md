@@ -546,9 +546,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_64BIT && TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_64BIT && TARGET_VECTOR"
 {
 })
 
@@ -565,9 +563,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vloxei<VIMODES:sew>.v\t%0,(%1),%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -587,9 +583,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_64BIT && TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_64BIT && TARGET_VECTOR"
 {
 })
 
@@ -607,9 +601,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vloxei<VIMODES:sew>.v\t%0,(%1),%2,%5.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -628,9 +620,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -645,9 +635,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vloxei<VIMODES:sew>.v\t%0,(%1),%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -666,9 +654,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -685,9 +671,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vloxei<VIMODES:sew>.v\t%0,(%3),%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -704,9 +688,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -721,9 +703,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vluxei<VIMODES:sew>.v\t%0,(%1),%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -742,9 +722,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -761,9 +739,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vluxei<VIMODES:sew>.v\t%0,(%3),%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -785,9 +761,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_64BIT && TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_64BIT && TARGET_VECTOR"
 {
 })
 
@@ -804,9 +778,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vsoxei<VIMODES:sew>.v\t%4,(%0),%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -826,9 +798,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_64BIT && TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_64BIT && TARGET_VECTOR"
 {
 })
 
@@ -846,9 +816,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vsoxei<VIMODES:sew>.v\t%4,(%0),%1,%5.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -867,9 +835,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -884,9 +850,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vs<order>xei<VIMODES:sew>.v\t%2,(%0),%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -904,9 +868,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -922,9 +884,7 @@
 	   (reg:SI VL_REGNUM)]
 	  UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vs<order>xei<VIMODES:sew>.v\t%3,(%1),%2,%0.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -971,9 +931,9 @@
 	 UNSPEC_USEVL))]
   "TARGET_VECTOR"
   "@
-   vmv<lmul>r.v\t%0,%1
-   vl<lmul>r.v\t%0,%1
-   vs<lmul>r.v\t%1,%0"
+   vmv<xlmul>r.v\t%0,%1
+   vl<xlmul>r.v\t%0,%1
+   vs<xlmul>r.v\t%1,%0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
@@ -3236,59 +3196,59 @@
 
 ;;Vector Eighth Sign-extend and Zero-extend
 
-(define_expand "<sz_op>extendvnx16qivnx16di2"
-  [(set (reg:VNx16DI VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_operand:VNx16DI 0 "register_operand")
-		   (unspec:VNx16DI
-		     [(any_extend:VNx16DI
-			(match_operand:VNx16QI 1 "register_operand"))
+(define_expand "<sz_op>extend<mode><vewmode>2"
+  [(set (reg:<VEWVLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VEWMODE> 0 "register_operand")
+		   (unspec:<VEWMODE>
+		     [(any_extend:<VEWMODE>
+			(match_operand:VEWIMODES 1 "register_operand"))
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
-	      (use (reg:VNx16DI VTYPE_REGNUM))])]
+	      (use (reg:<VEWVLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
 })
 
-(define_insn "*<sz_op>extendvnx16qivnx16di2_nosetvl"
-  [(set (match_operand:VNx16DI 0 "register_operand" "=&vr")
-	(unspec:VNx16DI
-	  [(any_extend:VNx16DI
-	     (match_operand:VNx16QI 1 "register_operand" "vr"))
+(define_insn "*<sz_op>extend<mode><vewmode>2_nosetvl"
+  [(set (match_operand:<VEWMODE> 0 "register_operand" "=&vr")
+	(unspec:<VEWMODE>
+	  [(any_extend:<VEWMODE>
+	     (match_operand:VEWIMODES 1 "register_operand" "vr"))
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
-   (use (reg:VNx16DI VTYPE_REGNUM))]
+   (use (reg:<VEWVLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "v<sz>ext.vf8\t%0,%1"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "<sz_op>extendvnx16qivnx16di2_mask"
-  [(set (reg:VNx16DI VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (parallel [(set (match_operand:VNx16DI 0 "register_operand")
-		   (unspec:VNx16DI
-		     [(if_then_else:VNx16DI
-			(match_operand:VNx16BI 1 "register_operand")
-			(any_extend:VNx16DI
-			  (match_operand:VNx16QI 3 "register_operand"))
-			(match_operand:VNx16DI 2 "register_operand"))
+(define_expand "<sz_op>extend<mode><vewmode>2_mask"
+  [(set (reg:<VEWVLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (parallel [(set (match_operand:<VEWMODE> 0 "register_operand")
+		   (unspec:<VEWMODE>
+		     [(if_then_else:<VEWMODE>
+			(match_operand:<VCMPEQUIV> 1 "register_operand")
+			(any_extend:<VEWMODE>
+			  (match_operand:VEWIMODES 3 "register_operand"))
+			(match_operand:<VEWMODE> 2 "register_operand"))
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
-	      (use (reg:VNx16DI VTYPE_REGNUM))])]
+	      (use (reg:<VEWVLMODE> VTYPE_REGNUM))])]
   "TARGET_VECTOR"
 {
 })
 
-(define_insn "*<sz_op>extendvnx16qivnx16di2_mask_nosetvl"
-  [(set (match_operand:VNx16DI 0 "register_operand" "=vr")
-	(unspec:VNx16DI
-	  [(if_then_else:VNx16DI
-	     (match_operand:VNx16BI 1 "register_operand" "vm")
-	     (any_extend:VNx16DI
-	       (match_operand:VNx16QI 3 "register_operand" "vr"))
-	     (match_operand:VNx16DI 2 "register_operand" "0"))
+(define_insn "*<sz_op>extend<mode><vewmode>2_mask_nosetvl"
+  [(set (match_operand:<VEWMODE> 0 "register_operand" "=vr")
+	(unspec:<VEWMODE>
+	  [(if_then_else:<VEWMODE>
+	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
+	     (any_extend:<VEWMODE>
+	       (match_operand:VEWIMODES 3 "register_operand" "vr"))
+	     (match_operand:<VEWMODE> 2 "register_operand" "0"))
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
-   (use (reg:VNx16DI VTYPE_REGNUM))]
+   (use (reg:<VEWVLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "v<sz>ext.vf8\t%0,%3,%1.t"
   [(set_attr "type" "vector")
@@ -9786,9 +9746,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vrgatherei<VIMODES:sew>.vv\t%0,%1,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -9807,9 +9765,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -9826,9 +9782,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "vrgatherei<VIMODES:sew>.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -10440,9 +10394,7 @@
 		      (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -10458,9 +10410,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "<vamo><VIMODES:sew>.v\t%0,(%1),%2,%0"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
@@ -10479,9 +10429,7 @@
 		     (reg:SI VL_REGNUM)]
 		    UNSPEC_USEVL))
 	      (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))])]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
 {
 })
 
@@ -10498,9 +10446,7 @@
 	   (reg:SI VL_REGNUM)]
 	 UNSPEC_USEVL))
    (use (reg:<VMODES:VLMODE> VTYPE_REGNUM))]
-  "TARGET_VECTOR
-   && known_eq (GET_MODE_NUNITS (<VMODES:MODE>mode),
-		GET_MODE_NUNITS (<VIMODES:MODE>mode))"
+  "TARGET_VECTOR"
   "<vamo><VIMODES:sew>.v\t%0,(%2),%3,%0,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
