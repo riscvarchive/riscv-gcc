@@ -7,6 +7,6 @@
 RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_IMM_MASKED_TEST, xor)
 RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_IMM_MASKED_TEST, xor)
 
-/* { dg-final { scan-assembler-times "vxor.vv" 32 } } */
-/* { dg-final { scan-assembler-times "vxor.vx" 32 } } */
-/* { dg-final { scan-assembler-times "vxor.vi" 32 } } */
+/* { dg-final { scan-assembler-times "vxor.vv" 44 } } */
+/* { dg-final { scan-assembler-times "vxor.vx" 44 } } */
+/* { dg-final { scan-assembler-times "vxor.vi" 44 } } */

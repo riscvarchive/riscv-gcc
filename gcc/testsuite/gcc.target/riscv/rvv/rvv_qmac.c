@@ -43,10 +43,10 @@ RVV_QINT_TEST_ARG(VWMAC,     qmaccu, u, u, u, u, u, u)
 RVV_QINT_TEST_ARG(VWMAC,    qmaccsu, i, i, u,  ,  , u)
 RVV_QINT_TEST_ARG(VWMAC_VX, qmaccus, i, u, i,  , u,  )
 
-/* { dg-final { scan-assembler-times "vqmacc.vv" 4 } } */
-/* { dg-final { scan-assembler-times "vqmacc.vx" 4 } } */
-/* { dg-final { scan-assembler-times "vqmaccu.vv" 4 } } */
-/* { dg-final { scan-assembler-times "vqmaccu.vx" 4 } } */
-/* { dg-final { scan-assembler-times "vqmaccsu.vv" 4 } } */
-/* { dg-final { scan-assembler-times "vqmaccsu.vx" 4 } } */
-/* { dg-final { scan-assembler-times "vqmaccus.vx" 4 } } */
+/* { dg-final { scan-assembler-times "vqmacc.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vqmacc.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vqmaccu.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vqmaccu.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vqmaccsu.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vqmaccsu.vx" 9 } } */
+/* { dg-final { scan-assembler-times "vqmaccus.vx" 9 } } */

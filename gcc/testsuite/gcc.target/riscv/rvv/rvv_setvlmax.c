@@ -13,4 +13,4 @@
 
 RVV_INT_REDUC_TEST(VSETVLMAX)
 
-/* { dg-final { scan-assembler-times "vsetvli" 16 } } */
+/* { dg-final { scan-assembler-times "vsetvli" 22 } } */

@@ -9,11 +9,11 @@ RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, minu)
 RVV_INT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, max)
 RVV_UINT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, maxu)
 
-/* { dg-final { scan-assembler-times "vmin.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmin.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vmax.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmax.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vminu.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vminu.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vmaxu.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vmaxu.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vmin.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vmin.vx" 22 } } */
+/* { dg-final { scan-assembler-times "vmax.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vmax.vx" 22 } } */
+/* { dg-final { scan-assembler-times "vminu.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vminu.vx" 22 } } */
+/* { dg-final { scan-assembler-times "vmaxu.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vmaxu.vx" 22 } } */

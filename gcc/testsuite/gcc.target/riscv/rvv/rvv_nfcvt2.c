@@ -105,11 +105,11 @@
 
 RVV_FLOAT_WNCVT_INT_TEST(RVV_NFCVT_TEST)
 
-/* { dg-final { scan-assembler-times "vfncvt.xu.f.w" 6 } } */
-/* { dg-final { scan-assembler-times "vfncvt.x.f.w" 6 } } */
-/* { dg-final { scan-assembler-times "vfncvt.rtz.xu.f.w" 6 } } */
-/* { dg-final { scan-assembler-times "vfncvt.rtz.x.f.w" 6 } } */
-/* { dg-final { scan-assembler-times "vfncvt.f.xu.w" 6 } } */
-/* { dg-final { scan-assembler-times "vfncvt.f.x.w" 6 } } */
-/* { dg-final { scan-assembler-times "vfncvt.f.f.w" 6 } } */
-/* { dg-final { scan-assembler-times "vfncvt.rod.f.f.w" 6 } } */
+/* { dg-final { scan-assembler-times "vfncvt.xu.f.w" 9 } } */
+/* { dg-final { scan-assembler-times "vfncvt.x.f.w" 9 } } */
+/* { dg-final { scan-assembler-times "vfncvt.rtz.xu.f.w" 9 } } */
+/* { dg-final { scan-assembler-times "vfncvt.rtz.x.f.w" 9 } } */
+/* { dg-final { scan-assembler-times "vfncvt.f.xu.w" 9 } } */
+/* { dg-final { scan-assembler-times "vfncvt.f.x.w" 9 } } */
+/* { dg-final { scan-assembler-times "vfncvt.f.f.w" 9 } } */
+/* { dg-final { scan-assembler-times "vfncvt.rod.f.f.w" 9 } } */

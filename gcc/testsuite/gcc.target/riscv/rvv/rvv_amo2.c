@@ -58,47 +58,47 @@ RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, maxe)
 RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, minue)
 RVV_FLOAT_INDEX_TEST_ARG (RVV_TEST_FAMO, maxue)
 
-/* { dg-final { scan-assembler-times "vamoswapei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamoswapei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamoswapei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamoswapei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamoswapei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamoswapei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamoswapei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamoswapei64.v" 44 } } */
 
-/* { dg-final { scan-assembler-times "vamoaddei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamoaddei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamoaddei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamoaddei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamoaddei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamoaddei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamoaddei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamoaddei64.v" 44 } } */
 
-/* { dg-final { scan-assembler-times "vamoxorei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamoxorei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamoxorei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamoxorei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamoxorei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamoxorei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamoxorei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamoxorei64.v" 44 } } */
 
-/* { dg-final { scan-assembler-times "vamoorei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamoorei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamoorei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamoorei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamoorei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamoorei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamoorei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamoorei64.v" 44 } } */
 
-/* { dg-final { scan-assembler-times "vamoandei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamoandei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamoandei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamoandei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamoandei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamoandei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamoandei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamoandei64.v" 44 } } */
 
-/* { dg-final { scan-assembler-times "vamominei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamominei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamominei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamominei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamominei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamominei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamominei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamominei64.v" 44 } } */
 
-/* { dg-final { scan-assembler-times "vamominuei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamominuei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamominuei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamominuei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamominuei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamominuei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamominuei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamominuei64.v" 44 } } */
 
-/* { dg-final { scan-assembler-times "vamomaxei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamomaxei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamomaxei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamomaxei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamomaxei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamomaxei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamomaxei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamomaxei64.v" 44 } } */
 
-/* { dg-final { scan-assembler-times "vamomaxuei8.v" 20 } } */
-/* { dg-final { scan-assembler-times "vamomaxuei16.v" 33 } } */
-/* { dg-final { scan-assembler-times "vamomaxuei32.v" 34 } } */
-/* { dg-final { scan-assembler-times "vamomaxuei64.v" 29 } } */
+/* { dg-final { scan-assembler-times "vamomaxuei8.v" 26 } } */
+/* { dg-final { scan-assembler-times "vamomaxuei16.v" 45 } } */
+/* { dg-final { scan-assembler-times "vamomaxuei32.v" 49 } } */
+/* { dg-final { scan-assembler-times "vamomaxuei64.v" 44 } } */

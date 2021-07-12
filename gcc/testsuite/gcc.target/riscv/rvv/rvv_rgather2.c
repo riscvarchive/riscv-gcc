@@ -107,6 +107,6 @@
 RVV_INT_TEST (RVV_TEST_RGATHER)
 RVV_FLOAT_INT_TEST (RVV_TEST_FLOAT_RGATHER)
 
-/* { dg-final { scan-assembler-times "vrgather.vv" 44 } } */
-/* { dg-final { scan-assembler-times "vrgather.vx" 44 } } */
-/* { dg-final { scan-assembler-times "vrgather.vi" 44 } } */
+/* { dg-final { scan-assembler-times "vrgather.vv" 59 } } */
+/* { dg-final { scan-assembler-times "vrgather.vx" 59 } } */
+/* { dg-final { scan-assembler-times "vrgather.vi" 59 } } */

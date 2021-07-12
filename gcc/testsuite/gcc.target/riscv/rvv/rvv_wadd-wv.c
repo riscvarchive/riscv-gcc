@@ -30,5 +30,5 @@
 RVV_WINT_TEST(VWADD)
 RVV_WUINT_TEST(VWADDU)
 
-/* { dg-final { scan-assembler-times "vwadd.wv" 9 } } */
-/* { dg-final { scan-assembler-times "vwaddu.wv" 9 } } */
+/* { dg-final { scan-assembler-times "vwadd.wv" 15 } } */
+/* { dg-final { scan-assembler-times "vwaddu.wv" 15 } } */

@@ -21,7 +21,7 @@
 /* XXX: integer intrinsics have not finished */
 RVV_FLOAT_TEST(VMAXMIN)
 
-/* { dg-final { scan-assembler-times "vfmax.vv" 12 } } */
-/* { dg-final { scan-assembler-times "vfmax.vf" 12 } } */
-/* { dg-final { scan-assembler-times "vfmin.vv" 12 } } */
-/* { dg-final { scan-assembler-times "vfmin.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vfmax.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vfmax.vf" 15 } } */
+/* { dg-final { scan-assembler-times "vfmin.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vfmin.vf" 15 } } */

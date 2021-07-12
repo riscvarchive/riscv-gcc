@@ -11,13 +11,13 @@ RVV_UINT_TEST_ARG(RVV_SHIFT_VEC_SCALAR_MASKED_TEST, srl)
 RVV_INT_TEST_ARG(RVV_SHIFT_VEC_SCALAR_MASKED_TEST, ssra)
 RVV_UINT_TEST_ARG(RVV_SHIFT_VEC_SCALAR_MASKED_TEST, ssrl)
 
-/* { dg-final { scan-assembler-times "vsll.vv" 32 } } */
-/* { dg-final { scan-assembler-times "vsll.vx" 32 } } */
-/* { dg-final { scan-assembler-times "vsra.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vsra.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vsrl.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vsrl.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vssra.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vssra.vx" 16 } } */
-/* { dg-final { scan-assembler-times "vssrl.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vssrl.vx" 16 } } */
+/* { dg-final { scan-assembler-times "vsll.vv" 44 } } */
+/* { dg-final { scan-assembler-times "vsll.vx" 44 } } */
+/* { dg-final { scan-assembler-times "vsra.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vsra.vx" 22 } } */
+/* { dg-final { scan-assembler-times "vsrl.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vsrl.vx" 22 } } */
+/* { dg-final { scan-assembler-times "vssra.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vssra.vx" 22 } } */
+/* { dg-final { scan-assembler-times "vssrl.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vssrl.vx" 22 } } */

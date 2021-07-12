@@ -70,11 +70,11 @@ RVV_INT_TEST (RVV_TEST_SLIDEUPDOWN)
 RVV_UINT_TEST (RVV_TEST_SLIDEUPDOWN)
 RVV_FLOAT_TEST (RVV_TEST_SLIDEUPDOWN)
 
-/* { dg-final { scan-assembler-times "vslideup.vx" 44 } } */
-/* { dg-final { scan-assembler-times "vslideup.vi" 44 } } */
-/* { dg-final { scan-assembler-times "vslidedown.vx" 44 } } */
-/* { dg-final { scan-assembler-times "vslidedown.vi" 44 } } */
-/* { dg-final { scan-assembler-times "vslide1up.vx" 32 } } */
-/* { dg-final { scan-assembler-times "vslide1down.vx" 32 } } */
-/* { dg-final { scan-assembler-times "vfslide1up.vf" 12 } } */
-/* { dg-final { scan-assembler-times "vfslide1down.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vslideup.vx" 59 } } */
+/* { dg-final { scan-assembler-times "vslideup.vi" 59 } } */
+/* { dg-final { scan-assembler-times "vslidedown.vx" 59 } } */
+/* { dg-final { scan-assembler-times "vslidedown.vi" 59 } } */
+/* { dg-final { scan-assembler-times "vslide1up.vx" 44 } } */
+/* { dg-final { scan-assembler-times "vslide1down.vx" 44 } } */
+/* { dg-final { scan-assembler-times "vfslide1up.vf" 15 } } */
+/* { dg-final { scan-assembler-times "vfslide1down.vf" 15 } } */

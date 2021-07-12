@@ -22,10 +22,10 @@ RVV_FLOAT_TEST_ARG(RVV_BIN_BUILTIN_VEC_SCALAR_MASKED_TEST, fdiv)
 RVV_FLOAT_TEST(VRDIV)
 
 
-/* { dg-final { scan-assembler-times "vdiv.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vdiv.vx" 32 } } */
-/* { dg-final { scan-assembler-times "vdivu.vv" 16 } } */
-/* { dg-final { scan-assembler-times "vdivu.vx" 32 } } */
-/* { dg-final { scan-assembler-times "vfdiv.vv" 12 } } */
-/* { dg-final { scan-assembler-times "vfdiv.vf" 12 } } */
-/* { dg-final { scan-assembler-times "vfrdiv.vf" 12 } } */
+/* { dg-final { scan-assembler-times "vdiv.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vdiv.vx" 44 } } */
+/* { dg-final { scan-assembler-times "vdivu.vv" 22 } } */
+/* { dg-final { scan-assembler-times "vdivu.vx" 44 } } */
+/* { dg-final { scan-assembler-times "vfdiv.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vfdiv.vf" 15 } } */
+/* { dg-final { scan-assembler-times "vfrdiv.vf" 15 } } */

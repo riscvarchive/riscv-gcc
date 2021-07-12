@@ -71,23 +71,23 @@ RVV_WFLOAT_TEST_ARG(VWADDSUB, fwadd)
 RVV_WFLOAT_TEST_ARG(VWADDSUB, fwsub)
 RVV_WFLOAT_TEST_ARG(VWADDSUB, fwmul)
 
-/* { dg-final { scan-assembler-times "vwadd.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwaddu.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwadd.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwaddu.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwsub.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwsubu.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwsub.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwsubu.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwmul.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwmulu.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwmul.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwmulu.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vwmulsu.vv" 9 } } */
-/* { dg-final { scan-assembler-times "vwmulsu.vx" 9 } } */
-/* { dg-final { scan-assembler-times "vfwadd.vv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwadd.vf" 6 } } */
-/* { dg-final { scan-assembler-times "vfwsub.vv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwsub.vf" 6 } } */
-/* { dg-final { scan-assembler-times "vfwmul.vv" 6 } } */
-/* { dg-final { scan-assembler-times "vfwmul.vf" 6 } } */
+/* { dg-final { scan-assembler-times "vwadd.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwaddu.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwadd.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwaddu.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwsub.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwsubu.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwsub.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwsubu.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwmul.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwmulu.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwmul.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwmulu.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vwmulsu.vv" 15 } } */
+/* { dg-final { scan-assembler-times "vwmulsu.vx" 15 } } */
+/* { dg-final { scan-assembler-times "vfwadd.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwadd.vf" 9 } } */
+/* { dg-final { scan-assembler-times "vfwsub.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwsub.vf" 9 } } */
+/* { dg-final { scan-assembler-times "vfwmul.vv" 9 } } */
+/* { dg-final { scan-assembler-times "vfwmul.vf" 9 } } */

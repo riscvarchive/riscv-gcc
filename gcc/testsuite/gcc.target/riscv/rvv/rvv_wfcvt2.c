@@ -94,10 +94,10 @@
 
 RVV_FLOAT_WNCVT_INT_TEST(RVV_WFCVT_TEST)
 
-/* { dg-final { scan-assembler-times "vfwcvt.xu.f.v" 6 } } */
-/* { dg-final { scan-assembler-times "vfwcvt.x.f.v" 6 } } */
-/* { dg-final { scan-assembler-times "vfwcvt.rtz.xu.f.v" 6 } } */
-/* { dg-final { scan-assembler-times "vfwcvt.rtz.x.f.v" 6 } } */
-/* { dg-final { scan-assembler-times "vfwcvt.f.xu.v" 6 } } */
-/* { dg-final { scan-assembler-times "vfwcvt.f.x.v" 6 } } */
-/* { dg-final { scan-assembler-times "vfwcvt.f.f.v" 6 } } */
+/* { dg-final { scan-assembler-times "vfwcvt.xu.f.v" 9 } } */
+/* { dg-final { scan-assembler-times "vfwcvt.x.f.v" 9 } } */
+/* { dg-final { scan-assembler-times "vfwcvt.rtz.xu.f.v" 9 } } */
+/* { dg-final { scan-assembler-times "vfwcvt.rtz.x.f.v" 9 } } */
+/* { dg-final { scan-assembler-times "vfwcvt.f.xu.v" 9 } } */
+/* { dg-final { scan-assembler-times "vfwcvt.f.x.v" 9 } } */
+/* { dg-final { scan-assembler-times "vfwcvt.f.f.v" 9 } } */

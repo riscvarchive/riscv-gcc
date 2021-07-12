@@ -22,7 +22,7 @@ RVV_INT_TEST(VSLOADSTORE)
 RVV_UINT_TEST(VSLOADSTORE)
 RVV_FLOAT_TEST(VSLOADSTORE)
 
-/* { dg-final { scan-assembler-times "vle8.v" 16 } } */
-/* { dg-final { scan-assembler-times "vle16.v" 24 } } */
-/* { dg-final { scan-assembler-times "vle32.v" 24 } } */
+/* { dg-final { scan-assembler-times "vle8.v" 28 } } */
+/* { dg-final { scan-assembler-times "vle16.v" 36 } } */
+/* { dg-final { scan-assembler-times "vle32.v" 30 } } */
 /* { dg-final { scan-assembler-times "vle64.v" 24 } } */

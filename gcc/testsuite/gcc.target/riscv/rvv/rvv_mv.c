@@ -36,7 +36,7 @@ RVV_UINT_TEST (RVV_TEST_MV_SV_VS)
 
 RVV_FLOAT_TEST (RVV_TEST_FMV_SV_VS)
 
-/* { dg-final { scan-assembler-times "vmv.s.x" 32 } } */
-/* { dg-final { scan-assembler-times "vmv.x.s" 32 } } */
-/* { dg-final { scan-assembler-times "vfmv.f.s" 12 } } */
-/* { dg-final { scan-assembler-times "vfmv.s.f" 12 } } */
+/* { dg-final { scan-assembler-times "vmv.s.x" 44 } } */
+/* { dg-final { scan-assembler-times "vmv.x.s" 44 } } */
+/* { dg-final { scan-assembler-times "vfmv.f.s" 15 } } */
+/* { dg-final { scan-assembler-times "vfmv.s.f" 15 } } */
