@@ -51,6 +51,39 @@ ADJUST_FLOAT_FORMAT (HF, &ieee_half_format);
   ADJUST_ALIGNMENT (VS##SF, 4); \
   ADJUST_ALIGNMENT (VD##DF, 8);
 
+#define RVV_FRACTIONAL_VBHS(NVECS, VB, VH, VS) \
+  VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 / NVECS, 0); \
+  VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 16 / NVECS, 0); \
+  \
+  ADJUST_NUNITS (VB##QI, riscv_rvv_chunks * 8); \
+  ADJUST_NUNITS (VH##HI, riscv_rvv_chunks * 4); \
+  ADJUST_NUNITS (VS##SI, riscv_rvv_chunks * 2); \
+  ADJUST_NUNITS (VH##HF, riscv_rvv_chunks * 4); \
+  ADJUST_NUNITS (VS##SF, riscv_rvv_chunks * 2); \
+  \
+  ADJUST_ALIGNMENT (VB##QI, 1); \
+  ADJUST_ALIGNMENT (VH##HI, 2); \
+  ADJUST_ALIGNMENT (VS##SI, 4); \
+  ADJUST_ALIGNMENT (VH##HF, 2); \
+  ADJUST_ALIGNMENT (VS##SF, 4);
+
+#define RVV_FRACTIONAL_VBH(NVECS, VB, VH) \
+  VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 / NVECS, 0); \
+  VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 16 / NVECS, 0); \
+  \
+  ADJUST_NUNITS (VB##QI, riscv_rvv_chunks * 8); \
+  ADJUST_NUNITS (VH##HI, riscv_rvv_chunks * 4); \
+  ADJUST_NUNITS (VH##HF, riscv_rvv_chunks * 4); \
+  \
+  ADJUST_ALIGNMENT (VB##QI, 1); \
+  ADJUST_ALIGNMENT (VH##HI, 2); \
+  ADJUST_ALIGNMENT (VH##HF, 2);
+
+#define RVV_FRACTIONAL_VB(NVECS, VB) \
+  VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 / NVECS, 0); \
+  ADJUST_NUNITS (VB##QI, riscv_rvv_chunks * 8); \
+  ADJUST_ALIGNMENT (VB##QI, 1);
+
 /* Give vectors the names normally used for 128-bit vectors.
    The actual number depends on command-line flags.  */
 RVV_MODES (1, VNx16, VNx8, VNx4, VNx2)
@@ -58,6 +91,10 @@ RVV_MODES (2, VNx32, VNx16, VNx8, VNx4)
 RVV_MODES (4, VNx64, VNx32, VNx16, VNx8)
 RVV_MODES (8, VNx128, VNx64, VNx32, VNx16)
 RVV_MODES (16, VNx256, VNx128, VNx64, VNx32)
+
+RVV_FRACTIONAL_VBHS (2, VNx8, VNx4, VNx2)
+RVV_FRACTIONAL_VBH (4, VNx4, VNx2)
+RVV_FRACTIONAL_VB (8, VNx2)
 
 #define RVV_TUPLE_MODES(NVECS, NSUBPART, VB, VH, VS, VD) \
   VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS, NSUBPART); \

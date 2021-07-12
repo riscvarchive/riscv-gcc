@@ -252,10 +252,13 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_C_SF_PTR const_float_ptr_type_node
 #define RISCV_ATYPE_C_DF_PTR const_double_ptr_type_node
 
+#define RISCV_ATYPE_VF16Mf4 rvvfloat16mf4_t_node
+#define RISCV_ATYPE_VF16Mf2 rvvfloat16mf2_t_node
 #define RISCV_ATYPE_VF16M1 rvvfloat16m1_t_node
 #define RISCV_ATYPE_VF16M2 rvvfloat16m2_t_node
 #define RISCV_ATYPE_VF16M4 rvvfloat16m4_t_node
 #define RISCV_ATYPE_VF16M8 rvvfloat16m8_t_node
+#define RISCV_ATYPE_VF32Mf2 rvvfloat32mf2_t_node
 #define RISCV_ATYPE_VF32M1 rvvfloat32m1_t_node
 #define RISCV_ATYPE_VF32M2 rvvfloat32m2_t_node
 #define RISCV_ATYPE_VF32M4 rvvfloat32m4_t_node
@@ -273,14 +276,20 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_VB32 rvvbool32_t_node
 #define RISCV_ATYPE_VB64 rvvbool64_t_node
 
+#define RISCV_ATYPE_VI8Mf8 rvvint8mf8_t_node
+#define RISCV_ATYPE_VI8Mf4 rvvint8mf4_t_node
+#define RISCV_ATYPE_VI8Mf2 rvvint8mf2_t_node
 #define RISCV_ATYPE_VI8M1 rvvint8m1_t_node
 #define RISCV_ATYPE_VI8M2 rvvint8m2_t_node
 #define RISCV_ATYPE_VI8M4 rvvint8m4_t_node
 #define RISCV_ATYPE_VI8M8 rvvint8m8_t_node
+#define RISCV_ATYPE_VI16Mf4 rvvint16mf4_t_node
+#define RISCV_ATYPE_VI16Mf2 rvvint16mf2_t_node
 #define RISCV_ATYPE_VI16M1 rvvint16m1_t_node
 #define RISCV_ATYPE_VI16M2 rvvint16m2_t_node
 #define RISCV_ATYPE_VI16M4 rvvint16m4_t_node
 #define RISCV_ATYPE_VI16M8 rvvint16m8_t_node
+#define RISCV_ATYPE_VI32Mf2 rvvint32mf2_t_node
 #define RISCV_ATYPE_VI32M1 rvvint32m1_t_node
 #define RISCV_ATYPE_VI32M2 rvvint32m2_t_node
 #define RISCV_ATYPE_VI32M4 rvvint32m4_t_node
@@ -290,14 +299,20 @@ AVAIL (vector, TARGET_VECTOR)
 #define RISCV_ATYPE_VI64M4 rvvint64m4_t_node
 #define RISCV_ATYPE_VI64M8 rvvint64m8_t_node
 
+#define RISCV_ATYPE_VUI8Mf8 rvvuint8mf8_t_node
+#define RISCV_ATYPE_VUI8Mf4 rvvuint8mf4_t_node
+#define RISCV_ATYPE_VUI8Mf2 rvvuint8mf2_t_node
 #define RISCV_ATYPE_VUI8M1 rvvuint8m1_t_node
 #define RISCV_ATYPE_VUI8M2 rvvuint8m2_t_node
 #define RISCV_ATYPE_VUI8M4 rvvuint8m4_t_node
 #define RISCV_ATYPE_VUI8M8 rvvuint8m8_t_node
+#define RISCV_ATYPE_VUI16Mf4 rvvuint16mf4_t_node
+#define RISCV_ATYPE_VUI16Mf2 rvvuint16mf2_t_node
 #define RISCV_ATYPE_VUI16M1 rvvuint16m1_t_node
 #define RISCV_ATYPE_VUI16M2 rvvuint16m2_t_node
 #define RISCV_ATYPE_VUI16M4 rvvuint16m4_t_node
 #define RISCV_ATYPE_VUI16M8 rvvuint16m8_t_node
+#define RISCV_ATYPE_VUI32Mf2 rvvuint32mf2_t_node
 #define RISCV_ATYPE_VUI32M1 rvvuint32m1_t_node
 #define RISCV_ATYPE_VUI32M2 rvvuint32m2_t_node
 #define RISCV_ATYPE_VUI32M4 rvvuint32m4_t_node
@@ -447,14 +462,20 @@ tree const_float16_ptr_type_node;
 _SCALAR_INT_ITERATOR(DECLARE_SCALAR_INT_PTR_TYPE_NODE)
 
 /* Vector type nodes.  */
+tree rvvint8mf8_t_node;
+tree rvvint8mf4_t_node;
+tree rvvint8mf2_t_node;
 tree rvvint8m1_t_node;
 tree rvvint8m2_t_node;
 tree rvvint8m4_t_node;
 tree rvvint8m8_t_node;
+tree rvvint16mf4_t_node;
+tree rvvint16mf2_t_node;
 tree rvvint16m1_t_node;
 tree rvvint16m2_t_node;
 tree rvvint16m4_t_node;
 tree rvvint16m8_t_node;
+tree rvvint32mf2_t_node;
 tree rvvint32m1_t_node;
 tree rvvint32m2_t_node;
 tree rvvint32m4_t_node;
@@ -464,14 +485,20 @@ tree rvvint64m2_t_node;
 tree rvvint64m4_t_node;
 tree rvvint64m8_t_node;
 
+tree rvvuint8mf8_t_node;
+tree rvvuint8mf4_t_node;
+tree rvvuint8mf2_t_node;
 tree rvvuint8m1_t_node;
 tree rvvuint8m2_t_node;
 tree rvvuint8m4_t_node;
 tree rvvuint8m8_t_node;
+tree rvvuint16mf4_t_node;
+tree rvvuint16mf2_t_node;
 tree rvvuint16m1_t_node;
 tree rvvuint16m2_t_node;
 tree rvvuint16m4_t_node;
 tree rvvuint16m8_t_node;
+tree rvvuint32mf2_t_node;
 tree rvvuint32m1_t_node;
 tree rvvuint32m2_t_node;
 tree rvvuint32m4_t_node;
@@ -481,10 +508,13 @@ tree rvvuint64m2_t_node;
 tree rvvuint64m4_t_node;
 tree rvvuint64m8_t_node;
 
+tree rvvfloat16mf4_t_node;
+tree rvvfloat16mf2_t_node;
 tree rvvfloat16m1_t_node;
 tree rvvfloat16m2_t_node;
 tree rvvfloat16m4_t_node;
 tree rvvfloat16m8_t_node;
+tree rvvfloat32mf2_t_node;
 tree rvvfloat32m1_t_node;
 tree rvvfloat32m2_t_node;
 tree rvvfloat32m4_t_node;
@@ -2868,6 +2898,12 @@ riscv_init_builtins (void)
 
       _SCALAR_INT_ITERATOR(DEFINE_SCALAR_PTR_TYPE_NODE);
 
+      rvvint8mf8_t_node
+	= riscv_vector_type ("vint8mf8_t", intQI_type_node, VNx2QImode);
+      rvvint8mf4_t_node
+	= riscv_vector_type ("vint8mf4_t", intQI_type_node, VNx4QImode);
+      rvvint8mf2_t_node
+	= riscv_vector_type ("vint8mf2_t", intQI_type_node, VNx8QImode);
       rvvint8m1_t_node
 	= riscv_vector_type ("vint8m1_t", intQI_type_node, VNx16QImode);
       rvvint8m2_t_node
@@ -2877,6 +2913,10 @@ riscv_init_builtins (void)
       rvvint8m8_t_node
 	= riscv_vector_type ("vint8m8_t", intQI_type_node, VNx128QImode);
 
+      rvvint16mf4_t_node
+	= riscv_vector_type ("vint16mf4_t", intHI_type_node, VNx2HImode);
+      rvvint16mf2_t_node
+	= riscv_vector_type ("vint16mf2_t", intHI_type_node, VNx4HImode);
       rvvint16m1_t_node
 	= riscv_vector_type ("vint16m1_t", intHI_type_node, VNx8HImode);
       rvvint16m2_t_node
@@ -2886,6 +2926,8 @@ riscv_init_builtins (void)
       rvvint16m8_t_node
 	= riscv_vector_type ("vint16m8_t", intHI_type_node, VNx64HImode);
 
+      rvvint32mf2_t_node
+	= riscv_vector_type ("vint32mf2_t", intSI_type_node, VNx2SImode);
       rvvint32m1_t_node
 	= riscv_vector_type ("vint32m1_t", intSI_type_node, VNx4SImode);
       rvvint32m2_t_node
@@ -2904,6 +2946,15 @@ riscv_init_builtins (void)
       rvvint64m8_t_node
 	= riscv_vector_type ("vint64m8_t", intDI_type_node, VNx16DImode);
 
+      rvvuint8mf8_t_node
+	= riscv_vector_type ("vuint8mf8_t", unsigned_intQI_type_node,
+			     VNx2QImode);
+      rvvuint8mf4_t_node
+	= riscv_vector_type ("vuint8mf4_t", unsigned_intQI_type_node,
+			     VNx4QImode);
+      rvvuint8mf2_t_node
+	= riscv_vector_type ("vuint8mf2_t", unsigned_intQI_type_node,
+			     VNx8QImode);
       rvvuint8m1_t_node
 	= riscv_vector_type ("vuint8m1_t", unsigned_intQI_type_node,
 			     VNx16QImode);
@@ -2917,6 +2968,12 @@ riscv_init_builtins (void)
 	= riscv_vector_type ("vuint8m8_t", unsigned_intQI_type_node,
 			     VNx128QImode);
 
+      rvvuint16mf4_t_node
+	= riscv_vector_type ("vuint16mf4_t", unsigned_intHI_type_node,
+			     VNx2HImode);
+      rvvuint16mf2_t_node
+	= riscv_vector_type ("vuint16mf2_t", unsigned_intHI_type_node,
+			     VNx4HImode);
       rvvuint16m1_t_node
 	= riscv_vector_type ("vuint16m1_t", unsigned_intHI_type_node,
 			     VNx8HImode);
@@ -2930,6 +2987,9 @@ riscv_init_builtins (void)
 	= riscv_vector_type ("vuint16m8_t", unsigned_intHI_type_node,
 			     VNx64HImode);
 
+      rvvuint32mf2_t_node
+	= riscv_vector_type ("vuint32mf2_t", unsigned_intSI_type_node,
+			     VNx2SImode);
       rvvuint32m1_t_node
 	= riscv_vector_type ("vuint32m1_t", unsigned_intSI_type_node,
 			     VNx4SImode);
@@ -2956,6 +3016,10 @@ riscv_init_builtins (void)
 	= riscv_vector_type ("vuint64m8_t", unsigned_intDI_type_node,
 			     VNx16DImode);
 
+      rvvfloat16mf4_t_node
+	= riscv_vector_type ("vfloat16mf4_t", fp16_type_node, VNx2HFmode);
+      rvvfloat16mf2_t_node
+	= riscv_vector_type ("vfloat16mf2_t", fp16_type_node, VNx4HFmode);
       rvvfloat16m1_t_node
 	= riscv_vector_type ("vfloat16m1_t", fp16_type_node, VNx8HFmode);
       rvvfloat16m2_t_node
@@ -2965,6 +3029,8 @@ riscv_init_builtins (void)
       rvvfloat16m8_t_node
 	= riscv_vector_type ("vfloat16m8_t", fp16_type_node, VNx64HFmode);
 
+      rvvfloat32mf2_t_node
+	= riscv_vector_type ("vfloat32mf2_t", float_type_node, VNx2SFmode);
       rvvfloat32m1_t_node
 	= riscv_vector_type ("vfloat32m1_t", float_type_node, VNx4SFmode);
       rvvfloat32m2_t_node
