@@ -5706,6 +5706,12 @@ riscv_mangle_type (const_tree type)
   if (TARGET_VECTOR && VECTOR_MODE_P (TYPE_MODE (type)))
     switch (TYPE_MODE (type))
       {
+      case E_VNx2QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8mf8_t" : "_vint8mf8_t";
+      case E_VNx4QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8mf4_t" : "_vint8mf4_t";
+      case E_VNx8QImode:
+	return TYPE_UNSIGNED(type) ? "_vuint8mf2_t" : "_vint8mf2_t";
       case E_VNx16QImode:
 	return TYPE_UNSIGNED(type) ? "_vuint8m1_t" : "_vint8m1_t";
       case E_VNx32QImode:
@@ -5714,6 +5720,10 @@ riscv_mangle_type (const_tree type)
 	return TYPE_UNSIGNED(type) ? "_vuint8m4_t" : "_vint8m4_t";
       case E_VNx128QImode:
 	return TYPE_UNSIGNED(type) ? "_vuint8m8_t" : "_vint8m8_t";
+      case E_VNx2HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16mf4_t" : "_vint16mf4_t";
+      case E_VNx4HImode:
+	return TYPE_UNSIGNED(type) ? "_vuint16mf2_t" : "_vint16mf2_t";
       case E_VNx8HImode:
 	return TYPE_UNSIGNED(type) ? "_vuint16m1_t" : "_vint16m1_t";
       case E_VNx16HImode:
@@ -5722,6 +5732,8 @@ riscv_mangle_type (const_tree type)
 	return TYPE_UNSIGNED(type) ? "_vuint16m4_t" : "_vint16m4_t";
       case E_VNx64HImode:
 	return TYPE_UNSIGNED(type) ? "_vuint16m8_t" : "_vint16m8_t";
+      case E_VNx2SImode:
+	return TYPE_UNSIGNED(type) ? "_vuint32mf2_t" : "_vint32mf2_t";
       case E_VNx4SImode:
 	return TYPE_UNSIGNED(type) ? "_vuint32m1_t" : "_vint32m1_t";
       case E_VNx8SImode:
@@ -5738,10 +5750,13 @@ riscv_mangle_type (const_tree type)
 	return TYPE_UNSIGNED(type) ? "_vuint64m4_t" : "_vint64m4_t";
       case E_VNx16DImode:
 	return TYPE_UNSIGNED(type) ? "_vuint64m8_t" : "_vint64m8_t";
+      case E_VNx2HFmode:   return "_vfloat16mf4_t";
+      case E_VNx4HFmode:   return "_vfloat16mf2_t";
       case E_VNx8HFmode:   return "_vfloat16m1_t";
       case E_VNx16HFmode:  return "_vfloat16m2_t";
       case E_VNx32HFmode:  return "_vfloat16m4_t";
       case E_VNx64HFmode:  return "_vfloat16m8_t";
+      case E_VNx2SFmode:   return "_vfloat32mf2_t";
       case E_VNx4SFmode:   return "_vfloat32m1_t";
       case E_VNx8SFmode:   return "_vfloat32m2_t";
       case E_VNx16SFmode:  return "_vfloat32m4_t";
