@@ -4278,22 +4278,41 @@ riscv_gen_load_poly_int (rtx target, rtx tmp1, rtx tmp2, poly_int64 value)
   if (scalar_offset)
     value -= scalar_offset;
 
-  gcc_assert (multiple_p (value, UNITS_PER_V_REG));
-  poly_int64 vlenb_mul = exact_div (value, UNITS_PER_V_REG);
-  emit_insn (gen_read_vlenb (tmp1));
+  if (maybe_lt (value, BYTES_PER_RVV_VECTOR))
+    {
+      poly_int64 vlenb_div = exact_div (UNITS_PER_V_REG, value);
+      emit_insn (gen_read_vlenb (tmp1));
 
-  gcc_assert (vlenb_mul.is_constant ());
+      gcc_assert (vlenb_div.is_constant ());
 
-  HOST_WIDE_INT vlenb_mul_int = vlenb_mul.to_constant();
+      HOST_WIDE_INT vlenb_div_int = vlenb_div.to_constant();
 
-  emit_move_insn (tmp2,
-		  gen_int_mode (vlenb_mul_int, Pmode));
+      emit_move_insn (tmp2,
+		      gen_int_mode (vlenb_div_int, Pmode));
 
-  if (TARGET_64BIT)
-    insn = gen_muldi3 (target, tmp1, tmp2);
+      if (TARGET_64BIT)
+	insn = gen_divdi3 (target, tmp1, tmp2);
+      else
+	insn = gen_divsi3 (target, tmp1, tmp2);
+    }
   else
-    insn = gen_mulsi3 (target, tmp1, tmp2);
+    {
+      gcc_assert (multiple_p (value, UNITS_PER_V_REG));
+      poly_int64 vlenb_mul = exact_div (value, UNITS_PER_V_REG);
+      emit_insn (gen_read_vlenb (tmp1));
 
+      gcc_assert (vlenb_mul.is_constant ());
+
+      HOST_WIDE_INT vlenb_mul_int = vlenb_mul.to_constant();
+
+      emit_move_insn (tmp2,
+		      gen_int_mode (vlenb_mul_int, Pmode));
+
+      if (TARGET_64BIT)
+	insn = gen_muldi3 (target, tmp1, tmp2);
+      else
+	insn = gen_mulsi3 (target, tmp1, tmp2);
+    }
   if (scalar_offset)
     {
       emit_insn (insn);
@@ -4841,9 +4860,15 @@ riscv_hard_regno_nregs (unsigned int regno, machine_mode mode)
   /* riscv_hard_regno_mode_ok calls here first, so we must accept vector
      modes in any register, but the result won't be used for non-vector
      registers.  */
-  if (riscv_vector_mode (mode))
+  if (riscv_vector_mode (mode)){
+    /* Handle fractional LMUL, it only occupy part of vector register but still
+       need one vector register to hold.  */
+    if (maybe_lt (GET_MODE_SIZE (mode), BYTES_PER_RVV_VECTOR))
+      return 1;
+
     return exact_div (GET_MODE_SIZE (mode),
 		      BYTES_PER_RVV_VECTOR).to_constant ();
+  }
 
   HOST_WIDE_INT constant_size = GET_MODE_SIZE (mode).to_constant ();
 
@@ -6023,7 +6048,7 @@ riscv_vector_alignment (const_tree type)
      potentially cause ABI changes when RVV support is off, so use a
      constant value.  */
   if (TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST)
-    return 64;
+    return GET_MODE_ALIGNMENT(GET_MODE_INNER(TYPE_MODE(type)));
 
   /* Don't assume that TYPE_SIZE fits in a HOST_WIDE_INT.  */
   HOST_WIDE_INT align
