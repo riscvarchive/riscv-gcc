@@ -36,6 +36,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-pass.h"
 #include "dbgcnt.h"
 #include "rtl-iter.h"
+#include "target.h"
 
 
 /* -------------------------------------------------------------------------
@@ -584,7 +585,7 @@ delete_unmarked_insns (void)
 	  rtx turn_into_use = NULL_RTX;
 
 	  /* Always delete no-op moves.  */
-	  if (noop_move_p (insn)
+	  if ((noop_move_p (insn) || targetm.noop_move_p(insn))
 	      /* Unless the no-op move can throw and we are not allowed
 		 to alter cfg.  */
 	      && (!cfun->can_throw_non_call_exceptions

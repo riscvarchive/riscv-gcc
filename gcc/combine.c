@@ -998,7 +998,7 @@ delete_noop_moves (void)
       for (insn = BB_HEAD (bb); insn != NEXT_INSN (BB_END (bb)); insn = next)
 	{
 	  next = NEXT_INSN (insn);
-	  if (INSN_P (insn) && noop_move_p (insn))
+	  if (INSN_P (insn) && (noop_move_p (insn) || targetm.noop_move_p(insn)))
 	    {
 	      if (dump_file)
 		fprintf (dump_file, "deleting noop move %d\n", INSN_UID (insn));
@@ -14314,7 +14314,7 @@ distribute_notes (rtx notes, rtx_insn *from_insn, rtx_insn *i3, rtx_insn *i2,
 	case REG_ARGS_SIZE:
 	  /* ??? How to distribute between i3-i1.  Assume i3 contains the
 	     entire adjustment.  Assert i3 contains at least some adjust.  */
-	  if (!noop_move_p (i3))
+	  if (!(noop_move_p (i3) || targetm.noop_move_p(i3)))
 	    {
 	      poly_int64 old_size, args_size = get_args_size (note);
 	      /* fixup_args_size_notes looks at REG_NORETURN note,

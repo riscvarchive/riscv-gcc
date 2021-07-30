@@ -6011,6 +6011,15 @@ Default return value is @code{true}.",
  bool, (const int from_reg, const int to_reg),
  hook_bool_const_int_const_int_true)
 
+DEFHOOK
+(noop_move_p,
+ "This target hook should return @code{true} if @var{insn} is a noop move.\n\
+This target hook will usually be @code{false}.\n\
+\n\
+Default return value is @code{false}.",
+ bool, (rtx insn),
+ hook_bool_rtx_false)
+
 /* Modify any or all of fixed_regs, call_used_regs, global_regs,
    reg_names, and reg_class_contents to account of the vagaries of the
    target.  */

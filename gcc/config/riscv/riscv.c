@@ -6229,6 +6229,23 @@ riscv_verify_type_context (location_t loc, type_context_kind context,
 
 }
 
+bool riscv_noop_move_p(rtx insn) {
+  rtx pat = PATTERN (insn);
+  if (GET_CODE (pat) == SET){
+    rtx src = SET_SRC (pat);
+    rtx dst = SET_DEST (pat);
+    /* Target-independent noop_move_p have already done. */
+    if (GET_CODE(src) != UNSPEC) {
+      return false;
+    }
+    /* Suppose that first param is real src register. */
+    src = XVECEXP(src, 0, 0);
+    return (REG_P (src) && REG_P (dst)
+	    && REGNO (src) == REGNO (dst));
+  }
+  return false;
+}
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
@@ -6441,6 +6458,9 @@ riscv_verify_type_context (location_t loc, type_context_kind context,
 
 #undef TARGET_VERIFY_TYPE_CONTEXT
 #define TARGET_VERIFY_TYPE_CONTEXT riscv_verify_type_context
+
+#undef TARGET_NOOP_MOVE_P
+#define TARGET_NOOP_MOVE_P riscv_noop_move_p
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

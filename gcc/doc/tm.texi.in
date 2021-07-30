@@ -3078,6 +3078,8 @@ specified first since that is the preferred elimination.
 
 @hook TARGET_CAN_ELIMINATE
 
+@hook TARGET_NOOP_MOVE_P
+
 @defmac INITIAL_ELIMINATION_OFFSET (@var{from-reg}, @var{to-reg}, @var{offset-var})
 This macro returns the initial difference between the specified pair
 of registers.  The value would be computed from information

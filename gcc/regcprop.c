@@ -1076,7 +1076,7 @@ copyprop_hardreg_forward_1 (basic_block bb, struct value_data *vd)
 	  && partial_subreg_p (GET_MODE (SET_DEST (set)),
 			       vd->e[REGNO (SET_DEST (set))].mode))
 	{
-	  if (noop_move_p (insn))
+	  if (noop_move_p (insn) || targetm.noop_move_p(insn))
 	    {
 	      bool last = insn == BB_END (bb);
 	      delete_insn (insn);

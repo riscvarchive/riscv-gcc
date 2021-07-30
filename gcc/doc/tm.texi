@@ -3769,6 +3769,13 @@ knows about.
 Default return value is @code{true}.
 @end deftypefn
 
+@deftypefn {Target Hook} bool TARGET_NOOP_MOVE_P (rtx @var{insn})
+This target hook should return @code{true} if @var{insn} is a noop move.
+This target hook will usually be @code{false}.
+
+Default return value is @code{false}.
+@end deftypefn
+
 @defmac INITIAL_ELIMINATION_OFFSET (@var{from-reg}, @var{to-reg}, @var{offset-var})
 This macro returns the initial difference between the specified pair
 of registers.  The value would be computed from information
