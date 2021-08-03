@@ -4271,6 +4271,7 @@ riscv_gen_load_poly_int (rtx target, rtx tmp1, rtx tmp2, poly_int64 value)
   rtx insn;
 
   HOST_WIDE_INT scalar_offset = 0;
+  bool tail = true;
 
   if (value.coeffs[0] != value.coeffs[1])
     scalar_offset = value.coeffs[0] - value.coeffs[1];
@@ -4278,7 +4279,32 @@ riscv_gen_load_poly_int (rtx target, rtx tmp1, rtx tmp2, poly_int64 value)
   if (scalar_offset)
     value -= scalar_offset;
 
-  if (maybe_lt (value, BYTES_PER_RVV_VECTOR))
+  if (!maybe_lt (known_lt (value, 0) ? -value : value, UNITS_PER_V_REG))
+    {
+      poly_int64 vlenb_mul = exact_div (value, UNITS_PER_V_REG);
+      emit_insn (gen_read_vlenb (tmp1));
+
+      gcc_assert (vlenb_mul.is_constant ());
+
+      HOST_WIDE_INT vlenb_mul_int = vlenb_mul.to_constant();
+
+      emit_move_insn (tmp2,
+		      gen_int_mode (vlenb_mul_int, Pmode));
+
+      if (TARGET_64BIT)
+	insn = gen_muldi3 (target, tmp1, tmp2);
+      else
+	insn = gen_mulsi3 (target, tmp1, tmp2);
+
+      if (multiple_p (value, UNITS_PER_V_REG))
+	tail = false;
+      else
+	{
+	  emit_insn (insn);
+	  value -= UNITS_PER_V_REG * vlenb_mul_int;
+	}
+    }
+  if (tail)
     {
       poly_int64 vlenb_div = exact_div (UNITS_PER_V_REG, value);
       emit_insn (gen_read_vlenb (tmp1));
@@ -4294,24 +4320,6 @@ riscv_gen_load_poly_int (rtx target, rtx tmp1, rtx tmp2, poly_int64 value)
 	insn = gen_divdi3 (target, tmp1, tmp2);
       else
 	insn = gen_divsi3 (target, tmp1, tmp2);
-    }
-  else
-    {
-      gcc_assert (multiple_p (value, UNITS_PER_V_REG));
-      poly_int64 vlenb_mul = exact_div (value, UNITS_PER_V_REG);
-      emit_insn (gen_read_vlenb (tmp1));
-
-      gcc_assert (vlenb_mul.is_constant ());
-
-      HOST_WIDE_INT vlenb_mul_int = vlenb_mul.to_constant();
-
-      emit_move_insn (tmp2,
-		      gen_int_mode (vlenb_mul_int, Pmode));
-
-      if (TARGET_64BIT)
-	insn = gen_muldi3 (target, tmp1, tmp2);
-      else
-	insn = gen_mulsi3 (target, tmp1, tmp2);
     }
   if (scalar_offset)
     {
