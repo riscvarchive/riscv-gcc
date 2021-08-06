@@ -65,13 +65,7 @@ ADJUST_FLOAT_FORMAT (HF, &ieee_half_format);
   ADJUST_ALIGNMENT (VH##HI, 2); \
   ADJUST_ALIGNMENT (VS##SI, 4); \
   ADJUST_ALIGNMENT (VH##HF, 2); \
-  ADJUST_ALIGNMENT (VS##SF, 4); \
-  \
-  ADJUST_BYTESIZE (VB##QI, riscv_rvv_chunks * 8); \
-  ADJUST_BYTESIZE (VH##HI, riscv_rvv_chunks * 8); \
-  ADJUST_BYTESIZE (VS##SI, riscv_rvv_chunks * 8); \
-  ADJUST_BYTESIZE (VH##HF, riscv_rvv_chunks * 8); \
-  ADJUST_BYTESIZE (VS##SF, riscv_rvv_chunks * 8);
+  ADJUST_ALIGNMENT (VS##SF, 4);
 
 #define RVV_FRACTIONAL_VBH(NVECS, VB, VH) \
   VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 / NVECS, 0); \
@@ -83,18 +77,12 @@ ADJUST_FLOAT_FORMAT (HF, &ieee_half_format);
   \
   ADJUST_ALIGNMENT (VB##QI, 1); \
   ADJUST_ALIGNMENT (VH##HI, 2); \
-  ADJUST_ALIGNMENT (VH##HF, 2); \
-  \
-  ADJUST_BYTESIZE (VB##QI, riscv_rvv_chunks * 8); \
-  ADJUST_BYTESIZE (VH##HI, riscv_rvv_chunks * 8); \
-  ADJUST_BYTESIZE (VH##HF, riscv_rvv_chunks * 8); \
+  ADJUST_ALIGNMENT (VH##HF, 2);
 
 #define RVV_FRACTIONAL_VB(NVECS, VB) \
   VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 / NVECS, 0); \
   ADJUST_NUNITS (VB##QI, riscv_rvv_chunks * 1); \
-  ADJUST_ALIGNMENT (VB##QI, 1); \
-  \
-  ADJUST_BYTESIZE (VB##QI, riscv_rvv_chunks * 8);
+  ADJUST_ALIGNMENT (VB##QI, 1);
 
 /* Give vectors the names normally used for 128-bit vectors.
    The actual number depends on command-line flags.  */
