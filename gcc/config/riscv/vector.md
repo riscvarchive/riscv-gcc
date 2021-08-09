@@ -5933,6 +5933,58 @@
  [(set_attr "type" "vector")
   (set_attr "mode" "none")])
 
+;; Vector Mask Load/Store
+
+(define_expand "lm<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand")
+	(unspec:VMASKMODES
+	  [(unspec:VMASKMODES
+	    [(mem:VMASKMODES (match_operand 1 "register_operand"))]
+	    UNSPEC_VLM)
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*lm<mode>"
+  [(set (match_operand:VMASKMODES 0 "register_operand" "=vr")
+	(unspec:VMASKMODES
+	  [(unspec:VMASKMODES
+	    [(match_operand:VMASKMODES 1 "memory_operand" "m")]
+	    UNSPEC_VLM)
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))]
+  "TARGET_VECTOR"
+  "vlm.v\t%0,%1"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
+(define_expand "sm<mode>"
+  [(set (mem:VMASKMODES (match_operand 0 "register_operand"))
+	(unspec:VMASKMODES
+	  [(unspec:VMASKMODES
+	    [(match_operand:VMASKMODES 1 "register_operand")]
+	    UNSPEC_VSM)
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn "*sm<mode>"
+  [(set (match_operand:VMASKMODES 0 "memory_operand" "=m")
+	(unspec:VMASKMODES
+	  [(unspec:VMASKMODES
+	    [(match_operand:VMASKMODES 1 "register_operand" "vr")]
+	    UNSPEC_VSM)
+	   (reg:SI VL_REGNUM)]
+	 UNSPEC_USEVL))]
+  "TARGET_VECTOR"
+  "vsm.v\t%1,%0"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Vector Mask-Register Logical Instructions
 
 (define_insn "<optab><mode>3"
