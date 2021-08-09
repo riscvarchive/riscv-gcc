@@ -3487,6 +3487,20 @@ v##NAME##_f_f_w_f##SEW##m##LMUL##_m (					\
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_FLOAT_NCVT_FF, nfcvt_ff, fncvt)
 _RVV_WFLOAT_ITERATOR_ARG (_RVV_FLOAT_NCVT_FF, nfcvt_rod_ff, fncvt_rod)
 
+#define _RVV_MASK_LOAD_STORE(MLEN, OP)					\
+__extension__ extern __inline vbool##MLEN##_t				\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlm_v_b##MLEN (const uint8_t *base, word_type vl)			\
+{									\
+  return __builtin_riscv_vlmbool##MLEN (base);				\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsm_v_b##MLEN (uint8_t *base, vbool##MLEN##_t value, word_type vl)	\
+{									\
+  __builtin_riscv_vsmbool##MLEN (base, value);				\
+}
+
 #define _RVV_MASK_NULLARY_OP(MLEN, OP)					\
 __extension__ extern __inline vbool##MLEN##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
@@ -3544,6 +3558,7 @@ vm##OP##_m_b##MLEN##_m (vbool##MLEN##_t mask,		\
   return __builtin_riscv_v##OP##bool##MLEN##_mask (mask, maskedoff, a);	\
 }
 
+_RVV_MASK_ITERATOR (_RVV_MASK_LOAD_STORE, )
 _RVV_MASK_ITERATOR (_RVV_MASK_NULLARY_OP, clr)
 _RVV_MASK_ITERATOR (_RVV_MASK_NULLARY_OP, set)
 _RVV_MASK_ITERATOR (_RVV_MASK_UNARY_OP_SCALAR, popc)

@@ -1494,6 +1494,14 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 		RISCV_VI##WE##M##WL##_FTYPE_VB##MLEN##_VI##WE##M##WL##_VI##E##M##L##_VUI##E##M##L,\
 		vector),
 
+#define MASK_LOAD_STORE_BUILTINS(MLEN, N)			\
+  DIRECT_NAMED (lmvnx##N##bi, vlmbool##MLEN,			\
+		RISCV_VB##MLEN##_FTYPE_C_UQI_PTR,		\
+		vector),					\
+  DIRECT_NAMED_NO_TARGET (smvnx##N##bi, vsmbool##MLEN,		\
+		RISCV_VOID_FTYPE_UQI_PTR_VB##MLEN,		\
+		vector),
+
 #define MASK_LOGICAL_BUILTINS(MLEN, N, OP)				\
   DIRECT_NAMED (OP##vnx##N##bi3, v##OP##bool##MLEN,			\
 		RISCV_VB##MLEN##_FTYPE_VB##MLEN##_VB##MLEN,		\
@@ -2597,6 +2605,7 @@ static const struct riscv_builtin_description riscv_builtins[] = {
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_NCVT_FF_BUILTINS, trunc, nfcvt_ff)
   _RVV_WFLOAT_ITERATOR_ARG (VFLOAT_NCVT_FF_BUILTINS, trunc_rod, nfcvt_rod_ff)
 
+  _RVV_MASK_ITERATOR (MASK_LOAD_STORE_BUILTINS)
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, clr)
   _RVV_MASK_ITERATOR_ARG (MASK_NULLARY_BUILTINS, set)
   _RVV_MASK_ITERATOR_ARG (MASK_UNARY_BUILTINS, sbf)
