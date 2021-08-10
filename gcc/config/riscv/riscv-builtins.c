@@ -37,6 +37,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "expr.h"
 #include "langhooks.h"
 #include "stringpool.h"
+#include "attribs.h"
 #include "riscv-vector-iterator.h"
 
 /* We don't want the PTR definition from ansi-decl.h.  */
@@ -462,67 +463,15 @@ tree const_float16_ptr_type_node;
 _SCALAR_INT_ITERATOR(DECLARE_SCALAR_INT_PTR_TYPE_NODE)
 
 /* Vector type nodes.  */
-tree rvvint8mf8_t_node;
-tree rvvint8mf4_t_node;
-tree rvvint8mf2_t_node;
-tree rvvint8m1_t_node;
-tree rvvint8m2_t_node;
-tree rvvint8m4_t_node;
-tree rvvint8m8_t_node;
-tree rvvint16mf4_t_node;
-tree rvvint16mf2_t_node;
-tree rvvint16m1_t_node;
-tree rvvint16m2_t_node;
-tree rvvint16m4_t_node;
-tree rvvint16m8_t_node;
-tree rvvint32mf2_t_node;
-tree rvvint32m1_t_node;
-tree rvvint32m2_t_node;
-tree rvvint32m4_t_node;
-tree rvvint32m8_t_node;
-tree rvvint64m1_t_node;
-tree rvvint64m2_t_node;
-tree rvvint64m4_t_node;
-tree rvvint64m8_t_node;
 
-tree rvvuint8mf8_t_node;
-tree rvvuint8mf4_t_node;
-tree rvvuint8mf2_t_node;
-tree rvvuint8m1_t_node;
-tree rvvuint8m2_t_node;
-tree rvvuint8m4_t_node;
-tree rvvuint8m8_t_node;
-tree rvvuint16mf4_t_node;
-tree rvvuint16mf2_t_node;
-tree rvvuint16m1_t_node;
-tree rvvuint16m2_t_node;
-tree rvvuint16m4_t_node;
-tree rvvuint16m8_t_node;
-tree rvvuint32mf2_t_node;
-tree rvvuint32m1_t_node;
-tree rvvuint32m2_t_node;
-tree rvvuint32m4_t_node;
-tree rvvuint32m8_t_node;
-tree rvvuint64m1_t_node;
-tree rvvuint64m2_t_node;
-tree rvvuint64m4_t_node;
-tree rvvuint64m8_t_node;
+#define RISCV_DECL_INT_TYPES(SEW, LMUL, MLEN,	MODE, SUBMODE)	\
+  tree rvvint##SEW##m##LMUL##_t_node;	\
+  tree rvvuint##SEW##m##LMUL##_t_node;
+_RVV_INT_ITERATOR(RISCV_DECL_INT_TYPES)
 
-tree rvvfloat16mf4_t_node;
-tree rvvfloat16mf2_t_node;
-tree rvvfloat16m1_t_node;
-tree rvvfloat16m2_t_node;
-tree rvvfloat16m4_t_node;
-tree rvvfloat16m8_t_node;
-tree rvvfloat32mf2_t_node;
-tree rvvfloat32m1_t_node;
-tree rvvfloat32m2_t_node;
-tree rvvfloat32m4_t_node;
-tree rvvfloat32m8_t_node;
-tree rvvfloat64m1_t_node;
-tree rvvfloat64m2_t_node;
-tree rvvfloat64m4_t_node;
-tree rvvfloat64m8_t_node;
+#define RISCV_DECL_FLOAT_TYPES(SEW, LMUL, MLEN,	MODE, SUBMODE) \
+  tree rvvfloat##SEW##m##LMUL##_t_node;
+_RVV_FLOAT_ITERATOR(RISCV_DECL_FLOAT_TYPES)
 
 tree rvvbool1_t_node;
 tree rvvbool2_t_node;
@@ -2772,6 +2721,48 @@ riscv_build_function_type (enum riscv_function_type type)
   return types[(int) type];
 }
 
+#define RVV_TYPE_ATTR_NAME "RVV type"
+
+/* Add type attributes to builtin type tree, currently only the mangled name. */
+
+static void
+add_vector_type_attribute (tree type, const char *type_name)
+{
+  char mangled_name[18];
+  snprintf (mangled_name, sizeof (mangled_name),
+    "%d_%s", (int) strlen (type_name) + 1, type_name);
+
+  tree mangled_name_tree = get_identifier (mangled_name);
+  tree value = tree_cons (NULL_TREE, mangled_name_tree, NULL_TREE);
+  TYPE_ATTRIBUTES (type) = tree_cons (get_identifier (RVV_TYPE_ATTR_NAME), value,
+				      TYPE_ATTRIBUTES (type));
+}
+
+/* If TYPE is an ABI-defined RVV type, return its attribute descriptor,
+   otherwise return null.  */
+
+static tree
+lookup_rvv_type_attribute (const_tree type)
+{
+  if (type == error_mark_node)
+    return NULL_TREE;
+  return lookup_attribute (RVV_TYPE_ATTR_NAME, TYPE_ATTRIBUTES (type));
+}
+
+/* If TYPE is a built-in type defined by the RVV ABI, return the mangled name,
+   otherwise return NULL.  */
+
+const char *
+riscv_mangle_builtin_type (const_tree type)
+{
+  if (TYPE_NAME (type) && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL)
+    type = TREE_TYPE (TYPE_NAME (type));
+  if (tree attr = lookup_rvv_type_attribute (type))
+    if (tree id = TREE_VALUE (chain_index (0, TREE_VALUE (attr))))
+      return IDENTIFIER_POINTER (id);
+  return NULL;
+}
+
 /* Create a builtin vector type with a name.  Taking care not to give
    the canonical type a name.  */
 
@@ -2782,6 +2773,7 @@ riscv_vector_type (const char *name, tree elt_type, enum machine_mode mode)
 
   /* Copy so we don't give the canonical type a name.  */
   result = build_distinct_type_copy (result);
+  add_vector_type_attribute(result, name);
 
   (*lang_hooks.types.register_builtin_type) (result, name);
 
@@ -2818,6 +2810,7 @@ riscv_vector_tuple_type (const char *name,
 
   layout_type (tuple_type);
   SET_TYPE_MODE (tuple_type, mode);
+  add_vector_type_attribute(tuple_type, name);
 
   tree decl = build_decl (input_location, TYPE_DECL,
 			  get_identifier (name), tuple_type);
