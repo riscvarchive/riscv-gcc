@@ -91,6 +91,7 @@ extern void riscv_atomic_assign_expand_fenv (tree *, tree *, tree *);
 extern rtx riscv_expand_builtin (tree, rtx, rtx, machine_mode, int);
 extern tree riscv_builtin_decl (unsigned int, bool);
 extern void riscv_init_builtins (void);
+extern const char * riscv_mangle_builtin_type (const_tree type);
 
 /* Routines implemented in riscv-common.c.  */
 extern std::string riscv_arch_str (bool version_p = true);
