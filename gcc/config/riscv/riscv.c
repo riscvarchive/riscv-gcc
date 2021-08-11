@@ -3234,7 +3234,7 @@ riscv_block_move_loop (rtx dest, rtx src, HOST_WIDE_INT length,
 bool
 riscv_expand_block_move (rtx dest, rtx src, rtx length)
 {
-  if (CONST_INT_P (length))
+  if (CONST_INT_P (length) && INTVAL (length) >= 0)
     {
       HOST_WIDE_INT factor, align;
 
