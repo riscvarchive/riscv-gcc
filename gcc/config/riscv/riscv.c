@@ -5875,10 +5875,10 @@ static unsigned int
 riscv_dwarf_poly_indeterminate_value (unsigned int i, unsigned int *factor,
 				      int *offset)
 {
-  /* Polynomial invariant 1 == (VLENB / 8) - 1.  */
+  /* Polynomial invariant 1 == (VLENB / 16) - 1.  */
   /* XXX: It's might not correct for ELEN=32 system.  */
   gcc_assert (i == 1);
-  *factor = 8;
+  *factor = 16;
   *offset = 1;
   return RISCV_DWARF_VLEN;
 }
