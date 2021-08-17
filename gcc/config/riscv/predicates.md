@@ -73,6 +73,11 @@
      the individual word-mode moves until after reload.  */
   if (GET_MODE_SIZE (mode) > UNITS_PER_WORD)
     return false;
+  
+  /* Check whether the constant can be loaded in a single
+     instruction with zbs extensions.  */
+  if (TARGET_64BIT && TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (INTVAL (op)))
+    return false;
 
   /* Otherwise check whether the constant can be loaded in a single
      instruction.  */
@@ -212,3 +217,20 @@
 {
   return riscv_gpr_save_operation_p (op);
 })
+
+;; Predicates for the B extension.
+(define_predicate "single_bit_mask_operand"
+  (and (match_code "const_int")
+       (match_test "pow2p_hwi (INTVAL (op))")))
+
+(define_predicate "not_single_bit_mask_operand"
+  (and (match_code "const_int")
+       (match_test "pow2p_hwi (~INTVAL (op))")))
+
+(define_predicate "const31_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 31")))
+
+(define_predicate "const63_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 63")))

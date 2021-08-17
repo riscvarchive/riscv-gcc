@@ -68,8 +68,3 @@ RISCV_BUILTIN (sm4ed_di, "sm4ed", RISCV_BUILTIN_DIRECT, RISCV_DI_FTYPE_DI_SI, cr
 RISCV_BUILTIN (sm4ks_si, "sm4ks", RISCV_BUILTIN_DIRECT, RISCV_SI_FTYPE_SI_SI, crypto_zksed32),
 RISCV_BUILTIN (sm4ks_di, "sm4ks", RISCV_BUILTIN_DIRECT, RISCV_DI_FTYPE_DI_SI, crypto_zksed64),
 
-// Zkr - Entropy Source
-RISCV_BUILTIN (pollentropy_si, "pollentropy", RISCV_BUILTIN_DIRECT, RISCV_SI_FTYPE, crypto_zkr32),
-RISCV_BUILTIN (pollentropy_di, "pollentropy", RISCV_BUILTIN_DIRECT, RISCV_DI_FTYPE, crypto_zkr64),
-RISCV_BUILTIN (getnoise_si, "getnoise", RISCV_BUILTIN_DIRECT, RISCV_SI_FTYPE, crypto_zkr32),
-RISCV_BUILTIN (getnoise_di, "getnoise", RISCV_BUILTIN_DIRECT, RISCV_DI_FTYPE, crypto_zkr64),
