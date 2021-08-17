@@ -274,6 +274,16 @@
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
+(define_insn "vsetvlmax<VIMODES:mode>_<P:mode>"
+  [(set (reg:VIMODES VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (reg:P VL_REGNUM) (const_int UNSPECV_VSETVL))
+   (set (match_operand:P 0 "register_operand" "=r")
+	(reg:P VL_REGNUM))]
+  "TARGET_VECTOR"
+  "vsetvli\t%0,x0,e<VIMODES:sew>,m<VIMODES:lmul>"
+  [(set_attr "type" "vector")
+   (set_attr "mode" "none")])
+
 ;; Load/store instructions.
 
 ;; Vector Unit-Stride Instructions
@@ -957,7 +967,10 @@
       gcc_assert (can_create_pseudo_p ());
       rtx tmp_reg = gen_reg_rtx (<VSUBMODE>mode);
       emit_move_insn (tmp_reg, dup_value);
-      emit_insn (gen_vsetvli_x0_<vlmode>());
+      if (TARGET_64BIT)
+	emit_insn (gen_vsetvlmax<vlmode>_di (gen_reg_rtx (Pmode)));
+      else
+	emit_insn (gen_vsetvlmax<vlmode>_si (gen_reg_rtx (Pmode)));
       emit_insn (gen_vec_duplicate<mode>_nosetvl (operands[0], tmp_reg));
       DONE;
     }
