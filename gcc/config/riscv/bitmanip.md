@@ -153,41 +153,6 @@
   "bseti\t%0,%1,%S2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*bsetw"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(sign_extend:DI
-	 (subreg:SI
-	  (ior:DI (subreg:DI
-		   (ashift:SI (const_int 1)
-			      (match_operand:QI 2 "register_operand" "r")) 0)
-		  (match_operand:DI 1 "register_operand" "r")) 0)))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "bsetw\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "*bsetw_mask"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(sign_extend:DI
-	 (subreg:SI
-	  (ior:DI (subreg:DI
-		   (ashift:SI
-		    (const_int 1)
-		    (subreg:QI
-		     (and:DI (match_operand:DI 2 "register_operand" "r")
-			     (match_operand 3 "const31_operand" "i")) 0)) 0)
-		  (match_operand:DI 1 "register_operand" "r")) 0)))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "bsetw\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "*bsetiw"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(ior:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
-		(match_operand 2 "single_bit_mask_operand" "i")))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "bsetiw\t%0,%1,%S2"
-  [(set_attr "type" "bitmanip")])
-
 (define_insn "*bclr<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(and:X (rotate:X (const_int -2)
@@ -203,27 +168,6 @@
 	       (match_operand 2 "not_single_bit_mask_operand" "i")))]
   "TARGET_ZBS"
   "bclri\t%0,%1,%T2"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "*bclrw"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(sign_extend:DI
-	 (subreg:SI
-	  (and:DI
-	   (not:DI (subreg:DI
-		    (ashift:SI (const_int 1)
-			       (match_operand:QI 2 "register_operand" "r")) 0))
-	   (match_operand:DI 1 "register_operand" "r")) 0)))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "bclrw\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "*bclriw"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(and:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
-		(match_operand 2 "not_single_bit_mask_operand" "i")))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "bclriw\t%0,%1,%T2"
   [(set_attr "type" "bitmanip")])
 
 (define_insn "*binv<mode>"
@@ -243,26 +187,6 @@
   "binvi\t%0,%1,%S2"
   [(set_attr "type" "bitmanip")])
 
-(define_insn "*binvw"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(sign_extend:DI
-	 (subreg:SI
-	  (xor:DI (subreg:DI
-		   (ashift:SI (const_int 1)
-			      (match_operand:QI 2 "register_operand" "r")) 0)
-		  (match_operand:DI 1 "register_operand" "r")) 0)))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "binvw\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "*binviw"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(xor:DI (sign_extend:DI (match_operand:SI 1 "register_operand" "r"))
-		(match_operand 2 "single_bit_mask_operand" "i")))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "binviw\t%0,%1,%S2"
-  [(set_attr "type" "bitmanip")])
-
 (define_insn "*bext<mode>"
   [(set (match_operand:X 0 "register_operand" "=r")
 	(zero_extract:X (match_operand:X 1 "register_operand" "r")
@@ -280,17 +204,6 @@
 			(match_operand 2 "immediate_operand" "i")))]
   "TARGET_ZBS"
   "bexti\t%0,%1,%2"
-  [(set_attr "type" "bitmanip")])
-
-(define_insn "*bextw"
-  [(set (match_operand:DI 0 "register_operand" "=r")
-	(and:DI
-	 (subreg:DI
-	  (lshiftrt:SI (match_operand:SI 1 "register_operand" "r")
-		       (match_operand:QI 2 "register_operand" "r")) 0)
-	 (const_int 1)))]
-  "TARGET_64BIT && TARGET_ZBS"
-  "bextw\t%0,%1,%2"
   [(set_attr "type" "bitmanip")])
 
 (define_insn "rotrsi3"

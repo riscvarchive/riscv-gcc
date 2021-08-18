@@ -36,29 +36,6 @@ sub4 (long i)
   return i | (1L << 20);
 }
 
-/* bsetw */
-int
-sub5 (int i, int j)
-{
-  return i | (1 << j);
-}
-
-/* bsetw_mask */
-int
-sub6 (int i, int j)
-{
-  return i | (1 << (j & 0x1f));
-}
-
-/* bsetiw */
-int
-sub7 (long i)
-{
-  return (int)i | (1 << 20);
-}
-
-/* { dg-final { scan-assembler-times "bset" 9 } } */
-/* { dg-final { scan-assembler-times "bseti" 2 } } */
-/* { dg-final { scan-assembler-times "bsetw" 2 } } */
-/* { dg-final { scan-assembler-times "bsetiw" 1 } } */
+/* { dg-final { scan-assembler-times "bset" 6 } } */
+/* { dg-final { scan-assembler-times "bseti" 1 } } */
 /* { dg-final { scan-assembler-not "andi" } } */
