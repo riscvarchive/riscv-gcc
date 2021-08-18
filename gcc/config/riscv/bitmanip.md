@@ -93,7 +93,7 @@
 (define_insn "*zero_extendsidi2_bitmanip"
   [(set (match_operand:DI 0 "register_operand" "=r,r")
 	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand" "r,m")))]
-  "TARGET_64BIT && (TARGET_ZBB || TARGET_ZBA)"
+  "TARGET_64BIT && TARGET_ZBA"
   "@
    zext.w\t%0,%1
    lwu\t%0,%1"

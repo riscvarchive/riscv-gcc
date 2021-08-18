@@ -1061,15 +1061,16 @@
 	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand")))]
   "TARGET_64BIT")
 
-(define_insn_and_split "zero_extendsidi2_internal"
+(define_insn_and_split "*zero_extendsidi2_internal"
   [(set (match_operand:DI     0 "register_operand"     "=r,r")
 	(zero_extend:DI
 	    (match_operand:SI 1 "nonimmediate_operand" " r,m")))]
-  "TARGET_64BIT && !(TARGET_ZBA || TARGET_ZBB)"
+  "TARGET_64BIT && !TARGET_ZBA"
   "@
    #
    lwu\t%0,%1"
-  "&& reload_completed
+  "&& !TARGET_ZBA
+   && reload_completed
    && REG_P (operands[1])
    && !paradoxical_subreg_p (operands[0])"
   [(set (match_dup 0)
@@ -1088,11 +1089,12 @@
   [(set (match_operand:GPR    0 "register_operand"     "=r,r")
 	(zero_extend:GPR
 	    (match_operand:HI 1 "nonimmediate_operand" " r,m")))]
-  "!(TARGET_ZBA || TARGET_ZBB)"
+  "!TARGET_ZBB"
   "@
    #
    lhu\t%0,%1"
   "&& reload_completed
+   && !TARGET_ZBB
    && REG_P (operands[1])
    && !paradoxical_subreg_p (operands[0])"
   [(set (match_dup 0)
@@ -1139,11 +1141,12 @@
   [(set (match_operand:SUPERQI   0 "register_operand"     "=r,r")
 	(sign_extend:SUPERQI
 	    (match_operand:SHORT 1 "nonimmediate_operand" " r,m")))]
-  ""
+  "!TARGET_ZBB"
   "@
    #
    l<SHORT:size>\t%0,%1"
   "&& reload_completed
+   && !TARGET_ZBB
    && REG_P (operands[1])
    && !paradoxical_subreg_p (operands[0])"
   [(set (match_dup 0) (ashift:SI (match_dup 1) (match_dup 2)))
