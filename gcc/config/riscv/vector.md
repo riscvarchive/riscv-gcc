@@ -10745,7 +10745,7 @@
 })
 
 (define_insn "*vseg_idx_load<order><VTMODES:mode><VIMODES:mode>_<P:mode>"
-  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VTMODES 0 "register_operand" "=&vr")
 	(unspec:VTMODES
 	  [(unspec:VTMODES
 	     [(match_operand:P 1 "register_operand" "r")
@@ -10779,7 +10779,7 @@
 })
 
 (define_insn "*vseg_idx_<order>load<VTMODES:mode><VIMODES:mode>_<P:mode>_mask"
-  [(set (match_operand:VTMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VTMODES 0 "register_operand" "=&vr")
 	(unspec:VTMODES
 	  [(unspec:VTMODES
 	     [(match_operand:P 1 "register_operand" "r")
