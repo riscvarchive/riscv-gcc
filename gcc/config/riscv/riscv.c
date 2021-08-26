@@ -388,6 +388,20 @@ riscv_build_integer_1 (struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS],
       return 1;
     }
 
+  /* ??? Maybe there are also other bitmanip instructions useful for loading
+     constants?  */
+  if (TARGET_64BIT)
+    {
+      if (TARGET_ZBS && SINGLE_BIT_MASK_OPERAND (value))
+	{
+	  /* Simply SBSET.  */
+	  codes[0].code = UNKNOWN;
+	  codes[0].value = value;
+	  return 1;
+	}
+      /* ??? Can use slo/sro to load constants.  */
+    }
+
   /* End with ADDI.  When constructing HImode constants, do not generate any
      intermediate value that is not itself a valid HImode constant.  The
      XORI case below will handle those remaining HImode constants.  */
@@ -436,6 +450,47 @@ riscv_build_integer_1 (struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS],
 	  alt_codes[alt_cost-1].value = shift;
 	  memcpy (codes, alt_codes, sizeof (alt_codes));
 	  cost = alt_cost;
+	}
+    }
+
+  if (cost > 2 && TARGET_64BIT && TARGET_ZBB)
+    {
+      int leading_ones = clz_hwi (~value);
+      int trailing_ones = ctz_hwi (~value);
+
+      /* If all bits are one except a few that are zero, and the zero bits
+	 are within a range of 11 bits, and at least one of the upper 32-bits
+	 is a zero, then we can generate a constant by loading a small
+	 negative constant and rotating.  */
+      if (leading_ones < 32
+	  && ((64 - leading_ones - trailing_ones) < 12))
+	{
+	  codes[0].code = UNKNOWN;
+	  /* The sign-bit might be zero, so just rotate to be safe.  */
+	  codes[0].value = (((unsigned HOST_WIDE_INT) value >> trailing_ones)
+			    | (value << (64 - trailing_ones)));
+	  codes[1].code = ROTATERT;
+	  codes[1].value = 64 - trailing_ones;
+	  cost = 2;
+	}
+      /* Handle the case where the 11 bit range of zero bits wraps around.  */
+      else
+	{
+	  int upper_trailing_ones = ctz_hwi (~value >> 32);
+	  int lower_leading_ones = clz_hwi (~value << 32);
+
+	  if (upper_trailing_ones < 32 && lower_leading_ones < 32
+	      && ((64 - upper_trailing_ones - lower_leading_ones) < 12))
+	    {
+	      codes[0].code = UNKNOWN;
+	      /* The sign-bit might be zero, so just rotate to be safe.  */
+	      codes[0].value = ((value << (32 - upper_trailing_ones))
+				| ((unsigned HOST_WIDE_INT) value
+				   >> (32 + upper_trailing_ones)));
+	      codes[1].code = ROTATERT;
+	      codes[1].value = 32 - upper_trailing_ones;
+	      cost = 2;
+	    }
 	}
     }
 
@@ -1736,6 +1791,14 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 	  *total = COSTS_N_INSNS (SINGLE_SHIFT_COST);
 	  return true;
 	}
+            /* This is an bext.  */
+      if (TARGET_ZBS && outer_code == SET
+	  && GET_CODE (XEXP (x, 1)) == CONST_INT
+	  && INTVAL (XEXP (x, 1)) == 1)
+	{
+	  *total = COSTS_N_INSNS (SINGLE_SHIFT_COST);
+	  return true;
+	}
       return false;
 
     case ASHIFT:
@@ -2024,7 +2087,17 @@ riscv_output_move (rtx dest, rtx src)
 	  }
 
       if (src_code == CONST_INT)
-	return "li\t%0,%1";
+	{
+	  if (SMALL_OPERAND (INTVAL (src)) || LUI_OPERAND (INTVAL (src)))
+	    return "li\t%0,%1";
+
+	  if (TARGET_64BIT && TARGET_ZBS
+	      && SINGLE_BIT_MASK_OPERAND (INTVAL (src)))
+	    return "bseti\t%0,zero,%S1";
+
+	  /* Should never reach here.  */
+	  abort ();
+	}
 
       if (src_code == HIGH)
 	return "lui\t%0,%h1";
@@ -3234,7 +3307,7 @@ riscv_block_move_loop (rtx dest, rtx src, HOST_WIDE_INT length,
 bool
 riscv_expand_block_move (rtx dest, rtx src, rtx length)
 {
-  if (CONST_INT_P (length))
+  if (CONST_INT_P (length) && INTVAL (length) >= 0)
     {
       HOST_WIDE_INT factor, align;
 
@@ -3366,7 +3439,9 @@ riscv_memmodel_needs_release_fence (enum memmodel model)
    'A'	Print the atomic operation suffix for memory model OP.
    'F'	Print a FENCE if the memory model requires a release.
    'z'	Print x0 if OP is zero, otherwise print OP normally.
-   'i'	Print i if the operand is not a register.  */
+   'i'	Print i if the operand is not a register.
+   's'  Sign-extend a 32-bit constant value to 64-bits then print.
+   'S'  Print shift-index of single-bit mask OP.  */
 
 static void
 riscv_print_operand (FILE *file, rtx op, int letter)
@@ -3405,6 +3480,27 @@ riscv_print_operand (FILE *file, rtx op, int letter)
       if (code != REG)
         fputs ("i", file);
       break;
+
+    case 's':
+      {
+	rtx newop = GEN_INT (INTVAL (op) | 0xffffffffUL << 32);
+	output_addr_const (file, newop);
+	break;
+      }
+
+    case 'S':
+      {
+	rtx newop = GEN_INT (ctz_hwi (INTVAL (op)));
+	output_addr_const (file, newop);
+	break;
+      }
+
+    case 'T':
+      {
+	rtx newop = GEN_INT (ctz_hwi (~INTVAL (op)));
+	output_addr_const (file, newop);
+	break;
+      }
 
     default:
       switch (code)

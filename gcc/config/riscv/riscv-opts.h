@@ -39,6 +39,16 @@ enum riscv_code_model {
 };
 extern enum riscv_code_model riscv_cmodel;
 
+enum riscv_isa_spec_class {
+  ISA_SPEC_CLASS_NONE,
+
+  ISA_SPEC_CLASS_2P2,
+  ISA_SPEC_CLASS_20190608,
+  ISA_SPEC_CLASS_20191213
+};
+
+extern enum riscv_isa_spec_class riscv_isa_spec;
+
 /* Keep this list in sync with define_attr "tune" in riscv.md.  */
 enum riscv_microarchitecture_type {
   generic,
@@ -51,22 +61,42 @@ enum riscv_align_data {
   riscv_align_data_type_natural
 };
 
-#define MASK_ZKG (1 << 0)
-#define MASK_ZKB (1 << 1)
-#define MASK_ZKR (1 << 2)
-#define MASK_ZKNE (1 << 3)
-#define MASK_ZKND (1 << 4)
-#define MASK_ZKNH (1 << 5)
-#define MASK_ZKSED (1 << 6)
-#define MASK_ZKSH (1 << 7)
+#define MASK_ZICSR    (1 << 0)
+#define MASK_ZIFENCEI (1 << 1)
 
-#define TARGET_ZKG ((riscv_crypto_subext & MASK_ZKG) != 0)
-#define TARGET_ZKB ((riscv_crypto_subext & MASK_ZKB) != 0)
-#define TARGET_ZKR ((riscv_crypto_subext & MASK_ZKR) != 0)
-#define TARGET_ZKNE ((riscv_crypto_subext & MASK_ZKNE) != 0)
-#define TARGET_ZKND ((riscv_crypto_subext & MASK_ZKND) != 0)
-#define TARGET_ZKNH ((riscv_crypto_subext & MASK_ZKNH) != 0)
+#define MASK_ZBA (1 << 0)
+#define MASK_ZBB (1 << 1)
+#define MASK_ZBC (1 << 2)
+#define MASK_ZBS (1 << 3)
+
+#define MASK_ZBKB     (1 << 0)
+#define MASK_ZBKC     (1 << 1)
+#define MASK_ZBKX     (1 << 2)
+#define MASK_ZKNE     (1 << 3)
+#define MASK_ZKND     (1 << 4)
+#define MASK_ZKNH     (1 << 5)
+#define MASK_ZKR      (1 << 6)
+#define MASK_ZKSED    (1 << 7)
+#define MASK_ZKSH     (1 << 8)
+#define MASK_ZKT      (1 << 9)
+
+#define TARGET_ZICSR    ((riscv_zi_subext & MASK_ZICSR) != 0)
+#define TARGET_ZIFENCEI ((riscv_zi_subext & MASK_ZIFENCEI) != 0)
+
+#define TARGET_ZBA ((riscv_bitmanip_subext & MASK_ZBA) != 0)
+#define TARGET_ZBB ((riscv_bitmanip_subext & MASK_ZBB) != 0)
+#define TARGET_ZBC ((riscv_bitmanip_subext & MASK_ZBC) != 0)
+#define TARGET_ZBS ((riscv_bitmanip_subext & MASK_ZBS) != 0)
+
+#define TARGET_ZBKB  ((riscv_crypto_subext & MASK_ZBKB) != 0)
+#define TARGET_ZBKC  ((riscv_crypto_subext & MASK_ZBKC) != 0)
+#define TARGET_ZBKX  ((riscv_crypto_subext & MASK_ZBKX) != 0)
+#define TARGET_ZKNE  ((riscv_crypto_subext & MASK_ZKNE) != 0)
+#define TARGET_ZKND  ((riscv_crypto_subext & MASK_ZKND) != 0)
+#define TARGET_ZKNH  ((riscv_crypto_subext & MASK_ZKNH) != 0)
+#define TARGET_ZKR   ((riscv_crypto_subext & MASK_ZKR) != 0)
 #define TARGET_ZKSED ((riscv_crypto_subext & MASK_ZKSED) != 0)
-#define TARGET_ZKSH ((riscv_crypto_subext & MASK_ZKSH) != 0)
+#define TARGET_ZKSH  ((riscv_crypto_subext & MASK_ZKSH) != 0)
+#define TARGET_ZKT   ((riscv_crypto_subext & MASK_ZKT) != 0)
 
 #endif /* ! GCC_RISCV_OPTS_H */

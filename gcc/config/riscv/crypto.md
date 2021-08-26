@@ -24,57 +24,62 @@
   UNSPEC_AES_DSM
   UNSPEC_AES_ES
   UNSPEC_AES_ESM
-  UNSPEC_AES_K
+  UNSPEC_AES_IM
+  UNSPEC_AES_KS1
+  UNSPEC_AES_KS2
   UNSPEC_SHA_256_SIG0
   UNSPEC_SHA_256_SIG1
   UNSPEC_SHA_256_SUM0
   UNSPEC_SHA_256_SUM1
   UNSPEC_SHA_512_SIG0
+  UNSPEC_SHA_512_SIG0_2
   UNSPEC_SHA_512_SIG1
+  UNSPEC_SHA_512_SIG1_2
   UNSPEC_SHA_512_SUM0
   UNSPEC_SHA_512_SUM1
   UNSPEC_SM3_P0
   UNSPEC_SM3_P1
   UNSPEC_SM4_ED
   UNSPEC_SM4_KS
-  UNSPEC_POLLENTROPY
-  UNSPEC_GETNOISE
 ])
-
 
 ;; Zkne&Zknd - AES (RV32)
 
 (define_insn "riscv_aes32dsi"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
-                   (match_operand:SI 2 "immediate_operand" "")]
+                   (match_operand:SI 2 "register_operand" "r")
+                   (match_operand:SI 3 "immediate_operand" "")]
                    UNSPEC_AES_DS))]
   "TARGET_ZKND && !TARGET_64BIT"
-  "aes32dsi\t%0,%1,%2")
+  "aes32dsi\t%0,%1,%2,%3")
 
 (define_insn "riscv_aes32dsmi"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
-                   (match_operand:SI 2 "immediate_operand" "")]
+                   (match_operand:SI 2 "register_operand" "r")
+                   (match_operand:SI 3 "immediate_operand" "")]
                    UNSPEC_AES_DSM))]
   "TARGET_ZKND && !TARGET_64BIT"
-  "aes32dsmi\t%0,%1,%2")
+  "aes32dsmi\t%0,%1,%2,%3")
 
 (define_insn "riscv_aes32esi"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
-                   (match_operand:SI 2 "immediate_operand" "")]
+                   (match_operand:SI 2 "register_operand" "")
+                   (match_operand:SI 3 "immediate_operand" "")]
                    UNSPEC_AES_ES))]
   "TARGET_ZKNE && !TARGET_64BIT"
-  "aes32esi\t%0,%1,%2")
+  "aes32esi\t%0,%1,%2,%3")
 
 (define_insn "riscv_aes32esmi"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
-                   (match_operand:SI 2 "immediate_operand" "")]
+                   (match_operand:SI 2 "register_operand" "r")
+                   (match_operand:SI 3 "immediate_operand" "")]
                    UNSPEC_AES_ESM))]
   "TARGET_ZKNE && !TARGET_64BIT"
-  "aes32esmi\t%0,%1,%2")
+  "aes32esmi\t%0,%1,%2,%3")
 
 
 ;; Zkne&Zknd - AES (RV64)
@@ -114,7 +119,7 @@
 (define_insn "riscv_aes64im"
   [(set (match_operand:DI 0 "register_operand" "=r")
         (unspec:DI [(match_operand:DI 1 "register_operand" "r")]
-                   UNSPEC_AES_K))]
+                   UNSPEC_AES_IM))]
   "TARGET_ZKND && TARGET_64BIT"
   "aes64im\t%0,%1")
 
@@ -122,7 +127,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
         (unspec:DI [(match_operand:DI 1 "register_operand" "r")
                    (match_operand:DI 2 "immediate_operand" "")]
-                   UNSPEC_AES_K))]
+                   UNSPEC_AES_KS1))]
   "TARGET_ZKNE && TARGET_64BIT"
   "aes64ks1i\t%0,%1,%2")
 
@@ -130,7 +135,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
         (unspec:DI [(match_operand:DI 1 "register_operand" "r")
                    (match_operand:DI 2 "register_operand" "r")]
-                   UNSPEC_AES_K))]
+                   UNSPEC_AES_KS2))]
   "TARGET_ZKNE && TARGET_64BIT"
   "aes64ks2\t%0,%1,%2")
 
@@ -180,7 +185,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
                    (match_operand:SI 2 "register_operand" "r")]
-                   UNSPEC_SHA_512_SIG0))]
+                   UNSPEC_SHA_512_SIG0_2))]
   "TARGET_ZKNH && !TARGET_64BIT"
   "sha512sig0l\t%0,%1,%2")
 
@@ -196,7 +201,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
                    (match_operand:SI 2 "register_operand" "r")]
-                   UNSPEC_SHA_512_SIG1))]
+                   UNSPEC_SHA_512_SIG1_2))]
   "TARGET_ZKNH && !TARGET_64BIT"
   "sha512sig1l\t%0,%1,%2")
 
@@ -212,7 +217,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
         (unspec:SI [(match_operand:SI 1 "register_operand" "r")
                    (match_operand:SI 2 "register_operand" "r")]
-                   UNSPEC_SHA_512_SUM0))]
+                   UNSPEC_SHA_512_SUM1))]
   "TARGET_ZKNH && !TARGET_64BIT"
   "sha512sum1r\t%0,%1,%2")
 
@@ -283,17 +288,3 @@
   "TARGET_ZKSED"
   "sm4ks\t%0,%1,%2")
 
-
-;; Zkr - Entropy Source
-
-(define_insn "riscv_pollentropy_<mode>"
-  [(set (match_operand:X 0 "register_operand" "=r")
-        (unspec:X [(const_int 0)] UNSPEC_POLLENTROPY))]
-  "TARGET_ZKR"
-  "pollentropy\t%0")
-
-(define_insn "riscv_getnoise_<mode>"
-  [(set (match_operand:X 0 "register_operand" "=r")
-        (unspec:X [(const_int 0)] UNSPEC_GETNOISE))]
-  "TARGET_ZKR"
-  "getnoise\t%0")
