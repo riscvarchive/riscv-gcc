@@ -43,6 +43,9 @@
   UNSPEC_LRINT
   UNSPEC_LROUND
 
+  ;; Bitmanip
+  UNSPEC_PCNTW
+
   ;; Stack tie
   UNSPEC_TIE
 ])
@@ -162,10 +165,11 @@
 ;; multi	multiword sequence (or user asm statements)
 ;; nop		no operation
 ;; ghost	an instruction that produces no real code
+;; bitmanip	bitmanip instructions
 (define_attr "type"
   "unknown,branch,jump,call,load,fpload,store,fpstore,
    mtc,mfc,const,arith,logical,shift,slt,imul,idiv,move,fmove,fadd,fmul,
-   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost"
+   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost,bitmanip"
   (cond [(eq_attr "got" "load") (const_string "load")
 
 	 ;; If a doubleword move uses these expensive instructions,
@@ -1052,15 +1056,21 @@
 
 ;; Extension insns.
 
-(define_insn_and_split "zero_extendsidi2"
+(define_expand "zero_extendsidi2"
+  [(set (match_operand:DI 0 "register_operand")
+	(zero_extend:DI (match_operand:SI 1 "nonimmediate_operand")))]
+  "TARGET_64BIT")
+
+(define_insn_and_split "*zero_extendsidi2_internal"
   [(set (match_operand:DI     0 "register_operand"     "=r,r")
 	(zero_extend:DI
 	    (match_operand:SI 1 "nonimmediate_operand" " r,m")))]
-  "TARGET_64BIT"
+  "TARGET_64BIT && !TARGET_ZBA"
   "@
    #
    lwu\t%0,%1"
-  "&& reload_completed
+  "&& !TARGET_ZBA
+   && reload_completed
    && REG_P (operands[1])
    && !paradoxical_subreg_p (operands[0])"
   [(set (match_dup 0)
@@ -1071,15 +1081,20 @@
   [(set_attr "move_type" "shift_shift,load")
    (set_attr "mode" "DI")])
 
-(define_insn_and_split "zero_extendhi<GPR:mode>2"
+(define_expand "zero_extendhi<GPR:mode>2"
+  [(set (match_operand:GPR 0 "register_operand")
+	(zero_extend:GPR (match_operand:HI 1 "nonimmediate_operand")))])
+
+(define_insn_and_split "*zero_extendhi<GPR:mode>2_internal"
   [(set (match_operand:GPR    0 "register_operand"     "=r,r")
 	(zero_extend:GPR
 	    (match_operand:HI 1 "nonimmediate_operand" " r,m")))]
-  ""
+  "!TARGET_ZBB"
   "@
    #
    lhu\t%0,%1"
   "&& reload_completed
+   && !TARGET_ZBB
    && REG_P (operands[1])
    && !paradoxical_subreg_p (operands[0])"
   [(set (match_dup 0)
@@ -1126,11 +1141,12 @@
   [(set (match_operand:SUPERQI   0 "register_operand"     "=r,r")
 	(sign_extend:SUPERQI
 	    (match_operand:SHORT 1 "nonimmediate_operand" " r,m")))]
-  ""
+  "!TARGET_ZBB"
   "@
    #
    l<SHORT:size>\t%0,%1"
   "&& reload_completed
+   && !TARGET_ZBB
    && REG_P (operands[1])
    && !paradoxical_subreg_p (operands[0])"
   [(set (match_dup 0) (ashift:SI (match_dup 1) (match_dup 2)))
@@ -1809,7 +1825,7 @@
 	(and:DI (match_operand:DI 1 "register_operand")
 		(match_operand:DI 2 "high_mask_shift_operand")))
    (clobber (match_operand:DI 3 "register_operand"))]
-  "TARGET_64BIT"
+  "TARGET_64BIT && !TARGET_ZBA"
   [(set (match_dup 3)
 	(lshiftrt:DI (match_dup 1) (match_dup 2)))
    (set (match_dup 0)
@@ -1829,6 +1845,7 @@
 		(match_operand 3 "immediate_operand" "")))
    (clobber (match_scratch:DI 4 "=&r"))]
   "TARGET_64BIT
+   && !TARGET_ZBA
    && ((INTVAL (operands[3]) >> INTVAL (operands[2])) == 0xffffffff)"
   "#"
   "&& reload_completed"
@@ -2460,6 +2477,14 @@
   ""
   "")
 
+(define_insn "riscv_pcntw"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(unspec
+	    [(match_operand:SI 1 "register_operand" "r")]
+	    UNSPEC_PCNTW))]
+  ""
+  "pcntw\t%0,%1")
+
 (define_insn "riscv_frflags"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(unspec_volatile [(const_int 0)] UNSPECV_FRFLAGS))]
@@ -2499,6 +2524,7 @@
   [(set_attr "length" "0")]
 )
 
+(include "bitmanip.md")
 (include "crypto.md")
 
 ;; This fixes a failure with gcc.c-torture/execute/pr64242.c at -O2 for a

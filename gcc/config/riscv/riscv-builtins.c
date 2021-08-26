@@ -89,6 +89,8 @@ struct riscv_builtin_description {
 
 AVAIL (hard_float, TARGET_HARD_FLOAT)
 
+AVAIL (bitmanip64, TARGET_64BIT && TARGET_BITMANIP)
+
 AVAIL (crypto_zknd32, TARGET_ZKND && !TARGET_64BIT)
 AVAIL (crypto_zknd64, TARGET_ZKND && TARGET_64BIT)
 AVAIL (crypto_zkne32, TARGET_ZKNE && !TARGET_64BIT)
@@ -152,7 +154,8 @@ AVAIL (crypto_zkr64, TARGET_ZKR && TARGET_64BIT)
 
 static const struct riscv_builtin_description riscv_builtins[] = {
   #include "riscv-builtins-crypto.def"
-
+  DIRECT_BUILTIN (pcntw, RISCV_SI_FTYPE_SI, bitmanip64),
+  DIRECT_BUILTIN (rolw, RISCV_SI_FTYPE_SI_SI, bitmanip64),
   DIRECT_BUILTIN (frflags, RISCV_USI_FTYPE, hard_float),
   DIRECT_NO_TARGET_BUILTIN (fsflags, RISCV_VOID_FTYPE_USI, hard_float)
 };

@@ -41,10 +41,7 @@
   UNSPEC_SM3_P1
   UNSPEC_SM4_ED
   UNSPEC_SM4_KS
-  UNSPEC_POLLENTROPY
-  UNSPEC_GETNOISE
 ])
-
 
 ;; Zkne&Zknd - AES (RV32)
 
@@ -291,17 +288,3 @@
   "TARGET_ZKSED"
   "sm4ks\t%0,%1,%2")
 
-
-;; Zkr - Entropy Source
-
-(define_insn "riscv_pollentropy_<mode>"
-  [(set (match_operand:X 0 "register_operand" "=r")
-        (unspec:X [(const_int 0)] UNSPEC_POLLENTROPY))]
-  "TARGET_ZKR"
-  "pollentropy\t%0")
-
-(define_insn "riscv_getnoise_<mode>"
-  [(set (match_operand:X 0 "register_operand" "=r")
-        (unspec:X [(const_int 0)] UNSPEC_GETNOISE))]
-  "TARGET_ZKR"
-  "getnoise\t%0")
