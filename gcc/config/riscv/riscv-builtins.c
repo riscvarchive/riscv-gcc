@@ -38,6 +38,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "langhooks.h"
 #include "stringpool.h"
 #include "riscv-vector-iterator.h"
+#include "riscv-protos.h"
 
 /* We don't want the PTR definition from ansi-decl.h.  */
 #undef PTR
@@ -129,6 +130,17 @@ enum riscv_builtin_type {
    return (COND);			\
  }
 
+#define DECL_CHECKER(NAME) \
+static bool                \
+check_##NAME (tree, rtx, rtx, machine_mode);
+
+#define DEF_CHECKER(NAME)                        \
+static bool                                      \
+check_##NAME (tree exp ATTRIBUTE_UNUSED,         \
+              rtx target ATTRIBUTE_UNUSED,       \
+              rtx subtarget ATTRIBUTE_UNUSED,    \
+              machine_mode mode ATTRIBUTE_UNUSED)
+
 /* This structure describes a single built-in function.  */
 struct riscv_builtin_description {
   /* The code of the main .md file instruction.  See riscv_builtin_type
@@ -146,10 +158,18 @@ struct riscv_builtin_description {
 
   /* Whether the function is available.  */
   unsigned int (*avail) (void);
+
+  /* Checker for the function.  */
+  bool (*check) (tree, rtx, rtx, machine_mode);
 };
 
 AVAIL (hard_float, TARGET_HARD_FLOAT)
 AVAIL (vector, TARGET_VECTOR)
+
+DECL_CHECKER(vector_insert)
+DECL_CHECKER(vector_tuple_insert)
+DECL_CHECKER(vector_extract)
+DECL_CHECKER(vector_tuple_extract)
 
 /* Construct a riscv_builtin_description from the given arguments.
 
@@ -165,13 +185,20 @@ AVAIL (vector, TARGET_VECTOR)
    riscv_builtin_avail_.  */
 #define RISCV_BUILTIN(INSN, NAME, BUILTIN_TYPE, FUNCTION_TYPE, AVAIL)	\
   { CODE_FOR_riscv_ ## INSN, "__builtin_riscv_" NAME,			\
-    BUILTIN_TYPE, FUNCTION_TYPE, riscv_builtin_avail_ ## AVAIL }
+    BUILTIN_TYPE, FUNCTION_TYPE, riscv_builtin_avail_ ## AVAIL, NULL}
+
+#define RISCV_BUILTIN_WITH_CHECKER(INSN, NAME, BUILTIN_TYPE, FUNCTION_TYPE, AVAIL, CHECKER)	\
+  { CODE_FOR_riscv_ ## INSN, "__builtin_riscv_" NAME,			\
+    BUILTIN_TYPE, FUNCTION_TYPE, riscv_builtin_avail_ ## AVAIL, check_ ## CHECKER}
 
 /* Define __builtin_riscv_<INSN>, which is a RISCV_BUILTIN_DIRECT function
    mapped to instruction CODE_FOR_riscv_<INSN>,  FUNCTION_TYPE and AVAIL
    are as for RISCV_BUILTIN.  */
 #define DIRECT_BUILTIN(INSN, FUNCTION_TYPE, AVAIL)			\
   RISCV_BUILTIN (INSN, #INSN, RISCV_BUILTIN_DIRECT, FUNCTION_TYPE, AVAIL)
+
+#define DIRECT_BUILTIN_WITH_CHECKER(INSN, FUNCTION_TYPE, AVAIL, CHECKER)			\
+  RISCV_BUILTIN_WITH_CHECKER (INSN, #INSN, RISCV_BUILTIN_DIRECT, FUNCTION_TYPE, AVAIL, CHECKER)
 
 /* Define __builtin_riscv_<INSN>, which is a RISCV_BUILTIN_DIRECT_NO_TARGET
    function mapped to instruction CODE_FOR_riscv_<INSN>,  FUNCTION_TYPE
@@ -180,16 +207,27 @@ AVAIL (vector, TARGET_VECTOR)
   RISCV_BUILTIN (INSN, #INSN, RISCV_BUILTIN_DIRECT_NO_TARGET,		\
 		 FUNCTION_TYPE, AVAIL)
 
+#define DIRECT_NO_TARGET_BUILTIN_WITH_CHECKER(INSN, FUNCTION_TYPE, AVAIL, CHECKER) \
+  RISCV_BUILTIN_WITH_CHECKER (INSN, #INSN, RISCV_BUILTIN_DIRECT_NO_TARGET,		\
+		 FUNCTION_TYPE, AVAIL, CHECKER)
+
 /* Same as above, but for using named patterns in the md file.  It drops the
    riscv after CODE_FOR_, but it is otherwise the same.  */
 #define RISCV_NAMED(INSN, NAME, BUILTIN_TYPE, FUNCTION_TYPE, AVAIL)	\
   { CODE_FOR_ ## INSN, "__builtin_riscv_" NAME,			\
-    BUILTIN_TYPE, FUNCTION_TYPE, riscv_builtin_avail_ ## AVAIL }
+    BUILTIN_TYPE, FUNCTION_TYPE, riscv_builtin_avail_ ## AVAIL, NULL}
+
+#define RISCV_NAMED_WITH_CHECKER(INSN, NAME, BUILTIN_TYPE, FUNCTION_TYPE, AVAIL, CHECKER)	\
+  { CODE_FOR_ ## INSN, "__builtin_riscv_" NAME,			\
+    BUILTIN_TYPE, FUNCTION_TYPE, riscv_builtin_avail_ ## AVAIL, check_ ## CHECKER}
 
 /* This has an extra NAME argument, as the builtin name and the pattern name
    are constructed differently.  */
 #define DIRECT_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)			\
   RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_DIRECT, FUNCTION_TYPE, AVAIL)
+
+#define DIRECT_NAMED_WITH_CHECKER(INSN, NAME, FUNCTION_TYPE, AVAIL, CHECKER)			\
+  RISCV_NAMED_WITH_CHECKER (INSN, #NAME, RISCV_BUILTIN_DIRECT, FUNCTION_TYPE, AVAIL, CHECKER)
 
 /* This has an extra NAME argument, as the builtin name and the pattern name
    are constructed differently.  */
@@ -197,15 +235,29 @@ AVAIL (vector, TARGET_VECTOR)
   RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_DIRECT_NO_TARGET,		\
 	       FUNCTION_TYPE, AVAIL)
 
+#define DIRECT_NAMED_NO_TARGET_WITH_CHECKER(INSN, NAME, FUNCTION_TYPE, AVAIL, CHECKER)	\
+  RISCV_NAMED_WITH_CHECKER (INSN, #NAME, RISCV_BUILTIN_DIRECT_NO_TARGET,		\
+	       FUNCTION_TYPE, AVAIL, CHECKER)
+
 #define SHIFT_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)			\
   RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_SHIFT_SCALAR, FUNCTION_TYPE, AVAIL)
+
+#define SHIFT_NAMED_WITH_CHECKER(INSN, NAME, FUNCTION_TYPE, AVAIL, CHECKER)			\
+  RISCV_NAMED_WITH_CHECKER (INSN, #NAME, RISCV_BUILTIN_SHIFT_SCALAR, FUNCTION_TYPE, AVAIL, CHECKER)
 
 #define SHIFT_MASK_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)		\
   RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_SHIFT_MASK_SCALAR,		\
 	       FUNCTION_TYPE, AVAIL)
 
+#define SHIFT_MASK_NAMED_WITH_CHECKER(INSN, NAME, FUNCTION_TYPE, AVAIL, CHECKER)		\
+  RISCV_NAMED_WITH_CHECKER (INSN, #NAME, RISCV_BUILTIN_SHIFT_MASK_SCALAR,		\
+	       FUNCTION_TYPE, AVAIL, CHECKER)
+
 #define MV_XS_NAMED(INSN, NAME, FUNCTION_TYPE, AVAIL)			\
   RISCV_NAMED (INSN, #NAME, RISCV_BUILTIN_MV_XS, FUNCTION_TYPE, AVAIL)
+
+#define MV_XS_NAMED_WITH_CHECKER(INSN, NAME, FUNCTION_TYPE, AVAIL, CHECKER)			\
+  RISCV_NAMED_WITH_CHECKER (INSN, #NAME, RISCV_BUILTIN_MV_XS, FUNCTION_TYPE, AVAIL, CHECKER)
 
 /* Argument types.  */
 #define RISCV_ATYPE_VOID void_type_node
@@ -1759,48 +1811,48 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 #define VINT_VEC_INSERT(SEW, WLMUL, LMUL, MLEN,				\
 			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
 			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)         \
-  DIRECT_NAMED (							\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vector_insert##VMODE_PREFIX_LOWER##i,				\
     vector_insertint##SEW##m##LMUL##m##WLMUL,				\
     RISCV_VI##SEW##M##WLMUL##_FTYPE_VI##SEW##M##WLMUL##_VI##SEW##M##LMUL##_SI,\
-    vector),								\
-  DIRECT_NAMED (							\
+    vector, vector_insert),								\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vector_insert##VMODE_PREFIX_LOWER##i,				\
     vector_insertuint##SEW##m##LMUL##m##WLMUL,				\
     RISCV_VUI##SEW##M##WLMUL##_FTYPE_VUI##SEW##M##WLMUL##_VUI##SEW##M##LMUL##_SI,\
-    vector),
+    vector, vector_insert),
 
 #define VFLOAT_VEC_INSERT(SEW, WLMUL, LMUL, MLEN,				\
 			  SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
 			  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)	\
-  DIRECT_NAMED (							\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vector_insert##VMODE_PREFIX_LOWER##f,				\
     vector_insertfloat##SEW##m##LMUL##m##WLMUL,				\
     RISCV_VF##SEW##M##WLMUL##_FTYPE_VF##SEW##M##WLMUL##_VF##SEW##M##LMUL##_SI,\
-    vector),
+    vector, vector_insert),
 
 #define VINT_VEC_EXTRACT(SEW, WLMUL, LMUL, MLEN,				\
 			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
 			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)	\
-  DIRECT_NAMED (							\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vector_extract##VMODE_PREFIX_LOWER##i,				\
     vector_extractint##SEW##m##WLMUL##m##LMUL,				\
     RISCV_VI##SEW##M##LMUL##_FTYPE_VI##SEW##M##WLMUL##_SI,	\
-    vector),								\
-  DIRECT_NAMED (							\
+    vector, vector_extract),								\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vector_extract##VMODE_PREFIX_LOWER##i,				\
     vector_extractuint##SEW##m##WLMUL##m##LMUL,				\
     RISCV_VUI##SEW##M##LMUL##_FTYPE_VUI##SEW##M##WLMUL##_SI,	\
-    vector),
+    vector, vector_extract),
 
 #define VFLOAT_VEC_EXTRACT(SEW, WLMUL, LMUL, MLEN,				\
 			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
 			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER)	\
-  DIRECT_NAMED (							\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vector_extract##VMODE_PREFIX_LOWER##f,				\
     vector_extractfloat##SEW##m##WLMUL##m##LMUL,				\
     RISCV_VF##SEW##M##LMUL##_FTYPE_VF##SEW##M##WLMUL##_SI,	\
-    vector),
+    vector, vector_extract),
 
 #define VREINTERPRET_INT(E, L, MLEN, IMODE, ISUBMODE)			\
   DIRECT_NAMED (mov##IMODE,						\
@@ -2230,48 +2282,48 @@ _RVV_SEG_ARG (RISCV_DECL_SEG_TYPES, X)
 #define VINT_SEG_INSERT(SEW, LMUL, NF, MLEN,				\
 			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
 			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
-  DIRECT_NAMED (							\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vtuple_insert##VMODE_PREFIX_LOWER##i,				\
     vtuple_insertint##SEW##m##LMUL##x##NF,				\
     RISCV_VI##SEW##M##LMUL##X##NF##_FTYPE_VI##SEW##M##LMUL##X##NF##_VI##SEW##M##LMUL##_SI,\
-    vector),								\
-  DIRECT_NAMED (							\
+    vector, vector_tuple_insert),								\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vtuple_insert##VMODE_PREFIX_LOWER##i,				\
     vtuple_insertuint##SEW##m##LMUL##x##NF,				\
     RISCV_VUI##SEW##M##LMUL##X##NF##_FTYPE_VUI##SEW##M##LMUL##X##NF##_VUI##SEW##M##LMUL##_SI,\
-    vector),
+    vector, vector_tuple_insert),
 
 #define VFLOAT_SEG_INSERT(SEW, LMUL, NF, MLEN,				\
 			  SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
 			  VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
-  DIRECT_NAMED (							\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vtuple_insert##VMODE_PREFIX_LOWER##f,				\
     vtuple_insertfloat##SEW##m##LMUL##x##NF,				\
     RISCV_VF##SEW##M##LMUL##X##NF##_FTYPE_VF##SEW##M##LMUL##X##NF##	_VF##SEW##M##LMUL##_SI,\
-    vector),								\
+    vector, vector_tuple_insert),								\
 
 #define VINT_SEG_EXTRACT(SEW, LMUL, NF, MLEN,				\
 			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
 			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
-  DIRECT_NAMED (							\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vtuple_extract##VMODE_PREFIX_LOWER##i,				\
     vtuple_extractint##SEW##m##LMUL##x##NF,				\
     RISCV_VI##SEW##M##LMUL##_FTYPE_VI##SEW##M##LMUL##X##NF##_SI,	\
-    vector),								\
-  DIRECT_NAMED (							\
+    vector, vector_tuple_extract),								\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vtuple_extract##VMODE_PREFIX_LOWER##i,				\
     vtuple_extractuint##SEW##m##LMUL##x##NF,				\
     RISCV_VUI##SEW##M##LMUL##_FTYPE_VUI##SEW##M##LMUL##X##NF##_SI,	\
-    vector),
+    vector, vector_tuple_extract),
 
 #define VFLOAT_SEG_EXTRACT(SEW, LMUL, NF, MLEN,				\
 			SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,		\
 			VMODE_PREFIX_UPPER, VMODE_PREFIX_LOWER, XX)	\
-  DIRECT_NAMED (							\
+  DIRECT_NAMED_WITH_CHECKER (							\
     vtuple_extract##VMODE_PREFIX_LOWER##f,				\
     vtuple_extractfloat##SEW##m##LMUL##x##NF,				\
     RISCV_VF##SEW##M##LMUL##_FTYPE_VF##SEW##M##LMUL##X##NF##_SI,	\
-    vector),
+    vector, vector_tuple_extract),
 
 #define VINT_SEG_CREATE2(SEW, LMUL, NF, MLEN,				\
 			 SMODE_PREFIX_UPPER, SMODE_PREFIX_LOWER,	\
@@ -3311,6 +3363,13 @@ riscv_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
   unsigned int fcode = DECL_MD_FUNCTION_CODE (fndecl);
   const struct riscv_builtin_description *d = &riscv_builtins[fcode];
 
+  /* TARGET_CHECK_BUILTIN_CALL can only do checking during paring, so
+     some information for indirect builtin call (like in inline functions,
+     etc.) can't pass to checker, so we do checking during expanding. */
+  if(d->check &&
+    !d->check (exp, target, subtarget, mode))
+    return const0_rtx;
+
   switch (d->builtin_type)
     {
     case RISCV_BUILTIN_SHIFT_SCALAR:
@@ -3345,4 +3404,70 @@ riscv_atomic_assign_expand_fenv (tree *hold, tree *clear, tree *update)
 		  build_call_expr (frflags, 0), NULL_TREE, NULL_TREE);
   *clear = build_call_expr (fsflags, 1, old_flags);
   *update = NULL_TREE;
+}
+
+static bool
+check_range (location_t loc, tree tuple, tree index, machine_mode emode)
+{
+  if (TREE_CODE (index) != INTEGER_CST)
+    return true;
+
+  machine_mode tmode = TYPE_MODE (TREE_TYPE (tuple));
+  poly_uint64 tsize = GET_MODE_SIZE (tmode);
+  poly_uint64 esize = GET_MODE_SIZE (emode);
+
+  poly_int64 max_poly = exact_div (tsize, esize);
+  gcc_assert (max_poly.is_constant ());
+  HOST_WIDE_INT max = max_poly.to_constant();
+
+  if(TREE_INT_CST_LOW (index) >= max)
+    {
+      error_at (loc, "index %d is out of range, should be less than %d.",
+        TREE_INT_CST_LOW (index), max);
+      return false;
+    }
+  return true;
+}
+
+static bool
+check_tuple_range (location_t loc, tree tuple, tree index)
+{
+  if (TREE_CODE (index) != INTEGER_CST)
+    return true;
+
+  machine_mode tmode = TYPE_MODE (TREE_TYPE (tuple));
+  int nf = riscv_get_nf (tmode);
+  if (TREE_INT_CST_LOW (index) >= nf)
+    {
+      error_at (loc, "index %d is out of range, should be less than %d.",
+        TREE_INT_CST_LOW (index), nf);
+      return false;
+    }
+  return true;
+}
+
+DEF_CHECKER (vector_insert)
+{
+  return check_range (EXPR_LOCATION (exp),
+           CALL_EXPR_ARG (exp, 0), CALL_EXPR_ARG (exp, 2),
+           TYPE_MODE (TREE_TYPE (CALL_EXPR_ARG (exp, 1))));
+}
+
+DEF_CHECKER (vector_tuple_insert)
+{
+  return check_tuple_range (EXPR_LOCATION (exp),
+           CALL_EXPR_ARG (exp, 0), CALL_EXPR_ARG (exp, 2));
+}
+
+DEF_CHECKER (vector_extract)
+{
+  return check_range (EXPR_LOCATION (exp),
+           CALL_EXPR_ARG (exp, 0), CALL_EXPR_ARG (exp, 1),
+           TYPE_MODE (TREE_TYPE (exp)));
+}
+
+DEF_CHECKER (vector_tuple_extract)
+{
+  return check_tuple_range (EXPR_LOCATION (exp),
+           CALL_EXPR_ARG (exp, 0), CALL_EXPR_ARG (exp, 1));
 }
