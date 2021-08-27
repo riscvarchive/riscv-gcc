@@ -11115,7 +11115,7 @@
   "TARGET_VECTOR"
 {
   if (INTVAL (operands[3]) < 0
-      || (INTVAL (operands[3]) > riscv_get_nf (<MODE>mode)))
+      || (INTVAL (operands[3]) >= riscv_get_nf (<MODE>mode)))
     {
       gcc_unreachable ();
       FAIL;
@@ -11135,7 +11135,7 @@
   "TARGET_VECTOR"
 {
   if (INTVAL (operands[2]) < 0
-      || (INTVAL (operands[2]) > riscv_get_nf (<MODE>mode)))
+      || (INTVAL (operands[2]) >= riscv_get_nf (<MODE>mode)))
     {
       gcc_unreachable ();
       FAIL;
@@ -11285,6 +11285,11 @@
   poly_int64 offset = INTVAL (operands[2]) * GET_MODE_SIZE (GET_MODE (operands[0]));
   rtx subreg = simplify_gen_subreg (GET_MODE (operands[0]), operands[1],
 				    <MODE>mode, offset);
+  if(!subreg)
+    {
+      gcc_unreachable ();
+      FAIL;
+    }
   emit_move_insn (operands[0], subreg);
   DONE;
 })
