@@ -10749,7 +10749,7 @@
 	(unspec:VTMODES
 	  [(unspec:VTMODES
 	     [(match_operand:P 1 "register_operand" "r")
-	      (match_operand:VIMODES 2 "register_operand")
+	      (match_operand:VIMODES 2 "register_operand" "vr")
 	      (mem:BLK (scratch))]
 	    UNSPEC_SEG_IDX_LOAD)
 	   (reg:SI VL_REGNUM)]
@@ -10783,7 +10783,7 @@
 	(unspec:VTMODES
 	  [(unspec:VTMODES
 	     [(match_operand:P 1 "register_operand" "r")
-	      (match_operand:VIMODES 4 "register_operand")
+	      (match_operand:VIMODES 4 "register_operand" "vr")
 	      (match_operand:<VTMODES:VCMPEQUIV> 2 "register_operand" "vm")
 	      (match_operand:VTMODES 3 "register_operand" "0")
 	      (mem:BLK (scratch))]
@@ -10817,7 +10817,7 @@
 	(unspec:VTMODES
 	  [(unspec:VTMODES
 	     [(match_operand:P 1 "register_operand" "r")
-	      (match_operand:P 2 "register_operand")
+	      (match_operand:P 2 "register_operand" "r")
 	      (mem:BLK (scratch))]
 	    UNSPEC_SEG_LOAD)
 	   (reg:SI VL_REGNUM)]
@@ -10851,7 +10851,7 @@
 	(unspec:VTMODES
 	  [(unspec:VTMODES
 	     [(match_operand:P 1 "register_operand" "r")
-	      (match_operand:P 4 "register_operand")
+	      (match_operand:P 4 "register_operand" "r")
 	      (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")
 	      (match_operand:VTMODES 3 "register_operand" "0")
 	      (mem:BLK (scratch))]
@@ -10947,7 +10947,7 @@
 	(unspec:BLK
 	  [(unspec:BLK
 	     [(match_operand:P 0 "register_operand" "r")
-	      (match_operand:VIMODES 2 "register_operand")
+	      (match_operand:VIMODES 2 "register_operand" "vr")
 	      (match_operand:VTMODES 1 "register_operand" "vr")]
 	    UNSPEC_SEG_IDX_STORE)
 	   (reg:SI VL_REGNUM)]
@@ -10980,7 +10980,7 @@
 	(unspec:BLK
 	  [(unspec:BLK
 	     [(match_operand:P 0 "register_operand" "r")
-	      (match_operand:VIMODES 3 "register_operand")
+	      (match_operand:VIMODES 3 "register_operand" "vr")
 	      (match_operand:VTMODES 1 "register_operand" "vr")
 	      (match_operand:<VTMODES:VCMPEQUIV> 2 "register_operand" "vm")]
 	    UNSPEC_SEG_IDX_STORE)
@@ -11013,7 +11013,7 @@
 	(unspec:BLK
 	  [(unspec:BLK
 	     [(match_operand:P 0 "register_operand" "r")
-	      (match_operand:P 2 "register_operand")
+	      (match_operand:P 2 "register_operand" "r")
 	      (match_operand:VTMODES 1 "register_operand" "vr")]
 	    UNSPEC_SEG_STORE)
 	   (reg:SI VL_REGNUM)]
@@ -11046,7 +11046,7 @@
 	(unspec:BLK
 	  [(unspec:BLK
 	     [(match_operand:P 0 "register_operand" "r")
-	      (match_operand:P 3 "register_operand")
+	      (match_operand:P 3 "register_operand" "r")
 	      (match_operand:VTMODES 1 "register_operand" "vr")
 	      (match_operand:<VCMPEQUIV> 2 "register_operand" "vm")]
 	    UNSPEC_SEG_STORE)
