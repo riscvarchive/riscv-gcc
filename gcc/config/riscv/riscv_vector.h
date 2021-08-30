@@ -5243,5 +5243,1361 @@ vcreate_f##SEW##m##LMUL##x##NF (vfloat##SEW##m##LMUL##_t v1,		\
 
 _RVV_FLOAT_TUPLE_NF8_ITERATOR_ARG (_RVVFLOAT_TUPLE_CREATE8, )
 
+#define _RVV_TUPLE_LDST2_WRAP(SEW, LMUL, NF, MLEN, T, SN, S)		\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					  v##S##SEW##m##LMUL##_t *v1,\
+					  const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, vl);		\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					      v##S##SEW##m##LMUL##_t *v1,\
+					      vbool##MLEN##_t mask,	\
+					      v##S##SEW##m##LMUL##_t maskedoff0,\
+					      v##S##SEW##m##LMUL##_t maskedoff1,\
+					      const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1);		\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					    v##S##SEW##m##LMUL##_t *v1,\
+					    const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF (a, new_vl, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+						v##S##SEW##m##LMUL##_t *v1,\
+						vbool##MLEN##_t mask,	\
+						v##S##SEW##m##LMUL##_t maskedoff0,\
+						v##S##SEW##m##LMUL##_t maskedoff1,\
+						const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1);		\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, new_vl, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					   v##S##SEW##m##LMUL##_t *v1,\
+					   const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					       v##S##SEW##m##LMUL##_t *v1,\
+					       vbool##MLEN##_t mask,	\
+					       v##S##SEW##m##LMUL##_t maskedoff0,\
+					       v##S##SEW##m##LMUL##_t maskedoff1,\
+					       const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1);		\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, s, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					  v##S##SEW##m##LMUL##_t v0,\
+					  v##S##SEW##m##LMUL##_t v1,\
+					  word_type vl)			\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1);				\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, ret, vl);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					      S##SEW##_t *a,		\
+					      v##S##SEW##m##LMUL##_t v0,\
+					      v##S##SEW##m##LMUL##_t v1,\
+					      word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1);				\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, ret, vl);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					   ptrdiff_t s,			\
+					   v##S##SEW##m##LMUL##_t v0,\
+					   v##S##SEW##m##LMUL##_t v1,\
+					   word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1);				\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, ret, vl);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					       S##SEW##_t *a,		\
+					       ptrdiff_t s,		\
+					       v##S##SEW##m##LMUL##_t v0,\
+					       v##S##SEW##m##LMUL##_t v1,\
+					       word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1);				\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, s, ret, vl);\
+}									\
+
+_RVV_INT_TUPLE_NF2_ITERATOR_ARG (_RVV_TUPLE_LDST2_WRAP, i, int)
+_RVV_INT_TUPLE_NF2_ITERATOR_ARG (_RVV_TUPLE_LDST2_WRAP, u, uint)
+_RVV_FLOAT_TUPLE_NF2_ITERATOR_ARG (_RVV_TUPLE_LDST2_WRAP, f, float)
+
+#define _RVV_TUPLE_LDST3_WRAP(SEW, LMUL, NF, MLEN, T, SN, S)		\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					  v##S##SEW##m##LMUL##_t *v1,\
+					  v##S##SEW##m##LMUL##_t *v2,\
+					  const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, vl);		\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					      v##S##SEW##m##LMUL##_t *v1,\
+					      v##S##SEW##m##LMUL##_t *v2,\
+					      vbool##MLEN##_t mask,	\
+					      v##S##SEW##m##LMUL##_t maskedoff0,\
+					      v##S##SEW##m##LMUL##_t maskedoff1,\
+					      v##S##SEW##m##LMUL##_t maskedoff2,\
+					      const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					    v##S##SEW##m##LMUL##_t *v1,\
+					    v##S##SEW##m##LMUL##_t *v2,\
+					    const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF (a, new_vl, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+						v##S##SEW##m##LMUL##_t *v1,\
+						v##S##SEW##m##LMUL##_t *v2,\
+						vbool##MLEN##_t mask,	\
+						v##S##SEW##m##LMUL##_t maskedoff0,\
+						v##S##SEW##m##LMUL##_t maskedoff1,\
+						v##S##SEW##m##LMUL##_t maskedoff2,\
+						const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, new_vl, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					   v##S##SEW##m##LMUL##_t *v1,\
+					   v##S##SEW##m##LMUL##_t *v2,\
+					   const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					       v##S##SEW##m##LMUL##_t *v1,\
+					       v##S##SEW##m##LMUL##_t *v2,\
+					       vbool##MLEN##_t mask,	\
+					       v##S##SEW##m##LMUL##_t maskedoff0,\
+					       v##S##SEW##m##LMUL##_t maskedoff1,\
+					       v##S##SEW##m##LMUL##_t maskedoff2,\
+					       const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, s, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					  v##S##SEW##m##LMUL##_t v0,\
+					  v##S##SEW##m##LMUL##_t v1,\
+					  v##S##SEW##m##LMUL##_t v2,\
+					  word_type vl)			\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2);			\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, ret, vl);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					      S##SEW##_t *a,		\
+					      v##S##SEW##m##LMUL##_t v0,\
+					      v##S##SEW##m##LMUL##_t v1,\
+					      v##S##SEW##m##LMUL##_t v2,\
+					      word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2);			\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, ret, vl);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					   ptrdiff_t s,			\
+					   v##S##SEW##m##LMUL##_t v0,\
+					   v##S##SEW##m##LMUL##_t v1,\
+					   v##S##SEW##m##LMUL##_t v2,\
+					   word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2);			\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, ret, vl);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					       S##SEW##_t *a,		\
+					       ptrdiff_t s,		\
+					       v##S##SEW##m##LMUL##_t v0,\
+					       v##S##SEW##m##LMUL##_t v1,\
+					       v##S##SEW##m##LMUL##_t v2,\
+					       word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2);			\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, s, ret, vl);\
+}									\
+
+_RVV_INT_TUPLE_NF3_ITERATOR_ARG (_RVV_TUPLE_LDST3_WRAP, i, int)
+_RVV_INT_TUPLE_NF3_ITERATOR_ARG (_RVV_TUPLE_LDST3_WRAP, u, uint)
+_RVV_FLOAT_TUPLE_NF3_ITERATOR_ARG (_RVV_TUPLE_LDST3_WRAP, f, float)
+
+#define _RVV_TUPLE_LDST4_WRAP(SEW, LMUL, NF, MLEN, T, SN, S)		\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					  v##S##SEW##m##LMUL##_t *v1,\
+					  v##S##SEW##m##LMUL##_t *v2,\
+					  v##S##SEW##m##LMUL##_t *v3,\
+					  const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, vl);		\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					      v##S##SEW##m##LMUL##_t *v1,\
+					      v##S##SEW##m##LMUL##_t *v2,\
+					      v##S##SEW##m##LMUL##_t *v3,\
+					      vbool##MLEN##_t mask,	\
+					      v##S##SEW##m##LMUL##_t maskedoff0,\
+					      v##S##SEW##m##LMUL##_t maskedoff1,\
+					      v##S##SEW##m##LMUL##_t maskedoff2,\
+					      v##S##SEW##m##LMUL##_t maskedoff3,\
+					      const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					    v##S##SEW##m##LMUL##_t *v1,\
+					    v##S##SEW##m##LMUL##_t *v2,\
+					    v##S##SEW##m##LMUL##_t *v3,\
+					    const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF (a, new_vl, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+						v##S##SEW##m##LMUL##_t *v1,\
+						v##S##SEW##m##LMUL##_t *v2,\
+						v##S##SEW##m##LMUL##_t *v3,\
+						vbool##MLEN##_t mask,	\
+						v##S##SEW##m##LMUL##_t maskedoff0,\
+						v##S##SEW##m##LMUL##_t maskedoff1,\
+						v##S##SEW##m##LMUL##_t maskedoff2,\
+						v##S##SEW##m##LMUL##_t maskedoff3,\
+						const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, new_vl, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					   v##S##SEW##m##LMUL##_t *v1,\
+					   v##S##SEW##m##LMUL##_t *v2,\
+					   v##S##SEW##m##LMUL##_t *v3,\
+					   const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					       v##S##SEW##m##LMUL##_t *v1,\
+					       v##S##SEW##m##LMUL##_t *v2,\
+					       v##S##SEW##m##LMUL##_t *v3,\
+					       vbool##MLEN##_t mask,	\
+					       v##S##SEW##m##LMUL##_t maskedoff0,\
+					       v##S##SEW##m##LMUL##_t maskedoff1,\
+					       v##S##SEW##m##LMUL##_t maskedoff2,\
+					       v##S##SEW##m##LMUL##_t maskedoff3,\
+					       const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, s, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					  v##S##SEW##m##LMUL##_t v0,\
+					  v##S##SEW##m##LMUL##_t v1,\
+					  v##S##SEW##m##LMUL##_t v2,\
+					  v##S##SEW##m##LMUL##_t v3,\
+					  word_type vl)			\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3);			\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, ret, vl);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					      S##SEW##_t *a,		\
+					      v##S##SEW##m##LMUL##_t v0,\
+					      v##S##SEW##m##LMUL##_t v1,\
+					      v##S##SEW##m##LMUL##_t v2,\
+					      v##S##SEW##m##LMUL##_t v3,\
+					      word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3);			\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, ret, vl);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					   ptrdiff_t s,			\
+					   v##S##SEW##m##LMUL##_t v0,\
+					   v##S##SEW##m##LMUL##_t v1,\
+					   v##S##SEW##m##LMUL##_t v2,\
+					   v##S##SEW##m##LMUL##_t v3,\
+					   word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3);			\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, ret, vl);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					       S##SEW##_t *a,		\
+					       ptrdiff_t s,		\
+					       v##S##SEW##m##LMUL##_t v0,\
+					       v##S##SEW##m##LMUL##_t v1,\
+					       v##S##SEW##m##LMUL##_t v2,\
+					       v##S##SEW##m##LMUL##_t v3,\
+					       word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3);			\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, s, ret, vl);\
+}									\
+
+_RVV_INT_TUPLE_NF4_ITERATOR_ARG (_RVV_TUPLE_LDST4_WRAP, i, int)
+_RVV_INT_TUPLE_NF4_ITERATOR_ARG (_RVV_TUPLE_LDST4_WRAP, u, uint)
+_RVV_FLOAT_TUPLE_NF4_ITERATOR_ARG (_RVV_TUPLE_LDST4_WRAP, f, float)
+
+#define _RVV_TUPLE_LDST5_WRAP(SEW, LMUL, NF, MLEN, T, SN, S)		\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					  v##S##SEW##m##LMUL##_t *v1,\
+					  v##S##SEW##m##LMUL##_t *v2,\
+					  v##S##SEW##m##LMUL##_t *v3,\
+					  v##S##SEW##m##LMUL##_t *v4,\
+					  const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, vl);		\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					      v##S##SEW##m##LMUL##_t *v1,\
+					      v##S##SEW##m##LMUL##_t *v2,\
+					      v##S##SEW##m##LMUL##_t *v3,\
+					      v##S##SEW##m##LMUL##_t *v4,\
+					      vbool##MLEN##_t mask,	\
+					      v##S##SEW##m##LMUL##_t maskedoff0,\
+					      v##S##SEW##m##LMUL##_t maskedoff1,\
+					      v##S##SEW##m##LMUL##_t maskedoff2,\
+					      v##S##SEW##m##LMUL##_t maskedoff3,\
+					      v##S##SEW##m##LMUL##_t maskedoff4,\
+					      const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4);			\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					    v##S##SEW##m##LMUL##_t *v1,\
+					    v##S##SEW##m##LMUL##_t *v2,\
+					    v##S##SEW##m##LMUL##_t *v3,\
+					    v##S##SEW##m##LMUL##_t *v4,\
+					    const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF (a, new_vl, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+						v##S##SEW##m##LMUL##_t *v1,\
+						v##S##SEW##m##LMUL##_t *v2,\
+						v##S##SEW##m##LMUL##_t *v3,\
+						v##S##SEW##m##LMUL##_t *v4,\
+						vbool##MLEN##_t mask,	\
+						v##S##SEW##m##LMUL##_t maskedoff0,\
+						v##S##SEW##m##LMUL##_t maskedoff1,\
+						v##S##SEW##m##LMUL##_t maskedoff2,\
+						v##S##SEW##m##LMUL##_t maskedoff3,\
+						v##S##SEW##m##LMUL##_t maskedoff4,\
+						const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4);			\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, new_vl, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					   v##S##SEW##m##LMUL##_t *v1,\
+					   v##S##SEW##m##LMUL##_t *v2,\
+					   v##S##SEW##m##LMUL##_t *v3,\
+					   v##S##SEW##m##LMUL##_t *v4,\
+					   const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					       v##S##SEW##m##LMUL##_t *v1,\
+					       v##S##SEW##m##LMUL##_t *v2,\
+					       v##S##SEW##m##LMUL##_t *v3,\
+					       v##S##SEW##m##LMUL##_t *v4,\
+					       vbool##MLEN##_t mask,	\
+					       v##S##SEW##m##LMUL##_t maskedoff0,\
+					       v##S##SEW##m##LMUL##_t maskedoff1,\
+					       v##S##SEW##m##LMUL##_t maskedoff2,\
+					       v##S##SEW##m##LMUL##_t maskedoff3,\
+					       v##S##SEW##m##LMUL##_t maskedoff4,\
+					       const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4);			\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, s, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					  v##S##SEW##m##LMUL##_t v0,\
+					  v##S##SEW##m##LMUL##_t v1,\
+					  v##S##SEW##m##LMUL##_t v2,\
+					  v##S##SEW##m##LMUL##_t v3,\
+					  v##S##SEW##m##LMUL##_t v4,\
+					  word_type vl)			\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4);		\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, ret, vl);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					      S##SEW##_t *a,	\
+					      v##S##SEW##m##LMUL##_t v0,\
+					      v##S##SEW##m##LMUL##_t v1,\
+					      v##S##SEW##m##LMUL##_t v2,\
+					      v##S##SEW##m##LMUL##_t v3,\
+					      v##S##SEW##m##LMUL##_t v4,\
+					      word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4);		\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, ret, vl);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					   ptrdiff_t s,			\
+					   v##S##SEW##m##LMUL##_t v0,\
+					   v##S##SEW##m##LMUL##_t v1,\
+					   v##S##SEW##m##LMUL##_t v2,\
+					   v##S##SEW##m##LMUL##_t v3,\
+					   v##S##SEW##m##LMUL##_t v4,\
+					   word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4);		\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, ret, vl);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					       S##SEW##_t *a,		\
+					       ptrdiff_t s,		\
+					       v##S##SEW##m##LMUL##_t v0,\
+					       v##S##SEW##m##LMUL##_t v1,\
+					       v##S##SEW##m##LMUL##_t v2,\
+					       v##S##SEW##m##LMUL##_t v3,\
+					       v##S##SEW##m##LMUL##_t v4,\
+					       word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4);		\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, s, ret, vl);\
+}									\
+
+_RVV_INT_TUPLE_NF5_ITERATOR_ARG (_RVV_TUPLE_LDST5_WRAP, i, int)
+_RVV_INT_TUPLE_NF5_ITERATOR_ARG (_RVV_TUPLE_LDST5_WRAP, u, uint)
+_RVV_FLOAT_TUPLE_NF5_ITERATOR_ARG (_RVV_TUPLE_LDST5_WRAP, f, float)
+
+#define _RVV_TUPLE_LDST6_WRAP(SEW, LMUL, NF, MLEN, T, SN, S)		\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					  v##S##SEW##m##LMUL##_t *v1,\
+					  v##S##SEW##m##LMUL##_t *v2,\
+					  v##S##SEW##m##LMUL##_t *v3,\
+					  v##S##SEW##m##LMUL##_t *v4,\
+					  v##S##SEW##m##LMUL##_t *v5,\
+					  const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, vl);		\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					      v##S##SEW##m##LMUL##_t *v1,\
+					      v##S##SEW##m##LMUL##_t *v2,\
+					      v##S##SEW##m##LMUL##_t *v3,\
+					      v##S##SEW##m##LMUL##_t *v4,\
+					      v##S##SEW##m##LMUL##_t *v5,\
+					      vbool##MLEN##_t mask,	\
+					      v##S##SEW##m##LMUL##_t maskedoff0,\
+					      v##S##SEW##m##LMUL##_t maskedoff1,\
+					      v##S##SEW##m##LMUL##_t maskedoff2,\
+					      v##S##SEW##m##LMUL##_t maskedoff3,\
+					      v##S##SEW##m##LMUL##_t maskedoff4,\
+					      v##S##SEW##m##LMUL##_t maskedoff5,\
+					      const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5);		\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					    v##S##SEW##m##LMUL##_t *v1,\
+					    v##S##SEW##m##LMUL##_t *v2,\
+					    v##S##SEW##m##LMUL##_t *v3,\
+					    v##S##SEW##m##LMUL##_t *v4,\
+					    v##S##SEW##m##LMUL##_t *v5,\
+					    const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF (a, new_vl, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+						v##S##SEW##m##LMUL##_t *v1,\
+						v##S##SEW##m##LMUL##_t *v2,\
+						v##S##SEW##m##LMUL##_t *v3,\
+						v##S##SEW##m##LMUL##_t *v4,\
+						v##S##SEW##m##LMUL##_t *v5,\
+						vbool##MLEN##_t mask,	\
+						v##S##SEW##m##LMUL##_t maskedoff0,\
+						v##S##SEW##m##LMUL##_t maskedoff1,\
+						v##S##SEW##m##LMUL##_t maskedoff2,\
+						v##S##SEW##m##LMUL##_t maskedoff3,\
+						v##S##SEW##m##LMUL##_t maskedoff4,\
+						v##S##SEW##m##LMUL##_t maskedoff5,\
+						const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5);		\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, new_vl, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					   v##S##SEW##m##LMUL##_t *v1,\
+					   v##S##SEW##m##LMUL##_t *v2,\
+					   v##S##SEW##m##LMUL##_t *v3,\
+					   v##S##SEW##m##LMUL##_t *v4,\
+					   v##S##SEW##m##LMUL##_t *v5,\
+					   const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					       v##S##SEW##m##LMUL##_t *v1,\
+					       v##S##SEW##m##LMUL##_t *v2,\
+					       v##S##SEW##m##LMUL##_t *v3,\
+					       v##S##SEW##m##LMUL##_t *v4,\
+					       v##S##SEW##m##LMUL##_t *v5,\
+					       vbool##MLEN##_t mask,	\
+					       v##S##SEW##m##LMUL##_t maskedoff0,\
+					       v##S##SEW##m##LMUL##_t maskedoff1,\
+					       v##S##SEW##m##LMUL##_t maskedoff2,\
+					       v##S##SEW##m##LMUL##_t maskedoff3,\
+					       v##S##SEW##m##LMUL##_t maskedoff4,\
+					       v##S##SEW##m##LMUL##_t maskedoff5,\
+					       const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5);		\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, s, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					  v##S##SEW##m##LMUL##_t v0,\
+					  v##S##SEW##m##LMUL##_t v1,\
+					  v##S##SEW##m##LMUL##_t v2,\
+					  v##S##SEW##m##LMUL##_t v3,\
+					  v##S##SEW##m##LMUL##_t v4,\
+					  v##S##SEW##m##LMUL##_t v5,\
+					  word_type vl)			\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5);		\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, ret, vl);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					      S##SEW##_t *a,		\
+					      v##S##SEW##m##LMUL##_t v0,\
+					      v##S##SEW##m##LMUL##_t v1,\
+					      v##S##SEW##m##LMUL##_t v2,\
+					      v##S##SEW##m##LMUL##_t v3,\
+					      v##S##SEW##m##LMUL##_t v4,\
+					      v##S##SEW##m##LMUL##_t v5,\
+					      word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5);		\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, ret, vl);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					   ptrdiff_t s,			\
+					   v##S##SEW##m##LMUL##_t v0,\
+					   v##S##SEW##m##LMUL##_t v1,\
+					   v##S##SEW##m##LMUL##_t v2,\
+					   v##S##SEW##m##LMUL##_t v3,\
+					   v##S##SEW##m##LMUL##_t v4,\
+					   v##S##SEW##m##LMUL##_t v5,\
+					   word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5);		\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, ret, vl);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					       S##SEW##_t *a,		\
+					       ptrdiff_t s,		\
+					       v##S##SEW##m##LMUL##_t v0,\
+					       v##S##SEW##m##LMUL##_t v1,\
+					       v##S##SEW##m##LMUL##_t v2,\
+					       v##S##SEW##m##LMUL##_t v3,\
+					       v##S##SEW##m##LMUL##_t v4,\
+					       v##S##SEW##m##LMUL##_t v5,\
+					       word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5);		\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, s, ret, vl);\
+}									\
+
+_RVV_INT_TUPLE_NF6_ITERATOR_ARG (_RVV_TUPLE_LDST6_WRAP, i, int)
+_RVV_INT_TUPLE_NF6_ITERATOR_ARG (_RVV_TUPLE_LDST6_WRAP, u, uint)
+_RVV_FLOAT_TUPLE_NF6_ITERATOR_ARG (_RVV_TUPLE_LDST6_WRAP, f, float)
+
+#define _RVV_TUPLE_LDST7_WRAP(SEW, LMUL, NF, MLEN, T, SN, S)		\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					  v##S##SEW##m##LMUL##_t *v1,\
+					  v##S##SEW##m##LMUL##_t *v2,\
+					  v##S##SEW##m##LMUL##_t *v3,\
+					  v##S##SEW##m##LMUL##_t *v4,\
+					  v##S##SEW##m##LMUL##_t *v5,\
+					  v##S##SEW##m##LMUL##_t *v6,\
+					  const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, vl);		\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					      v##S##SEW##m##LMUL##_t *v1,\
+					      v##S##SEW##m##LMUL##_t *v2,\
+					      v##S##SEW##m##LMUL##_t *v3,\
+					      v##S##SEW##m##LMUL##_t *v4,\
+					      v##S##SEW##m##LMUL##_t *v5,\
+					      v##S##SEW##m##LMUL##_t *v6,\
+					      vbool##MLEN##_t mask,	\
+					      v##S##SEW##m##LMUL##_t maskedoff0,\
+					      v##S##SEW##m##LMUL##_t maskedoff1,\
+					      v##S##SEW##m##LMUL##_t maskedoff2,\
+					      v##S##SEW##m##LMUL##_t maskedoff3,\
+					      v##S##SEW##m##LMUL##_t maskedoff4,\
+					      v##S##SEW##m##LMUL##_t maskedoff5,\
+					      v##S##SEW##m##LMUL##_t maskedoff6,\
+					      const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5, maskedoff6);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					    v##S##SEW##m##LMUL##_t *v1,\
+					    v##S##SEW##m##LMUL##_t *v2,\
+					    v##S##SEW##m##LMUL##_t *v3,\
+					    v##S##SEW##m##LMUL##_t *v4,\
+					    v##S##SEW##m##LMUL##_t *v5,\
+					    v##S##SEW##m##LMUL##_t *v6,\
+					    const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF (a, new_vl, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+						v##S##SEW##m##LMUL##_t *v1,\
+						v##S##SEW##m##LMUL##_t *v2,\
+						v##S##SEW##m##LMUL##_t *v3,\
+						v##S##SEW##m##LMUL##_t *v4,\
+						v##S##SEW##m##LMUL##_t *v5,\
+						v##S##SEW##m##LMUL##_t *v6,\
+						vbool##MLEN##_t mask,	\
+						v##S##SEW##m##LMUL##_t maskedoff0,\
+						v##S##SEW##m##LMUL##_t maskedoff1,\
+						v##S##SEW##m##LMUL##_t maskedoff2,\
+						v##S##SEW##m##LMUL##_t maskedoff3,\
+						v##S##SEW##m##LMUL##_t maskedoff4,\
+						v##S##SEW##m##LMUL##_t maskedoff5,\
+						v##S##SEW##m##LMUL##_t maskedoff6,\
+						const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5, maskedoff6);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, new_vl, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					   v##S##SEW##m##LMUL##_t *v1,\
+					   v##S##SEW##m##LMUL##_t *v2,\
+					   v##S##SEW##m##LMUL##_t *v3,\
+					   v##S##SEW##m##LMUL##_t *v4,\
+					   v##S##SEW##m##LMUL##_t *v5,\
+					   v##S##SEW##m##LMUL##_t *v6,\
+					   const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					       v##S##SEW##m##LMUL##_t *v1,\
+					       v##S##SEW##m##LMUL##_t *v2,\
+					       v##S##SEW##m##LMUL##_t *v3,\
+					       v##S##SEW##m##LMUL##_t *v4,\
+					       v##S##SEW##m##LMUL##_t *v5,\
+					       v##S##SEW##m##LMUL##_t *v6,\
+					       vbool##MLEN##_t mask,	\
+					       v##S##SEW##m##LMUL##_t maskedoff0,\
+					       v##S##SEW##m##LMUL##_t maskedoff1,\
+					       v##S##SEW##m##LMUL##_t maskedoff2,\
+					       v##S##SEW##m##LMUL##_t maskedoff3,\
+					       v##S##SEW##m##LMUL##_t maskedoff4,\
+					       v##S##SEW##m##LMUL##_t maskedoff5,\
+					       v##S##SEW##m##LMUL##_t maskedoff6,\
+					       const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5, maskedoff6);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, s, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					  v##S##SEW##m##LMUL##_t v0,\
+					  v##S##SEW##m##LMUL##_t v1,\
+					  v##S##SEW##m##LMUL##_t v2,\
+					  v##S##SEW##m##LMUL##_t v3,\
+					  v##S##SEW##m##LMUL##_t v4,\
+					  v##S##SEW##m##LMUL##_t v5,\
+					  v##S##SEW##m##LMUL##_t v6,\
+					  word_type vl)			\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5, v6);	\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, ret, vl);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					      S##SEW##_t *a,		\
+					      v##S##SEW##m##LMUL##_t v0,\
+					      v##S##SEW##m##LMUL##_t v1,\
+					      v##S##SEW##m##LMUL##_t v2,\
+					      v##S##SEW##m##LMUL##_t v3,\
+					      v##S##SEW##m##LMUL##_t v4,\
+					      v##S##SEW##m##LMUL##_t v5,\
+					      v##S##SEW##m##LMUL##_t v6,\
+					      word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5, v6);	\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, ret, vl);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					   ptrdiff_t s,			\
+					   v##S##SEW##m##LMUL##_t v0,\
+					   v##S##SEW##m##LMUL##_t v1,\
+					   v##S##SEW##m##LMUL##_t v2,\
+					   v##S##SEW##m##LMUL##_t v3,\
+					   v##S##SEW##m##LMUL##_t v4,\
+					   v##S##SEW##m##LMUL##_t v5,\
+					   v##S##SEW##m##LMUL##_t v6,\
+					   word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5, v6);	\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, ret, vl);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					       S##SEW##_t *a,		\
+					       ptrdiff_t s,		\
+					       v##S##SEW##m##LMUL##_t v0,\
+					       v##S##SEW##m##LMUL##_t v1,\
+					       v##S##SEW##m##LMUL##_t v2,\
+					       v##S##SEW##m##LMUL##_t v3,\
+					       v##S##SEW##m##LMUL##_t v4,\
+					       v##S##SEW##m##LMUL##_t v5,\
+					       v##S##SEW##m##LMUL##_t v6,\
+					       word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5, v6);	\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, s, ret, vl);\
+}									\
+
+_RVV_INT_TUPLE_NF7_ITERATOR_ARG (_RVV_TUPLE_LDST7_WRAP, i, int)
+_RVV_INT_TUPLE_NF7_ITERATOR_ARG (_RVV_TUPLE_LDST7_WRAP, u, uint)
+_RVV_FLOAT_TUPLE_NF7_ITERATOR_ARG (_RVV_TUPLE_LDST7_WRAP, f, float)
+
+#define _RVV_TUPLE_LDST8_WRAP(SEW, LMUL, NF, MLEN, T, SN, S)		\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					  v##S##SEW##m##LMUL##_t *v1,\
+					  v##S##SEW##m##LMUL##_t *v2,\
+					  v##S##SEW##m##LMUL##_t *v3,\
+					  v##S##SEW##m##LMUL##_t *v4,\
+					  v##S##SEW##m##LMUL##_t *v5,\
+					  v##S##SEW##m##LMUL##_t *v6,\
+					  v##S##SEW##m##LMUL##_t *v7,\
+					  const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, vl);		\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+  *v7 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 7);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					      v##S##SEW##m##LMUL##_t *v1,\
+					      v##S##SEW##m##LMUL##_t *v2,\
+					      v##S##SEW##m##LMUL##_t *v3,\
+					      v##S##SEW##m##LMUL##_t *v4,\
+					      v##S##SEW##m##LMUL##_t *v5,\
+					      v##S##SEW##m##LMUL##_t *v6,\
+					      v##S##SEW##m##LMUL##_t *v7,\
+					      vbool##MLEN##_t mask,	\
+					      v##S##SEW##m##LMUL##_t maskedoff0,\
+					      v##S##SEW##m##LMUL##_t maskedoff1,\
+					      v##S##SEW##m##LMUL##_t maskedoff2,\
+					      v##S##SEW##m##LMUL##_t maskedoff3,\
+					      v##S##SEW##m##LMUL##_t maskedoff4,\
+					      v##S##SEW##m##LMUL##_t maskedoff5,\
+					      v##S##SEW##m##LMUL##_t maskedoff6,\
+					      v##S##SEW##m##LMUL##_t maskedoff7,\
+					      const S##SEW##_t *a, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5, maskedoff6, maskedoff7);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+  *v7 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 7);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					    v##S##SEW##m##LMUL##_t *v1,\
+					    v##S##SEW##m##LMUL##_t *v2,\
+					    v##S##SEW##m##LMUL##_t *v3,\
+					    v##S##SEW##m##LMUL##_t *v4,\
+					    v##S##SEW##m##LMUL##_t *v5,\
+					    v##S##SEW##m##LMUL##_t *v6,\
+					    v##S##SEW##m##LMUL##_t *v7,\
+					    const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF (a, new_vl, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+  *v7 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 7);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+						v##S##SEW##m##LMUL##_t *v1,\
+						v##S##SEW##m##LMUL##_t *v2,\
+						v##S##SEW##m##LMUL##_t *v3,\
+						v##S##SEW##m##LMUL##_t *v4,\
+						v##S##SEW##m##LMUL##_t *v5,\
+						v##S##SEW##m##LMUL##_t *v6,\
+						v##S##SEW##m##LMUL##_t *v7,\
+						vbool##MLEN##_t mask,	\
+						v##S##SEW##m##LMUL##_t maskedoff0,\
+						v##S##SEW##m##LMUL##_t maskedoff1,\
+						v##S##SEW##m##LMUL##_t maskedoff2,\
+						v##S##SEW##m##LMUL##_t maskedoff3,\
+						v##S##SEW##m##LMUL##_t maskedoff4,\
+						v##S##SEW##m##LMUL##_t maskedoff5,\
+						v##S##SEW##m##LMUL##_t maskedoff6,\
+						v##S##SEW##m##LMUL##_t maskedoff7,\
+						const S##SEW##_t *a, word_type *new_vl, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5, maskedoff6, maskedoff7);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlseg##NF##e##SEW##ff_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, new_vl, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+  *v7 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 7);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (v##S##SEW##m##LMUL##_t *v0,\
+					   v##S##SEW##m##LMUL##_t *v1,\
+					   v##S##SEW##m##LMUL##_t *v2,\
+					   v##S##SEW##m##LMUL##_t *v3,\
+					   v##S##SEW##m##LMUL##_t *v4,\
+					   v##S##SEW##m##LMUL##_t *v5,\
+					   v##S##SEW##m##LMUL##_t *v6,\
+					   v##S##SEW##m##LMUL##_t *v7,\
+					   const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, vl);	\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+  *v7 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 7);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (v##S##SEW##m##LMUL##_t *v0,\
+					       v##S##SEW##m##LMUL##_t *v1,\
+					       v##S##SEW##m##LMUL##_t *v2,\
+					       v##S##SEW##m##LMUL##_t *v3,\
+					       v##S##SEW##m##LMUL##_t *v4,\
+					       v##S##SEW##m##LMUL##_t *v5,\
+					       v##S##SEW##m##LMUL##_t *v6,\
+					       v##S##SEW##m##LMUL##_t *v7,\
+					       vbool##MLEN##_t mask,	\
+					       v##S##SEW##m##LMUL##_t maskedoff0,\
+					       v##S##SEW##m##LMUL##_t maskedoff1,\
+					       v##S##SEW##m##LMUL##_t maskedoff2,\
+					       v##S##SEW##m##LMUL##_t maskedoff3,\
+					       v##S##SEW##m##LMUL##_t maskedoff4,\
+					       v##S##SEW##m##LMUL##_t maskedoff5,\
+					       v##S##SEW##m##LMUL##_t maskedoff6,\
+					       v##S##SEW##m##LMUL##_t maskedoff7,\
+					       const S##SEW##_t *a, ptrdiff_t s, word_type vl)\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t maskedoff = 				\
+    vcreate_##SN##SEW##m##LMUL##x##NF (maskedoff0, maskedoff1, maskedoff2, maskedoff3,\
+				       maskedoff4, maskedoff5, maskedoff6, maskedoff7);\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vlsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, maskedoff, a, s, vl);\
+  *v0 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 0);	\
+  *v1 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 1);	\
+  *v2 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 2);	\
+  *v3 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 3);	\
+  *v4 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 4);	\
+  *v5 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 5);	\
+  *v6 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 6);	\
+  *v7 = vget_##SN##SEW##m##LMUL##x##NF##_##SN##SEW##m##LMUL (ret, 7);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					  v##S##SEW##m##LMUL##_t v0,\
+					  v##S##SEW##m##LMUL##_t v1,\
+					  v##S##SEW##m##LMUL##_t v2,\
+					  v##S##SEW##m##LMUL##_t v3,\
+					  v##S##SEW##m##LMUL##_t v4,\
+					  v##S##SEW##m##LMUL##_t v5,\
+					  v##S##SEW##m##LMUL##_t v6,\
+					  v##S##SEW##m##LMUL##_t v7,\
+					  word_type vl)			\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5, v6, v7);	\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, ret, vl);		\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					      S##SEW##_t *a,		\
+					      v##S##SEW##m##LMUL##_t v0,\
+					      v##S##SEW##m##LMUL##_t v1,\
+					      v##S##SEW##m##LMUL##_t v2,\
+					      v##S##SEW##m##LMUL##_t v3,\
+					      v##S##SEW##m##LMUL##_t v4,\
+					      v##S##SEW##m##LMUL##_t v5,\
+					      v##S##SEW##m##LMUL##_t v6,\
+					      v##S##SEW##m##LMUL##_t v7,\
+					      word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5, v6, v7);	\
+  vsseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, ret, vl);\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL (S##SEW##_t *a,		\
+					   ptrdiff_t s,			\
+					   v##S##SEW##m##LMUL##_t v0,\
+					   v##S##SEW##m##LMUL##_t v1,\
+					   v##S##SEW##m##LMUL##_t v2,\
+					   v##S##SEW##m##LMUL##_t v3,\
+					   v##S##SEW##m##LMUL##_t v4,\
+					   v##S##SEW##m##LMUL##_t v5,\
+					   v##S##SEW##m##LMUL##_t v6,\
+					   v##S##SEW##m##LMUL##_t v7,\
+					   word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5, v6, v7);	\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF (a, s, ret, vl);	\
+}									\
+__extension__ extern __inline void					\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##_m (vbool##MLEN##_t mask,	\
+					       S##SEW##_t *a,		\
+					       ptrdiff_t s,		\
+					       v##S##SEW##m##LMUL##_t v0,\
+					       v##S##SEW##m##LMUL##_t v1,\
+					       v##S##SEW##m##LMUL##_t v2,\
+					       v##S##SEW##m##LMUL##_t v3,\
+					       v##S##SEW##m##LMUL##_t v4,\
+					       v##S##SEW##m##LMUL##_t v5,\
+					       v##S##SEW##m##LMUL##_t v6,\
+					       v##S##SEW##m##LMUL##_t v7,\
+					       word_type vl)		\
+{									\
+  v##S##SEW##m##LMUL##x##NF##_t ret = 					\
+    vcreate_##SN##SEW##m##LMUL##x##NF (v0, v1, v2, v3, v4, v5, v6, v7);	\
+  vssseg##NF##e##SEW##_v_##SN##SEW##m##LMUL##x##NF##_m (mask, a, s, ret, vl);\
+}									\
+
+_RVV_INT_TUPLE_NF8_ITERATOR_ARG (_RVV_TUPLE_LDST8_WRAP, i, int)
+_RVV_INT_TUPLE_NF8_ITERATOR_ARG (_RVV_TUPLE_LDST8_WRAP, u, uint)
+_RVV_FLOAT_TUPLE_NF8_ITERATOR_ARG (_RVV_TUPLE_LDST8_WRAP, f, float)
+
 #endif
 #endif
