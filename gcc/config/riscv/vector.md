@@ -948,10 +948,7 @@
 ;; to ensure that the scratch operand has been allocated a reg first.
 (define_expand "mov<mode>"
   [(set (match_operand:VMODES 0 "reg_or_mem_operand")
-	(unspec:VMODES
-	  [(match_operand:VMODES 1 "vector_move_operand")
-	   (reg:SI VL_REGNUM)]
-	 UNSPEC_USEVL))]
+		(match_operand:VMODES 1 "vector_move_operand"))]
   "TARGET_VECTOR"
 {
   /* Need to force register if mem <- !reg.  */
@@ -978,10 +975,7 @@
 
 (define_insn "*mov<mode>"
   [(set (match_operand:VMODES 0 "reg_or_mem_operand"  "=vr,vr,m")
-	(unspec:VMODES
-	  [(match_operand:VMODES 1 "reg_or_mem_operand"  "vr,m,vr")
-	   (reg:SI VL_REGNUM)]
-	 UNSPEC_USEVL))]
+		(match_operand:VMODES 1 "reg_or_mem_operand"  "vr,m,vr"))]
   "TARGET_VECTOR"
   "@
    vmv<xlmul>r.v\t%0,%1
@@ -992,10 +986,7 @@
 
 (define_expand "mov<mode>"
   [(set (match_operand:VMASKMODES 0 "reg_or_mem_operand")
-	(unspec:VMASKMODES
-	  [(match_operand:VMASKMODES 1 "vector_move_operand")
-	   (reg:SI VL_REGNUM)]
-	 UNSPEC_USEVL))]
+		(match_operand:VMASKMODES 1 "vector_move_operand"))]
   "TARGET_VECTOR"
 {
   rtx ele;
@@ -1020,10 +1011,7 @@
 ;; move pattern for vector masking type.
 (define_insn "*mov<mode>"
   [(set (match_operand:VMASKMODES 0 "reg_or_mem_operand"  "=vr,vr, m")
-	(unspec:VMASKMODES
-	  [(match_operand:VMASKMODES 1 "reg_or_mem_operand"  " vr, m, vr")
-	   (reg:SI VL_REGNUM)]
-	 UNSPEC_USEVL))]
+		(match_operand:VMASKMODES 1 "reg_or_mem_operand"  "vr, m, vr"))]
   "TARGET_VECTOR"
   "@
    vmv1r.v\t%0, %1
@@ -11060,12 +11048,8 @@
 
 
 (define_insn_and_split "mov<mode>"
-  [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
-   (set (match_operand:VTMODES 0 "nonimmediate_operand" "=vr,vr, m,vr")
-	(unspec:VTMODES
-	  [(match_operand:VTMODES 1 "vector_move_operand"  " vr, m,vr,vc")
-	   (reg:SI VL_REGNUM)]
-	 UNSPEC_USEVL))
+  [(set (match_operand:VTMODES 0 "nonimmediate_operand" "=vr,vr, m,vr")
+		(match_operand:VTMODES 1 "vector_move_operand"  " vr, m,vr,vc"))
    (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,r"))]
   "TARGET_VECTOR"
   "#"
