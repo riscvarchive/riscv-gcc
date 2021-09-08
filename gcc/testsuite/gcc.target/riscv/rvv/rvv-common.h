@@ -813,6 +813,85 @@
   MACRO ( 8, 2, 4,  4, __VA_ARGS__)     \
   MACRO ( 8, 4, 2,  2, __VA_ARGS__)
 
+#define RVV_SEG_NF2_NO_SEW8_TEST_ARG(MACRO, ...) \
+  MACRO (16, 1, 2, 16, __VA_ARGS__)	\
+  MACRO (16, 2, 2,  8, __VA_ARGS__)	\
+  MACRO (16, 4, 2,  4, __VA_ARGS__)	\
+  MACRO (32, 1, 2, 32, __VA_ARGS__)	\
+  MACRO (32, 2, 2, 16, __VA_ARGS__)	\
+  MACRO (32, 4, 2,  8, __VA_ARGS__)	\
+  MACRO (64, 1, 2, 64, __VA_ARGS__)	\
+  MACRO (64, 2, 2, 32, __VA_ARGS__)	\
+  MACRO (64, 4, 2, 16, __VA_ARGS__)	\
+
+#define RVV_SEG_NF2_TEST_ARG(MACRO, ...)		\
+  RVV_SEG_NF2_NO_SEW8_TEST_ARG(MACRO, __VA_ARGS__)	\
+  MACRO (8, 1, 2, 8, __VA_ARGS__)	\
+  MACRO (8, 2, 2, 4, __VA_ARGS__)	\
+  MACRO (8, 4, 2, 2, __VA_ARGS__)	\
+
+#define RVV_SEG_NF3_NO_SEW8_TEST_ARG(MACRO, ...) \
+  MACRO (16, 1, 3, 16, __VA_ARGS__)	\
+  MACRO (16, 2, 3,  8, __VA_ARGS__)	\
+  MACRO (32, 1, 3, 32, __VA_ARGS__)	\
+  MACRO (32, 2, 3, 16, __VA_ARGS__)	\
+  MACRO (64, 1, 3, 64, __VA_ARGS__)	\
+  MACRO (64, 2, 3, 32, __VA_ARGS__)	\
+
+#define RVV_SEG_NF3_TEST_ARG(MACRO, ...)		\
+  RVV_SEG_NF3_NO_SEW8_TEST_ARG(MACRO, __VA_ARGS__)	\
+  MACRO (8, 1, 3, 8, __VA_ARGS__)	\
+  MACRO (8, 2, 3, 4, __VA_ARGS__)	\
+
+#define RVV_SEG_NF4_NO_SEW8_TEST_ARG(MACRO, ...) \
+  MACRO (16, 1, 4, 16, __VA_ARGS__)	\
+  MACRO (16, 2, 4,  8, __VA_ARGS__)	\
+  MACRO (32, 1, 4, 32, __VA_ARGS__)	\
+  MACRO (32, 2, 4, 16, __VA_ARGS__)	\
+  MACRO (64, 1, 4, 64, __VA_ARGS__)	\
+  MACRO (64, 2, 4, 32, __VA_ARGS__)	\
+
+#define RVV_SEG_NF4_TEST_ARG(MACRO, ...)		\
+  RVV_SEG_NF4_NO_SEW8_TEST_ARG(MACRO, __VA_ARGS__)	\
+  MACRO (8, 1, 4, 8, __VA_ARGS__)	\
+  MACRO (8, 2, 4, 4, __VA_ARGS__)	\
+
+#define RVV_SEG_NF5_NO_SEW8_TEST_ARG(MACRO, ...) \
+  MACRO (16, 1, 5, 16, __VA_ARGS__)	\
+  MACRO (32, 1, 5, 32, __VA_ARGS__)	\
+  MACRO (64, 1, 5, 64, __VA_ARGS__)	\
+
+#define RVV_SEG_NF5_TEST_ARG(MACRO, ...)		\
+  RVV_SEG_NF5_NO_SEW8_TEST_ARG(MACRO, __VA_ARGS__)	\
+  MACRO (8, 1, 5, 8, __VA_ARGS__)	\
+
+#define RVV_SEG_NF6_NO_SEW8_TEST_ARG(MACRO, ...) \
+  MACRO (16, 1, 6, 16, __VA_ARGS__)	\
+  MACRO (32, 1, 6, 32, __VA_ARGS__)	\
+  MACRO (64, 1, 6, 64, __VA_ARGS__)	\
+
+#define RVV_SEG_NF6_TEST_ARG(MACRO, ...)		\
+  RVV_SEG_NF6_NO_SEW8_TEST_ARG(MACRO, __VA_ARGS__)	\
+  MACRO (8, 1, 6, 8, __VA_ARGS__)	\
+
+#define RVV_SEG_NF7_NO_SEW8_TEST_ARG(MACRO, ...) \
+  MACRO (16, 1, 7, 16, __VA_ARGS__)	\
+  MACRO (32, 1, 7, 32, __VA_ARGS__)	\
+  MACRO (64, 1, 7, 64, __VA_ARGS__)	\
+
+#define RVV_SEG_NF7_TEST_ARG(MACRO, ...)		\
+  RVV_SEG_NF7_NO_SEW8_TEST_ARG(MACRO, __VA_ARGS__)	\
+  MACRO (8, 1, 7, 8, __VA_ARGS__)	\
+
+#define RVV_SEG_NF8_NO_SEW8_TEST_ARG(MACRO, ...) \
+  MACRO (16, 1, 8, 16, __VA_ARGS__)	\
+  MACRO (32, 1, 8, 32, __VA_ARGS__)	\
+  MACRO (64, 1, 8, 64, __VA_ARGS__)	\
+
+#define RVV_SEG_NF8_TEST_ARG(MACRO, ...)		\
+  RVV_SEG_NF8_NO_SEW8_TEST_ARG(MACRO, __VA_ARGS__)	\
+  MACRO (8, 1, 8, 8, __VA_ARGS__)	\
+
 #define VLOAD(VCLASS, SEW, EM, x) vle##SEW##_v_##VCLASS##EM (x, vl)
 #define VILOAD(SEW, EM, x) VLOAD(i, SEW, EM, x)
 #define VULOAD(SEW, EM, x) VLOAD(u, SEW, EM, x)
