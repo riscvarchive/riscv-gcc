@@ -18,6 +18,8 @@
 RVV_FLOAT_INT_TEST_ARG(RVV_FCLASS_TEST, fclass)
 
 RVV_FLOAT_TEST_ARG(RVV_UNARY_BUILTIN_VEC_TEST, fsqrt)
+RVV_FLOAT_TEST_ARG(RVV_UNARY_BUILTIN_VEC_TEST, fabs)
 
 /* { dg-final { scan-assembler-times "vfclass.v" 15 } } */
 /* { dg-final { scan-assembler-times "vfsqrt.v" 15 } } */
+/* { dg-final { scan-assembler-times "vfsgnjx.vv" 15 } } */
