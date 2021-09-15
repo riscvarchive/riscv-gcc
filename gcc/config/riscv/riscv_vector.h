@@ -3137,6 +3137,28 @@ _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, rec7)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, rsqrt7)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP, neg)
 
+#define _RVV_FLOAT_UNARY_OP2(SEW, LMUL, MLEN, T, OP, NAME)		\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vf##NAME##_v_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a, word_type vl)	\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL (a, a);		\
+}									\
+__extension__ extern __inline vfloat##SEW##m##LMUL##_t			\
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
+vf##NAME##_v_f##SEW##m##LMUL##_m (					\
+  vbool##MLEN##_t mask,							\
+  vfloat##SEW##m##LMUL##_t maskedoff, 					\
+  vfloat##SEW##m##LMUL##_t a, word_type vl)				\
+{									\
+  vsetvl_e##SEW##m##LMUL (vl);						\
+  return __builtin_riscv_vf##OP##float##SEW##m##LMUL##_mask (		\
+      mask, maskedoff, a, a);						\
+}
+
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FLOAT_UNARY_OP2, xorsign, abs)
+
 #define _RVV_FLOAT_VFCLASS(SEW, LMUL, MLEN, T, OP, NAME)		\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
