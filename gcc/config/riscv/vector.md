@@ -11050,7 +11050,7 @@
 (define_insn_and_split "mov<mode>"
   [(set (match_operand:VTMODES 0 "nonimmediate_operand" "=vr,vr, m,vr")
 		(match_operand:VTMODES 1 "vector_move_operand"  " vr, m,vr,vc"))
-   (clobber (match_scratch:<VSUBMODE> 2 "=X,X,X,r"))]
+   (clobber (match_scratch:<VSUBMODE> 2 "=X,&r,&r,&r"))]
   "TARGET_VECTOR"
   "#"
   "&& reload_completed"
@@ -11072,9 +11072,17 @@
   else if (REG_P (operands[0]) && MEM_P (operands[1]))
     {
       if (TARGET_64BIT)
-	emit_insn (gen_vseg_load<mode>_di (operands[0], XEXP (operands[1], 0)));
+	{
+	  PUT_MODE (operands[2], DImode);
+	  emit_insn (gen_vsetvlmax<vlmode>_di (operands[2]));
+	  emit_insn (gen_vseg_load<mode>_di (operands[0], XEXP (operands[1], 0)));
+	}
       else
-	emit_insn (gen_vseg_load<mode>_si (operands[0], XEXP (operands[1], 0)));
+	{
+	  PUT_MODE (operands[2], SImode);
+	  emit_insn (gen_vsetvlmax<vlmode>_si (operands[2]));
+	  emit_insn (gen_vseg_load<mode>_si (operands[0], XEXP (operands[1], 0)));
+	}
     }
   else if (REG_P (operands[0]) && GET_CODE (operands[1]) == CONST_VECTOR)
     {
@@ -11096,9 +11104,17 @@
   else if (MEM_P (operands[0]) && REG_P (operands[1]))
     {
       if (TARGET_64BIT)
-	emit_insn (gen_vseg_store<mode>_di (operands[1], XEXP (operands[0], 0)));
+	{
+	  PUT_MODE (operands[2], DImode);
+	  emit_insn (gen_vsetvlmax<vlmode>_di (operands[2]));
+	  emit_insn (gen_vseg_store<mode>_di (operands[1], XEXP (operands[0], 0)));
+	}
       else
-	emit_insn (gen_vseg_store<mode>_si (operands[1], XEXP (operands[0], 0)));
+	{
+	  PUT_MODE (operands[2], SImode);
+	  emit_insn (gen_vsetvlmax<vlmode>_si (operands[2]));
+	  emit_insn (gen_vseg_store<mode>_si (operands[1], XEXP (operands[0], 0)));
+	}
     }
   else
     gcc_unreachable ();
