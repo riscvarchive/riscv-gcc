@@ -1903,14 +1903,14 @@ __extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vs##NAME##_i##WSEW##m##WLMUL (vint##SEW##m##LMUL##_t a, word_type vl)		\
 {									\
-  vsetvl_e##SEW##m##LMUL (vl);						\
+  vsetvl_e##WSEW##m##WLMUL (vl);					\
   return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL (a);		\
 }									\
 __extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
 vz##NAME##_u##WSEW##m##WLMUL (vuint##SEW##m##LMUL##_t a, word_type vl)		\
 {									\
-  vsetvl_e##SEW##m##LMUL (vl);						\
+  vsetvl_e##WSEW##m##WLMUL (vl);					\
   return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL (a);		\
 }									\
 __extension__ extern __inline vint##WSEW##m##WLMUL##_t			\
@@ -1919,7 +1919,7 @@ vs##NAME##_i##WSEW##m##WLMUL##_m (vbool##MLEN##_t mask,		\
 				       vint##WSEW##m##WLMUL##_t maskedoff,\
 				       vint##SEW##m##LMUL##_t a, word_type vl)	\
 {									\
-  vsetvl_e##SEW##m##LMUL (vl);						\
+  vsetvl_e##WSEW##m##WLMUL (vl);					\
   return __builtin_riscv_v##OP##_vv_i##SEW##m##LMUL##_mask (mask, maskedoff, a);\
 }									\
 __extension__ extern __inline vuint##WSEW##m##WLMUL##_t			\
@@ -1928,7 +1928,7 @@ vz##NAME##_u##WSEW##m##WLMUL##_m (vbool##MLEN##_t mask,		\
 				       vuint##WSEW##m##WLMUL##_t maskedoff,\
 				       vuint##SEW##m##LMUL##_t a, word_type vl)	\
 {									\
-  vsetvl_e##SEW##m##LMUL (vl);						\
+  vsetvl_e##WSEW##m##WLMUL (vl);					\
   return __builtin_riscv_v##OP##_vv_u##SEW##m##LMUL##_mask (mask, maskedoff, a);\
 }
 
