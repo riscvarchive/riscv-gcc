@@ -27,6 +27,11 @@
 (define_register_constraint "j" "SIBCALL_REGS"
   "@internal")
 
+(define_register_constraint "Z0" "ODD_GR_PAIRS"
+  "@internal Odd pairs of integer registers.")
+(define_register_constraint "Z1" "EVEN_GR_PAIRS"
+  "@internal Even pairs of integer registers.")
+
 ;; Avoid using register t0 for JALR's argument, because for some
 ;; microarchitectures that is a return-address stack hint.
 (define_register_constraint "l" "JALR_REGS"
