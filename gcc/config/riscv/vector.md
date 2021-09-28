@@ -11047,7 +11047,8 @@
 (define_insn_and_split "mov<mode>"
   [(set (match_operand:VTMODES 0 "nonimmediate_operand" "=vr,vr, m,vr")
 		(match_operand:VTMODES 1 "vector_move_operand"  " vr, m,vr,vc"))
-   (clobber (match_scratch:<VSUBMODE> 2 "=X,&r,&r,&r"))]
+   (clobber (match_scratch:<VSUBMODE> 2 "=X,&r,&r,&r"))
+   (clobber (match_scratch:<VSUBMODE> 3 "=X,&r,&r,X"))]
   "TARGET_VECTOR"
   "#"
   "&& reload_completed"
@@ -11068,17 +11069,25 @@
     }
   else if (REG_P (operands[0]) && MEM_P (operands[1]))
     {
+      PUT_MODE (operands[2], Pmode);
+      PUT_MODE (operands[3], Pmode);
+      rtx lmul = GEN_INT (exact_log2 (riscv_get_lmul (<MODE>mode)));
+      emit_insn (gen_read_vlenb (operands[2]));
       if (TARGET_64BIT)
-	{
-	  PUT_MODE (operands[2], DImode);
-	  emit_insn (gen_vsetvlmax<vlmode>_di (operands[2]));
-	  emit_insn (gen_vseg_load<mode>_di (operands[0], XEXP (operands[1], 0)));
-	}
+	emit_insn (gen_ashldi3 (operands[2], operands[2], lmul));
       else
+	emit_insn (gen_ashlsi3 (operands[2], operands[2], lmul));
+      emit_move_insn (operands[3], XEXP (operands[1], 0));
+
+      for (i = 0; i < riscv_get_nf (<MODE>mode); ++i)
 	{
-	  PUT_MODE (operands[2], SImode);
-	  emit_insn (gen_vsetvlmax<vlmode>_si (operands[2]));
-	  emit_insn (gen_vseg_load<mode>_si (operands[0], XEXP (operands[1], 0)));
+	  poly_int64 offset = i * GET_MODE_SIZE (<VTSUBMODE>mode);
+	  rtx dst = simplify_gen_subreg (<VTSUBMODE>mode, operands[0],
+						<MODE>mode, offset);
+	  if (i != 0)
+	    emit_insn (gen_add3_insn (operands[3], operands[3], operands[2]));
+	  rtx src = gen_rtx_MEM (<VTSUBMODE>mode, operands[3]);
+	  emit_move_insn (dst, src);
 	}
     }
   else if (REG_P (operands[0]) && GET_CODE (operands[1]) == CONST_VECTOR)
@@ -11100,17 +11109,25 @@
     }
   else if (MEM_P (operands[0]) && REG_P (operands[1]))
     {
+      PUT_MODE (operands[2], Pmode);
+      PUT_MODE (operands[3], Pmode);
+      rtx lmul = GEN_INT (exact_log2 (riscv_get_lmul (<MODE>mode)));
+      emit_insn (gen_read_vlenb (operands[2]));
       if (TARGET_64BIT)
-	{
-	  PUT_MODE (operands[2], DImode);
-	  emit_insn (gen_vsetvlmax<vlmode>_di (operands[2]));
-	  emit_insn (gen_vseg_store<mode>_di (operands[1], XEXP (operands[0], 0)));
-	}
+	emit_insn (gen_ashldi3 (operands[2], operands[2], lmul));
       else
+	emit_insn (gen_ashlsi3 (operands[2], operands[2], lmul));
+      emit_move_insn (operands[3], XEXP (operands[0], 0));
+
+      for (i = 0; i < riscv_get_nf (<MODE>mode); ++i)
 	{
-	  PUT_MODE (operands[2], SImode);
-	  emit_insn (gen_vsetvlmax<vlmode>_si (operands[2]));
-	  emit_insn (gen_vseg_store<mode>_si (operands[1], XEXP (operands[0], 0)));
+	  poly_int64 offset = i * GET_MODE_SIZE (<VTSUBMODE>mode);
+	  rtx src = simplify_gen_subreg (<VTSUBMODE>mode, operands[1],
+						<MODE>mode, offset);
+	  if (i != 0)
+	    emit_insn (gen_add3_insn (operands[3], operands[3], operands[2]));
+	  rtx dst = gen_rtx_MEM (<VTSUBMODE>mode, operands[3]);
+	  emit_move_insn (dst, src);
 	}
     }
   else

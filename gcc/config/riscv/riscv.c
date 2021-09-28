@@ -5894,11 +5894,11 @@ riscv_regmode_natural_size (machine_mode mode)
   return UNITS_PER_WORD;
 }
 
-/* Get the number of fields for the mode, MODE should be a machine mode for
+/* Get the number of fields/lmul for the mode, MODE should be a machine mode for
    vector tuple types.  */
 
-int
-riscv_get_nf (machine_mode mode)
+static void
+riscv_get_nf_lmul (machine_mode mode, int *nf, int *lmul)
 {
   switch (mode)
     {
@@ -5906,21 +5906,41 @@ riscv_get_nf (machine_mode mode)
 			    SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
 			    VMODE_PREFIX_LOWER, X)			\
     case E_##VMODE_PREFIX_UPPER##Imode:					\
-      return NF;
+      if (nf) *nf = NF;							\
+      if (lmul) *lmul = LMUL;						\
+      return;
     _RVV_SEG_ARG (VEC_INT_TUPLE_TYPES, X)
 #undef VEC_INT_TUPLE_TYPES
 #define VEC_FLOAT_TUPLE_TYPES(SEW, LMUL, NF, MLEN, SMODE_PREFIX_UPPER,	\
 			      SMODE_PREFIX_LOWER, VMODE_PREFIX_UPPER,	\
 			      VMODE_PREFIX_LOWER, X)			\
     case E_##VMODE_PREFIX_UPPER##Fmode:				\
-      return NF;
+      if (nf) *nf = NF;							\
+      if (lmul) *lmul = LMUL;						\
+      return;
     _RVV_SEG_NO_SEW8_ARG (VEC_FLOAT_TUPLE_TYPES, X)
 #undef VEC_FLOAT_TUPLE_TYPES
     default:
       /* Non-vector tuple type should not call this function.  */
       gcc_unreachable ();
-      return -1;
+      return;
     }
+}
+
+int
+riscv_get_nf(machine_mode mode)
+{
+  int ret = -1;
+  riscv_get_nf_lmul (mode, &ret, NULL);
+  return ret;
+}
+
+int
+riscv_get_lmul(machine_mode mode)
+{
+  int ret = -1;
+  riscv_get_nf_lmul (mode, NULL, &ret);
+  return ret;
 }
 
 /* Routines for expand vtuple_create pattern.  */
