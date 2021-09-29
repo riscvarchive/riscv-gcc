@@ -1015,6 +1015,17 @@ def gen_usr_c():
       vals = list(filter(lambda x: x.nf == nf, int_vector_tuple_modes))
     )
 
+  for nf in range(2, 9):
+    dump_c_iterator(
+      name = "_RVV_INT_TUPLE_NF%d_INDEX_ITERATOR" % nf,
+      comment = "/* An iterator to call a macro with every supported NF, SEW, LMUL and MLEN value,\n"
+                "   along with its corresponding vector, floating point modes, and info for\n"
+                "   corresponding floating point and vector tuple type.  */",
+      arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {CTYPE}, {EEW}, {EMUL}",
+      vals = list(filter(lambda x: x.nf == nf, int_vector_tuple_modes)),
+      eew_index=True
+    )
+
   dump_c_iterator(
     name = "_RVV_FLOAT_TUPLE_ITERATOR",
     comment = "/* An iterator to call a macro with every supported NF, SEW, LMUL and MLEN value,\n"
@@ -1042,6 +1053,17 @@ def gen_usr_c():
                 "   corresponding floating point and vector tuple type.  */",
       arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {CTYPE}",
       vals = list(filter(lambda x: x.nf == nf, float_vector_tuple_modes))
+    )
+
+  for nf in range(2, 9):
+    dump_c_iterator(
+      name = "_RVV_FLOAT_TUPLE_NF%d_INDEX_ITERATOR" % nf,
+      comment = "/* An iterator to call a macro with every supported NF, SEW, LMUL and MLEN value,\n"
+                "   along with its corresponding vector, floating point modes, and info for\n"
+                "   corresponding floating point and vector tuple type.  */",
+      arg_list_template = "{SEW}, {LMUL}, {NF}, {MLEN}, {CTYPE}, {EEW}, {EMUL}",
+      vals = list(filter(lambda x: x.nf == nf, float_vector_tuple_modes)),
+      eew_index=True
     )
 
 # -------------------------------------------------
