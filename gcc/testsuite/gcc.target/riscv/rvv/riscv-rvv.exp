@@ -21,6 +21,10 @@ if ![istarget riscv*-*-*] then {
   return
 }
 
+if { ![check_effective_target_riscv_rvv] } {
+    return
+}
+
 # Load support procs.
 load_lib gcc-dg.exp
 
@@ -30,7 +34,7 @@ if ![info exists DEFAULT_CFLAGS] then {
     set DEFAULT_CFLAGS " -ansi -pedantic-errors"
 }
 
-set rvv_flags "-O2 -march=rv64gcv_zfh -mabi=lp64 -std=gnu99"
+set rvv_flags "-O2 -std=gnu99"
 
 # Initialize `dg'.
 dg-init

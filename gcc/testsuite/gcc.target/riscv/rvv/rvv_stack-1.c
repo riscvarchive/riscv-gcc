@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-skip-if "test rvv" { *-*-* } { "*" } { "-march=rv*v*" } } */
 
 void bar(vint8m1_t *);
 void barx(int *);

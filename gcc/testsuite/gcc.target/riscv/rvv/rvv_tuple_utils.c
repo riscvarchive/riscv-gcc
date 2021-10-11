@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-skip-if "test rvv" { *-*-* } { "*" } { "-march=rv*v*" } } */
 
 #include "rvv-common.h"
 

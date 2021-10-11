@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-skip-if "test rvv" { *-*-* } { "*" } { "-march=rv*v*" } } */
 /* { dg-additional-options "-O0 -g" } */
 
 #include <riscv_vector.h>

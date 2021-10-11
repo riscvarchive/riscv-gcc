@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-skip-if "test rvv" { *-*-* } { "*" } { "-march=rv*v*" } } */
 /* -fno-expensive-optimizations for disable bswap pass, it will cause ICE when
    there is vector operation with bitwise-or  */
 /* { dg-additional-options "-fno-expensive-optimizations" } */

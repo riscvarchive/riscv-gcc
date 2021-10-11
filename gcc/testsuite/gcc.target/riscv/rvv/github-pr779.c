@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-skip-if "test rvv" { *-*-* } { "*" } { "-march=rv*v*" } } */
 /* { dg-additional-options "-march=rv32gcv -mabi=ilp32" } */
 
 #include <riscv_vector.h>

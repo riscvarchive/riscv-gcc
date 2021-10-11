@@ -1,4 +1,5 @@
 /* { dg-do compile } */
+/* { dg-skip-if "test rvv" { *-*-* } { "*" } { "-march=rv*v*" } } */
 
 #include <riscv_vector.h>
 void foo(int32_t *c, word_type vl){
