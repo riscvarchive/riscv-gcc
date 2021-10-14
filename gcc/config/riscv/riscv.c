@@ -5279,6 +5279,7 @@ riscv_conditional_register_usage (void)
     {
       for (int regno = VECT_REG_FIRST; regno <= VECT_REG_LAST; regno++)
 	fixed_regs[regno] = call_used_regs[regno] = 1;
+      fixed_regs[VTYPE_REGNUM] = call_used_regs[VTYPE_REGNUM] = 1;
     }
 }
 
