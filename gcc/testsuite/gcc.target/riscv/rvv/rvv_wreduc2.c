@@ -39,7 +39,7 @@
     vy = VLOAD(VCLASS, SEW, EM, y);					\
     vz = VLOAD(VCLASS, SEW, EM, z);					\
     mask = MSET (MLEN);					\
-    vx = vfwredsum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx, vl);	\
+    vx = vfwredusum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx, vl);	\
     vx = vfwredosum_vs_##VCLASS##EM##_##VCLASS##WEMONE##_m (mask, vx, vy, vx, vl);	\
     VSTORE (VCLASS, WSEW, WEMONE, x, vx);					\
   }
@@ -50,5 +50,5 @@ RVV_WFLOAT_REDUC_TEST(VFWREDUC)
 
 /* { dg-final { scan-assembler-times "vwredsum.vs" 15 } } */
 /* { dg-final { scan-assembler-times "vwredsumu.vs" 15 } } */
-/* { dg-final { scan-assembler-times "vfwredsum.vs" 9 } } */
+/* { dg-final { scan-assembler-times "vfwredusum.vs" 9 } } */
 /* { dg-final { scan-assembler-times "vfwredosum.vs" 9 } } */

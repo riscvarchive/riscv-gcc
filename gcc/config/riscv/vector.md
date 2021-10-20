@@ -152,10 +152,6 @@
 
 (define_int_attr sumu [(UNSPEC_REDUC_SUM "") (UNSPEC_REDUC_USUM "u")])
 
-;; <o> expands to an empty string when doing a unordered operation and
-;; "o" when doing an ordered operation.
-(define_int_attr o [(UNSPEC_REDUC_SUM "") (UNSPEC_ORDERED_REDUC_SUM "o")])
-
 ;; Iterator and attributes for misc mask instructions.
 (define_int_iterator MISC_MASK_OP [UNSPEC_SBF UNSPEC_SIF UNSPEC_SOF])
 
@@ -221,7 +217,8 @@
 (define_int_attr order
  [(UNSPEC_ORDERED_INDEXED_STORE "o") (UNSPEC_UNORDERED_INDEXED_STORE "u")
   (UNSPEC_SEG_LOAD "o") (UNSPEC_SEG_UNORDERED_LOAD "u")
-  (UNSPEC_SEG_STORE "o") (UNSPEC_SEG_UNORDERED_STORE "u")])
+  (UNSPEC_SEG_STORE "o") (UNSPEC_SEG_UNORDERED_STORE "u")
+  (UNSPEC_ORDERED_REDUC_SUM "o") (UNSPEC_REDUC_SUM "u")])
 
 ;; Iterator and attributes for integer multiply-add instructions.
 (define_int_iterator UNSPEC_MASK_VMACS [UNSPEC_MASK_VMADD UNSPEC_MASK_VMSUB
@@ -6722,7 +6719,7 @@
 
 ;; Widening Floating-Point Reduction Instructions
 
-(define_expand "wreduc_<o>sum<mode>"
+(define_expand "wreduc_<order>sum<mode>"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VW1MODES> 0 "register_operand")
 		   (unspec:<VW1MODES>
@@ -6738,7 +6735,7 @@
 {
 })
 
-(define_insn "*wreduc_<o>sum<mode>_nosetvl"
+(define_insn "*wreduc_<order>sum<mode>_nosetvl"
   [(set (match_operand:<VW1MODES> 0 "register_operand" "=&vr")
 	(unspec:<VW1MODES>
 	  [(unspec:<VW1MODES>
@@ -6750,11 +6747,11 @@
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vfwred<o>sum.vs\t%0,%3,%2"
+  "vfwred<order>sum.vs\t%0,%3,%2"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
-(define_expand "wreduc_<o>sum<mode>_mask"
+(define_expand "wreduc_<order>sum<mode>_mask"
   [(set (reg:<VLMODE> VTYPE_REGNUM) (const_int UNSPECV_VSETVL))
    (parallel [(set (match_operand:<VW1MODES> 0 "register_operand")
 		   (unspec:<VW1MODES>
@@ -6771,7 +6768,7 @@
 {
 })
 
-(define_insn "*wreduc_<o>sum<mode>_mask_nosetvl"
+(define_insn "*wreduc_<order>sum<mode>_mask_nosetvl"
   [(set (match_operand:<VW1MODES> 0 "register_operand" "=vr")
 	(unspec:<VW1MODES>
 	  [(unspec:<VW1MODES>
@@ -6784,7 +6781,7 @@
 	 UNSPEC_USEVL))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR"
-  "vfwred<o>sum.vs\t%0,%4,%3,%1.t"
+  "vfwred<order>sum.vs\t%0,%4,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
