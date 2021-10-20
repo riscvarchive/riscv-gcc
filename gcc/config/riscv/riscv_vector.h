@@ -3793,7 +3793,7 @@ vfwred##OP##_vs_f##SEW##m##LMUL##_f##WSEW##m1_m (vbool##MLEN##_t mask,	\
 								   b, a);\
 }									\
 
-_RVV_WRED_FLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, sum)
+_RVV_WRED_FLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, usum)
 _RVV_WRED_FLOAT_ITERATOR_ARG (_RVV_FWREDUC_OP, osum)
 
 #define _RVV_VREINTERPRET(SEW, LMUL, MLEN, T)				\
