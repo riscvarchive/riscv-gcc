@@ -2860,7 +2860,7 @@
 })
 
 (define_insn "*w<add_sub:optab><any_extend:u><mode>_vv_mask_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
 	(unspec:<VWMODE>
 	  [(if_then_else:<VWMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -2899,7 +2899,7 @@
 })
 
 (define_insn "*w<add_sub:optab><any_extend:u><mode>_vv_scalar_mask_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
 	(unspec:<VWMODE>
 	  [(if_then_else:<VWMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -2965,7 +2965,7 @@
 })
 
 (define_insn "*w<add_sub:optab><any_extend:u><mode>_wv_scalar_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
 	(unspec:<VWMODE>
 	  [(add_sub:<VWMODE>
 	     (match_operand:<VWMODE> 1 "register_operand" "vr")
@@ -2999,7 +2999,7 @@
 })
 
 (define_insn "*w<add_sub:optab><any_extend:u><mode>_wv_mask_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
 	(unspec:<VWMODE>
 	  [(if_then_else:<VWMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -3380,7 +3380,7 @@
 })
 
 (define_insn "*fw<optab><mode>_vv_mask_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
 	(unspec:<VWMODE>
 	  [(if_then_else:<VWMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -3419,7 +3419,7 @@
 })
 
 (define_insn "*fw<optab><mode>_vv_scalar_mask_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
 	(unspec:<VWMODE>
 	  [(if_then_else:<VWMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -3485,7 +3485,7 @@
 })
 
 (define_insn "*fw<optab><mode>_wv_scalar_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
 	(unspec:<VWMODE>
 	  [(add_sub:<VWMODE>
 	     (match_operand:<VWMODE> 1 "register_operand" "vr")
@@ -3519,7 +3519,7 @@
 })
 
 (define_insn "*fw<optab><mode>_wv_mask_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
 	(unspec:<VWMODE>
 	  [(if_then_else:<VWMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
