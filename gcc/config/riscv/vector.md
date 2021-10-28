@@ -6551,7 +6551,7 @@
 })
 
 (define_insn "*wreduc_sum<sumu><mode>_mask_nosetvl"
-  [(set (match_operand:<VW1MODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VW1MODES> 0 "register_operand" "=&vr")
 	(unspec:<VW1MODES>
 	  [(unspec:<VW1MODES>
 	     [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -6769,7 +6769,7 @@
 })
 
 (define_insn "*wreduc_<order>sum<mode>_mask_nosetvl"
-  [(set (match_operand:<VW1MODES> 0 "register_operand" "=vr")
+  [(set (match_operand:<VW1MODES> 0 "register_operand" "=&vr")
 	(unspec:<VW1MODES>
 	  [(unspec:<VW1MODES>
 	    [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
