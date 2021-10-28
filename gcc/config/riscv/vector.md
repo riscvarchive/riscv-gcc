@@ -8978,7 +8978,7 @@
 })
 
 (define_insn "*<fix_cvt><mode><vfwimode>2_mask_nosetvl"
-  [(set (match_operand:<VFWIMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VFWIMODE> 0 "register_operand" "=&vr")
 	(unspec:<VFWIMODE>
 	  [(if_then_else:<VFWIMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -9039,7 +9039,7 @@
 })
 
 (define_insn "*<fcvt_xf><mode><vfwimode>2_mask_nosetvl"
-  [(set (match_operand:<VFWIMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VFWIMODE> 0 "register_operand" "=&vr")
 	(unspec:<VFWIMODE>
 	  [(if_then_else:<VFWIMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -9098,7 +9098,7 @@
 })
 
 (define_insn "*<float_cvt><mode><viwfmode>2_mask_nosetvl"
-  [(set (match_operand:<VIWFMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VIWFMODE> 0 "register_operand" "=&vr")
 	(unspec:<VIWFMODE>
 	  [(if_then_else:<VIWFMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -9156,7 +9156,7 @@
 })
 
 (define_insn "*extend<mode><vwmode>2_mask_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
 	(unspec:<VWMODE>
 	  [(if_then_else:<VWMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
