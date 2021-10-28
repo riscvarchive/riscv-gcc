@@ -7069,7 +7069,7 @@
 })
 
 (define_insn "*<vnshift><mode>3_nv_mask_nosetvl"
-  [(set (match_operand:VWIMODES 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VWIMODES 0 "register_operand" "=&vr,&vr")
 	(unspec:VWIMODES
 	  [(if_then_else:VWIMODES
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
@@ -7108,7 +7108,7 @@
 })
 
 (define_insn "*<vnshift><mode>3_scalar_nv_mask_nosetvl"
-  [(set (match_operand:VWIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VWIMODES 0 "register_operand" "=&vr")
 	(unspec:VWIMODES
 	  [(if_then_else:VWIMODES
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
@@ -7169,7 +7169,7 @@
 })
 
 (define_insn "*vncvt<mode>3_mask_nosetvl"
-  [(set (match_operand:VWIMODES 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VWIMODES 0 "register_operand" "=&vr,&vr")
 	(unspec:VWIMODES
 	  [(if_then_else:VWIMODES
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm,vm")
