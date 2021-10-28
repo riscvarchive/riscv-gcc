@@ -3157,7 +3157,7 @@
 })
 
 (define_insn "*<sz_op>extend<mode><vwmode>2_mask_nosetvl"
-  [(set (match_operand:<VWMODE> 0 "register_operand" "=vr")
+  [(set (match_operand:<VWMODE> 0 "register_operand" "=&vr")
 	(unspec:<VWMODE>
 	  [(if_then_else:<VWMODE>
 	     (match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
