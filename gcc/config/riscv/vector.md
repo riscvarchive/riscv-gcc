@@ -680,7 +680,7 @@
 })
 
 (define_insn "*vloxei<VMODES:mode><VIMODES:mode>_<P:mode>_mask_nosetvl"
-  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
 	(unspec:VMODES
 	  [(unspec:VMODES
 	     [(match_operand:<VMODES:VCMPEQUIV> 1 "register_operand" "vm")
@@ -756,7 +756,7 @@
 })
 
 (define_insn "*vluxei<VMODES:mode><VIMODES:mode>_<P:mode>_mask_nosetvl"
-  [(set (match_operand:VMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VMODES 0 "register_operand" "=&vr")
 	(unspec:VMODES
 	  [(unspec:VMODES
 	     [(match_operand:<VMODES:VCMPEQUIV> 1 "register_operand" "vm")
