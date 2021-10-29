@@ -6144,7 +6144,7 @@
 })
 
 (define_insn "*iota<mode>2_mask_nosetvl"
-  [(set (match_operand:VIMODES 0 "register_operand" "=vr")
+  [(set (match_operand:VIMODES 0 "register_operand" "=&vr")
 	(unspec:VIMODES
 	  [(unspec:VIMODES
 	     [(match_operand:<VCMPEQUIV> 1 "register_operand" "vm")
