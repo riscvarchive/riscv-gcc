@@ -6851,3 +6851,105 @@
   "TARGET_ZPN && TARGET_64BIT"
   "kmsxda32\t%0, %2, %3"
   [(set_attr "type" "dsp")])
+
+;; rev
+(define_expand "rev<mode>"
+  [(match_operand:X 0 "register_operand")
+   (match_operand:X 1 "register_operand")]
+  "TARGET_ZBPBO"
+{
+  emit_insn (gen_rev<mode>_internal (operands[0], operands[1]));
+  DONE;
+})
+
+(define_insn "revsi_internal"
+  [(set (match_operand:SI 0 "register_operand"             "=r")
+	(unspec:SI [(match_operand:SI 1 "register_operand" " r")
+		    (const_int 31)] UNSPEC_BITREV))]
+  "TARGET_ZBPBO && !TARGET_64BIT"
+  "rev\t%0, %1"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "SI")])
+
+(define_insn "revdi_internal"
+  [(set (match_operand:DI 0 "register_operand"             "=r")
+	(unspec:DI [(match_operand:DI 1 "register_operand" " r")
+		    (const_int 63)] UNSPEC_BITREV))]
+  "TARGET_ZBPBO && TARGET_64BIT"
+  "rev\t%0, %1"
+  [(set_attr "type"   "dsp")
+   (set_attr "mode"   "DI")])
+
+;; fsr, fsri, fsrw
+(define_insn "fsrw"
+  [(set (match_operand:SI 0 "register_operand"     "=r")
+	(unspec: SI [(match_operand:SI 1 "register_operand" "r")
+		(match_operand:SI 2 "register_operand" "r")
+		(match_operand:SI 3 "register_operand" "r")] UNSPEC_FSRW))]
+  "TARGET_ZBPBO && TARGET_64BIT"
+  "fsrw\t%0,%1,%2,%3"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "SI")])
+
+(define_expand "fsr"
+  [(match_operand:SI 0 "register_operand" "  =r, r")
+   (match_operand:SI 1 "register_operand" "r, r")
+   (match_operand:SI 2 "arith_operand" "r, I")
+   (match_operand:SI 3 "register_operand" "r, r")]
+   "TARGET_ZBPBO && !TARGET_64BIT"
+  {
+    unsigned HOST_WIDE_INT shamt;
+    if (CONST_INT_P (operands[2]))
+      {
+        shamt = INTVAL (operands[2]) & 63;
+        if (shamt == 32)
+		  {
+            emit_move_insn (operands[0], operands[1]);
+            DONE;
+          }
+        shamt = shamt > 32 ? shamt - 32 : shamt;
+        operands[2] = GEN_INT(shamt);
+        emit_insn (gen_fsri_rvp (operands[0], operands[1],
+                       operands[2], operands[3]));
+      }
+	else
+	  {
+		emit_insn (gen_fsr_rvp (operands[0], operands[1], operands[2], operands[3]));
+	  }
+	DONE;
+  })
+
+(define_insn "fsr_rvp"
+  [(set (match_operand:SI 0 "register_operand"     "=r")
+	(unspec: SI [(match_operand:SI 1 "register_operand" "")
+		(match_operand:SI 2 "register_operand" "")
+		(match_operand:SI 3 "register_operand" "")] UNSPEC_FSR))]
+  "TARGET_ZBPBO && !TARGET_64BIT"
+  "fsr\t%0,%1,%2,%3"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "SI")])
+
+(define_insn "fsri_rvp"
+  [(set (match_operand:SI 0 "register_operand"     "=r")
+	(truncate: SI
+	  (ior:DI
+	    (ashiftrt:DI
+	      (match_operand:SI 1 "register_operand" " r")
+	      (match_operand:SI 2 "fsr_shamt_imm"   " u05"))
+	    (lshiftrt:DI
+	      (match_operand:SI 3 "register_operand" " r")
+	      (minus:SI (const_int 32) (match_dup 2))))))]
+  "TARGET_ZBPBO && !TARGET_64BIT"
+  "fsri\t%0,%1,%2,%3"
+  [(set_attr "type" "dsp")
+   (set_attr "mode" "SI")])
+
+;; move pattern
+(define_expand "mov<mode>"
+  [(set (match_operand:VPMOVE 0 "")
+	(match_operand:VPMOVE 1 ""))]
+  "TARGET_ZPN"
+{
+  if (riscv_legitimize_move (<MODE>mode, operands[0], operands[1]))
+    DONE;
+})

@@ -284,3 +284,12 @@
   (and (match_operand 0 "const_int_operand")
        (ior (match_test "satisfies_constraint_C15 (op)")
 	    (match_test "satisfies_constraint_C16 (op)"))))
+
+(define_predicate "rev_rimm_operand"
+  (ior (match_operand 0 "const_arith_operand")
+       (match_test "INTVAL (op) == (BITS_PER_WORD - 1)")))
+
+(define_predicate "fsr_shamt_imm"
+  (ior (match_operand 0 "register_operand")
+       (and (match_operand 0 "const_arith_operand")
+            (match_test "IN_RANGE (INTVAL (op), 1, 31)"))))
