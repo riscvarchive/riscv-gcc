@@ -21,6 +21,9 @@
 (define_mode_iterator VECI [(V4QI "!TARGET_64BIT") (V2HI "!TARGET_64BIT")
                             (V8QI "TARGET_64BIT") (V4HI "TARGET_64BIT")
 			                      (V2SI "TARGET_64BIT")])
+;; v2hi, v4qi is also used in rv64p
+(define_mode_iterator VPMOVE [(V4QI "") (V2HI "")
+                             (V8QI "TARGET_64BIT")  (V4HI "TARGET_64BIT")])
 (define_mode_iterator VQIHI [(V4QI "!TARGET_64BIT") (V2HI "!TARGET_64BIT")
                              (V8QI "TARGET_64BIT")  (V4HI "TARGET_64BIT")])
 (define_mode_iterator VSHI [(V2HI "!TARGET_64BIT") (V2SI "TARGET_64BIT")])
@@ -6953,3 +6956,32 @@
   if (riscv_legitimize_move (<MODE>mode, operands[0], operands[1]))
     DONE;
 })
+
+(define_insn "*mov<mode>_internal"
+  [(set (match_operand:VPMOVE 0 "nonimmediate_operand" "=r,r,r, m,  *f,*f,*r,*m")
+	(match_operand:VPMOVE 1 "move_operand"         " r,T,m,rJ,*r*J,*m,*f,*f"))]
+  "(register_operand (operands[0], <MODE>mode)
+    || reg_or_0_operand (operands[1], <MODE>mode))
+   && TARGET_ZPN"
+  { return riscv_output_move (operands[0], operands[1]); }
+  [(set_attr "move_type" "move,const,load,store,mtc,fpload,mfc,fpstore")
+   (set_attr "mode" "<MODE>")])
+
+(define_expand "movv2si"
+  [(set (match_operand:V2SI 0 "")
+	(match_operand:V2SI 1 ""))]
+  "TARGET_64BIT && TARGET_ZPN "
+{
+  if (riscv_legitimize_move (V2SImode, operands[0], operands[1]))
+    DONE;
+})
+
+(define_insn "*movv2si_64bit"
+  [(set (match_operand:V2SI 0 "nonimmediate_operand" "=r,r,r, m,  *f,*f,*r,*f,*m")
+	(match_operand:V2SI 1 "move_operand"         " r,T,m,rJ,*r*J,*m,*f,*f,*f"))]
+  "TARGET_64BIT && TARGET_ZPN
+   && (register_operand (operands[0], V2SImode)
+       || reg_or_0_operand (operands[1], V2SImode))"
+  { return riscv_output_move (operands[0], operands[1]); }
+  [(set_attr "move_type" "move,const,load,store,mtc,fpload,mfc,fmove,fpstore")
+   (set_attr "mode" "V2SI")])
