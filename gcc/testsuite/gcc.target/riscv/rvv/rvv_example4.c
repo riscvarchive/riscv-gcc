@@ -37,7 +37,7 @@ void foo3() {
       vl = vsetvlmax_e64m1();
       vec_sum =
           vfmv_s_f_f64m1 (vec_sum, 0.0, vl); /* move scalar to vec_sum[0] */
-      vec_sum = vfredsum_vs_f64m1_f64m1(
+      vec_sum = vfredusum_vs_f64m1_f64m1(
           vec_sum, vec_c, vec_sum, vl); /* vd[0] =  sum( vec_sum[0] , vec_c[*] ) */
       C[i][j] = vfmv_f_s_f64m1_f64 (vec_sum); /* rd = vec_sum[0] */
     }

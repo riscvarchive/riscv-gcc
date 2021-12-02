@@ -41,7 +41,7 @@
     v##VCLASST##EM##_t vy;						\
     vx = VLOAD (VCLASS, SEW, EMONE, x);					\
     vy = VLOAD(VCLASS, SEW, EM, y);					\
-    vx = vfredsum_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx, vl);	\
+    vx = vfredusum_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx, vl);	\
     vx = vfredosum_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx, vl);	\
     vx = vfredmax_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx, vl);	\
     vx = vfredmin_vs_##VCLASS##EM##_##VCLASS##EMONE (vx, vy, vx, vl);	\
@@ -60,7 +60,7 @@ RVV_FLOAT_REDUC_TEST(VFREDUC)
 /* { dg-final { scan-assembler-times "vredand.vs" 44 } } */
 /* { dg-final { scan-assembler-times "vredor.vs" 44 } } */
 /* { dg-final { scan-assembler-times "vredxor.vs" 44 } } */
-/* { dg-final { scan-assembler-times "vfredsum.vs" 15 } } */
+/* { dg-final { scan-assembler-times "vfredusum.vs" 15 } } */
 /* { dg-final { scan-assembler-times "vfredosum.vs" 15 } } */
 /* { dg-final { scan-assembler-times "vfredmax.vs" 15 } } */
 /* { dg-final { scan-assembler-times "vfredmin.vs" 15 } } */

@@ -3766,7 +3766,7 @@ vfred##OP##_vs_f##SEW##m##LMUL##_f##SEW##m1_m (vbool##MLEN##_t mask,	\
 								  b, a);\
 }
 
-_RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, sum)
+_RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, usum)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, osum)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, max)
 _RVV_FLOAT_ITERATOR_ARG (_RVV_FREDUC_OP, min)
