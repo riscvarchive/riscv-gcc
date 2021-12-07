@@ -140,7 +140,7 @@ void riscv_biquad_df2T_stage_f32(const float32_t *pIn, float32_t *pOut,
 
     // I'm not sure why does need to use another vector register
     vfloat32m1_t v_slide;
-    v_slide = vcopy_v_f32m1(v_d);
+    v_slide = vfcopy_v_f32m1(v_d);
 
     v_d = vslidedown_vx_f32m1(
 	vundefined_f32m1 (),

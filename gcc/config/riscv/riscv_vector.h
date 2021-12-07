@@ -827,7 +827,7 @@ _RVV_FLOAT_INDEX_ITERATOR_ARG (_RVVFLOAT_ST_INDEXED, vsuxei)
 #define _RVV_FLOAT_VEC_MOVE(SEW, LMUL, MLEN, T)				\
 __extension__ extern __inline vfloat##SEW##m##LMUL##_t		\
 __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))	\
-vcopy_v_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a)		\
+vfcopy_v_f##SEW##m##LMUL (vfloat##SEW##m##LMUL##_t a)		\
 {									\
   return a;								\
 }									\
