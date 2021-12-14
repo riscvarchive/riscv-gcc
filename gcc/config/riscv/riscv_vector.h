@@ -2596,7 +2596,7 @@ v##OP##_vv_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t acc,			\
 			    vint##SEW##m##LMUL##_t a,			\
 			    vint##SEW##m##LMUL##_t b)			\
 {									\
-  vsetvlmax_e##SEW##m##LMUL ()						\
+  vsetvlmax_e##SEW##m##LMUL ();						\
   return __builtin_riscv_v##IOP##_sv_i##SEW##m##LMUL (acc, a, b);	\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
@@ -2605,7 +2605,7 @@ v##OP##_vv_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t acc,		\
 			    vuint##SEW##m##LMUL##_t a,			\
 			    vuint##SEW##m##LMUL##_t b)			\
 {									\
-  vsetvlmax_e##SEW##m##LMUL ()						\
+  vsetvlmax_e##SEW##m##LMUL ();						\
   return __builtin_riscv_v##IOP##_sv_u##SEW##m##LMUL (acc, a, b);	\
 }									\
 __extension__ extern __inline vint##SEW##m##LMUL##_t			\
@@ -2614,7 +2614,7 @@ v##OP##_vx_i##SEW##m##LMUL (vint##SEW##m##LMUL##_t acc,			\
 			    T a,					\
 			    vint##SEW##m##LMUL##_t b)			\
 {									\
-  vsetvlmax_e##SEW##m##LMUL ()						\
+  vsetvlmax_e##SEW##m##LMUL ();						\
   return __builtin_riscv_v##IOP##_sv_i##SEW##m##LMUL##_scalar (acc, a, b);\
 }									\
 __extension__ extern __inline vuint##SEW##m##LMUL##_t			\
@@ -2623,7 +2623,7 @@ v##OP##_vx_u##SEW##m##LMUL (vuint##SEW##m##LMUL##_t acc,		\
 			    u##T a,					\
 			    vuint##SEW##m##LMUL##_t b)			\
 {									\
-  vsetvlmax_e##SEW##m##LMUL ()						\
+  vsetvlmax_e##SEW##m##LMUL ();						\
   return __builtin_riscv_v##IOP##_sv_u##SEW##m##LMUL##_scalar (acc, a, b);\
 }
 
