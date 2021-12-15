@@ -2724,7 +2724,7 @@
 	 UNSPEC_RECE7))
    (use (reg:<VLMODE> VTYPE_REGNUM))]
   "TARGET_VECTOR && TARGET_HARD_FLOAT"
-  "vrec7.v\t%0,%3,%1.t"
+  "vfrec7.v\t%0,%3,%1.t"
   [(set_attr "type" "vector")
    (set_attr "mode" "none")])
 
