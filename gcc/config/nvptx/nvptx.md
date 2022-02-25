@@ -288,7 +288,8 @@
   "@
    %.\\tmov.b16\\t%0, %1;
    %.\\tld.b16\\t%0, %1;
-   %.\\tst.b16\\t%0, %1;")
+   %.\\tst.b16\\t%0, %1;"
+  [(set_attr "subregs_ok" "true")])
 
 (define_expand "movhf"
   [(set (match_operand:HF 0 "nonimmediate_operand" "")
@@ -806,6 +807,22 @@
 			(match_operand:SI 2 "nvptx_nonmemory_operand" "Ri")))]
   ""
   "%.\\tshr.u%T0\\t%0, %1, %2;")
+
+(define_insn "rotlsi3"
+  [(set (match_operand:SI 0 "nvptx_register_operand" "=R")
+	(rotate:SI (match_operand:SI 1 "nvptx_register_operand" "R")
+		   (and:SI (match_operand:SI 2 "nvptx_nonmemory_operand" "Ri")
+			   (const_int 31))))]
+  "TARGET_SM35"
+  "%.\\tshf.l.wrap.b32\\t%0, %1, %1, %2;")
+
+(define_insn "rotrsi3"
+  [(set (match_operand:SI 0 "nvptx_register_operand" "=R")
+	(rotatert:SI (match_operand:SI 1 "nvptx_register_operand" "R")
+		     (and:SI (match_operand:SI 2 "nvptx_nonmemory_operand" "Ri")
+			     (const_int 31))))]
+  "TARGET_SM35"
+  "%.\\tshf.r.wrap.b32\\t%0, %1, %1, %2;")
 
 ;; Logical operations
 
@@ -2069,8 +2086,8 @@
 
   if (TARGET_SM70)
     {
-       emit_insn (gen_nvptx_atomic_store<mode> (operands[0], operands[1],
-						operands[2]));
+       emit_insn (gen_nvptx_atomic_store_sm70<mode> (operands[0], operands[1],
+						     operands[2]));
        DONE;
     }
 
@@ -2079,13 +2096,12 @@
     /* Fall back to expand_atomic_store.  */
     FAIL;
 
-  rtx tmpreg = gen_reg_rtx (<MODE>mode);
-  emit_insn (gen_atomic_exchange<mode> (tmpreg, operands[0], operands[1],
-					operands[2]));
+  emit_insn (gen_nvptx_atomic_store<mode> (operands[0], operands[1],
+					   operands[2]));
   DONE;
 })
 
-(define_insn "nvptx_atomic_store<mode>"
+(define_insn "nvptx_atomic_store_sm70<mode>"
   [(set (match_operand:SDIM 0 "memory_operand" "+m")	      ;; memory
        (unspec_volatile:SDIM
 	 [(match_operand:SDIM 1 "nvptx_nonmemory_operand" "Ri") ;; input
@@ -2095,6 +2111,20 @@
   {
     const char *t
       = "%.\tst%A0.b%T0\t%0, %1;";
+    return nvptx_output_atomic_insn (t, operands, 0, 2);
+  }
+  [(set_attr "atomic" "false")]) ;; Note: st is not an atomic insn.
+
+(define_insn "nvptx_atomic_store<mode>"
+  [(set (match_operand:SDIM 0 "memory_operand" "+m")	      ;; memory
+       (unspec_volatile:SDIM
+	 [(match_operand:SDIM 1 "nvptx_nonmemory_operand" "Ri") ;; input
+	  (match_operand:SI 2 "const_int_operand")]		;; model
+	       UNSPECV_ST))]
+  "!TARGET_SM70"
+  {
+    const char *t
+      = "%.\tatom%A0.exch.b%T0\t_, %0, %1;";
     return nvptx_output_atomic_insn (t, operands, 0, 2);
   }
   [(set_attr "atomic" "true")])

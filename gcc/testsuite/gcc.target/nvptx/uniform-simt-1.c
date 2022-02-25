@@ -16,3 +16,4 @@ f (void)
 }
 
 /* { dg-final { scan-assembler-times "@%r\[0-9\]*\tatom.global.cas" 1 } } */
+/* { dg-final { scan-assembler-times "shfl.sync.idx.b32" 1 } } */
