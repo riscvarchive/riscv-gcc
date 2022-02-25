@@ -2471,7 +2471,7 @@ private template hasPlainMangling(FT) if (is(FT == function))
 {
     enum lnk = __traits(getLinkage, FT);
     // C || Windows
-    enum hasPlainMangling = lnk == "C" || lnk == "Windows" || lnk == "System";
+    enum hasPlainMangling = lnk == "C" || lnk == "Windows";
 }
 
 @safe pure nothrow unittest

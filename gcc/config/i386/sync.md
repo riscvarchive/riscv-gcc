@@ -373,20 +373,11 @@
    (match_operand:SI 7 "const_int_operand")]	;; failure model
   "TARGET_CMPXCHG"
 {
-  if (TARGET_RELAX_CMPXCHG_LOOP)
-  {
-    ix86_expand_cmpxchg_loop (&operands[0], operands[1], operands[2],
-			      operands[3], operands[4], operands[6],
-			      false, NULL);
-  }
-  else
-  {
-    emit_insn
-      (gen_atomic_compare_and_swap<mode>_1
-	(operands[1], operands[2], operands[3], operands[4], operands[6]));
-      ix86_expand_setcc (operands[0], EQ, gen_rtx_REG (CCZmode, FLAGS_REG),
-			const0_rtx);
-  }
+  emit_insn
+   (gen_atomic_compare_and_swap<mode>_1
+    (operands[1], operands[2], operands[3], operands[4], operands[6]));
+  ix86_expand_setcc (operands[0], EQ, gen_rtx_REG (CCZmode, FLAGS_REG),
+		     const0_rtx);
   DONE;
 })
 
@@ -406,35 +397,25 @@
    (match_operand:SI 7 "const_int_operand")]	;; failure model
   "TARGET_CMPXCHG"
 {
-  int doubleword = !(<MODE>mode == DImode && TARGET_64BIT);
-  if (TARGET_RELAX_CMPXCHG_LOOP)
-  {
-    ix86_expand_cmpxchg_loop (&operands[0], operands[1], operands[2],
-			      operands[3], operands[4], operands[6],
-			      doubleword, NULL);
-  }
+  if (<MODE>mode == DImode && TARGET_64BIT)
+    {
+      emit_insn
+       (gen_atomic_compare_and_swapdi_1
+	(operands[1], operands[2], operands[3], operands[4], operands[6]));
+    }
   else
-  {
-    if (!doubleword)
-      {
-	emit_insn
-	  (gen_atomic_compare_and_swapdi_1
-	   (operands[1], operands[2], operands[3], operands[4], operands[6]));
-      }
-    else
-      {
-	machine_mode hmode = <CASHMODE>mode;
+    {
+      machine_mode hmode = <CASHMODE>mode;
 
-	emit_insn
-	  (gen_atomic_compare_and_swap<mode>_doubleword
-	   (operands[1], operands[2], operands[3],
-	    gen_lowpart (hmode, operands[4]), gen_highpart (hmode, operands[4]),
-	    operands[6]));
-      }
+      emit_insn
+       (gen_atomic_compare_and_swap<mode>_doubleword
+        (operands[1], operands[2], operands[3],
+	 gen_lowpart (hmode, operands[4]), gen_highpart (hmode, operands[4]),
+	 operands[6]));
+    }
 
-    ix86_expand_setcc (operands[0], EQ, gen_rtx_REG (CCZmode, FLAGS_REG),
-		       const0_rtx);
-  }
+  ix86_expand_setcc (operands[0], EQ, gen_rtx_REG (CCZmode, FLAGS_REG),
+		     const0_rtx);
   DONE;
 })
 

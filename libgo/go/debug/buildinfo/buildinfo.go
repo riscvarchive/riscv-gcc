@@ -75,8 +75,8 @@ func Read(r io.ReaderAt) (*BuildInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	bi, err := debug.ParseBuildInfo(mod)
-	if err != nil {
+	bi := &BuildInfo{}
+	if err := bi.UnmarshalText([]byte(mod)); err != nil {
 		return nil, err
 	}
 	bi.GoVersion = vers

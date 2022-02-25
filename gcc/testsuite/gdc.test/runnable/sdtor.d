@@ -3,13 +3,19 @@
 /*
 TEST_OUTPUT:
 ---
+runnable/sdtor.d(36): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+runnable/sdtor.d(59): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+runnable/sdtor.d(93): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+runnable/sdtor.d(117): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+runnable/sdtor.d(143): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+runnable/sdtor.d(177): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+runnable/sdtor.d(203): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+runnable/sdtor.d(276): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
 S7353
 ---
 */
 
 import core.vararg;
-// FIXME: Shouldn't tests that use this go in core.memory now that `delete` has been removed?
-import core.memory : __delete;
 
 extern (C) int printf(const(char*) fmt, ...) nothrow;
 
@@ -27,7 +33,7 @@ struct S1
 void test1()
 {
     S1* s = new S1();
-    __delete(s);
+    delete s;
     assert(sdtor == 1);
 }
 
@@ -50,7 +56,7 @@ void test3()
 {
     T3* s = new T3();
     s.s.a = 3;
-    __delete(s);
+    delete s;
     assert(sdtor3 == 1);
 }
 
@@ -84,7 +90,7 @@ void test4()
 {
     T4* s = new T4();
     s.s.a = 4;
-    __delete(s);
+    delete s;
     assert(sdtor4 == 3);
 }
 
@@ -108,7 +114,7 @@ struct T5
 void test5()
 {
     T5* s = new T5();
-    __delete(s);
+    delete s;
     assert(sdtor5 == 2);
 }
 
@@ -134,7 +140,7 @@ class T6
 void test6()
 {
     T6 s = new T6();
-    __delete(s);
+    delete s;
     assert(sdtor6 == 2);
 }
 
@@ -168,7 +174,7 @@ struct T7
 void test7()
 {
     T7* s = new T7();
-    __delete(s);
+    delete s;
     assert(sdtor7 == 4);
 }
 
@@ -194,7 +200,7 @@ void test8()
     s[0].c = 2;
     s[1].c = 1;
     s[2].c = 0;
-    __delete(s);
+    delete s;
     assert(sdtor8 == 3);
 }
 
@@ -267,7 +273,7 @@ class T11
 void test11()
 {
     T11 s = new T11();
-    __delete(s);
+    delete s;
     assert(sdtor11 == 2);
 }
 

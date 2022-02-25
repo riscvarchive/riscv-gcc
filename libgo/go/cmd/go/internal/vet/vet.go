@@ -13,7 +13,6 @@ import (
 	"cmd/go/internal/base"
 	"cmd/go/internal/cfg"
 	"cmd/go/internal/load"
-	"cmd/go/internal/modload"
 	"cmd/go/internal/trace"
 	"cmd/go/internal/work"
 )
@@ -55,7 +54,6 @@ See also: go fmt, go fix.
 
 func runVet(ctx context.Context, cmd *base.Command, args []string) {
 	vetFlags, pkgArgs := vetFlags(args)
-	modload.InitWorkfile() // The vet command does custom flag processing; initialize workspaces after that.
 
 	if cfg.DebugTrace != "" {
 		var close func() error

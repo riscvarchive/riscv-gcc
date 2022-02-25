@@ -284,7 +284,6 @@ public:
     Identifier *getIdent();
     hash_t toHash();
 
-    bool isDiscardable();
     bool needsCodegen();
 
     TemplateInstance *isTemplateInstance() { return this; }

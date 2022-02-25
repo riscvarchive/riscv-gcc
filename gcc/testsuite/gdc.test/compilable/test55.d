@@ -1,4 +1,4 @@
-// COMPILE_SEPARATELY:
+// COMPILE_SEPARATELY
 // COMPILED_IMPORTS: imports/test55a.d
 // PERMUTE_ARGS: -dw
 // REQUIRED_ARGS: -d
@@ -17,3 +17,4 @@ class Queue2 {
   alias int ListHead;
   Arm2 a;
 }
+

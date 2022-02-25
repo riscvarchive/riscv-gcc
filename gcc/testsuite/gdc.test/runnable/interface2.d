@@ -1,4 +1,11 @@
 // PERMUTE_ARGS:
+/*
+TEST_OUTPUT:
+---
+runnable/interface2.d(47): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+runnable/interface2.d(98): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+---
+*/
 
 extern(C) int printf(const char*, ...);
 
@@ -37,7 +44,7 @@ void test1()
     printf("cast(Bar)f = %p\n", b2);
     assert(b is b2);
 
-    destroy(f);
+    delete f;
 }
 
 /*******************************************************/
@@ -88,7 +95,7 @@ class E3 : D3, C3
 void test3()
 {
     C3 c = new E3();
-    destroy(c);
+    delete c;
 }
 
 

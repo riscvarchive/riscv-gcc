@@ -68,6 +68,11 @@ AC_ARG_ENABLE(shared,
 ], [enable_shared=yes])
 AC_SUBST(enable_shared)
 
+AC_ARG_ENABLE(gcov,
+[  --disable-gcov          don't provide libgcov and related host tools],
+[], [enable_gcov=yes])
+AC_SUBST(enable_gcov)
+
 AC_ARG_ENABLE(vtable-verify,
 [  --enable-vtable-verify    Enable vtable verification feature ],
 [case "$enableval" in
@@ -157,18 +162,6 @@ AC_CANONICAL_HOST
 ACX_NONCANONICAL_HOST
 ACX_NONCANONICAL_TARGET
 GCC_TOPLEV_SUBDIRS
-
-AC_ARG_ENABLE(gcov,
-[  --disable-gcov          don't provide libgcov and related host tools],
-[], [case $target in
-       bpf-*-*)
-         enable_gcov=no
-       ;;
-       *)
-         enable_gcov=yes
-       ;;
-     esac])
-AC_SUBST(enable_gcov)
 
 # Calculate toolexeclibdir
 # Also toolexecdir, though it's only used in toolexeclibdir

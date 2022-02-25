@@ -991,9 +991,8 @@ public:
     override void visit(VisibilityDeclaration d)
     {
         visibilityToBuffer(buf, d.visibility);
+        buf.writeByte(' ');
         AttribDeclaration ad = cast(AttribDeclaration)d;
-        if (ad.decl.dim <= 1)
-            buf.writeByte(' ');
         if (ad.decl.dim == 1 && (*ad.decl)[0].isVisibilityDeclaration)
             visit(cast(AttribDeclaration)(*ad.decl)[0]);
         else
@@ -1694,8 +1693,17 @@ public:
 
     override void visit(DtorDeclaration d)
     {
-        if (stcToBuffer(buf, d.storage_class))
-            buf.writeByte(' ');
+        if (d.storage_class & STC.trusted)
+            buf.writestring("@trusted ");
+        if (d.storage_class & STC.safe)
+            buf.writestring("@safe ");
+        if (d.storage_class & STC.nogc)
+            buf.writestring("@nogc ");
+        if (d.storage_class & STC.live)
+            buf.writestring("@live ");
+        if (d.storage_class & STC.disable)
+            buf.writestring("@disable ");
+
         buf.writestring("~this()");
         bodyToBuffer(d);
     }
@@ -1984,9 +1992,29 @@ public:
     {
         buf.writeByte('"');
         const o = buf.length;
-        foreach (i; 0 .. e.len)
+        for (size_t i = 0; i < e.len; i++)
         {
-            writeCharLiteral(*buf, e.getCodeUnit(i));
+            const c = e.charAt(i);
+            switch (c)
+            {
+            case '"':
+            case '\\':
+                buf.writeByte('\\');
+                goto default;
+            default:
+                if (c <= 0xFF)
+                {
+                    if (c <= 0x7F && isprint(c))
+                        buf.writeByte(c);
+                    else
+                        buf.printf("\\x%02x", c);
+                }
+                else if (c <= 0xFFFF)
+                    buf.printf("\\x%02x\\x%02x", c & 0xFF, c >> 8);
+                else
+                    buf.printf("\\x%02x\\x%02x\\x%02x\\x%02x", c & 0xFF, (c >> 8) & 0xFF, (c >> 16) & 0xFF, c >> 24);
+                break;
+            }
         }
         if (hgs.ddoc)
             escapeDdocString(buf, o);
@@ -2085,6 +2113,12 @@ public:
             buf.writeByte('.');
         }
         buf.writestring("new ");
+        if (e.newargs && e.newargs.dim)
+        {
+            buf.writeByte('(');
+            argsToBuffer(e.newargs, buf, hgs);
+            buf.writeByte(')');
+        }
         typeToBuffer(e.newtype, null, buf, hgs);
         if (e.arguments && e.arguments.dim)
         {
@@ -2102,6 +2136,12 @@ public:
             buf.writeByte('.');
         }
         buf.writestring("new");
+        if (e.newargs && e.newargs.dim)
+        {
+            buf.writeByte('(');
+            argsToBuffer(e.newargs, buf, hgs);
+            buf.writeByte(')');
+        }
         buf.writestring(" class ");
         if (e.arguments && e.arguments.dim)
         {
@@ -2322,12 +2362,6 @@ public:
             expToBuffer(e.msg, PREC.assign, buf, hgs);
         }
         buf.writeByte(')');
-    }
-
-    override void visit(ThrowExp e)
-    {
-        buf.writestring("throw ");
-        expToBuffer(e.e1, PREC.unary, buf, hgs);
     }
 
     override void visit(DotIdExp e)
@@ -2867,6 +2901,22 @@ string stcToString(ref StorageClass stc)
     }
     //printf("stc = %llx\n", stc);
     return null;
+}
+
+/// Ditto
+extern (D) string trustToString(TRUST trust) pure nothrow
+{
+    final switch (trust)
+    {
+    case TRUST.default_:
+        return null;
+    case TRUST.system:
+        return "@system";
+    case TRUST.trusted:
+        return "@trusted";
+    case TRUST.safe:
+        return "@safe";
+    }
 }
 
 private void linkageToBuffer(OutBuffer* buf, LINK linkage)
@@ -3846,11 +3896,6 @@ private void typeToBufferx(Type t, OutBuffer* buf, HdrGenState* hgs)
         buf.writeByte(' ');
         if (t.id)
             buf.writestring(t.id.toChars());
-        if (t.tok == TOK.enum_ && t.base.ty != TY.Tint32)
-        {
-            buf.writestring(" : ");
-            visitWithMask(t.base, t.mod, buf, hgs);
-        }
     }
 
     void visitTuple(TypeTuple t)

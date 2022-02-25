@@ -284,10 +284,7 @@ mark_stmt_if_obviously_necessary (gimple *stmt, bool aggressive)
       break;
 
     case GIMPLE_ASSIGN:
-      /* Mark indirect CLOBBERs to be lazily removed if their SSA operands
-	 do not prevail.  That also makes control flow leading to them
-	 not necessary in aggressive mode.  */
-      if (gimple_clobber_p (stmt) && !zero_ssa_operands (stmt, SSA_OP_USE))
+      if (gimple_clobber_p (stmt))
 	return;
       break;
 
@@ -1271,36 +1268,11 @@ maybe_optimize_arith_overflow (gimple_stmt_iterator *gsi,
   gimplify_and_update_call_from_tree (gsi, result);
 }
 
-/* Returns whether the control parents of BB are preserved.  */
-
-static bool
-control_parents_preserved_p (basic_block bb)
-{
-  /* If we marked the control parents from BB they are preserved.  */
-  if (bitmap_bit_p (visited_control_parents, bb->index))
-    return true;
-
-  /* But they can also end up being marked from elsewhere.  */
-  bitmap_iterator bi;
-  unsigned edge_number;
-  EXECUTE_IF_SET_IN_BITMAP (cd->get_edges_dependent_on (bb->index),
-			    0, edge_number, bi)
-    {
-      basic_block cd_bb = cd->get_edge_src (edge_number);
-      if (cd_bb != bb
-	  && !bitmap_bit_p (last_stmt_necessary, cd_bb->index))
-	return false;
-    }
-  /* And cache the result.  */
-  bitmap_set_bit (visited_control_parents, bb->index);
-  return true;
-}
-
 /* Eliminate unnecessary statements. Any instruction not marked as necessary
    contributes nothing to the program, and can be deleted.  */
 
 static bool
-eliminate_unnecessary_stmts (bool aggressive)
+eliminate_unnecessary_stmts (void)
 {
   bool something_changed = false;
   basic_block bb;
@@ -1394,10 +1366,7 @@ eliminate_unnecessary_stmts (bool aggressive)
 			  break;
 			}
 		    }
-		  if (!dead
-		      /* When doing CD-DCE we have to ensure all controls
-			 of the stmt are still live.  */
-		      && (!aggressive || control_parents_preserved_p (bb)))
+		  if (!dead)
 		    {
 		      bitmap_clear (debug_seen);
 		      continue;
@@ -1907,7 +1876,7 @@ perform_tree_ssa_dce (bool aggressive)
   propagate_necessity (aggressive);
   BITMAP_FREE (visited);
 
-  something_changed |= eliminate_unnecessary_stmts (aggressive);
+  something_changed |= eliminate_unnecessary_stmts ();
   something_changed |= cfg_altered;
 
   /* We do not update postdominators, so free them unconditionally.  */

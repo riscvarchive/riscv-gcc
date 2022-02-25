@@ -201,10 +201,6 @@ func cCompilerCmd(t *testing.T) []string {
 	if !lastSpace {
 		cc = append(cc, s[start:])
 	}
-
-	// Force reallocation (and avoid aliasing bugs) for tests that append to cc.
-	cc = cc[:len(cc):len(cc)]
-
 	return cc
 }
 

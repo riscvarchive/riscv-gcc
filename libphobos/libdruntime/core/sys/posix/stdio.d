@@ -623,35 +623,35 @@ version (CRuntime_Glibc)
 {
     enum P_tmpdir  = "/tmp";
 }
-else version (CRuntime_Musl)
+version (CRuntime_Musl)
 {
     enum P_tmpdir  = "/tmp";
 }
-else version (Darwin)
+version (Darwin)
 {
     enum P_tmpdir  = "/var/tmp";
 }
-else version (FreeBSD)
+version (FreeBSD)
 {
     enum P_tmpdir  = "/var/tmp/";
 }
-else version (NetBSD)
+version (NetBSD)
 {
     enum P_tmpdir  = "/var/tmp/";
 }
-else version (OpenBSD)
+version (OpenBSD)
 {
     enum P_tmpdir  = "/tmp/";
 }
-else version (DragonFlyBSD)
+version (DragonFlyBSD)
 {
     enum P_tmpdir  = "/var/tmp/";
 }
-else version (Solaris)
+version (Solaris)
 {
     enum P_tmpdir  = "/var/tmp/";
 }
-else version (CRuntime_UClibc)
+version (CRuntime_UClibc)
 {
     enum P_tmpdir  = "/tmp";
 }

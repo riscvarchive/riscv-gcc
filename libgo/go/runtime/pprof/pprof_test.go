@@ -798,7 +798,7 @@ func TestBlockProfile(t *testing.T) {
 	t.Skip("lots of details are different for gccgo; FIXME")
 	type TestCase struct {
 		name string
-		f    func(*testing.T)
+		f    func()
 		stk  []string
 		re   string
 	}
@@ -907,7 +907,7 @@ func TestBlockProfile(t *testing.T) {
 	runtime.SetBlockProfileRate(1)
 	defer runtime.SetBlockProfileRate(0)
 	for _, test := range tests {
-		test.f(t)
+		test.f()
 	}
 
 	t.Run("debug=1", func(t *testing.T) {
@@ -983,73 +983,42 @@ func containsStack(got [][]string, want []string) bool {
 	return false
 }
 
-// awaitBlockedGoroutine spins on runtime.Gosched until a runtime stack dump
-// shows a goroutine in the given state with a stack frame in
-// runtime/pprof.<fName>.
-func awaitBlockedGoroutine(t *testing.T, state, fName string) {
-	re := fmt.Sprintf(`(?m)^goroutine \d+ \[%s\]:\n(?:.+\n\t.+\n)*runtime/pprof\.%s`, regexp.QuoteMeta(state), fName)
-	r := regexp.MustCompile(re)
+const blockDelay = 10 * time.Millisecond
 
-	if deadline, ok := t.Deadline(); ok {
-		if d := time.Until(deadline); d > 1*time.Second {
-			timer := time.AfterFunc(d-1*time.Second, func() {
-				debug.SetTraceback("all")
-				panic(fmt.Sprintf("timed out waiting for %#q", re))
-			})
-			defer timer.Stop()
-		}
-	}
-
-	buf := make([]byte, 64<<10)
-	for {
-		runtime.Gosched()
-		n := runtime.Stack(buf, true)
-		if n == len(buf) {
-			// Buffer wasn't large enough for a full goroutine dump.
-			// Resize it and try again.
-			buf = make([]byte, 2*len(buf))
-			continue
-		}
-		if r.Match(buf[:n]) {
-			return
-		}
-	}
-}
-
-func blockChanRecv(t *testing.T) {
+func blockChanRecv() {
 	c := make(chan bool)
 	go func() {
-		awaitBlockedGoroutine(t, "chan receive", "blockChanRecv")
+		time.Sleep(blockDelay)
 		c <- true
 	}()
 	<-c
 }
 
-func blockChanSend(t *testing.T) {
+func blockChanSend() {
 	c := make(chan bool)
 	go func() {
-		awaitBlockedGoroutine(t, "chan send", "blockChanSend")
+		time.Sleep(blockDelay)
 		<-c
 	}()
 	c <- true
 }
 
-func blockChanClose(t *testing.T) {
+func blockChanClose() {
 	c := make(chan bool)
 	go func() {
-		awaitBlockedGoroutine(t, "chan receive", "blockChanClose")
+		time.Sleep(blockDelay)
 		close(c)
 	}()
 	<-c
 }
 
-func blockSelectRecvAsync(t *testing.T) {
+func blockSelectRecvAsync() {
 	const numTries = 3
 	c := make(chan bool, 1)
 	c2 := make(chan bool, 1)
 	go func() {
 		for i := 0; i < numTries; i++ {
-			awaitBlockedGoroutine(t, "select", "blockSelectRecvAsync")
+			time.Sleep(blockDelay)
 			c <- true
 		}
 	}()
@@ -1061,11 +1030,11 @@ func blockSelectRecvAsync(t *testing.T) {
 	}
 }
 
-func blockSelectSendSync(t *testing.T) {
+func blockSelectSendSync() {
 	c := make(chan bool)
 	c2 := make(chan bool)
 	go func() {
-		awaitBlockedGoroutine(t, "select", "blockSelectSendSync")
+		time.Sleep(blockDelay)
 		<-c
 	}()
 	select {
@@ -1074,11 +1043,11 @@ func blockSelectSendSync(t *testing.T) {
 	}
 }
 
-func blockMutex(t *testing.T) {
+func blockMutex() {
 	var mu sync.Mutex
 	mu.Lock()
 	go func() {
-		awaitBlockedGoroutine(t, "semacquire", "blockMutex")
+		time.Sleep(blockDelay)
 		mu.Unlock()
 	}()
 	// Note: Unlock releases mu before recording the mutex event,
@@ -1088,12 +1057,12 @@ func blockMutex(t *testing.T) {
 	mu.Lock()
 }
 
-func blockCond(t *testing.T) {
+func blockCond() {
 	var mu sync.Mutex
 	c := sync.NewCond(&mu)
 	mu.Lock()
 	go func() {
-		awaitBlockedGoroutine(t, "sync.Cond.Wait", "blockCond")
+		time.Sleep(blockDelay)
 		mu.Lock()
 		c.Signal()
 		mu.Unlock()
@@ -1179,7 +1148,7 @@ func TestMutexProfile(t *testing.T) {
 		t.Fatalf("need MutexProfileRate 0, got %d", old)
 	}
 
-	blockMutex(t)
+	blockMutex()
 
 	t.Run("debug=1", func(t *testing.T) {
 		var w bytes.Buffer

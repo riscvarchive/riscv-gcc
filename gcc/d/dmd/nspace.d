@@ -48,7 +48,6 @@ module dmd.nspace;
 
 import dmd.aggregate;
 import dmd.arraytypes;
-import dmd.astenums;
 import dmd.dscope;
 import dmd.dsymbol;
 import dmd.dsymbolsem;

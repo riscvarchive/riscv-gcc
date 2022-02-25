@@ -50,9 +50,9 @@ module std.conv;
 public import std.ascii : LetterCase;
 
 import std.meta;
-import std.range;
+import std.range.primitives;
 import std.traits;
-import std.typecons : Flag, Yes, No, tuple, isTuple;
+import std.typecons : Flag, Yes, No, tuple;
 
 // Same as std.string.format, but "self-importing".
 // Helps reduce code and imports, particularly in static asserts.
@@ -651,32 +651,6 @@ if (isImplicitlyConvertible!(S, T) &&
             assertThrown!ConvOverflowException(to!Uint(sn));
         }}
     }}
-}
-
-// https://issues.dlang.org/show_bug.cgi?id=13551
-private T toImpl(T, S)(S value)
-if (isTuple!T)
-{
-    T t;
-    static foreach (i; 0 .. T.length)
-    {
-        t[i] = value[i].to!(typeof(T[i]));
-    }
-    return t;
-}
-
-@safe unittest
-{
-    import std.typecons : Tuple;
-
-    auto test = ["10", "20", "30"];
-    assert(test.to!(Tuple!(int, int, int)) == Tuple!(int, int, int)(10, 20, 30));
-
-    auto test1 = [1, 2];
-    assert(test1.to!(Tuple!(int, int)) == Tuple!(int, int)(1, 2));
-
-    auto test2 = [1.0, 2.0, 3.0];
-    assert(test2.to!(Tuple!(int, int, int)) == Tuple!(int, int, int)(1, 2, 3));
 }
 
 /*
@@ -1642,7 +1616,7 @@ if (!isImplicitlyConvertible!(S, T) &&
 Array-to-array conversion (except when target is a string type)
 converts each element in turn by using `to`.
  */
-private T toImpl(T, S)(scope S value)
+private T toImpl(T, S)(S value)
 if (!isImplicitlyConvertible!(S, T) &&
     !isSomeString!S && isDynamicArray!S &&
     !isExactSomeString!T && isArray!T)
@@ -1996,7 +1970,7 @@ if (isInputRange!S && isSomeChar!(ElementEncodingType!S) &&
 
 /// ditto
 private T toImpl(T, S)(S value, uint radix)
-if (isSomeFiniteCharInputRange!S &&
+if (isInputRange!S && !isInfinite!S && isSomeChar!(ElementEncodingType!S) &&
     isIntegral!T && is(typeof(parse!T(value, radix))))
 {
     scope(success)

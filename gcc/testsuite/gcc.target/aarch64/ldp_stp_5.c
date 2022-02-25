@@ -1,4 +1,4 @@
-/* { dg-options "-O2 -mstrict-align" } */
+/* { dg-options "-O2" } */
 
 double arr[4][4];
 

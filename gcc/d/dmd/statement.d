@@ -21,6 +21,7 @@ import dmd.arraytypes;
 import dmd.astenums;
 import dmd.ast_node;
 import dmd.gluelayer;
+import dmd.canthrow;
 import dmd.cond;
 import dmd.dclass;
 import dmd.declaration;

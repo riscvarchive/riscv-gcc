@@ -1,5 +1,9 @@
 /*
 REQUIRED_ARGS: -debug
+TEST_OUTPUT:
+---
+compilable/debugInference.d(35): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+---
 https://issues.dlang.org/show_bug.cgi?id=20507
 */
 
@@ -28,7 +32,7 @@ void bar()()
         auto f2Ptr = &f2;
 
         S s;
-        destroy(s);
+        delete s;
 
         int* ptr = cast(int*) 0;
         int[] slice = ptr[0 .. 4];

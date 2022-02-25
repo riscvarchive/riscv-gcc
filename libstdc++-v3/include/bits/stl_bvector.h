@@ -1135,9 +1135,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       _GLIBCXX20_CONSTEXPR
       iterator
 #if __cplusplus >= 201103L
-      insert(const_iterator __position, const bool& __x)
+      insert(const_iterator __position, const bool& __x = bool())
 #else
-      insert(iterator __position, const bool& __x)
+      insert(iterator __position, const bool& __x = bool())
 #endif
       {
 	const difference_type __n = __position - begin();
@@ -1148,13 +1148,6 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	  _M_insert_aux(__position._M_const_cast(), __x);
 	return begin() + __n;
       }
-
-#if _GLIBCXX_USE_DEPRECATED
-      _GLIBCXX_DEPRECATED_SUGGEST("insert(position, false)")
-      iterator
-      insert(const_iterator __position)
-      { return this->insert(__position._M_const_cast(), false); }
-#endif
 
 #if __cplusplus >= 201103L
       template<typename _InputIterator,

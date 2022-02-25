@@ -4571,7 +4571,7 @@ string debugTypeName(const(TypeInfo) ti) nothrow
         else
             return debugTypeName(ci.next);
     else
-        name = typeid(ti).name;
+        name = ti.classinfo.name;
     return name;
 }
 

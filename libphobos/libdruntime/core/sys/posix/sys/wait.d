@@ -38,81 +38,7 @@ extern (C) nothrow @nogc:
 /*
 WNOHANG
 WUNTRACED
-*/
 
-version (linux)
-{
-    enum WNOHANG        = 1;
-    enum WUNTRACED      = 2;
-
-    private
-    {
-        enum __W_CONTINUED = 0xFFFF;
-    }
-}
-else version (Darwin)
-{
-    enum WNOHANG        = 1;
-    enum WUNTRACED      = 2;
-
-    private
-    {
-        enum _WSTOPPED = 0x7F; // octal 0177
-    }
-}
-else version (FreeBSD)
-{
-    enum WNOHANG        = 1;
-    enum WUNTRACED      = 2;
-
-    private
-    {
-        enum _WSTOPPED = 0x7F; // octal 0177
-        enum __W_CONTINUED = 0x13;
-    }
-}
-else version (NetBSD)
-{
-    enum WNOHANG        = 1;
-    enum WUNTRACED      = 2;
-
-    private
-    {
-        enum _WSTOPPED = 0x7F; // octal 0177
-    }
-}
-else version (OpenBSD)
-{
-    enum WNOHANG        = 1;
-    enum WUNTRACED      = 2;
-
-    private
-    {
-        enum _WSTOPPED   = 0x7F;   // octal 0177
-        enum _WCONTINUED = 0xFFFF; // octal 0177777
-    }
-}
-else version (DragonFlyBSD)
-{
-    enum WNOHANG        = 1;
-    enum WUNTRACED      = 2;
-
-    private
-    {
-        enum _WSTOPPED = 0x7F; // octal 0177
-    }
-}
-else version (Solaris)
-{
-    enum WNOHANG        = 64;
-    enum WUNTRACED      = 4;
-}
-else
-{
-    static assert(false, "Unsupported platform");
-}
-
-/*
 WEXITSTATUS
 WIFCONTINUED
 WIFEXITED
@@ -120,14 +46,22 @@ WIFSIGNALED
 WIFSTOPPED
 WSTOPSIG
 WTERMSIG
+
+pid_t wait(int*);
+pid_t waitpid(pid_t, int*, int);
 */
 
 version (CRuntime_Glibc)
 {
     @safe pure:
 
+    enum WNOHANG        = 1;
+    enum WUNTRACED      = 2;
+
     private
     {
+        enum __W_CONTINUED = 0xFFFF;
+
         extern (D) int __WTERMSIG( int status ) { return status & 0x7F; }
     }
 
@@ -151,6 +85,14 @@ else version (Darwin)
 {
     @safe pure:
 
+    enum WNOHANG        = 1;
+    enum WUNTRACED      = 2;
+
+    private
+    {
+        enum _WSTOPPED = 0x7F; // octal 0177
+    }
+
     extern (D) int _WSTATUS(int status)         { return (status & 0x7F);           }
     extern (D) int  WEXITSTATUS( int status )   { return (status >> 8);             }
     extern (D) int  WIFCONTINUED( int status )  { return status == 0x13;            }
@@ -166,6 +108,14 @@ else version (Darwin)
 else version (FreeBSD)
 {
     @safe pure:
+
+    enum WNOHANG        = 1;
+    enum WUNTRACED      = 2;
+
+    private
+    {
+        enum _WSTOPPED = 0x7F; // octal 0177
+    }
 
     extern (D) int _WSTATUS(int status)         { return (status & 0x7F);           }
     extern (D) int  WEXITSTATUS( int status )   { return (status >> 8);             }
@@ -183,6 +133,14 @@ else version (NetBSD)
 {
     @safe pure:
 
+    enum WNOHANG        = 1;
+    enum WUNTRACED      = 2;
+
+    private
+    {
+        enum _WSTOPPED = 0x7F; // octal 0177
+    }
+
     extern (D) int _WSTATUS(int status)         { return (status & 0x7F);           }
     extern (D) int  WEXITSTATUS( int status )   { return (status >> 8);             }
     extern (D) int  WIFCONTINUED( int status )  { return status == 0x13;            }
@@ -198,6 +156,15 @@ else version (NetBSD)
 else version (OpenBSD)
 {
     @safe pure:
+
+    enum WNOHANG        = 1;
+    enum WUNTRACED      = 2;
+
+    private
+    {
+        enum _WSTOPPED   = 0x7F;   // octal 0177
+        enum _WCONTINUED = 0xFFFF; // octal 0177777
+    }
 
     extern (D) int _WSTATUS(int status)         { return (status & 0x7F);                     }
     extern (D) int  WEXITSTATUS(int status)   { return (status >> 8) & 0xFF;                  }
@@ -215,6 +182,14 @@ else version (DragonFlyBSD)
 {
     @safe pure:
 
+    enum WNOHANG        = 1;
+    enum WUNTRACED      = 2;
+
+    private
+    {
+        enum _WSTOPPED = 0x7F; // octal 0177
+    }
+
     extern (D) int _WSTATUS(int status)         { return (status & 0x7F);           }
     extern (D) int  WEXITSTATUS( int status )   { return (status >> 8);             }
     extern (D) int  WIFCONTINUED( int status )  { return status == 0x13;            }
@@ -231,6 +206,9 @@ else version (Solaris)
 {
     @safe pure:
 
+    enum WNOHANG        = 64;
+    enum WUNTRACED      = 4;
+
     extern (D) int WEXITSTATUS(int status) { return (status >> 8) & 0xff; }
     extern (D) int WIFCONTINUED(int status) { return (status & 0xffff) == 0xffff; }
     extern (D) bool WIFEXITED(int status) { return (status & 0xff) == 0;     }
@@ -242,6 +220,10 @@ else version (Solaris)
 else version (CRuntime_Bionic)
 {
     @safe pure:
+
+    enum WNOHANG   = 1;
+    enum WUNTRACED = 2;
+
     extern (D) int  WEXITSTATUS( int status ) { return ( status & 0xFF00 ) >> 8; }
     extern (D) bool WIFEXITED( int status ) { return WTERMSIG(status) == 0; }
     extern (D) bool WIFSIGNALED( int status ) { return WTERMSIG(status + 1) >= 2; }
@@ -252,6 +234,10 @@ else version (CRuntime_Bionic)
 else version (CRuntime_Musl)
 {
     @safe pure:
+
+    enum WNOHANG        = 1;
+    enum WUNTRACED      = 2;
+
     extern (D) int  WEXITSTATUS( int status ) { return ( status & 0xFF00 ) >> 8; }
     extern (D) int  WIFCONTINUED( int status ) { return status == 0xffff; }
     extern (D) bool WIFEXITED( int status ) { return WTERMSIG( status ) == 0; }
@@ -264,8 +250,13 @@ else version (CRuntime_UClibc)
 {
     @safe pure:
 
+    enum WNOHANG        = 1;
+    enum WUNTRACED      = 2;
+
     private
     {
+        enum __W_CONTINUED = 0xFFFF;
+
         extern (D) int __WTERMSIG( int status ) { return status & 0x7F; }
     }
 
@@ -297,11 +288,6 @@ else
     static assert(false, "Unsupported platform");
 }
 
-/*
-pid_t wait(int*);
-pid_t waitpid(pid_t, int*, int);
-*/
-
 pid_t wait(int*);
 pid_t waitpid(pid_t, int*, int);
 
@@ -320,9 +306,11 @@ enum idtype_t
     P_PID,
     P_PGID
 }
+
+int waitid(idtype_t, id_t, siginfo_t*, int);
 */
 
-version (linux)
+version (CRuntime_Glibc)
 {
     enum WEXITED    = 4;
     enum WSTOPPED   = 2;
@@ -335,6 +323,8 @@ version (linux)
         P_PID,
         P_PGID
     }
+
+    int waitid(idtype_t, id_t, siginfo_t*, int);
 }
 else version (Darwin)
 {
@@ -349,6 +339,8 @@ else version (Darwin)
         P_PID,
         P_PGID
     }
+
+    int waitid(idtype_t, id_t, siginfo_t*, int);
 }
 else version (FreeBSD)
 {
@@ -377,6 +369,8 @@ else version (FreeBSD)
         P_CPUID,
         P_PSETID
     }
+
+    int waitid(idtype_t, id_t, siginfo_t*, int);
 }
 else version (NetBSD)
 {
@@ -425,51 +419,50 @@ else version (Solaris)
         P_CPUID,        /* CPU identifier.                      */
         P_PSETID,       /* Processor set identifier             */
     }
-}
-else
-{
-    static assert(false, "Unsupported platform");
-}
 
-/*
-int waitid(idtype_t, id_t, siginfo_t*, int);
-*/
-
-version (CRuntime_Glibc)
-{
-    int waitid(idtype_t, id_t, siginfo_t*, int);
-}
-else version (Darwin)
-{
-    int waitid(idtype_t, id_t, siginfo_t*, int);
-}
-else version (FreeBSD)
-{
-    int waitid(idtype_t, id_t, siginfo_t*, int);
-}
-else version (NetBSD)
-{
-}
-else version (OpenBSD)
-{
-}
-else version (DragonFlyBSD)
-{
-}
-else version (Solaris)
-{
     int waitid(idtype_t, id_t, siginfo_t*, int);
 }
 else version (CRuntime_Bionic)
 {
+    enum WEXITED    = 4;
+    enum WSTOPPED   = 2;
+    enum WCONTINUED = 8;
+    enum WNOWAIT    = 0x01000000;
+
+    alias int idtype_t;
+
     int waitid(idtype_t, id_t, siginfo_t*, int);
 }
 else version (CRuntime_Musl)
 {
+    enum WEXITED    = 4;
+    enum WSTOPPED   = 2;
+    enum WCONTINUED = 8;
+    enum WNOWAIT    = 0x01000000;
+
+    enum idtype_t
+    {
+        P_ALL,
+        P_PID,
+        P_PGID
+    }
+
     int waitid(idtype_t, id_t, siginfo_t*, int);
 }
 else version (CRuntime_UClibc)
 {
+    enum WEXITED    = 4;
+    enum WSTOPPED   = 2;
+    enum WCONTINUED = 8;
+    enum WNOWAIT    = 0x01000000;
+
+    enum idtype_t
+    {
+        P_ALL,
+        P_PID,
+        P_PGID
+    }
+
     int waitid(idtype_t, id_t, siginfo_t*, int);
 }
 else

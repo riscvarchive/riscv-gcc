@@ -210,9 +210,6 @@ private void resolveHelper(TypeQualified mt, const ref Loc loc, Scope* sc, Dsymb
             error(loc, "undefined identifier `%s`, did you mean %s `%s`?", p, s2.kind(), s2.toChars());
         else if (const q = Scope.search_correct_C(id))
             error(loc, "undefined identifier `%s`, did you mean `%s`?", p, q);
-        else if ((id == Id.This   && sc.getStructClassScope()) ||
-                 (id == Id._super && sc.getClassScope()))
-            error(loc, "undefined identifier `%s`, did you mean `typeof(%s)`?", p, p);
         else
             error(loc, "undefined identifier `%s`", p);
 
@@ -276,7 +273,7 @@ private void resolveHelper(TypeQualified mt, const ref Loc loc, Scope* sc, Dsymb
             // Same check as in Expression.semanticY(DotIdExp)
             else if (sm.isPackage() && checkAccess(sc, sm.isPackage()))
             {
-                // @@@DEPRECATED_2.106@@@
+                // @@@DEPRECATED_2.096@@@
                 // Should be an error in 2.106. Just remove the deprecation call
                 // and uncomment the null assignment
                 deprecation(loc, "%s %s is not accessible here, perhaps add 'static import %s;'", sm.kind(), sm.toPrettyChars(), sm.toPrettyChars());
@@ -2043,22 +2040,6 @@ extern(C++) Type typeSemantic(Type type, const ref Loc loc, Scope* sc)
             return mtype.resolved;
         }
 
-        /* Find the current scope by skipping tag scopes.
-         * In C, tag scopes aren't considered scopes.
-         */
-        Scope* sc2 = sc;
-        while (1)
-        {
-            sc2 = sc2.inner();
-            auto scopesym = sc2.scopesym;
-            if (scopesym.isStructDeclaration())
-            {
-                sc2 = sc2.enclosing;
-                continue;
-            }
-            break;
-        }
-
         /* Declare mtype as a struct/union/enum declaration
          */
         void declareTag()
@@ -2066,22 +2047,22 @@ extern(C++) Type typeSemantic(Type type, const ref Loc loc, Scope* sc)
             void declare(ScopeDsymbol sd)
             {
                 sd.members = mtype.members;
-                auto scopesym = sc2.inner().scopesym;
+                auto scopesym = sc.inner().scopesym;
                 if (scopesym.members)
                     scopesym.members.push(sd);
                 if (scopesym.symtab && !scopesym.symtabInsert(sd))
                 {
                     Dsymbol s2 = scopesym.symtabLookup(sd, mtype.id);
-                    handleTagSymbols(*sc2, sd, s2, scopesym);
+                    handleTagSymbols(*sc, sd, s2, scopesym);
                 }
-                sd.parent = sc2.parent;
-                sd.dsymbolSemantic(sc2);
+                sd.parent = sc.parent;
+                sd.dsymbolSemantic(sc);
             }
 
             switch (mtype.tok)
             {
                 case TOK.enum_:
-                    auto ed = new EnumDeclaration(mtype.loc, mtype.id, mtype.base);
+                    auto ed = new EnumDeclaration(mtype.loc, mtype.id, Type.tint32);
                     declare(ed);
                     mtype.resolved = visitEnum(new TypeEnum(ed));
                     break;
@@ -2117,7 +2098,7 @@ extern(C++) Type typeSemantic(Type type, const ref Loc loc, Scope* sc)
         /* look for pre-existing declaration
          */
         Dsymbol scopesym;
-        auto s = sc2.search(mtype.loc, mtype.id, &scopesym, IgnoreErrors | TagNameSpace);
+        auto s = sc.search(mtype.loc, mtype.id, &scopesym, IgnoreErrors | TagNameSpace);
         if (!s || s.isModule())
         {
             // no pre-existing declaration, so declare it
@@ -2130,7 +2111,7 @@ extern(C++) Type typeSemantic(Type type, const ref Loc loc, Scope* sc)
         /* A redeclaration only happens if both declarations are in
          * the same scope
          */
-        const bool redeclar = (scopesym == sc2.inner().scopesym);
+        const bool redeclar = (scopesym == sc.inner().scopesym);
 
         if (redeclar)
         {
@@ -2173,7 +2154,7 @@ extern(C++) Type typeSemantic(Type type, const ref Loc loc, Scope* sc)
                          * picked up and added to the symtab.
                          */
                         sd.semanticRun = PASS.semantic;
-                        sd.dsymbolSemantic(sc2);
+                        sd.dsymbolSemantic(sc);
                     }
                 }
                 else
@@ -3004,20 +2985,43 @@ void resolve(Type mt, const ref Loc loc, Scope* sc, out Expression pe, out Type 
     void visitIdentifier(TypeIdentifier mt)
     {
         //printf("TypeIdentifier::resolve(sc = %p, idents = '%s')\n", sc, mt.toChars());
+        if ((mt.ident.equals(Id._super) || mt.ident.equals(Id.This)) && !hasThis(sc))
+        {
+            // @@@DEPRECATED_v2.091@@@.
+            // Made an error in 2.086.
+            // Eligible for removal in 2.091.
+            if (mt.ident.equals(Id._super))
+            {
+                error(mt.loc, "Using `super` as a type is obsolete. Use `typeof(super)` instead");
+            }
+             // @@@DEPRECATED_v2.091@@@.
+            // Made an error in 2.086.
+            // Eligible for removal in 2.091.
+            if (mt.ident.equals(Id.This))
+            {
+                error(mt.loc, "Using `this` as a type is obsolete. Use `typeof(this)` instead");
+            }
+            if (AggregateDeclaration ad = sc.getStructClassScope())
+            {
+                if (ClassDeclaration cd = ad.isClassDeclaration())
+                {
+                    if (mt.ident.equals(Id.This))
+                        mt.ident = cd.ident;
+                    else if (cd.baseClass && mt.ident.equals(Id._super))
+                        mt.ident = cd.baseClass.ident;
+                }
+                else
+                {
+                    StructDeclaration sd = ad.isStructDeclaration();
+                    if (sd && mt.ident.equals(Id.This))
+                        mt.ident = sd.ident;
+                }
+            }
+        }
         if (mt.ident == Id.ctfe)
         {
             error(loc, "variable `__ctfe` cannot be read at compile time");
             return returnError();
-        }
-        if (mt.ident == Id.builtin_va_list) // gcc has __builtin_va_xxxx for stdarg.h
-        {
-            /* Since we don't support __builtin_va_start, -arg, -end, we don't
-             * have to actually care what -list is. A void* will do.
-             * If we ever do care, import core.stdc.stdarg and pull
-             * the definition out of that, similarly to how std.math is handled for PowExp
-             */
-            pt = target.va_listType(loc, sc);
-            return;
         }
 
         Dsymbol scopesym;
@@ -3817,7 +3821,7 @@ Expression dotExp(Type mt, Scope* sc, Expression e, Identifier ident, int flag)
                  *  e.opDot().ident
                  */
                 e = build_overload(e.loc, sc, e, null, fd);
-                // @@@DEPRECATED_2.092@@@.
+                // @@@DEPRECATED_2.087@@@.
                 e.deprecation("`opDot` is deprecated. Use `alias this`");
                 e = new DotIdExp(e.loc, e, ident);
                 return returnExp(e.expressionSemantic(sc));
@@ -3936,7 +3940,7 @@ Expression dotExp(Type mt, Scope* sc, Expression e, Identifier ident, int flag)
 
             e = new TupleExp(e.loc, e0, exps);
             Scope* sc2 = sc.push();
-            sc2.flags |= SCOPE.noaccesscheck;
+            sc2.flags |= global.params.useDIP1000 == FeatureState.enabled ? SCOPE.onlysafeaccess : SCOPE.noaccesscheck;
             e = e.expressionSemantic(sc2);
             sc2.pop();
             return e;
@@ -4197,7 +4201,7 @@ Expression dotExp(Type mt, Scope* sc, Expression e, Identifier ident, int flag)
 
             e = new TupleExp(e.loc, e0, exps);
             Scope* sc2 = sc.push();
-            sc2.flags |= SCOPE.noaccesscheck;
+            sc2.flags |= global.params.useDIP1000 == FeatureState.enabled ? SCOPE.onlysafeaccess : SCOPE.noaccesscheck;
             e = e.expressionSemantic(sc2);
             sc2.pop();
             return e;

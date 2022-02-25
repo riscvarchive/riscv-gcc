@@ -567,8 +567,7 @@ extern (C++) class FuncDeclaration : Declaration
              * do existing practice. But we should examine how TypeFunction does
              * it, for consistency.
              */
-            if (global.params.useDIP1000 != FeatureState.enabled &&
-                !tf.isref && isRefReturnScope(vthis.storage_class))
+            if (!tf.isref && isRefReturnScope(vthis.storage_class))
             {
                 /* if `ref return scope`, evaluate to `ref` `return scope`
                  */
@@ -3053,7 +3052,7 @@ FuncDeclaration resolveFuncCall(const ref Loc loc, Scope* sc, Dsymbol s,
         // all of overloads are templates
         if (td)
         {
-            .error(loc, "none of the overloads of %s `%s.%s` are callable using argument types `!(%s)%s`",
+            .error(loc, "%s `%s.%s` cannot deduce function from argument types `!(%s)%s`",
                    td.kind(), td.parent.toPrettyChars(), td.ident.toChars(),
                    tiargsBuf.peekChars(), fargsBuf.peekChars());
 

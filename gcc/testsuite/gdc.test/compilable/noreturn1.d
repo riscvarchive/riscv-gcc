@@ -20,7 +20,8 @@ static assert(!is(noreturn == void));
 
 static assert(is( typeof(assert(0)) == noreturn ));
 
-static assert(is( typeof(throw new Exception("")) == noreturn ));
+// Does not parse yet
+// static assert(is( typeof(throw new Exception()) == noreturn ));
 
 static assert(is(noreturn == noreturn));
 static assert(!is(noreturn == const noreturn));

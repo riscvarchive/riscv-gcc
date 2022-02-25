@@ -1,7 +1,5 @@
 /* { dg-do compile } */
-/* -Winvalid-memory-model warnings are issued before the dead invalid calls
-   are removed.  */
-/* { dg-options "-O2 -march=armv8-a+lse -Wno-invalid-memory-model" } */
+/* { dg-options "-O2 -march=armv8-a+lse" } */
 
 /* Test ARMv8.1-A CAS instruction.  */
 

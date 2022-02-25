@@ -149,6 +149,4 @@ get_openacc_privatization_dump_flags ()
   return l_dump_flags;
 }
 
-extern tree omp_build_component_ref (tree obj, tree field);
-
 #endif /* GCC_OMP_GENERAL_H */

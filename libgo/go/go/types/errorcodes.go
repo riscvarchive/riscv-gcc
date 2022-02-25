@@ -98,10 +98,13 @@ const (
 	// _InvalidDeclCycle occurs when a declaration cycle is not valid.
 	//
 	// Example:
-	//  type S struct {
-	//  	S
+	//  import "unsafe"
+	//
+	//  type T struct {
+	//  	a [n]int
 	//  }
 	//
+	//  var n = unsafe.Sizeof(T{})
 	_InvalidDeclCycle
 
 	// _InvalidTypeCycle occurs when a cycle in type definitions results in a
@@ -1382,7 +1385,10 @@ const (
 
 	// _InvalidMethodTypeParams occurs when methods have type parameters.
 	//
-	// It cannot be encountered with an AST parsed using go/parser.
+	// Example:
+	//  type T int
+	//
+	//  func (T) m[P any]() {}
 	_InvalidMethodTypeParams
 
 	// _MisplacedTypeParam occurs when a type parameter is used in a place where

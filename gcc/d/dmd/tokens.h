@@ -44,6 +44,7 @@ enum class TOK : unsigned char
     leftCurly,
     rightCurly,
     colon,
+    negate,
     semicolon,
     dotDotDot,
     endOfFile,
@@ -52,18 +53,26 @@ enum class TOK : unsigned char
     assert_,
     true_,
     false_,
+    array,
+    call,
+    address,
+    type,
     throw_,
     new_,
     delete_,
+    star,
     variable,
     slice,
     version_,
     module_,
     dollar,
     template_,
+    declaration,
     typeof_,
     pragma_,
     typeid_,
+    uadd,
+    remove,
     comment,
 
     // Operators
@@ -75,6 +84,7 @@ enum class TOK : unsigned char
     notEqual,
     identity,
     notIdentity,
+    index,
     is_,
 
     leftShift,      // 64
@@ -277,10 +287,8 @@ enum class TOK : unsigned char
     _Thread_local_,
 
     // C only extended keywords
-    _import,
-    cdecl_,
+    cdecl,
     declspec,
-    stdcall,
     attribute__,
 
     MAX,

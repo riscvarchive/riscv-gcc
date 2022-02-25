@@ -1315,18 +1315,7 @@ private final class CppMangleVisitor : Visitor
 
         foreach (n, fparam; parameterList)
         {
-            Type t = fparam.type.merge2();
-            if (fparam.isReference())
-                t = t.referenceTo();
-            else if (fparam.storageClass & STC.lazy_)
-            {
-                // Mangle as delegate
-                auto tf = new TypeFunction(ParameterList(), t, LINK.d);
-                auto td = new TypeDelegate(tf);
-                t = td.merge();
-            }
-            else if (Type cpptype = target.cpp.parameterType(t))
-                t = cpptype;
+            Type t = target.cpp.parameterType(fparam);
             if (t.ty == Tsarray)
             {
                 // Static arrays in D are passed by value; no counterpart in C++

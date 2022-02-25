@@ -122,10 +122,8 @@ private LabelStatement checkLabeledLoop(Scope* sc, Statement statement)
  * Returns:
  *  `e` or ErrorExp.
  */
-private Expression checkAssignmentAsCondition(Expression e, Scope* sc)
+private Expression checkAssignmentAsCondition(Expression e)
 {
-    if (sc.flags & SCOPE.Cfile)
-        return e;
     auto ec = lastComma(e);
     if (ec.op == EXP.assign)
     {
@@ -150,7 +148,7 @@ extern(C++) Statement statementSemantic(Statement s, Scope* sc)
     return v.result;
 }
 
-package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
+private extern (C++) final class StatementSemanticVisitor : Visitor
 {
     alias visit = Visitor.visit;
 
@@ -552,7 +550,7 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
             (cast(DotIdExp)ds.condition).noderef = true;
 
         // check in syntax level
-        ds.condition = checkAssignmentAsCondition(ds.condition, sc);
+        ds.condition = checkAssignmentAsCondition(ds.condition);
 
         ds.condition = ds.condition.expressionSemantic(sc);
         ds.condition = resolveProperties(sc, ds.condition);
@@ -625,7 +623,7 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
                 (cast(DotIdExp)fs.condition).noderef = true;
 
             // check in syntax level
-            fs.condition = checkAssignmentAsCondition(fs.condition, sc);
+            fs.condition = checkAssignmentAsCondition(fs.condition);
 
             fs.condition = fs.condition.expressionSemantic(sc);
             fs.condition = resolveProperties(sc, fs.condition);
@@ -1608,7 +1606,7 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
      * Params:
      *  sc = context
      *  fs = ForeachStatement
-     *  tfld = type of function literal to be created (type of opApply() function if any), can be null
+     *  tfld = type of function literal to be created, can be null
      * Returns:
      *  Function literal created, as an expression
      *  null if error.
@@ -1619,7 +1617,7 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
         foreach (i; 0 .. fs.parameters.dim)
         {
             Parameter p = (*fs.parameters)[i];
-            StorageClass stc = STC.ref_ | (p.storageClass & STC.scope_);
+            StorageClass stc = STC.ref_;
             Identifier id;
 
             p.type = p.type.typeSemantic(fs.loc, sc);
@@ -1628,17 +1626,17 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
             {
                 Parameter prm = tfld.parameterList[i];
                 //printf("\tprm = %s%s\n", (prm.storageClass&STC.ref_?"ref ":"").ptr, prm.ident.toChars());
-                stc = (prm.storageClass & STC.ref_) | (p.storageClass & STC.scope_);
-                if ((p.storageClass & STC.ref_) != (prm.storageClass & STC.ref_))
+                stc = prm.storageClass & STC.ref_;
+                id = p.ident; // argument copy is not need.
+                if ((p.storageClass & STC.ref_) != stc)
                 {
-                    if (!(prm.storageClass & STC.ref_))
+                    if (!stc)
                     {
                         fs.error("`foreach`: cannot make `%s` `ref`", p.ident.toChars());
                         return null;
                     }
                     goto LcopyArg;
                 }
-                id = p.ident; // argument copy is not need.
             }
             else if (p.storageClass & STC.ref_)
             {
@@ -1655,7 +1653,7 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
 
                 Initializer ie = new ExpInitializer(fs.loc, new IdentifierExp(fs.loc, id));
                 auto v = new VarDeclaration(fs.loc, p.type, p.ident, ie);
-                v.storage_class |= STC.temp | (stc & STC.scope_);
+                v.storage_class |= STC.temp;
                 Statement s = new ExpStatement(fs.loc, v);
                 fs._body = new CompoundStatement(fs.loc, s, fs._body);
             }
@@ -1869,7 +1867,7 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
          */
 
         // check in syntax level
-        ifs.condition = checkAssignmentAsCondition(ifs.condition, sc);
+        ifs.condition = checkAssignmentAsCondition(ifs.condition);
 
         auto sym = new ScopeDsymbol();
         sym.parent = sc.scopesym;
@@ -3567,6 +3565,7 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
 
         tcs.tryBody = sc.tryBody;   // chain on the in-flight tryBody
         tcs._body = tcs._body.semanticScope(sc, null, null, tcs);
+        assert(tcs._body);
 
         /* Even if body is empty, still do semantic analysis on catches
          */
@@ -3608,11 +3607,6 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
 
         if (catchErrors)
             return setError();
-
-        // No actual code in the try (i.e. omitted any conditionally compiled code)
-        // Could also be extended to check for hasCode
-        if (!tcs._body)
-            return;
 
         if (tcs._body.isErrorStatement())
         {
@@ -3738,61 +3732,44 @@ package (dmd) extern (C++) final class StatementSemanticVisitor : Visitor
          */
 
         //printf("ThrowStatement::semantic()\n");
-        if (throwSemantic(ts.loc, ts.exp, sc))
-            result = ts;
-        else
-            setError();
 
-    }
-
-    /**
-     * Run semantic on `throw <exp>`.
-     *
-     * Params:
-     *   loc = location of the `throw`
-     *   exp = value to be thrown
-     *   sc  = enclosing scope
-     *
-     * Returns: true if the `throw` is valid, or false if an error was found
-     */
-    extern(D) static bool throwSemantic(const ref Loc loc, ref Expression exp, Scope* sc)
-    {
         if (!global.params.useExceptions)
         {
-            loc.error("Cannot use `throw` statements with -betterC");
-            return false;
+            ts.error("Cannot use `throw` statements with -betterC");
+            return setError();
         }
 
         if (!ClassDeclaration.throwable)
         {
-            loc.error("Cannot use `throw` statements because `object.Throwable` was not declared");
-            return false;
+            ts.error("Cannot use `throw` statements because `object.Throwable` was not declared");
+            return setError();
         }
 
-        if (FuncDeclaration fd = sc.parent.isFuncDeclaration())
-            fd.hasReturnExp |= 2;
+        FuncDeclaration fd = sc.parent.isFuncDeclaration();
+        fd.hasReturnExp |= 2;
 
-        if (exp.op == EXP.new_)
+        if (ts.exp.op == EXP.new_)
         {
-            NewExp ne = cast(NewExp) exp;
+            NewExp ne = cast(NewExp)ts.exp;
             ne.thrownew = true;
         }
 
-        exp = exp.expressionSemantic(sc);
-        exp = resolveProperties(sc, exp);
-        exp = checkGC(sc, exp);
-        if (exp.op == EXP.error)
-            return false;
+        ts.exp = ts.exp.expressionSemantic(sc);
+        ts.exp = resolveProperties(sc, ts.exp);
+        ts.exp = checkGC(sc, ts.exp);
+        if (ts.exp.op == EXP.error)
+            return setError();
 
-        checkThrowEscape(sc, exp, false);
+        checkThrowEscape(sc, ts.exp, false);
 
-        ClassDeclaration cd = exp.type.toBasetype().isClassHandle();
+        ClassDeclaration cd = ts.exp.type.toBasetype().isClassHandle();
         if (!cd || ((cd != ClassDeclaration.throwable) && !ClassDeclaration.throwable.isBaseOf(cd, null)))
         {
-            loc.error("can only throw class objects derived from `Throwable`, not type `%s`", exp.type.toChars());
-            return false;
+            ts.error("can only throw class objects derived from `Throwable`, not type `%s`", ts.exp.type.toChars());
+            return setError();
         }
-        return true;
+
+        result = ts;
     }
 
     override void visit(DebugStatement ds)
@@ -4768,71 +4745,161 @@ private Statements* flatten(Statement statement, Scope* sc)
 }
 
 /***********************************************************
- * Convert TemplateMixin members (which are Dsymbols) to Statements.
- * Params:
- *    s = the symbol to convert to a Statement
- * Returns:
- *    s redone as a Statement
+ * Convert TemplateMixin members (== Dsymbols) to Statements.
  */
 private Statement toStatement(Dsymbol s)
 {
-    Statement result;
+    extern (C++) final class ToStmt : Visitor
+    {
+        alias visit = Visitor.visit;
+    public:
+        Statement result;
 
-    if (auto tm = s.isTemplateMixin())
-    {
-        auto a = new Statements();
-        foreach (m; *tm.members)
+        Statement visitMembers(Loc loc, Dsymbols* a)
         {
-            if (Statement sx = toStatement(m))
-                a.push(sx);
+            if (!a)
+                return null;
+
+            auto statements = new Statements();
+            foreach (s; *a)
+            {
+                statements.push(toStatement(s));
+            }
+            return new CompoundStatement(loc, statements);
         }
-        result = new CompoundStatement(tm.loc, a);
-    }
-    else if (s.isVarDeclaration()       ||
-             s.isAggregateDeclaration() ||
-             s.isFuncDeclaration()      ||
-             s.isEnumDeclaration()      ||
-             s.isAliasDeclaration()     ||
-             s.isTemplateDeclaration())
-    {
-        /* Perhaps replace the above with isScopeDsymbol() || isDeclaration()
-         */
+
+        override void visit(Dsymbol s)
+        {
+            .error(Loc.initial, "Internal Compiler Error: cannot mixin %s `%s`\n", s.kind(), s.toChars());
+            result = new ErrorStatement();
+        }
+
+        override void visit(TemplateMixin tm)
+        {
+            auto a = new Statements();
+            foreach (m; *tm.members)
+            {
+                Statement s = toStatement(m);
+                if (s)
+                    a.push(s);
+            }
+            result = new CompoundStatement(tm.loc, a);
+        }
+
         /* An actual declaration symbol will be converted to DeclarationExp
          * with ExpStatement.
          */
-        auto de = new DeclarationExp(s.loc, s);
-        de.type = Type.tvoid; // avoid repeated semantic
-        result = new ExpStatement(s.loc, de);
-    }
-    else if (auto d = s.isAttribDeclaration())
-    {
+        Statement declStmt(Dsymbol s)
+        {
+            auto de = new DeclarationExp(s.loc, s);
+            de.type = Type.tvoid; // avoid repeated semantic
+            return new ExpStatement(s.loc, de);
+        }
+
+        override void visit(VarDeclaration d)
+        {
+            result = declStmt(d);
+        }
+
+        override void visit(AggregateDeclaration d)
+        {
+            result = declStmt(d);
+        }
+
+        override void visit(FuncDeclaration d)
+        {
+            result = declStmt(d);
+        }
+
+        override void visit(EnumDeclaration d)
+        {
+            result = declStmt(d);
+        }
+
+        override void visit(AliasDeclaration d)
+        {
+            result = declStmt(d);
+        }
+
+        override void visit(TemplateDeclaration d)
+        {
+            result = declStmt(d);
+        }
+
         /* All attributes have been already picked by the semantic analysis of
          * 'bottom' declarations (function, struct, class, etc).
          * So we don't have to copy them.
          */
-        if (Dsymbols* a = d.include(null))
+        override void visit(StorageClassDeclaration d)
         {
-            auto statements = new Statements();
-            foreach (sx; *a)
-            {
-                statements.push(toStatement(sx));
-            }
-            result = new CompoundStatement(d.loc, statements);
+            result = visitMembers(d.loc, d.decl);
+        }
+
+        override void visit(DeprecatedDeclaration d)
+        {
+            result = visitMembers(d.loc, d.decl);
+        }
+
+        override void visit(LinkDeclaration d)
+        {
+            result = visitMembers(d.loc, d.decl);
+        }
+
+        override void visit(VisibilityDeclaration d)
+        {
+            result = visitMembers(d.loc, d.decl);
+        }
+
+        override void visit(AlignDeclaration d)
+        {
+            result = visitMembers(d.loc, d.decl);
+        }
+
+        override void visit(UserAttributeDeclaration d)
+        {
+            result = visitMembers(d.loc, d.decl);
+        }
+
+        override void visit(ForwardingAttribDeclaration d)
+        {
+            result = visitMembers(d.loc, d.decl);
+        }
+
+        override void visit(StaticAssert s)
+        {
+        }
+
+        override void visit(Import s)
+        {
+        }
+
+        override void visit(PragmaDeclaration d)
+        {
+        }
+
+        override void visit(ConditionalDeclaration d)
+        {
+            result = visitMembers(d.loc, d.include(null));
+        }
+
+        override void visit(StaticForeachDeclaration d)
+        {
+            assert(d.sfe && !!d.sfe.aggrfe ^ !!d.sfe.rangefe);
+            result = visitMembers(d.loc, d.include(null));
+        }
+
+        override void visit(CompileDeclaration d)
+        {
+            result = visitMembers(d.loc, d.include(null));
         }
     }
-    else if (s.isStaticAssert() ||
-             s.isImport())
-    {
-        /* Ignore as they are not Statements
-         */
-    }
-    else
-    {
-        .error(Loc.initial, "Internal Compiler Error: cannot mixin %s `%s`\n", s.kind(), s.toChars());
-        result = new ErrorStatement();
-    }
 
-    return result;
+    if (!s)
+        return null;
+
+    scope ToStmt v = new ToStmt();
+    s.accept(v);
+    return v.result;
 }
 
 /**

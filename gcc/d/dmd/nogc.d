@@ -71,7 +71,6 @@ public:
         if (!e.f)
             return;
 
-        // Treat lowered hook calls as their original expressions.
         auto fd = stripHookTraceImpl(e.f);
         if (fd.ident == Id._d_arraysetlengthT)
         {
@@ -83,6 +82,20 @@ public:
                 return;
             }
             f.printGCUsage(e.loc, "setting `length` may cause a GC allocation");
+        }
+        else if (fd.ident == Id._d_delstruct)
+        {
+            // In expressionsem.d, `delete s` was lowererd to `_d_delstruct(s)`.
+            // The following code handles the call like the original expression,
+            // so the error is menaningful to the user.
+            if (f.setGC())
+            {
+                e.error("cannot use `delete` in `@nogc` %s `%s`", f.kind(),
+                    f.toPrettyChars());
+                err = true;
+                return;
+            }
+            f.printGCUsage(e.loc, "`delete` requires the GC");
         }
     }
 
@@ -144,8 +157,32 @@ public:
                 return; // delete for scope allocated class object
         }
 
-        // Semantic should have already handled this case.
-        assert(0);
+        Type tb = e.e1.type.toBasetype();
+        AggregateDeclaration ad = null;
+        switch (tb.ty)
+        {
+        case Tclass:
+            ad = (cast(TypeClass)tb).sym;
+            break;
+
+        case Tpointer:
+            tb = (cast(TypePointer)tb).next.toBasetype();
+            if (tb.ty == Tstruct)
+                ad = (cast(TypeStruct)tb).sym;
+            break;
+
+        default:
+            break;
+        }
+
+        if (f.setGC())
+        {
+            e.error("cannot use `delete` in `@nogc` %s `%s`",
+                f.kind(), f.toPrettyChars());
+            err = true;
+            return;
+        }
+        f.printGCUsage(e.loc, "`delete` requires the GC");
     }
 
     override void visit(IndexExp e)

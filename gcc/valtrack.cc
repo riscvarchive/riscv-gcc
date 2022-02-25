@@ -558,9 +558,7 @@ debug_lowpart_subreg (machine_mode outer_mode, rtx expr,
   rtx ret = simplify_gen_subreg (outer_mode, expr, inner_mode, offset);
   if (ret)
     return ret;
-  if (GET_MODE (expr) != VOIDmode)
-    return gen_rtx_raw_SUBREG (outer_mode, expr, offset);
-  return NULL_RTX;
+  return gen_rtx_raw_SUBREG (outer_mode, expr, offset);
 }
 
 /* If UREGNO is referenced by any entry in DEBUG, emit a debug insn

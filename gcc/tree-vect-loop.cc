@@ -1323,8 +1323,13 @@ vect_compute_single_scalar_iteration_cost (loop_vec_info loop_vinfo)
 
   /* Now accumulate cost.  */
   loop_vinfo->scalar_costs = init_cost (loop_vinfo, true);
-  add_stmt_costs (loop_vinfo->scalar_costs,
-		  &LOOP_VINFO_SCALAR_ITERATION_COST (loop_vinfo));
+  stmt_info_for_cost *si;
+  int j;
+  FOR_EACH_VEC_ELT (LOOP_VINFO_SCALAR_ITERATION_COST (loop_vinfo),
+		    j, si)
+    (void) add_stmt_cost (loop_vinfo->scalar_costs, si->count,
+			  si->kind, si->stmt_info, si->vectype,
+			  si->misalign, si->where);
   loop_vinfo->scalar_costs->finish_cost (nullptr);
 }
 
@@ -3868,10 +3873,10 @@ vect_get_known_peeling_cost (loop_vec_info loop_vinfo, int peel_iters_prologue,
 	 iterations are unknown, count a taken branch per peeled loop.  */
       if (peel_iters_prologue > 0)
 	retval = record_stmt_cost (prologue_cost_vec, 1, cond_branch_taken,
-				   vect_prologue);
+				   NULL, NULL_TREE, 0, vect_prologue);
       if (*peel_iters_epilogue > 0)
 	retval += record_stmt_cost (epilogue_cost_vec, 1, cond_branch_taken,
-				    vect_epilogue);
+				    NULL, NULL_TREE, 0, vect_epilogue);
     }
 
   stmt_info_for_cost *si;
@@ -3941,7 +3946,8 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
     {
       /*  FIXME: Make cost depend on complexity of individual check.  */
       unsigned len = LOOP_VINFO_MAY_MISALIGN_STMTS (loop_vinfo).length ();
-      (void) add_stmt_cost (target_cost_data, len, scalar_stmt, vect_prologue);
+      (void) add_stmt_cost (target_cost_data, len, vector_stmt,
+			    NULL, NULL_TREE, 0, vect_prologue);
       if (dump_enabled_p ())
 	dump_printf (MSG_NOTE,
 		     "cost model: Adding cost of checks for loop "
@@ -3953,12 +3959,13 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
     {
       /*  FIXME: Make cost depend on complexity of individual check.  */
       unsigned len = LOOP_VINFO_COMP_ALIAS_DDRS (loop_vinfo).length ();
-      (void) add_stmt_cost (target_cost_data, len, scalar_stmt, vect_prologue);
+      (void) add_stmt_cost (target_cost_data, len, vector_stmt,
+			    NULL, NULL_TREE, 0, vect_prologue);
       len = LOOP_VINFO_CHECK_UNEQUAL_ADDRS (loop_vinfo).length ();
       if (len)
 	/* Count LEN - 1 ANDs and LEN comparisons.  */
 	(void) add_stmt_cost (target_cost_data, len * 2 - 1,
-			      scalar_stmt, vect_prologue);
+			      scalar_stmt, NULL, NULL_TREE, 0, vect_prologue);
       len = LOOP_VINFO_LOWER_BOUNDS (loop_vinfo).length ();
       if (len)
 	{
@@ -3969,7 +3976,7 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
 	    if (!LOOP_VINFO_LOWER_BOUNDS (loop_vinfo)[i].unsigned_p)
 	      nstmts += 1;
 	  (void) add_stmt_cost (target_cost_data, nstmts,
-				scalar_stmt, vect_prologue);
+				scalar_stmt, NULL, NULL_TREE, 0, vect_prologue);
 	}
       if (dump_enabled_p ())
 	dump_printf (MSG_NOTE,
@@ -3982,7 +3989,7 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
     {
       /*  FIXME: Make cost depend on complexity of individual check.  */
       (void) add_stmt_cost (target_cost_data, 1, vector_stmt,
-			    NULL, NULL, NULL_TREE, 0, vect_prologue);
+			    NULL, NULL_TREE, 0, vect_prologue);
       if (dump_enabled_p ())
 	dump_printf (MSG_NOTE,
 		     "cost model: Adding cost of checks for loop "
@@ -3991,7 +3998,7 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
 
   if (LOOP_REQUIRES_VERSIONING (loop_vinfo))
     (void) add_stmt_cost (target_cost_data, 1, cond_branch_taken,
-			  vect_prologue);
+			  NULL, NULL_TREE, 0, vect_prologue);
 
   /* Count statements in scalar loop.  Using this as scalar cost for a single
      iteration for now.
@@ -4079,8 +4086,8 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
       {
 	(void) add_stmt_cost (target_cost_data,
 			      si->count * peel_iters_prologue, si->kind,
-			      si->stmt_info, si->node, si->vectype,
-			      si->misalign, vect_prologue);
+			      si->stmt_info, si->vectype, si->misalign,
+			      vect_prologue);
       }
 
   /* Add costs associated with peel_iters_epilogue.  */
@@ -4089,27 +4096,29 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
       {
 	(void) add_stmt_cost (target_cost_data,
 			      si->count * peel_iters_epilogue, si->kind,
-			      si->stmt_info, si->node, si->vectype,
-			      si->misalign, vect_epilogue);
+			      si->stmt_info, si->vectype, si->misalign,
+			      vect_epilogue);
       }
 
   /* Add possible cond_branch_taken/cond_branch_not_taken cost.  */
 
   if (prologue_need_br_taken_cost)
     (void) add_stmt_cost (target_cost_data, 1, cond_branch_taken,
-			  vect_prologue);
+			  NULL, NULL_TREE, 0, vect_prologue);
 
   if (prologue_need_br_not_taken_cost)
     (void) add_stmt_cost (target_cost_data, 1,
-			  cond_branch_not_taken, vect_prologue);
+			  cond_branch_not_taken, NULL, NULL_TREE, 0,
+			  vect_prologue);
 
   if (epilogue_need_br_taken_cost)
     (void) add_stmt_cost (target_cost_data, 1, cond_branch_taken,
-			  vect_epilogue);
+			  NULL, NULL_TREE, 0, vect_epilogue);
 
   if (epilogue_need_br_not_taken_cost)
     (void) add_stmt_cost (target_cost_data, 1,
-			  cond_branch_not_taken, vect_epilogue);
+			  cond_branch_not_taken, NULL, NULL_TREE, 0,
+			  vect_epilogue);
 
   /* Take care of special costs for rgroup controls of partial vectors.  */
   if (LOOP_VINFO_FULLY_MASKED_P (loop_vinfo))
@@ -4136,11 +4145,9 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
 	 being the tie-breaker between vectorizing or not, then it's
 	 probably better not to vectorize.  */
       (void) add_stmt_cost (target_cost_data, num_masks,
-			    vector_stmt, NULL, NULL, NULL_TREE, 0,
-			    vect_prologue);
+			    vector_stmt, NULL, NULL_TREE, 0, vect_prologue);
       (void) add_stmt_cost (target_cost_data, num_masks - 1,
-			    vector_stmt, NULL, NULL, NULL_TREE, 0,
-			    vect_body);
+			    vector_stmt, NULL, NULL_TREE, 0, vect_body);
     }
   else if (LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo))
     {
@@ -4197,9 +4204,9 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
 	  }
 
       (void) add_stmt_cost (target_cost_data, prologue_stmts,
-			    scalar_stmt, vect_prologue);
+			    scalar_stmt, NULL, NULL_TREE, 0, vect_prologue);
       (void) add_stmt_cost (target_cost_data, body_stmts,
-			    scalar_stmt, vect_body);
+			    scalar_stmt, NULL, NULL_TREE, 0, vect_body);
     }
 
   /* FORNOW: The scalar outside cost is incremented in one of the

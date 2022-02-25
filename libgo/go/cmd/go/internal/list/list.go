@@ -316,6 +316,7 @@ For more about modules, see https://golang.org/ref/mod.
 func init() {
 	CmdList.Run = runList // break init cycle
 	work.AddBuildFlags(CmdList, work.DefaultBuildFlags)
+	base.AddWorkfileFlag(&CmdList.Flag)
 }
 
 var (

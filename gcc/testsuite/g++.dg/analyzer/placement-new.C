@@ -20,9 +20,9 @@ void test_2 (void)
 
 void test_3 (void)
 {
-  char buf[sizeof(int)]; // { dg-message "region created on stack here" }
+  char buf[sizeof(int)];
   int *p = new(buf) int (42);
-  delete p; // { dg-warning "memory on the stack" }
+  delete p; // { dg-warning "memory not on the heap" }
 }
 
 // { dg-prune-output "-Wfree-nonheap-object" }

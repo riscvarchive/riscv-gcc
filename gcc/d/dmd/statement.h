@@ -45,7 +45,7 @@ struct code;
 
 /* How a statement exits; this is returned by blockExit()
  */
-enum BE : int32_t
+enum BE
 {
     BEnone =     0,
     BEfallthru = 1,

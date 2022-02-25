@@ -52,27 +52,7 @@ struct tm
 public import core.sys.posix.sys.types : time_t, clock_t;
 
 ///
-version (CRuntime_Glibc)
-{
-    enum clock_t CLOCKS_PER_SEC = 1_000_000;
-    clock_t clock();
-}
-else version (CRuntime_Musl)
-{
-    enum clock_t CLOCKS_PER_SEC = 1_000_000;
-    clock_t clock();
-}
-else version (CRuntime_Bionic)
-{
-    enum clock_t CLOCKS_PER_SEC = 1_000_000;
-    clock_t clock();
-}
-else version (CRuntime_UClibc)
-{
-    enum clock_t CLOCKS_PER_SEC = 1_000_000;
-    clock_t clock();
-}
-else version (OSX)
+version (OSX)
 {
     enum clock_t CLOCKS_PER_SEC = 1_000_000; // was 100 until OSX 10.4/10.5
     version (X86)
@@ -106,6 +86,26 @@ else version (DragonFlyBSD)
     clock_t clock();
 }
 else version (Solaris)
+{
+    enum clock_t CLOCKS_PER_SEC = 1_000_000;
+    clock_t clock();
+}
+else version (CRuntime_Glibc)
+{
+    enum clock_t CLOCKS_PER_SEC = 1_000_000;
+    clock_t clock();
+}
+else version (CRuntime_Musl)
+{
+    enum clock_t CLOCKS_PER_SEC = 1_000_000;
+    clock_t clock();
+}
+else version (CRuntime_Bionic)
+{
+    enum clock_t CLOCKS_PER_SEC = 1_000_000;
+    clock_t clock();
+}
+else version (CRuntime_UClibc)
 {
     enum clock_t CLOCKS_PER_SEC = 1_000_000;
     clock_t clock();

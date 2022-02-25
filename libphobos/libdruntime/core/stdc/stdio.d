@@ -700,8 +700,9 @@ else version (Solaris)
 }
 else version (CRuntime_Bionic)
 {
+    import core.sys.posix.sys.types : off_t;
     ///
-    alias c_long fpos_t; // couldn't use off_t because of static if issue
+    alias off_t fpos_t;
 
     ///
     struct __sFILE
@@ -744,10 +745,12 @@ else version (CRuntime_UClibc)
     import core.stdc.stddef : wchar_t;
     import core.sys.posix.sys.types : ssize_t, pthread_mutex_t;
 
+    alias long off_t;
+
     ///
     struct fpos_t
     {
-        long __pos; // couldn't use off_t because of static if issue
+        off_t __pos;
         mbstate_t __state;
         int __mblen_pending;
     }
@@ -756,7 +759,7 @@ else version (CRuntime_UClibc)
     {
        ssize_t function(void* __cookie, char* __buf, size_t __bufsize)          read;
        ssize_t function(void* __cookie, const char* __buf, size_t __bufsize)    write;
-       int function(void* __cookie, long* __pos, int __whence)                  seek;
+       int function(void* __cookie, off_t* __pos, int __whence)                 seek;
        int function(void* __cookie)                                             close;
     }
 
@@ -897,14 +900,12 @@ else version (CRuntime_Microsoft)
 
     extern shared void function() _fcloseallp;
 
-    FILE* __acrt_iob_func(int hnd);     // VS2015+, reimplemented in msvc.d for VS2013-
-
     ///
-    FILE* stdin()() { return __acrt_iob_func(0); }
+    shared FILE* stdin;  // = &__iob_func()[0];
     ///
-    FILE* stdout()() { return __acrt_iob_func(1); }
+    shared FILE* stdout; // = &__iob_func()[1];
     ///
-    FILE* stderr()() { return __acrt_iob_func(2); }
+    shared FILE* stderr; // = &__iob_func()[2];
 }
 else version (CRuntime_Glibc)
 {

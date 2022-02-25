@@ -1,5 +1,11 @@
 // PERMUTE_ARGS:
 // REQUIRED_ARGS:
+/*
+TEST_OUTPUT:
+---
+runnable/test4.d(717): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+---
+*/
 
 import core.exception;
 import core.stdc.math;
@@ -708,7 +714,7 @@ void test29()
 
     Foo29 f = new Foo29();
 
-    destroy(f);
+    delete f;
     assert(x29 == 3);
 }
 

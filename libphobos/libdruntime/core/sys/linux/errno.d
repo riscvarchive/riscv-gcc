@@ -13,7 +13,7 @@ nothrow:
 public import core.stdc.errno;
 import core.sys.linux.config;
 
-static if (_GNU_SOURCE)
+static if (__USE_GNU)
 {
     extern __gshared char* program_invocation_name, program_invocation_short_name;
     alias error_t = int;

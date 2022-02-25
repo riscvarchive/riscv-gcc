@@ -127,14 +127,14 @@ extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artif
 _mm_loadr_ps (float const *__P)
 {
   __v4sf   __tmp;
-  __m128 __result;
-  static const __vector unsigned char __permute_vector =
+  __m128 result;
+  static const __vector unsigned char permute_vector =
     { 0x1C, 0x1D, 0x1E, 0x1F, 0x18, 0x19, 0x1A, 0x1B, 0x14, 0x15, 0x16,
 	0x17, 0x10, 0x11, 0x12, 0x13 };
 
   __tmp = vec_ld (0, (__v4sf *) __P);
-  __result = (__m128) vec_perm (__tmp, __tmp, __permute_vector);
-  return __result;
+  result = (__m128) vec_perm (__tmp, __tmp, permute_vector);
+  return result;
 }
 
 /* Create a vector with all four elements equal to F.  */
@@ -184,11 +184,11 @@ extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artific
 _mm_storer_ps (float *__P, __m128 __A)
 {
   __v4sf   __tmp;
-  static const __vector unsigned char __permute_vector =
+  static const __vector unsigned char permute_vector =
     { 0x1C, 0x1D, 0x1E, 0x1F, 0x18, 0x19, 0x1A, 0x1B, 0x14, 0x15, 0x16,
 	0x17, 0x10, 0x11, 0x12, 0x13 };
 
-  __tmp = (__m128) vec_perm (__A, __A, __permute_vector);
+  __tmp = (__m128) vec_perm (__A, __A, permute_vector);
 
   _mm_store_ps (__P, __tmp);
 }
@@ -218,9 +218,9 @@ _mm_set_ss (float __F)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_move_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
 
-  return (vec_sel ((__v4sf)__A, (__v4sf)__B, __mask));
+  return (vec_sel ((__v4sf)__A, (__v4sf)__B, mask));
 }
 
 /* Create a vector with element 0 as *P and the rest zero.  */
@@ -245,18 +245,18 @@ extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artif
 _mm_add_ss (__m128 __A, __m128 __B)
 {
 #ifdef _ARCH_PWR7
-  __m128 __a, __b, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __m128 a, b, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower double)
      results. So to insure we don't generate spurious exceptions
      (from the upper double values) we splat the lower double
      before we to the operation.  */
-  __a = vec_splat (__A, 0);
-  __b = vec_splat (__B, 0);
-  __c = __a + __b;
+  a = vec_splat (__A, 0);
+  b = vec_splat (__B, 0);
+  c = a + b;
   /* Then we merge the lower float result with the original upper
      float elements from __A.  */
-  return (vec_sel (__A, __c, __mask));
+  return (vec_sel (__A, c, mask));
 #else
   __A[0] = __A[0] + __B[0];
   return (__A);
@@ -267,18 +267,18 @@ extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artif
 _mm_sub_ss (__m128 __A, __m128 __B)
 {
 #ifdef _ARCH_PWR7
-  __m128 __a, __b, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __m128 a, b, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower double)
      results. So to insure we don't generate spurious exceptions
      (from the upper double values) we splat the lower double
      before we to the operation.  */
-  __a = vec_splat (__A, 0);
-  __b = vec_splat (__B, 0);
-  __c = __a - __b;
+  a = vec_splat (__A, 0);
+  b = vec_splat (__B, 0);
+  c = a - b;
   /* Then we merge the lower float result with the original upper
      float elements from __A.  */
-  return (vec_sel (__A, __c, __mask));
+  return (vec_sel (__A, c, mask));
 #else
   __A[0] = __A[0] - __B[0];
   return (__A);
@@ -289,18 +289,18 @@ extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artif
 _mm_mul_ss (__m128 __A, __m128 __B)
 {
 #ifdef _ARCH_PWR7
-  __m128 __a, __b, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __m128 a, b, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower double)
      results. So to insure we don't generate spurious exceptions
      (from the upper double values) we splat the lower double
      before we to the operation.  */
-  __a = vec_splat (__A, 0);
-  __b = vec_splat (__B, 0);
-  __c = __a * __b;
+  a = vec_splat (__A, 0);
+  b = vec_splat (__B, 0);
+  c = a * b;
   /* Then we merge the lower float result with the original upper
      float elements from __A.  */
-  return (vec_sel (__A, __c, __mask));
+  return (vec_sel (__A, c, mask));
 #else
   __A[0] = __A[0] * __B[0];
   return (__A);
@@ -311,18 +311,18 @@ extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artif
 _mm_div_ss (__m128 __A, __m128 __B)
 {
 #ifdef _ARCH_PWR7
-  __m128 __a, __b, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __m128 a, b, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower double)
      results. So to insure we don't generate spurious exceptions
      (from the upper double values) we splat the lower double
      before we to the operation.  */
-  __a = vec_splat (__A, 0);
-  __b = vec_splat (__B, 0);
-  __c = __a / __b;
+  a = vec_splat (__A, 0);
+  b = vec_splat (__B, 0);
+  c = a / b;
   /* Then we merge the lower float result with the original upper
      float elements from __A.  */
-  return (vec_sel (__A, __c, __mask));
+  return (vec_sel (__A, c, mask));
 #else
   __A[0] = __A[0] / __B[0];
   return (__A);
@@ -332,17 +332,17 @@ _mm_div_ss (__m128 __A, __m128 __B)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_sqrt_ss (__m128 __A)
 {
-  __m128 __a, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __m128 a, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower double)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper double values) we splat the lower double
    * before we to the operation. */
-  __a = vec_splat (__A, 0);
-  __c = vec_sqrt (__a);
+  a = vec_splat (__A, 0);
+  c = vec_sqrt (a);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return (vec_sel (__A, __c, __mask));
+  return (vec_sel (__A, c, mask));
 }
 
 /* Perform the respective operation on the four SPFP values in A and B.  */
@@ -391,81 +391,81 @@ _mm_rsqrt_ps (__m128 __A)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_rcp_ss (__m128 __A)
 {
-  __m128 __a, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __m128 a, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower double)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper double values) we splat the lower double
    * before we to the operation. */
-  __a = vec_splat (__A, 0);
-  __c = _mm_rcp_ps (__a);
+  a = vec_splat (__A, 0);
+  c = _mm_rcp_ps (a);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return (vec_sel (__A, __c, __mask));
+  return (vec_sel (__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_rsqrt_ss (__m128 __A)
 {
-  __m128 __a, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __m128 a, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower double)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper double values) we splat the lower double
    * before we to the operation. */
-  __a = vec_splat (__A, 0);
-  __c = vec_rsqrte (__a);
+  a = vec_splat (__A, 0);
+  c = vec_rsqrte (a);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return (vec_sel (__A, __c, __mask));
+  return (vec_sel (__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_min_ss (__m128 __A, __m128 __B)
 {
-  __v4sf __a, __b, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __v4sf a, b, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower float)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper float values) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf)__A, 0);
-  __b = vec_splat ((__v4sf)__B, 0);
-  __c = vec_min (__a, __b);
+  a = vec_splat ((__v4sf)__A, 0);
+  b = vec_splat ((__v4sf)__B, 0);
+  c = vec_min (a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return (vec_sel ((__v4sf)__A, __c, __mask));
+  return (vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_max_ss (__m128 __A, __m128 __B)
 {
-  __v4sf __a, __b, __c;
-  static const __vector unsigned int __mask = {0xffffffff, 0, 0, 0};
+  __v4sf a, b, c;
+  static const __vector unsigned int mask = {0xffffffff, 0, 0, 0};
   /* PowerISA VSX does not allow partial (for just lower float)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper float values) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat (__A, 0);
-  __b = vec_splat (__B, 0);
-  __c = vec_max (__a, __b);
+  a = vec_splat (__A, 0);
+  b = vec_splat (__B, 0);
+  c = vec_max (a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return (vec_sel ((__v4sf)__A, __c, __mask));
+  return (vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_min_ps (__m128 __A, __m128 __B)
 {
-  __vector __bool int __m = vec_cmpgt ((__v4sf) __B, (__v4sf) __A);
-  return vec_sel (__B, __A, __m);
+  __vector __bool int m = vec_cmpgt ((__v4sf) __B, (__v4sf) __A);
+  return vec_sel (__B, __A, m);
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_max_ps (__m128 __A, __m128 __B)
 {
-  __vector __bool int __m = vec_cmpgt ((__v4sf) __A, (__v4sf) __B);
-  return vec_sel (__B, __A, __m);
+  __vector __bool int m = vec_cmpgt ((__v4sf) __A, (__v4sf) __B);
+  return vec_sel (__B, __A, m);
 }
 
 /* Perform logical bit-wise operations on 128-bit values.  */
@@ -530,8 +530,8 @@ _mm_cmpge_ps (__m128 __A, __m128 __B)
 extern __inline  __m128  __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpneq_ps (__m128  __A, __m128  __B)
 {
-  __v4sf __temp = (__v4sf ) vec_cmpeq ((__v4sf) __A, (__v4sf)__B);
-  return ((__m128)vec_nor (__temp, __temp));
+  __v4sf temp = (__v4sf ) vec_cmpeq ((__v4sf) __A, (__v4sf)__B);
+  return ((__m128)vec_nor (temp, temp));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -561,31 +561,31 @@ _mm_cmpnge_ps (__m128 __A, __m128 __B)
 extern __inline  __m128  __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpord_ps (__m128  __A, __m128  __B)
 {
-  __vector unsigned int __a, __b;
-  __vector unsigned int __c, __d;
-  static const __vector unsigned int __float_exp_mask =
+  __vector unsigned int a, b;
+  __vector unsigned int c, d;
+  static const __vector unsigned int float_exp_mask =
     { 0x7f800000, 0x7f800000, 0x7f800000, 0x7f800000 };
 
-  __a = (__vector unsigned int) vec_abs ((__v4sf)__A);
-  __b = (__vector unsigned int) vec_abs ((__v4sf)__B);
-  __c = (__vector unsigned int) vec_cmpgt (__float_exp_mask, __a);
-  __d = (__vector unsigned int) vec_cmpgt (__float_exp_mask, __b);
-  return ((__m128 ) vec_and (__c, __d));
+  a = (__vector unsigned int) vec_abs ((__v4sf)__A);
+  b = (__vector unsigned int) vec_abs ((__v4sf)__B);
+  c = (__vector unsigned int) vec_cmpgt (float_exp_mask, a);
+  d = (__vector unsigned int) vec_cmpgt (float_exp_mask, b);
+  return ((__m128 ) vec_and (c, d));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpunord_ps (__m128 __A, __m128 __B)
 {
-  __vector unsigned int __a, __b;
-  __vector unsigned int __c, __d;
-  static const __vector unsigned int __float_exp_mask =
+  __vector unsigned int a, b;
+  __vector unsigned int c, d;
+  static const __vector unsigned int float_exp_mask =
     { 0x7f800000, 0x7f800000, 0x7f800000, 0x7f800000 };
 
-  __a = (__vector unsigned int) vec_abs ((__v4sf)__A);
-  __b = (__vector unsigned int) vec_abs ((__v4sf)__B);
-  __c = (__vector unsigned int) vec_cmpgt (__a, __float_exp_mask);
-  __d = (__vector unsigned int) vec_cmpgt (__b, __float_exp_mask);
-  return ((__m128 ) vec_or (__c, __d));
+  a = (__vector unsigned int) vec_abs ((__v4sf)__A);
+  b = (__vector unsigned int) vec_abs ((__v4sf)__B);
+  c = (__vector unsigned int) vec_cmpgt (a, float_exp_mask);
+  d = (__vector unsigned int) vec_cmpgt (b, float_exp_mask);
+  return ((__m128 ) vec_or (c, d));
 }
 
 /* Perform a comparison on the lower SPFP values of A and B.  If the
@@ -594,222 +594,222 @@ _mm_cmpunord_ps (__m128 __A, __m128 __B)
 extern __inline  __m128  __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpeq_ss (__m128  __A, __m128  __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmpeq (__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmpeq(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmplt_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmplt(__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmplt(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmple_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmple(__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmple(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpgt_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmpgt(__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmpgt(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpge_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmpge(__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmpge(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpneq_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmpeq(__a, __b);
-  __c = vec_nor (__c, __c);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmpeq(a, b);
+  c = vec_nor (c, c);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpnlt_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmpge(__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmpge(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpnle_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmpgt(__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmpgt(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpngt_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we to the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmple(__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmple(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpnge_ss (__m128 __A, __m128 __B)
 {
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
-  __v4sf __a, __b, __c;
+  __v4sf a, b, c;
   /* PowerISA VMX does not allow partial (for just element 0)
    * results. So to insure we don't generate spurious exceptions
    * (from the upper elements) we splat the lower float
    * before we do the operation. */
-  __a = vec_splat ((__v4sf) __A, 0);
-  __b = vec_splat ((__v4sf) __B, 0);
-  __c = (__v4sf) vec_cmplt(__a, __b);
+  a = vec_splat ((__v4sf) __A, 0);
+  b = vec_splat ((__v4sf) __B, 0);
+  c = (__v4sf) vec_cmplt(a, b);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, __c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpord_ss (__m128 __A, __m128 __B)
 {
-  __vector unsigned int __a, __b;
-  __vector unsigned int __c, __d;
-  static const __vector unsigned int __float_exp_mask =
+  __vector unsigned int a, b;
+  __vector unsigned int c, d;
+  static const __vector unsigned int float_exp_mask =
     { 0x7f800000, 0x7f800000, 0x7f800000, 0x7f800000 };
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
 
-  __a = (__vector unsigned int) vec_abs ((__v4sf)__A);
-  __b = (__vector unsigned int) vec_abs ((__v4sf)__B);
-  __c = (__vector unsigned int) vec_cmpgt (__float_exp_mask, __a);
-  __d = (__vector unsigned int) vec_cmpgt (__float_exp_mask, __b);
-  __c = vec_and (__c, __d);
+  a = (__vector unsigned int) vec_abs ((__v4sf)__A);
+  b = (__vector unsigned int) vec_abs ((__v4sf)__B);
+  c = (__vector unsigned int) vec_cmpgt (float_exp_mask, a);
+  d = (__vector unsigned int) vec_cmpgt (float_exp_mask, b);
+  c = vec_and (c, d);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, (__v4sf)__c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, (__v4sf)c, mask));
 }
 
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cmpunord_ss (__m128 __A, __m128 __B)
 {
-  __vector unsigned int __a, __b;
-  __vector unsigned int __c, __d;
-  static const __vector unsigned int __float_exp_mask =
+  __vector unsigned int a, b;
+  __vector unsigned int c, d;
+  static const __vector unsigned int float_exp_mask =
     { 0x7f800000, 0x7f800000, 0x7f800000, 0x7f800000 };
-  static const __vector unsigned int __mask =
+  static const __vector unsigned int mask =
     { 0xffffffff, 0, 0, 0 };
 
-  __a = (__vector unsigned int) vec_abs ((__v4sf)__A);
-  __b = (__vector unsigned int) vec_abs ((__v4sf)__B);
-  __c = (__vector unsigned int) vec_cmpgt (__a, __float_exp_mask);
-  __d = (__vector unsigned int) vec_cmpgt (__b, __float_exp_mask);
-  __c = vec_or (__c, __d);
+  a = (__vector unsigned int) vec_abs ((__v4sf)__A);
+  b = (__vector unsigned int) vec_abs ((__v4sf)__B);
+  c = (__vector unsigned int) vec_cmpgt (a, float_exp_mask);
+  d = (__vector unsigned int) vec_cmpgt (b, float_exp_mask);
+  c = vec_or (c, d);
   /* Then we merge the lower float result with the original upper
    * float elements from __A.  */
-  return ((__m128)vec_sel ((__v4sf)__A, (__v4sf)__c, __mask));
+  return ((__m128)vec_sel ((__v4sf)__A, (__v4sf)c, mask));
 }
 
 /* Compare the lower SPFP values of A and B and return 1 if true
@@ -905,9 +905,9 @@ _mm_cvtss_f32 (__m128 __A)
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtss_si32 (__m128 __A)
 {
-  int __res;
+  int res;
 #ifdef _ARCH_PWR8
-  double __dtmp;
+  double dtmp;
   __asm__(
 #ifdef __LITTLE_ENDIAN__
       "xxsldwi %x0,%x0,%x0,3;\n"
@@ -916,13 +916,13 @@ _mm_cvtss_si32 (__m128 __A)
       "fctiw  %2,%2;\n"
       "mfvsrd  %1,%x2;\n"
       : "+wa" (__A),
-        "=r" (__res),
-        "=f" (__dtmp)
+        "=r" (res),
+        "=f" (dtmp)
       : );
 #else
-  __res = __builtin_rint(__A[0]);
+  res = __builtin_rint(__A[0]);
 #endif
-  return __res;
+  return (res);
 }
 
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -938,9 +938,9 @@ _mm_cvt_ss2si (__m128 __A)
 extern __inline long long __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtss_si64 (__m128 __A)
 {
-  long long __res;
+  long long res;
 #if defined (_ARCH_PWR8) && defined (__powerpc64__)
-  double __dtmp;
+  double dtmp;
   __asm__(
 #ifdef __LITTLE_ENDIAN__
       "xxsldwi %x0,%x0,%x0,3;\n"
@@ -949,13 +949,13 @@ _mm_cvtss_si64 (__m128 __A)
       "fctid  %2,%2;\n"
       "mfvsrd  %1,%x2;\n"
       : "+wa" (__A),
-        "=r" (__res),
-        "=f" (__dtmp)
+        "=r" (res),
+        "=f" (dtmp)
       : );
 #else
-  __res = __builtin_llrint(__A[0]);
+  res = __builtin_llrint(__A[0]);
 #endif
-  return __res;
+  return (res);
 }
 
 /* Microsoft intrinsic.  */
@@ -992,15 +992,15 @@ extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artifi
 _mm_cvtps_pi32 (__m128 __A)
 {
   /* Splat two lower SPFP values to both halves.  */
-  __v4sf __temp, __rounded;
-  __vector unsigned long long __result;
+  __v4sf temp, rounded;
+  __vector unsigned long long result;
 
   /* Splat two lower SPFP values to both halves.  */
-  __temp = (__v4sf) vec_splat ((__vector long long)__A, 0);
-  __rounded = vec_rint (__temp);
-  __result = (__vector unsigned long long) vec_cts (__rounded, 0);
+  temp = (__v4sf) vec_splat ((__vector long long)__A, 0);
+  rounded = vec_rint(temp);
+  result = (__vector unsigned long long) vec_cts (rounded, 0);
 
-  return (__m64) ((__vector long long) __result)[0];
+  return (__m64) ((__vector long long) result)[0];
 }
 
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1014,9 +1014,9 @@ extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artifici
 _mm_cvttss_si32 (__m128 __A)
 {
   /* Extract the lower float element.  */
-  float __temp = __A[0];
+  float temp = __A[0];
   /* truncate to 32-bit integer and return.  */
-  return __temp;
+  return temp;
 }
 
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1030,9 +1030,9 @@ extern __inline long long __attribute__((__gnu_inline__, __always_inline__, __ar
 _mm_cvttss_si64 (__m128 __A)
 {
   /* Extract the lower float element.  */
-  float __temp = __A[0];
+  float temp = __A[0];
   /* truncate to 32-bit integer and return.  */
-  return __temp;
+  return temp;
 }
 
 /* Microsoft intrinsic.  */
@@ -1040,9 +1040,9 @@ extern __inline long long __attribute__((__gnu_inline__, __always_inline__, __ar
 _mm_cvttss_si64x (__m128 __A)
 {
   /* Extract the lower float element.  */
-  float __temp = __A[0];
+  float temp = __A[0];
   /* truncate to 32-bit integer and return.  */
-  return __temp;
+  return temp;
 }
 
 /* Truncate the two lower SPFP values to 32-bit integers.  Return the
@@ -1050,14 +1050,14 @@ _mm_cvttss_si64x (__m128 __A)
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvttps_pi32 (__m128 __A)
 {
-  __v4sf __temp;
-  __vector unsigned long long __result;
+  __v4sf temp;
+  __vector unsigned long long result;
 
   /* Splat two lower SPFP values to both halves.  */
-  __temp = (__v4sf) vec_splat ((__vector long long)__A, 0);
-  __result = (__vector unsigned long long) vec_cts (__temp, 0);
+  temp = (__v4sf) vec_splat ((__vector long long)__A, 0);
+  result = (__vector unsigned long long) vec_cts (temp, 0);
 
-  return (__m64) ((__vector long long) __result)[0];
+  return (__m64) ((__vector long long) result)[0];
 }
 
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1070,8 +1070,8 @@ _mm_cvtt_ps2pi (__m128 __A)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtsi32_ss (__m128 __A, int __B)
 {
-  float __temp = __B;
-  __A[0] = __temp;
+  float temp = __B;
+  __A[0] = temp;
 
   return __A;
 }
@@ -1087,8 +1087,8 @@ _mm_cvt_si2ss (__m128 __A, int __B)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtsi64_ss (__m128 __A, long long __B)
 {
-  float __temp = __B;
-  __A[0] = __temp;
+  float temp = __B;
+  __A[0] = temp;
 
   return __A;
 }
@@ -1105,14 +1105,14 @@ _mm_cvtsi64x_ss (__m128 __A, long long __B)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtpi32_ps (__m128        __A, __m64        __B)
 {
-  __vector signed int __vm1;
-  __vector float __vf1;
+  __vector signed int vm1;
+  __vector float vf1;
 
-  __vm1 = (__vector signed int) (__vector unsigned long long) {__B, __B};
-  __vf1 = (__vector float) vec_ctf (__vm1, 0);
+  vm1 = (__vector signed int) (__vector unsigned long long) {__B, __B};
+  vf1 = (__vector float) vec_ctf (vm1, 0);
 
   return ((__m128) (__vector unsigned long long)
-    { ((__vector unsigned long long)__vf1) [0],
+    { ((__vector unsigned long long)vf1) [0],
 	((__vector unsigned long long)__A) [1]});
 }
 
@@ -1126,54 +1126,54 @@ _mm_cvt_pi2ps (__m128 __A, __m64 __B)
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtpi16_ps (__m64 __A)
 {
-  __vector signed short __vs8;
-  __vector signed int __vi4;
-  __vector float __vf1;
+  __vector signed short vs8;
+  __vector signed int vi4;
+  __vector float vf1;
 
-  __vs8 = (__vector signed short) (__vector unsigned long long) { __A, __A };
-  __vi4 = vec_vupklsh (__vs8);
-  __vf1 = (__vector float) vec_ctf (__vi4, 0);
+  vs8 = (__vector signed short) (__vector unsigned long long) { __A, __A };
+  vi4 = vec_vupklsh (vs8);
+  vf1 = (__vector float) vec_ctf (vi4, 0);
 
-  return (__m128) __vf1;
+  return (__m128) vf1;
 }
 
 /* Convert the four unsigned 16-bit values in A to SPFP form.  */
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtpu16_ps (__m64 __A)
 {
-  const __vector unsigned short __zero =
+  const __vector unsigned short zero =
     { 0, 0, 0, 0, 0, 0, 0, 0 };
-  __vector unsigned short __vs8;
-  __vector unsigned int __vi4;
-  __vector float __vf1;
+  __vector unsigned short vs8;
+  __vector unsigned int vi4;
+  __vector float vf1;
 
-  __vs8 = (__vector unsigned short) (__vector unsigned long long) { __A, __A };
-  __vi4 = (__vector unsigned int) vec_mergel
+  vs8 = (__vector unsigned short) (__vector unsigned long long) { __A, __A };
+  vi4 = (__vector unsigned int) vec_mergel
 #ifdef __LITTLE_ENDIAN__
-                                           (__vs8, __zero);
+                                           (vs8, zero);
 #else
-                                           (__zero, __vs8);
+                                           (zero, vs8);
 #endif
-  __vf1 = (__vector float) vec_ctf (__vi4, 0);
+  vf1 = (__vector float) vec_ctf (vi4, 0);
 
-  return (__m128) __vf1;
+  return (__m128) vf1;
 }
 
 /* Convert the low four signed 8-bit values in A to SPFP form.  */
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtpi8_ps (__m64 __A)
 {
-  __vector signed char __vc16;
-  __vector signed short __vs8;
-  __vector signed int __vi4;
-  __vector float __vf1;
+  __vector signed char vc16;
+  __vector signed short vs8;
+  __vector signed int vi4;
+  __vector float vf1;
 
-  __vc16 = (__vector signed char) (__vector unsigned long long) { __A, __A };
-  __vs8 = vec_vupkhsb (__vc16);
-  __vi4 = vec_vupkhsh (__vs8);
-  __vf1 = (__vector float) vec_ctf (__vi4, 0);
+  vc16 = (__vector signed char) (__vector unsigned long long) { __A, __A };
+  vs8 = vec_vupkhsb (vc16);
+  vi4 = vec_vupkhsh (vs8);
+  vf1 = (__vector float) vec_ctf (vi4, 0);
 
-  return (__m128) __vf1;
+  return (__m128) vf1;
 }
 
 /* Convert the low four unsigned 8-bit values in A to SPFP form.  */
@@ -1181,70 +1181,70 @@ extern __inline  __m128  __attribute__((__gnu_inline__, __always_inline__, __art
 
 _mm_cvtpu8_ps (__m64  __A)
 {
-  const __vector unsigned char __zero =
+  const __vector unsigned char zero =
     { 0, 0, 0, 0, 0, 0, 0, 0 };
-  __vector unsigned char __vc16;
-  __vector unsigned short __vs8;
-  __vector unsigned int __vi4;
-  __vector float __vf1;
+  __vector unsigned char vc16;
+  __vector unsigned short vs8;
+  __vector unsigned int vi4;
+  __vector float vf1;
 
-  __vc16 = (__vector unsigned char) (__vector unsigned long long) { __A, __A };
+  vc16 = (__vector unsigned char) (__vector unsigned long long) { __A, __A };
 #ifdef __LITTLE_ENDIAN__
-  __vs8 = (__vector unsigned short) vec_mergel (__vc16, __zero);
-  __vi4 = (__vector unsigned int) vec_mergeh (__vs8,
-					    (__vector unsigned short) __zero);
+  vs8 = (__vector unsigned short) vec_mergel (vc16, zero);
+  vi4 = (__vector unsigned int) vec_mergeh (vs8,
+					    (__vector unsigned short) zero);
 #else
-  __vs8 = (__vector unsigned short) vec_mergel (__zero, __vc16);
-  __vi4 = (__vector unsigned int) vec_mergeh ((__vector unsigned short) __zero,
-                                            __vs8);
+  vs8 = (__vector unsigned short) vec_mergel (zero, vc16);
+  vi4 = (__vector unsigned int) vec_mergeh ((__vector unsigned short) zero,
+                                            vs8);
 #endif
-  __vf1 = (__vector float) vec_ctf (__vi4, 0);
+  vf1 = (__vector float) vec_ctf (vi4, 0);
 
-  return (__m128) __vf1;
+  return (__m128) vf1;
 }
 
 /* Convert the four signed 32-bit values in A and B to SPFP form.  */
 extern __inline __m128 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtpi32x2_ps (__m64 __A, __m64 __B)
 {
-  __vector signed int __vi4;
-  __vector float __vf4;
+  __vector signed int vi4;
+  __vector float vf4;
 
-  __vi4 = (__vector signed int) (__vector unsigned long long) { __A, __B };
-  __vf4 = (__vector float) vec_ctf (__vi4, 0);
-  return (__m128) __vf4;
+  vi4 = (__vector signed int) (__vector unsigned long long) { __A, __B };
+  vf4 = (__vector float) vec_ctf (vi4, 0);
+  return (__m128) vf4;
 }
 
 /* Convert the four SPFP values in A to four signed 16-bit integers.  */
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtps_pi16 (__m128 __A)
 {
-  __v4sf __rounded;
-  __vector signed int __temp;
-  __vector unsigned long long __result;
+  __v4sf rounded;
+  __vector signed int temp;
+  __vector unsigned long long result;
 
-  __rounded = vec_rint(__A);
-  __temp = vec_cts (__rounded, 0);
-  __result = (__vector unsigned long long) vec_pack (__temp, __temp);
+  rounded = vec_rint(__A);
+  temp = vec_cts (rounded, 0);
+  result = (__vector unsigned long long) vec_pack (temp, temp);
 
-  return (__m64) ((__vector long long) __result)[0];
+  return (__m64) ((__vector long long) result)[0];
 }
 
 /* Convert the four SPFP values in A to four signed 8-bit integers.  */
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_cvtps_pi8 (__m128 __A)
 {
-  __v4sf __rounded;
-  __vector signed int __tmp_i;
-  static const __vector signed int __zero = {0, 0, 0, 0};
-  __vector signed short __tmp_s;
-  __vector signed char __res_v;
+  __v4sf rounded;
+  __vector signed int tmp_i;
+  static const __vector signed int zero = {0, 0, 0, 0};
+  __vector signed short tmp_s;
+  __vector signed char res_v;
 
-  __rounded = vec_rint(__A);
-  __tmp_i = vec_cts (__rounded, 0);
-  __tmp_s = vec_pack (__tmp_i, __zero);
-  __res_v = vec_pack (__tmp_s, __tmp_s);
-  return (__m64) ((__vector long long) __res_v)[0];
+  rounded = vec_rint(__A);
+  tmp_i = vec_cts (rounded, 0);
+  tmp_s = vec_pack (tmp_i, zero);
+  res_v = vec_pack (tmp_s, tmp_s);
+  return (__m64) ((__vector long long) res_v)[0];
 }
 
 /* Selects four specific SPFP values from A and B based on MASK.  */
@@ -1252,11 +1252,11 @@ extern __inline  __m128  __attribute__((__gnu_inline__, __always_inline__, __art
 
 _mm_shuffle_ps (__m128  __A, __m128  __B, int const __mask)
 {
-  unsigned long __element_selector_10 = __mask & 0x03;
-  unsigned long __element_selector_32 = (__mask >> 2) & 0x03;
-  unsigned long __element_selector_54 = (__mask >> 4) & 0x03;
-  unsigned long __element_selector_76 = (__mask >> 6) & 0x03;
-  static const unsigned int __permute_selectors[4] =
+  unsigned long element_selector_10 = __mask & 0x03;
+  unsigned long element_selector_32 = (__mask >> 2) & 0x03;
+  unsigned long element_selector_54 = (__mask >> 4) & 0x03;
+  unsigned long element_selector_76 = (__mask >> 6) & 0x03;
+  static const unsigned int permute_selectors[4] =
     {
 #ifdef __LITTLE_ENDIAN__
       0x03020100, 0x07060504, 0x0B0A0908, 0x0F0E0D0C
@@ -1264,13 +1264,13 @@ _mm_shuffle_ps (__m128  __A, __m128  __B, int const __mask)
       0x00010203, 0x04050607, 0x08090A0B, 0x0C0D0E0F
 #endif
     };
-  __vector unsigned int __t;
+  __vector unsigned int t;
 
-  __t[0] = __permute_selectors[__element_selector_10];
-  __t[1] = __permute_selectors[__element_selector_32];
-  __t[2] = __permute_selectors[__element_selector_54] + 0x10101010;
-  __t[3] = __permute_selectors[__element_selector_76] + 0x10101010;
-  return vec_perm ((__v4sf) __A, (__v4sf)__B, (__vector unsigned char)__t);
+  t[0] = permute_selectors[element_selector_10];
+  t[1] = permute_selectors[element_selector_32];
+  t[2] = permute_selectors[element_selector_54] + 0x10101010;
+  t[3] = permute_selectors[element_selector_76] + 0x10101010;
+  return vec_perm ((__v4sf) __A, (__v4sf)__B, (__vector unsigned char)t);
 }
 
 /* Selects and interleaves the upper two SPFP values from A and B.  */
@@ -1355,8 +1355,8 @@ _mm_movemask_ps (__m128  __A)
 #ifdef _ARCH_PWR10
   return vec_extractm ((__vector unsigned int) __A);
 #else
-  __vector unsigned long long __result;
-  static const __vector unsigned int __perm_mask =
+  __vector unsigned long long result;
+  static const __vector unsigned int perm_mask =
     {
 #ifdef __LITTLE_ENDIAN__
 	0x00204060, 0x80808080, 0x80808080, 0x80808080
@@ -1365,14 +1365,14 @@ _mm_movemask_ps (__m128  __A)
 #endif
     };
 
-  __result = ((__vector unsigned long long)
+  result = ((__vector unsigned long long)
 	    vec_vbpermq ((__vector unsigned char) __A,
-			 (__vector unsigned char) __perm_mask));
+			 (__vector unsigned char) perm_mask));
 
 #ifdef __LITTLE_ENDIAN__
-  return __result[1];
+  return result[1];
 #else
-  return __result[0];
+  return result[0];
 #endif
 #endif /* !_ARCH_PWR10 */
 }
@@ -1395,12 +1395,12 @@ _mm_load_ps1 (float const *__P)
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_extract_pi16 (__m64 const __A, int const __N)
 {
-  unsigned int __shiftr = __N & 3;
+  unsigned int shiftr = __N & 3;
 #ifdef __BIG_ENDIAN__
-  __shiftr = 3 - __shiftr;
+  shiftr = 3 - shiftr;
 #endif
 
-  return ((__A >> (__shiftr * 16)) & 0xffff);
+  return ((__A >> (shiftr * 16)) & 0xffff);
 }
 
 extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1414,12 +1414,12 @@ _m_pextrw (__m64 const __A, int const __N)
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_insert_pi16 (__m64 const __A, int const __D, int const __N)
 {
-  const int __shiftl = (__N & 3) * 16;
-  const __m64 __shiftD = (const __m64) __D << __shiftl;
-  const __m64 __mask = 0xffffUL << __shiftl;
-  __m64 __result = (__A & (~__mask)) | (__shiftD & __mask);
+  const int shiftl = (__N & 3) * 16;
+  const __m64 shiftD = (const __m64) __D << shiftl;
+  const __m64 mask = 0xffffUL << shiftl;
+  __m64 result = (__A & (~mask)) | (shiftD & mask);
 
-  return __result;
+  return (result);
 }
 
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1434,30 +1434,30 @@ extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artifi
 _mm_max_pi16 (__m64 __A, __m64 __B)
 {
 #if _ARCH_PWR8
-  __vector signed short __a, __b, __r;
-  __vector __bool short __c;
+  __vector signed short a, b, r;
+  __vector __bool short c;
 
-  __a = (__vector signed short)vec_splats (__A);
-  __b = (__vector signed short)vec_splats (__B);
-  __c = (__vector __bool short)vec_cmpgt (__a, __b);
-  __r = vec_sel (__b, __a, __c);
-  return (__m64) ((__vector long long) __r)[0];
+  a = (__vector signed short)vec_splats (__A);
+  b = (__vector signed short)vec_splats (__B);
+  c = (__vector __bool short)vec_cmpgt (a, b);
+  r = vec_sel (b, a, c);
+  return (__m64) ((__vector long long) r)[0];
 #else
-  __m64_union __m1, __m2, __res;
+  __m64_union m1, m2, res;
 
-  __m1.as_m64 = __A;
-  __m2.as_m64 = __B;
+  m1.as_m64 = __A;
+  m2.as_m64 = __B;
 
-  __res.as_short[0] =
-      (__m1.as_short[0] > __m2.as_short[0]) ? __m1.as_short[0] : __m2.as_short[0];
-  __res.as_short[1] =
-      (__m1.as_short[1] > __m2.as_short[1]) ? __m1.as_short[1] : __m2.as_short[1];
-  __res.as_short[2] =
-      (__m1.as_short[2] > __m2.as_short[2]) ? __m1.as_short[2] : __m2.as_short[2];
-  __res.as_short[3] =
-      (__m1.as_short[3] > __m2.as_short[3]) ? __m1.as_short[3] : __m2.as_short[3];
+  res.as_short[0] =
+      (m1.as_short[0] > m2.as_short[0]) ? m1.as_short[0] : m2.as_short[0];
+  res.as_short[1] =
+      (m1.as_short[1] > m2.as_short[1]) ? m1.as_short[1] : m2.as_short[1];
+  res.as_short[2] =
+      (m1.as_short[2] > m2.as_short[2]) ? m1.as_short[2] : m2.as_short[2];
+  res.as_short[3] =
+      (m1.as_short[3] > m2.as_short[3]) ? m1.as_short[3] : m2.as_short[3];
 
-  return (__m64) __res.as_m64;
+  return (__m64) res.as_m64;
 #endif
 }
 
@@ -1472,27 +1472,28 @@ extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artifi
 _mm_max_pu8 (__m64 __A, __m64 __B)
 {
 #if _ARCH_PWR8
-  __vector unsigned char __a, __b, __r;
-  __vector __bool char __c;
+  __vector unsigned char a, b, r;
+  __vector __bool char c;
 
-  __a = (__vector unsigned char)vec_splats (__A);
-  __b = (__vector unsigned char)vec_splats (__B);
-  __c = (__vector __bool char)vec_cmpgt (__a, __b);
-  __r = vec_sel (__b, __a, __c);
-  return (__m64) ((__vector long long) __r)[0];
+  a = (__vector unsigned char)vec_splats (__A);
+  b = (__vector unsigned char)vec_splats (__B);
+  c = (__vector __bool char)vec_cmpgt (a, b);
+  r = vec_sel (b, a, c);
+  return (__m64) ((__vector long long) r)[0];
 #else
-  __m64_union __m1, __m2, __res;
-  long __i;
+  __m64_union m1, m2, res;
+  long i;
 
-  __m1.as_m64 = __A;
-  __m2.as_m64 = __B;
+  m1.as_m64 = __A;
+  m2.as_m64 = __B;
 
-  for (__i = 0; __i < 8; __i++)
-    __res.as_char[__i] =
-      ((unsigned char) __m1.as_char[__i] > (unsigned char) __m2.as_char[__i]) ?
-	  __m1.as_char[__i] : __m2.as_char[__i];
 
-  return (__m64) __res.as_m64;
+  for (i = 0; i < 8; i++)
+  res.as_char[i] =
+      ((unsigned char) m1.as_char[i] > (unsigned char) m2.as_char[i]) ?
+	  m1.as_char[i] : m2.as_char[i];
+
+  return (__m64) res.as_m64;
 #endif
 }
 
@@ -1507,30 +1508,30 @@ extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artifi
 _mm_min_pi16 (__m64 __A, __m64 __B)
 {
 #if _ARCH_PWR8
-  __vector signed short __a, __b, __r;
-  __vector __bool short __c;
+  __vector signed short a, b, r;
+  __vector __bool short c;
 
-  __a = (__vector signed short)vec_splats (__A);
-  __b = (__vector signed short)vec_splats (__B);
-  __c = (__vector __bool short)vec_cmplt (__a, __b);
-  __r = vec_sel (__b, __a, __c);
-  return (__m64) ((__vector long long) __r)[0];
+  a = (__vector signed short)vec_splats (__A);
+  b = (__vector signed short)vec_splats (__B);
+  c = (__vector __bool short)vec_cmplt (a, b);
+  r = vec_sel (b, a, c);
+  return (__m64) ((__vector long long) r)[0];
 #else
-  __m64_union __m1, __m2, __res;
+  __m64_union m1, m2, res;
 
-  __m1.as_m64 = __A;
-  __m2.as_m64 = __B;
+  m1.as_m64 = __A;
+  m2.as_m64 = __B;
 
-  __res.as_short[0] =
-      (__m1.as_short[0] < __m2.as_short[0]) ? __m1.as_short[0] : __m2.as_short[0];
-  __res.as_short[1] =
-      (__m1.as_short[1] < __m2.as_short[1]) ? __m1.as_short[1] : __m2.as_short[1];
-  __res.as_short[2] =
-      (__m1.as_short[2] < __m2.as_short[2]) ? __m1.as_short[2] : __m2.as_short[2];
-  __res.as_short[3] =
-      (__m1.as_short[3] < __m2.as_short[3]) ? __m1.as_short[3] : __m2.as_short[3];
+  res.as_short[0] =
+      (m1.as_short[0] < m2.as_short[0]) ? m1.as_short[0] : m2.as_short[0];
+  res.as_short[1] =
+      (m1.as_short[1] < m2.as_short[1]) ? m1.as_short[1] : m2.as_short[1];
+  res.as_short[2] =
+      (m1.as_short[2] < m2.as_short[2]) ? m1.as_short[2] : m2.as_short[2];
+  res.as_short[3] =
+      (m1.as_short[3] < m2.as_short[3]) ? m1.as_short[3] : m2.as_short[3];
 
-  return (__m64) __res.as_m64;
+  return (__m64) res.as_m64;
 #endif
 }
 
@@ -1545,28 +1546,28 @@ extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artifi
 _mm_min_pu8 (__m64 __A, __m64 __B)
 {
 #if _ARCH_PWR8
-  __vector unsigned char __a, __b, __r;
-  __vector __bool char __c;
+  __vector unsigned char a, b, r;
+  __vector __bool char c;
 
-  __a = (__vector unsigned char)vec_splats (__A);
-  __b = (__vector unsigned char)vec_splats (__B);
-  __c = (__vector __bool char)vec_cmplt (__a, __b);
-  __r = vec_sel (__b, __a, __c);
-  return (__m64) ((__vector long long) __r)[0];
+  a = (__vector unsigned char)vec_splats (__A);
+  b = (__vector unsigned char)vec_splats (__B);
+  c = (__vector __bool char)vec_cmplt (a, b);
+  r = vec_sel (b, a, c);
+  return (__m64) ((__vector long long) r)[0];
 #else
-  __m64_union __m1, __m2, __res;
-  long __i;
+  __m64_union m1, m2, res;
+  long i;
 
-  __m1.as_m64 = __A;
-  __m2.as_m64 = __B;
+  m1.as_m64 = __A;
+  m2.as_m64 = __B;
 
 
-  for (__i = 0; __i < 8; __i++)
-    __res.as_char[__i] =
-      ((unsigned char) __m1.as_char[__i] < (unsigned char) __m2.as_char[__i]) ?
-	  __m1.as_char[__i] : __m2.as_char[__i];
+  for (i = 0; i < 8; i++)
+  res.as_char[i] =
+      ((unsigned char) m1.as_char[i] < (unsigned char) m2.as_char[i]) ?
+	  m1.as_char[i] : m2.as_char[i];
 
-  return (__m64) __res.as_m64;
+  return (__m64) res.as_m64;
 #endif
 }
 
@@ -1581,24 +1582,24 @@ extern __inline int __attribute__((__gnu_inline__, __always_inline__, __artifici
 _mm_movemask_pi8 (__m64 __A)
 {
 #ifdef __powerpc64__
-  unsigned long long __p =
+  unsigned long long p =
 #ifdef __LITTLE_ENDIAN__
                          0x0008101820283038UL; // permute control for sign bits
 #else
                          0x3830282018100800UL; // permute control for sign bits
 #endif
-  return __builtin_bpermd (__p, __A);
+  return __builtin_bpermd (p, __A);
 #else
 #ifdef __LITTLE_ENDIAN__
-  unsigned int __mask = 0x20283038UL;
-  unsigned int __r1 = __builtin_bpermd (__mask, __A) & 0xf;
-  unsigned int __r2 = __builtin_bpermd (__mask, __A >> 32) & 0xf;
+  unsigned int mask = 0x20283038UL;
+  unsigned int r1 = __builtin_bpermd (mask, __A) & 0xf;
+  unsigned int r2 = __builtin_bpermd (mask, __A >> 32) & 0xf;
 #else
-  unsigned int __mask = 0x38302820UL;
-  unsigned int __r1 = __builtin_bpermd (__mask, __A >> 32) & 0xf;
-  unsigned int __r2 = __builtin_bpermd (__mask, __A) & 0xf;
+  unsigned int mask = 0x38302820UL;
+  unsigned int r1 = __builtin_bpermd (mask, __A >> 32) & 0xf;
+  unsigned int r2 = __builtin_bpermd (mask, __A) & 0xf;
 #endif
-  return (__r2 << 4) | __r1;
+  return (r2 << 4) | r1;
 #endif
 }
 
@@ -1613,10 +1614,10 @@ _m_pmovmskb (__m64 __A)
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_mulhi_pu16 (__m64 __A, __m64 __B)
 {
-  __vector unsigned short __a, __b;
-  __vector unsigned short __c;
-  __vector unsigned int __w0, __w1;
-  __vector unsigned char __xform1 = {
+  __vector unsigned short a, b;
+  __vector unsigned short c;
+  __vector unsigned int w0, w1;
+  __vector unsigned char xform1 = {
 #ifdef __LITTLE_ENDIAN__
       0x02, 0x03, 0x12, 0x13,  0x06, 0x07, 0x16, 0x17,
       0x0A, 0x0B, 0x1A, 0x1B,  0x0E, 0x0F, 0x1E, 0x1F
@@ -1626,14 +1627,14 @@ _mm_mulhi_pu16 (__m64 __A, __m64 __B)
 #endif
     };
 
-  __a = (__vector unsigned short)vec_splats (__A);
-  __b = (__vector unsigned short)vec_splats (__B);
+  a = (__vector unsigned short)vec_splats (__A);
+  b = (__vector unsigned short)vec_splats (__B);
 
-  __w0 = vec_vmuleuh (__a, __b);
-  __w1 = vec_vmulouh (__a, __b);
-  __c = (__vector unsigned short)vec_perm (__w0, __w1, __xform1);
+  w0 = vec_vmuleuh (a, b);
+  w1 = vec_vmulouh (a, b);
+  c = (__vector unsigned short)vec_perm (w0, w1, xform1);
 
-  return (__m64) ((__vector long long) __c)[0];
+  return (__m64) ((__vector long long) c)[0];
 }
 
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1647,11 +1648,11 @@ _m_pmulhuw (__m64 __A, __m64 __B)
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_shuffle_pi16 (__m64 __A, int const __N)
 {
-  unsigned long __element_selector_10 = __N & 0x03;
-  unsigned long __element_selector_32 = (__N >> 2) & 0x03;
-  unsigned long __element_selector_54 = (__N >> 4) & 0x03;
-  unsigned long __element_selector_76 = (__N >> 6) & 0x03;
-  static const unsigned short __permute_selectors[4] =
+  unsigned long element_selector_10 = __N & 0x03;
+  unsigned long element_selector_32 = (__N >> 2) & 0x03;
+  unsigned long element_selector_54 = (__N >> 4) & 0x03;
+  unsigned long element_selector_76 = (__N >> 6) & 0x03;
+  static const unsigned short permute_selectors[4] =
     {
 #ifdef __LITTLE_ENDIAN__
 	      0x0908, 0x0B0A, 0x0D0C, 0x0F0E
@@ -1659,24 +1660,24 @@ _mm_shuffle_pi16 (__m64 __A, int const __N)
 	      0x0607, 0x0405, 0x0203, 0x0001
 #endif
     };
-  __m64_union __t;
-  __vector unsigned long long __a, __p, __r;
+  __m64_union t;
+  __vector unsigned long long a, p, r;
 
 #ifdef __LITTLE_ENDIAN__
-  __t.as_short[0] = __permute_selectors[__element_selector_10];
-  __t.as_short[1] = __permute_selectors[__element_selector_32];
-  __t.as_short[2] = __permute_selectors[__element_selector_54];
-  __t.as_short[3] = __permute_selectors[__element_selector_76];
+  t.as_short[0] = permute_selectors[element_selector_10];
+  t.as_short[1] = permute_selectors[element_selector_32];
+  t.as_short[2] = permute_selectors[element_selector_54];
+  t.as_short[3] = permute_selectors[element_selector_76];
 #else
-  __t.as_short[3] = __permute_selectors[__element_selector_10];
-  __t.as_short[2] = __permute_selectors[__element_selector_32];
-  __t.as_short[1] = __permute_selectors[__element_selector_54];
-  __t.as_short[0] = __permute_selectors[__element_selector_76];
+  t.as_short[3] = permute_selectors[element_selector_10];
+  t.as_short[2] = permute_selectors[element_selector_32];
+  t.as_short[1] = permute_selectors[element_selector_54];
+  t.as_short[0] = permute_selectors[element_selector_76];
 #endif
-  __p = vec_splats (__t.as_m64);
-  __a = vec_splats (__A);
-  __r = vec_perm (__a, __a, (__vector unsigned char)__p);
-  return (__m64) ((__vector long long) __r)[0];
+  p = vec_splats (t.as_m64);
+  a = vec_splats (__A);
+  r = vec_perm (a, a, (__vector unsigned char)p);
+  return (__m64) ((__vector long long) r)[0];
 }
 
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1691,14 +1692,14 @@ _m_pshufw (__m64 __A, int const __N)
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_maskmove_si64 (__m64 __A, __m64 __N, char *__P)
 {
-  __m64 __hibit = 0x8080808080808080UL;
-  __m64 __mask, __tmp;
-  __m64 *__p = (__m64*)__P;
+  __m64 hibit = 0x8080808080808080UL;
+  __m64 mask, tmp;
+  __m64 *p = (__m64*)__P;
 
-  __tmp = *__p;
-  __mask = _mm_cmpeq_pi8 ((__N & __hibit), __hibit);
-  __tmp = (__tmp & (~__mask)) | (__A & __mask);
-  *__p = __tmp;
+  tmp = *p;
+  mask = _mm_cmpeq_pi8 ((__N & hibit), hibit);
+  tmp = (tmp & (~mask)) | (__A & mask);
+  *p = tmp;
 }
 
 extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1711,12 +1712,12 @@ _m_maskmovq (__m64 __A, __m64 __N, char *__P)
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_avg_pu8 (__m64 __A, __m64 __B)
 {
-  __vector unsigned char __a, __b, __c;
+  __vector unsigned char a, b, c;
 
-  __a = (__vector unsigned char)vec_splats (__A);
-  __b = (__vector unsigned char)vec_splats (__B);
-  __c = vec_avg (__a, __b);
-  return (__m64) ((__vector long long) __c)[0];
+  a = (__vector unsigned char)vec_splats (__A);
+  b = (__vector unsigned char)vec_splats (__B);
+  c = vec_avg (a, b);
+  return (__m64) ((__vector long long) c)[0];
 }
 
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1729,12 +1730,12 @@ _m_pavgb (__m64 __A, __m64 __B)
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_avg_pu16 (__m64 __A, __m64 __B)
 {
-  __vector unsigned short __a, __b, __c;
+  __vector unsigned short a, b, c;
 
-  __a = (__vector unsigned short)vec_splats (__A);
-  __b = (__vector unsigned short)vec_splats (__B);
-  __c = vec_avg (__a, __b);
-  return (__m64) ((__vector long long) __c)[0];
+  a = (__vector unsigned short)vec_splats (__A);
+  b = (__vector unsigned short)vec_splats (__B);
+  c = vec_avg (a, b);
+  return (__m64) ((__vector long long) c)[0];
 }
 
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))
@@ -1749,26 +1750,26 @@ _m_pavgw (__m64 __A, __m64 __B)
 extern __inline    __m64    __attribute__((__gnu_inline__, __always_inline__, __artificial__))
 _mm_sad_pu8 (__m64  __A, __m64  __B)
 {
-  __vector unsigned char __a, __b;
-  __vector unsigned char __vmin, __vmax, __vabsdiff;
-  __vector signed int __vsum;
-  const __vector unsigned int __zero =
+  __vector unsigned char a, b;
+  __vector unsigned char vmin, vmax, vabsdiff;
+  __vector signed int vsum;
+  const __vector unsigned int zero =
     { 0, 0, 0, 0 };
-  __m64_union __result = {0};
+  __m64_union result = {0};
 
-  __a = (__vector unsigned char) (__vector unsigned long long) { 0UL, __A };
-  __b = (__vector unsigned char) (__vector unsigned long long) { 0UL, __B };
-  __vmin = vec_min (__a, __b);
-  __vmax = vec_max (__a, __b);
-  __vabsdiff = vec_sub (__vmax, __vmin);
+  a = (__vector unsigned char) (__vector unsigned long long) { 0UL, __A };
+  b = (__vector unsigned char) (__vector unsigned long long) { 0UL, __B };
+  vmin = vec_min (a, b);
+  vmax = vec_max (a, b);
+  vabsdiff = vec_sub (vmax, vmin);
   /* Sum four groups of bytes into integers.  */
-  __vsum = (__vector signed int) vec_sum4s (__vabsdiff, __zero);
+  vsum = (__vector signed int) vec_sum4s (vabsdiff, zero);
   /* Sum across four integers with integer result.  */
-  __vsum = vec_sums (__vsum, (__vector signed int) __zero);
+  vsum = vec_sums (vsum, (__vector signed int) zero);
   /* The sum is in the right most 32-bits of the vector result.
      Transfer to a GPR and truncate to 16 bits.  */
-  __result.as_short[0] = __vsum[3];
-  return __result.as_m64;
+  result.as_short[0] = vsum[3];
+  return result.as_m64;
 }
 
 extern __inline __m64 __attribute__((__gnu_inline__, __always_inline__, __artificial__))

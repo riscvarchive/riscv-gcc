@@ -1718,13 +1718,7 @@ find_array_section (gfc_expr *expr, gfc_ref *ref)
 	}
 
       cons = gfc_constructor_lookup (base, limit);
-      if (cons == NULL)
-	{
-	  gfc_error ("Error in array constructor referenced at %L",
-		     &ref->u.ar.where);
-	  t = false;
-	  goto cleanup;
-	}
+      gcc_assert (cons);
       gfc_constructor_append_expr (&expr->value.constructor,
 				   gfc_copy_expr (cons->expr), NULL);
     }

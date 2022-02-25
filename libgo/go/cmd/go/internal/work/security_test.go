@@ -15,7 +15,6 @@ var goodCompilerFlags = [][]string{
 	{"-Ufoo"},
 	{"-Ufoo1"},
 	{"-F/Qt"},
-	{"-F", "/Qt"},
 	{"-I/"},
 	{"-I/etc/passwd"},
 	{"-I."},

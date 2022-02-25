@@ -7382,10 +7382,6 @@ convert_nontype_argument (tree type, tree expr, tsubst_flags_t complain)
      for examples.  */
   if (TYPE_REF_OBJ_P (type) || TYPE_REFFN_P (type))
     {
-      /* Check this before we strip *& to avoid redundancy.  */
-      if (!mark_single_function (expr, complain))
-	return error_mark_node;
-
       tree probe_type, probe = expr;
       if (REFERENCE_REF_P (probe))
 	probe = TREE_OPERAND (probe, 0);
@@ -7735,8 +7731,8 @@ coerce_template_template_parm (tree parm,
 	 template <template <template <class> class> class TT>
 	 class C;  */
       {
-	tree parmparm = DECL_TEMPLATE_PARMS (parm);
-	tree argparm = DECL_TEMPLATE_PARMS (arg);
+	tree parmparm = DECL_INNERMOST_TEMPLATE_PARMS (parm);
+	tree argparm = DECL_INNERMOST_TEMPLATE_PARMS (arg);
 
 	if (!coerce_template_template_parms
 	    (parmparm, argparm, complain, in_decl, outer_args))
@@ -8005,8 +8001,8 @@ unify_bound_ttp_args (tree tparms, tree targs, tree parm, tree& arg,
    the parameters to A, and OUTER_ARGS contains A.  */
 
 static int
-coerce_template_template_parms (tree parm_parms_full,
-				tree arg_parms_full,
+coerce_template_template_parms (tree parm_parms,
+				tree arg_parms,
 				tsubst_flags_t complain,
 				tree in_decl,
 				tree outer_args)
@@ -8014,9 +8010,6 @@ coerce_template_template_parms (tree parm_parms_full,
   int nparms, nargs, i;
   tree parm, arg;
   int variadic_p = 0;
-
-  tree parm_parms = INNERMOST_TEMPLATE_PARMS (parm_parms_full);
-  tree arg_parms = INNERMOST_TEMPLATE_PARMS (arg_parms_full);
 
   gcc_assert (TREE_CODE (parm_parms) == TREE_VEC);
   gcc_assert (TREE_CODE (arg_parms) == TREE_VEC);
@@ -8053,26 +8046,8 @@ coerce_template_template_parms (tree parm_parms_full,
 	 specialized as P, so they match.*/
       processing_template_decl_sentinel ptds (/*reset*/false);
       ++processing_template_decl;
-
       tree pargs = template_parms_level_to_args (parm_parms);
-
-      /* PARM, and thus the context in which we are passing ARG to it, may be
-	 at a deeper level than ARG; when trying to coerce to ARG_PARMS, we
-	 want to provide the right number of levels, so we reduce the number of
-	 levels in OUTER_ARGS before prepending them.  This is most important
-	 when ARG is a namespace-scope template, as in alias-decl-ttp2.C.
-
-	 ARG might also be deeper than PARM (ttp23).  In that case, we include
-	 all of OUTER_ARGS.  The missing levels seem potentially problematic,
-	 but I can't come up with a testcase that breaks.  */
-      if (int arg_outer_levs = TMPL_PARMS_DEPTH (arg_parms_full) - 1)
-	{
-	  auto x = make_temp_override (TREE_VEC_LENGTH (outer_args));
-	  if (TMPL_ARGS_DEPTH (outer_args) > arg_outer_levs)
-	    TREE_VEC_LENGTH (outer_args) = arg_outer_levs;
-	  pargs = add_to_template_args (outer_args, pargs);
-	}
-
+      pargs = add_outermost_template_args (outer_args, pargs);
       pargs = coerce_template_parms (arg_parms, pargs, NULL_TREE, tf_none,
 				     /*require_all*/true, /*use_default*/true);
       if (pargs != error_mark_node)
@@ -8211,16 +8186,16 @@ template_template_parm_bindings_ok_p (tree tparms, tree targs)
 	      /* Extract the template parameters from the template
 		 argument.  */
 	      if (TREE_CODE (targ) == TEMPLATE_DECL)
-		targ_parms = DECL_TEMPLATE_PARMS (targ);
+		targ_parms = DECL_INNERMOST_TEMPLATE_PARMS (targ);
 	      else if (TREE_CODE (targ) == TEMPLATE_TEMPLATE_PARM)
-		targ_parms = DECL_TEMPLATE_PARMS (TYPE_NAME (targ));
+		targ_parms = DECL_INNERMOST_TEMPLATE_PARMS (TYPE_NAME (targ));
 
 	      /* Verify that we can coerce the template template
 		 parameters from the template argument to the template
 		 parameter.  This requires an exact match.  */
 	      if (targ_parms
 		  && !coerce_template_template_parms
-		       (DECL_TEMPLATE_PARMS (tparm),
+		       (DECL_INNERMOST_TEMPLATE_PARMS (tparm),
 			targ_parms,
 			tf_none,
 			tparm,
@@ -8514,13 +8489,13 @@ convert_template_argument (tree parm,
 	    val = orig_arg;
 	  else
 	    {
-	      tree parmparm = DECL_TEMPLATE_PARMS (parm);
+	      tree parmparm = DECL_INNERMOST_TEMPLATE_PARMS (parm);
 	      tree argparm;
 
 	      /* Strip alias templates that are equivalent to another
 		 template.  */
 	      arg = get_underlying_template (arg);
-	      argparm = DECL_TEMPLATE_PARMS (arg);
+              argparm = DECL_INNERMOST_TEMPLATE_PARMS (arg);
 
 	      if (coerce_template_template_parms (parmparm, argparm,
 						  complain, in_decl,
@@ -13752,7 +13727,7 @@ defarg_insts_for (tree fn)
 {
   if (!defarg_inst)
     defarg_inst = hash_table<tree_vec_map_cache_hasher>::create_ggc (13);
-  tree_vec_map in = { { fn }, nullptr };
+  tree_vec_map in = { fn, nullptr };
   tree_vec_map **slot
     = defarg_inst->find_slot_with_hash (&in, DECL_UID (fn), INSERT);
   if (!*slot)
@@ -24726,6 +24701,9 @@ mark_decl_instantiated (tree result, int extern_p)
        set correctly by tsubst.  */
     TREE_PUBLIC (result) = 1;
 
+  /* This might have been set by an earlier implicit instantiation.  */
+  DECL_COMDAT (result) = 0;
+
   if (extern_p)
     {
       DECL_EXTERNAL (result) = 1;
@@ -26140,15 +26118,20 @@ maybe_instantiate_noexcept (tree fn, tsubst_flags_t complain)
 	  push_deferring_access_checks (dk_no_deferred);
 	  input_location = DECL_SOURCE_LOCATION (fn);
 
-	  if (DECL_NONSTATIC_MEMBER_FUNCTION_P (fn)
-	      && !DECL_LOCAL_DECL_P (fn))
+	  if (!DECL_LOCAL_DECL_P (fn))
 	    {
 	      /* If needed, set current_class_ptr for the benefit of
-		 tsubst_copy/PARM_DECL.  */
-	      tree this_parm = DECL_ARGUMENTS (fn);
-	      current_class_ptr = NULL_TREE;
-	      current_class_ref = cp_build_fold_indirect_ref (this_parm);
-	      current_class_ptr = this_parm;
+		 tsubst_copy/PARM_DECL.  The exception pattern will
+		 refer to the parm of the template, not the
+		 instantiation.  */
+	      tree tdecl = DECL_TEMPLATE_RESULT (DECL_TI_TEMPLATE (fn));
+	      if (DECL_NONSTATIC_MEMBER_FUNCTION_P (tdecl))
+		{
+		  tree this_parm = DECL_ARGUMENTS (tdecl);
+		  current_class_ptr = NULL_TREE;
+		  current_class_ref = cp_build_fold_indirect_ref (this_parm);
+		  current_class_ptr = this_parm;
+		}
 	    }
 
 	  /* If this function is represented by a TEMPLATE_DECL, then

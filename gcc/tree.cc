@@ -12047,12 +12047,10 @@ warn_deprecated_use (tree node, tree attr)
 	attr = DECL_ATTRIBUTES (node);
       else if (TYPE_P (node))
 	{
-	  tree decl = TYPE_STUB_DECL (TYPE_MAIN_VARIANT (node));
+	  tree decl = TYPE_STUB_DECL (node);
 	  if (decl)
-	    {
-	      node = TREE_TYPE (decl);
-	      attr = TYPE_ATTRIBUTES (node);
-	    }
+	    attr = lookup_attribute ("deprecated",
+				     TYPE_ATTRIBUTES (TREE_TYPE (decl)));
 	}
     }
 

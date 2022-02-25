@@ -302,7 +302,8 @@ public:
             //property(name, "impure");
             break;
         case PURE.weak:     return property(name, "weak");
-        case PURE.const_:   return property(name, "strong");
+        case PURE.const_:   return property(name, "const");
+        case PURE.strong:   return property(name, "strong");
         case PURE.fwdref:   return property(name, "fwdref");
         }
     }

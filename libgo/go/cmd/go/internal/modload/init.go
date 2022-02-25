@@ -288,20 +288,20 @@ func BinDir() string {
 // operate in workspace mode. It should not be called by other commands,
 // for example 'go mod tidy', that don't operate in workspace mode.
 func InitWorkfile() {
-	switch gowork := cfg.Getenv("GOWORK"); gowork {
+	switch cfg.WorkFile {
 	case "off":
 		workFilePath = ""
 	case "", "auto":
 		workFilePath = findWorkspaceFile(base.Cwd())
 	default:
-		if !filepath.IsAbs(gowork) {
-			base.Fatalf("the path provided to GOWORK must be an absolute path")
+		if !filepath.IsAbs(cfg.WorkFile) {
+			base.Fatalf("the path provided to -workfile must be an absolute path")
 		}
-		workFilePath = gowork
+		workFilePath = cfg.WorkFile
 	}
 }
 
-// WorkFilePath returns the absolute path of the go.work file, or "" if not in
+// WorkFilePath returns the path of the go.work file, or "" if not in
 // workspace mode. WorkFilePath must be called after InitWorkfile.
 func WorkFilePath() string {
 	return workFilePath
@@ -610,9 +610,6 @@ func UpdateWorkFile(wf *modfile.WorkFile) {
 	missingModulePaths := map[string]string{} // module directory listed in file -> abspath modroot
 
 	for _, d := range wf.Use {
-		if d.Path == "" {
-			continue // d is marked for deletion.
-		}
 		modRoot := d.Path
 		if d.ModulePath == "" {
 			missingModulePaths[d.Path] = modRoot
@@ -1033,25 +1030,11 @@ func makeMainModules(ms []module.Version, rootDirs []string, modFiles []*modfile
 			for _, r := range modFiles[i].Replace {
 				if replacedByWorkFile[r.Old.Path] {
 					continue
-				}
-				var newV module.Version = r.New
-				if WorkFilePath() != "" && newV.Version == "" && !filepath.IsAbs(newV.Path) {
-					// Since we are in a workspace, we may be loading replacements from
-					// multiple go.mod files. Relative paths in those replacement are
-					// relative to the go.mod file, not the workspace, so the same string
-					// may refer to two different paths and different strings may refer to
-					// the same path. Convert them all to be absolute instead.
-					//
-					// (We could do this outside of a workspace too, but it would mean that
-					// replacement paths in error strings needlessly differ from what's in
-					// the go.mod file.)
-					newV.Path = filepath.Join(rootDirs[i], newV.Path)
-				}
-				if prev, ok := replacements[r.Old]; ok && !curModuleReplaces[r.Old] && prev != newV {
-					base.Fatalf("go: conflicting replacements for %v:\n\t%v\n\t%v\nuse \"go work edit -replace %v=[override]\" to resolve", r.Old, prev, newV, r.Old)
+				} else if prev, ok := replacements[r.Old]; ok && !curModuleReplaces[r.Old] && prev != r.New {
+					base.Fatalf("go: conflicting replacements for %v:\n\t%v\n\t%v\nuse \"go work edit -replace %v=[override]\" to resolve", r.Old, prev, r.New, r.Old)
 				}
 				curModuleReplaces[r.Old] = true
-				replacements[r.Old] = newV
+				replacements[r.Old] = r.New
 
 				v, ok := mainModules.highestReplaced[r.Old.Path]
 				if !ok || semver.Compare(r.Old.Version, v) > 0 {
@@ -1109,7 +1092,7 @@ func setDefaultBuildMod() {
 		if inWorkspaceMode() && cfg.BuildMod != "readonly" {
 			base.Fatalf("go: -mod may only be set to readonly when in workspace mode, but it is set to %q"+
 				"\n\tRemove the -mod flag to use the default readonly value,"+
-				"\n\tor set GOWORK=off to disable workspace mode.", cfg.BuildMod)
+				"\n\tor set -workfile=off to disable workspace mode.", cfg.BuildMod)
 		}
 		// Don't override an explicit '-mod=' argument.
 		return

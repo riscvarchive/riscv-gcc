@@ -819,11 +819,11 @@ func loadPackageData(ctx context.Context, path, parentPath, parentDir, parentRoo
 	}
 	r := resolvedImportCache.Do(importKey, func() any {
 		var r resolvedImport
-		if cfg.ModulesEnabled {
-			r.dir, r.path, r.err = modload.Lookup(parentPath, parentIsStd, path)
-		} else if build.IsLocalImport(path) {
+		if build.IsLocalImport(path) {
 			r.dir = filepath.Join(parentDir, path)
 			r.path = dirToImportPath(r.dir)
+		} else if cfg.ModulesEnabled {
+			r.dir, r.path, r.err = modload.Lookup(parentPath, parentIsStd, path)
 		} else if mode&ResolveImport != 0 {
 			// We do our own path resolution, because we want to
 			// find out the key to use in packageCache without the
@@ -1113,7 +1113,6 @@ func dirAndRoot(path string, dir, root string) (string, string) {
 	}
 
 	if !str.HasFilePathPrefix(dir, root) || len(dir) <= len(root) || dir[len(root)] != filepath.Separator || path != "command-line-arguments" && !build.IsLocalImport(path) && filepath.Join(root, path) != dir {
-		debug.PrintStack()
 		base.Fatalf("unexpected directory layout:\n"+
 			"	import path: %s\n"+
 			"	root: %s\n"+
@@ -2236,17 +2235,13 @@ func (p *Package) setBuildInfo() {
 
 	var debugModFromModinfo func(*modinfo.ModulePublic) *debug.Module
 	debugModFromModinfo = func(mi *modinfo.ModulePublic) *debug.Module {
-		version := mi.Version
-		if version == "" {
-			version = "(devel)"
-		}
 		dm := &debug.Module{
 			Path:    mi.Path,
-			Version: version,
+			Version: mi.Version,
 		}
 		if mi.Replace != nil {
 			dm.Replace = debugModFromModinfo(mi.Replace)
-		} else if mi.Version != "" {
+		} else {
 			dm.Sum = modfetch.Sum(module.Version{Path: mi.Path, Version: mi.Version})
 		}
 		return dm
@@ -2429,7 +2424,12 @@ func (p *Package) setBuildInfo() {
 		appendSetting("vcs.modified", strconv.FormatBool(st.Uncommitted))
 	}
 
-	p.Internal.BuildInfo = info.String()
+	text, err := info.MarshalText()
+	if err != nil {
+		setPkgErrorf("error formatting build info: %v", err)
+		return
+	}
+	p.Internal.BuildInfo = string(text)
 }
 
 // SafeArg reports whether arg is a "safe" command-line argument,

@@ -1,4 +1,9 @@
 /*
+TEST_OUTPUT:
+---
+runnable/mixin1.d(948): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+---
+
 RUN_OUTPUT:
 ---
 Foo3.func()
@@ -940,7 +945,7 @@ class Outer38
 void test38()
 {
     Outer38 o = new Outer38();
-    destroy(o);
+    delete o;
     assert(Outer38.c == 3);
 }
 

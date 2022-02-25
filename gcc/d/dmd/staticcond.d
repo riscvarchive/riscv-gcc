@@ -109,16 +109,18 @@ bool evalStaticCondition(Scope* sc, Expression original, Expression e, out bool 
         e = e.ctfeInterpret();
 
         const opt = e.toBool();
-        if (opt.isEmpty())
+        if (opt.hasValue(true))
+            return true;
+        else if (opt.hasValue(false))
         {
-            e.error("expression `%s` is not constant", e.toChars());
-            errors = true;
+            if (negatives)
+                negatives.push(before);
             return false;
         }
 
-        if (negatives && !opt.get())
-            negatives.push(before);
-        return opt.get();
+        e.error("expression `%s` is not constant", e.toChars());
+        errors = true;
+        return false;
     }
     return impl(e);
 }

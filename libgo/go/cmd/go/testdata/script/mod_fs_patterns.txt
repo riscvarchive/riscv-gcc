@@ -51,11 +51,11 @@ stdout '^at$'
 # a package path.
 cd ../badat/bad@
 ! go list .
-stderr 'directory . outside main module or its selected dependencies'
+stderr 'directory . outside available modules'
 ! go list $PWD
-stderr 'directory . outside main module or its selected dependencies'
+stderr 'directory . outside available modules'
 ! go list $PWD/...
-stderr 'directory . outside main module or its selected dependencies'
+stderr 'directory . outside available modules'
 
 -- x/go.mod --
 module m

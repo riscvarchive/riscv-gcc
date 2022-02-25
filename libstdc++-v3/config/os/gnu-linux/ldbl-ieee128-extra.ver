@@ -2,8 +2,7 @@
 
 GLIBCXX_IEEE128_3.4.29 {
 
-  _Z*St17__gnu_cxx_ieee1287num_get*;
-  _Z*St17__gnu_cxx_ieee1287num_put*;
+  *__gnu_cxx_ieee128*;
 
   _ZNSt14numeric_limitsIu9__ieee128E*;
   _ZNSirsERu9__ieee128;
@@ -45,10 +44,6 @@ GLIBCXX_IEEE128_3.4.29 {
   _ZSt8to_charsPcS_u9__ieee128*;
 
 } GLIBCXX_3.4.29;
-
-GLIBCXX_IEEE128_3.4.30 {
-  _ZNSt17__gnu_cxx_ieee12816__convert_from_vERKP15__locale_structPciPKcz;
-} GLIBCXX_3.4.30;
 
 CXXABI_IEEE128_1.3.13 {
 

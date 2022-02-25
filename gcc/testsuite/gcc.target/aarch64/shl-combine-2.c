@@ -1,8 +1,6 @@
 /* { dg-do assemble } */
 /* { dg-options "-O3 --save-temps --param=vect-epilogues-nomask=0" } */
 
-#pragma GCC target "+nosve"
-
 #define TYPE char
 
 void e (signed TYPE * restrict a, signed TYPE *b, int n)

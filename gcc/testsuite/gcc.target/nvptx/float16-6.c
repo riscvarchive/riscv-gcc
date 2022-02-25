@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -misa=sm_53" } */
+/* { dg-options "-O2 -misa=sm_53 -mptx=6.3" } */
 
 _Float16 x;
 _Float16 y;

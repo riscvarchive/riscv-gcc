@@ -238,7 +238,10 @@ retry:
 			pfd.events &= ^_POLLOUT
 		}
 		if mode != 0 {
-			pds[i].setEventErr(pfd.revents == _POLLERR)
+			pds[i].everr = false
+			if pfd.revents == _POLLERR {
+				pds[i].everr = true
+			}
 			netpollready(&toRun, pds[i], mode)
 			n--
 		}

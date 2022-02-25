@@ -2122,9 +2122,6 @@
 ;; Code iterator for logical operations
 (define_code_iterator LOGICAL [and ior xor])
 
-;; LOGICAL with plus, for when | gets converted to +.
-(define_code_iterator LOGICAL_OR_PLUS [and ior xor plus])
-
 ;; LOGICAL without AND.
 (define_code_iterator LOGICAL_OR [ior xor])
 

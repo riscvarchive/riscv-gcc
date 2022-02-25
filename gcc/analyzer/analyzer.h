@@ -54,7 +54,6 @@ class svalue;
   class compound_svalue;
   class conjured_svalue;
   class asm_output_svalue;
-  class const_fn_result_svalue;
 typedef hash_set<const svalue *> svalue_set;
 class region;
   class frame_region;

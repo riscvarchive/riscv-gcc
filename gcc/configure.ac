@@ -1041,15 +1041,7 @@ AC_SUBST(enable_shared)
 
 AC_ARG_ENABLE(gcov,
 [  --disable-gcov          don't provide libgcov and related host tools],
-[], [case $target in
-       bpf-*-*)
-         enable_gcov=no
-       ;;
-       *)
-         enable_gcov=yes
-       ;;
-     esac])
-
+[], [enable_gcov=yes])
 AC_SUBST(enable_gcov)
 
 AC_ARG_WITH(specs,

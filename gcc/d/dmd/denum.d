@@ -16,7 +16,6 @@ module dmd.denum;
 
 import core.stdc.stdio;
 
-import dmd.astenums;
 import dmd.attrib;
 import dmd.gluelayer;
 import dmd.declaration;
@@ -61,7 +60,7 @@ extern (C++) final class EnumDeclaration : ScopeDsymbol
     extern (D) this(const ref Loc loc, Identifier ident, Type memtype)
     {
         super(loc, ident);
-        //printf("EnumDeclaration() %p %s : %s\n", this, toChars(), memtype.toChars());
+        //printf("EnumDeclaration() %s\n", toChars());
         type = new TypeEnum(this);
         this.memtype = memtype;
         visibility = Visibility(Visibility.Kind.undefined);

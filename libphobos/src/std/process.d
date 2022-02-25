@@ -106,8 +106,9 @@ version (Windows)
 }
 
 import std.internal.cstring;
-import std.range;
+import std.range.primitives;
 import std.stdio;
+import std.traits : isSomeChar;
 
 version (OSX)
     version = Darwin;
@@ -1526,7 +1527,7 @@ package(std) string searchPathFor(scope const(char)[] executable)
 // current user.
 version (Posix)
 private bool isExecutable(R)(R path) @trusted nothrow @nogc
-if (isSomeFiniteCharInputRange!R)
+if (isInputRange!R && isSomeChar!(ElementEncodingType!R))
 {
     return (access(path.tempCString(), X_OK) == 0);
 }

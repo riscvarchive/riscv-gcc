@@ -446,7 +446,6 @@ extern (C++) class ClassDeclaration : AggregateDeclaration
             *poffset = 0;
         while (cd)
         {
-            assert(cd.baseClass || cd.semanticRun >= PASS.semanticdone || cd.isInterfaceDeclaration());
             if (this == cd.baseClass)
                 return true;
 

@@ -2017,7 +2017,6 @@ const struct sanitizer_opts_s sanitizer_opts[] =
   SANITIZER_OPT (vptr, SANITIZE_VPTR, true),
   SANITIZER_OPT (pointer-overflow, SANITIZE_POINTER_OVERFLOW, true),
   SANITIZER_OPT (builtin, SANITIZE_BUILTIN, true),
-  SANITIZER_OPT (shadow-call-stack, SANITIZE_SHADOW_CALL_STACK, false),
   SANITIZER_OPT (all, ~0U, true),
 #undef SANITIZER_OPT
   { NULL, 0U, 0UL, false }
@@ -2144,8 +2143,7 @@ parse_sanitizer_options (const char *p, location_t loc, int scode,
 		  }
 		else
 		  flags |= ~(SANITIZE_THREAD | SANITIZE_LEAK
-			     | SANITIZE_UNREACHABLE | SANITIZE_RETURN
-			     | SANITIZE_SHADOW_CALL_STACK);
+			     | SANITIZE_UNREACHABLE | SANITIZE_RETURN);
 	      }
 	    else if (value)
 	      {

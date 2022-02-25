@@ -624,7 +624,7 @@ extern (C) void _d_print_throwable(Throwable t)
             {
                 WSink caption;
                 if (t)
-                    caption.sink(typeid(t).name);
+                    caption.sink(t.classinfo.name);
 
                 // Avoid static user32.dll dependency for console applications
                 // by loading it dynamically as needed

@@ -180,30 +180,7 @@ class Object
     /**
      * Test whether $(D this) is equal to $(D o).
      * The default implementation only compares by identity (using the $(D is) operator).
-     * Generally, overrides and overloads for $(D opEquals) should attempt to compare objects by their contents.
-     * A class will most likely want to add an overload that takes your specific type as the argument
-     * and does the content comparison. Then you can override this and forward it to your specific
-     * typed overload with a cast. Remember to check for `null` on the typed overload.
-     *
-     * Examples:
-     * ---
-     * class Child {
-     *    int contents;
-     *    // the typed overload first. It can use all the attribute you want
-     *    bool opEquals(const Child c) const @safe pure nothrow @nogc
-     *    {
-     *        if (c is null)
-     *            return false;
-     *        return this.contents == c.contents;
-     *    }
-     *
-     *    // and now the generic override forwards with a cast
-     *    override bool opEquals(Object o)
-     *    {
-     *        return this.opEquals(cast(Child) o);
-     *    }
-     * }
-     * ---
+     * Generally, overrides for $(D opEquals) should attempt to compare objects by their contents.
      */
     bool opEquals(Object o)
     {
@@ -260,50 +237,41 @@ class Object
     }
 }
 
-/++
-    Implementation for class opEquals override. Calls the class-defined methods after a null check.
-    Please note this is not nogc right now, even if your implementation is, because of
-    the typeinfo name string compare. This is because of dmd's dll implementation. However,
-    it can infer to @safe if your class' opEquals is.
-+/
-bool opEquals(LHS, RHS)(LHS lhs, RHS rhs) if (is(LHS : const Object) && is(RHS : const Object))
+bool opEquals(Object lhs, Object rhs)
 {
-    static if (__traits(compiles, lhs.opEquals(rhs)) && __traits(compiles, rhs.opEquals(lhs)))
+    // If aliased to the same object or both null => equal
+    if (lhs is rhs) return true;
+
+    // If either is null => non-equal
+    if (lhs is null || rhs is null) return false;
+
+    if (!lhs.opEquals(rhs)) return false;
+
+    // If same exact type => one call to method opEquals
+    if (typeid(lhs) is typeid(rhs) ||
+        !__ctfe && typeid(lhs).opEquals(typeid(rhs)))
+            /* CTFE doesn't like typeid much. 'is' works, but opEquals doesn't
+            (issue 7147). But CTFE also guarantees that equal TypeInfos are
+            always identical. So, no opEquals needed during CTFE. */
     {
-        // If aliased to the same object or both null => equal
-        if (lhs is rhs) return true;
-
-        // If either is null => non-equal
-        if (lhs is null || rhs is null) return false;
-
-        if (!lhs.opEquals(rhs)) return false;
-
-        // If same exact type => one call to method opEquals
-        if (typeid(lhs) is typeid(rhs) ||
-            !__ctfe && typeid(lhs).opEquals(typeid(rhs)))
-                /* CTFE doesn't like typeid much. 'is' works, but opEquals doesn't
-                (issue 7147). But CTFE also guarantees that equal TypeInfos are
-                always identical. So, no opEquals needed during CTFE. */
-        {
-            return true;
-        }
-
-        // General case => symmetric calls to method opEquals
-        return rhs.opEquals(lhs);
+        return true;
     }
-    else
-    {
-        // this is a compatibility hack for the old const cast behavior
-        // if none of the new overloads compile, we'll go back plain Object,
-        // including casting away const. It does this through the pointer
-        // to bypass any opCast that may be present on the original class.
-        return .opEquals!(Object, Object)(*cast(Object*) &lhs, *cast(Object*) &rhs);
 
-    }
+    // General case => symmetric calls to method opEquals
+    return rhs.opEquals(lhs);
+}
+
+/************************
+* Returns true if lhs and rhs are equal.
+*/
+bool opEquals(const Object lhs, const Object rhs)
+{
+    // A hack for the moment.
+    return opEquals(cast()lhs, cast()rhs);
 }
 
 /// If aliased to the same object or both null => equal
-@system unittest // this one is not @safe because it goes through the Object base method
+@system unittest
 {
     class F { int flag; this(int flag) { this.flag = flag; } }
 
@@ -323,8 +291,7 @@ bool opEquals(LHS, RHS)(LHS lhs, RHS rhs) if (is(LHS : const Object) && is(RHS :
 }
 
 /// If same exact type => one call to method opEquals
-/// This test passes `@safe` because it defines a new opEquals with `@safe`
-@safe unittest
+@system unittest
 {
     class F
     {
@@ -335,9 +302,9 @@ bool opEquals(LHS, RHS)(LHS lhs, RHS rhs) if (is(LHS : const Object) && is(RHS :
             this.flag = flag;
         }
 
-        bool opEquals(const F o) const @safe nothrow pure
+        override bool opEquals(const Object o)
         {
-            return flag == o.flag;
+            return flag == (cast(F) o).flag;
         }
     }
 
@@ -347,7 +314,7 @@ bool opEquals(LHS, RHS)(LHS lhs, RHS rhs) if (is(LHS : const Object) && is(RHS :
 }
 
 /// General case => symmetric calls to method opEquals
-@safe unittest
+@system unittest
 {
     int fEquals, gEquals;
 
@@ -364,10 +331,10 @@ bool opEquals(LHS, RHS)(LHS lhs, RHS rhs) if (is(LHS : const Object) && is(RHS :
     {
         this(int flag) { super(flag); }
 
-        bool opEquals(const Base o) @safe
+        override bool opEquals(const Object o)
         {
             fEquals++;
-            return flag == o.flag;
+            return flag == (cast(Base) o).flag;
         }
     }
 
@@ -375,124 +342,16 @@ bool opEquals(LHS, RHS)(LHS lhs, RHS rhs) if (is(LHS : const Object) && is(RHS :
     {
         this(int flag) { super(flag); }
 
-        bool opEquals(const Base o) @safe
+        override bool opEquals(const Object o)
         {
             gEquals++;
-            return flag == o.flag;
+            return flag == (cast(Base) o).flag;
         }
     }
 
     assert(new F(1) == new G(1));
     assert(fEquals == 1);
     assert(gEquals == 1);
-}
-
-/++
-    This test shows an example for a comprehensive inheritance equality chain too.
-+/
-unittest
-{
-    static class Base
-    {
-        int member;
-
-        this(int member) pure @safe nothrow @nogc
-        {
-            this.member = member;
-        }
-
-        override bool opEquals(Object rhs) const
-        {
-            return this.opEquals(cast(Base) rhs);
-        }
-
-        bool opEquals(const Base rhs) const @nogc pure nothrow @safe
-        {
-            if (rhs is null)
-                return false;
-            return this.member == rhs.member;
-        }
-    }
-
-    // works through the direct class with attributes enabled, except for pure and nogc in the current TypeInfo implementation
-    bool testThroughBase() nothrow @safe
-    {
-        Base b1 = new Base(0);
-        Base b2 = new Base(0);
-        assert(b1 == b2);
-        Base b3 = new Base(1);
-        assert(b1 != b3);
-        return true;
-    }
-
-    static assert(testThroughBase());
-
-    // also works through the base class interface thanks to the override, but no more attributes
-    bool testThroughObject()
-    {
-        Object o1 = new Base(0);
-        Object o2 = new Base(0);
-        assert(o1 == o2);
-        Object o3 = new Base(1);
-        assert(o1 != o3);
-        return true;
-    }
-
-    static assert(testThroughObject());
-
-    // Each time you make a child, you want to override all old opEquals
-    // and add a new overload for the new child.
-    static class Child : Base
-    {
-        int member2;
-
-        this(int member, int member2) pure @safe nothrow @nogc
-        {
-            super(member);
-            this.member2 = member2;
-        }
-
-        // override the whole chain so it works consistently though any base
-        override bool opEquals(Object rhs) const
-        {
-            return this.opEquals(cast(Child) rhs);
-        }
-        override bool opEquals(const Base rhs) const
-        {
-            return this.opEquals(cast(const Child) rhs);
-        }
-        // and then add the new overload, if necessary, to handle new members
-        bool opEquals(const Child rhs) const @nogc pure nothrow @safe
-        {
-            if (rhs is null)
-                return false;
-            // can call back to the devirtualized base test with implicit conversion
-            // then compare the new member too. or we could have just compared the base
-            // member directly here as well.
-            return Base.opEquals(rhs) && this.member2 == rhs.member2;
-        }
-
-        // a mixin template, of course, could automate this.
-    }
-
-    bool testThroughChild()
-    {
-        Child a = new Child(0, 0);
-        Child b = new Child(0, 1);
-        assert(a != b);
-
-        Base ba = a;
-        Base bb = b;
-        assert(ba != bb);
-
-        Object oa = a;
-        Object ob = b;
-        assert(oa != ob);
-
-        return true;
-    }
-
-    static assert(testThroughChild());
 }
 
 // To cover const Object opEquals
@@ -537,8 +396,7 @@ void setSameMutex(shared Object ownee, shared Object owner)
  */
 struct Interface
 {
-    /// Class info returned by `typeid` for this interface (not for containing class)
-    TypeInfo_Class   classinfo;
+    TypeInfo_Class   classinfo;  /// .classinfo for this interface (not for containing class)
     void*[]     vtbl;
     size_t      offset;     /// offset to Interface 'this' from Object 'this'
 }
@@ -589,17 +447,13 @@ class TypeInfo
 
     override bool opEquals(Object o)
     {
-        return opEquals(cast(TypeInfo) o);
-    }
-
-    bool opEquals(const TypeInfo ti) @safe nothrow const
-    {
         /* TypeInfo instances are singletons, but duplicates can exist
          * across DLL's. Therefore, comparing for a name match is
          * sufficient.
          */
-        if (this is ti)
+        if (this is o)
             return true;
+        auto ti = cast(const TypeInfo)o;
         return ti && this.toString() == ti.toString();
     }
 
@@ -608,7 +462,7 @@ class TypeInfo
         auto anotherObj = new Object();
 
         assert(typeid(void).opEquals(typeid(void)));
-        assert(typeid(void) != anotherObj); // calling .opEquals here directly is a type mismatch
+        assert(!typeid(void).opEquals(anotherObj));
     }
 
     /**
@@ -1543,13 +1397,13 @@ private extern (C) int _d_isbaseof(scope TypeInfo_Class child,
 /**
  * Runtime type information about a class.
  * Can be retrieved from an object instance by using the
- * $(DDSUBLINK spec/expression,typeid_expressions,typeid expression).
+ * $(DDSUBLINK spec/property,classinfo, .classinfo) property.
  */
 class TypeInfo_Class : TypeInfo
 {
     override string toString() const pure { return name; }
 
-    override bool opEquals(const TypeInfo o) const
+    override bool opEquals(Object o)
     {
         if (this is o)
             return true;
@@ -1885,8 +1739,12 @@ class TypeInfo_Struct : TypeInfo
             return false;
         else if (xopEquals)
         {
-            const dg = _memberFunc(p1, xopEquals);
-            return dg.xopEquals(p2);
+            version (GNU)
+            {   // BUG: GDC and DMD use different calling conventions
+                return (*xopEquals)(p2, p1);
+            }
+            else
+                return (*xopEquals)(p1, p2);
         }
         else if (p1 == p2)
             return true;
@@ -1908,8 +1766,12 @@ class TypeInfo_Struct : TypeInfo
                     return true;
                 else if (xopCmp)
                 {
-                    const dg = _memberFunc(p1, xopCmp);
-                    return dg.xopCmp(p2);
+                    version (GNU)
+                    {   // BUG: GDC and DMD use different calling conventions
+                        return (*xopCmp)(p1, p2);
+                    }
+                    else
+                        return (*xopCmp)(p2, p1);
                 }
                 else
                     // BUG: relies on the GC not moving objects
@@ -2014,28 +1876,6 @@ class TypeInfo_Struct : TypeInfo
         TypeInfo m_arg2;
     }
     immutable(void)* m_RTInfo;                // data for precise GC
-
-    // The xopEquals and xopCmp members are function pointers to member
-    // functions, which is not guaranteed to share the same ABI, as it is not
-    // known whether the `this` parameter is the first or second argument.
-    // This wrapper is to convert it to a delegate which will always pass the
-    // `this` parameter in the correct way.
-    private struct _memberFunc
-    {
-        union
-        {
-            struct // delegate
-            {
-                const void* ptr;
-                const void* funcptr;
-            }
-            @safe pure nothrow
-            {
-                bool delegate(in void*) xopEquals;
-                int delegate(in void*) xopCmp;
-            }
-        }
-    }
 }
 
 @system unittest
@@ -2875,7 +2715,7 @@ void clear(Value, Key)(Value[Key] aa)
     _aaClear(*cast(AA *) &aa);
 }
 
-/** ditto */
+/* ditto */
 void clear(Value, Key)(Value[Key]* aa)
 {
     _aaClear(*cast(AA *) aa);
@@ -2922,21 +2762,21 @@ T rehash(T : Value[Key], Value, Key)(T aa)
     return aa;
 }
 
-/** ditto */
+/* ditto */
 T rehash(T : Value[Key], Value, Key)(T* aa)
 {
     _aaRehash(cast(AA*)aa, typeid(Value[Key]));
     return *aa;
 }
 
-/** ditto */
+/* ditto */
 T rehash(T : shared Value[Key], Value, Key)(T aa)
 {
     _aaRehash(cast(AA*)&aa, typeid(Value[Key]));
     return aa;
 }
 
-/** ditto */
+/* ditto */
 T rehash(T : shared Value[Key], Value, Key)(T* aa)
 {
     _aaRehash(cast(AA*)aa, typeid(Value[Key]));
@@ -2944,8 +2784,8 @@ T rehash(T : shared Value[Key], Value, Key)(T* aa)
 }
 
 /***********************************
- * Creates a new associative array of the same size and copies the contents of
- * the associative array into it.
+ * Create a new associative array of the same size and copy the contents of the
+ * associative array into it.
  * Params:
  *      aa =     The associative array.
  */
@@ -2986,7 +2826,7 @@ V[K] dup(T : V[K], K, V)(T aa)
     return result;
 }
 
-/** ditto */
+/* ditto */
 V[K] dup(T : V[K], K, V)(T* aa)
 {
     return (*aa).dup;
@@ -3013,27 +2853,11 @@ private AARange _aaToRange(T: V[K], K, V)(ref T aa) pure nothrow @nogc @safe
 }
 
 /***********************************
- * Returns a $(REF_ALTTEXT forward range, isForwardRange, std,range,primitives)
- * which will iterate over the keys of the associative array. The keys are
- * returned by reference.
- *
- * If structural changes are made to the array (removing or adding keys), all
- * ranges previously obtained through this function are invalidated. The
- * following example program will dereference a null pointer:
- *
- *---
- * import std.stdio : writeln;
- *
- * auto dict = ["k1": 1, "k2": 2];
- * auto keyRange = dict.byKey;
- * dict.clear;
- * writeln(keyRange.front);    // Segmentation fault
- *---
- *
+ * Returns a forward range over the keys of the associative array.
  * Params:
  *      aa =     The associative array.
  * Returns:
- *      A forward range referencing the keys of the associative array.
+ *      A forward range.
  */
 auto byKey(T : V[K], K, V)(T aa) pure nothrow @nogc @safe
 {
@@ -3056,7 +2880,7 @@ auto byKey(T : V[K], K, V)(T aa) pure nothrow @nogc @safe
     return Result(_aaToRange(aa));
 }
 
-/** ditto */
+/* ditto */
 auto byKey(T : V[K], K, V)(T* aa) pure nothrow @nogc
 {
     return (*aa).byKey();
@@ -3065,7 +2889,7 @@ auto byKey(T : V[K], K, V)(T* aa) pure nothrow @nogc
 ///
 @safe unittest
 {
-    auto dict = [1: "v1", 2: "v2"];
+    auto dict = [1: 0, 2: 0];
     int sum;
     foreach (v; dict.byKey)
         sum += v;
@@ -3074,27 +2898,11 @@ auto byKey(T : V[K], K, V)(T* aa) pure nothrow @nogc
 }
 
 /***********************************
- * Returns a $(REF_ALTTEXT forward range, isForwardRange, std,range,primitives)
- * which will iterate over the values of the associative array. The values are
- * returned by reference.
- *
- * If structural changes are made to the array (removing or adding keys), all
- * ranges previously obtained through this function are invalidated. The
- * following example program will dereference a null pointer:
- *
- *---
- * import std.stdio : writeln;
- *
- * auto dict = ["k1": 1, "k2": 2];
- * auto valueRange = dict.byValue;
- * dict.clear;
- * writeln(valueRange.front);    // Segmentation fault
- *---
- *
+ * Returns a forward range over the values of the associative array.
  * Params:
  *      aa =     The associative array.
  * Returns:
- *      A forward range referencing the values of the associative array.
+ *      A forward range.
  */
 auto byValue(T : V[K], K, V)(T aa) pure nothrow @nogc @safe
 {
@@ -3117,7 +2925,7 @@ auto byValue(T : V[K], K, V)(T aa) pure nothrow @nogc @safe
     return Result(_aaToRange(aa));
 }
 
-/** ditto */
+/* ditto */
 auto byValue(T : V[K], K, V)(T* aa) pure nothrow @nogc
 {
     return (*aa).byValue();
@@ -3135,35 +2943,11 @@ auto byValue(T : V[K], K, V)(T* aa) pure nothrow @nogc
 }
 
 /***********************************
- * Returns a $(REF_ALTTEXT forward range, isForwardRange, std,range,primitives)
- * which will iterate over the key-value pairs of the associative array. The
- * returned pairs are represented by an opaque type with `.key` and `.value`
- * properties for accessing references to the key and value of the pair,
- * respectively.
- *
- * If structural changes are made to the array (removing or adding keys), all
- * ranges previously obtained through this function are invalidated. The
- * following example program will dereference a null pointer:
- *
- *---
- * import std.stdio : writeln;
- *
- * auto dict = ["k1": 1, "k2": 2];
- * auto kvRange = dict.byKeyValue;
- * dict.clear;
- * writeln(kvRange.front.key, ": ", kvRange.front.value);    // Segmentation fault
- *---
- *
- * Note that this is a low-level interface to iterating over the associative
- * array and is not compatible withth the
- * $(LINK2 $(ROOT_DIR)phobos/std_typecons.html#.Tuple,`Tuple`) type in Phobos.
- * For compatibility with `Tuple`, use
- * $(LINK2 $(ROOT_DIR)phobos/std_array.html#.byPair,std.array.byPair) instead.
- *
+ * Returns a forward range over the key value pairs of the associative array.
  * Params:
  *      aa =     The associative array.
  * Returns:
- *      A forward range referencing the pairs of the associative array.
+ *      A forward range.
  */
 auto byKeyValue(T : V[K], K, V)(T aa) pure nothrow @nogc @safe
 {
@@ -3203,7 +2987,7 @@ auto byKeyValue(T : V[K], K, V)(T aa) pure nothrow @nogc @safe
     return Result(_aaToRange(aa));
 }
 
-/** ditto */
+/* ditto */
 auto byKeyValue(T : V[K], K, V)(T* aa) pure nothrow @nogc
 {
     return (*aa).byKeyValue();
@@ -3215,21 +2999,18 @@ auto byKeyValue(T : V[K], K, V)(T* aa) pure nothrow @nogc
     auto dict = ["k1": 1, "k2": 2];
     int sum;
     foreach (e; dict.byKeyValue)
-    {
-        assert(e.key[1] == e.value + '0');
         sum += e.value;
-    }
 
     assert(sum == 3);
 }
 
 /***********************************
- * Returns a newly allocated dynamic array containing a copy of the keys from
- * the associative array.
+ * Returns a dynamic array, the elements of which are the keys in the
+ * associative array.
  * Params:
  *      aa =     The associative array.
  * Returns:
- *      A dynamic array containing a copy of the keys.
+ *      A dynamic array.
  */
 Key[] keys(T : Value[Key], Value, Key)(T aa) @property
 {
@@ -3247,7 +3028,7 @@ Key[] keys(T : Value[Key], Value, Key)(T aa) @property
     return res;
 }
 
-/** ditto */
+/* ditto */
 Key[] keys(T : Value[Key], Value, Key)(T *aa) @property
 {
     return (*aa).keys;
@@ -3308,12 +3089,12 @@ Key[] keys(T : Value[Key], Value, Key)(T *aa) @property
 }
 
 /***********************************
- * Returns a newly allocated dynamic array containing a copy of the values from
- * the associative array.
+ * Returns a dynamic array, the elements of which are the values in the
+ * associative array.
  * Params:
  *      aa =     The associative array.
  * Returns:
- *      A dynamic array containing a copy of the values.
+ *      A dynamic array.
  */
 Value[] values(T : Value[Key], Value, Key)(T aa) @property
 {
@@ -3331,7 +3112,7 @@ Value[] values(T : Value[Key], Value, Key)(T aa) @property
     return res;
 }
 
-/** ditto */
+/* ditto */
 Value[] values(T : Value[Key], Value, Key)(T *aa) @property
 {
     return (*aa).values;
@@ -3407,13 +3188,12 @@ inout(V) get(K, V)(inout(V[K]) aa, K key, lazy inout(V) defaultValue)
     return p ? *p : defaultValue;
 }
 
-/** ditto */
+/* ditto */
 inout(V) get(K, V)(inout(V[K])* aa, K key, lazy inout(V) defaultValue)
 {
     return (*aa).get(key, defaultValue);
 }
 
-///
 @safe unittest
 {
     auto aa = ["k1": 1];
@@ -4871,6 +4651,8 @@ public import core.internal.array.construction : _d_arrayctor;
 public import core.internal.array.construction : _d_arraysetctor;
 public import core.internal.array.capacity: _d_arraysetlengthTImpl;
 
+public import core.lifetime : _d_delstructImpl;
+
 public import core.internal.dassert: _d_assert_fail;
 
 public import core.internal.destruction: __ArrayDtor;
@@ -4881,9 +4663,6 @@ public import core.internal.postblit: __ArrayPostblit;
 
 public import core.internal.switch_: __switch;
 public import core.internal.switch_: __switch_error;
-
-public import core.lifetime : _d_delstructImpl;
-public import core.lifetime : _d_newThrowable;
 
 public @trusted @nogc nothrow pure extern (C) void _d_delThrowable(scope Throwable);
 
