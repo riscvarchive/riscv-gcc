@@ -1500,46 +1500,6 @@ tuple_type_field (tree type)
   gcc_unreachable ();
 }
 
-inline bool
-int32_or_uint32_constant_p (tree x)
-{
-  if (TREE_CODE (x) != INTEGER_CST)
-    return false;
-
-  /* 1. 0~2^31-1
-      2. 0xFFFF FFFF 8000 0000 ~ 0xFFFF FFFF FFFF FFFF */
-  if (tree_fits_shwi_p (x))
-    {
-      HOST_WIDE_INT val = tree_to_shwi (x);
-      return val <= 0x7FFFFFFFll && val >= -0x80000000ll;
-    }
-  else
-    {
-      unsigned HOST_WIDE_INT val = tree_to_uhwi (x);
-      return val <= 0x7FFFFFFFull || val >= 0xFFFFFFFF80000000ull;
-    }
-}
-
-inline bool
-need_splat_vector_p (const function_instance &instance, tree x)
-{
-  if ((instance.get_operation () == OP_vx ||
-       instance.get_operation () == OP_vxm ||
-       instance.get_operation () == OP_v_x ||
-       instance.get_operation () == OP_none) &&
-      TYPE_MODE (TREE_TYPE (x)) == DImode && !TARGET_64BIT &&
-      !int32_or_uint32_constant_p (x))
-    return true;
-
-  return false;
-}
-
-inline bool
-di_on_target32_p (machine_mode mode)
-{
-  return GET_MODE_INNER (mode) == DImode && !TARGET_64BIT;
-}
-
 /* Return a hash code for a function_instance.  */
 inline hashval_t
 get_string_hash (char *input_string)

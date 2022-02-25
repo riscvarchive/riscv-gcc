@@ -106,6 +106,115 @@ gimple_expand_vec_set_expr (struct function *fun, gimple_stmt_iterator *gsi)
   return ass_stmt;
 }
 
+/* Subroutine to check whether all elements int a CONSTRUCTOR
+   are same. */
+static bool
+constructor_all_same_p (tree constructor, tree *e)
+{
+  *e = CONSTRUCTOR_ELT (constructor, 0)->value;
+  for (unsigned i = 1; i < CONSTRUCTOR_NELTS (constructor); ++i)
+   {
+    if (CONSTRUCTOR_ELT (constructor, i)->value != *e)
+      return false;
+   }
+   return true;
+}
+
+/* Subroutine of gimple_expand_vec_cond_expr, it generate
+   vcond_mask for vec_cond expression. */
+
+static gimple *
+gimple_gen_vcond_mask (tree op0, tree op1, tree op2, tree op3)
+{
+  bool optab_p = op3 ?
+    convert_optab_handler (len_vcond_mask_sv_optab,
+       TYPE_MODE (TREE_TYPE (op1)), TYPE_MODE (TREE_TYPE (op0)))
+    : convert_optab_handler (vcond_mask_sv_optab,
+       TYPE_MODE (TREE_TYPE (op1)), TYPE_MODE (TREE_TYPE (op0)));
+  if (TREE_CODE (op1) == VECTOR_CST && uniform_vector_p (op1)
+    && optab_p)
+    {
+      if (op3)
+        return gimple_build_call_internal (IFN_LEN_VCOND_MASK_SV, 4, op0,
+	    uniform_vector_p (op1), op2, op3);
+      else
+        return gimple_build_call_internal (IFN_VCOND_MASK_SV, 3, op0,
+	    uniform_vector_p (op1), op2);
+    }
+  if (TREE_CODE (op1) == SSA_NAME && SSA_NAME_DEF_STMT (op1)
+    && is_gimple_assign (SSA_NAME_DEF_STMT (op1)) && optab_p)
+    {
+      gimple *def_stmt = SSA_NAME_DEF_STMT (op1);
+      if (gimple_assign_rhs_code (def_stmt) == VEC_DUPLICATE_EXPR)
+        {
+	  if (op3)
+	    return gimple_build_call_internal (IFN_LEN_VCOND_MASK_SV, 4, op0,
+	       gimple_assign_rhs1 (def_stmt), op2, op3);
+	  else
+	    return gimple_build_call_internal (IFN_VCOND_MASK_SV, 3, op0,
+	       gimple_assign_rhs1 (def_stmt), op2);
+	}
+      if (gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
+        {
+	  tree e = NULL_TREE;
+	  if (constructor_all_same_p (gimple_assign_rhs1 (def_stmt), &e))
+	    {
+	      if (op3)
+	        return gimple_build_call_internal (IFN_LEN_VCOND_MASK_SV, 4, op0,
+	           e, op2, op3);
+	      else
+	        return gimple_build_call_internal (IFN_VCOND_MASK_SV, 3, op0,
+	           e, op2);
+	    }
+	}
+    }
+  optab_p = op3 ?
+    convert_optab_handler (len_vcond_mask_vs_optab,
+       GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))), TYPE_MODE (TREE_TYPE (op0)))
+    : convert_optab_handler (vcond_mask_vs_optab,
+       GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))), TYPE_MODE (TREE_TYPE (op0)));
+  if (TREE_CODE (op2) == VECTOR_CST && uniform_vector_p (op2) && optab_p)
+    {
+      if (op3)
+        return gimple_build_call_internal (IFN_LEN_VCOND_MASK_VS, 4, op0,
+	    op1, uniform_vector_p (op2), op3);
+      else
+        return gimple_build_call_internal (IFN_VCOND_MASK_VS, 3, op0,
+	    op2, uniform_vector_p (op2));
+    }
+  if (TREE_CODE (op2) == SSA_NAME && SSA_NAME_DEF_STMT (op2)
+    && is_gimple_assign (SSA_NAME_DEF_STMT (op2)) && optab_p)
+    {
+      gimple *def_stmt = SSA_NAME_DEF_STMT (op2);
+      if (gimple_assign_rhs_code (def_stmt) == VEC_DUPLICATE_EXPR)
+        {
+	  if (op3)
+	    return gimple_build_call_internal (IFN_LEN_VCOND_MASK_VS, 4, op0,
+	       op1, gimple_assign_rhs1 (def_stmt), op3);
+	  else
+	    return gimple_build_call_internal (IFN_LEN_VCOND_MASK_VS, 3, op0,
+	       op1, gimple_assign_rhs1 (def_stmt));
+	}
+      if (gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
+        {
+	  tree e = NULL_TREE;
+	  if (constructor_all_same_p (gimple_assign_rhs1 (def_stmt), &e))
+	    {
+	      if (op3)
+	        return gimple_build_call_internal (IFN_LEN_VCOND_MASK_VS, 4, op0,
+	           op1, e, op3);
+	      else
+	        return gimple_build_call_internal (IFN_LEN_VCOND_MASK_VS, 3, op0,
+	           op1, e);
+	    }
+	}
+    }
+  if (op3)
+    return gimple_build_call_internal (IFN_LEN_VCOND_MASK, 4, op0, op1, op2, op3);
+  else
+    return gimple_build_call_internal (IFN_VCOND_MASK, 3, op0, op1, op2);
+}
+
 /* Expand all VEC_COND_EXPR gimple assignments into calls to internal
    function based on type of selected expansion.  */
 
@@ -227,7 +336,7 @@ gimple_expand_vec_cond_expr (struct function *fun, gimple_stmt_iterator *gsi,
       gcc_assert (VECTOR_BOOLEAN_TYPE_P (TREE_TYPE (op0)));
       if (get_vcond_mask_icode (mode, TYPE_MODE (TREE_TYPE (op0)))
 	  != CODE_FOR_nothing)
-	return gimple_build_call_internal (IFN_VCOND_MASK, 3, op0, op1, op2);
+	return gimple_gen_vcond_mask (op0, op1, op2, NULL_TREE);
       /* Fake op0 < 0.  */
       else
 	{
@@ -269,7 +378,7 @@ gimple_expand_vec_cond_expr (struct function *fun, gimple_stmt_iterator *gsi,
 		  && can_compute_op0
 		  && (get_vcond_mask_icode (mode, TYPE_MODE (TREE_TYPE (op0)))
 		      != CODE_FOR_nothing));
-      return gimple_build_call_internal (IFN_VCOND_MASK, 3, op0, op1, op2);
+      return gimple_gen_vcond_mask (op0, op1, op2, NULL_TREE);
     }
 
   tree tcode_tree = build_int_cst (integer_type_node, tcode);
@@ -385,7 +494,7 @@ gimple_expand_len_vcond_fn (gimple_stmt_iterator *gsi,
       gcc_assert (VECTOR_BOOLEAN_TYPE_P (TREE_TYPE (op0)));
       if (get_len_vcond_mask_icode (mode, TYPE_MODE (TREE_TYPE (op0)))
 	  != CODE_FOR_nothing)
-	return gimple_build_call_internal (IFN_LEN_VCOND_MASK, 4, op0, op1, op2, op3);
+	return gimple_gen_vcond_mask (op0, op1, op2, op3);
       /* Fake op0 < 0.  */
       else
 	{
@@ -418,7 +527,7 @@ gimple_expand_len_vcond_fn (gimple_stmt_iterator *gsi,
 		  && can_compute_op0
 		  && (get_len_vcond_mask_icode (mode, TYPE_MODE (TREE_TYPE (op0)))
 		      != CODE_FOR_nothing));
-      return gimple_build_call_internal (IFN_LEN_VCOND_MASK, 4, op0, op1, op2, op3);
+      return gimple_gen_vcond_mask (op0, op1, op2, op3);
     }
 
   tree tcode_tree = build_int_cst (integer_type_node, tcode);
