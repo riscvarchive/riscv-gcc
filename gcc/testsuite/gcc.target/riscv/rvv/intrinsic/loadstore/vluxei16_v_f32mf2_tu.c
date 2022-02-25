@@ -1,0 +1,22 @@
+/* { dg-do compile } */
+/* { dg-skip-if "test vector intrinsic" { *-*-* } { "*" } { "-march=rv*v*" } } */
+#include <stddef.h>
+#include <riscv_vector.h>
+
+vfloat32mf2_t
+test0_vluxei16_v_f32mf2_tu(vfloat32mf2_t dest,const float32_t *base,vuint16mf4_t bindex,size_t vl)
+{
+    return vluxei16_v_f32mf2_tu(dest, base, bindex, vl);
+}
+
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e32,\s*mf2,\s*tu,\s*mu} 1 } } */
+
+vfloat32mf2_t
+test1_vluxei16_v_f32mf2_tu(vfloat32mf2_t dest,const float32_t *base,vuint16mf4_t bindex,size_t vl)
+{
+    return vluxei16_v_f32mf2_tu(dest, base, bindex, 6);
+}
+
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*6,\s*e32,\s*mf2,\s*tu,\s*mu} 1 } } */
+
+/* { dg-final { scan-assembler-times {vluxei16\.v} 2 } } */

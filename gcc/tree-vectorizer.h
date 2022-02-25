@@ -1473,6 +1473,7 @@ public:
   unsigned int outside_cost () const;
   unsigned int total_cost () const;
   unsigned int suggested_unroll_factor () const;
+  bool costing_for_scalar_p () const;
 
 protected:
   unsigned int record_stmt_cost (stmt_vec_info, vect_cost_model_location,
@@ -1554,6 +1555,14 @@ inline unsigned int
 vector_costs::total_cost () const
 {
   return body_cost () + outside_cost ();
+}
+
+/* Return whether it is a scalar cost. */
+
+inline bool
+vector_costs::costing_for_scalar_p () const
+{
+  return m_costing_for_scalar;
 }
 
 /* Return the suggested unroll factor.  */
@@ -1709,7 +1718,7 @@ init_cost (vec_info *vinfo, bool costing_for_scalar)
 
 extern void dump_stmt_cost (FILE *, int, enum vect_cost_for_stmt,
 			    stmt_vec_info, tree, int, unsigned,
-			    enum vect_cost_model_location);
+			    enum vect_cost_model_location, bool costing_for_scalar);
 
 /* Alias targetm.vectorize.add_stmt_cost.  */
 
@@ -1723,7 +1732,7 @@ add_stmt_cost (vector_costs *costs, int count,
 					misalign, where);
   if (dump_file && (dump_flags & TDF_DETAILS))
     dump_stmt_cost (dump_file, count, kind, stmt_info, vectype, misalign,
-		    cost, where);
+		    cost, where, costs->costing_for_scalar_p ());
   return cost;
 }
 
@@ -2224,6 +2233,9 @@ extern void vect_record_loop_len (loop_vec_info, vec_loop_lens *, unsigned int,
 extern tree vect_get_loop_len (loop_vec_info, vec_loop_lens *, unsigned int,
 			       unsigned int);
 extern gimple_seq vect_gen_len (tree, tree, tree, tree);
+extern void vect_add_len_without_overflow (gimple_seq *, tree, class loop *,
+  	                  tree, tree, tree, tree,
+                     gimple_stmt_iterator *, bool, tree *, tree *);
 extern stmt_vec_info info_for_reduction (vec_info *, stmt_vec_info);
 extern bool reduction_fn_for_scalar_code (code_helper, internal_fn *);
 

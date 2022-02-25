@@ -1,0 +1,22 @@
+/* { dg-do compile } */
+/* { dg-skip-if "test vector intrinsic" { *-*-* } { "*" } { "-march=rv*v*" } } */
+#include <stddef.h>
+#include <riscv_vector.h>
+
+void
+test0_vsse32_v_f32mf2(float32_t *base,ptrdiff_t bstride,vfloat32mf2_t value,size_t vl)
+{
+    vsse32_v_f32mf2(base, bstride, value, vl);
+}
+
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e32,\s*mf2,\s*ta,\s*mu} 1 } } */
+
+void
+test1_vsse32_v_f32mf2(float32_t *base,ptrdiff_t bstride,vfloat32mf2_t value,size_t vl)
+{
+    vsse32_v_f32mf2(base, bstride, value, 4);
+}
+
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*4,\s*e32,\s*mf2,\s*ta,\s*mu} 1 } } */
+
+/* { dg-final { scan-assembler-times {vsse32\.v} 2 } } */

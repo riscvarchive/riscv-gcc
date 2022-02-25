@@ -181,7 +181,7 @@
 #			the --with-sysroot configure option or the
 #			--sysroot command line option is used this
 #			will be relative to the sysroot.
-# target_type_format_char 
+# target_type_format_char
 # 			The default character to be used for formatting
 #			the attribute in a
 #			.type symbol_name, ${t_t_f_c}<property>
@@ -509,8 +509,13 @@ pru-*-*)
 	;;
 riscv*)
 	cpu_type=riscv
-	extra_objs="riscv-builtins.o riscv-c.o riscv-sr.o riscv-shorten-memrefs.o"
+	extra_headers="riscv_vector.h"
+	extra_objs="riscv-builtins.o riscv-vector-builtins.o riscv-c.o riscv-sr.o riscv-shorten-memrefs.o riscv-insert-vsetvli.o"
+	extra_objs="${extra_objs} riscv-vector-cost.o riscv-vector-builtins-functions.o"
 	d_target_objs="riscv-d.o"
+	target_gtfiles="$target_gtfiles \$(srcdir)/config/riscv/riscv-builtins.cc \$(srcdir)/config/riscv/riscv-vector-builtins.cc"
+	target_gtfiles="$target_gtfiles \$(srcdir)/config/riscv/riscv-vector-builtins-functions.cc"
+	target_gtfiles="$target_gtfiles \$(srcdir)/config/riscv/riscv-vector-builtins-functions.h"
 	;;
 rs6000*-*-*)
 	extra_options="${extra_options} g.opt fused-madd.opt rs6000/rs6000-tables.opt"

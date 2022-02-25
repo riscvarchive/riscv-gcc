@@ -156,6 +156,10 @@ union _FP_UNION_H
     }						\
   while (0)
 
+#define FP_CMP_H(r, X, Y, un, ex)	_FP_CMP (H, 1, (r), X, Y, (un), (ex))
+#define FP_CMP_EQ_H(r, X, Y, ex)	_FP_CMP_EQ (H, 1, (r), X, Y, (ex))
+#define FP_CMP_UNORD_H(r, X, Y, ex)	_FP_CMP_UNORD (H, 1, (r), X, Y, (ex))
+
 #define FP_TO_INT_H(r, X, rsz, rsg)	_FP_TO_INT (H, 1, (r), X, (rsz), (rsg))
 #define FP_TO_INT_ROUND_H(r, X, rsz, rsg)	\
   _FP_TO_INT_ROUND (H, 1, (r), X, (rsz), (rsg))

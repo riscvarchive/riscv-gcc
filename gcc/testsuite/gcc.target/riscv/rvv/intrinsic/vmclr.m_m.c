@@ -1,0 +1,105 @@
+
+/* { dg-do compile } */
+/* { dg-skip-if "test vector intrinsic" { *-*-* } { "*" } { "-march=rv*v*" } } */
+
+#include <stddef.h>
+#include <riscv_vector.h>
+
+
+vbool64_t
+test_vmclr_m_b64(size_t vl)
+{
+  return vmclr_m_b64(vl);
+}
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e8,\s*mf8,\s*t[au],\s*m[au]\s+(?:(?!vsetvli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b64 )?} 1 } } */
+
+vbool64_t
+test_vmclr_m_b64_vl31(size_t vl)
+{
+  return vmclr_m_b64(31);
+}
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*31,\s*e8,\s*mf8,\s*t[au],\s*m[au]\s+(?:(?!vsetivli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b64_vl31 )?} 1 } } */
+
+vbool32_t
+test_vmclr_m_b32(size_t vl)
+{
+  return vmclr_m_b32(vl);
+}
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e8,\s*mf4,\s*t[au],\s*m[au]\s+(?:(?!vsetvli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b32 )?} 1 } } */
+
+vbool32_t
+test_vmclr_m_b32_vl31(size_t vl)
+{
+  return vmclr_m_b32(31);
+}
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*31,\s*e8,\s*mf4,\s*t[au],\s*m[au]\s+(?:(?!vsetivli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b32_vl31 )?} 1 } } */
+
+vbool16_t
+test_vmclr_m_b16(size_t vl)
+{
+  return vmclr_m_b16(vl);
+}
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e8,\s*mf2,\s*t[au],\s*m[au]\s+(?:(?!vsetvli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b16 )?} 1 } } */
+
+vbool16_t
+test_vmclr_m_b16_vl31(size_t vl)
+{
+  return vmclr_m_b16(31);
+}
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*31,\s*e8,\s*mf2,\s*t[au],\s*m[au]\s+(?:(?!vsetivli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b16_vl31 )?} 1 } } */
+
+vbool8_t
+test_vmclr_m_b8(size_t vl)
+{
+  return vmclr_m_b8(vl);
+}
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e8,\s*m1,\s*t[au],\s*m[au]\s+(?:(?!vsetvli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b8 )?} 1 } } */
+
+vbool8_t
+test_vmclr_m_b8_vl31(size_t vl)
+{
+  return vmclr_m_b8(31);
+}
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*31,\s*e8,\s*m1,\s*t[au],\s*m[au]\s+(?:(?!vsetivli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b8_vl31 )?} 1 } } */
+
+vbool4_t
+test_vmclr_m_b4(size_t vl)
+{
+  return vmclr_m_b4(vl);
+}
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e8,\s*m2,\s*t[au],\s*m[au]\s+(?:(?!vsetvli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b4 )?} 1 } } */
+
+vbool4_t
+test_vmclr_m_b4_vl31(size_t vl)
+{
+  return vmclr_m_b4(31);
+}
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*31,\s*e8,\s*m2,\s*t[au],\s*m[au]\s+(?:(?!vsetivli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b4_vl31 )?} 1 } } */
+
+vbool2_t
+test_vmclr_m_b2(size_t vl)
+{
+  return vmclr_m_b2(vl);
+}
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e8,\s*m4,\s*t[au],\s*m[au]\s+(?:(?!vsetvli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b2 )?} 1 } } */
+
+vbool2_t
+test_vmclr_m_b2_vl31(size_t vl)
+{
+  return vmclr_m_b2(31);
+}
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*31,\s*e8,\s*m4,\s*t[au],\s*m[au]\s+(?:(?!vsetivli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b2_vl31 )?} 1 } } */
+
+vbool1_t
+test_vmclr_m_b1(size_t vl)
+{
+  return vmclr_m_b1(vl);
+}
+/* { dg-final { scan-assembler-times {vsetvli\s+zero,\s*(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*e8,\s*m8,\s*t[au],\s*m[au]\s+(?:(?!vsetvli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b1 )?} 1 } } */
+
+vbool1_t
+test_vmclr_m_b1_vl31(size_t vl)
+{
+  return vmclr_m_b1(31);
+}
+/* { dg-final { scan-assembler-times {vsetivli\s+zero,\s*31,\s*e8,\s*m8,\s*t[au],\s*m[au]\s+(?:(?!vsetivli|vmclr\.m).)*\s+vmclr\.m\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n(?: test_vmclr_m_b1_vl31 )?} 1 } } */

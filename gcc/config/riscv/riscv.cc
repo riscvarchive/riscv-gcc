@@ -20,12 +20,14 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #define IN_TARGET_CODE 1
+#define VSET_TOLERATE 2
 
 #define INCLUDE_STRING
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "backend.h"
 #include "rtl.h"
 #include "regs.h"
 #include "insn-config.h"
@@ -46,7 +48,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "reload.h"
 #include "tm_p.h"
 #include "target.h"
-#include "target-def.h"
 #include "basic-block.h"
 #include "expr.h"
 #include "optabs.h"
@@ -57,6 +58,21 @@ along with GCC; see the file COPYING3.  If not see
 #include "predict.h"
 #include "tree-pass.h"
 #include "opts.h"
+#include "langhooks.h"
+#include "rtl-iter.h"
+#include "gimple.h"
+#include "cfghooks.h"
+#include "cfgloop.h"
+#include "fold-const.h"
+#include "gimple-iterator.h"
+#include "tree-vectorizer.h"
+#include "tree-ssa-loop-niter.h"
+#include "rtx-vector-builder.h"
+#include "fractional-cost.h"
+#include "riscv-vector-builtins.h"
+/* This file should be included last.  */
+#include "target-def.h"
+#include "riscv-vector-cost.h"
 
 /* True if X is an UNSPEC wrapper around a SYMBOL_REF or LABEL_REF.  */
 #define UNSPEC_ADDRESS_P(X)					\
@@ -100,7 +116,7 @@ enum riscv_address_type {
 /* Information about a function's frame layout.  */
 struct GTY(())  riscv_frame_info {
   /* The size of the frame in bytes.  */
-  HOST_WIDE_INT total_size;
+  poly_int64 total_size;
 
   /* Bit X is set if the function saves or restores GPR X.  */
   unsigned int mask;
@@ -112,17 +128,20 @@ struct GTY(())  riscv_frame_info {
   unsigned save_libcall_adjustment;
 
   /* Offsets of fixed-point and floating-point save areas from frame bottom */
-  HOST_WIDE_INT gp_sp_offset;
-  HOST_WIDE_INT fp_sp_offset;
+  poly_int64 gp_sp_offset;
+  poly_int64 fp_sp_offset;
+
+  /* offset of all arguments. */
+  HOST_WIDE_INT constant_offset;
 
   /* Offset of virtual frame pointer from stack pointer/frame bottom */
-  HOST_WIDE_INT frame_pointer_offset;
+  poly_int64 frame_pointer_offset;
 
   /* Offset of hard frame pointer from stack pointer/frame bottom */
-  HOST_WIDE_INT hard_frame_pointer_offset;
+  poly_int64 hard_frame_pointer_offset;
 
   /* The offset of arg_pointer_rtx from the bottom of the frame.  */
-  HOST_WIDE_INT arg_pointer_offset;
+  poly_int64 arg_pointer_offset;
 };
 
 enum riscv_privilege_levels {
@@ -166,6 +185,18 @@ struct riscv_arg_info {
 
   /* The offset of the first register used, provided num_fprs is nonzero.  */
   unsigned int fpr_offset;
+
+  /* The number of vector registers allocated to this argument.  */
+  unsigned int num_vrs;
+
+  /* The offset of the first register used, provided num_vrs is nonzero.  */
+  unsigned int vr_offset;
+
+  /* The number of mask registers allocated to this argument.  */
+  unsigned int num_mrs;
+
+  /* The offset of the first register used, provided num_mrs is nonzero.  */
+  unsigned int mr_offset;
 };
 
 /* Information about an address described by riscv_address_type.
@@ -223,6 +254,12 @@ struct riscv_tune_param
   bool slow_unaligned_access;
 };
 
+/* Cost for vector insn classes.  */
+struct riscv_vector_tune_param {
+    const vector_insn_cost_table* rvv_insn_costs_table;
+    const vector_stmt_cost_table* rvv_stmt_costs_table;
+};
+
 /* Information about one micro-arch we know about.  */
 struct riscv_tune_info {
   /* This micro-arch canonical name.  */
@@ -233,6 +270,9 @@ struct riscv_tune_info {
 
   /* Tuning parameters for this micro-arch.  */
   const struct riscv_tune_param *tune_param;
+
+  /* Tuning vector parameters for this micro-arch.  */
+  const struct riscv_vector_tune_param *vector_tune_param;
 };
 
 /* Global variables for machine-dependent things.  */
@@ -251,8 +291,17 @@ static int epilogue_cfa_sp_offset;
 /* Which tuning parameters to use.  */
 static const struct riscv_tune_param *tune_param;
 
+/* Which vector tuning parameters to use.  */
+static const struct riscv_vector_tune_param *vector_tune_param;
+
 /* Which automaton to use for tuning.  */
 enum riscv_microarchitecture_type riscv_microarchitecture;
+
+/* The number of 64-bit elements in an RVV vector.  */
+poly_uint_for_mode riscv_vector_chunks;
+
+/* Prefer vf for auto-vectorizer.  */
+unsigned riscv_vectorization_factor;
 
 /* Index R is the smallest register class that contains register R.  */
 const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
@@ -272,7 +321,22 @@ const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
-  FRAME_REGS,	FRAME_REGS,
+  FRAME_REGS,        FRAME_REGS, VL_REGS,        VTYPE_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  V0_REGS, VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
 };
 
 /* Costs to use when optimizing for rocket.  */
@@ -327,6 +391,47 @@ static const struct riscv_tune_param optimize_size_tune_info = {
   false,					/* slow_unaligned_access */
 };
 
+static const vector_insn_scale_table generic_rvv_insn_scale_table = {
+    4, /*load*/
+    1, /*store*/
+    1, /*alu*/
+    1, /*mult*/
+    1, /*movi*/
+    1, /*dup*/
+    1, /*extract*/
+    1, /*if_then_else*/
+};
+
+static const vector_stmt_scale_table generic_rvv_stmt_scale_table = {
+    1, /* scalar_int_stmt_cost  */
+    1, /* scalar_fp_stmt_cost  */
+    1, /* scalar_load_cost  */
+    1, /* scalar_store_cost  */
+    1, /* vec_int_stmt_cost  */
+    1, /* vec_fp_stmt_cost  */
+    1, /* vec_permute_cost  */
+    1, /* vec_to_scalar_cost  */
+    1, /* scalar_to_vec_cost  */
+    1, /* vec_align_load_cost  */
+    1, /* vec_unalign_load_cost  */
+    1, /* vec_unalign_store_cost  */
+    1, /* vec_store_cost  */
+    1, /* cond_taken_branch_cost  */
+    1 /* cond_not_taken_branch_cost  */
+};
+
+static const vector_insn_cost_table* generic_rvv_insn_cost_table =
+            new vector_insn_cost_table(&generic_rvv_insn_scale_table);
+
+static const vector_stmt_cost_table* generic_rvv_stmt_cost_table =
+            new vector_stmt_cost_table(&generic_rvv_stmt_scale_table);
+
+/* Costs to use when optimizing for riscv vector.  */
+static const struct riscv_vector_tune_param generic_rvv_tune_info = {
+  generic_rvv_insn_cost_table,
+  generic_rvv_stmt_cost_table
+};
+
 static tree riscv_handle_fndecl_attribute (tree *, tree, tree, int, bool *);
 static tree riscv_handle_type_attribute (tree *, tree, tree, int, bool *);
 
@@ -358,12 +463,12 @@ static const unsigned gpr_save_reg_order[] = {
 
 /* A table describing all the processors GCC knows about.  */
 static const struct riscv_tune_info riscv_tune_info_table[] = {
-  { "rocket", generic, &rocket_tune_info },
-  { "sifive-3-series", generic, &rocket_tune_info },
-  { "sifive-5-series", generic, &rocket_tune_info },
-  { "sifive-7-series", sifive_7, &sifive_7_tune_info },
-  { "thead-c906", generic, &thead_c906_tune_info },
-  { "size", generic, &optimize_size_tune_info },
+  { "rocket", generic, &rocket_tune_info, &generic_rvv_tune_info },
+  { "sifive-3-series", generic, &rocket_tune_info, &generic_rvv_tune_info },
+  { "sifive-5-series", generic, &rocket_tune_info, &generic_rvv_tune_info },
+  { "sifive-7-series", sifive_7, &sifive_7_tune_info, &generic_rvv_tune_info },
+  { "thead-c906", generic, &thead_c906_tune_info,  &generic_rvv_tune_info },
+  { "size", generic, &optimize_size_tune_info, &generic_rvv_tune_info },
 };
 
 /* Implement TARGET_MIN_ARITHMETIC_PRECISION.  */
@@ -703,11 +808,2513 @@ static int riscv_symbol_insns (enum riscv_symbol_type type)
     }
 }
 
+/* Helper functions for RVV */
+
+machine_mode
+get_vector_mode_for_mask (machine_mode mode)
+{
+  machine_mode preferred_simd_mode[4];
+  preferred_simd_mode[0] = targetm.vectorize.preferred_simd_mode (QImode);
+  preferred_simd_mode[1] = targetm.vectorize.preferred_simd_mode (HImode);
+  preferred_simd_mode[2] = targetm.vectorize.preferred_simd_mode (SImode);
+  preferred_simd_mode[3] = targetm.vectorize.preferred_simd_mode (DImode);
+
+  for (int i = 0; i < 4; i++)
+    {
+      if (known_eq (GET_MODE_NUNITS (preferred_simd_mode[i]), GET_MODE_NUNITS (mode)))
+        return preferred_simd_mode[i];
+    }
+
+  machine_mode rvv_mode;
+  FOR_EACH_MODE_IN_CLASS (rvv_mode, MODE_VECTOR_INT)
+    if (GET_MODE_INNER (rvv_mode) == QImode
+      && known_eq (GET_MODE_NUNITS (rvv_mode),
+        GET_MODE_NUNITS (mode)))
+      return rvv_mode;
+  return VOIDmode;
+}
+
+unsigned int
+get_vtype_for_mode (machine_mode mode)
+{
+  /* ???? In RVV intrinsics docs, for vsetvl and vsetvlmax intrinsics,
+     the tail and mask policy are set default to be ta,mu. Whether we
+     should have other combinations of policy and add ta or ma operand
+     to vsetvl and vsetvlmax intrinsics needs community confirm. */
+  switch (mode)
+    {
+    case VNx2QImode:
+    case VNx2BImode:
+      return 0x45;
+
+    case VNx4QImode:
+    case VNx4BImode:
+      return 0x46;
+
+    case VNx8QImode:
+    case VNx8BImode:
+      return 0x47;
+
+    case VNx16QImode:
+    case VNx16BImode:
+      return 0x40;
+
+    case VNx32QImode:
+    case VNx32BImode:
+      return 0x41;
+
+    case VNx64QImode:
+    case VNx64BImode:
+      return 0x42;
+
+    case VNx128QImode:
+    case VNx128BImode:
+      return 0x43;
+
+    case VNx2HImode:
+    case VNx2HFmode:
+      return 0x4e;
+
+    case VNx4HImode:
+    case VNx4HFmode:
+      return 0x4f;
+
+    case VNx8HImode:
+    case VNx8HFmode:
+      return 0x48;
+
+    case VNx16HImode:
+    case VNx16HFmode:
+      return 0x49;
+
+    case VNx32HImode:
+    case VNx32HFmode:
+      return 0x4a;
+
+    case VNx64HImode:
+    case VNx64HFmode:
+      return 0x4b;
+
+    case VNx2SImode:
+    case VNx2SFmode:
+      return 0x57;
+
+    case VNx4SImode:
+    case VNx4SFmode:
+      return 0x50;
+
+    case VNx8SImode:
+    case VNx8SFmode:
+      return 0x51;
+
+    case VNx16SImode:
+    case VNx16SFmode:
+      return 0x52;
+
+    case VNx32SImode:
+    case VNx32SFmode:
+      return 0x53;
+
+    case VNx2DImode:
+    case VNx2DFmode:
+      return 0x58;
+
+    case VNx4DImode:
+    case VNx4DFmode:
+      return 0x59;
+
+    case VNx8DImode:
+    case VNx8DFmode:
+      return 0x5a;
+
+    case VNx16DImode:
+      return 0x5b;
+
+    default:
+      break;
+    }
+
+  gcc_unreachable ();
+}
+
+rtx
+riscv_vector_gen_policy (unsigned int rvv_policy)
+{
+  if (rvv_policy == RVV_POLICY_MU)
+    return riscv_vector::gen_mu_policy ();
+  else if (rvv_policy == RVV_POLICY_TU)
+    return riscv_vector::gen_tu_policy ();
+  else
+    return riscv_vector::gen_any_policy ();
+}
+
+bool
+riscv_vector_mask_mode_p (machine_mode mode)
+{
+  return (mode == VNx2BImode || mode == VNx4BImode || mode == VNx8BImode
+          || mode == VNx16BImode || mode == VNx32BImode
+          || mode == VNx64BImode || mode == VNx128BImode);
+}
+
+bool
+riscv_tuple_mode_p (machine_mode mode)
+{
+#define VECTOR_DATA_MODE_P_TUPLE8(MODE)                                       \
+  (mode == VNx2x##MODE##mode) \
+      || (mode == VNx3x##MODE##mode)                        \
+      || (mode == VNx4x##MODE##mode)                        \
+      || (mode == VNx5x##MODE##mode)                        \
+      || (mode == VNx6x##MODE##mode)                        \
+      || (mode == VNx7x##MODE##mode)                        \
+      || (mode == VNx8x##MODE##mode)
+#define VECTOR_DATA_MODE_P_TUPLE4(MODE)                                       \
+  (mode == VNx2x##MODE##mode) \
+      || (mode == VNx3x##MODE##mode)                        \
+      || (mode == VNx4x##MODE##mode)
+#define VECTOR_DATA_MODE_P_TUPLE2(MODE)                                       \
+  (mode == VNx2x##MODE##mode)
+
+  return (VECTOR_DATA_MODE_P_TUPLE8 (8QI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4HI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2SI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4HF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2SF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4QI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2HI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2HF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2QI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (16QI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (8HI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4SI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2DI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (8HF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4SF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2DF)
+          || VECTOR_DATA_MODE_P_TUPLE4 (32QI)
+          || VECTOR_DATA_MODE_P_TUPLE4 (16HI)
+          || VECTOR_DATA_MODE_P_TUPLE4 (8SI)
+          || VECTOR_DATA_MODE_P_TUPLE4 (4DI)
+          || VECTOR_DATA_MODE_P_TUPLE4 (16HF)
+          || VECTOR_DATA_MODE_P_TUPLE4 (8SF)
+          || VECTOR_DATA_MODE_P_TUPLE4 (4DF)
+          || VECTOR_DATA_MODE_P_TUPLE2 (64QI)
+          || VECTOR_DATA_MODE_P_TUPLE2 (32HI)
+          || VECTOR_DATA_MODE_P_TUPLE2 (16SI)
+          || VECTOR_DATA_MODE_P_TUPLE2 (8DI)
+          || VECTOR_DATA_MODE_P_TUPLE2 (32HF)
+          || VECTOR_DATA_MODE_P_TUPLE2 (16SF)
+          || VECTOR_DATA_MODE_P_TUPLE2 (8DF));
+}
+
+bool
+riscv_vector_data_mode_p (machine_mode mode)
+{
+  return (mode == VNx2QImode || mode == VNx4QImode || mode == VNx8QImode || mode == VNx16QImode
+            || mode == VNx32QImode || mode == VNx64QImode || mode == VNx128QImode || mode == VNx2HImode
+            || mode == VNx4HImode || mode == VNx8HImode || mode == VNx16HImode || mode == VNx32HImode
+            || mode == VNx64HImode || mode == VNx2SImode || mode == VNx4SImode || mode == VNx8SImode
+            || mode == VNx16SImode || mode == VNx32SImode || mode == VNx2DImode || mode == VNx4DImode
+            || mode == VNx8DImode || mode == VNx16DImode || mode == VNx2HFmode || mode == VNx4HFmode
+            || mode == VNx8HFmode || mode == VNx16HFmode || mode == VNx32HFmode || mode == VNx64HFmode
+            || mode == VNx2SFmode || mode == VNx4SFmode || mode == VNx8SFmode || mode == VNx16SFmode
+            || mode == VNx32SFmode || mode == VNx2DFmode || mode == VNx4DFmode || mode == VNx8DFmode
+            || mode == VNx16DFmode || riscv_tuple_mode_p (mode));
+}
+
+bool
+riscv_vector_mode_p (machine_mode mode)
+{
+  return riscv_vector_mask_mode_p (mode) || riscv_vector_data_mode_p (mode);
+}
+
+static bool
+riscv_partial_tuple_vector_mode_p (machine_mode mode)
+{
+  switch (mode)
+    {
+    case VNx2x8QImode:
+    case VNx3x8QImode:
+    case VNx4x8QImode:
+    case VNx5x8QImode:
+    case VNx6x8QImode:
+    case VNx7x8QImode:
+    case VNx8x8QImode:
+
+    case VNx2x4QImode:
+    case VNx3x4QImode:
+    case VNx4x4QImode:
+    case VNx5x4QImode:
+    case VNx6x4QImode:
+    case VNx7x4QImode:
+    case VNx8x4QImode:
+
+    case VNx2x2QImode:
+    case VNx3x2QImode:
+    case VNx4x2QImode:
+    case VNx5x2QImode:
+    case VNx6x2QImode:
+    case VNx7x2QImode:
+    case VNx8x2QImode:
+
+    case VNx2x4HImode:
+    case VNx3x4HImode:
+    case VNx4x4HImode:
+    case VNx5x4HImode:
+    case VNx6x4HImode:
+    case VNx7x4HImode:
+    case VNx8x4HImode:
+
+    case VNx2x2HImode:
+    case VNx3x2HImode:
+    case VNx4x2HImode:
+    case VNx5x2HImode:
+    case VNx6x2HImode:
+    case VNx7x2HImode:
+    case VNx8x2HImode:
+
+    case VNx2x2SImode:
+    case VNx3x2SImode:
+    case VNx4x2SImode:
+    case VNx5x2SImode:
+    case VNx6x2SImode:
+    case VNx7x2SImode:
+    case VNx8x2SImode:
+
+    case VNx2x4HFmode:
+    case VNx3x4HFmode:
+    case VNx4x4HFmode:
+    case VNx5x4HFmode:
+    case VNx6x4HFmode:
+    case VNx7x4HFmode:
+    case VNx8x4HFmode:
+
+    case VNx2x2HFmode:
+    case VNx3x2HFmode:
+    case VNx4x2HFmode:
+    case VNx5x2HFmode:
+    case VNx6x2HFmode:
+    case VNx7x2HFmode:
+    case VNx8x2HFmode:
+
+    case VNx2x2SFmode:
+    case VNx3x2SFmode:
+    case VNx4x2SFmode:
+    case VNx5x2SFmode:
+    case VNx6x2SFmode:
+    case VNx7x2SFmode:
+    case VNx8x2SFmode:
+      return true;
+    default:
+      return false;
+    }
+}
+
+static poly_uint64
+riscv_vector_natural_size (machine_mode mode)
+{
+  switch (mode)
+    {
+    case VNx2x8QImode:
+    case VNx3x8QImode:
+    case VNx4x8QImode:
+    case VNx5x8QImode:
+    case VNx6x8QImode:
+    case VNx7x8QImode:
+    case VNx8x8QImode:
+      return GET_MODE_SIZE (VNx8QImode);
+
+    case VNx2x4QImode:
+    case VNx3x4QImode:
+    case VNx4x4QImode:
+    case VNx5x4QImode:
+    case VNx6x4QImode:
+    case VNx7x4QImode:
+    case VNx8x4QImode:
+      return GET_MODE_SIZE (VNx4QImode);
+
+    case VNx2x2QImode:
+    case VNx3x2QImode:
+    case VNx4x2QImode:
+    case VNx5x2QImode:
+    case VNx6x2QImode:
+    case VNx7x2QImode:
+    case VNx8x2QImode:
+      return GET_MODE_SIZE (VNx2QImode);
+
+    case VNx2x4HImode:
+    case VNx3x4HImode:
+    case VNx4x4HImode:
+    case VNx5x4HImode:
+    case VNx6x4HImode:
+    case VNx7x4HImode:
+    case VNx8x4HImode:
+      return GET_MODE_SIZE (VNx4HImode);
+
+    case VNx2x2HImode:
+    case VNx3x2HImode:
+    case VNx4x2HImode:
+    case VNx5x2HImode:
+    case VNx6x2HImode:
+    case VNx7x2HImode:
+    case VNx8x2HImode:
+      return GET_MODE_SIZE (VNx2HImode);
+
+    case VNx2x2SImode:
+    case VNx3x2SImode:
+    case VNx4x2SImode:
+    case VNx5x2SImode:
+    case VNx6x2SImode:
+    case VNx7x2SImode:
+    case VNx8x2SImode:
+      return GET_MODE_SIZE (VNx2SImode);
+
+    case VNx2x4HFmode:
+    case VNx3x4HFmode:
+    case VNx4x4HFmode:
+    case VNx5x4HFmode:
+    case VNx6x4HFmode:
+    case VNx7x4HFmode:
+    case VNx8x4HFmode:
+      return GET_MODE_SIZE (VNx4HFmode);
+
+    case VNx2x2HFmode:
+    case VNx3x2HFmode:
+    case VNx4x2HFmode:
+    case VNx5x2HFmode:
+    case VNx6x2HFmode:
+    case VNx7x2HFmode:
+    case VNx8x2HFmode:
+      return GET_MODE_SIZE (VNx2HFmode);
+
+    case VNx2x2SFmode:
+    case VNx3x2SFmode:
+    case VNx4x2SFmode:
+    case VNx5x2SFmode:
+    case VNx6x2SFmode:
+    case VNx7x2SFmode:
+    case VNx8x2SFmode:
+      return GET_MODE_SIZE (VNx2SFmode);
+
+    default:
+      break;
+    }
+
+  return BYTES_PER_RISCV_VECTOR;
+}
+
+bool
+riscv_const_poly_int_p (rtx x)
+{
+  poly_int64 value = rtx_to_poly_int64 (x);
+
+  HOST_WIDE_INT factor = value.coeffs[0];
+  return (value.coeffs[1] == factor && factor == UNITS_PER_V_REG.coeffs[0]);
+}
+
+unsigned int
+riscv_parse_vlmul_field (unsigned int vtype)
+{
+  return vtype & 0x7;
+}
+
+unsigned int
+riscv_parse_vsew_field (unsigned int vtype)
+{
+  return (vtype >> 3) & 0x7;
+}
+
+bool
+riscv_parse_vta_field (unsigned int vtype)
+{
+  return (vtype & 0x40) != 0;
+}
+
+bool
+riscv_parse_vma_field (unsigned int vtype)
+{
+  return (vtype & 0x80) != 0;
+}
+
+unsigned int
+riscv_classify_vlmul_field (machine_mode mode)
+{
+  /* Make the decision based on the mode's enum value rather than its
+     properties, so that we keep the correct classification regardless
+     of -mriscv-vector-bits.  */
+  switch (mode)
+    {
+#define CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8(MODE)                               \
+  case E_VNx##MODE##mode:                                                     \
+  case E_VNx2x##MODE##mode:                                                   \
+  case E_VNx3x##MODE##mode:                                                   \
+  case E_VNx4x##MODE##mode:                                                   \
+  case E_VNx5x##MODE##mode:                                                   \
+  case E_VNx6x##MODE##mode:                                                   \
+  case E_VNx7x##MODE##mode:                                                   \
+  case E_VNx8x##MODE##mode:
+#define CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4(MODE)                               \
+  case E_VNx##MODE##mode:                                                     \
+  case E_VNx2x##MODE##mode:                                                   \
+  case E_VNx3x##MODE##mode:                                                   \
+  case E_VNx4x##MODE##mode:
+#define CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2(MODE)                               \
+  case E_VNx##MODE##mode:                                                     \
+  case E_VNx2x##MODE##mode:
+      /* Partial RVV LMUL = 1/2 vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (8QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2SI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4HF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2SF)
+
+    case E_VNx8BImode:
+      return VLMUL_FIELD_111;
+      /* Partial RVV LMUL = 1/4 vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2HF)
+
+    case E_VNx4BImode:
+      return VLMUL_FIELD_110;
+      /* Partial RVV LMUL = 1/8 vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2QI)
+
+    case E_VNx2BImode:
+      return VLMUL_FIELD_101;
+      /* x1 RVV vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (16QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (8HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4SI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2DI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (8HF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4SF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2DF)
+
+    case E_VNx16BImode:
+      return VLMUL_FIELD_000;
+      /* x2 RVV vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (32QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (16HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (8SI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (4DI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (16HF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (8SF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (4DF)
+
+    case E_VNx32BImode:
+      return VLMUL_FIELD_001;
+      /* x4 RVV vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (64QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (32HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (16SI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (8DI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (32HF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (16SF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (8DF)
+
+    case E_VNx64BImode:
+      return VLMUL_FIELD_010;
+
+    /* x8 RVV vectors.  */
+    case E_VNx128QImode:
+    case E_VNx64HImode:
+    case E_VNx32SImode:
+    case E_VNx16DImode:
+    case E_VNx64HFmode:
+    case E_VNx32SFmode:
+    case E_VNx16DFmode:
+    case E_VNx128BImode:
+      return VLMUL_FIELD_011;
+
+    default:
+      break;
+    }
+
+  /* we don't care about VLMUL for Mask */
+  return VLMUL_FIELD_000;
+}
+
+unsigned int
+riscv_classify_vsew_field (machine_mode mode)
+{
+  switch (GET_MODE_INNER (mode))
+    {
+    case E_QImode:
+      return VSEW_FIELD_000;
+
+    case E_HImode:
+    case E_HFmode:
+      return VSEW_FIELD_001;
+
+    case E_SImode:
+    case E_SFmode:
+      return VSEW_FIELD_010;
+
+    case E_DImode:
+    case E_DFmode:
+      return VSEW_FIELD_011;
+
+    case E_TImode:
+      return VSEW_FIELD_100;
+
+    default:
+      break;
+    }
+
+  /* we don't care about VSEW for Mask */
+  return VSEW_FIELD_000;
+}
+
+machine_mode
+riscv_translate_attr_mode (rtx_insn *insn)
+{
+  gcc_assert (recog_memoized (insn) >= 0);
+
+  switch (get_attr_mode (insn))
+    {
+#define TRANSLATE_VECTOR_MODE_TUPLE8(MODE)                                    \
+  case MODE_VNX##MODE:                                                        \
+    return VNx##MODE##mode;                                                   \
+  case MODE_VNX2X##MODE:                                                      \
+    return VNx2x##MODE##mode;                                                 \
+  case MODE_VNX3X##MODE:                                                      \
+    return VNx3x##MODE##mode;                                                 \
+  case MODE_VNX4X##MODE:                                                      \
+    return VNx4x##MODE##mode;                                                 \
+  case MODE_VNX5X##MODE:                                                      \
+    return VNx5x##MODE##mode;                                                 \
+  case MODE_VNX6X##MODE:                                                      \
+    return VNx6x##MODE##mode;                                                 \
+  case MODE_VNX7X##MODE:                                                      \
+    return VNx7x##MODE##mode;                                                 \
+  case MODE_VNX8X##MODE:                                                      \
+    return VNx8x##MODE##mode;
+#define TRANSLATE_VECTOR_MODE_TUPLE4(MODE)                                    \
+  case MODE_VNX##MODE:                                                        \
+    return VNx##MODE##mode;                                                   \
+  case MODE_VNX2X##MODE:                                                      \
+    return VNx2x##MODE##mode;                                                 \
+  case MODE_VNX3X##MODE:                                                      \
+    return VNx3x##MODE##mode;                                                 \
+  case MODE_VNX4X##MODE:                                                      \
+    return VNx4x##MODE##mode;
+#define TRANSLATE_VECTOR_MODE_TUPLE2(MODE)                                    \
+  case MODE_VNX##MODE:                                                        \
+    return VNx##MODE##mode;                                                   \
+  case MODE_VNX2X##MODE:                                                      \
+    return VNx2x##MODE##mode;
+#define TRANSLATE_VECTOR_MODE(MODE)                                           \
+  case MODE_VNX##MODE:                                                        \
+    return VNx##MODE##mode;
+      TRANSLATE_VECTOR_MODE_TUPLE8 (8QI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4HI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2SI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4HF)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2SF)
+      TRANSLATE_VECTOR_MODE (8BI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4QI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2HI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2HF)
+      TRANSLATE_VECTOR_MODE (4BI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2QI)
+      TRANSLATE_VECTOR_MODE (2BI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (16QI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (8HI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4SI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2DI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (8HF)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4SF)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2DF)
+      TRANSLATE_VECTOR_MODE (16BI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (32QI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (16HI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (8SI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (4DI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (16HF)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (8SF)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (4DF)
+      TRANSLATE_VECTOR_MODE (32BI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (64QI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (32HI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (16SI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (8DI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (32HF)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (16SF)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (8DF)
+      TRANSLATE_VECTOR_MODE (64BI)
+      TRANSLATE_VECTOR_MODE (128QI)
+      TRANSLATE_VECTOR_MODE (64HI)
+      TRANSLATE_VECTOR_MODE (32SI)
+      TRANSLATE_VECTOR_MODE (16DI)
+      TRANSLATE_VECTOR_MODE (64HF)
+      TRANSLATE_VECTOR_MODE (32SF)
+      TRANSLATE_VECTOR_MODE (16DF)
+      TRANSLATE_VECTOR_MODE (128BI)
+
+    default:
+      break;
+    }
+
+  return VOIDmode;
+}
+
+int
+riscv_classify_nf (machine_mode mode)
+{
+#define CLASSIFY_TUPLE8(MODE) \
+  case VNx2x##MODE##mode: return 2; \
+  case VNx3x##MODE##mode: return 3; \
+  case VNx4x##MODE##mode: return 4; \
+  case VNx5x##MODE##mode: return 5; \
+  case VNx6x##MODE##mode: return 6; \
+  case VNx7x##MODE##mode: return 7; \
+  case VNx8x##MODE##mode: return 8;
+#define CLASSIFY_TUPLE4(MODE) \
+  case VNx2x##MODE##mode: return 2; \
+  case VNx3x##MODE##mode: return 3; \
+  case VNx4x##MODE##mode: return 4;
+#define CLASSIFY_TUPLE2(MODE) \
+  case VNx2x##MODE##mode: return 2;
+  switch (mode)
+  {
+  CLASSIFY_TUPLE8(2QI)
+  CLASSIFY_TUPLE8(4QI)
+  CLASSIFY_TUPLE8(8QI)
+  CLASSIFY_TUPLE8(16QI)
+  CLASSIFY_TUPLE4(32QI)
+  CLASSIFY_TUPLE2(64QI)
+  CLASSIFY_TUPLE8(2HI)
+  CLASSIFY_TUPLE8(4HI)
+  CLASSIFY_TUPLE8(8HI)
+  CLASSIFY_TUPLE4(16HI)
+  CLASSIFY_TUPLE2(32HI)
+  CLASSIFY_TUPLE8(2SI)
+  CLASSIFY_TUPLE8(4SI)
+  CLASSIFY_TUPLE4(8SI)
+  CLASSIFY_TUPLE2(16SI)
+  CLASSIFY_TUPLE8(2DI)
+  CLASSIFY_TUPLE4(4DI)
+  CLASSIFY_TUPLE2(8DI)
+  CLASSIFY_TUPLE8(2HF)
+  CLASSIFY_TUPLE8(4HF)
+  CLASSIFY_TUPLE8(8HF)
+  CLASSIFY_TUPLE4(16HF)
+  CLASSIFY_TUPLE2(32HF)
+  CLASSIFY_TUPLE8(2SF)
+  CLASSIFY_TUPLE8(4SF)
+  CLASSIFY_TUPLE4(8SF)
+  CLASSIFY_TUPLE2(16SF)
+  CLASSIFY_TUPLE8(2DF)
+  CLASSIFY_TUPLE4(4DF)
+  CLASSIFY_TUPLE2(8DF)
+  default:
+    break;
+  }
+
+  return 1;
+}
+
+int riscv_vlmul_regsize(machine_mode mode)
+{
+    switch(riscv_classify_vlmul_field(mode))
+    {
+        case VLMUL_FIELD_001:
+            return 2;
+        case VLMUL_FIELD_010:
+            return 4;
+        case VLMUL_FIELD_011:
+            return 8;
+        case VLMUL_FIELD_100:
+            gcc_unreachable();
+    }
+    return 1;
+}
+
+/* Return the RVV vector mode that has NUNITS elements of mode INNER_MODE.  */
+
+opt_machine_mode
+riscv_tuple_mode (machine_mode mode, unsigned int nvecs)
+{
+  switch (mode)
+    {
+#define TUPLE_MODE_TUPLE8(MODE)                                               \
+  case VNx##MODE##mode:                                                       \
+    if (nvecs == 2)                                                           \
+      return VNx2x##MODE##mode;                                               \
+    if (nvecs == 3)                                                           \
+      return VNx3x##MODE##mode;                                               \
+    if (nvecs == 4)                                                           \
+      return VNx4x##MODE##mode;                                               \
+    if (nvecs == 5)                                                           \
+      return VNx5x##MODE##mode;                                               \
+    if (nvecs == 6)                                                           \
+      return VNx6x##MODE##mode;                                               \
+    if (nvecs == 7)                                                           \
+      return VNx7x##MODE##mode;                                               \
+    if (nvecs == 8)                                                           \
+      return VNx8x##MODE##mode;                                               \
+    break;
+#define TUPLE_MODE_TUPLE4(MODE)                                               \
+  case VNx##MODE##mode:                                                       \
+    if (nvecs == 2)                                                           \
+      return VNx2x##MODE##mode;                                               \
+    if (nvecs == 3)                                                           \
+      return VNx3x##MODE##mode;                                               \
+    if (nvecs == 4)                                                           \
+      return VNx4x##MODE##mode;                                               \
+    break;
+#define TUPLE_MODE_TUPLE2(MODE)                                               \
+  case VNx##MODE##mode:                                                       \
+    if (nvecs == 2)                                                           \
+      return VNx2x##MODE##mode;                                               \
+    break;
+      TUPLE_MODE_TUPLE8 (8QI)
+      TUPLE_MODE_TUPLE8 (4HI)
+      TUPLE_MODE_TUPLE8 (2SI)
+      TUPLE_MODE_TUPLE8 (4HF)
+      TUPLE_MODE_TUPLE8 (2SF)
+      TUPLE_MODE_TUPLE8 (4QI)
+      TUPLE_MODE_TUPLE8 (2HI)
+      TUPLE_MODE_TUPLE8 (2HF)
+      TUPLE_MODE_TUPLE8 (2QI)
+      TUPLE_MODE_TUPLE8 (16QI)
+      TUPLE_MODE_TUPLE8 (8HI)
+      TUPLE_MODE_TUPLE8 (4SI)
+      TUPLE_MODE_TUPLE8 (2DI)
+      TUPLE_MODE_TUPLE8 (8HF)
+      TUPLE_MODE_TUPLE8 (4SF)
+      TUPLE_MODE_TUPLE8 (2DF)
+      TUPLE_MODE_TUPLE4 (32QI)
+      TUPLE_MODE_TUPLE4 (16HI)
+      TUPLE_MODE_TUPLE4 (8SI)
+      TUPLE_MODE_TUPLE4 (4DI)
+      TUPLE_MODE_TUPLE4 (16HF)
+      TUPLE_MODE_TUPLE4 (8SF)
+      TUPLE_MODE_TUPLE4 (4DF)
+      TUPLE_MODE_TUPLE2 (64QI)
+      TUPLE_MODE_TUPLE2 (32HI)
+      TUPLE_MODE_TUPLE2 (16SI)
+      TUPLE_MODE_TUPLE2 (8DI)
+      TUPLE_MODE_TUPLE2 (32HF)
+      TUPLE_MODE_TUPLE2 (16SF)
+      TUPLE_MODE_TUPLE2 (8DF)
+
+    default:
+      break;
+    }
+
+  return opt_machine_mode ();
+}
+
+/* Return true if X is a const_vector with all duplicate elements, which is in
+   the range between MINVAL and MAXVAL.  */
+
+bool
+riscv_const_vec_all_same_in_range_p (rtx x, HOST_WIDE_INT minval,
+                                     HOST_WIDE_INT maxval)
+{
+  rtx elt;
+  return (const_vec_duplicate_p (x, &elt)
+          && CONST_INT_P (elt)
+          && IN_RANGE (INTVAL (elt), minval, maxval));
+}
+
+/* Return true if VEC is a constant in which every element is in the range
+   [MINVAL, MAXVAL].  The elements do not need to have the same value.  */
+
+static bool
+riscv_const_vec_all_in_range_p (rtx vec,
+				  HOST_WIDE_INT minval,
+				  HOST_WIDE_INT maxval)
+{
+  if (!CONST_VECTOR_P (vec)
+      || GET_MODE_CLASS (GET_MODE (vec)) != MODE_VECTOR_INT)
+    return false;
+
+  unsigned int nunits;
+  if (!CONST_VECTOR_STEPPED_P (vec))
+    nunits = const_vector_encoded_nelts (vec);
+  else if (!CONST_VECTOR_NUNITS (vec).is_constant (&nunits))
+    return false;
+
+  for (unsigned int i = 0; i < nunits; i++)
+    {
+      rtx vec_elem = CONST_VECTOR_ELT (vec, i);
+      if (!CONST_INT_P (vec_elem)
+	  || !IN_RANGE (INTVAL (vec_elem), minval, maxval))
+	return false;
+    }
+  return true;
+}
+
+/* Return the number of temporary registers that riscv_add_offset_1
+   would need to add OFFSET to a register.  */
+
+static unsigned int
+riscv_add_offset_1_temporaries (HOST_WIDE_INT offset)
+{
+  return SMALL_OPERAND (offset) ? 0 : 1;
+}
+
+/* Return the number of temporary registers that riscv_add_offset
+   would need to move OFFSET into a register or add OFFSET to a register;
+   ADD_P is true if we want the latter rather than the former.  */
+
+static unsigned int
+riscv_offset_temporaries (bool add_p, poly_int64 offset)
+{
+  /* This follows the same structure as riscv_add_offset.  */
+  if (add_p && riscv_const_poly_int_p (gen_int_mode (offset, Pmode)))
+    return 0;
+
+  unsigned int count = 0;
+  HOST_WIDE_INT factor = offset.coeffs[1];
+  HOST_WIDE_INT constant = offset.coeffs[0] - factor;
+  poly_int64 poly_offset (factor, factor);
+  if (add_p && riscv_const_poly_int_p (gen_int_mode (offset, Pmode)))
+    /* Need one register for the csrr vlenb result.  */
+    count += 1;
+  else if (factor != 0)
+    {
+      factor = abs (factor);
+      if (!riscv_const_poly_int_p (gen_int_mode (poly_offset, Pmode)))
+        /* Need one register for the CNT result and one for the multiplication
+           factor.  If necessary, the second temporary can be reused for the
+           constant part of the offset.  */
+        return 2;
+      /* Need one register for the CNT result (which might then
+         be shifted).  */
+      count += 1;
+    }
+  return count + riscv_add_offset_1_temporaries (constant);
+}
+
+/* Emit a comparison CMP between OP0 and OP1, both of which have mode
+   DATA_MODE, and return the result in a predicate of mode MASK_MODE.
+   Use TARGET as the target register if nonnull and convenient.  */
+
+static rtx
+riscv_vector_emit_int_cmp (rtx target, machine_mode mask_mode, rtx_code cmp,
+			  machine_mode data_mode, rtx op1, rtx op2, rtx op3)
+{
+  rtx x;
+  insn_code icode;
+  expand_operand ops[7];
+  create_output_operand (&ops[0], target, mask_mode);
+  create_input_operand (&ops[1], const0_rtx, Pmode);
+  create_input_operand (&ops[2], const0_rtx, Pmode);
+  op1 = force_reg (data_mode, op1);
+  create_input_operand (&ops[3], op1, data_mode);
+  if (const_vec_duplicate_p(op2, &x))
+    {
+      icode = code_for_vms_vx (cmp, data_mode);
+      create_input_operand (&ops[4], x, GET_MODE_INNER (data_mode));
+    }
+  else
+    {
+      if (VECTOR_MODE_P (GET_MODE (op2)))
+        {
+          op2 = force_reg (data_mode, op2);
+          icode = code_for_vms_vv (cmp, data_mode);
+          create_input_operand (&ops[4], op2, data_mode);
+        }
+      else
+        {
+          icode = code_for_vms_vx (cmp, data_mode);
+          create_input_operand (&ops[4], op2, GET_MODE (op2));
+        }
+    }
+  if (op3)
+    create_input_operand (&ops[5], op3, Pmode);
+  else
+    create_input_operand (&ops[5], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
+  create_input_operand (&ops[6], riscv_vector_gen_policy (), Pmode);
+  expand_insn (icode, 7, ops);
+  return ops[0].value;
+}
+
+/* Expand an RVV integer comparison using the RVV equivalent of:
+
+     (set TARGET (CODE OP0 OP1)).  */
+
+void
+riscv_expand_vec_cmp_int (rtx target, rtx_code code, rtx op0, rtx op1, rtx op2)
+{
+  machine_mode mask_mode = GET_MODE (target);
+  machine_mode data_mode = GET_MODE (op0);
+  rtx res = riscv_vector_emit_int_cmp (target, mask_mode, code, data_mode,
+				       op0, op1, op2);
+  if (!rtx_equal_p (target, res))
+    emit_move_insn (target, res);
+}
+
+/* Emit a comparison CMP between OP0 and OP1, both of which have mode
+   DATA_MODE, and return the result in a predicate of mode MASK_MODE.
+   Use TARGET as the target register if nonnull and convenient.  */
+
+static rtx
+riscv_vector_emit_float_cmp (rtx target, machine_mode mask_mode, rtx_code cmp,
+			  machine_mode data_mode, rtx op1, rtx op2, rtx op3)
+{
+  rtx f;
+  insn_code icode;
+  expand_operand ops[7];
+  create_output_operand (&ops[0], target, mask_mode);
+  create_input_operand (&ops[1], const0_rtx, Pmode);
+  create_input_operand (&ops[2], const0_rtx, Pmode);
+  op1 = force_reg (data_mode, op1);
+  create_input_operand (&ops[3], op1, data_mode);
+  if (const_vec_duplicate_p(op2, &f))
+    {
+      icode = code_for_vmf_vf (cmp, data_mode);
+      create_input_operand (&ops[4], f, GET_MODE_INNER (data_mode));
+    }
+  else
+    {
+      if (VECTOR_MODE_P (GET_MODE (op2)))
+        {
+          op2 = force_reg (data_mode, op2);
+          icode = code_for_vmf_vv (cmp, data_mode);
+          create_input_operand (&ops[4], op2, data_mode);
+        }
+      else
+        {
+          icode = code_for_vmf_vf (cmp, data_mode);
+          create_input_operand (&ops[4], op2, GET_MODE (op2));
+        }
+    }
+  if (op3)
+    create_input_operand (&ops[5], op3, Pmode);
+  else
+    create_input_operand (&ops[5], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
+
+  create_input_operand (&ops[6], riscv_vector_gen_policy (), Pmode);
+  expand_insn (icode, 7, ops);
+  return ops[0].value;
+}
+
+/* Expand an RVV integer comparison using the RVV equivalent of:
+
+     (set TARGET (CODE OP0 OP1)).  */
+
+void
+riscv_expand_vec_cmp_float (rtx target, rtx_code code, rtx op0, rtx op1, rtx op2)
+{
+  machine_mode mask_mode = GET_MODE (target);
+  machine_mode data_mode = GET_MODE (op0);
+  rtx res = riscv_vector_emit_float_cmp (target, mask_mode, code, data_mode,
+				         op0, op1, op2);
+  if (!rtx_equal_p (target, res))
+    emit_move_insn (target, res);
+}
+
+/* Expand an RVV vcond pattern with operands OPS.  DATA_MODE is the mode
+   of the data being selected and CMP_MODE is the mode of the values being
+   compared.  */
+
+void
+riscv_expand_vcond (machine_mode data_mode, machine_mode cmp_mode,
+		    machine_mode mask_mode, rtx *ops, bool len_p)
+{
+  rtx mask = gen_reg_rtx (mask_mode);
+  if (FLOAT_MODE_P (cmp_mode))
+    {
+      if (len_p)
+        riscv_expand_vec_cmp_float (mask, GET_CODE (ops[3]), ops[4], ops[5], ops[6]);
+      else
+        riscv_expand_vec_cmp_float (mask, GET_CODE (ops[3]), ops[4], ops[5], NULL_RTX);
+    }
+  else
+    {
+      if (len_p)
+        riscv_expand_vec_cmp_int (mask, GET_CODE (ops[3]), ops[4], ops[5], ops[6]);
+      else
+        riscv_expand_vec_cmp_int (mask, GET_CODE (ops[3]), ops[4], ops[5], NULL_RTX);
+    }
+
+  if (len_p)
+    emit_insn (gen_len_vcond_mask (data_mode, data_mode,
+    	       force_reg (data_mode, ops[0]), ops[1],
+	       force_reg (data_mode, ops[2]), mask, ops[6]));
+  else
+    emit_insn (gen_vcond_mask (data_mode, data_mode,
+    	       force_reg (data_mode, ops[0]), ops[1],
+	       force_reg (data_mode, ops[2]), mask));
+}
+
+rtx
+gen_vlx2 (rtx vl)
+{
+  rtx vlx2;
+  if (CONST_SCALAR_INT_P (vl))
+    {
+      unsigned HOST_WIDE_INT vlen = UINTVAL (vl);
+      unsigned HOST_WIDE_INT vlenx2;
+      /* check for shift left overflow when think of vlen as unsigned int */
+      if (vlen >= 0x80000000)
+        {
+          vlenx2 = 0xFFFFFFFF;
+        }
+      else
+        {
+          vlenx2 = vlen << 1;
+        }
+
+      if (vlenx2 > 31)
+        vlx2 = force_reg (SImode, GEN_INT (vlenx2));
+      else
+        vlx2 = gen_int_mode (vlenx2, SImode);
+    }
+  else if (rtx_equal_p (vl, gen_rtx_REG (Pmode, X0_REGNUM)))
+    return vl;
+  else
+    {
+      rtx t = gen_reg_rtx (SImode);
+      vlx2 = gen_reg_rtx (GET_MODE (vl));
+      emit_insn (gen_vmv_vlx2_help (vlx2, vl, t));
+    }
+  return vlx2;
+}
+
+void
+emit_int64_to_vector_32bit (
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  rtx vd, rtx s, rtx vl, rtx tail)
+{
+  if (CONST_SCALAR_INT_P (s))
+    {
+      s = force_reg(DImode, s);
+    }
+
+  rtx hi = gen_highpart (SImode, s);
+  rtx lo = gen_lowpart (SImode, s);
+
+  rtx zero = gen_rtx_REG (SImode, X0_REGNUM);
+
+  /* make a "0101..." mask vector */
+  rtx vm1 = gen_reg_rtx (VNx4SImode);
+  emit_insn (gen_vmv_v_x_internal (VNx4SImode,
+    vm1, const0_rtx, force_reg(SImode, GEN_INT (0x55555555)),
+    zero, riscv_vector_gen_policy ()));
+  rtx vm2 = gen_reg_rtx (VMSImode);
+  emit_insn (gen_rtx_SET (vm2, gen_lowpart(VMSImode, vm1)));
+
+  rtx v2 = gen_reg_rtx (VSImode);
+  emit_insn (gen_vmv_v_x_internal (VSImode, v2, const0_rtx, hi,
+                                   vl, riscv_vector_gen_policy ()));
+
+  rtx vd_si = gen_reg_rtx(VSImode);
+  emit_insn (gen_vmerge_vxm_internal (VSImode,
+    vd_si, vm2, const0_rtx, v2, lo, vl, tail));
+
+  emit_insn (gen_rtx_SET (vd, gen_lowpart(Vmode, vd_si)));
+}
+
+
+bool
+imm32_p (rtx a)
+{
+  if (!CONST_SCALAR_INT_P (a))
+    return false;
+  unsigned HOST_WIDE_INT val = UINTVAL (a);
+  return val <= 0x7FFFFFFFULL || val >= 0xFFFFFFFF80000000ULL;
+}
+
+typedef bool imm_p (rtx);
+typedef rtx gen_3 (rtx, rtx, rtx);
+typedef rtx gen_4 (rtx, rtx, rtx, rtx);
+typedef rtx gen_5 (rtx, rtx, rtx, rtx, rtx);
+typedef rtx gen_6 (rtx, rtx, rtx, rtx, rtx, rtx);
+typedef rtx gen_7 (rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+enum GEN_CLASS
+{
+  GEN_VX,
+  GEN_VX_32BIT,
+  GEN_VV
+};
+
+enum GEN_CLASS
+modify_operands(
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  bool (*imm5_p) (rtx),
+  int i, bool reverse
+)
+{
+  if (!TARGET_64BIT && VSUBmode == DImode)
+    {
+      if (imm32_p (operands[i]))
+        {
+          if (!imm5_p (operands[i]))
+            operands[i] = force_reg (SImode, operands[i]);
+          return GEN_VX_32BIT;
+        }
+      else
+        {
+          rtx result = gen_reg_rtx (Vmode);
+          rtx zero = gen_rtx_REG (SImode, X0_REGNUM);
+          rtx tail = riscv_vector_gen_policy ();
+
+          emit_int64_to_vector_32bit (
+            Vmode, VSImode, VMSImode,
+            result, operands[i], zero, tail);
+
+          operands[i] = result;
+
+          if (reverse)
+            {
+              rtx b = operands[i - 1];
+              operands[i - 1] = operands[i];
+              operands[i] = b;
+            }
+          return GEN_VV;
+        }
+    }
+  else
+    {
+      if (!imm5_p (operands[i]))
+        operands[i] = force_reg (VSUBmode, operands[i]);
+      return GEN_VX;
+    }
+}
+
+bool
+emit_op5_vmv_v_x (
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  int i
+)
+{
+  if (!TARGET_64BIT && VSUBmode == DImode)
+    {
+      if (!imm32_p (operands[i]))
+        {
+          rtx vd = operands[1];
+          if (rtx_equal_p (vd, const0_rtx))
+            {
+              vd = operands[0];
+            }
+          emit_int64_to_vector_32bit (
+            Vmode, VSImode, VMSImode,
+            vd, operands[i],
+            gen_vlx2(operands[3]), operands[4]
+          );
+
+          emit_insn (gen_rtx_SET (operands[0], vd));
+          return true;
+        }
+    }
+  return false;
+}
+
+bool
+emit_op5_vmv_s_x (
+  machine_mode Vmode, machine_mode VSImode, machine_mode VSUBmode,
+  rtx *operands,
+  int i
+)
+{
+  if (!TARGET_64BIT && VSUBmode == DImode)
+  {
+    if (!imm32_p (operands[i]))
+      {
+        rtx s = operands[i];
+        if (CONST_SCALAR_INT_P (s))
+          {
+            s = force_reg(DImode, s);
+          }
+
+        rtx hi = gen_highpart (SImode, s);
+        rtx lo = gen_lowpart (SImode, s);
+        rtx vlx2 = gen_vlx2 (operands[3]);;
+
+        rtx vret = operands[0];
+        rtx vd = operands[1];
+        if (vd == const0_rtx)
+          {
+            vd = gen_reg_rtx (Vmode);
+          }
+        rtx vd_si = gen_lowpart (VSImode, vd);
+
+        emit_insn (gen_vslide_vx (UNSPEC_SLIDEDOWN, VSImode,
+          vd_si, const0_rtx, vd_si, vd_si, const2_rtx, vlx2, operands[4]
+        ));
+        rtx v1 = gen_reg_rtx (VSImode);
+        emit_insn (gen_vslide1_vx_internal (UNSPEC_SLIDE1UP, VSImode,
+          v1, const0_rtx, vd_si, vd_si, hi, vlx2, operands[4]
+        ));
+        emit_insn (gen_vslide1_vx_internal (UNSPEC_SLIDE1UP, VSImode,
+          vd_si, const0_rtx, v1, v1, lo, vlx2, operands[4]
+        ));
+
+        emit_insn (gen_rtx_SET (
+          vret, gen_lowpart (Vmode, vd_si)
+        ));
+
+        return true;
+      }
+  }
+  return false;
+}
+
+void
+emit_op5 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  gen_5 *gen_vx,
+  gen_5 *gen_vx_32bit,
+  gen_5 *gen_vv,
+  imm_p *imm5_p,
+  int i, bool reverse
+)
+{
+  if (unspec == UNSPEC_VMV)
+    {
+      if (emit_op5_vmv_v_x (Vmode, VSImode, VMSImode, VSUBmode,
+                            operands, i))
+        {
+          return;
+        }
+    }
+  else if (unspec == UNSPEC_VMVS)
+    {
+      if (emit_op5_vmv_s_x (Vmode, VSImode, VSUBmode, operands, i))
+        {
+          return;
+        }
+    }
+
+  enum GEN_CLASS gen_class = modify_operands(
+    Vmode, VSImode, VMSImode, VSUBmode,
+    operands, imm5_p, i, reverse);
+
+  gen_5 *gen = gen_class == GEN_VX ? gen_vx
+              : gen_class == GEN_VV ? gen_vv
+              : gen_vx_32bit;
+
+  emit_insn ((*gen) (
+    operands[0], operands[1], operands[2], operands[3],
+    operands[4]
+  ));
+}
+
+void
+emit_op6 (
+  unsigned int unspec ATTRIBUTE_UNUSED,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  gen_6 *gen_vx,
+  gen_6 *gen_vx_32bit,
+  gen_6 *gen_vv,
+  imm_p *imm5_p,
+  int i, bool reverse
+)
+{
+  enum GEN_CLASS gen_class = modify_operands(
+    Vmode, VSImode, VMSImode, VSUBmode,
+    operands, imm5_p, i, reverse);
+
+  gen_6 *gen = gen_class == GEN_VX ? gen_vx
+              : gen_class == GEN_VV ? gen_vv
+              : gen_vx_32bit;
+
+  emit_insn ((*gen) (
+    operands[0], operands[1], operands[2], operands[3],
+    operands[4], operands[5]
+  ));
+}
+
+bool
+emit_op7_slide1 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VSUBmode,
+  rtx *operands,
+  int i
+)
+{
+  if (!TARGET_64BIT && VSUBmode == DImode)
+  {
+    if (!imm32_p (operands[i]))
+      {
+        rtx s = operands[i];
+        if (CONST_SCALAR_INT_P (s))
+          {
+            s = force_reg(DImode, s);
+          }
+
+        rtx hi = gen_highpart (SImode, s);
+        rtx lo = gen_lowpart (SImode, s);
+
+        rtx vret = operands[0];
+        rtx mask = operands[1];
+        rtx vs = operands[3];
+        rtx vlx2 = gen_vlx2 (operands[5]);
+        rtx vs_si = gen_lowpart (VSImode, vs);
+        rtx vtemp;
+        if (rtx_equal_p (operands[2], const0_rtx))
+          {
+            vtemp = gen_reg_rtx (VSImode);
+          }
+        else
+          {
+            vtemp = gen_lowpart (VSImode, operands[2]);
+          }
+
+        if (unspec == UNSPEC_SLIDE1UP)
+          {
+            rtx v1;
+            if (Vmode == VNx16DImode)
+              {
+                v1 = gen_rtx_REG (VSImode, V24_REGNUM);
+              }
+            else
+              {
+                v1 = gen_reg_rtx (VSImode);
+              }
+
+            emit_insn (gen_vslide1_vx_internal (
+              UNSPEC_SLIDE1UP, VSImode,
+              v1, const0_rtx, const0_rtx, vs_si, hi, vlx2, operands[6]
+            ));
+            emit_insn (gen_vslide1_vx_internal (
+              UNSPEC_SLIDE1UP, VSImode,
+              vtemp, const0_rtx, const0_rtx, v1, lo, vlx2, operands[6]
+            ));
+          }
+        else
+          {
+            emit_insn (gen_vslide1_vx_internal (
+              UNSPEC_SLIDE1DOWN, VSImode,
+              vtemp, const0_rtx, const0_rtx, vs_si, lo, vlx2, operands[6]
+            ));
+            emit_insn (gen_vslide1_vx_internal (
+              UNSPEC_SLIDE1DOWN, VSImode,
+              vtemp, const0_rtx, const0_rtx, vtemp, hi, vlx2, operands[6]
+            ));
+          }
+
+        if (rtx_equal_p (mask, const0_rtx))
+          {
+            emit_insn (gen_rtx_SET (
+              vret, gen_lowpart (Vmode, vtemp)
+            ));
+          }
+        else
+          {
+            rtx dest = operands[2];
+            if (rtx_equal_p (dest, const0_rtx))
+              {
+                dest = vret;
+              }
+            emit_insn (gen_vmerge_vvm (Vmode,
+              dest, mask, dest, dest,
+              gen_lowpart(Vmode, vtemp), operands[5], operands[6]
+            ));
+
+            emit_insn (gen_rtx_SET (vret, dest));
+          }
+        
+
+        return true;
+      }
+  }
+  return false;
+}
+
+void
+emit_op7 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  gen_7 *gen_vx,
+  gen_7 *gen_vx_32bit,
+  gen_7 *gen_vv,
+  imm_p *imm5_p,
+  int i, bool reverse
+)
+{
+  if (unspec == UNSPEC_SLIDE1UP || unspec == UNSPEC_SLIDE1DOWN)
+    {
+      if (emit_op7_slide1 (unspec, Vmode, VSImode, VSUBmode, operands, i))
+        {
+          return;
+        }
+    }
+
+  enum GEN_CLASS gen_class = modify_operands(
+    Vmode, VSImode, VMSImode, VSUBmode,
+    operands, imm5_p, i, reverse);
+
+  gen_7 *gen = gen_class == GEN_VX ? gen_vx
+              : gen_class == GEN_VV ? gen_vv
+              : gen_vx_32bit;
+
+  emit_insn ((*gen) (
+    operands[0], operands[1], operands[2], operands[3],
+    operands[4], operands[5], operands[6]
+  ));
+}
+
+static void
+riscv_vector_emit_vec_duplicate (machine_mode mode, machine_mode inner_mode,
+                                 rtx target, rtx x)
+{
+  struct expand_operand ops[2];
+  enum insn_code icode = optab_handler (vec_duplicate_optab, mode);
+  gcc_assert (icode != CODE_FOR_nothing);
+  create_output_operand (&ops[0], target, mode);
+  create_input_operand (&ops[1], x, inner_mode);
+  expand_insn (icode, 2, ops);
+}
+
+/* Emit RTL corresponding to:
+   vec_shl_insert_optab.  */
+
+static void
+emit_vec_shl_insert (rtx target, rtx src, rtx elem)
+{
+  machine_mode mode = GET_MODE (target);
+  scalar_mode elem_mode = GET_MODE_INNER (mode);
+  elem = force_reg (elem_mode, elem);
+
+  insn_code icode = optab_handler (vec_shl_insert_optab, mode);
+  gcc_assert (icode != CODE_FOR_nothing);
+  emit_insn (GEN_FCN (icode) (target, src, elem));
+}
+
+/* Emit RTL corresponding to:
+   vslide1down.vx/vfslide1down.vf. */
+static void
+emit_slide1down (rtx target, rtx elem)
+{
+  machine_mode mode = GET_MODE (target);
+  if (!FLOAT_MODE_P (mode))
+    emit_insn (gen_vslide1_vx (UNSPEC_SLIDE1DOWN, mode,
+        target, const0_rtx, const0_rtx, target, elem,
+        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  else
+    emit_insn (gen_vfslide1_vf (UNSPEC_SLIDE1DOWN, mode,
+        target, const0_rtx, const0_rtx, target, force_reg (GET_MODE (elem), elem), gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+}
+
+/* Emit RTL corresponding to:
+   vslide1up.vx/vfslide1up.vf. */
+static void
+emit_slide1up (rtx target, rtx elem)
+{
+  machine_mode mode = GET_MODE (target);
+  if (!FLOAT_MODE_P (mode))
+    emit_insn (gen_vslide1_vx (UNSPEC_SLIDE1UP, mode,
+        target, const0_rtx, const0_rtx, target, elem,
+        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  else
+    emit_insn (gen_vfslide1_vf (UNSPEC_SLIDE1UP, mode,
+        target, const0_rtx, const0_rtx, target, force_reg (GET_MODE (elem), elem), gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+}
+
+static int
+get_dup_cnt_idx(const rtx_vector_builder &builder, int nelts, int offset, int* val_idx)
+{
+  struct val_info
+  {
+    int cnt;
+    int idx;
+  };
+
+  struct val_info* dup_val_info = (struct val_info*) xmalloc(nelts * sizeof(struct val_info));
+  int n_const_values = 0, max_dup_cnt = 0, ndup;
+
+  memset(dup_val_info, 0, nelts * sizeof(struct val_info));
+
+  for (int i = offset; i < nelts; ++i)
+  {
+    rtx x = builder.elt (i);
+    bool found = false;
+    for (int n = 0; n < n_const_values; ++n)
+    {
+      if (rtx_equal_p (x, builder.elt (dup_val_info[n].idx)))
+      {
+        found = true;
+        dup_val_info[n].cnt++;
+        break;
+      }
+    }
+    if (!found)
+    {
+      dup_val_info[n_const_values].cnt = 1;
+      dup_val_info[n_const_values].idx = i;
+      n_const_values++;
+    }
+  }
+
+  for (int n = 0; n < n_const_values; ++n)
+  {
+    if (dup_val_info[n].cnt > max_dup_cnt)
+    {
+      max_dup_cnt = dup_val_info[n].cnt;
+      *val_idx = dup_val_info[n].idx;
+    }
+  }
+
+  free(dup_val_info);
+  if (max_dup_cnt > (nelts + 1) / 2)
+  {
+    ndup = max_dup_cnt;
+  }
+  else
+  {
+    ndup = 0;
+  }
+  return ndup;
+}
+
+/*
+when return true:
+        it means the builder is mostly formed with constants
+        the base&step are constant values
+when return false:
+        it means the builder is mostly formed with varibles or floats
+        if duplication exists in the builder, the base is the index of the duplicated element and the step is the duplication count
+*/
+static bool
+calculate_base_step(const rtx_vector_builder &builder, int nelts,
+        scalar_mode inner_mode, int offset, int* base, int* step)
+{
+  gcc_assert(offset < nelts);
+
+  int dup_cnt = 0, dup_idx = 0;
+
+  dup_cnt = get_dup_cnt_idx(builder, nelts, offset, &dup_idx);
+
+  if (dup_cnt > (nelts - offset + 1) / 2)
+  {
+    if (!FLOAT_MODE_P (inner_mode) && valid_for_const_vector_p (inner_mode, builder.elt (dup_idx)))
+    {
+      *step = 0;
+      *base = INTVAL(builder.elt (dup_idx));
+      return true;
+    }
+    else
+    {
+      *step = dup_cnt;
+      *base = dup_idx;
+      return false;
+    }
+  }
+
+  if (FLOAT_MODE_P (inner_mode))
+  {
+    *base = -1;
+    *step = 0;
+    return false;
+  }
+
+  struct const_info
+  {
+    int index;
+    int const_int;
+  };
+
+  struct base_step_info
+  {
+    int cnt;
+    int base;
+    int step;
+  };
+
+  int elem_size = nelts - offset, n_base_step_values = 0, max_base_step_cnt = 0;
+  struct const_info pre_const_info;
+  struct base_step_info* base_step_infos = (struct base_step_info*) xmalloc(elem_size * sizeof(struct base_step_info));
+  memset(base_step_infos, 0, elem_size * sizeof(struct base_step_info));
+  pre_const_info.index = -1;
+
+  for (int i = offset; i < nelts; ++i)
+  {
+    rtx x = builder.elt (i);
+
+    if (valid_for_const_vector_p (inner_mode, x))
+    {
+      /* calculate base & step */
+      if (pre_const_info.index >= 0)
+      {
+        int cur_step = (INTVAL(x) - pre_const_info.const_int) / (i - pre_const_info.index);
+        int cur_base = INTVAL(x) - cur_step * i;
+
+        bool found = false;
+        for (int n = 0; n < n_base_step_values; ++n)
+        {
+          if (cur_step == base_step_infos[n].step && cur_base == base_step_infos[n].base)
+          {
+            found = true;
+            base_step_infos[n].cnt++;
+            break;
+          }
+        }
+        if (!found)
+        {
+          base_step_infos[n_base_step_values].cnt = 1;
+          base_step_infos[n_base_step_values].base = cur_base;
+          base_step_infos[n_base_step_values].step = cur_step;
+          n_base_step_values++;
+        }
+      }
+
+      pre_const_info.index = i;
+      pre_const_info.const_int = INTVAL(x);
+    }
+  }
+
+  if (n_base_step_values >= nelts / 2 || n_base_step_values == 0)
+  {
+    *step = 0;
+    *base = -1;
+    return false;
+  }
+
+  for (int n = 0; n < n_base_step_values; ++n)
+  {
+    if (base_step_infos[n].cnt > max_base_step_cnt)
+    {
+      max_base_step_cnt = base_step_infos[n].cnt;
+      *base = base_step_infos[n].base;
+      *step = base_step_infos[n].step;
+    }
+  }
+  return true;
+}
+
+static int
+get_mismatched_rtx_cnt (const rtx_vector_builder &builder, int nelts, int offset, rtx target)
+{
+  int n_missmatch = 0;
+  for (int i = offset; i < nelts; ++i)
+  {
+    rtx x = builder.elt (i);
+    if (!rtx_equal_p (x, target))
+      ++n_missmatch;
+  }
+  return n_missmatch;
+}
+
+static int
+get_mismatched_bs_cnt (const rtx_vector_builder &builder, int nelts,
+        scalar_mode inner_mode, int offset, int base, int step)
+{
+  int n_missmatch = 0;
+  for (int i = offset; i < nelts; ++i)
+  {
+    rtx x = builder.elt (i);
+    if (!valid_for_const_vector_p (inner_mode, x) || FLOAT_MODE_P (inner_mode) || INTVAL(x) != base + step * i)
+    {
+      if (!valid_for_const_vector_p (inner_mode, x))
+        n_missmatch |= 0x1; // with varible in missmatch
+      n_missmatch += 2;
+    }
+  }
+  return n_missmatch;
+}
+
+static int
+get_first_rtx_index(const rtx_vector_builder &builder, int nelts, scalar_mode inner_mode, rtx target, bool reversed)
+{
+  if (reversed)
+  {
+    for (int i = nelts - 1; i >= 0; --i)
+    {
+      rtx x = builder.elt (i);
+      if (target == NULL_RTX)
+      {
+        if (!valid_for_const_vector_p (inner_mode, x))
+          return nelts - 1 - i;
+      }
+      else if (rtx_equal_p (x, target))
+        return nelts - 1 - i;
+    }
+  }
+  else
+  {
+    for (int i = 0; i < nelts; ++i)
+    {
+      rtx x = builder.elt (i);
+      if (target == NULL_RTX)
+      {
+        if (!valid_for_const_vector_p (inner_mode, x))
+          return i;
+      }
+      else if (rtx_equal_p (x, target))
+        return i;
+    }
+  }
+  return -1;
+}
+
+static int
+get_first_bs_index(const rtx_vector_builder &builder, int nelts, scalar_mode inner_mode, int base, int step, bool reversed)
+{
+  if (reversed)
+  {
+    for (int i = nelts - 1; i >= 0; --i)
+    {
+      rtx x = builder.elt (i);
+      if (valid_for_const_vector_p (inner_mode, x) && INTVAL (x) == base + i * step)
+        return nelts - 1 - i;
+    }
+  }
+  else
+  {
+    for (int i = 0; i < nelts; ++i)
+    {
+      rtx x = builder.elt (i);
+      if (valid_for_const_vector_p (inner_mode, x) && INTVAL (x) == base + i * step)
+        return i;
+    }
+  }
+  return -1;
+}
+
+/* Subroutine of riscv_vector_expand_vector_init.
+   Works as follows:
+   (a) Initialize TARGET by broadcasting element NELTS_REQD - 1 of BUILDER.
+   (b) Skip leading elements from BUILDER, which are the same as
+       element NELTS_REQD - 1.
+   (c) Insert earlier elements in reverse order in TARGET using insr.  */
+
+static void
+riscv_vector_expand_vector_init_insert_leading_elems (rtx target,
+					              const rtx_vector_builder &builder,
+					              int nelts_reqd)
+{
+  machine_mode mode = GET_MODE (target);
+  scalar_mode elem_mode = GET_MODE_INNER (mode);
+  riscv_vector_emit_vec_duplicate (mode, elem_mode, target, builder.elt (0));
+  int ndups = builder.count_dups (0, nelts_reqd - 1, 1);
+  for (int i = ndups; i < nelts_reqd; i++)
+    emit_slide1down (target, builder.elt (i));
+}
+
+static void
+riscv_vector_expand_vector_init_handle_ending_const
+ (rtx target, const rtx_vector_builder &builder, int nelts_reqd, int leading_others, int n_mismatch, int base, int step)
+{
+  machine_mode mode = GET_MODE (target);
+  scalar_mode elem_mode = GET_MODE_INNER (mode);
+  /* Try to use the natural pattern of BUILDER to extend the trailing
+     constant elements to a full vector.  Replace any variables in the
+     extra elements with zeros.
+
+     ??? It would be better if the builders supported "don't care"
+         elements, with the builder filling in whichever elements
+         give the most compact encoding.  */
+  rtx_vector_builder v (mode, nelts_reqd, 1);
+  for (int i = leading_others; i < nelts_reqd + leading_others; i++)
+  {
+    rtx x;
+    if (n_mismatch <= VSET_TOLERATE)
+    {
+      x = GEN_INT(base + step * i);
+    }
+    else
+    {
+      x = i < nelts_reqd ? builder.elt (i) : CONST0_RTX (elem_mode);
+    }
+    v.quick_push (x);
+  }
+  rtx const_vec = v.build ();
+  rtx dest;
+  if (leading_others > 0)
+  {
+    if ((leading_others % 2) == 0)
+      dest = gen_rtx_REG (mode, V8_REGNUM);
+    else
+      dest = gen_rtx_REG (mode, V24_REGNUM);
+  }
+  else
+    dest = target;
+
+  emit_move_insn (dest, const_vec);
+
+  if (n_mismatch > 0 && n_mismatch <= VSET_TOLERATE)
+  {
+    enum insn_code icode = optab_handler (vec_set_optab, mode);
+    gcc_assert (icode != CODE_FOR_nothing);
+
+    for (int i = leading_others; i < nelts_reqd; ++i)
+    {
+      rtx x = builder.elt (i);
+      if (INTVAL(x) != base + step * i)
+      {
+        x = copy_to_mode_reg (elem_mode, x);
+        emit_insn (GEN_FCN (icode) (dest, x, GEN_INT (i - leading_others)));
+      }
+    }
+  }
+
+  bool target_last_p = false;
+  for (int i = leading_others - 1; i >= 0; i--)
+  {
+    if (target_last_p)
+    {
+      target_last_p = false;
+      emit_vec_shl_insert (dest, target, builder.elt (i));
+    }
+    else
+    {
+      target_last_p = true;
+      emit_vec_shl_insert (target, dest, builder.elt (i));
+     }
+  }
+
+  if (!target_last_p)
+    riscv_emit_move (target, dest);
+
+}
+
+static void
+riscv_vector_expand_vector_init_handle_leading_const
+ (rtx target, const rtx_vector_builder &builder, int nelts_reqd, int ending_others, int n_mismatch, int base, int step)
+{
+  machine_mode mode = GET_MODE (target);
+  scalar_mode elem_mode = GET_MODE_INNER (mode);
+  /* Try to use the natural pattern of BUILDER to extend the trailing
+     constant elements to a full vector.  Replace any variables in the
+     extra elements with zeros.
+
+     ??? It would be better if the builders supported "don't care"
+         elements, with the builder filling in whichever elements
+         give the most compact encoding.  */
+  rtx_vector_builder v (mode, nelts_reqd, 1);
+  for (int i = 0; i < nelts_reqd; i++)
+  {
+    rtx x;
+    if (n_mismatch <= VSET_TOLERATE)
+    {
+      x = GEN_INT(base + step * (i - ending_others));
+    }
+    else
+    {
+      x = i >= ending_others ? builder.elt (i - ending_others) : CONST0_RTX (elem_mode);
+    }
+    v.quick_push (x);
+  }
+  rtx const_vec = v.build ();
+
+  emit_move_insn (target, const_vec);
+
+  if (n_mismatch > 0 && n_mismatch <= VSET_TOLERATE)
+  {
+    enum insn_code icode = optab_handler (vec_set_optab, mode);
+    gcc_assert (icode != CODE_FOR_nothing);
+
+    for (int i = 0; i < nelts_reqd - ending_others; ++i)
+    {
+      rtx x = builder.elt (i);
+      if (INTVAL(x) != base + step * i)
+      {
+        x = copy_to_mode_reg (elem_mode, x);
+        emit_insn (GEN_FCN (icode) (target, x, GEN_INT (i + ending_others)));
+      }
+    }
+  }
+
+  for (int i = nelts_reqd - ending_others; i < nelts_reqd; i++)
+    emit_slide1down (target, builder.elt (i));
+}
+
+static bool
+riscv_vector_expand_vector_handle_dup_and_const
+ (rtx target, const rtx_vector_builder &builder, int nelts_reqd)
+{
+  machine_mode mode = GET_MODE (target);
+  scalar_mode elem_mode = GET_MODE_INNER (mode);
+  int base = 0, step = 1, n_mismatch = 0;
+  bool in_constants = calculate_base_step(builder, nelts_reqd, elem_mode, 0, &base, &step);
+
+  if (in_constants)
+  {
+    int leading_others = get_first_bs_index(builder, nelts_reqd, elem_mode, base, step, false);
+    int ending_others = get_first_bs_index(builder, nelts_reqd, elem_mode, base, step, true);
+
+    if (leading_others >= nelts_reqd / 2 || ending_others >= nelts_reqd / 2)
+      return false;
+
+    if (leading_others > ending_others)
+    {
+      n_mismatch = get_mismatched_bs_cnt(builder, nelts_reqd, elem_mode, leading_others, base, step);
+      if ((n_mismatch >> 1) > VSET_TOLERATE && (n_mismatch & 0x1) == 0x1)
+        return false;
+      n_mismatch >>= 1;
+      riscv_vector_expand_vector_init_handle_ending_const(
+          target, builder, nelts_reqd, leading_others, n_mismatch, base, step);
+    }
+    else // leading_others <= ending_others
+    {
+      n_mismatch = get_mismatched_bs_cnt(builder, nelts_reqd - ending_others, elem_mode, 0, base, step);
+      if ((n_mismatch >> 1) > VSET_TOLERATE && (n_mismatch & 0x1) == 0x1)
+        return false;
+      n_mismatch >>= 1;
+      riscv_vector_expand_vector_init_handle_leading_const(
+          target, builder, nelts_reqd, ending_others, n_mismatch, base, step);
+    }
+  }
+  else // not in_constant
+  {
+    if (base < 0)
+    {
+      int leading_const = get_first_rtx_index(builder, nelts_reqd, elem_mode, NULL_RTX, false);
+      int ending_const = get_first_rtx_index(builder, nelts_reqd, elem_mode, NULL_RTX, true);
+      if (leading_const > nelts_reqd / 2)
+      {
+        riscv_vector_expand_vector_init_handle_leading_const(
+            target, builder, nelts_reqd, nelts_reqd - leading_const, VSET_TOLERATE + 1, 0, 0);
+        return true;
+      }
+      else if (ending_const > nelts_reqd / 2)
+      {
+        riscv_vector_expand_vector_init_handle_ending_const(
+            target, builder, nelts_reqd, nelts_reqd - ending_const, VSET_TOLERATE + 1, 0, 0);
+        return true;
+      }
+      return false;
+    }
+    int dup_idx = base, ndups = step;
+    int leading_others = get_first_rtx_index(builder, nelts_reqd, elem_mode, builder.elt(dup_idx), false);
+    int ending_others = get_first_rtx_index(builder, nelts_reqd, elem_mode, builder.elt(dup_idx), true);
+    if (leading_others > ending_others)
+    {
+      n_mismatch = get_mismatched_rtx_cnt(builder, nelts_reqd, leading_others, builder.elt(dup_idx));
+      if (n_mismatch > VSET_TOLERATE)
+        return false;
+
+      rtx dest;
+      if ((leading_others % 2) == 0)
+        dest = gen_rtx_REG (mode, V8_REGNUM);
+      else
+        dest = gen_rtx_REG (mode, V24_REGNUM);
+
+      riscv_vector_emit_vec_duplicate (mode, elem_mode, dest, builder.elt(dup_idx));
+
+      if (leading_others + ndups < nelts_reqd)
+      {
+        enum insn_code icode = optab_handler (vec_set_optab, mode);
+        gcc_assert (icode != CODE_FOR_nothing);
+
+        for (int i = leading_others; i < nelts_reqd; ++i)
+        {
+          rtx x = builder.elt (i);
+          if (!rtx_equal_p (x, builder.elt (dup_idx)))
+          {
+            x = copy_to_mode_reg (elem_mode, x);
+            emit_insn (GEN_FCN (icode) (dest, x, GEN_INT (i - leading_others)));
+          }
+        }
+      }
+
+      bool target_last_p = false;
+
+      for (int i = leading_others - 1; i >= 0; i--)
+      {
+        if (target_last_p)
+        {
+          target_last_p = false;
+          emit_vec_shl_insert (dest, target, builder.elt (i));
+        }
+        else
+        {
+          target_last_p = true;
+          emit_vec_shl_insert (target, dest, builder.elt (i));
+        }
+      }
+      if (!target_last_p)
+        riscv_emit_move (target, dest);
+    }
+    else // leading_others <= ending_others
+    {
+      n_mismatch = get_mismatched_rtx_cnt(builder, nelts_reqd - ending_others, 0, builder.elt(dup_idx));
+      if (n_mismatch > VSET_TOLERATE)
+        return false;
+      riscv_vector_emit_vec_duplicate (mode, elem_mode, target, builder.elt(dup_idx));
+
+      if (ending_others + ndups < nelts_reqd)
+      {
+        enum insn_code icode = optab_handler (vec_set_optab, mode);
+        gcc_assert (icode != CODE_FOR_nothing);
+
+        for (int i = 0; i < nelts_reqd - ending_others; ++i)
+        {
+          rtx x = builder.elt (i);
+          if (!rtx_equal_p (x, builder.elt (dup_idx)))
+          {
+            x = copy_to_mode_reg (elem_mode, x);
+            emit_insn (GEN_FCN (icode) (target, x, GEN_INT (i + ending_others)));
+          }
+        }
+      }
+
+      for (int i = nelts_reqd - ending_others; i < nelts_reqd; i++)
+        emit_slide1down (target, builder.elt (i));
+    }
+  }
+  return true;
+}
+
+/* Initialize register TARGET from the elements in PARALLEL rtx VALS.  */
+
+void
+riscv_vector_expand_vector_init (rtx target, rtx vals)
+{
+  machine_mode mode = GET_MODE (target);
+  int nelts = XVECLEN (vals, 0);
+
+  rtx_vector_builder v (mode, nelts, 1);
+  for (int i = 0; i < nelts; i++)
+    v.quick_push (XVECEXP (vals, 0, i));
+  v.finalize ();
+
+  if (nelts < 4
+      || ! riscv_vector_expand_vector_handle_dup_and_const (target, v, nelts))
+    riscv_vector_expand_vector_init_insert_leading_elems (target, v, nelts);
+}
+
+bool
+riscv_vector_strided_const_vector_p (rtx op)
+{
+  rtx base, step;
+  return const_vec_series_p (op, &base, &step);
+}
+
+void
+riscv_vector_expand_series_const_vector (rtx target, rtx src)
+{
+  rtx base, step;
+  gcc_assert (const_vec_series_p (src, &base, &step));
+  machine_mode mode = GET_MODE (target);
+  emit_insn (gen_vec_series (mode, target, base, step));
+}
+
+static void
+riscv_vector_expand_strided (rtx ptr, rtx offset, int scale, rtx vector,
+                             rtx mask, rtx vl, unsigned int gather_scatter_flag)
+{
+  rtx base, step;
+  gcc_assert (const_vec_series_p (offset, &base, &step));
+  rtx stride = gen_reg_rtx (Pmode);
+  riscv_emit_move (stride, GEN_INT (INTVAL (step) * scale));
+  machine_mode vector_mode = GET_MODE (vector);
+
+  if (base != const0_rtx)
+    emit_insn (gen_rtx_SET (ptr, gen_rtx_PLUS (Pmode, ptr, base)));
+  switch (gather_scatter_flag)
+    {
+    case ENUM_GATHER_LOAD:
+    case ENUM_LEN_GATHER_LOAD:
+      emit_insn (gen_vlse (vector_mode, vector, const0_rtx, const0_rtx, ptr,
+                           stride, vl, riscv_vector_gen_policy ()));
+      break;
+    case ENUM_MASK_GATHER_LOAD:
+    case ENUM_LEN_MASK_GATHER_LOAD:
+      emit_clobber (vector);
+      emit_insn (gen_vlse (vector_mode, vector, mask, vector, ptr, stride, vl,
+                           riscv_vector_gen_policy ()));
+      break;
+    case ENUM_SCATTER_STORE:
+    case ENUM_LEN_SCATTER_STORE:
+      emit_insn (gen_vsse (vector_mode, const0_rtx, ptr, stride, vector, vl,
+                           riscv_vector_gen_policy ()));
+      break;
+    case ENUM_MASK_SCATTER_STORE:
+    case ENUM_LEN_MASK_SCATTER_STORE:
+      emit_insn (gen_vsse (vector_mode, mask, ptr, stride, vector, vl,
+                           riscv_vector_gen_policy ()));
+      break;
+    default:
+      break;
+    }
+}
+
+void
+riscv_vector_expand_gather_scatter (rtx *ops, unsigned int gather_scatter_flag)
+{
+  rtx base, offset, vector;
+  machine_mode vector_mode, offset_mode;
+  int scale, log2;
+  bool unsigned_p;
+  if (gather_scatter_flag & 0x1)
+    {
+      base = ops[0];
+      offset = ops[1];
+      vector = ops[4];
+      vector_mode = GET_MODE (ops[4]);
+      offset_mode = GET_MODE (ops[1]);
+      scale = INTVAL (ops[3]);
+      log2 = exact_log2 (scale);
+      unsigned_p = INTVAL (ops[2]);
+    }
+  else
+    {
+      base = ops[1];
+      offset = ops[2];
+      vector = ops[0];
+      vector_mode = GET_MODE (ops[0]);
+      offset_mode = GET_MODE (ops[2]);
+      scale = INTVAL (ops[4]);
+      log2 = exact_log2 (scale);
+      unsigned_p = INTVAL (ops[3]);
+    }
+
+  base = force_reg (Pmode, base);
+  offset = force_reg (offset_mode, offset);
+
+  /* RVV only support zero_extend offset. For sign_extend offset, we
+     need to sign_extend the offset and use gather scatter instructions
+     that have the same offset and base mode. */
+  if (unsigned_p == 0 && GET_MODE_INNER (offset_mode) != Pmode)
+    {
+      machine_mode new_offset_mode;
+      gcc_assert (riscv_vector_data_mode (Pmode, GET_MODE_NUNITS (offset_mode))
+                      .exists (&new_offset_mode));
+      rtx new_offset = gen_reg_rtx (new_offset_mode);
+
+      unsigned int factor =
+          GET_MODE_BITSIZE (GET_MODE_INNER (new_offset_mode)) /
+          GET_MODE_BITSIZE (GET_MODE_INNER (offset_mode));
+      if (factor == 2)
+        emit_insn (gen_vext_vf2 (SIGN_EXTEND, offset_mode, new_offset,
+                                 const0_rtx, const0_rtx, offset,
+                                 gen_rtx_REG (Pmode, X0_REGNUM),
+                                 riscv_vector::gen_ta_policy ()));
+      else if (factor == 4)
+        emit_insn (gen_vext_vf4 (SIGN_EXTEND, offset_mode, new_offset,
+                                 const0_rtx, const0_rtx, offset,
+                                 gen_rtx_REG (Pmode, X0_REGNUM),
+                                 riscv_vector::gen_ta_policy ()));
+      else
+        emit_insn (gen_vext_vf8 (SIGN_EXTEND, offset_mode, new_offset,
+                                 const0_rtx, const0_rtx, offset,
+                                 gen_rtx_REG (Pmode, X0_REGNUM),
+                                 riscv_vector::gen_ta_policy ()));
+
+      offset = new_offset;
+      offset_mode = new_offset_mode;
+    }
+
+  rtx vl;
+  if ((gather_scatter_flag >> 1) & 0x1)
+    {
+      if (gather_scatter_flag == ENUM_LEN_MASK_GATHER_LOAD ||
+          gather_scatter_flag == ENUM_LEN_MASK_SCATTER_STORE)
+        vl = force_reg (Pmode, ops[6]);
+      else
+        vl = force_reg (Pmode, ops[5]);
+    }
+  else
+    vl = gen_rtx_REG (Pmode, X0_REGNUM);
+
+  if (!REG_P (offset))
+    {
+      riscv_vector_expand_strided (base, offset, scale, vector,
+                                   (gather_scatter_flag == ENUM_GATHER_LOAD ||
+                                    gather_scatter_flag == ENUM_GATHER_LOAD ||
+                                    gather_scatter_flag == ENUM_SCATTER_STORE ||
+                                    gather_scatter_flag == ENUM_SCATTER_STORE)
+                                       ? NULL_RTX
+                                       : ops[5],
+                                   vl, gather_scatter_flag);
+      return;
+    }
+
+  if (log2 != 0)
+    {
+      rtx new_offset = gen_reg_rtx (offset_mode);
+      emit_insn (gen_v_vx (ASHIFT, offset_mode, new_offset, const0_rtx, const0_rtx,
+                           offset, GEN_INT (log2), vl, riscv_vector_gen_policy ()));
+      offset = new_offset;
+    }
+
+  switch (gather_scatter_flag)
+    {
+    case ENUM_GATHER_LOAD:
+    case ENUM_LEN_GATHER_LOAD:
+      emit_insn (gen_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, vector_mode, offset_mode, vector,
+                            const0_rtx, const0_rtx, base, offset, vl,
+                            riscv_vector_gen_policy ()));
+      break;
+    case ENUM_MASK_GATHER_LOAD:
+    case ENUM_LEN_MASK_GATHER_LOAD:
+      emit_clobber (vector);
+      emit_insn (gen_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, vector_mode, offset_mode, vector, ops[5],
+                            vector, base, offset, vl, riscv_vector_gen_policy (RVV_POLICY_MU)));
+      break;
+    case ENUM_SCATTER_STORE:
+    case ENUM_LEN_SCATTER_STORE:
+      emit_insn (gen_vsxei (UNSPEC_UNORDER_INDEXED_STORE, vector_mode, offset_mode, const0_rtx,
+                            base, offset, vector, vl, riscv_vector_gen_policy ()));
+      break;
+    case ENUM_MASK_SCATTER_STORE:
+    case ENUM_LEN_MASK_SCATTER_STORE:
+      emit_insn (gen_vsxei (UNSPEC_UNORDER_INDEXED_STORE, vector_mode, offset_mode, ops[5], base,
+                            offset, vector, vl, riscv_vector_gen_policy ()));
+      break;
+    default:
+      break;
+    }
+}
+
+rtx
+riscv_vector_constant_helper (const char *str, machine_mode mode)
+{
+  if (SCALAR_INT_MODE_P (mode)
+    && (strcmp (str, "plus") == 0
+    || strcmp (str, "umax") == 0
+    || strcmp (str, "ior") == 0
+    || strcmp (str, "xor") == 0))
+    return GEN_INT (0);
+
+  if (strcmp (str, "and") == 0)
+    return GEN_INT (-1);
+
+  if (strcmp (str, "plus") == 0)
+    return force_reg (mode, CONST0_RTX (mode));
+
+  switch (mode)
+  {
+  case QImode:
+    if (strcmp (str, "umin") == 0)
+      return force_reg (mode, GEN_INT (0xFF));
+    else if (strcmp (str, "smin") == 0)
+      return force_reg (mode, GEN_INT (0x7F));
+    else if (strcmp (str, "smax") == 0)
+      return force_reg (mode, GEN_INT (0xFFFFFFFFFFFFFF80));
+    else
+      break;
+  case HImode:
+    if (strcmp (str, "umin") == 0)
+      return force_reg (mode, GEN_INT (0xFFFF));
+    else if (strcmp (str, "smin") == 0)
+      return force_reg (mode, GEN_INT (0x7FFF));
+    else if (strcmp (str, "smax") == 0)
+      return force_reg (mode, GEN_INT (0xFFFFFFFFFFFF8000));
+    else
+      break;
+  case SImode:
+    if (strcmp (str, "umin") == 0)
+      return force_reg (mode, GEN_INT (0xFFFFFFFF));
+    else if (strcmp (str, "smin") == 0)
+      return force_reg (mode, GEN_INT (0x7FFFFFFF));
+    else if (strcmp (str, "smax") == 0)
+      return force_reg (mode, GEN_INT (0xFFFFFFFF80000000));
+    else
+      break;
+  case DImode:
+    if (strcmp (str, "umin") == 0)
+      return force_reg (mode, GEN_INT (0xFFFFFFFFFFFFFFFF));
+    else if (strcmp (str, "smin") == 0)
+      return force_reg (mode, GEN_INT (0x7FFFFFFFFFFFFFFF));
+    else if (strcmp (str, "smax") == 0)
+      return force_reg (mode, GEN_INT (0x8000000000000000));
+    else
+      break;
+  case HFmode:
+    if (strcmp (str, "smin") == 0)
+      return gen_lowpart (mode, force_reg (HImode, GEN_INT (0x7BFF)));
+    else if (strcmp (str, "smax") == 0)
+      return gen_lowpart (mode, force_reg (HImode, GEN_INT (0xFC00)));
+    else
+      break;
+  case SFmode:
+    if (strcmp (str, "smin") == 0)
+      return gen_lowpart (mode, force_reg (SImode, GEN_INT (0x7F7FFFFF)));
+    else if (strcmp (str, "smax") == 0)
+      return gen_lowpart (mode, force_reg (SImode, GEN_INT (0xFF7FFFFF)));
+    else
+      break;
+  case DFmode:
+    if (strcmp (str, "smin") == 0)
+      return gen_lowpart (mode, force_reg (DImode, GEN_INT (0x7FEFFFFFFFFFFFFF)));
+    else if (strcmp (str, "smax") == 0)
+      return gen_lowpart (mode, force_reg (DImode, GEN_INT (0xFFEFFFFFFFFFFFFF)));
+    else
+      break;
+  default:
+    break;
+  }
+
+  gcc_unreachable ();
+}
+
+/* Return the RVV vector mode that has NUNITS elements or bytes of mode INNER_MODE.  */
+
+opt_machine_mode
+riscv_vector_data_mode (scalar_mode inner_mode, poly_uint64 nunits)
+{
+  enum mode_class mclass = (is_a <scalar_float_mode> (inner_mode)
+                             ? MODE_VECTOR_FLOAT : MODE_VECTOR_INT);
+  machine_mode mode;
+  FOR_EACH_MODE_IN_CLASS (mode, mclass)
+    if (inner_mode == GET_MODE_INNER (mode)
+        && known_eq (nunits, GET_MODE_NUNITS (mode))
+        && riscv_vector_data_mode_p (mode)
+        && !riscv_tuple_mode_p (mode))
+      return mode;
+  return opt_machine_mode ();
+}
+
+static rtx
+riscv_vector_gen_mask_mem(rtx const_vec, machine_mode mask_mode)
+{
+  rtvec v = rtvec_alloc (XVECLEN (const_vec, 0));
+  for (int i = 0; i < XVECLEN (const_vec, 0); i++)
+    RTVEC_ELT (v, i) = GEN_INT (0);
+
+  unsigned char b = 0;
+  for (int i = 0; i < XVECLEN (const_vec, 0); i++)
+  {
+    if (INTVAL (XVECEXP(const_vec, 0, i)))
+      b = b | (1 << (i % 8));
+
+    if ((i > 0 && (i % 8) == 7)
+      || (i == (XVECLEN (const_vec, 0) - 1)))
+      {
+        RTVEC_ELT (v, ((i + 7) / 8) - 1) = GEN_INT (b);
+        b = 0;
+      }
+  }
+  machine_mode store_mode;
+  riscv_vector_data_mode (QImode, GET_MODE_NUNITS (mask_mode)).exists (&store_mode);
+  const_vec = gen_rtx_CONST_VECTOR (store_mode, v);
+  rtx mem = force_const_mem (store_mode, const_vec);
+  return gen_rtx_MEM (mask_mode, XEXP (mem, 0));
+}
+
+void
+riscv_vector_expand_vec_perm (rtx target, rtx op0, rtx op1, rtx sel)
+{
+  rtx x;
+  machine_mode data_mode = GET_MODE (target);
+  machine_mode sel_mode = GET_MODE (sel);
+  /* Enforced by the pattern condition.  */
+  int nunits = GET_MODE_NUNITS (sel_mode).to_constant ();
+
+  /* Note: vec_perm indices are supposed to wrap when they go beyond the
+     size of the two value vectors, i.e. the upper bits of the indices
+     are effectively ignored.  RVV vrgather instead produces 0 for any
+     out-of-range indices, so we need to modulo all the vec_perm indices
+     to ensure they are all in range.  */
+  rtx sel_reg = force_reg (sel_mode, sel);
+
+  /* TARGET_VECTORIZE_VEC_PERM_CONST will eliminate the cases that
+     nunits larger than 255 if inner mode is QImode. So it is safe
+     to use vrgather instructions. */
+
+  /* Check if the sel only references the first values vector.  */
+  if (CONST_VECTOR_P (sel)
+      && riscv_const_vec_all_in_range_p (sel, 0, nunits - 1))
+    {
+      if (const_vec_duplicate_p (sel, &x))
+        {
+          if (IN_RANGE (INTVAL (x), 0, 31))
+            emit_insn (gen_vrgather_vx (data_mode, target, const0_rtx, const0_rtx, op0, x,
+                                        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+          else
+            emit_insn (gen_vrgather_vx (data_mode, target, const0_rtx, const0_rtx, op0, force_reg (Pmode, x),
+                                        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+        }
+      else
+        emit_insn (gen_vrgather_vv (data_mode, target, const0_rtx, const0_rtx, op0, sel_reg,
+                                    gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+      return;
+    }
+
+  /* Check if the two values vectors are the same.  */
+  if (rtx_equal_p (op0, op1))
+    {
+      if (const_vec_duplicate_p (sel, &x))
+        {
+          if (IN_RANGE (INTVAL (x), 0, 31))
+            emit_insn (gen_vrgather_vx (data_mode, target, const0_rtx, const0_rtx, op0, x,
+                                        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+          else
+            emit_insn (gen_vrgather_vx (data_mode, target, const0_rtx, const0_rtx, op0, force_reg (Pmode, x),
+                                        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+        }
+      else
+        emit_insn (gen_vrgather_vv (data_mode, target, const0_rtx, const0_rtx, op0, sel_reg,
+                                    gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+      return;
+    }
+
+  /* Run vrgather on for each value vector and combine the results.  */
+  machine_mode mask_mode;
+  gcc_assert (targetm.vectorize.get_mask_mode (data_mode).exists (&mask_mode));
+  rtx mask = gen_reg_rtx (mask_mode);
+
+  // use const memory for const vnx128qi
+  if (CONST_VECTOR_P (sel) && nunits >= 128 && GET_MODE_INNER(sel_mode) == QImode)
+  {
+    rtx_vector_builder op_idx_builder (sel_mode, nunits, 1);
+    rtx_vector_builder op1_mask_builder (mask_mode, nunits, 1);
+    for (int i = 0; i < nunits; i++)
+    {
+      HOST_WIDE_INT idx_val = INTVAL (CONST_VECTOR_ELT (sel, i));
+      // ensure idx is positive
+      rtx idx = GEN_INT ((idx_val + nunits) % nunits);
+      rtx mask = (idx_val >= nunits || idx_val < 0) ? CONST1_RTX (BImode) : CONST0_RTX (BImode);
+      op_idx_builder.quick_push (idx);
+      op1_mask_builder.quick_push (mask);
+    }
+
+    rtx new_idx = gen_reg_rtx (sel_mode);
+    rtx new_idx_mem = force_const_mem (sel_mode, op_idx_builder.build());
+    riscv_emit_move(new_idx, gen_rtx_MEM (sel_mode, XEXP (new_idx_mem, 0)));
+    riscv_emit_move (mask, riscv_vector_gen_mask_mem(op1_mask_builder.build (), mask_mode));
+    emit_insn (gen_vrgather_vv (data_mode, target, const0_rtx, const0_rtx, op0, new_idx,
+               gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+
+    emit_insn (gen_vrgather_vv (data_mode, target, mask, target, op1, new_idx,
+               gen_rtx_REG (Pmode, X0_REGNUM),
+               riscv_vector::gen_tamu_policy ()));
+    return;
+  }
+
+  /* step1: generate a mask that should select second vector. */
+  emit_insn (gen_vms_vx (GEU, sel_mode, mask, const0_rtx, const0_rtx, sel_reg,
+      GEN_INT (nunits), gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_ta_policy ()));
+
+  /* step2: gather a intermediate result for index < nunits,
+            we don't need to care about the result of the element
+            whose index >= nunits. */
+  emit_insn (gen_vrgather_vv (data_mode, target, const0_rtx,const0_rtx, op0, sel_reg,
+             gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+
+  /* step3: generate a new selector for second vector. */
+  emit_insn (gen_v_vx (UNSPEC_VSUB, sel_mode, sel_reg, const0_rtx, const0_rtx, sel_reg,
+        GEN_INT (nunits), gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_ta_policy ()));
+
+  /* step4: merge the result of index >= nunits. */
+  emit_insn (gen_vrgather_vv (data_mode, target, mask, target, op1, sel_reg,
+             gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_tamu_policy ()));
+}
+
 /* Implement TARGET_LEGITIMATE_CONSTANT_P.  */
 
 static bool
 riscv_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
+  /* If an offset is being added to something else, we need to allow the
+     base to be moved into the destination register, meaning that there
+     are no free temporaries for the offset.  */
+  poly_int64 offset;
+  if (CONST_POLY_INT_P (x)
+    && poly_int_rtx_p (x, &offset)
+    && !offset.is_constant ()
+    && riscv_offset_temporaries (true, offset) > 0)
+    return false;
+
   return riscv_const_insns (x) > 0;
 }
 
@@ -718,6 +3325,12 @@ riscv_cannot_force_const_mem (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
   enum riscv_symbol_type type;
   rtx base, offset;
+
+  /* There's no way to calculate VL-based values using relocations.  */
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, x, ALL)
+    if (GET_CODE (*iter) == CONST_POLY_INT)
+      return true;
 
   /* There is no assembler syntax for expressing an address-sized
      high part.  */
@@ -793,8 +3406,8 @@ riscv_valid_offset_p (rtx x, machine_mode mode)
 
   /* We may need to split multiword moves, so make sure that every word
      is accessible.  */
-  if (GET_MODE_SIZE (mode) > UNITS_PER_WORD
-      && !SMALL_OPERAND (INTVAL (x) + GET_MODE_SIZE (mode) - UNITS_PER_WORD))
+  if (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD
+      && !SMALL_OPERAND (INTVAL (x) + GET_MODE_SIZE (mode).to_constant () - UNITS_PER_WORD))
     return false;
 
   return true;
@@ -858,7 +3471,7 @@ riscv_valid_lo_sum_p (enum riscv_symbol_type sym_type, machine_mode mode,
   else
     {
       align = GET_MODE_ALIGNMENT (mode);
-      size = GET_MODE_BITSIZE (mode);
+      size = GET_MODE_BITSIZE (mode).to_constant ();
     }
 
   /* We may need to split multiword moves, so make sure that each word
@@ -888,6 +3501,11 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
       return riscv_valid_base_register_p (info->reg, mode, strict_p);
 
     case PLUS:
+
+      /* Vector load/store disallow any offset.  */
+      if (TARGET_VECTOR && riscv_vector_mode_p (mode))
+        return false;
+
       info->type = ADDRESS_REG;
       info->reg = XEXP (x, 0);
       info->offset = XEXP (x, 1);
@@ -895,6 +3513,11 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
 	      && riscv_valid_offset_p (info->offset, mode));
 
     case LO_SUM:
+
+      /* Vector load/store disallow LO_SUM.  */
+      if (TARGET_VECTOR && riscv_vector_mode_p (mode))
+        return false;
+
       info->type = ADDRESS_LO_SUM;
       info->reg = XEXP (x, 0);
       info->offset = XEXP (x, 1);
@@ -913,6 +3536,11 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
 	      && riscv_valid_lo_sum_p (info->symbol_type, mode, info->offset));
 
     case CONST_INT:
+
+      /* Vector load/store disallow CONST_INT.  */
+      if (TARGET_VECTOR && riscv_vector_mode_p (mode))
+        return false;
+
       /* Small-integer addresses don't occur very often, but they
 	 are legitimate if x0 is a valid base register.  */
       info->type = ADDRESS_CONST_INT;
@@ -998,8 +3626,9 @@ riscv_address_insns (rtx x, machine_mode mode, bool might_split_p)
 
   /* BLKmode is used for single unaligned loads and stores and should
      not count as a multiword mode. */
-  if (mode != BLKmode && might_split_p)
-    n += (GET_MODE_SIZE (mode) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+  if (mode != BLKmode && might_split_p && !riscv_vector_mode_p (mode))
+    n += ((GET_MODE_SIZE (mode).to_constant () + UNITS_PER_WORD - 1)
+          / UNITS_PER_WORD);
 
   if (addr.type == ADDRESS_LO_SUM)
     n += riscv_symbol_insns (addr.symbol_type) - 1;
@@ -1034,9 +3663,79 @@ riscv_const_insns (rtx x)
       }
 
     case CONST_DOUBLE:
-    case CONST_VECTOR:
       /* We can use x0 to load floating-point zero.  */
       return x == CONST0_RTX (GET_MODE (x)) ? 1 : 0;
+    case CONST_VECTOR:
+      {
+        machine_mode mode = GET_MODE (x);
+        /* For the mode which is not RVV mode, we use
+           default configuration. */
+        if (!riscv_vector_mode_p (mode))
+          return x == CONST0_RTX (GET_MODE (x)) ? 1 : 0;
+
+        unsigned int factor = 0;
+        if (GET_MODE_CLASS (GET_MODE (x)) == MODE_VECTOR_BOOL)
+          {
+            /* In RVV, we can use vmclr.m/vmset.m to generate
+               all 0s/1s bool vector. Otherwise we can only use
+               load instructions. */
+            if (x == CONST0_RTX (GET_MODE (x))
+              || x == CONSTM1_RTX (GET_MODE (x)))
+              return 1;
+            else
+              return 0;
+          }
+        else if (FLOAT_MODE_P (GET_MODE (x)))
+          {
+            /* In RVV, Floating-point should be first load
+               into floating-point register
+               then duplicate. */
+            factor = 3;
+          }
+        else
+          {
+            rtx elt;
+            if (!const_vec_duplicate_p (x, &elt))
+              {
+                rtx base, step;
+                if (const_vec_series_p (x, &base, &step))
+                  {
+                    /* For const vector: {0, 1, 2, ......},
+                       we can use a single instruction vid.v
+                       to generate the vector. */
+                    if (INTVAL (step) == 1
+                      && INTVAL (base) == 0)
+                      factor = 1;
+                    /* We need a vid + li + vmul.vx instruction. */
+                    else if (INTVAL (base) == 0)
+                      factor = 2 + riscv_integer_cost (INTVAL (step));
+                    /* We need a vid + (li + vadd.vx)/vadd.vi instruction. */
+                    else if (INTVAL (step) == 1)
+                      factor = IN_RANGE (INTVAL (base), -16, 15) ? 2
+                          : 2 + riscv_integer_cost (INTVAL (base));
+                    /* We need a vid + (li + vadd.vx)/vadd.vi + li + vmul.vx instruction. */
+                    else
+                      factor = IN_RANGE (INTVAL (base), -16, 15) ? 4
+                          : 4 + riscv_integer_cost (INTVAL (base));
+                  }
+                else
+                  factor = 0;
+              }
+            else
+              {
+                /* Use vmv.v.i. */
+                if (riscv_const_vec_all_same_in_range_p (x, -15, 16))
+                  factor = 1;
+                /* Use li + vmv.v.x. */
+                else
+                  factor = 1 + riscv_integer_cost (INTVAL (elt));
+              }
+          }
+        if (riscv_tuple_mode_p (mode))
+          return factor * riscv_classify_nf (mode);
+        else
+          return factor;
+      }
 
     case CONST:
       /* See if we can refer to X directly.  */
@@ -1056,6 +3755,12 @@ riscv_const_insns (rtx x)
     case SYMBOL_REF:
     case LABEL_REF:
       return riscv_symbol_insns (riscv_classify_symbol (x));
+
+    /* FIXME: In RVV, we get CONST_POLY_INT by using csrr vlenb
+       instruction and several scalar shift or mult instructions,
+       it is so far unknown. We set it to 4 temporarily.  */
+    case CONST_POLY_INT:
+      return 4;
 
     default:
       return 0;
@@ -1092,9 +3797,10 @@ riscv_load_store_insns (rtx mem, rtx_insn *insn)
 
   /* Try to prove that INSN does not need to be split.  */
   might_split_p = true;
-  if (GET_MODE_BITSIZE (mode) <= 32)
+
+  if (GET_MODE_BITSIZE (mode).to_constant () <= 32)
     might_split_p = false;
-  else if (GET_MODE_BITSIZE (mode) == 64)
+  else if (GET_MODE_BITSIZE (mode).to_constant () == 64)
     {
       set = single_set (insn);
       if (set && !riscv_split_64bit_move_p (SET_DEST (set), SET_SRC (set)))
@@ -1598,20 +4304,277 @@ riscv_legitimize_const_move (machine_mode mode, rtx dest, rtx src)
   riscv_emit_move (dest, src);
 }
 
+/* Report when we try to do something that requires vector when vector is disabled.
+   This is an error of last resort and isn't very high-quality.  It usually
+   involves attempts to measure the vector length in some way.  */
+static void
+riscv_report_vector_required (void)
+{
+  static bool reported_p = false;
+
+  /* Avoid reporting a slew of messages for a single oversight.  */
+  if (reported_p)
+    return;
+
+  error ("this operation requires the RVV ISA extension");
+  inform (input_location, "you can enable RVV using the command-line"
+          " option %<-march%>, or by using the %<target%>"
+          " attribute or pragma");
+  reported_p = true;
+}
+
+/* Note: clobber register holds the vlenb or 1/2 vlenb or 1/4 vlenb or 1/8 vlenb value. */
+/* Expand move for quotient.  */
+static void
+riscv_expand_quotient (int quotient, machine_mode mode, rtx clobber_vlenb, rtx dest)
+{
+  if (quotient == 0)
+    {
+      riscv_emit_move(dest, GEN_INT(0));
+      return;
+    }
+
+  bool is_neg = quotient < 0;
+  quotient = abs(quotient);
+  int log2 = exact_log2 (quotient);
+  int vlenb = BYTES_PER_RISCV_VECTOR.coeffs[1];
+
+  if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+    emit_insn (gen_rtx_SET (clobber_vlenb, gen_int_mode (poly_int64 (vlenb, vlenb), mode)));
+  else
+    {
+      riscv_emit_move (gen_highpart (Pmode, clobber_vlenb), GEN_INT (0));
+      emit_insn (gen_rtx_SET (gen_lowpart (Pmode, clobber_vlenb), gen_int_mode (poly_int64 (vlenb, vlenb), Pmode)));
+    }
+
+  if (log2 == 0)
+    {
+      if (is_neg)
+        {
+          if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+            emit_insn (gen_rtx_SET (dest, gen_rtx_NEG (mode, clobber_vlenb)));
+          else
+            {
+              /* We should use SImode to simulate DImode negation. */
+              /* prologue and epilogue can not go through this condition. */
+              gcc_assert (can_create_pseudo_p ());
+              rtx reg = gen_reg_rtx (Pmode);
+              riscv_emit_move(dest, clobber_vlenb);
+              emit_insn (gen_rtx_SET (reg,
+                  gen_rtx_NE (Pmode, gen_lowpart (Pmode, dest), const0_rtx)));
+              emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+                  gen_rtx_NEG (Pmode, gen_highpart (Pmode, dest))));
+              emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest),
+                  gen_rtx_NEG (Pmode, gen_lowpart (Pmode, dest))));
+              emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+                  gen_rtx_MINUS (Pmode, gen_highpart (Pmode, dest), reg)));
+            }
+        }
+      else
+        riscv_emit_move(dest, clobber_vlenb);
+    }
+  else if (log2 != -1
+    && GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+    {
+      gcc_assert (IN_RANGE (log2, 0, 31));
+
+      if (is_neg)
+        {
+          emit_insn (gen_rtx_SET (dest, gen_rtx_NEG (mode, clobber_vlenb)));
+          emit_insn (gen_rtx_SET (dest, gen_rtx_ASHIFT (mode, dest, GEN_INT (log2))));
+        }
+      else
+        emit_insn (gen_rtx_SET (dest, gen_rtx_ASHIFT (mode, clobber_vlenb, GEN_INT (log2))));
+    }
+  else if (exact_log2 (quotient + 1) != -1
+    && GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+    {
+      gcc_assert (IN_RANGE (exact_log2 (quotient + 1), 0, 31));
+      emit_insn (gen_rtx_SET (
+                   dest,
+                   gen_rtx_ASHIFT (mode, clobber_vlenb, GEN_INT (exact_log2 (quotient + 1)))));
+
+      if (is_neg)
+        emit_insn (gen_rtx_SET (dest, gen_rtx_MINUS (mode, clobber_vlenb, dest)));
+      else
+        emit_insn (gen_rtx_SET (dest, gen_rtx_MINUS (mode, dest, clobber_vlenb)));
+    }
+  else if (exact_log2 (quotient - 1) != -1
+    && GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+    {
+      gcc_assert (IN_RANGE (exact_log2 (quotient - 1), 0, 31));
+      emit_insn (gen_rtx_SET (
+                   dest, gen_rtx_ASHIFT (mode, clobber_vlenb,
+                                         GEN_INT (exact_log2 (quotient - 1)))));
+
+      if (is_neg)
+        {
+          emit_insn (gen_rtx_SET (dest, gen_rtx_NEG (mode, dest)));
+          emit_insn (gen_rtx_SET (dest, gen_rtx_MINUS (mode, dest, clobber_vlenb)));
+        }
+      else
+        emit_insn (gen_rtx_SET (dest, gen_rtx_PLUS (mode, dest, clobber_vlenb)));
+    }
+  else
+    {
+      gcc_assert (TARGET_MUL
+                  && "M-extension must be enabled to calculate the poly_int "
+                  "size/offset.");
+
+      if (is_neg)
+        riscv_emit_move (dest, GEN_INT (-quotient));
+      else
+        riscv_emit_move (dest, GEN_INT (quotient));
+
+      if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+        emit_insn (gen_rtx_SET (dest, gen_rtx_MULT (mode, dest, clobber_vlenb)));
+      else
+        {
+          /* We should use SImode to simulate DImode multiplication. */
+          /* prologue and epilogue can not go through this condition. */
+          gcc_assert (can_create_pseudo_p ());
+          rtx reg = gen_reg_rtx (Pmode);
+          emit_insn (gen_umulsi3_highpart (reg, gen_lowpart (Pmode, dest),
+              gen_lowpart (Pmode, clobber_vlenb)));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, clobber_vlenb),
+              gen_rtx_MULT (Pmode, gen_highpart (Pmode, clobber_vlenb),
+                  gen_lowpart (Pmode, dest))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+              gen_rtx_MULT (Pmode, gen_highpart (Pmode, dest),
+                  gen_lowpart (Pmode, clobber_vlenb))));
+          emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest),
+              gen_rtx_MULT (Pmode, gen_lowpart (Pmode, dest),
+                  gen_lowpart (Pmode, clobber_vlenb))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+              gen_rtx_PLUS (Pmode, gen_highpart (Pmode, dest),
+                  gen_highpart (Pmode, clobber_vlenb))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+              gen_rtx_PLUS (Pmode, gen_highpart (Pmode, dest), reg)));
+        }
+    }
+}
+
+/* Analyze src and emit const_poly_int mov sequence.  */
+
+static void
+riscv_expand_mov_const_poly_int (machine_mode mode, rtx dest, rtx clobber,
+                                 rtx src)
+{
+  poly_int64 value = rtx_to_poly_int64 (src);
+  int offset = value.coeffs[0];
+  int factor = value.coeffs[1];
+  int vlenb = BYTES_PER_RISCV_VECTOR.coeffs[1];
+  int div_factor = 0;
+
+  if ((factor % vlenb) == 0)
+    riscv_expand_quotient(factor / vlenb, mode, clobber, dest);
+  else if ((factor % (vlenb / 2)) == 0)
+    {
+      riscv_expand_quotient(factor / (vlenb / 2), mode, clobber, dest);
+      div_factor = 2;
+    }
+  else if ((factor % (vlenb / 4)) == 0)
+    {
+      riscv_expand_quotient(factor / (vlenb / 4), mode, clobber, dest);
+      div_factor = 4;
+    }
+  else if ((factor % (vlenb / 8)) == 0)
+    {
+      riscv_expand_quotient(factor / (vlenb / 8), mode, clobber, dest);
+      div_factor = 8;
+    }
+  else if ((factor % (vlenb / 16)) == 0)
+    {
+      riscv_expand_quotient(factor / (vlenb / 16), mode, clobber, dest);
+      div_factor = 16;
+    }
+  else
+    gcc_unreachable();
+
+  if (div_factor != 0)
+    {
+      if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+        emit_insn (gen_rtx_SET (dest, gen_rtx_ASHIFTRT (mode, dest, GEN_INT (exact_log2 (div_factor)))));
+      else
+        {
+          /* We should use SImode to simulate DImode shift. */
+          /* prologue and epilogue can not go through this condition. */
+          gcc_assert (can_create_pseudo_p ());
+          rtx reg = gen_reg_rtx (Pmode);
+          emit_insn (gen_rtx_SET (reg, gen_rtx_ASHIFT (Pmode, gen_highpart (Pmode, dest),
+              GEN_INT (GET_MODE_BITSIZE (Pmode) - exact_log2 (div_factor)))));
+          emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest),
+              gen_rtx_LSHIFTRT (Pmode, gen_lowpart (Pmode, dest),
+              GEN_INT (exact_log2 (div_factor)))));
+          emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest),
+              gen_rtx_IOR (Pmode, reg, gen_lowpart (Pmode, dest))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+              gen_rtx_ASHIFTRT (Pmode, gen_highpart (Pmode, dest),
+              GEN_INT (exact_log2 (div_factor)))));
+        }
+    }
+
+  HOST_WIDE_INT constant = offset - factor;
+
+  if (constant == 0)
+    return;
+  else if (SMALL_OPERAND (constant))
+    {
+      if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+        emit_insn (gen_rtx_SET (dest, gen_rtx_PLUS (mode, dest, GEN_INT (constant))));
+      else
+        {
+          /* We should use SImode to simulate DImode addition. */
+          /* prologue and epilogue can not go through this condition. */
+          gcc_assert (can_create_pseudo_p ());
+          rtx reg = gen_reg_rtx (Pmode);
+          emit_insn (gen_rtx_SET (reg, gen_rtx_PLUS (Pmode, gen_lowpart (Pmode, dest), GEN_INT (constant))));
+          emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest), gen_rtx_LTU (Pmode, reg, gen_lowpart (Pmode, dest))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest), gen_rtx_PLUS (Pmode, gen_lowpart (Pmode, dest), gen_highpart (Pmode, dest))));
+          riscv_emit_move (gen_lowpart (Pmode, dest), reg);
+        }
+    }
+  else
+    emit_insn (gen_rtx_SET (dest, riscv_add_offset (clobber, dest, constant)));
+}
+
 /* If (set DEST SRC) is not a valid move instruction, emit an equivalent
    sequence that is valid.  */
 
 bool
 riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
 {
-  /* Expand 
-       (set (reg:QI target) (mem:QI (address))) 
+  scalar_int_mode int_mode;
+  if (CONST_POLY_INT_P (src)
+    && is_a <scalar_int_mode> (mode, &int_mode))
+    {
+      poly_int64 value = rtx_to_poly_int64 (src);
+      if (!value.is_constant () && !TARGET_VECTOR)
+        {
+          riscv_report_vector_required ();
+          return true;
+        }
+
+      if (GET_MODE_SIZE (mode).to_constant () < GET_MODE_SIZE (Pmode))
+        {
+          rtx clobber = gen_reg_rtx (Pmode);
+          riscv_expand_mov_const_poly_int (Pmode, gen_lowpart (Pmode, dest), clobber, src);
+        }
+      else
+        {
+          rtx clobber = gen_reg_rtx (mode);
+          riscv_expand_mov_const_poly_int (mode, dest, clobber, src);
+        }
+      return true;
+    }
+  /* Expand
+       (set (reg:QI target) (mem:QI (address)))
      to
        (set (reg:DI temp) (zero_extend:DI (mem:QI (address))))
        (set (reg:QI target) (subreg:QI (reg:DI temp) 0))
      with auto-sign/zero extend.  */
   if (GET_MODE_CLASS (mode) == MODE_INT
-      && GET_MODE_SIZE (mode) < UNITS_PER_WORD
+      && GET_MODE_SIZE (mode).to_constant () < UNITS_PER_WORD
       && can_create_pseudo_p ()
       && MEM_P (src))
     {
@@ -1620,7 +4583,7 @@ riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
 
       temp_reg = gen_reg_rtx (word_mode);
       zero_extend_p = (LOAD_EXTEND_OP (mode) == ZERO_EXTEND);
-      emit_insn (gen_extend_insn (temp_reg, src, word_mode, mode, 
+      emit_insn (gen_extend_insn (temp_reg, src, word_mode, mode,
 				  zero_extend_p));
       riscv_emit_move (dest, gen_lowpart (mode, temp_reg));
       return true;
@@ -1631,13 +4594,14 @@ riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
       rtx reg;
 
       if (GET_CODE (src) == CONST_INT)
-	{
-	  /* Apply the equivalent of PROMOTE_MODE here for constants to
-	     improve cse.  */
-	  machine_mode promoted_mode = mode;
-	  if (GET_MODE_CLASS (mode) == MODE_INT
-	      && GET_MODE_SIZE (mode) < UNITS_PER_WORD)
-	    promoted_mode = word_mode;
+        {
+          /* Apply the equivalent of PROMOTE_MODE here for constants to
+             improve cse.  */
+          machine_mode promoted_mode = mode;
+
+          if (GET_MODE_CLASS (mode) == MODE_INT
+              && GET_MODE_SIZE (mode).to_constant () < UNITS_PER_WORD)
+            promoted_mode = word_mode;
 
 	  if (splittable_const_int_operand (src, mode))
 	    {
@@ -1734,7 +4698,8 @@ riscv_immediate_operand_p (int code, HOST_WIDE_INT x)
 static int
 riscv_binary_cost (rtx x, int single_insns, int double_insns)
 {
-  if (GET_MODE_SIZE (GET_MODE (x)) == UNITS_PER_WORD * 2)
+  if (!riscv_vector_mode_p (GET_MODE (x))
+      && GET_MODE_SIZE (GET_MODE (x)).to_constant () == UNITS_PER_WORD * 2)
     return COSTS_N_INSNS (double_insns);
   return COSTS_N_INSNS (single_insns);
 }
@@ -1781,6 +4746,12 @@ static bool
 riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UNUSED,
 		 int *total, bool speed)
 {
+  /* FIXME: adjust vector cost. */
+  if (riscv_vector_mode_p (mode))
+    {
+      return vector_tune_param->rvv_insn_costs_table->get_cost (x, mode, total, speed);
+    }
+
   bool float_mode_p = FLOAT_MODE_P (mode);
   int cost;
 
@@ -1834,7 +4805,7 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
       return false;
 
     case NOT:
-      *total = COSTS_N_INSNS (GET_MODE_SIZE (mode) > UNITS_PER_WORD ? 2 : 1);
+      *total = COSTS_N_INSNS (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD ? 2 : 1);
       return false;
 
     case AND:
@@ -2078,20 +5049,21 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 	  }
       }
 
-      if (float_mode_p)
-	*total = tune_param->fp_add[mode == DFmode];
-      else
-	*total = COSTS_N_INSNS (GET_MODE_SIZE (mode) > UNITS_PER_WORD ? 4 : 1);
-      return false;
+    if (float_mode_p)
+      *total = tune_param->fp_add[mode == DFmode];
+    else
+      *total = COSTS_N_INSNS (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD ? 4 : 1);
+
+    return false;
 
     case MULT:
       if (float_mode_p)
 	*total = tune_param->fp_mul[mode == DFmode];
       else if (!TARGET_MUL)
-	/* Estimate the cost of a library call.  */
-	*total = COSTS_N_INSNS (speed ? 32 : 6);
-      else if (GET_MODE_SIZE (mode) > UNITS_PER_WORD)
-	*total = 3 * tune_param->int_mul[0] + COSTS_N_INSNS (2);
+        /* Estimate the cost of a library call.  */
+        *total = COSTS_N_INSNS (speed ? 32 : 6);
+      else if (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD)
+        *total = 3 * tune_param->int_mul[0] + COSTS_N_INSNS (2);
       else if (!speed)
 	*total = COSTS_N_INSNS (1);
       else
@@ -2253,7 +5225,7 @@ riscv_output_move (rtx dest, rtx src)
   dest_code = GET_CODE (dest);
   src_code = GET_CODE (src);
   mode = GET_MODE (dest);
-  dbl_p = (GET_MODE_SIZE (mode) == 8);
+  dbl_p = (GET_MODE_SIZE (mode).to_constant () == 8);
 
   if (dbl_p && riscv_split_64bit_move_p (dest, src))
     return "#";
@@ -2261,16 +5233,37 @@ riscv_output_move (rtx dest, rtx src)
   if (dest_code == REG && GP_REG_P (REGNO (dest)))
     {
       if (src_code == REG && FP_REG_P (REGNO (src)))
-	return dbl_p ? "fmv.x.d\t%0,%1" : "fmv.x.w\t%0,%1";
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 2:
+            if (TARGET_FP16)
+              return "fmv.x.h\t%0,%1";
+            else
+              /* Using fmv.x.s + sign-extend to emulate.  */
+              return "fmv.x.w\t%0,%1;slli\t%0,%0,16;srai\t%0,%0,16";
+
+          case 4:
+            return "fmv.x.w\t%0,%1";
+
+          case 8:
+            return "fmv.x.d\t%0,%1";
+          }
 
       if (src_code == MEM)
-	switch (GET_MODE_SIZE (mode))
-	  {
-	  case 1: return "lbu\t%0,%1";
-	  case 2: return "lhu\t%0,%1";
-	  case 4: return "lw\t%0,%1";
-	  case 8: return "ld\t%0,%1";
-	  }
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 1:
+            return "lbu\t%0,%1";
+
+          case 2:
+            return "lhu\t%0,%1";
+
+          case 4:
+            return "lw\t%0,%1";
+
+          case 8:
+            return "ld\t%0,%1";
+          }
 
       if (src_code == CONST_INT)
 	{
@@ -2289,13 +5282,20 @@ riscv_output_move (rtx dest, rtx src)
 	return "lui\t%0,%h1";
 
       if (symbolic_operand (src, VOIDmode))
-	switch (riscv_classify_symbolic_expression (src))
-	  {
-	  case SYMBOL_GOT_DISP: return "la\t%0,%1";
-	  case SYMBOL_ABSOLUTE: return "lla\t%0,%1";
-	  case SYMBOL_PCREL: return "lla\t%0,%1";
-	  default: gcc_unreachable ();
-	  }
+        switch (riscv_classify_symbolic_expression (src))
+          {
+          case SYMBOL_GOT_DISP:
+            return "la\t%0,%1";
+
+          case SYMBOL_ABSOLUTE:
+            return "lla\t%0,%1";
+
+          case SYMBOL_PCREL:
+            return "lla\t%0,%1";
+
+          default:
+            gcc_unreachable ();
+          }
     }
   if ((src_code == REG && GP_REG_P (REGNO (src)))
       || (src == CONST0_RTX (mode)))
@@ -2305,39 +5305,103 @@ riscv_output_move (rtx dest, rtx src)
 	  if (GP_REG_P (REGNO (dest)))
 	    return "mv\t%0,%z1";
 
-	  if (FP_REG_P (REGNO (dest)))
-	    {
-	      if (!dbl_p)
-		return "fmv.w.x\t%0,%z1";
-	      if (TARGET_64BIT)
-		return "fmv.d.x\t%0,%z1";
-	      /* in RV32, we can emulate fmv.d.x %0, x0 using fcvt.d.w */
-	      gcc_assert (src == CONST0_RTX (mode));
-	      return "fcvt.d.w\t%0,x0";
-	    }
-	}
+          if (FP_REG_P (REGNO (dest)))
+            switch (GET_MODE_SIZE (mode).to_constant ())
+              {
+              case 2:
+                if (TARGET_FP16)
+                  return "fmv.h.x\t%0,%z1";
+                else
+                  /* High 16 bits should be all-1, otherwise HW will treated
+                     as a n-bit canonical NaN, but isn't matter for
+                     softfloat, because softfloat routines won't do that.  */
+                  return "fmv.w.x\t%0,%1";
+
+              case 4:
+                return "fmv.w.x\t%0,%z1";
+
+              case 8:
+                if (TARGET_64BIT)
+                  return "fmv.d.x\t%0,%z1";
+
+                /* in RV32, we can emulate fmv.d.x %0, x0 using fcvt.d.w */
+                gcc_assert (src == CONST0_RTX (mode));
+                return "fcvt.d.w\t%0,x0";
+              }
+        }
+
       if (dest_code == MEM)
-	switch (GET_MODE_SIZE (mode))
-	  {
-	  case 1: return "sb\t%z1,%0";
-	  case 2: return "sh\t%z1,%0";
-	  case 4: return "sw\t%z1,%0";
-	  case 8: return "sd\t%z1,%0";
-	  }
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 1:
+            return "sb\t%z1,%0";
+
+          case 2:
+            return "sh\t%z1,%0";
+
+          case 4:
+            return "sw\t%z1,%0";
+
+          case 8:
+            return "sd\t%z1,%0";
+          }
     }
   if (src_code == REG && FP_REG_P (REGNO (src)))
     {
       if (dest_code == REG && FP_REG_P (REGNO (dest)))
-	return dbl_p ? "fmv.d\t%0,%1" : "fmv.s\t%0,%1";
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 2:
+            return "fmv.h\t%0,%1";
+
+          case 4:
+            return "fmv.s\t%0,%1";
+
+          case 8:
+            return "fmv.d\t%0,%1";
+          }
 
       if (dest_code == MEM)
-	return dbl_p ? "fsd\t%1,%0" : "fsw\t%1,%0";
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 2:
+            return "fsh\t%1,%0";
+
+          case 4:
+            return "fsw\t%1,%0";
+
+          case 8:
+            return "fsd\t%1,%0";
+          }
     }
   if (dest_code == REG && FP_REG_P (REGNO (dest)))
     {
       if (src_code == MEM)
-	return dbl_p ? "fld\t%0,%1" : "flw\t%0,%1";
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 2:
+            return "flh\t%0,%1";
+
+          case 4:
+            return "flw\t%0,%1";
+
+          case 8:
+            return "fld\t%0,%1";
+          }
     }
+
+  if (dest_code == REG
+      && GP_REG_P (REGNO (dest))
+      && src_code == CONST_POLY_INT)
+    {
+      /* we only want a single full vector register vlen
+         read after reload. */
+      poly_int64 value = rtx_to_poly_int64 (src);
+      gcc_assert (value.coeffs[0] == UNITS_PER_V_REG.coeffs[0]
+                  && value.coeffs[1] == UNITS_PER_V_REG.coeffs[1]);
+      return "csrr\t%0,vlenb";
+    }
+
   gcc_unreachable ();
 }
 
@@ -2484,7 +5548,7 @@ static void
 riscv_extend_comparands (rtx_code code, rtx *op0, rtx *op1)
 {
   /* Comparisons consider all XLEN bits, so extend sub-XLEN values.  */
-  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (*op0)))
+  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (*op0)).to_constant ())
     {
       /* It is more profitable to zero-extend QImode values.  But not if the
 	 first operand has already been sign-extended, and the second one is
@@ -2601,21 +5665,25 @@ riscv_emit_float_compare (enum rtx_code *code, rtx *op0, rtx *op1)
       *op1 = riscv_force_binary (word_mode, EQ, cmp_op0, cmp_op1);
       break;
 
-#define UNORDERED_COMPARISON(CODE, CMP)					\
-    case CODE:								\
-      *code = EQ;							\
-      *op0 = gen_reg_rtx (word_mode);					\
-      if (GET_MODE (cmp_op0) == SFmode && TARGET_64BIT)			\
-	emit_insn (gen_f##CMP##_quietsfdi4 (*op0, cmp_op0, cmp_op1));	\
-      else if (GET_MODE (cmp_op0) == SFmode)				\
-	emit_insn (gen_f##CMP##_quietsfsi4 (*op0, cmp_op0, cmp_op1));	\
-      else if (GET_MODE (cmp_op0) == DFmode && TARGET_64BIT)		\
-	emit_insn (gen_f##CMP##_quietdfdi4 (*op0, cmp_op0, cmp_op1));	\
-      else if (GET_MODE (cmp_op0) == DFmode)				\
-	emit_insn (gen_f##CMP##_quietdfsi4 (*op0, cmp_op0, cmp_op1));	\
-      else								\
-	gcc_unreachable ();						\
-      *op1 = const0_rtx;						\
+#define UNORDERED_COMPARISON(CODE, CMP)                                        \
+    case CODE:                                                                \
+      *code = EQ;                                                        \
+      *op0 = gen_reg_rtx (word_mode);                                        \
+      if (GET_MODE (cmp_op0) == SFmode && TARGET_64BIT)                        \
+        emit_insn (gen_f##CMP##_quietsfdi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == SFmode)                                \
+        emit_insn (gen_f##CMP##_quietsfsi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == DFmode && TARGET_64BIT)                \
+        emit_insn (gen_f##CMP##_quietdfdi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == DFmode)                                \
+        emit_insn (gen_f##CMP##_quietdfsi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == HFmode && TARGET_64BIT)                \
+        emit_insn (gen_f##CMP##_quiethfdi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == HFmode)                                \
+        emit_insn (gen_f##CMP##_quiethfsi4 (*op0, cmp_op0, cmp_op1));        \
+      else                                                                \
+        gcc_unreachable ();                                                \
+      *op1 = const0_rtx;                                                \
       break;
 
     case UNLT:
@@ -2843,7 +5911,7 @@ riscv_flatten_aggregate_field (const_tree type,
 	if (n != 0)
 	  return -1;
 
-	HOST_WIDE_INT elt_size = GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (type)));
+      HOST_WIDE_INT elt_size = GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (type))).to_constant ();
 
 	if (elt_size <= UNITS_PER_FP_ARG)
 	  {
@@ -2860,15 +5928,15 @@ riscv_flatten_aggregate_field (const_tree type,
 
     default:
       if (n < 2
-	  && ((SCALAR_FLOAT_TYPE_P (type)
-	       && GET_MODE_SIZE (TYPE_MODE (type)) <= UNITS_PER_FP_ARG)
-	      || (INTEGRAL_TYPE_P (type)
-		  && GET_MODE_SIZE (TYPE_MODE (type)) <= UNITS_PER_WORD)))
-	{
-	  fields[n].type = type;
-	  fields[n].offset = offset;
-	  return n + 1;
-	}
+          && ((SCALAR_FLOAT_TYPE_P (type)
+               && GET_MODE_SIZE (TYPE_MODE (type)).to_constant () <= UNITS_PER_FP_ARG)
+              || (INTEGRAL_TYPE_P (type)
+                  && GET_MODE_SIZE (TYPE_MODE (type)).to_constant () <= UNITS_PER_WORD)))
+        {
+          fields[n].type = type;
+          fields[n].offset = offset;
+          return n + 1;
+        }
       else
 	return -1;
     }
@@ -3029,11 +6097,13 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
   unsigned num_bytes, num_words;
   unsigned fpr_base = return_p ? FP_RETURN : FP_ARG_FIRST;
   unsigned gpr_base = return_p ? GP_RETURN : GP_ARG_FIRST;
+  unsigned vr_base = return_p ? V_RETURN : V_ARG_FIRST;
   unsigned alignment = riscv_function_arg_boundary (mode, type);
 
   memset (info, 0, sizeof (*info));
   info->gpr_offset = cum->num_gprs;
   info->fpr_offset = cum->num_fprs;
+  info->mr_offset = cum->num_mrs;
 
   if (named)
     {
@@ -3091,15 +6161,85 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
 	  if (!SCALAR_FLOAT_TYPE_P (fields[0].type))
 	    std::swap (fregno, gregno);
 
-	  return riscv_pass_fpr_pair (mode, fregno, TYPE_MODE (fields[0].type),
-				      fields[0].offset,
-				      gregno, TYPE_MODE (fields[1].type),
-				      fields[1].offset);
-	}
+          return riscv_pass_fpr_pair (mode, fregno, TYPE_MODE (fields[0].type),
+                                      fields[0].offset,
+                                      gregno, TYPE_MODE (fields[1].type),
+                                      fields[1].offset);
+        }
+
+      /*  Pass vectors in VRs. For the argument contain scalable vectors,
+          for example: foo (vint8m1_t a), we pass this in VRs to reduce
+          redundant register spills. The maximum vector arg registers is
+          MAX_ARGS_IN_VECTOR_REGISTERS. */
+      if (riscv_vector_mode_p (mode))
+        {
+          /*  For return vector register, we use V_RETURN as default. */
+          if (return_p)
+            {
+              if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
+                return gen_rtx_REG (mode, V_REG_FIRST);
+              else
+                return gen_rtx_REG (mode, vr_base);
+            }
+
+          /* The first mask register in argument we use is v0, the res of them
+             we use v8,v9,.....etc same as vector registers.  */
+          if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
+            {
+              info->num_mrs = 1;
+
+              if (info->mr_offset + info->num_mrs <= MAX_ARGS_IN_MASK_REGISTERS)
+                return gen_rtx_REG (mode, V_REG_FIRST);
+            }
+
+          /*  The number of vectors to pass in the function arg.
+              When the mode size is less than a full vector, we
+              use 1 vector to pass. */
+          int nvecs;
+          if (riscv_tuple_mode_p (mode))
+            nvecs = riscv_classify_nf (mode);
+          else
+            nvecs = known_le (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR) ? 1 :
+                exact_div (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR).to_constant ();
+
+          int align = riscv_vlmul_regsize(mode);
+
+          for (int i = 0; i + nvecs <= MAX_ARGS_IN_VECTOR_REGISTERS; i += 1)
+            {
+              if (!cum->used_vrs[i] && (i + 8) % align == 0)
+                {
+                  bool find_space = true;
+                  int j = 1;
+                  for (; j < nvecs; j += 1)
+                    {
+                      if (cum->used_vrs[i + j])
+                        {
+                          find_space = false;
+                          break;
+                        }
+                    }
+                  if (find_space)
+                    {
+                      info->num_vrs = nvecs;
+                      info->vr_offset = i;
+                      return gen_rtx_REG(mode, vr_base + i);
+                    }
+                  else
+                    {
+                      /* skip the j num registers which can not be used */
+                      i += j;
+                    }
+                }
+            }
+
+          info->num_vrs = 0;
+          info->num_mrs = 0;
+          return NULL_RTX;
+        }
     }
 
   /* Work out the size of the argument.  */
-  num_bytes = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode);
+  num_bytes = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode).to_constant ();
   num_words = (num_bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
   /* Doubleword-aligned varargs start on an even register boundary.  */
@@ -3146,8 +6286,18 @@ riscv_function_arg_advance (cumulative_args_t cum_v,
      num_gprs to MAX_ARGS_IN_REGISTERS if a doubleword-aligned
      argument required us to skip the final GPR and pass the whole
      argument on the stack.  */
+
+  if (info.num_vrs > 0)
+    {
+      for (unsigned int i = 0; i < info.num_vrs; i += 1)
+        {
+          /* set current used vector registers */
+          cum->used_vrs[info.vr_offset + i] = true;
+        }
+    }
   cum->num_fprs = info.fpr_offset + info.num_fprs;
   cum->num_gprs = info.gpr_offset + info.num_gprs;
+  cum->num_mrs = info.mr_offset + info.num_mrs;
 }
 
 /* Implement TARGET_ARG_PARTIAL_BYTES.  */
@@ -3193,7 +6343,7 @@ riscv_function_value (const_tree type, const_tree func, machine_mode mode)
 static bool
 riscv_pass_by_reference (cumulative_args_t cum_v, const function_arg_info &arg)
 {
-  HOST_WIDE_INT size = arg.type_size_in_bytes ();
+  HOST_WIDE_INT size = arg.type_size_in_bytes ().to_constant ();
   struct riscv_arg_info info;
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
 
@@ -3204,8 +6354,17 @@ riscv_pass_by_reference (cumulative_args_t cum_v, const function_arg_info &arg)
     {
       /* Don't pass by reference if we can use a floating-point register.  */
       riscv_get_arg_info (&info, cum, arg.mode, arg.type, arg.named, false);
+
       if (info.num_fprs)
-	return false;
+        return false;
+
+      /* Don't pass by reference if we can use a vector register.  */
+      if (info.num_vrs)
+        return false;
+
+      /* Don't pass by reference if we can use a mask register.  */
+      if (info.num_mrs)
+        return false;
     }
 
   /* Pass by reference if the data do not fit in two integer registers.  */
@@ -3484,6 +6643,73 @@ riscv_block_move_loop (rtx dest, rtx src, unsigned HOST_WIDE_INT length,
     emit_insn(gen_nop ());
 }
 
+/* Subroutine of riscv_expand_block_move function using
+   RVV instructions. */
+
+bool
+riscv_vector_expand_block_move (rtx *operands)
+{
+  /*
+  memcpy:
+      mv a3, a0 # Copy destination
+  loop:
+    vsetvli t0, a2, e8, m8, ta, ma   # Vectors of 8b
+    vle8.v v0, (a1)               # Load bytes
+      add a1, a1, t0              # Bump pointer
+      sub a2, a2, t0              # Decrement count
+    vse8.v v0, (a3)               # Store bytes
+      add a3, a3, t0              # Bump pointer
+      bnez a2, loop               # Any more?
+      ret                         # Return
+  */
+  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
+  bool size_p = optimize_function_for_size_p (cfun);
+  rtx src, dst;
+  rtx end = gen_reg_rtx (Pmode);
+  rtx cnt = gen_reg_rtx (Pmode);
+  rtx vec = gen_reg_rtx (cur_mode);
+  /* FIXME: we consider the num of bytes to be memcpy is
+     worthwhile as 16 bytes, but it is under disscussion. */
+  unsigned int worthwhile_bytes = 16;
+
+  /* A memcpy libcall in the worst case takes 3 instructions to prepare the
+     arguments + 1 for the call.  When RVV should take 7 instructions and
+     we're optimizing for size a libcall my be preferable.  */
+  if (size_p)
+    return false;
+
+  if (CONST_INT_P (operands[2]) && INTVAL (operands[2]) < worthwhile_bytes)
+    return false;
+
+  if (CONST_POLY_INT_P (operands[2]))
+    emit_insn (gen_rtx_SET (end, operands[2]));
+  else
+    riscv_emit_move (end, operands[2]);
+  /* Move the address into scratch registers.  */
+  dst = copy_addr_to_reg (XEXP (operands[0], 0));
+  src = copy_addr_to_reg (XEXP (operands[1], 0));
+
+  unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
+  unsigned int vsew = riscv_classify_vsew_field (cur_mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+
+  rtx label = gen_label_rtx ();
+  emit_label (label);
+  emit_insn (gen_vsetvl (Pmode, cnt, end, GEN_INT (vtype)));
+  emit_insn (gen_vle (cur_mode, vec, const0_rtx, const0_rtx, src, end,
+                      riscv_vector_gen_policy ()));
+  emit_insn (gen_vse (cur_mode, const0_rtx, dst, vec, end, riscv_vector_gen_policy ()));
+  emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
+  emit_insn (gen_rtx_SET (dst, gen_rtx_PLUS (Pmode, dst, cnt)));
+  emit_insn (gen_rtx_SET (end, gen_rtx_MINUS (Pmode, end, cnt)));
+
+  /* Emit the loop condition.  */
+  rtx test = gen_rtx_NE (VOIDmode, end, const0_rtx);
+  emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
+  emit_insn (gen_nop ());
+  return true;
+}
+
 /* Expand a cpymemsi instruction, which copies LENGTH bytes from
    memory reference SRC to memory reference DEST.  */
 
@@ -3529,6 +6755,227 @@ riscv_expand_block_move (rtx dest, rtx src, rtx length)
 	}
     }
   return false;
+}
+
+bool
+riscv_vector_expand_strlen (rtx *operands)
+{
+  /*
+  strlen:
+      mv a3, a0             # Save start
+  loop:
+      vsetvli a1, x0, e8, m8, ta, ma  # Vector of bytes of maximum length
+      vle8ff.v v8, (a3)      # Load bytes
+      csrr a1, vl           # Get bytes read
+      vmseq.vi v0, v8, 0    # Set v0[i] where v8[i] = 0
+      vfirst.m a2, v0       # Find first set bit
+      add a3, a3, a1        # Bump pointer
+      bltz a2, loop         # Not found?
+
+      add a0, a0, a1        # Sum start + bump
+      add a3, a3, a2        # Add index
+      sub a0, a3, a0        # Subtract start address+bump
+
+      ret
+  */
+  if (optimize < 1 || operands[2] != const0_rtx)
+    return false;
+
+  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
+  machine_mode mask_mode;
+  gcc_assert (targetm.vectorize.get_mask_mode (cur_mode).exists (&mask_mode));
+  rtx src;
+  rtx cnt = gen_reg_rtx (Pmode);
+  rtx end = gen_reg_rtx (Pmode);
+  rtx save = operands[0];
+  rtx vec = gen_reg_rtx (cur_mode);
+  rtx mask = gen_reg_rtx (mask_mode);
+
+  /* Move the address into scratch registers.  */
+  src = copy_addr_to_reg (XEXP (operands[1], 0));
+  riscv_emit_move (save, src);
+
+  unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
+  unsigned int vsew = riscv_classify_vsew_field (cur_mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+
+  rtx label = gen_label_rtx ();
+  emit_label (label);
+  emit_insn (gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
+  emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, save, gen_rtx_REG (Pmode, X0_REGNUM),
+                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_readvl (Pmode, cnt, vec));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec, const0_rtx,
+                         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_any_policy ()));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, cnt)));
+
+  /* Emit the loop condition.  */
+  rtx test = gen_rtx_LT (VOIDmode, end, const0_rtx);
+  emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
+
+  emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
+  emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, end)));
+  emit_insn (gen_rtx_SET (save, gen_rtx_MINUS (Pmode, save, src)));
+  return true;
+}
+
+bool
+riscv_vector_expand_strcpy (rtx *operands)
+{
+  /*
+  strcpy:
+      mv a2, a0             # Copy dst
+      li t0, -1             # Infinite AVL
+  loop:
+    vsetvli x0, t0, e8, m8, ta, ma  # Max length vectors of bytes
+    vle8ff.v v8, (a1)        # Get src bytes
+      csrr t1, vl           # Get number of bytes fetched
+    vmseq.vi v1, v8, 0      # Flag zero bytes
+    vfirst.m a3, v1         # Zero found?
+      add a1, a1, t1        # Bump pointer
+    vmsif.m v0, v1          # Set mask up to and including zero byte.
+    vse8.v v8, (a2), v0.t    # Write out bytes
+      add a2, a2, t1        # Bump pointer
+      bltz a3, loop         # Zero byte not found, so loop
+
+      ret
+  */
+  if (optimize < 1)
+    return false;
+
+  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
+  machine_mode mask_mode;
+  gcc_assert (targetm.vectorize.get_mask_mode (cur_mode).exists (&mask_mode));
+  rtx src, dst;
+  rtx cnt = gen_reg_rtx (Pmode);
+  rtx end = gen_reg_rtx (Pmode);
+  rtx save = gen_reg_rtx (Pmode);
+  rtx init = gen_reg_rtx (Pmode);
+  rtx vec = gen_reg_rtx (cur_mode);
+  rtx mask = gen_reg_rtx (mask_mode);
+  rtx mask2 = gen_reg_rtx (mask_mode);
+
+  /* Move the address into scratch registers.  */
+  dst = copy_addr_to_reg (XEXP (operands[1], 0));
+  src = copy_addr_to_reg (XEXP (operands[2], 0));
+  riscv_emit_move (save, dst);
+  riscv_emit_move (init, constm1_rtx);
+
+  unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
+  unsigned int vsew = riscv_classify_vsew_field (cur_mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+
+  rtx label = gen_label_rtx ();
+  emit_label (label);
+  emit_insn (gen_vsetvl (Pmode, gen_rtx_REG (Pmode, X0_REGNUM), init, GEN_INT (vtype)));
+  emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, src, init,
+                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_readvl (Pmode, cnt, vec));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec, const0_rtx, init,
+                         riscv_vector::gen_any_policy ()));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, init, riscv_vector_gen_policy ()));
+  emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
+  emit_insn (gen_vm_m (UNSPEC_SIF, mask_mode, mask2, const0_rtx, const0_rtx, mask, init,
+                       riscv_vector_gen_policy ()));
+  emit_insn (gen_vse (cur_mode, mask2, save, vec, init, riscv_vector_gen_policy ()));
+  emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, cnt)));
+
+  /* Emit the loop condition.  */
+  rtx test = gen_rtx_LT (VOIDmode, end, const0_rtx);
+  emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
+
+  /* store NULL pointer to operands[0]. */
+  riscv_emit_move (operands[0], save);
+  return true;
+}
+
+bool
+riscv_vector_expand_strcmp (rtx *operands)
+{
+/*
+strcmp:
+    ##  Using LMUL=2, but same register names work for larger LMULs
+    li t1, 0                # Initial pointer bump
+loop:
+    vsetvli t0, x0, e8, m2, ta, ma  # Max length vectors of bytes
+    add a0, a0, t1          # Bump src1 pointer
+    vle8ff.v v8, (a0)       # Get src1 bytes
+    add a1, a1, t1          # Bump src2 pointer
+    vle8ff.v v16, (a1)      # Get src2 bytes
+
+    vmseq.vi v0, v8, 0      # Flag zero bytes in src1
+    vmsne.vv v1, v8, v16    # Flag if src1 != src2
+    vmor.mm v0, v0, v1      # Combine exit conditions
+
+    vfirst.m a2, v0         # ==0 or != ?
+    csrr t1, vl             # Get number of bytes fetched
+
+    bltz a2, loop           # Loop if all same and no zero byte
+
+    add a0, a0, a2          # Get src1 element address
+    lbu a3, (a0)            # Get src1 byte from memory
+
+    add a1, a1, a2          # Get src2 element address
+    lbu a4, (a1)            # Get src2 byte from memory
+
+    sub a0, a3, a4          # Return value.
+
+    ret
+*/
+  if (optimize < 1)
+    return false;
+
+  machine_mode cur_mode = VNx32QImode;
+  machine_mode mask_mode = VNx32BImode;
+
+  rtx src1, src2;
+  rtx cnt = gen_reg_rtx (Pmode);
+  rtx end = gen_reg_rtx (Pmode);
+  rtx offset = gen_reg_rtx (Pmode);
+  rtx vec1 = gen_reg_rtx (cur_mode);
+  rtx vec2 = gen_reg_rtx (cur_mode);
+  rtx mask = gen_reg_rtx (mask_mode);
+  rtx mask2 = gen_reg_rtx (mask_mode);
+
+  /* Move the address into scratch registers.  */
+  src1 = copy_addr_to_reg (XEXP (operands[1], 0));
+  src2 = copy_addr_to_reg (XEXP (operands[2], 0));
+  riscv_emit_move (offset, const0_rtx);
+
+  unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
+  unsigned int vsew = riscv_classify_vsew_field (cur_mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+
+  rtx label = gen_label_rtx ();
+  emit_label (label);
+  emit_insn (gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
+  emit_insn (gen_rtx_SET (src1, gen_rtx_PLUS (Pmode, src1, offset)));
+  emit_insn (gen_vleff (cur_mode, vec1, const0_rtx, const0_rtx, src1,
+                        gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_rtx_SET (src2, gen_rtx_PLUS (Pmode, src2, offset)));
+  emit_insn (gen_vleff (cur_mode, vec2, const0_rtx, const0_rtx, src2,
+                        gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec1, const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vms_vv (NE, cur_mode, mask2, const0_rtx, const0_rtx, vec1, vec2,
+                         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vm_mm (IOR, mask_mode, mask, mask, mask2, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_readvl (Pmode, offset, mask));
+
+  /* Emit the loop condition.  */
+  rtx test = gen_rtx_LT (VOIDmode, end, const0_rtx);
+  emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
+
+  emit_insn (gen_rtx_SET (src1, gen_rtx_PLUS (Pmode, src1, end)));
+  emit_insn (gen_rtx_SET (src2, gen_rtx_PLUS (Pmode, src2, end)));
+  rtx result1 = gen_reg_rtx (GET_MODE (operands[0]));
+  rtx result2 = gen_reg_rtx (GET_MODE (operands[0]));
+  riscv_emit_move (result1, gen_rtx_MEM (GET_MODE (operands[0]), src1));
+  riscv_emit_move (result2, gen_rtx_MEM (GET_MODE (operands[0]), src2));
+  emit_insn (gen_rtx_SET (operands[0],
+      gen_rtx_MINUS (GET_MODE (operands[0]), result1, result2)));
+  return true;
 }
 
 /* Print symbolic operand OP, which is part of a HIGH or LO_SUM
@@ -3678,6 +7125,37 @@ riscv_print_operand (FILE *file, rtx op, int letter)
 	output_addr_const (file, newop);
 	break;
       }
+
+    case 'v':
+    {
+      rtx elt;
+
+      if (!const_vec_duplicate_p (op, &elt))
+        output_operand_lossage ("invalid vector constant");
+      else if (GET_MODE_CLASS (GET_MODE (op)) == MODE_VECTOR_INT)
+        asm_fprintf (file, "%wd", INTVAL (elt));
+      else
+        output_operand_lossage ("invalid vector constant");
+    }
+    break;
+
+    case 'V':
+    {
+      rtx elt;
+
+      if (!const_vec_duplicate_p (op, &elt))
+        output_operand_lossage ("invalid vector constant");
+      else if (GET_MODE_CLASS (GET_MODE (op)) == MODE_VECTOR_INT)
+        asm_fprintf (file, "%wd", -INTVAL (elt));
+      else
+        output_operand_lossage ("invalid vector constant");
+    }
+    break;
+
+    case 'B':
+      fputs (GET_RTX_NAME (code), file);
+      break;
+
     default:
       switch (code)
 	{
@@ -3694,15 +7172,31 @@ riscv_print_operand (FILE *file, rtx op, int letter)
 	    output_address (mode, XEXP (op, 0));
 	  break;
 
-	default:
-	  if (letter == 'z' && op == CONST0_RTX (GET_MODE (op)))
-	    fputs (reg_names[GP_REG_FIRST], file);
-	  else if (letter && letter != 'z')
-	    output_operand_lossage ("invalid use of '%%%c'", letter);
-	  else
-	    output_addr_const (file, riscv_strip_unspec_address (op));
-	  break;
-	}
+        case CONST_VECTOR:
+        {
+          rtx imm;
+
+          if (!const_vec_duplicate_p (op, &imm))
+            {
+              output_operand_lossage ("invalid immediate value for vector");
+              break;
+            }
+
+          gcc_assert (CONST_INT_P (imm));
+          asm_fprintf (file, "%wd", INTVAL (imm));
+          break;
+        }
+
+        default:
+          if (letter == 'z' && op == CONST0_RTX (GET_MODE (op)))
+            fputs (reg_names[GP_REG_FIRST], file);
+          else if (letter && letter != 'z')
+            output_operand_lossage ("invalid use of '%%%c'", letter);
+          else
+            output_addr_const (file, riscv_strip_unspec_address (op));
+
+          break;
+        }
     }
 }
 
@@ -3822,7 +7316,7 @@ riscv_elf_select_rtx_section (machine_mode mode, rtx x,
 {
   section *s = default_elf_select_rtx_section (mode, x, align);
 
-  if (riscv_size_ok_for_small_data_p (GET_MODE_SIZE (mode)))
+  if (riscv_size_ok_for_small_data_p (GET_MODE_SIZE (mode).to_constant ()))
     {
       if (startswith (s->named.name, ".rodata.cst"))
 	{
@@ -3930,6 +7424,19 @@ riscv_save_libcall_count (unsigned mask)
   abort ();
 }
 
+/* Handle stack align for poly_int.  */
+static poly_int64
+riscv_stack_align (poly_int64 value)
+{
+  return aligned_upper_bound (value, PREFERRED_STACK_BOUNDARY / 8);
+}
+
+static HOST_WIDE_INT
+riscv_stack_align (HOST_WIDE_INT value)
+{
+  return RISCV_STACK_ALIGN (value);
+}
+
 /* Populate the current function's riscv_frame_info structure.
 
    RISC-V stack frames grown downward.  High addresses are at the top.
@@ -3978,7 +7485,7 @@ static void
 riscv_compute_frame_info (void)
 {
   struct riscv_frame_info *frame;
-  HOST_WIDE_INT offset;
+  poly_int64 offset;
   bool interrupt_save_prologue_temp = false;
   unsigned int regno, i, num_x_saved = 0, num_f_saved = 0;
 
@@ -3989,8 +7496,11 @@ riscv_compute_frame_info (void)
   if (cfun->machine->interrupt_handler_p)
     {
       HOST_WIDE_INT step1 = riscv_first_stack_step (frame);
-      if (! SMALL_OPERAND (frame->total_size - step1))
-	interrupt_save_prologue_temp = true;
+
+      if (!frame->total_size.is_constant ()
+          || (frame->total_size.is_constant ()
+              && !SMALL_OPERAND (frame->total_size.to_constant() - step1)))
+        interrupt_save_prologue_temp = true;
     }
 
   memset (frame, 0, sizeof (*frame));
@@ -4019,28 +7529,29 @@ riscv_compute_frame_info (void)
     }
 
   /* At the bottom of the frame are any outgoing stack arguments. */
-  offset = RISCV_STACK_ALIGN (crtl->outgoing_args_size);
+  offset = riscv_stack_align (crtl->outgoing_args_size);
   /* Next are local stack variables. */
-  offset += RISCV_STACK_ALIGN (get_frame_size ());
+  offset += riscv_stack_align (get_frame_size ());
   /* The virtual frame pointer points above the local variables. */
   frame->frame_pointer_offset = offset;
   /* Next are the callee-saved FPRs. */
   if (frame->fmask)
-    offset += RISCV_STACK_ALIGN (num_f_saved * UNITS_PER_FP_REG);
+    offset += riscv_stack_align (num_f_saved * UNITS_PER_FP_REG);
+
   frame->fp_sp_offset = offset - UNITS_PER_FP_REG;
   /* Next are the callee-saved GPRs. */
   if (frame->mask)
     {
-      unsigned x_save_size = RISCV_STACK_ALIGN (num_x_saved * UNITS_PER_WORD);
+      unsigned x_save_size = riscv_stack_align (num_x_saved * UNITS_PER_WORD);
       unsigned num_save_restore = 1 + riscv_save_libcall_count (frame->mask);
 
       /* Only use save/restore routines if they don't alter the stack size.  */
-      if (RISCV_STACK_ALIGN (num_save_restore * UNITS_PER_WORD) == x_save_size)
-	{
-	  /* Libcall saves/restores 3 registers at once, so we need to
-	     allocate 12 bytes for callee-saved register.  */
-	  if (TARGET_RVE)
-	    x_save_size = 3 * UNITS_PER_WORD;
+      if (riscv_stack_align (num_save_restore * UNITS_PER_WORD) == x_save_size)
+        {
+          /* Libcall saves/restores 3 registers at once, so we need to
+             allocate 12 bytes for callee-saved register.  */
+          if (TARGET_RVE)
+            x_save_size = 3 * UNITS_PER_WORD;
 
 	  frame->save_libcall_adjustment = x_save_size;
 	}
@@ -4051,17 +7562,20 @@ riscv_compute_frame_info (void)
   /* The hard frame pointer points above the callee-saved GPRs. */
   frame->hard_frame_pointer_offset = offset;
   /* Above the hard frame pointer is the callee-allocated varags save area. */
-  offset += RISCV_STACK_ALIGN (cfun->machine->varargs_size);
+  offset += riscv_stack_align (cfun->machine->varargs_size);
   /* Next is the callee-allocated area for pretend stack arguments.  */
-  offset += RISCV_STACK_ALIGN (crtl->args.pretend_args_size);
+  offset += riscv_stack_align (crtl->args.pretend_args_size);
   /* Arg pointer must be below pretend args, but must be above alignment
      padding.  */
   frame->arg_pointer_offset = offset - crtl->args.pretend_args_size;
   frame->total_size = offset;
+
+  frame->constant_offset = riscv_stack_align (frame->total_size.coeffs[0] - frame->total_size.coeffs[1]);
+
   /* Next points the incoming stack pointer and any incoming arguments. */
 
   /* Only use save/restore routines when the GPRs are atop the frame.  */
-  if (frame->hard_frame_pointer_offset != frame->total_size)
+  if (known_ne (frame->hard_frame_pointer_offset, frame->total_size))
     frame->save_libcall_adjustment = 0;
 }
 
@@ -4078,10 +7592,10 @@ riscv_can_eliminate (const int from ATTRIBUTE_UNUSED, const int to)
    or argument pointer.  TO is either the stack pointer or hard frame
    pointer.  */
 
-HOST_WIDE_INT
+poly_int64
 riscv_initial_elimination_offset (int from, int to)
 {
-  HOST_WIDE_INT src, dest;
+  poly_int64 src, dest;
 
   riscv_compute_frame_info ();
 
@@ -4125,7 +7639,7 @@ riscv_set_return_address (rtx address, rtx scratch)
 
   gcc_assert (BITSET_P (cfun->machine->frame.mask, RETURN_ADDR_REGNUM));
   slot_address = riscv_add_offset (scratch, stack_pointer_rtx,
-				  cfun->machine->frame.gp_sp_offset);
+                                   cfun->machine->frame.gp_sp_offset.to_constant());
   riscv_emit_move (gen_frame_mem (GET_MODE (address), slot_address), address);
 }
 
@@ -4139,7 +7653,7 @@ typedef void (*riscv_save_restore_fn) (rtx, rtx);
 
 static void
 riscv_save_restore_reg (machine_mode mode, int regno,
-		       HOST_WIDE_INT offset, riscv_save_restore_fn fn)
+                        poly_int64 offset, riscv_save_restore_fn fn)
 {
   rtx mem;
 
@@ -4152,10 +7666,10 @@ riscv_save_restore_reg (machine_mode mode, int regno,
    of the frame.  */
 
 static void
-riscv_for_each_saved_reg (HOST_WIDE_INT sp_offset, riscv_save_restore_fn fn,
-			  bool epilogue, bool maybe_eh_return)
+riscv_for_each_saved_reg (poly_int64 sp_offset, riscv_save_restore_fn fn,
+                          bool epilogue, bool maybe_eh_return)
 {
-  HOST_WIDE_INT offset;
+  poly_int64 offset;
 
   /* Save the link register and s-registers. */
   offset = cfun->machine->frame.gp_sp_offset - sp_offset;
@@ -4238,21 +7752,27 @@ riscv_restore_reg (rtx reg, rtx mem)
 static HOST_WIDE_INT
 riscv_first_stack_step (struct riscv_frame_info *frame)
 {
-  if (SMALL_OPERAND (frame->total_size))
-    return frame->total_size;
+  HOST_WIDE_INT frame_total_size;
+  if (!frame->total_size.is_constant())
+    frame_total_size = frame->constant_offset;
+  else
+    frame_total_size = frame->total_size.to_constant();
+
+  if (SMALL_OPERAND (frame_total_size))
+    return frame_total_size;
 
   HOST_WIDE_INT min_first_step =
-    RISCV_STACK_ALIGN (frame->total_size - frame->fp_sp_offset);
+    RISCV_STACK_ALIGN (frame_total_size - frame->fp_sp_offset.to_constant());
   HOST_WIDE_INT max_first_step = IMM_REACH / 2 - PREFERRED_STACK_BOUNDARY / 8;
-  HOST_WIDE_INT min_second_step = frame->total_size - max_first_step;
+  HOST_WIDE_INT min_second_step = frame_total_size - max_first_step;
   gcc_assert (min_first_step <= max_first_step);
 
   /* As an optimization, use the least-significant bits of the total frame
      size, so that the second adjustment step is just LUI + ADD.  */
   if (!SMALL_OPERAND (min_second_step)
-      && frame->total_size % IMM_REACH < IMM_REACH / 2
-      && frame->total_size % IMM_REACH >= min_first_step)
-    return frame->total_size % IMM_REACH;
+      && frame_total_size % IMM_REACH < IMM_REACH / 2
+      && frame_total_size % IMM_REACH >= min_first_step)
+    return frame_total_size % IMM_REACH;
 
   if (TARGET_RVC)
     {
@@ -4319,18 +7839,45 @@ riscv_emit_stack_tie (void)
     emit_insn (gen_stack_tiedi (stack_pointer_rtx, hard_frame_pointer_rtx));
 }
 
+static void
+riscv_adjust_vector_frame (rtx target, poly_int64 offset)
+{
+  rtx clobber = RISCV_PROLOGUE_TEMP (Pmode);
+  rtx space = RISCV_PROLOGUE_TEMP2 (Pmode);
+  rtx insn, dwarf, adjust_frame_rtx;
+
+  riscv_expand_mov_const_poly_int (Pmode, space, clobber, gen_int_mode (offset, Pmode));
+
+  insn = gen_add3_insn (target,
+                        target,
+                        space);
+
+  insn = emit_insn (insn);
+
+  RTX_FRAME_RELATED_P (insn) = 1;
+
+  adjust_frame_rtx =
+    gen_rtx_SET (target,
+                 plus_constant (Pmode, target, offset));
+
+  dwarf = alloc_reg_note (REG_FRAME_RELATED_EXPR,
+                          copy_rtx (adjust_frame_rtx), NULL_RTX);
+
+  REG_NOTES (insn) = dwarf;
+}
+
 /* Expand the "prologue" pattern.  */
 
 void
 riscv_expand_prologue (void)
 {
   struct riscv_frame_info *frame = &cfun->machine->frame;
-  HOST_WIDE_INT size = frame->total_size;
+  poly_int64 size = frame->total_size;
   unsigned mask = frame->mask;
   rtx insn;
 
   if (flag_stack_usage_info)
-    current_function_static_stack_size = size;
+    current_function_static_stack_size = constant_lower_bound (size);
 
   if (cfun->machine->naked_p)
     return;
@@ -4352,7 +7899,10 @@ riscv_expand_prologue (void)
   /* Save the registers.  */
   if ((frame->mask | frame->fmask) != 0)
     {
-      HOST_WIDE_INT step1 = MIN (size, riscv_first_stack_step (frame));
+      HOST_WIDE_INT step1 = riscv_first_stack_step (frame);
+
+      if (size.is_constant ())
+        step1 = MIN (size.to_constant(), step1);
 
       insn = gen_add3_insn (stack_pointer_rtx,
 			    stack_pointer_rtx,
@@ -4367,34 +7917,47 @@ riscv_expand_prologue (void)
   /* Set up the frame pointer, if we're using one.  */
   if (frame_pointer_needed)
     {
+      poly_int64 offset = frame->hard_frame_pointer_offset - size;
       insn = gen_add3_insn (hard_frame_pointer_rtx, stack_pointer_rtx,
-			    GEN_INT (frame->hard_frame_pointer_offset - size));
+                            GEN_INT (offset.to_constant ()));
       RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
 
       riscv_emit_stack_tie ();
     }
 
   /* Allocate the rest of the frame.  */
-  if (size > 0)
+  if (known_gt (size, 0))
     {
-      if (SMALL_OPERAND (-size))
-	{
-	  insn = gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
-				GEN_INT (-size));
-	  RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
-	}
-      else
-	{
-	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), GEN_INT (-size));
-	  emit_insn (gen_add3_insn (stack_pointer_rtx,
-				    stack_pointer_rtx,
-				    RISCV_PROLOGUE_TEMP (Pmode)));
+      /* Allocate stack for vector if it has scalable vectors.  */
+      if (!size.is_constant ())
+        {
+          HOST_WIDE_INT factor = size.coeffs[1];
+          poly_int64 poly_offset (factor, factor);
+          riscv_adjust_vector_frame (stack_pointer_rtx, -poly_offset);
+          size -= poly_offset;
+        }
 
-	  /* Describe the effect of the previous instructions.  */
-	  insn = plus_constant (Pmode, stack_pointer_rtx, -size);
-	  insn = gen_rtx_SET (stack_pointer_rtx, insn);
-	  riscv_set_frame_expr (insn);
-	}
+      if (size.to_constant () == 0)
+        return;
+
+      if (SMALL_OPERAND (-size.to_constant ()))
+        {
+          insn = gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
+                                GEN_INT (-size.to_constant ()));
+          RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
+        }
+      else
+        {
+          riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), GEN_INT (-size.to_constant ()));
+          RTX_FRAME_RELATED_P (emit_insn (gen_add3_insn (stack_pointer_rtx,
+                                    stack_pointer_rtx,
+                                    RISCV_PROLOGUE_TEMP (Pmode)))) = 1;
+
+          /* Describe the effect of the previous instructions.  */
+          insn = plus_constant (Pmode, stack_pointer_rtx, -size.to_constant ());
+          insn = gen_rtx_SET (stack_pointer_rtx, insn);
+          riscv_set_frame_expr (insn);
+        }
     }
 }
 
@@ -4434,7 +7997,7 @@ riscv_expand_epilogue (int style)
      Start off by assuming that no registers need to be restored.  */
   struct riscv_frame_info *frame = &cfun->machine->frame;
   unsigned mask = frame->mask;
-  HOST_WIDE_INT step1 = frame->total_size;
+  poly_int64 step1 = frame->total_size;
   HOST_WIDE_INT step2 = 0;
   bool use_restore_libcall = ((style == NORMAL_RETURN)
 			      && riscv_use_save_libcall (frame));
@@ -4442,8 +8005,8 @@ riscv_expand_epilogue (int style)
   rtx insn;
 
   /* We need to add memory barrier to prevent read from deallocated stack.  */
-  bool need_barrier_p = (get_frame_size ()
-			 + cfun->machine->frame.arg_pointer_offset) != 0;
+  bool need_barrier_p = known_ne (get_frame_size ()
+                                  + cfun->machine->frame.arg_pointer_offset, 0);
 
   if (cfun->machine->naked_p)
     {
@@ -4470,12 +8033,22 @@ riscv_expand_epilogue (int style)
       riscv_emit_stack_tie ();
       need_barrier_p = false;
 
-      rtx adjust = GEN_INT (-frame->hard_frame_pointer_offset);
-      if (!SMALL_OPERAND (INTVAL (adjust)))
-	{
-	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
-	  adjust = RISCV_PROLOGUE_TEMP (Pmode);
-	}
+      rtx adjust = frame->hard_frame_pointer_offset.is_constant () ?
+                   GEN_INT (-frame->hard_frame_pointer_offset.to_constant ())
+                   : gen_int_mode (-frame->hard_frame_pointer_offset, Pmode);
+
+      if (!rtx_to_poly_int64 (adjust).is_constant ())
+        {
+          rtx clobber = RISCV_PROLOGUE_TEMP (Pmode);
+          rtx space = RISCV_PROLOGUE_TEMP2 (Pmode);
+          riscv_expand_mov_const_poly_int (Pmode, space, clobber, adjust);
+          adjust = space;
+        }
+      else if (!SMALL_OPERAND (INTVAL (adjust)))
+        {
+          riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
+          adjust = RISCV_PROLOGUE_TEMP (Pmode);
+        }
 
       insn = emit_insn (
 	       gen_add3_insn (stack_pointer_rtx, hard_frame_pointer_rtx,
@@ -4483,8 +8056,8 @@ riscv_expand_epilogue (int style)
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_value = gen_rtx_PLUS (
-			       Pmode, hard_frame_pointer_rtx,
-			       GEN_INT (-frame->hard_frame_pointer_offset));
+                               Pmode, hard_frame_pointer_rtx,
+                               gen_int_mode (-frame->hard_frame_pointer_offset, Pmode));
       rtx cfa_adjust_rtx = gen_rtx_SET (stack_pointer_rtx, cfa_adjust_value);
       dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
@@ -4501,19 +8074,28 @@ riscv_expand_epilogue (int style)
     }
 
   /* Set TARGET to BASE + STEP1.  */
-  if (step1 > 0)
+  if (known_gt (step1, 0))
     {
       /* Emit a barrier to prevent loads from a deallocated stack.  */
       riscv_emit_stack_tie ();
       need_barrier_p = false;
 
       /* Get an rtx for STEP1 that we can add to BASE.  */
-      rtx adjust = GEN_INT (step1);
-      if (!SMALL_OPERAND (step1))
-	{
-	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
-	  adjust = RISCV_PROLOGUE_TEMP (Pmode);
-	}
+      rtx adjust = step1.is_constant () ?
+                   GEN_INT (step1.to_constant ()) : gen_int_mode (step1, Pmode);
+
+      if (!step1.is_constant ())
+        {
+          HOST_WIDE_INT factor = step1.coeffs[1];
+          poly_int64 poly_offset (factor, factor);
+          riscv_adjust_vector_frame (stack_pointer_rtx, poly_offset);
+          step1 -= poly_offset;
+        }
+      else if (!SMALL_OPERAND (step1.to_constant ()))
+        {
+          riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
+          adjust = RISCV_PROLOGUE_TEMP (Pmode);
+        }
 
       insn = emit_insn (
 	       gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx, adjust));
@@ -4627,8 +8209,8 @@ riscv_epilogue_uses (unsigned int regno)
 bool
 riscv_can_use_return_insn (void)
 {
-  return (reload_completed && cfun->machine->frame.total_size == 0
-	  && ! cfun->machine->interrupt_handler_p);
+  return (reload_completed && known_eq (cfun->machine->frame.total_size, 0)
+          && ! cfun->machine->interrupt_handler_p);
 }
 
 /* Given that there exists at least one variable that is set (produced)
@@ -4727,8 +8309,9 @@ static bool
 riscv_secondary_memory_needed (machine_mode mode, reg_class_t class1,
 			       reg_class_t class2)
 {
-  return (GET_MODE_SIZE (mode) > UNITS_PER_WORD
-	  && (class1 == FP_REGS) != (class2 == FP_REGS));
+  return (!riscv_vector_mode_p (mode)
+          && GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD
+          && (class1 == FP_REGS) != (class2 == FP_REGS));
 }
 
 /* Implement TARGET_REGISTER_MOVE_COST.  */
@@ -4737,6 +8320,11 @@ static int
 riscv_register_move_cost (machine_mode mode,
 			  reg_class_t from, reg_class_t to)
 {
+  /* There is no easy way to move fp16 value between FPR without ZFH
+     extension, it require an extra temp GPR to move that.  */
+  if (!TARGET_FP16 && mode == HFmode && from == FP_REGS && to == FP_REGS)
+    return 6;
+
   return riscv_secondary_memory_needed (mode, from, to) ? 8 : 2;
 }
 
@@ -4745,11 +8333,41 @@ riscv_register_move_cost (machine_mode mode,
 static unsigned int
 riscv_hard_regno_nregs (unsigned int regno, machine_mode mode)
 {
+  if (riscv_vector_mode_p (mode))
+    {
+      /* FIXME: According to RVV ISA 1.0, EMUL * NFIELDS represents
+         the number of underlying vectr registers, meaning EMUL = 1/8,
+         NFILED = 2, NVECS = 1/8 * 2 = 1/4.
+         But the intrinsics doc and LLVM show that it should occupy 2
+         vector registers in this case.
+         We assign registers in this case
+         follow the rules in LLVM and intrinsics doc.  */
+      if (known_ne (riscv_vector_natural_size (mode), BYTES_PER_RISCV_VECTOR))
+        return exact_div (GET_MODE_SIZE (mode),
+                          riscv_vector_natural_size (mode)).to_constant ();
+
+      if (known_lt (GET_MODE_SIZE (mode), UNITS_PER_V_REG))
+        return 1;
+
+      return exact_div (GET_MODE_SIZE (mode),
+                        UNITS_PER_V_REG).to_constant ();
+    }
+
+  /* VTYPE/VL register is a fake register */
+  if (regno == VTYPE_REGNUM
+      || regno == VL_REGNUM
+      || !GET_MODE_SIZE (mode).is_constant ())
+    return 1;
+
   if (FP_REG_P (regno))
-    return (GET_MODE_SIZE (mode) + UNITS_PER_FP_REG - 1) / UNITS_PER_FP_REG;
+    return (GET_MODE_SIZE (mode).to_constant () + UNITS_PER_FP_REG - 1) / UNITS_PER_FP_REG;
+
+  /* Assume every valid non-vector mode fits in one vector register.  */
+  if (V_REG_P (regno))
+    return 1;
 
   /* All other registers are word-sized.  */
-  return (GET_MODE_SIZE (mode) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+  return (GET_MODE_SIZE (mode).to_constant () + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 }
 
 /* Implement TARGET_HARD_REGNO_MODE_OK.  */
@@ -4762,12 +8380,18 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
   if (GP_REG_P (regno))
     {
       if (!GP_REG_P (regno + nregs - 1))
-	return false;
+        return false;
+
+      if (riscv_vector_mode_p (mode))
+        return false;
     }
   else if (FP_REG_P (regno))
     {
       if (!FP_REG_P (regno + nregs - 1))
 	return false;
+
+      if (!FLOAT_MODE_P (mode))
+        return false;
 
       if (GET_MODE_CLASS (mode) != MODE_FLOAT
 	  && GET_MODE_CLASS (mode) != MODE_COMPLEX_FLOAT)
@@ -4780,6 +8404,20 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	      && GET_MODE_UNIT_SIZE (mode) > UNITS_PER_FP_ARG))
 	return false;
     }
+  else if (V_REG_P (regno))
+    {
+      if (!riscv_vector_mode_p (mode))
+        return false;
+
+      /* 3.3.2. LMUL = 2,4,8, register numbers should be multiple of 2,4,8. */
+      int regsize = riscv_vlmul_regsize(mode);
+
+      if (regsize != 1)
+        return ((regno % regsize) == 0);
+    }
+  else if (regno == VTYPE_REGNUM
+           || regno == VL_REGNUM)
+    return (nregs == 1 && mode == SImode);
   else
     return false;
 
@@ -4800,6 +8438,25 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 static bool
 riscv_modes_tieable_p (machine_mode mode1, machine_mode mode2)
 {
+  if (riscv_vector_mode_p (mode1) && riscv_vector_mode_p (mode2))
+    {
+      /* Only allow normal vector modes to be tied. */
+      return (!riscv_tuple_mode_p (mode1) && !riscv_tuple_mode_p (mode2));
+    }
+  else if (riscv_vector_mode_p (mode1) || riscv_vector_mode_p (mode2))
+    {
+      /* If only one is vector mode, then don't allow scaler and vector mode to be tied. */
+      return false;
+    }
+  else if (TARGET_VECTOR && (
+            (GET_MODE_CLASS (mode1) == MODE_FLOAT && GET_MODE_CLASS (mode2) != MODE_FLOAT)
+            || (GET_MODE_CLASS (mode1) != MODE_FLOAT && GET_MODE_CLASS (mode2) == MODE_FLOAT)))
+    {
+      /* When V extension is enabled, that implied F or D Extension is also enabled.
+         In this situation, disable float and scaler mode to be tied.  */
+      return false;
+    }
+
   return (mode1 == mode2
 	  || !(GET_MODE_CLASS (mode1) == MODE_FLOAT
 	       && GET_MODE_CLASS (mode2) == MODE_FLOAT));
@@ -4815,6 +8472,15 @@ riscv_class_max_nregs (reg_class_t rclass, machine_mode mode)
 
   if (reg_class_subset_p (rclass, GR_REGS))
     return riscv_hard_regno_nregs (GP_REG_FIRST, mode);
+
+  if (reg_class_subset_p (V_REGS, rclass))
+    return riscv_hard_regno_nregs (V_REG_FIRST, mode);
+
+  if (reg_class_subset_p (VL_REGS, rclass))
+    return 1;
+
+  if (reg_class_subset_p (VTYPE_REGS, rclass))
+    return 1;
 
   return 0;
 }
@@ -4956,6 +8622,26 @@ riscv_init_machine_status (void)
   return ggc_cleared_alloc<machine_function> ();
 }
 
+/* Return the Vlen value associated with -mriscv-vector-bits= value VALUE.  */
+
+static poly_uint_for_mode
+riscv_convert_riscv_vector_bits (riscv_vector_bits_enum value)
+{
+  /* 64-bit RVV modes use different register layouts
+     on small-endian targets, so we would need to forbid subregs that convert
+     from one to the other.  By default a reinterpret sequence would then
+     involve a store to memory in one mode and a load back in the other.
+     Even if we optimize that sequence using reverse instructions,
+     it would still be a significant potential overhead.
+
+     For now, it seems better to generate length-agnostic code for that
+     case instead.  */
+  if (value == RVV_SCALABLE)
+    return poly_uint_for_mode (2, 2);
+  else
+    return (int) value / 64;
+}
+
 /* Implement TARGET_OPTION_OVERRIDE.  */
 
 static void
@@ -4990,6 +8676,7 @@ riscv_option_override (void)
 			   RISCV_TUNE_STRING_DEFAULT));
   riscv_microarchitecture = cpu->microarchitecture;
   tune_param = optimize_size ? &optimize_size_tune_info : cpu->tune_param;
+  vector_tune_param = cpu->vector_tune_param;
 
   /* Use -mtune's setting for slow_unaligned_access, even when optimizing
      for size.  For architectures that trap and emulate unaligned accesses,
@@ -5102,6 +8789,11 @@ riscv_option_override (void)
       riscv_stack_protector_guard_offset = offs;
     }
 
+  /* Convert -mriscv-vector-bits to a chunks count.  */
+  riscv_vector_chunks = riscv_convert_riscv_vector_bits (riscv_vector_bits);
+
+  if (TARGET_VECTOR && TARGET_RVV)
+    riscv_vectorization_factor = riscv_vector_lmul;
 }
 
 /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */
@@ -5132,7 +8824,16 @@ riscv_conditional_register_usage (void)
   if (UNITS_PER_FP_ARG == 0)
     {
       for (int regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
-	call_used_regs[regno] = 1;
+        call_used_regs[regno] = 1;
+    }
+
+  if (!TARGET_VECTOR)
+    {
+      for (int regno = V_REG_FIRST; regno <= V_REG_LAST; regno++)
+        fixed_regs[regno] = call_used_regs[regno] = 1;
+
+      fixed_regs[VTYPE_REGNUM] = call_used_regs[VTYPE_REGNUM] = 1;
+      fixed_regs[VL_REGNUM] = call_used_regs[VL_REGNUM] = 1;
     }
 }
 
@@ -5421,8 +9122,12 @@ riscv_slow_unaligned_access (machine_mode, unsigned int)
 /* Implement TARGET_CAN_CHANGE_MODE_CLASS.  */
 
 static bool
-riscv_can_change_mode_class (machine_mode, machine_mode, reg_class_t rclass)
+riscv_can_change_mode_class (machine_mode from, machine_mode to, reg_class_t rclass)
 {
+  if (riscv_vector_mode_p (from) && riscv_vector_mode_p (to)
+      && !riscv_tuple_mode_p (from) && !riscv_tuple_mode_p (to))
+    return true;
+
   return !reg_classes_intersect_p (FP_REGS, rclass);
 }
 
@@ -5459,9 +9164,10 @@ riscv_promote_function_mode (const_tree type ATTRIBUTE_UNUSED,
     return promote_mode (type, mode, punsignedp);
 
   unsignedp = *punsignedp;
-  PROMOTE_MODE (mode, unsignedp, type);
+  scalar_mode smode = as_a <scalar_mode> (mode);
+  PROMOTE_MODE (smode, unsignedp, type);
   *punsignedp = unsignedp;
-  return mode;
+  return smode;
 }
 
 /* Implement TARGET_MACHINE_DEPENDENT_REORG.  */
@@ -5585,6 +9291,1171 @@ riscv_asan_shadow_offset (void)
      libsanitizer/asan/asan_mapping.h which is currently 1<<29 for rv64,
      even though 1<<36 makes more sense.  */
   return TARGET_64BIT ? (HOST_WIDE_INT_1 << 29) : 0;
+}
+
+/* Implement TARGET_MANGLE_TYPE.  */
+
+static const char *
+riscv_mangle_type (const_tree type)
+{
+  /* Half-precision float.  */
+  if (TREE_CODE (type) == REAL_TYPE && TYPE_PRECISION (type) == 16)
+    return "Dh";
+
+  /* Mangle all vector type for vector extension.  */
+  /* The mangle name follows the rule of aarch64
+     that is "u" + length of (abi_name) + abi_name. */
+  if (TYPE_NAME (type) != NULL)
+    {
+      const char *res = riscv_vector::mangle_builtin_type (type);
+      if (res)
+        return res;
+    }
+  /* Use the default mangling.  */
+  return NULL;
+}
+
+/* Implement TARGET_SCALAR_MODE_SUPPORTED_P.  */
+
+static bool
+riscv_scalar_mode_supported_p (scalar_mode mode)
+{
+  if (mode == HFmode)
+    return true;
+  else
+    return default_scalar_mode_supported_p (mode);
+}
+
+/* Implement TARGET_LIBGCC_FLOATING_MODE_SUPPORTED_P - return TRUE
+   if MODE is HFmode, and punt to the generic implementation otherwise.  */
+
+static bool
+riscv_libgcc_floating_mode_supported_p (scalar_float_mode mode)
+{
+  if (mode == HFmode)
+    return true;
+  else
+    return default_libgcc_floating_mode_supported_p (mode);
+}
+
+/* Set the value of FLT_EVAL_METHOD.
+   ISO/IEC TS 18661-3 defines two values that we'd like to make use of:
+
+    0: evaluate all operations and constants, whose semantic type has at
+       most the range and precision of type float, to the range and
+       precision of float; evaluate all other operations and constants to
+       the range and precision of the semantic type;
+
+    N, where _FloatN is a supported interchange floating type
+       evaluate all operations and constants, whose semantic type has at
+       most the range and precision of _FloatN type, to the range and
+       precision of the _FloatN type; evaluate all other operations and
+       constants to the range and precision of the semantic type;
+
+   If we have the zfh extensions then we support _Float16 in native
+   precision, so we should set this to 16.  */
+
+static enum flt_eval_method
+riscv_excess_precision (enum excess_precision_type type)
+{
+  switch (type)
+    {
+      case EXCESS_PRECISION_TYPE_FAST:
+      case EXCESS_PRECISION_TYPE_STANDARD:
+        /* We can calculate either in 16-bit range and precision or
+           32-bit range and precision.  Make that decision based on whether
+           we have native support for the RISC-V 'ZFH' Extension floating-point
+           instructions or not.  */
+        return (TARGET_FP16
+                ? FLT_EVAL_METHOD_PROMOTE_TO_FLOAT16
+                : FLT_EVAL_METHOD_PROMOTE_TO_FLOAT);
+      case EXCESS_PRECISION_TYPE_IMPLICIT:
+      case EXCESS_PRECISION_TYPE_FLOAT16:
+        return FLT_EVAL_METHOD_PROMOTE_TO_FLOAT16;
+      default:
+        gcc_unreachable ();
+    }
+  return FLT_EVAL_METHOD_UNPREDICTABLE;
+}
+
+/* Implement TARGET_FLOATN_MODE.  */
+static opt_scalar_float_mode
+riscv_floatn_mode (int n, bool extended)
+{
+  if (!extended && n == 16)
+    return HFmode;
+
+  return default_floatn_mode (n, extended);
+}
+
+/* Implement REGMODE_NATURAL_SIZE.  */
+
+poly_uint64
+riscv_regmode_natural_size (machine_mode mode)
+{
+  /* The natural size for RVV data modes is one RVV data vector,
+     and similarly for predicates.  We can't independently modify
+     anything smaller than that.  */
+  /* ??? For now, only do this for variable-width RVV registers.
+     Doing it for constant-sized registers breaks lower-subreg.c.  */
+  /* For partial tuple vector, we should
+     use the mode of the vector subpart,
+     in case of segment loads and stores. */
+  if ((!riscv_vector_chunks.is_constant () && riscv_vector_mode_p (mode))
+    || riscv_partial_tuple_vector_mode_p (mode))
+    return riscv_vector_natural_size (mode);
+
+  return UNITS_PER_WORD;
+}
+
+/* Implement the TARGET_DWARF_POLY_INDETERMINATE_VALUE hook.  */
+
+static unsigned int
+riscv_dwarf_poly_indeterminate_value (unsigned int i, unsigned int *factor,
+                                      int *offset)
+{
+  /* Polynomial invariant 1 == (VLENB / 16) - 1.  */
+  gcc_assert (i == 1);
+  *factor = 16;
+  *offset = 1;
+  return RISCV_DWARF_VLENB;
+}
+
+/* Implement TARGET_ESTIMATED_POLY_VALUE.
+   Look into the tuning structure for an estimate.
+   KIND specifies the type of requested estimate: min, max or likely.
+   For cores with a known RVV width all three estimates are the same.
+   For generic RVV tuning we want to distinguish the maximum estimate from
+   the minimum and likely ones.
+   The likely estimate is the same as the minimum in that case to give a
+   conservative behavior of auto-vectorizing with RVV when it is a win
+   even for 128-bit RVV.
+   When RVV width information is available VAL.coeffs[1] is multiplied by
+   the number of VQ chunks over the initial Advanced SIMD 128 bits.  */
+
+static HOST_WIDE_INT
+riscv_estimated_poly_value (poly_int64 val,
+                            poly_value_estimate_kind kind = POLY_VALUE_LIKELY)
+{
+  unsigned int width_source
+    = BITS_PER_RISCV_VECTOR.is_constant ()
+      ? (unsigned int)BITS_PER_RISCV_VECTOR.to_constant ()
+      : (unsigned int)RVV_SCALABLE;
+
+  /* If there is no core-specific information then the minimum and likely
+     values are based on 128-bit vectors and the maximum is based on
+     the architectural maximum of 2048 bits.  */
+  if (width_source == RVV_SCALABLE)
+    switch (kind)
+      {
+      case POLY_VALUE_MIN:
+      case POLY_VALUE_LIKELY:
+        return val.coeffs[0];
+
+      case POLY_VALUE_MAX:
+        return val.coeffs[0] + val.coeffs[1] * 15;
+      }
+
+  /* Allow BITS_PER_RISCV_VECTOR to be a bitmask of different VL, treating the
+     lowest as likely.  This could be made more general if future -mtune
+     options need it to be.  */
+  if (kind == POLY_VALUE_MAX)
+    width_source = 1 << floor_log2 (width_source);
+  else
+    width_source = least_bit_hwi (width_source);
+
+  /* If the core provides width information, use that.  */
+  HOST_WIDE_INT over_128 = width_source - 128;
+  return val.coeffs[0] + val.coeffs[1] * over_128 / 128;
+}
+
+/* Provide a mapping from gcc register numbers to dwarf register numbers.  */
+unsigned
+riscv_dbx_register_number (unsigned regno)
+{
+  if (GP_REG_P (regno))
+    return RISCV_DWARF_GP + regno - GP_REG_FIRST;
+  else if (FP_REG_P (regno))
+    return RISCV_DWARF_FP + regno - FP_REG_FIRST;
+  else if (V_REG_P (regno))
+    return RISCV_DWARF_V + regno - V_REG_FIRST;
+  else if (regno == VL_REGNUM)
+    return RISCV_DWARF_VL;
+  else if (regno == VTYPE_REGNUM)
+    return RISCV_DWARF_VTYPE;
+
+  /* Return values >= DWARF_FRAME_REGISTERS indicate that there is no
+     equivalent DWARF register.  */
+  return DWARF_FRAME_REGISTERS;
+}
+
+/* Implement TARGET_VECTOR_MODE_SUPPORTED_P.  */
+
+static bool
+riscv_vector_mode_supported_p (machine_mode mode)
+{
+  if (TARGET_VECTOR && riscv_vector_mode_p (mode))
+    return true;
+
+  return false;
+}
+
+/* Implement target hook TARGET_ARRAY_MODE.  */
+
+static opt_machine_mode
+riscv_array_mode (machine_mode mode, unsigned HOST_WIDE_INT nelems)
+{
+  #define RVV_ARRAY_MODE8(MODE) \
+    case VNx##MODE##mode: \
+    if (nelems == 2) \
+      return VNx2x##MODE##mode; \
+    else if (nelems == 3) \
+      return VNx3x##MODE##mode; \
+    else if (nelems == 4) \
+      return VNx4x##MODE##mode; \
+    else if (nelems == 5) \
+      return VNx5x##MODE##mode; \
+    else if (nelems == 6) \
+      return VNx6x##MODE##mode; \
+    else if (nelems == 7) \
+      return VNx7x##MODE##mode; \
+    else if (nelems == 8) \
+      return VNx8x##MODE##mode; \
+    else \
+      break;
+  #define RVV_ARRAY_MODE4(MODE) \
+    case VNx##MODE##mode: \
+    if (nelems == 2) \
+      return VNx2x##MODE##mode; \
+    else if (nelems == 3) \
+      return VNx3x##MODE##mode; \
+    else if (nelems == 4) \
+      return VNx4x##MODE##mode; \
+    else \
+      break;
+  #define RVV_ARRAY_MODE2(MODE) \
+    case VNx##MODE##mode: \
+    if (nelems == 2) \
+      return VNx2x##MODE##mode; \
+    else \
+      break;
+  if (TARGET_VECTOR && TARGET_RVV)
+    {
+      switch (mode)
+      {
+      RVV_ARRAY_MODE8 (8QI)
+      RVV_ARRAY_MODE8 (4HI)
+      RVV_ARRAY_MODE8 (2SI)
+      RVV_ARRAY_MODE8 (4HF)
+      RVV_ARRAY_MODE8 (2SF)
+      RVV_ARRAY_MODE8 (4QI)
+      RVV_ARRAY_MODE8 (2HI)
+      RVV_ARRAY_MODE8 (2HF)
+      RVV_ARRAY_MODE8 (2QI)
+      RVV_ARRAY_MODE8 (16QI)
+      RVV_ARRAY_MODE8 (8HI)
+      RVV_ARRAY_MODE8 (4SI)
+      RVV_ARRAY_MODE8 (2DI)
+      RVV_ARRAY_MODE8 (8HF)
+      RVV_ARRAY_MODE8 (4SF)
+      RVV_ARRAY_MODE8 (2DF)
+      RVV_ARRAY_MODE4 (32QI)
+      RVV_ARRAY_MODE4 (16HI)
+      RVV_ARRAY_MODE4 (8SI)
+      RVV_ARRAY_MODE4 (4DI)
+      RVV_ARRAY_MODE4 (16HF)
+      RVV_ARRAY_MODE4 (8SF)
+      RVV_ARRAY_MODE4 (4DF)
+      RVV_ARRAY_MODE2 (64QI)
+      RVV_ARRAY_MODE2 (32HI)
+      RVV_ARRAY_MODE2 (16SI)
+      RVV_ARRAY_MODE2 (8DI)
+      RVV_ARRAY_MODE2 (32HF)
+      RVV_ARRAY_MODE2 (16SF)
+      RVV_ARRAY_MODE2 (8DF)
+      default:
+        break;
+      }
+    }
+
+  return opt_machine_mode ();
+}
+
+/* Implement target hook TARGET_ARRAY_MODE_SUPPORTED_P.  */
+
+static bool
+riscv_array_mode_supported_p (machine_mode, unsigned HOST_WIDE_INT)
+{
+  return false;
+}
+
+/* Implement TARGET_VERIFY_TYPE_CONTEXT.  */
+
+static bool
+riscv_verify_type_context (location_t loc, type_context_kind context,
+                           const_tree type, bool silent_p)
+{
+  if (type == error_mark_node)
+    return true;
+
+  if (!lookup_attribute ("RVV sizeless type", TYPE_ATTRIBUTES (type)))
+    return true;
+
+  switch (context)
+    {
+    case TCTX_SIZEOF:
+    case TCTX_STATIC_STORAGE:
+      if (!silent_p)
+        error_at (loc, "RVV type %qT does not have a fixed size", type);
+
+      return false;
+
+    case TCTX_ALIGNOF:
+      if (!silent_p)
+        error_at (loc, "RVV type %qT does not have a defined alignment", type);
+
+      return false;
+
+    case TCTX_THREAD_STORAGE:
+      if (!silent_p)
+        error_at (loc,
+                  "variables of type %qT cannot have thread-local"
+                  " storage duration",
+                  type);
+
+      return false;
+
+    case TCTX_POINTER_ARITH:
+      if (!silent_p)
+        error_at (loc, "arithmetic on pointer to RVV type %qT", type);
+
+      return false;
+
+    case TCTX_FIELD:
+      if (silent_p)
+        ;
+      else if (lang_GNU_CXX ())
+        error_at (loc, "member variables cannot have RVV type %qT", type);
+      else
+        error_at (loc, "fields cannot have RVV type %qT", type);
+
+      return false;
+
+    case TCTX_ARRAY_ELEMENT:
+      if (!silent_p)
+        error_at (loc, "array elements cannot have RVV type %qT", type);
+
+      return false;
+
+    case TCTX_ALLOCATION:
+      if (!silent_p)
+        error_at (loc, "cannot allocate objects with RVV type %qT", type);
+
+      return false;
+
+    case TCTX_DEALLOCATION:
+      if (!silent_p)
+        error_at (loc, "cannot delete objects with RVV type %qT", type);
+
+      return false;
+
+    case TCTX_EXCEPTIONS:
+      if (!silent_p)
+        error_at (loc, "cannot throw or catch RVV type %qT", type);
+
+      return false;
+
+    case TCTX_CAPTURE_BY_COPY:
+      if (!silent_p)
+        error_at (loc, "capture by copy of RVV type %qT", type);
+
+      return false;
+    }
+
+  gcc_unreachable ();
+}
+
+/* Implement TARGET_VECTOR_ALIGNMENT.  */
+
+static HOST_WIDE_INT
+riscv_vector_alignment (const_tree type)
+{
+  /* ??? Checking the mode isn't ideal, but VECTOR_BOOLEAN_TYPE_P can
+     be set for non-predicate vectors of booleans.  Modes are the most
+     direct way we have of identifying real RVV predicate types.  */
+  /* FIXME: RVV didn't mention the alignment of bool, we uses
+     one byte align.  */
+  if (GET_MODE_CLASS (TYPE_MODE (type)) == MODE_VECTOR_BOOL)
+    return 8;
+
+  widest_int min_size
+    = constant_lower_bound (wi::to_poly_widest (TYPE_SIZE (type)));
+  return wi::umin (min_size, 128).to_uhwi ();
+}
+
+/* Implement target hook TARGET_VECTORIZE_PREFERRED_VECTOR_ALIGNMENT.  */
+
+static poly_uint64
+riscv_vectorize_preferred_vector_alignment (const_tree type)
+{
+  if (riscv_vector_mode_p (TYPE_MODE (type)))
+    {
+      /* If the length of the vector is a fixed power of 2, try to align
+      to that length, otherwise don't try to align at all.  */
+      HOST_WIDE_INT result;
+
+      if (!GET_MODE_BITSIZE (TYPE_MODE (type)).is_constant (&result)
+          || !pow2p_hwi (result))
+        result = TYPE_ALIGN (TREE_TYPE (type));
+
+      return result;
+    }
+
+  return default_preferred_vector_alignment (type);
+}
+
+/* Implement target hook TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE.  */
+
+static bool
+riscv_simd_vector_alignment_reachable (const_tree type, bool is_packed)
+{
+  if (is_packed)
+    return false;
+
+  /* For fixed-length vectors, check that the vectorizer will aim for
+     full-vector alignment.  This isn't true for generic GCC vectors
+     that are wider than the ABI maximum of 128 bits.  */
+  poly_uint64 preferred_alignment =
+    riscv_vectorize_preferred_vector_alignment (type);
+  if (TREE_CODE (TYPE_SIZE (type)) == INTEGER_CST
+      && maybe_ne (wi::to_widest (TYPE_SIZE (type)),
+                   preferred_alignment))
+    return false;
+
+  /* Vectors whose size is <= BIGGEST_ALIGNMENT are naturally aligned.  */
+  return true;
+}
+
+/* Return true if the vector misalignment factor is supported by the
+   target.  */
+
+static bool
+riscv_builtin_support_vector_misalignment (machine_mode mode,
+                                             const_tree type, int misalignment,
+                                             bool is_packed)
+{
+  return default_builtin_support_vector_misalignment (mode, type, misalignment,
+                                                      is_packed);
+}
+
+/* Implement TARGET_COMPATIBLE_VECTOR_TYPES_P.  */
+
+static bool
+riscv_compatible_vector_types_p (const_tree type1, const_tree type2)
+{
+  return (riscv_vector::builtin_type_p (type1)
+          == riscv_vector::builtin_type_p (type2));
+}
+
+/* Implement TARGET_VECTORIZE_PREFERRED_SIMD_MODE.  */
+
+static machine_mode
+riscv_preferred_simd_mode (scalar_mode mode)
+{
+  if (TARGET_VECTOR && TARGET_RVV)
+    switch (mode)
+      {
+      case E_QImode:
+        return riscv_vectorization_factor == 1 ? VNx16QImode
+            : riscv_vectorization_factor == 2 ? VNx32QImode
+            : riscv_vectorization_factor == 4 ? VNx64QImode
+            : VNx128QImode;
+      case E_HImode:
+        return riscv_vectorization_factor == 1 ? VNx8HImode
+            : riscv_vectorization_factor == 2 ? VNx16HImode
+            : riscv_vectorization_factor == 4 ? VNx32HImode
+            : VNx64HImode;
+      case E_SImode:
+        return riscv_vectorization_factor == 1 ? VNx4SImode
+            : riscv_vectorization_factor == 2 ? VNx8SImode
+            : riscv_vectorization_factor == 4 ? VNx16SImode
+            : VNx32SImode;
+      case E_DImode:
+        return riscv_vectorization_factor == 1 ? VNx2DImode
+            : riscv_vectorization_factor == 2 ? VNx4DImode
+            : riscv_vectorization_factor == 4 ? VNx8DImode
+            : VNx16DImode;
+      case E_HFmode:
+        if (TARGET_FP16)
+          return riscv_vectorization_factor == 1 ? VNx8HFmode
+            : riscv_vectorization_factor == 2 ? VNx16HFmode
+            : riscv_vectorization_factor == 4 ? VNx32HFmode
+            : VNx64HImode;
+        break;
+      case E_SFmode:
+        if (TARGET_HARD_FLOAT)
+          return riscv_vectorization_factor == 1 ? VNx4SFmode
+            : riscv_vectorization_factor == 2 ? VNx8SFmode
+            : riscv_vectorization_factor == 4 ? VNx16SFmode
+            : VNx32SImode;
+        break;
+      case E_DFmode:
+        if (TARGET_DOUBLE_FLOAT)
+          return riscv_vectorization_factor == 1 ? VNx2DFmode
+            : riscv_vectorization_factor == 2 ? VNx4DFmode
+            : riscv_vectorization_factor == 4 ? VNx8DFmode
+            : VNx16DImode;
+        break;
+      default:
+        break;
+      }
+
+  return word_mode;
+}
+
+/* Implement TARGET_VECTORIZE_RELATED_MODE.  */
+
+static opt_machine_mode
+riscv_vectorize_related_mode (machine_mode vector_mode,
+                              scalar_mode element_mode,
+                              poly_uint64 nunits)
+{
+  unsigned int is_rvv_mode = TARGET_VECTOR & riscv_vector_mode_p (vector_mode) & TARGET_RVV;
+
+  /* If we're operating on RVV vectors, try to return an RVV mode.  */
+  poly_uint64 rvv_nunits;
+  if (is_rvv_mode
+      && multiple_p (BYTES_PER_RISCV_VECTOR * riscv_vectorization_factor,
+                     GET_MODE_SIZE (element_mode), &rvv_nunits))
+    {
+      machine_mode rvv_mode;
+      if (maybe_ne (nunits, 0U))
+        {
+          /* Try to find a full or partial RVV mode with exactly
+             NUNITS units.  */
+          if (multiple_p (rvv_nunits, nunits)
+              && riscv_vector_data_mode (element_mode,
+                                         nunits).exists (&rvv_mode))
+              return rvv_mode;
+        }
+      else
+        {
+          /* Take the preferred number of units from the number of bytes
+             that fit in VECTOR_MODE.  We always start by "autodetecting"
+             a full vector mode with preferred_simd_mode, so vectors
+             chosen here will also be full vector modes.  Then
+             autovectorize_vector_modes tries smaller starting modes
+             and thus smaller preferred numbers of units.  */
+          rvv_nunits = ordered_min (rvv_nunits, GET_MODE_SIZE (vector_mode));
+          if (riscv_vector_data_mode (element_mode,
+                                      rvv_nunits).exists (&rvv_mode))
+            return rvv_mode;
+        }
+    }
+
+  return default_vectorize_related_mode (vector_mode, element_mode, nunits);
+}
+
+/* Return a list of possible vector sizes for the vectorizer
+   to iterate over.  */
+static unsigned int
+riscv_autovectorize_vector_modes (vector_modes *modes, bool)
+{
+  if (TARGET_VECTOR && TARGET_RVV)
+    {
+
+      if (riscv_vectorization_factor == RVV_LMUL1)
+        {
+          modes->safe_push (VNx16QImode);
+          modes->safe_push (VNx8QImode);
+          modes->safe_push (VNx4QImode);
+          modes->safe_push (VNx2QImode);
+        }
+      else if (riscv_vectorization_factor == RVV_LMUL2)
+        {
+          modes->safe_push (VNx32QImode);
+          modes->safe_push (VNx16QImode);
+          modes->safe_push (VNx8QImode);
+          modes->safe_push (VNx4QImode);
+        }
+      else if (riscv_vectorization_factor == RVV_LMUL4)
+        {
+          modes->safe_push (VNx64QImode);
+          modes->safe_push (VNx32QImode);
+          modes->safe_push (VNx16QImode);
+          modes->safe_push (VNx8QImode);
+        }
+      else
+        {
+          modes->safe_push (VNx128QImode);
+          modes->safe_push (VNx64QImode);
+          modes->safe_push (VNx32QImode);
+          modes->safe_push (VNx16QImode);
+        }
+    }
+
+  return 0;
+}
+
+/* Additional target hook to define the approach that is
+   used in partial vector during autovectorization. */
+static bool
+riscv_autovectorize_partial_vectors_approach (bool, bool lens_is_empty)
+{
+  if (!lens_is_empty)
+    return true;
+
+  return false;
+}
+
+/* Implement TARGET_VECTORIZE_GET_MASK_MODE.  */
+
+static opt_machine_mode
+riscv_get_mask_mode (machine_mode mode)
+{
+  if (TARGET_VECTOR && TARGET_RVV)
+    {
+      machine_mode mask_mode;
+      FOR_EACH_MODE_IN_CLASS (mask_mode, MODE_VECTOR_BOOL)
+        if (GET_MODE_INNER (mask_mode) == BImode
+          && known_eq (GET_MODE_NUNITS (mask_mode),
+            GET_MODE_NUNITS (mode))
+          && riscv_vector_mask_mode_p (mask_mode))
+          return mask_mode;
+    }
+  return default_get_mask_mode (mode);
+}
+
+/* Implement TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE.  Assume for now that
+   it isn't worth branching around empty masked ops (including masked
+   stores).  */
+
+static bool
+riscv_empty_mask_is_expensive (unsigned)
+{
+  return false;
+}
+
+/* Vectorizer cost model target hooks.  */
+
+/* Implement targetm.vectorize.builtin_vectorization_cost.  */
+int
+riscv_builtin_vectorization_cost (enum vect_cost_for_stmt type_of_cost,
+                                tree vectype,
+                                int misalign ATTRIBUTE_UNUSED)
+{
+    unsigned elements;
+    bool fp = false;
+    rtx x = NULL_RTX;
+    machine_mode mode = VOIDmode;
+
+    if (vectype != NULL) {
+        fp = FLOAT_TYPE_P (vectype);
+        mode = TYPE_MODE(vectype);
+    }
+
+    switch (type_of_cost) {
+        case scalar_stmt:
+            return fp ? vector_tune_param->rvv_stmt_costs_table->scalar_fp->cost(x, mode)
+                            : vector_tune_param->rvv_stmt_costs_table->scalar_int->cost(x, mode);
+
+        case scalar_load:
+            return vector_tune_param->rvv_stmt_costs_table->scalar_load->cost(x, mode);
+
+        case scalar_store:
+            return vector_tune_param->rvv_stmt_costs_table->scalar_store->cost(x, mode);
+
+        case vector_stmt:
+            return fp ? vector_tune_param->rvv_stmt_costs_table->vec_fp->cost(x, mode)
+                            : vector_tune_param->rvv_stmt_costs_table->vec_int->cost(x, mode);
+
+        case vector_load:
+            return vector_tune_param->rvv_stmt_costs_table->vec_align_load->cost(x, mode);
+
+        case vector_store:
+            return vector_tune_param->rvv_stmt_costs_table->vec_store->cost(x, mode);
+
+        case vec_to_scalar:
+            return vector_tune_param->rvv_stmt_costs_table->vec_to_scalar->cost(x, mode);
+
+        case scalar_to_vec:
+            return vector_tune_param->rvv_stmt_costs_table->scalar_to_vec->cost(x, mode);
+
+        case unaligned_load:
+        case vector_gather_load:
+            return vector_tune_param->rvv_stmt_costs_table->vec_unalign_load->cost(x, mode);
+
+        case unaligned_store:
+        case vector_scatter_store:
+            return vector_tune_param->rvv_stmt_costs_table->vec_unalign_store->cost(x, mode);
+
+        case cond_branch_taken:
+            return vector_tune_param->rvv_stmt_costs_table->cond_taken_branch->cost(x, mode);
+
+        case cond_branch_not_taken:
+            return vector_tune_param->rvv_stmt_costs_table->cond_not_taken_branch->cost(x, mode);
+
+        case vec_perm:
+            return vector_tune_param->rvv_stmt_costs_table->vec_permute->cost(x, mode);
+
+        case vec_promote_demote:
+            return fp ? vector_tune_param->rvv_stmt_costs_table->vec_fp->cost(x, mode)
+                            : vector_tune_param->rvv_stmt_costs_table->vec_int->cost(x, mode);
+
+        case vec_construct:
+            elements = estimated_poly_value (TYPE_VECTOR_SUBPARTS (vectype));
+            return elements / 2 + 1;
+
+        default:
+        gcc_unreachable ();
+    }
+}
+
+/* vec_perm support.  */
+
+struct expand_vec_perm_d
+{
+  rtx target, op0, op1;
+  vec_perm_indices perm;
+  machine_mode vmode;
+  bool one_vector_p;
+  bool testing_p;
+};
+
+/* Try to implement D using RVV vmerge instruction.  */
+
+static bool
+riscv_vector_vmerge (struct expand_vec_perm_d *d)
+{
+  machine_mode vmode = d->vmode;
+  int unit_size = GET_MODE_UNIT_SIZE (vmode);
+
+  if (unit_size > 8)
+    return false;
+
+  int n_patterns = d->perm.encoding ().npatterns ();
+  poly_int64 vec_len = d->perm.length ();
+
+  for (int i = 0; i < n_patterns; ++i) {
+    if (!known_eq (d->perm[i], i) && !known_eq (d->perm[i], vec_len + i))
+      return false;
+    }
+
+  for (int i = n_patterns; i < n_patterns * 2; i++)
+    if (!d->perm.series_p (i, n_patterns, i, n_patterns)
+        && !d->perm.series_p (i, n_patterns, vec_len + i, n_patterns))
+      return false;
+
+  machine_mode mask_mode;
+  if (!targetm.vectorize.get_mask_mode (vmode).exists (&mask_mode))
+    return false;
+
+  if (d->testing_p)
+    return true;
+
+  /* Build a mask that is true when op0 elements should be used.  */
+  rtx_vector_builder builder (mask_mode, n_patterns, 2);
+  for (int i = 0; i < n_patterns * 2; i++)
+    {
+      rtx elem = known_eq (d->perm[i], i) ? CONST1_RTX (BImode)
+					  : CONST0_RTX (BImode);
+      builder.quick_push (elem);
+    }
+
+  rtx mask = gen_reg_rtx (mask_mode);
+  riscv_emit_move (mask, riscv_vector_gen_mask_mem(builder.build (), mask_mode));
+  /* TARGET = MASK ? OP0 : OP1.  */
+  emit_insn (gen_vcond_mask (vmode, vmode, d->target, d->op0, d->op1, mask));
+  return true;
+}
+
+static bool
+riscv_vector_vdup (struct expand_vec_perm_d *d)
+{
+  rtx out = d->target;
+  rtx in0;
+  HOST_WIDE_INT elt;
+  machine_mode vmode = d->vmode;
+  rtx lane;
+
+  if (d->perm.encoding ().encoded_nelts () != 1
+      || !d->perm[0].is_constant (&elt))
+    return false;
+
+  /* Success! */
+  if (d->testing_p)
+    return true;
+
+  in0 = d->op0;
+  lane = GEN_INT (elt);
+
+  rtx select = gen_reg_rtx(GET_MODE_INNER (vmode));
+  emit_insn (gen_vec_extract (vmode, vmode, select, in0, lane));
+  emit_insn (gen_vec_duplicate (vmode, out, select));
+  return true;
+}
+
+static bool
+riscv_vector_vcompress (struct expand_vec_perm_d *d)
+{
+  machine_mode vmode = d->vmode;
+  int unit_size = GET_MODE_UNIT_SIZE (vmode);
+  poly_int64 vec_len = d->perm.length ();
+
+  if (unit_size > 8 || !vec_len.is_constant ())
+    return false;
+
+  int vlen = vec_len.to_constant ();
+  if (known_ge(d->perm[vlen - 1], vlen * 2) || vlen < 4)
+    return false;
+
+  int first_op1_index = -1;
+  for (int i = 0; i < vlen; i++)
+  {
+    if (!d->perm[i].is_constant ())
+      return false;
+    if (d->one_vector_p)
+    {
+      if (first_op1_index < 0 && i > 0 && known_le(d->perm[i], d->perm[i - 1]))
+      {
+        first_op1_index = i;
+      }
+    }
+    else if (first_op1_index < 0 && known_ge(d->perm[i], vec_len))
+    {
+      first_op1_index = i;
+    }
+  }
+
+  if (first_op1_index < 0)
+    return false;
+
+  // the index of op1 MUST be series
+  for (int i = first_op1_index + 1; i < vlen; i++)
+  {
+    if (known_ne(d->perm[i], d->perm[i - 1] + 1))
+      return false;
+  }
+  // the index of op0 MUST be increasing progressively
+  bool is_op0_series = true;
+  for (int i = 1; i < first_op1_index; i++)
+  {
+    if (known_eq(d->perm[i], d->perm[i - 1] + 1))
+      continue;
+    else
+      is_op0_series = false;
+    if (known_le(d->perm[i], d->perm[i - 1]))
+      return false;
+  }
+
+  machine_mode mask_mode;
+  if (!targetm.vectorize.get_mask_mode (vmode).exists (&mask_mode))
+    return false;
+
+  if (d->testing_p)
+    return true;
+
+  if (first_op1_index == vlen - 1 && is_op0_series)
+  {
+    int slide_down_cnt = d->perm[0].to_constant ();
+    rtx select = gen_reg_rtx(GET_MODE_INNER (vmode));
+    emit_insn (gen_vec_extract (vmode, vmode, select, d->op1, GEN_INT(d->perm[vlen - 1].to_constant ())));
+
+    if (slide_down_cnt == 0)
+      emit_slide1up(d->op0, select);
+    else
+      gcc_assert(slide_down_cnt == 1);
+
+    emit_slide1down(d->op0, select);
+    riscv_emit_move (d->target, d->op0);
+    return true;
+  }
+
+  if (first_op1_index == 1)
+  {
+    int slide_up_cnt = d->perm[1].to_constant () % vlen;
+    rtx select = gen_reg_rtx(GET_MODE_INNER (vmode));
+    emit_insn (gen_vec_extract (vmode, vmode, select, d->op0, GEN_INT(d->perm[0].to_constant ())));
+
+    if (slide_up_cnt > 0)
+    {
+      gcc_assert(slide_up_cnt == 1);
+      emit_slide1down(d->op1, select);
+    }
+
+    emit_slide1up(d->op1, select);
+    riscv_emit_move (d->target, d->op1);
+    return true;
+  }
+
+  // whether need to slide up
+  int slide_up_cnt = vlen * 2 - d->perm[vlen - 1].to_constant () - 1;
+  if (slide_up_cnt > 0)
+  {
+    emit_clobber (d->target);
+    emit_insn (gen_vslide_vx (UNSPEC_SLIDEUP,
+        vmode, d->target, const0_rtx, d->target,
+        d->op1, force_reg(Pmode, GEN_INT (slide_up_cnt)), gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector::gen_tu_policy ()));
+  }
+
+  /* Build a mask that is true when op0 elements should be used.  */
+  uint8_t* mask_val = (uint8_t*) xmalloc(vlen);
+  memset(mask_val, 0, vlen);
+  rtx_vector_builder builder (mask_mode, vlen, 1);
+  for (int i = 0; i <first_op1_index; i++)
+  {
+    mask_val[d->perm[i].to_constant()] = 1;
+  }
+
+  for (int i = 0; i < vlen; i++)
+  {
+    rtx elem = (mask_val[i] == 1) ? CONST1_RTX (BImode) : CONST0_RTX (BImode);
+    builder.quick_push (elem);
+  }
+  free(mask_val);
+
+  rtx mask = gen_reg_rtx (mask_mode);
+  riscv_emit_move (mask, riscv_vector_gen_mask_mem(builder.build (), mask_mode));
+
+  struct expand_operand ops[6];
+  insn_code icode = code_for_vcompress_vm (vmode);
+  gcc_assert (icode != CODE_FOR_nothing);
+  create_output_operand (&ops[0], d->target, vmode);
+  create_input_operand (&ops[1], mask, mask_mode);
+  if (slide_up_cnt > 0)
+    create_input_operand (&ops[2], d->target, vmode);
+  else
+    create_input_operand (&ops[2], d->op1, vmode);
+  create_input_operand (&ops[3], d->op0, vmode);
+  create_input_operand (&ops[4], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
+  create_input_operand (&ops[5], riscv_vector_gen_policy (), Pmode);
+  expand_insn (icode, 6, ops);
+  return true;
+}
+
+/* Try to implement D using an RVV vrgather instruction.  */
+
+static bool
+riscv_vector_vrgather (struct expand_vec_perm_d *d)
+{
+  scalar_mode element_mode = GET_MODE_INNER (d->vmode);
+  machine_mode mask_mode;
+  gcc_assert (targetm.vectorize.get_mask_mode (d->vmode).exists (&mask_mode));
+  machine_mode sel_mode = related_int_vector_mode (d->vmode).require ();
+  if (!d->perm.length ().is_constant ()
+      && ((known_gt (GET_MODE_SIZE (d->vmode), BYTES_PER_RISCV_VECTOR)
+      && GET_MODE_BITSIZE (element_mode) > 16)
+      || GET_MODE_BITSIZE (element_mode) < 16))
+    gcc_assert (riscv_vector_data_mode (HImode, d->perm.length ()) .exists (&sel_mode));
+
+  unsigned int i = 0;
+  while (known_gt (d->perm.length (), ++i))
+    {
+      if (!d->perm[i].is_constant ())
+        return false;
+    }
+
+  if (d->testing_p)
+    return true;
+
+  /* step1: fetch vlmax for specific mode. */
+  unsigned int vlmul = riscv_classify_vlmul_field (d->vmode);
+  unsigned int vsew = riscv_classify_vsew_field (d->vmode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+  rtx vl = gen_reg_rtx (Pmode);
+  emit_insn (gen_vsetvl (Pmode, vl, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
+
+  if (!d->perm.length ().is_constant ())
+    {
+      rtx mask = gen_reg_rtx (mask_mode);
+      rtx sel = vec_perm_indices_to_rtx (sel_mode, d->perm);
+      rtx sel_reg = force_reg (sel_mode, sel);
+      rtx x;
+      if (const_vec_duplicate_p (sel, &x))
+        {
+          rtx reg = gen_reg_rtx (Pmode);
+          emit_insn (gen_rtx_SET (reg, x));
+          emit_insn (gen_vrgather_vx (d->vmode,
+                                      d->target, const0_rtx, const0_rtx, d->op0, reg,
+                                      gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+        }
+
+      if (d->one_vector_p)
+        {
+          if ((known_gt (GET_MODE_SIZE (d->vmode), BYTES_PER_RISCV_VECTOR)
+              && GET_MODE_BITSIZE (element_mode) > 16)
+              || GET_MODE_BITSIZE (element_mode) < 16)
+            emit_insn (gen_vrgatherei16_vv (d->vmode,
+                       d->target, const0_rtx, const0_rtx, d->op0, sel_reg,
+                       gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+          else
+            emit_insn (gen_vrgather_vv (d->vmode, d->target, const0_rtx, const0_rtx, d->op0, sel_reg,
+                       gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+        }
+      else
+        {
+          /* step2: generate a mask that should select second vector. */
+          if (Pmode == SImode && GET_MODE_INNER (sel_mode) == DImode)
+            emit_insn (gen_vms_vx_32bit (GEU, sel_mode, mask, const0_rtx, const0_rtx, sel_reg,
+                vl, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_any_policy ()));
+          else if (GET_MODE_INNER (sel_mode) == Pmode)
+            emit_insn (gen_vms_vx (GEU, sel_mode, mask, const0_rtx, const0_rtx, sel_reg,
+                vl, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_any_policy ()));
+          else
+            emit_insn (gen_vms_vx_internal (GEU, sel_mode, mask, const0_rtx, const0_rtx, sel_reg,
+                gen_lowpart (GET_MODE_INNER (sel_mode), vl),
+                gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_any_policy ()));
+          /* step3: gather a intermediate result for index < nunits,
+                    we don't need to care about the result of the element
+                    whose index >= nunits. */
+          if (known_gt (GET_MODE_SIZE (d->vmode), BYTES_PER_RISCV_VECTOR)
+            && GET_MODE_BITSIZE (element_mode) > 16)
+            emit_insn (gen_vrgatherei16_vv (d->vmode,
+                       d->target, const0_rtx, const0_rtx, d->op0, sel_reg,
+                       gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+          else
+            emit_insn (gen_vrgather_vv (d->vmode, d->target, const0_rtx, const0_rtx, d->op0, sel_reg,
+                       gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+          /* step4: generate a new selector for second vector. */
+          if (Pmode == SImode && GET_MODE_INNER (sel_mode) == DImode)
+            emit_insn (gen_vsub_vx_32bit (sel_mode, sel_reg,
+                  const0_rtx, const0_rtx, sel_reg, vl,
+                  gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy()));
+          else if (GET_MODE_INNER (sel_mode) == Pmode)
+            emit_insn (gen_v_vx (UNSPEC_VSUB, sel_mode, sel_reg,
+                  const0_rtx, const0_rtx, sel_reg, vl,
+                  gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy()));
+          else
+            emit_insn (gen_v_vx (UNSPEC_VSUB, sel_mode, sel_reg,
+                  const0_rtx, const0_rtx, sel_reg,
+                  gen_lowpart (GET_MODE_INNER (sel_mode), vl),
+                  gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy()));
+          /* step5: merge the result of index >= nunits. */
+          if (known_gt (GET_MODE_SIZE (d->vmode), BYTES_PER_RISCV_VECTOR)
+            && GET_MODE_BITSIZE (element_mode) > 16)
+            emit_insn (gen_vrgatherei16_vv (d->vmode,
+                       d->target, mask, d->target, d->op1, sel_reg,
+                       gen_rtx_REG (Pmode, X0_REGNUM),
+                       riscv_vector::gen_tamu_policy ()));
+          else
+            emit_insn (gen_vrgather_vv (d->vmode, d->target, mask, d->target, d->op1, sel_reg,
+                       gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_tamu_policy ()));
+        }
+    }
+  else
+  {
+    sel_mode = related_int_vector_mode (d->vmode).require ();
+    rtx sel = vec_perm_indices_to_rtx (sel_mode, d->perm);
+    riscv_vector_expand_vec_perm (d->target, d->op0, d->op1, sel);
+  }
+
+  return true;
+}
+
+static bool
+riscv_vector_expand_vec_perm_const (struct expand_vec_perm_d *d)
+{
+  if (!(riscv_vector_data_mode_p (d->vmode) && !riscv_tuple_mode_p (d->vmode)))
+    return false;
+  /* The pattern matching functions above are written to look for a small
+     number to begin the sequence (0, 1, N/2).  If we begin with an index
+     from the second operand, we can swap the operands.  */
+  poly_int64 nelt = d->perm.length ();
+  if (known_ge (d->perm[0], nelt))
+    {
+      d->perm.rotate_inputs (1);
+      std::swap (d->op0, d->op1);
+    }
+
+  if (known_gt (nelt, 1))
+    {
+      if (riscv_vector_vmerge (d))
+        return true;
+      if (riscv_vector_vdup (d))
+        return true;
+      if (riscv_vector_vcompress (d))
+        return true;
+      if (riscv_vector_vrgather (d))
+        return true;
+    }
+
+  return false;
+}
+
+/* Implement TARGET_VECTORIZE_VEC_PERM_CONST.  */
+
+static bool
+riscv_vectorize_vec_perm_const (machine_mode vmode, rtx target, rtx op0,
+                                rtx op1, const vec_perm_indices &sel)
+{
+  if (!(TARGET_VECTOR && TARGET_RVV))
+    return false;
+
+  struct expand_vec_perm_d d;
+
+  /* Check whether the mask can be applied to a single vector.  */
+  if (sel.ninputs () == 1
+      || (op0 && rtx_equal_p (op0, op1)))
+    d.one_vector_p = true;
+  else if (sel.all_from_input_p (0))
+    {
+      d.one_vector_p = true;
+      op1 = op0;
+    }
+  else if (sel.all_from_input_p (1))
+    {
+      d.one_vector_p = true;
+      op0 = op1;
+    }
+  else
+    d.one_vector_p = false;
+
+  d.perm.new_vector (sel.encoding (), d.one_vector_p ? 1 : 2,
+		     sel.nelts_per_input ());
+  d.vmode = vmode;
+  d.target = target;
+  d.op0 = op0 ? force_reg (vmode, op0) : NULL_RTX;
+  if (op0 == op1)
+    d.op1 = d.op0;
+  else
+    d.op1 = op1 ? force_reg (vmode, op1) : NULL_RTX;
+  d.testing_p = !target;
+
+  if (GET_MODE_BITSIZE (GET_MODE_INNER (d.vmode)) < 16
+    && d.perm.length ().is_constant ())
+    {
+      /* For constant index, we don't vectorize if the index
+         is greater than 255. */
+      for (unsigned int i = 0; i < d.perm.length ().to_constant (); i++)
+        {
+          if (known_gt (d.perm[i], 255)
+            || known_lt (d.perm[i], 0))
+            return false;
+        }
+    }
+
+  if (!d.testing_p)
+    return riscv_vector_expand_vec_perm_const (&d);
+
+  rtx_insn *last = get_last_insn ();
+  bool ret = riscv_vector_expand_vec_perm_const (&d);
+  gcc_assert (last == get_last_insn ());
+
+  return ret;
+}
+
+void
+riscv_init_expanders (void)
+{
+  init_machine_status = riscv_init_machine_status;
+}
+
+/* Implement TARGET_VECTORIZE_CREATE_COSTS.  */
+vector_costs *
+riscv_vectorize_create_costs (vec_info *vinfo, bool costing_for_scalar)
+{
+  return new riscv_vector_costs (vinfo, costing_for_scalar);
 }
 
 /* Initialize the GCC target structure.  */
@@ -5777,6 +10648,83 @@ riscv_asan_shadow_offset (void)
 #undef  TARGET_DEFAULT_TARGET_FLAGS
 #define TARGET_DEFAULT_TARGET_FLAGS (MASK_BIG_ENDIAN)
 #endif
+
+#undef TARGET_GIMPLE_FOLD_BUILTIN
+#define TARGET_GIMPLE_FOLD_BUILTIN riscv_gimple_fold_builtin
+
+#undef TARGET_MANGLE_TYPE
+#define TARGET_MANGLE_TYPE riscv_mangle_type
+
+#undef TARGET_SCALAR_MODE_SUPPORTED_P
+#define TARGET_SCALAR_MODE_SUPPORTED_P riscv_scalar_mode_supported_p
+
+#undef TARGET_LIBGCC_FLOATING_MODE_SUPPORTED_P
+#define TARGET_LIBGCC_FLOATING_MODE_SUPPORTED_P riscv_libgcc_floating_mode_supported_p
+
+#undef TARGET_C_EXCESS_PRECISION
+#define TARGET_C_EXCESS_PRECISION riscv_excess_precision
+
+#undef TARGET_FLOATN_MODE
+#define TARGET_FLOATN_MODE riscv_floatn_mode
+
+#undef TARGET_DWARF_POLY_INDETERMINATE_VALUE
+#define TARGET_DWARF_POLY_INDETERMINATE_VALUE riscv_dwarf_poly_indeterminate_value
+#undef TARGET_ESTIMATED_POLY_VALUE
+#define TARGET_ESTIMATED_POLY_VALUE riscv_estimated_poly_value
+
+#undef TARGET_VECTOR_MODE_SUPPORTED_P
+#define TARGET_VECTOR_MODE_SUPPORTED_P riscv_vector_mode_supported_p
+
+#undef TARGET_ARRAY_MODE
+#define TARGET_ARRAY_MODE riscv_array_mode
+
+#undef TARGET_ARRAY_MODE_SUPPORTED_P
+#define TARGET_ARRAY_MODE_SUPPORTED_P riscv_array_mode_supported_p
+
+#undef TARGET_VERIFY_TYPE_CONTEXT
+#define TARGET_VERIFY_TYPE_CONTEXT riscv_verify_type_context
+
+#undef TARGET_VECTOR_ALIGNMENT
+#define TARGET_VECTOR_ALIGNMENT riscv_vector_alignment
+
+#undef TARGET_VECTORIZE_PREFERRED_VECTOR_ALIGNMENT
+#define TARGET_VECTORIZE_PREFERRED_VECTOR_ALIGNMENT riscv_vectorize_preferred_vector_alignment
+
+#undef TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE
+#define TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE riscv_simd_vector_alignment_reachable
+
+#undef TARGET_VECTORIZE_SUPPORT_VECTOR_MISALIGNMENT
+#define TARGET_VECTORIZE_SUPPORT_VECTOR_MISALIGNMENT riscv_builtin_support_vector_misalignment
+
+#undef TARGET_COMPATIBLE_VECTOR_TYPES_P
+#define TARGET_COMPATIBLE_VECTOR_TYPES_P riscv_compatible_vector_types_p
+
+#undef TARGET_VECTORIZE_PREFERRED_SIMD_MODE
+#define TARGET_VECTORIZE_PREFERRED_SIMD_MODE riscv_preferred_simd_mode
+
+#undef TARGET_VECTORIZE_RELATED_MODE
+#define TARGET_VECTORIZE_RELATED_MODE riscv_vectorize_related_mode
+
+#undef TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES
+#define TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES riscv_autovectorize_vector_modes
+
+#undef TARGET_VECTORIZE_AUTOVECTORIZE_PARTIAL_VECTORS_APPROACH
+#define TARGET_VECTORIZE_AUTOVECTORIZE_PARTIAL_VECTORS_APPROACH riscv_autovectorize_partial_vectors_approach
+
+#undef TARGET_VECTORIZE_GET_MASK_MODE
+#define TARGET_VECTORIZE_GET_MASK_MODE riscv_get_mask_mode
+
+#undef TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE
+#define TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE riscv_empty_mask_is_expensive
+
+#undef TARGET_VECTORIZE_BUILTIN_VECTORIZATION_COST
+#define TARGET_VECTORIZE_BUILTIN_VECTORIZATION_COST riscv_builtin_vectorization_cost
+
+#undef TARGET_VECTORIZE_CREATE_COSTS
+#define TARGET_VECTORIZE_CREATE_COSTS riscv_vectorize_create_costs
+
+#undef TARGET_VECTORIZE_VEC_PERM_CONST
+#define TARGET_VECTORIZE_VEC_PERM_CONST riscv_vectorize_vec_perm_const
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
