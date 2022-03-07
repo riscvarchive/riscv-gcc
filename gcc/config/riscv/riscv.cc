@@ -1633,6 +1633,12 @@ riscv_cannot_force_const_mem (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
   enum riscv_symbol_type type;
   rtx base, offset;
 
+  /* There's no way to calculate VL-based values using relocations.  */
+  subrtx_iterator::array_type array;
+  FOR_EACH_SUBRTX (iter, array, x, ALL)
+    if (GET_CODE (*iter) == CONST_POLY_INT)
+      return true;
+
   /* There is no assembler syntax for expressing an address-sized
      high part.  */
   if (GET_CODE (x) == HIGH)
@@ -6642,11 +6648,41 @@ riscv_register_move_cost (machine_mode mode,
 static unsigned int
 riscv_hard_regno_nregs (unsigned int regno, machine_mode mode)
 {
+  if (riscv_vector_mode_p (mode))
+    {
+      /* FIXME: According to RVV ISA 1.0, EMUL * NFIELDS represents
+         the number of underlying vectr registers, meaning EMUL = 1/8,
+         NFILED = 2, NVECS = 1/8 * 2 = 1/4.
+         But the intrinsics doc and LLVM show that it should occupy 2
+         vector registers in this case.
+         We assign registers in this case
+         follow the rules in LLVM and intrinsics doc.  */
+      if (known_ne (riscv_vector_natural_size (mode), BYTES_PER_RISCV_VECTOR))
+        return exact_div (GET_MODE_SIZE (mode),
+                          riscv_vector_natural_size (mode)).to_constant ();
+
+      if (known_lt (GET_MODE_SIZE (mode), UNITS_PER_V_REG))
+        return 1;
+
+      return exact_div (GET_MODE_SIZE (mode),
+                        UNITS_PER_V_REG).to_constant ();
+    }
+
+  /* VTYPE/VL register is a fake register */
+  if (regno == VTYPE_REGNUM
+      || regno == VL_REGNUM
+      || !GET_MODE_SIZE (mode).is_constant ())
+    return 1;
+
   if (FP_REG_P (regno))
-    return (GET_MODE_SIZE (mode) + UNITS_PER_FP_REG - 1) / UNITS_PER_FP_REG;
+    return (GET_MODE_SIZE (mode).to_constant () + UNITS_PER_FP_REG - 1) / UNITS_PER_FP_REG;
+
+  /* Assume every valid non-vector mode fits in one vector register.  */
+  if (V_REG_P (regno))
+    return 1;
 
   /* All other registers are word-sized.  */
-  return (GET_MODE_SIZE (mode) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+  return (GET_MODE_SIZE (mode).to_constant () + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 }
 
 /* Implement TARGET_HARD_REGNO_MODE_OK.  */
@@ -6717,6 +6753,25 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 static bool
 riscv_modes_tieable_p (machine_mode mode1, machine_mode mode2)
 {
+  if (riscv_vector_mode_p (mode1) && riscv_vector_mode_p (mode2))
+    {
+      /* Only allow normal vector modes to be tied. */
+      return (!riscv_tuple_mode_p (mode1) && !riscv_tuple_mode_p (mode2));
+    }
+  else if (riscv_vector_mode_p (mode1) || riscv_vector_mode_p (mode2))
+    {
+      /* If only one is vector mode, then don't allow scaler and vector mode to be tied. */
+      return false;
+    }
+  else if (TARGET_VECTOR && (
+            (GET_MODE_CLASS (mode1) == MODE_FLOAT && GET_MODE_CLASS (mode2) != MODE_FLOAT)
+            || (GET_MODE_CLASS (mode1) != MODE_FLOAT && GET_MODE_CLASS (mode2) == MODE_FLOAT)))
+    {
+      /* When V extension is enabled, that implied F or D Extension is also enabled.
+         In this situation, disable float and scaler mode to be tied.  */
+      return false;
+    }
+
   return (mode1 == mode2
 	  || !(GET_MODE_CLASS (mode1) == MODE_FLOAT
 	       && GET_MODE_CLASS (mode2) == MODE_FLOAT));
@@ -6732,6 +6787,15 @@ riscv_class_max_nregs (reg_class_t rclass, machine_mode mode)
 
   if (reg_class_subset_p (rclass, GR_REGS))
     return riscv_hard_regno_nregs (GP_REG_FIRST, mode);
+
+  if (reg_class_subset_p (V_REGS, rclass))
+    return riscv_hard_regno_nregs (V_REG_FIRST, mode);
+
+  if (reg_class_subset_p (VL_REGS, rclass))
+    return 1;
+
+  if (reg_class_subset_p (VTYPE_REGS, rclass))
+    return 1;
 
   return 0;
 }
@@ -6871,6 +6935,26 @@ static struct machine_function *
 riscv_init_machine_status (void)
 {
   return ggc_cleared_alloc<machine_function> ();
+}
+
+/* Return the Vlen value associated with -mriscv-vector-bits= value VALUE.  */
+
+static poly_uint16
+riscv_convert_riscv_vector_bits (riscv_vector_bits_enum value)
+{
+  /* 64-bit RVV modes use different register layouts
+     on small-endian targets, so we would need to forbid subregs that convert
+     from one to the other.  By default a reinterpret sequence would then
+     involve a store to memory in one mode and a load back in the other.
+     Even if we optimize that sequence using reverse instructions,
+     it would still be a significant potential overhead.
+
+     For now, it seems better to generate length-agnostic code for that
+     case instead.  */
+  if (value == RVV_SCALABLE)
+    return poly_uint16 (2, 2);
+  else
+    return (int) value / 64;
 }
 
 /* Implement TARGET_OPTION_OVERRIDE.  */
@@ -7019,6 +7103,8 @@ riscv_option_override (void)
       riscv_stack_protector_guard_offset = offs;
     }
 
+  /* Convert -mriscv-vector-bits to a chunks count.  */
+  riscv_vector_chunks = riscv_convert_riscv_vector_bits (riscv_vector_bits);
 }
 
 /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */
@@ -7338,8 +7424,12 @@ riscv_slow_unaligned_access (machine_mode, unsigned int)
 /* Implement TARGET_CAN_CHANGE_MODE_CLASS.  */
 
 static bool
-riscv_can_change_mode_class (machine_mode, machine_mode, reg_class_t rclass)
+riscv_can_change_mode_class (machine_mode from, machine_mode to, reg_class_t rclass)
 {
+  if (riscv_vector_mode_p (from) && riscv_vector_mode_p (to)
+      && !riscv_tuple_mode_p (from) && !riscv_tuple_mode_p (to))
+    return true;
+
   return !reg_classes_intersect_p (FP_REGS, rclass);
 }
 
@@ -7376,9 +7466,10 @@ riscv_promote_function_mode (const_tree type ATTRIBUTE_UNUSED,
     return promote_mode (type, mode, punsignedp);
 
   unsignedp = *punsignedp;
-  PROMOTE_MODE (mode, unsignedp, type);
+  scalar_mode smode = as_a <scalar_mode> (mode);
+  PROMOTE_MODE (smode, unsignedp, type);
   *punsignedp = unsignedp;
-  return mode;
+  return smode;
 }
 
 /* Implement TARGET_MACHINE_DEPENDENT_REORG.  */
