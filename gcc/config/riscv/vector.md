@@ -791,3 +791,57 @@
   [(set_attr "type" "vse")
    (set_attr "mode" "<VB:MODE>")])
 
+;; Vector Strided Loads.
+
+;; This special pattern, we add policy operand because
+;; we need it in the expansion.
+(define_insn "@vlse<V:mode>"
+  [(set (match_operand:V 0 "register_operand" "=vd,vd,vd,vd,vr,vr,vr,vr")
+    (unspec:V
+      [(unspec:V
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:V
+           [(match_operand 3 "pmode_register_operand" "r,r,r,r,r,r,r,r")
+           (match_operand 4 "p_reg_or_0_operand" "r,J,r,J,r,J,r,J")
+           (mem:BLK (scratch))] UNSPEC_STRIDED_LOAD)
+         (match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vlse<sew>.v\t%0,(%3),%4,%1.t
+   vlse<sew>.v\t%0,(%3),zero,%1.t
+   vlse<sew>.v\t%0,(%3),%4,%1.t
+   vlse<sew>.v\t%0,(%3),zero,%1.t
+   vlse<sew>.v\t%0,(%3),%4
+   vlse<sew>.v\t%0,(%3),zero
+   vlse<sew>.v\t%0,(%3),%4
+   vlse<sew>.v\t%0,(%3),zero"
+  [(set_attr "type" "vlse")
+   (set_attr "mode" "<V:MODE>")])
+
+;; Vector Strided Stores.
+(define_insn "@vsse<V:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V
+        [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (unspec:BLK
+          [(match_operand 1 "pmode_register_operand" "r,r,r,r")
+           (match_operand 2 "p_reg_or_0_operand" "r,J,r,J")
+           (match_operand:V 3 "register_operand" "vr,vr,vr,vr")] UNSPEC_STRIDED_STORE)
+         (match_dup 1)] UNSPEC_SELECT)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vsse<sew>.v\t%3,(%1),%2,%0.t
+   vsse<sew>.v\t%3,(%1),zero,%0.t
+   vsse<sew>.v\t%3,(%1),%2
+   vsse<sew>.v\t%3,(%1),zero"
+  [(set_attr "type" "vsse")
+   (set_attr "mode" "<V:MODE>")])
