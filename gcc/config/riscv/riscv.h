@@ -22,6 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_RISCV_H
 #define GCC_RISCV_H
 
+#include <stdbool.h>
 #include "config/riscv/riscv-opts.h"
 
 /* Target CPU builtins.  */
@@ -123,7 +124,7 @@ ASM_MISA_SPEC
 
 /* The mapping from gcc register number to DWARF 2 CFA column number.  */
 #define DWARF_FRAME_REGNUM(REGNO) \
-  (GP_REG_P (REGNO) || FP_REG_P (REGNO) ? REGNO : INVALID_REGNUM)
+  (GP_REG_P (REGNO) || FP_REG_P (REGNO) || (TARGET_VECTOR && V_REG_P (REGNO)) ? REGNO : INVALID_REGNUM)
 
 /* The DWARF 2 CFA column which tracks the return address.  */
 #define DWARF_FRAME_RETURN_COLUMN RETURN_ADDR_REGNUM
@@ -155,6 +156,7 @@ ASM_MISA_SPEC
 
 /* The `Q' extension is not yet supported.  */
 #define UNITS_PER_FP_REG (TARGET_DOUBLE_FLOAT ? 8 : 4)
+#define UNITS_PER_V_REG (GET_MODE_SIZE (VNx2DImode))
 
 /* The largest type that can be passed in floating-point registers.  */
 #define UNITS_PER_FP_ARG						\
@@ -287,11 +289,18 @@ ASM_MISA_SPEC
 
    - 32 integer registers
    - 32 floating point registers
-   - 2 fake registers:
+   - 4 fake registers:
 	- ARG_POINTER_REGNUM
-	- FRAME_POINTER_REGNUM */
+	- FRAME_POINTER_REGNUM
+  - VL_REGNUM
+	- VTYPE_REGNUM
+   - 30 unused registers for future expansion
+   - 32 vector registers:
+  - V0_REGS
+  - VNoV0_REGS
+  - V_REGS		*/
 
-#define FIRST_PSEUDO_REGISTER 66
+#define FIRST_PSEUDO_REGISTER 128
 
 /* x0, sp, gp, and tp are fixed.  */
 
@@ -303,7 +312,11 @@ ASM_MISA_SPEC
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   /* Others.  */							\
-  1, 1									\
+  1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  /* Vector registers.  */						\
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0			\
 }
 
 /* a0-a7, t0-t6, fa0-fa7, and ft0-ft11 are volatile across calls.
@@ -317,7 +330,11 @@ ASM_MISA_SPEC
   1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
   1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
   /* Others.  */							\
-  1, 1									\
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  /* Vector registers.  */						\
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1			\
 }
 
 /* Select a register mode required for caller save of hard regno REGNO.
@@ -337,6 +354,11 @@ ASM_MISA_SPEC
 #define FP_REG_LAST  63
 #define FP_REG_NUM   (FP_REG_LAST - FP_REG_FIRST + 1)
 
+/* To be consistent with Clang+LLVM Compiler, Vector Registers DwarfRegNum starts at 96 */
+#define V_REG_FIRST 96
+#define V_REG_LAST  127
+#define V_REG_NUM   (V_REG_LAST - V_REG_FIRST + 1)
+
 /* The DWARF 2 CFA column which tracks the return address from a
    signal handler context.  This means that to maintain backwards
    compatibility, no hard register can be assigned this column if it
@@ -347,6 +369,8 @@ ASM_MISA_SPEC
   ((unsigned int) ((int) (REGNO) - GP_REG_FIRST) < GP_REG_NUM)
 #define FP_REG_P(REGNO)  \
   ((unsigned int) ((int) (REGNO) - FP_REG_FIRST) < FP_REG_NUM)
+#define V_REG_P(REGNO) \
+  ((unsigned int) ((int) (REGNO) - V_REG_FIRST) < V_REG_NUM)
 
 /* True when REGNO is in SIBCALL_REGS set.  */
 #define SIBCALL_REG_P(REGNO)	\
@@ -376,6 +400,10 @@ ASM_MISA_SPEC
 
 #define RISCV_PROLOGUE_TEMP_REGNUM (GP_TEMP_FIRST)
 #define RISCV_PROLOGUE_TEMP(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP_REGNUM)
+#define RISCV_PROLOGUE_TEMP2_REGNUM (GP_TEMP_FIRST + 1)
+#define RISCV_PROLOGUE_TEMP2(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP2_REGNUM)
+#define RISCV_PROLOGUE_TEMP3_REGNUM (GP_TEMP_FIRST + 1)
+#define RISCV_PROLOGUE_TEMP3(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP3_REGNUM)
 
 #define RISCV_CALL_ADDRESS_TEMP_REGNUM (GP_TEMP_FIRST + 1)
 #define RISCV_CALL_ADDRESS_TEMP(MODE) \
@@ -430,6 +458,11 @@ enum reg_class
   GR_REGS,			/* integer registers */
   FP_REGS,			/* floating-point registers */
   FRAME_REGS,			/* arg pointer and frame pointer */
+  VL_REGS,			/* vl register */
+  VTYPE_REGS,			/* vype register */
+  V0_REGS,		    /* v0.t registers */
+  VNoV0_REGS,		/* vector registers except v0.t */
+  V_REGS,			/* vector registers */
   ALL_REGS,			/* all registers */
   LIM_REG_CLASSES		/* max value + 1 */
 };
@@ -450,6 +483,11 @@ enum reg_class
   "GR_REGS",								\
   "FP_REGS",								\
   "FRAME_REGS",								\
+  "VL_REGS",								\
+  "VTYPE_REGS",								\
+  "V0_REGS", 				\
+  "VNoV0_REGS", 			\
+  "V_REGS", 							\
   "ALL_REGS"								\
 }
 
@@ -466,13 +504,18 @@ enum reg_class
 
 #define REG_CLASS_CONTENTS						\
 {									\
-  { 0x00000000, 0x00000000, 0x00000000 },	/* NO_REGS */		\
-  { 0xf003fcc0, 0x00000000, 0x00000000 },	/* SIBCALL_REGS */	\
-  { 0xffffffc0, 0x00000000, 0x00000000 },	/* JALR_REGS */		\
-  { 0xffffffff, 0x00000000, 0x00000000 },	/* GR_REGS */		\
-  { 0x00000000, 0xffffffff, 0x00000000 },	/* FP_REGS */		\
-  { 0x00000000, 0x00000000, 0x00000003 },	/* FRAME_REGS */	\
-  { 0xffffffff, 0xffffffff, 0x00000003 }	/* ALL_REGS */		\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },	/* NO_REGS */		\
+  { 0xf003fcc0, 0x00000000, 0x00000000, 0x00000000 },	/* SIBCALL_REGS */	\
+  { 0xffffffc0, 0x00000000, 0x00000000, 0x00000000 },	/* JALR_REGS */		\
+  { 0xffffffff, 0x00000000, 0x00000000, 0x00000000 },	/* GR_REGS */		\
+  { 0x00000000, 0xffffffff, 0x00000000, 0x00000000 },	/* FP_REGS */		\
+  { 0x00000000, 0x00000000, 0x00000003, 0x00000000 },	/* FRAME_REGS */	\
+  { 0x00000000, 0x00000000, 0x00000004, 0x00000000 },	/* VL_REGS */	\
+  { 0x00000000, 0x00000000, 0x00000008, 0x00000000 },	/* VTYPE_REGS */	\
+  { 0x00000000, 0x00000000, 0x00000000, 0x00000001 },	/* V0_REGS */\
+  { 0x00000000, 0x00000000, 0x00000000, 0xfffffffe },	/* VNoV0_REGS */\
+  { 0x00000000, 0x00000000, 0x00000000, 0xffffffff },	/* V_REGS */\
+  { 0xffffffff, 0xffffffff, 0x0000000f, 0xffffffff }	/* ALL_REGS */		\
 }
 
 /* A C expression whose value is a register class containing hard
@@ -512,9 +555,17 @@ enum reg_class
   60, 61, 62, 63,							\
   /* Call-saved FPRs.  */						\
   40, 41, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,			\
+  /* Call-clobbered vector registers, the order is consistent with Clang+LLVM Compiler */ \
+  /* V24 ~ V31.  */					\
+  120, 121, 122, 123, 124, 125, 126, 127,	\
+  /* V8 ~ V23.  */					\
+  104, 105, 106, 107, 108, 109, 110, 111,	\
+  112, 113, 114, 115, 116, 117, 118, 119, \
+  /* V0 ~ V7.  */					\
+  96,	97, 98, 99, 100, 101, 102, 103,	 \
   /* None of the remaining classes have defined call-saved		\
      registers.  */							\
-  64, 65								\
+  64, 65, 66, 67								\
 }
 
 /* True if VALUE is a signed 12-bit number.  */
@@ -575,8 +626,14 @@ enum reg_class
 
 #define GP_RETURN GP_ARG_FIRST
 #define FP_RETURN (UNITS_PER_FP_ARG == 0 ? GP_RETURN : FP_ARG_FIRST)
+#define V_RETURN V_ARG_FIRST
 
 #define MAX_ARGS_IN_REGISTERS (riscv_abi == ABI_ILP32E ? 6 : 8)
+/*  FIXME: Follow the calling convention in LLVM,
+    maximum 16 vector registers and 1 mask register
+    in function arg.  */
+#define MAX_ARGS_IN_VECTOR_REGISTERS (16)
+#define MAX_ARGS_IN_MASK_REGISTERS (1)
 
 /* Symbolic macros for the first/last argument registers.  */
 
@@ -585,6 +642,8 @@ enum reg_class
 #define GP_TEMP_FIRST (GP_REG_FIRST + 5)
 #define FP_ARG_FIRST (FP_REG_FIRST + 10)
 #define FP_ARG_LAST  (FP_ARG_FIRST + MAX_ARGS_IN_REGISTERS - 1)
+#define V_ARG_FIRST (V_REG_FIRST + 8)
+#define V_ARG_LAST  (V_ARG_FIRST + MAX_ARGS_IN_VECTOR_REGISTERS - 1)
 
 #define CALLEE_SAVED_REG_NUMBER(REGNO)			\
   ((REGNO) >= 8 && (REGNO) <= 9 ? (REGNO) - 8 :		\
@@ -612,6 +671,12 @@ typedef struct {
 
   /* Number of floating-point registers used so far, likewise.  */
   unsigned int num_fprs;
+
+  /* The used state of args in vectors, 1 for used by prev arg, initial to 0 */
+  bool used_vrs[MAX_ARGS_IN_VECTOR_REGISTERS];
+
+  /* Number of mask registers used so far, up to MAX_ARGS_IN_MASK_REGISTERS. */
+  unsigned int num_mrs;
 } CUMULATIVE_ARGS;
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
@@ -780,7 +845,14 @@ typedef struct {
   "fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5",	\
   "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7",	\
   "fs8", "fs9", "fs10","fs11","ft8", "ft9", "ft10","ft11",	\
-  "arg", "frame", }
+  "arg", "frame","vl","vtype","vxsat", "vxrm", "N/A", "N/A", \
+  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
+  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
+  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
+  "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",	\
+  "v8",  "v9",  "v10", "v11", "v12", "v13", "v14", "v15",	\
+  "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",	\
+  "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31" 	}
 
 #define ADDITIONAL_REGISTER_NAMES					\
 {									\
@@ -1001,6 +1073,16 @@ extern poly_uint16 riscv_vector_chunks;
 /* This is the maximum value that can be represented in a compressed load/store
    offset (an unsigned 5-bit value scaled by 4).  */
 #define CSW_MAX_OFFSET (((4LL << C_S_BITS) - 1) & ~3)
+
+#define RISCV_DWARF_VXSAT (4096 + 0x009)
+#define RISCV_DWARF_VXRM (4096 + 0x00a)
+#define RISCV_DWARF_VL (4096 + 0xc20)
+#define RISCV_DWARF_VTYPE (4096 + 0xc21)
+#define RISCV_DWARF_VLENB	(4096 + 0xc22)
+
+#define RISCV_DWARF_GP 0
+#define RISCV_DWARF_FP 32
+#define RISCV_DWARF_V 96
 
 /* Called from RISCV_REORG, this is defined in riscv-sr.cc.  */
 
