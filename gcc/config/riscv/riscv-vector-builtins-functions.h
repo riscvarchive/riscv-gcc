@@ -658,6 +658,28 @@ public:
   get_argument_types (const function_instance &instance,
                       vec<tree> &argument_types) const OVERRIDE;
 };
+
+/* A function_base for single-width binary functions.  */
+class reduceop : public function_builder
+{
+public:
+  // use the same construction function as the function_builder
+  using function_builder::function_builder;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  tree
+  get_mask_type (const tree &return_type, const tree &first_type,
+                 const vec<tree> &argument_types, lmul_value_index lmul) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+};
+
 /* A function_base for vle functions.  */
 class vle : public loadstore
 {
@@ -1332,6 +1354,73 @@ public:
   void
   get_argument_types (const function_instance &instance,
                       vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vred functions.  */
+class vred : public reduceop
+{
+public:
+  // use the same construction function as the reduceop
+  using reduceop::reduceop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vwredsum functions.  */
+class vwredsum : public reduceop
+{
+public:
+  // use the same construction function as the reduceop
+  using reduceop::reduceop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfred functions.  */
+class vfred : public reduceop
+{
+public:
+  // use the same construction function as the reduceop
+  using reduceop::reduceop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwredosum functions.  */
+class vfwredosum : public reduceop
+{
+public:
+  // use the same construction function as the reduceop
+  using reduceop::reduceop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwredusum functions.  */
+class vfwredusum : public reduceop
+{
+public:
+  // use the same construction function as the reduceop
+  using reduceop::reduceop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
 
   rtx
   expand (const function_instance &instance, tree exp,

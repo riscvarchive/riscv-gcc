@@ -2880,6 +2880,41 @@ ternop::get_argument_types (const function_instance &instance,
     }
 }
 
+/* A function_base for single-width binary functions.  */
+void
+reduceop::get_name (char *name, const function_instance &instance) const
+{
+  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
+                       instance.get_data_type_list ()[0] == DT_unsigned, false,
+                       true, instance.get_arg_pattern ().arg_list[1],
+                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+}
+
+tree
+reduceop::get_return_type (const function_instance &instance) const
+{
+  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                   instance.get_data_type_list ()[0] == DT_unsigned);
+}
+
+void
+reduceop::get_argument_types (const function_instance &instance,
+                              vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    argument_types.quick_push (
+        get_dt_t (instance.get_arg_pattern ().arg_list[i],
+                  instance.get_data_type_list ()[i] == DT_unsigned));
+}
+
+tree
+reduceop::get_mask_type (const tree &, const tree &, const vec<tree> &argument_types,
+                         lmul_value_index) const
+{
+  return lmul2mask_t (GET_MODE_INNER (TYPE_MODE (argument_types[0])),
+                      mode2lmul (TYPE_MODE (argument_types[0])));
+}
+
 /* A function_base for vle functions.  */
 unsigned int
 vle::call_properties (const function_instance &) const
@@ -4048,6 +4083,94 @@ vmv::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
+/* A function_base for vred functions.  */
+rtx
+vred::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  unsigned int unspec =
+      strcmp (instance.get_base_name (), "vredsum") == 0    ? UNSPEC_REDUC_SUM
+      : strcmp (instance.get_base_name (), "vredmax") == 0  ? UNSPEC_REDUC_MAX
+      : strcmp (instance.get_base_name (), "vredmaxu") == 0 ? UNSPEC_REDUC_MAXU
+      : strcmp (instance.get_base_name (), "vredmin") == 0  ? UNSPEC_REDUC_MIN
+      : strcmp (instance.get_base_name (), "vredminu") == 0 ? UNSPEC_REDUC_MINU
+      : strcmp (instance.get_base_name (), "vredand") == 0  ? UNSPEC_REDUC_AND
+      : strcmp (instance.get_base_name (), "vredor") == 0   ? UNSPEC_REDUC_OR
+                                                            : UNSPEC_REDUC_XOR;
+  icode = code_for_vred_vs (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vwredsum functions.  */
+rtx
+vwredsum::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  rtx_code code = strcmp (instance.get_base_name (), "vwredsum") == 0
+                      ? SIGN_EXTEND
+                      : ZERO_EXTEND;
+  icode = code_for_vwredsum_vs (code, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfred functions.  */
+unsigned int
+vfred::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfred::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  unsigned int unspec = strcmp (instance.get_base_name (), "vfredosum") == 0
+                            ? UNSPEC_REDUC_ORDERED_SUM
+                        : strcmp (instance.get_base_name (), "vfredusum") == 0
+                            ? UNSPEC_REDUC_UNORDERED_SUM
+                        : strcmp (instance.get_base_name (), "vfredmax") == 0
+                            ? UNSPEC_REDUC_MAX
+                            : UNSPEC_REDUC_MIN;
+  icode = code_for_vfred_vs (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwredosum functions.  */
+unsigned int
+vfwredosum::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwredosum::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwredosum_vs (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwredusum functions.  */
+unsigned int
+vfwredusum::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwredusum::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwredusum_vs (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
 /* A function_base for vsadd functions.  */
 rtx
 vsadd::expand (const function_instance &instance, tree exp, rtx target) const

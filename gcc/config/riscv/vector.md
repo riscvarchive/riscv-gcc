@@ -5488,3 +5488,136 @@
    vfncvt.rod.f.f.w\t%0,%3"
   [(set_attr "type" "vfncvt")
    (set_attr "mode" "<VWF:MODE>")])
+
+;; -------------------------------------------------------------------------------
+;; ---- 14. Vector Reduction Operations
+;; -------------------------------------------------------------------------------
+;; Includes:
+;; - 14.1 Vector Single-Width Integer Reduction Instructions
+;; - 14.2 Vector Widening Integer Reduction Instructions
+;; - 14.3 Vector Single-Width Floating-Point Reduction
+;; - 14.4 Vector Widening Floating-Point Reduction Instructions
+;; -------------------------------------------------------------------------------
+
+;; Integer simple-reductions.
+(define_insn "@vred<reduc><mode>_vs"
+  [(set (match_operand:<VLMUL1> 0 "register_operand" "=vr,vr,vr,vr")
+  (unspec:<VLMUL1>
+    [(unspec:<VM>
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (unspec:<VLMUL1>
+         [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
+          (match_operand:VI 3 "register_operand" "vr,vr,vr,vr")
+          (match_operand:<VLMUL1> 4 "register_operand" "vr,vr,vr,vr")] REDUC)
+       (match_dup 2)] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vred<reduc>.vs\t%0,%3,%4,%1.t
+   vred<reduc>.vs\t%0,%3,%4,%1.t
+   vred<reduc>.vs\t%0,%3,%4
+   vred<reduc>.vs\t%0,%3,%4"
+  [(set_attr "type" "vreduc")
+   (set_attr "mode" "<MODE>")])
+
+;; Signed/Unsigned sum reduction into double-width accumulator.
+(define_insn "@vwredsum<u><VWREDI:mode>_vs"
+  [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  (unspec:<VWLMUL1>
+    [(unspec:<VM>
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (unspec:<VWLMUL1>
+         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
+          (any_extend:<VWLMUL1>
+           (match_operand:VWREDI 3 "register_operand" "vr,vr,vr,vr"))
+          (match_operand:<VWLMUL1> 4 "register_operand" "vr,vr,vr,vr")] UNSPEC_REDUC_SUM)
+       (match_dup 2)] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vwredsum<u>.vs\t%0,%3,%4,%1.t
+   vwredsum<u>.vs\t%0,%3,%4,%1.t
+   vwredsum<u>.vs\t%0,%3,%4
+   vwredsum<u>.vs\t%0,%3,%4"
+  [(set_attr "type" "vwreduc")
+   (set_attr "mode" "<VWREDI:MODE>")])
+
+;; Floating-Point simple-reductions.
+(define_insn "@vfred<reduc><mode>_vs"
+  [(set (match_operand:<VLMUL1> 0 "register_operand" "=vr,vr,vr,vr")
+  (unspec:<VLMUL1>
+    [(unspec:<VM>
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (unspec:<VLMUL1>
+         [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
+          (match_operand:VF 3 "register_operand" "vr,vr,vr,vr")
+          (match_operand:<VLMUL1> 4 "register_operand" "vr,vr,vr,vr")] FREDUC)
+       (match_dup 2)] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfred<reduc>.vs\t%0,%3,%4,%1.t
+   vfred<reduc>.vs\t%0,%3,%4,%1.t
+   vfred<reduc>.vs\t%0,%3,%4
+   vfred<reduc>.vs\t%0,%3,%4"
+  [(set_attr "type" "vreduc")
+   (set_attr "mode" "<MODE>")])
+
+;; unordered sum reduction into double-width accumulator.
+(define_insn "@vfwredusum<VWREDF:mode>_vs"
+  [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  (unspec:<VWLMUL1>
+    [(unspec:<VM>
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (unspec:<VWLMUL1>
+         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
+          (float_extend:<VWLMUL1>
+           (match_operand:VWREDF 3 "register_operand" "vr,vr,vr,vr"))
+          (match_operand:<VWLMUL1> 4 "register_operand" "vr,vr,vr,vr")] UNSPEC_REDUC_UNORDERED_SUM)
+       (match_dup 2)] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfwredusum.vs\t%0,%3,%4,%1.t
+   vfwredusum.vs\t%0,%3,%4,%1.t
+   vfwredusum.vs\t%0,%3,%4
+   vfwredusum.vs\t%0,%3,%4"
+  [(set_attr "type" "vwreduc")
+   (set_attr "mode" "<VWREDF:MODE>")])
+
+;; ordered sum reduction into double-width accumulator.
+(define_insn "@vfwredosum<VWREDF:mode>_vs"
+  [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  (unspec:<VWLMUL1>
+    [(unspec:<VM>
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (unspec:<VWLMUL1>
+         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
+          (float_extend:<VWLMUL1>
+           (match_operand:VWREDF 3 "register_operand" "vr,vr,vr,vr"))
+          (match_operand:<VWLMUL1> 4 "register_operand" "vr,vr,vr,vr")] UNSPEC_REDUC_ORDERED_SUM)
+       (match_dup 2)] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfwredosum.vs\t%0,%3,%4,%1.t
+   vfwredosum.vs\t%0,%3,%4,%1.t
+   vfwredosum.vs\t%0,%3,%4
+   vfwredosum.vs\t%0,%3,%4"
+  [(set_attr "type" "vwreduc")
+   (set_attr "mode" "<VWREDF:MODE>")])
