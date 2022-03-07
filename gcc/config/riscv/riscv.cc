@@ -720,6 +720,863 @@ static int riscv_symbol_insns (enum riscv_symbol_type type)
     }
 }
 
+/* Helper functions for RVV */
+
+unsigned int
+get_vtype_for_mode (machine_mode mode)
+{
+  /* ???? In RVV intrinsics docs, for vsetvl and vsetvlmax intrinsics,
+     the tail and mask policy are set default to be ta,mu. Whether we
+     should have other combinations of policy and add ta or ma operand
+     to vsetvl and vsetvlmax intrinsics needs community confirm. */
+  switch (mode)
+    {
+    case VNx2QImode:
+    case VNx2BImode:
+      return 0x45;
+
+    case VNx4QImode:
+    case VNx4BImode:
+      return 0x46;
+
+    case VNx8QImode:
+    case VNx8BImode:
+      return 0x47;
+
+    case VNx16QImode:
+    case VNx16BImode:
+      return 0x40;
+
+    case VNx32QImode:
+    case VNx32BImode:
+      return 0x41;
+
+    case VNx64QImode:
+    case VNx64BImode:
+      return 0x42;
+
+    case VNx128QImode:
+    case VNx128BImode:
+      return 0x43;
+
+    case VNx2HImode:
+    case VNx2HFmode:
+      return 0x4e;
+
+    case VNx4HImode:
+    case VNx4HFmode:
+      return 0x4f;
+
+    case VNx8HImode:
+    case VNx8HFmode:
+      return 0x48;
+
+    case VNx16HImode:
+    case VNx16HFmode:
+      return 0x49;
+
+    case VNx32HImode:
+    case VNx32HFmode:
+      return 0x4a;
+
+    case VNx64HImode:
+    case VNx64HFmode:
+      return 0x4b;
+
+    case VNx2SImode:
+    case VNx2SFmode:
+      return 0x57;
+
+    case VNx4SImode:
+    case VNx4SFmode:
+      return 0x50;
+
+    case VNx8SImode:
+    case VNx8SFmode:
+      return 0x51;
+
+    case VNx16SImode:
+    case VNx16SFmode:
+      return 0x52;
+
+    case VNx32SImode:
+    case VNx32SFmode:
+      return 0x53;
+
+    case VNx2DImode:
+    case VNx2DFmode:
+      return 0x58;
+
+    case VNx4DImode:
+    case VNx4DFmode:
+      return 0x59;
+
+    case VNx8DImode:
+    case VNx8DFmode:
+      return 0x5a;
+
+    case VNx16DImode:
+      return 0x5b;
+
+    default:
+      break;
+    }
+
+  gcc_unreachable ();
+}
+
+rtx
+riscv_vector_gen_policy (unsigned int rvv_policy)
+{
+  if (rvv_policy == RVV_POLICY_MU)
+    return riscv_vector::gen_mu_policy ();
+  else if (rvv_policy == RVV_POLICY_TU)
+    return riscv_vector::gen_tu_policy ();
+  else
+    return riscv_vector::gen_any_policy ();
+}
+
+bool
+riscv_vector_mask_mode_p (machine_mode mode)
+{
+  return (mode == VNx2BImode || mode == VNx4BImode || mode == VNx8BImode
+          || mode == VNx16BImode || mode == VNx32BImode
+          || mode == VNx64BImode || mode == VNx128BImode);
+}
+
+bool
+riscv_tuple_mode_p (machine_mode mode)
+{
+#define VECTOR_DATA_MODE_P_TUPLE8(MODE)                                       \
+  (mode == VNx2x##MODE##mode) \
+      || (mode == VNx3x##MODE##mode)                        \
+      || (mode == VNx4x##MODE##mode)                        \
+      || (mode == VNx5x##MODE##mode)                        \
+      || (mode == VNx6x##MODE##mode)                        \
+      || (mode == VNx7x##MODE##mode)                        \
+      || (mode == VNx8x##MODE##mode)
+#define VECTOR_DATA_MODE_P_TUPLE4(MODE)                                       \
+  (mode == VNx2x##MODE##mode) \
+      || (mode == VNx3x##MODE##mode)                        \
+      || (mode == VNx4x##MODE##mode)
+#define VECTOR_DATA_MODE_P_TUPLE2(MODE)                                       \
+  (mode == VNx2x##MODE##mode)
+
+  return (VECTOR_DATA_MODE_P_TUPLE8 (8QI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4HI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2SI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4HF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2SF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4QI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2HI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2HF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2QI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (16QI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (8HI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4SI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2DI)
+          || VECTOR_DATA_MODE_P_TUPLE8 (8HF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (4SF)
+          || VECTOR_DATA_MODE_P_TUPLE8 (2DF)
+          || VECTOR_DATA_MODE_P_TUPLE4 (32QI)
+          || VECTOR_DATA_MODE_P_TUPLE4 (16HI)
+          || VECTOR_DATA_MODE_P_TUPLE4 (8SI)
+          || VECTOR_DATA_MODE_P_TUPLE4 (4DI)
+          || VECTOR_DATA_MODE_P_TUPLE4 (16HF)
+          || VECTOR_DATA_MODE_P_TUPLE4 (8SF)
+          || VECTOR_DATA_MODE_P_TUPLE4 (4DF)
+          || VECTOR_DATA_MODE_P_TUPLE2 (64QI)
+          || VECTOR_DATA_MODE_P_TUPLE2 (32HI)
+          || VECTOR_DATA_MODE_P_TUPLE2 (16SI)
+          || VECTOR_DATA_MODE_P_TUPLE2 (8DI)
+          || VECTOR_DATA_MODE_P_TUPLE2 (32HF)
+          || VECTOR_DATA_MODE_P_TUPLE2 (16SF)
+          || VECTOR_DATA_MODE_P_TUPLE2 (8DF));
+}
+
+bool
+riscv_vector_data_mode_p (machine_mode mode)
+{
+  return (mode == VNx2QImode || mode == VNx4QImode || mode == VNx8QImode || mode == VNx16QImode
+            || mode == VNx32QImode || mode == VNx64QImode || mode == VNx128QImode || mode == VNx2HImode
+            || mode == VNx4HImode || mode == VNx8HImode || mode == VNx16HImode || mode == VNx32HImode
+            || mode == VNx64HImode || mode == VNx2SImode || mode == VNx4SImode || mode == VNx8SImode
+            || mode == VNx16SImode || mode == VNx32SImode || mode == VNx2DImode || mode == VNx4DImode
+            || mode == VNx8DImode || mode == VNx16DImode || mode == VNx2HFmode || mode == VNx4HFmode
+            || mode == VNx8HFmode || mode == VNx16HFmode || mode == VNx32HFmode || mode == VNx64HFmode
+            || mode == VNx2SFmode || mode == VNx4SFmode || mode == VNx8SFmode || mode == VNx16SFmode
+            || mode == VNx32SFmode || mode == VNx2DFmode || mode == VNx4DFmode || mode == VNx8DFmode
+            || mode == VNx16DFmode || riscv_tuple_mode_p (mode));
+}
+
+bool
+riscv_vector_mode_p (machine_mode mode)
+{
+  return riscv_vector_mask_mode_p (mode) || riscv_vector_data_mode_p (mode);
+}
+
+static bool
+riscv_partial_tuple_vector_mode_p (machine_mode mode)
+{
+  switch (mode)
+    {
+    case VNx2x8QImode:
+    case VNx3x8QImode:
+    case VNx4x8QImode:
+    case VNx5x8QImode:
+    case VNx6x8QImode:
+    case VNx7x8QImode:
+    case VNx8x8QImode:
+
+    case VNx2x4QImode:
+    case VNx3x4QImode:
+    case VNx4x4QImode:
+    case VNx5x4QImode:
+    case VNx6x4QImode:
+    case VNx7x4QImode:
+    case VNx8x4QImode:
+
+    case VNx2x2QImode:
+    case VNx3x2QImode:
+    case VNx4x2QImode:
+    case VNx5x2QImode:
+    case VNx6x2QImode:
+    case VNx7x2QImode:
+    case VNx8x2QImode:
+
+    case VNx2x4HImode:
+    case VNx3x4HImode:
+    case VNx4x4HImode:
+    case VNx5x4HImode:
+    case VNx6x4HImode:
+    case VNx7x4HImode:
+    case VNx8x4HImode:
+
+    case VNx2x2HImode:
+    case VNx3x2HImode:
+    case VNx4x2HImode:
+    case VNx5x2HImode:
+    case VNx6x2HImode:
+    case VNx7x2HImode:
+    case VNx8x2HImode:
+
+    case VNx2x2SImode:
+    case VNx3x2SImode:
+    case VNx4x2SImode:
+    case VNx5x2SImode:
+    case VNx6x2SImode:
+    case VNx7x2SImode:
+    case VNx8x2SImode:
+
+    case VNx2x4HFmode:
+    case VNx3x4HFmode:
+    case VNx4x4HFmode:
+    case VNx5x4HFmode:
+    case VNx6x4HFmode:
+    case VNx7x4HFmode:
+    case VNx8x4HFmode:
+
+    case VNx2x2HFmode:
+    case VNx3x2HFmode:
+    case VNx4x2HFmode:
+    case VNx5x2HFmode:
+    case VNx6x2HFmode:
+    case VNx7x2HFmode:
+    case VNx8x2HFmode:
+
+    case VNx2x2SFmode:
+    case VNx3x2SFmode:
+    case VNx4x2SFmode:
+    case VNx5x2SFmode:
+    case VNx6x2SFmode:
+    case VNx7x2SFmode:
+    case VNx8x2SFmode:
+      return true;
+    default:
+      return false;
+    }
+}
+
+static poly_uint64
+riscv_vector_natural_size (machine_mode mode)
+{
+  switch (mode)
+    {
+    case VNx2x8QImode:
+    case VNx3x8QImode:
+    case VNx4x8QImode:
+    case VNx5x8QImode:
+    case VNx6x8QImode:
+    case VNx7x8QImode:
+    case VNx8x8QImode:
+      return GET_MODE_SIZE (VNx8QImode);
+
+    case VNx2x4QImode:
+    case VNx3x4QImode:
+    case VNx4x4QImode:
+    case VNx5x4QImode:
+    case VNx6x4QImode:
+    case VNx7x4QImode:
+    case VNx8x4QImode:
+      return GET_MODE_SIZE (VNx4QImode);
+
+    case VNx2x2QImode:
+    case VNx3x2QImode:
+    case VNx4x2QImode:
+    case VNx5x2QImode:
+    case VNx6x2QImode:
+    case VNx7x2QImode:
+    case VNx8x2QImode:
+      return GET_MODE_SIZE (VNx2QImode);
+
+    case VNx2x4HImode:
+    case VNx3x4HImode:
+    case VNx4x4HImode:
+    case VNx5x4HImode:
+    case VNx6x4HImode:
+    case VNx7x4HImode:
+    case VNx8x4HImode:
+      return GET_MODE_SIZE (VNx4HImode);
+
+    case VNx2x2HImode:
+    case VNx3x2HImode:
+    case VNx4x2HImode:
+    case VNx5x2HImode:
+    case VNx6x2HImode:
+    case VNx7x2HImode:
+    case VNx8x2HImode:
+      return GET_MODE_SIZE (VNx2HImode);
+
+    case VNx2x2SImode:
+    case VNx3x2SImode:
+    case VNx4x2SImode:
+    case VNx5x2SImode:
+    case VNx6x2SImode:
+    case VNx7x2SImode:
+    case VNx8x2SImode:
+      return GET_MODE_SIZE (VNx2SImode);
+
+    case VNx2x4HFmode:
+    case VNx3x4HFmode:
+    case VNx4x4HFmode:
+    case VNx5x4HFmode:
+    case VNx6x4HFmode:
+    case VNx7x4HFmode:
+    case VNx8x4HFmode:
+      return GET_MODE_SIZE (VNx4HFmode);
+
+    case VNx2x2HFmode:
+    case VNx3x2HFmode:
+    case VNx4x2HFmode:
+    case VNx5x2HFmode:
+    case VNx6x2HFmode:
+    case VNx7x2HFmode:
+    case VNx8x2HFmode:
+      return GET_MODE_SIZE (VNx2HFmode);
+
+    case VNx2x2SFmode:
+    case VNx3x2SFmode:
+    case VNx4x2SFmode:
+    case VNx5x2SFmode:
+    case VNx6x2SFmode:
+    case VNx7x2SFmode:
+    case VNx8x2SFmode:
+      return GET_MODE_SIZE (VNx2SFmode);
+
+    default:
+      break;
+    }
+
+  return BYTES_PER_RISCV_VECTOR;
+}
+
+bool
+riscv_const_poly_int_p (rtx x)
+{
+  poly_int64 value = rtx_to_poly_int64 (x);
+
+  HOST_WIDE_INT factor = value.coeffs[0];
+  return (value.coeffs[1] == factor && factor == UNITS_PER_V_REG.coeffs[0]);
+}
+
+unsigned int
+riscv_parse_vlmul_field (unsigned int vtype)
+{
+  return vtype & 0x7;
+}
+
+unsigned int
+riscv_parse_vsew_field (unsigned int vtype)
+{
+  return (vtype >> 3) & 0x7;
+}
+
+bool
+riscv_parse_vta_field (unsigned int vtype)
+{
+  return (vtype & 0x40) != 0;
+}
+
+bool
+riscv_parse_vma_field (unsigned int vtype)
+{
+  return (vtype & 0x80) != 0;
+}
+
+unsigned int
+riscv_classify_vlmul_field (machine_mode mode)
+{
+  /* Make the decision based on the mode's enum value rather than its
+     properties, so that we keep the correct classification regardless
+     of -mriscv-vector-bits.  */
+  switch (mode)
+    {
+#define CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8(MODE)                               \
+  case E_VNx##MODE##mode:                                                     \
+  case E_VNx2x##MODE##mode:                                                   \
+  case E_VNx3x##MODE##mode:                                                   \
+  case E_VNx4x##MODE##mode:                                                   \
+  case E_VNx5x##MODE##mode:                                                   \
+  case E_VNx6x##MODE##mode:                                                   \
+  case E_VNx7x##MODE##mode:                                                   \
+  case E_VNx8x##MODE##mode:
+#define CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4(MODE)                               \
+  case E_VNx##MODE##mode:                                                     \
+  case E_VNx2x##MODE##mode:                                                   \
+  case E_VNx3x##MODE##mode:                                                   \
+  case E_VNx4x##MODE##mode:
+#define CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2(MODE)                               \
+  case E_VNx##MODE##mode:                                                     \
+  case E_VNx2x##MODE##mode:
+      /* Partial RVV LMUL = 1/2 vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (8QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2SI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4HF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2SF)
+
+    case E_VNx8BImode:
+      return VLMUL_FIELD_111;
+      /* Partial RVV LMUL = 1/4 vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2HF)
+
+    case E_VNx4BImode:
+      return VLMUL_FIELD_110;
+      /* Partial RVV LMUL = 1/8 vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2QI)
+
+    case E_VNx2BImode:
+      return VLMUL_FIELD_101;
+      /* x1 RVV vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (16QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (8HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4SI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2DI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (8HF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (4SF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE8 (2DF)
+
+    case E_VNx16BImode:
+      return VLMUL_FIELD_000;
+      /* x2 RVV vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (32QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (16HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (8SI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (4DI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (16HF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (8SF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE4 (4DF)
+
+    case E_VNx32BImode:
+      return VLMUL_FIELD_001;
+      /* x4 RVV vectors.  */
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (64QI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (32HI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (16SI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (8DI)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (32HF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (16SF)
+      CLASSIFY_VLMUL_VECTOR_MODE_TUPLE2 (8DF)
+
+    case E_VNx64BImode:
+      return VLMUL_FIELD_010;
+
+    /* x8 RVV vectors.  */
+    case E_VNx128QImode:
+    case E_VNx64HImode:
+    case E_VNx32SImode:
+    case E_VNx16DImode:
+    case E_VNx64HFmode:
+    case E_VNx32SFmode:
+    case E_VNx16DFmode:
+    case E_VNx128BImode:
+      return VLMUL_FIELD_011;
+
+    default:
+      break;
+    }
+
+  /* we don't care about VLMUL for Mask */
+  return VLMUL_FIELD_000;
+}
+
+unsigned int
+riscv_classify_vsew_field (machine_mode mode)
+{
+  switch (GET_MODE_INNER (mode))
+    {
+    case E_QImode:
+      return VSEW_FIELD_000;
+
+    case E_HImode:
+    case E_HFmode:
+      return VSEW_FIELD_001;
+
+    case E_SImode:
+    case E_SFmode:
+      return VSEW_FIELD_010;
+
+    case E_DImode:
+    case E_DFmode:
+      return VSEW_FIELD_011;
+
+    case E_TImode:
+      return VSEW_FIELD_100;
+
+    default:
+      break;
+    }
+
+  /* we don't care about VSEW for Mask */
+  return VSEW_FIELD_000;
+}
+
+machine_mode
+riscv_translate_attr_mode (rtx_insn *insn)
+{
+  gcc_assert (recog_memoized (insn) >= 0);
+
+  switch (get_attr_mode (insn))
+    {
+#define TRANSLATE_VECTOR_MODE_TUPLE8(MODE)                                    \
+  case MODE_VNX##MODE:                                                        \
+    return VNx##MODE##mode;                                                   \
+  case MODE_VNX2X##MODE:                                                      \
+    return VNx2x##MODE##mode;                                                 \
+  case MODE_VNX3X##MODE:                                                      \
+    return VNx3x##MODE##mode;                                                 \
+  case MODE_VNX4X##MODE:                                                      \
+    return VNx4x##MODE##mode;                                                 \
+  case MODE_VNX5X##MODE:                                                      \
+    return VNx5x##MODE##mode;                                                 \
+  case MODE_VNX6X##MODE:                                                      \
+    return VNx6x##MODE##mode;                                                 \
+  case MODE_VNX7X##MODE:                                                      \
+    return VNx7x##MODE##mode;                                                 \
+  case MODE_VNX8X##MODE:                                                      \
+    return VNx8x##MODE##mode;
+#define TRANSLATE_VECTOR_MODE_TUPLE4(MODE)                                    \
+  case MODE_VNX##MODE:                                                        \
+    return VNx##MODE##mode;                                                   \
+  case MODE_VNX2X##MODE:                                                      \
+    return VNx2x##MODE##mode;                                                 \
+  case MODE_VNX3X##MODE:                                                      \
+    return VNx3x##MODE##mode;                                                 \
+  case MODE_VNX4X##MODE:                                                      \
+    return VNx4x##MODE##mode;
+#define TRANSLATE_VECTOR_MODE_TUPLE2(MODE)                                    \
+  case MODE_VNX##MODE:                                                        \
+    return VNx##MODE##mode;                                                   \
+  case MODE_VNX2X##MODE:                                                      \
+    return VNx2x##MODE##mode;
+#define TRANSLATE_VECTOR_MODE(MODE)                                           \
+  case MODE_VNX##MODE:                                                        \
+    return VNx##MODE##mode;
+      TRANSLATE_VECTOR_MODE_TUPLE8 (8QI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4HI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2SI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4HF)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2SF)
+      TRANSLATE_VECTOR_MODE (8BI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4QI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2HI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2HF)
+      TRANSLATE_VECTOR_MODE (4BI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2QI)
+      TRANSLATE_VECTOR_MODE (2BI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (16QI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (8HI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4SI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2DI)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (8HF)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (4SF)
+      TRANSLATE_VECTOR_MODE_TUPLE8 (2DF)
+      TRANSLATE_VECTOR_MODE (16BI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (32QI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (16HI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (8SI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (4DI)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (16HF)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (8SF)
+      TRANSLATE_VECTOR_MODE_TUPLE4 (4DF)
+      TRANSLATE_VECTOR_MODE (32BI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (64QI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (32HI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (16SI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (8DI)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (32HF)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (16SF)
+      TRANSLATE_VECTOR_MODE_TUPLE2 (8DF)
+      TRANSLATE_VECTOR_MODE (64BI)
+      TRANSLATE_VECTOR_MODE (128QI)
+      TRANSLATE_VECTOR_MODE (64HI)
+      TRANSLATE_VECTOR_MODE (32SI)
+      TRANSLATE_VECTOR_MODE (16DI)
+      TRANSLATE_VECTOR_MODE (64HF)
+      TRANSLATE_VECTOR_MODE (32SF)
+      TRANSLATE_VECTOR_MODE (16DF)
+      TRANSLATE_VECTOR_MODE (128BI)
+
+    default:
+      break;
+    }
+
+  return VOIDmode;
+}
+
+int
+riscv_classify_nf (machine_mode mode)
+{
+#define CLASSIFY_TUPLE8(MODE) \
+  case VNx2x##MODE##mode: return 2; \
+  case VNx3x##MODE##mode: return 3; \
+  case VNx4x##MODE##mode: return 4; \
+  case VNx5x##MODE##mode: return 5; \
+  case VNx6x##MODE##mode: return 6; \
+  case VNx7x##MODE##mode: return 7; \
+  case VNx8x##MODE##mode: return 8;
+#define CLASSIFY_TUPLE4(MODE) \
+  case VNx2x##MODE##mode: return 2; \
+  case VNx3x##MODE##mode: return 3; \
+  case VNx4x##MODE##mode: return 4;
+#define CLASSIFY_TUPLE2(MODE) \
+  case VNx2x##MODE##mode: return 2;
+  switch (mode)
+  {
+  CLASSIFY_TUPLE8(2QI)
+  CLASSIFY_TUPLE8(4QI)
+  CLASSIFY_TUPLE8(8QI)
+  CLASSIFY_TUPLE8(16QI)
+  CLASSIFY_TUPLE4(32QI)
+  CLASSIFY_TUPLE2(64QI)
+  CLASSIFY_TUPLE8(2HI)
+  CLASSIFY_TUPLE8(4HI)
+  CLASSIFY_TUPLE8(8HI)
+  CLASSIFY_TUPLE4(16HI)
+  CLASSIFY_TUPLE2(32HI)
+  CLASSIFY_TUPLE8(2SI)
+  CLASSIFY_TUPLE8(4SI)
+  CLASSIFY_TUPLE4(8SI)
+  CLASSIFY_TUPLE2(16SI)
+  CLASSIFY_TUPLE8(2DI)
+  CLASSIFY_TUPLE4(4DI)
+  CLASSIFY_TUPLE2(8DI)
+  CLASSIFY_TUPLE8(2HF)
+  CLASSIFY_TUPLE8(4HF)
+  CLASSIFY_TUPLE8(8HF)
+  CLASSIFY_TUPLE4(16HF)
+  CLASSIFY_TUPLE2(32HF)
+  CLASSIFY_TUPLE8(2SF)
+  CLASSIFY_TUPLE8(4SF)
+  CLASSIFY_TUPLE4(8SF)
+  CLASSIFY_TUPLE2(16SF)
+  CLASSIFY_TUPLE8(2DF)
+  CLASSIFY_TUPLE4(4DF)
+  CLASSIFY_TUPLE2(8DF)
+  default:
+    break;
+  }
+
+  return 1;
+}
+
+int riscv_vlmul_regsize(machine_mode mode)
+{
+    switch(riscv_classify_vlmul_field(mode))
+    {
+        case VLMUL_FIELD_001:
+            return 2;
+        case VLMUL_FIELD_010:
+            return 4;
+        case VLMUL_FIELD_011:
+            return 8;
+        case VLMUL_FIELD_100:
+            gcc_unreachable();
+    }
+    return 1;
+}
+
+/* Return the RVV vector mode that has NUNITS elements of mode INNER_MODE.  */
+
+opt_machine_mode
+riscv_tuple_mode (machine_mode mode, unsigned int nvecs)
+{
+  switch (mode)
+    {
+#define TUPLE_MODE_TUPLE8(MODE)                                               \
+  case VNx##MODE##mode:                                                       \
+    if (nvecs == 2)                                                           \
+      return VNx2x##MODE##mode;                                               \
+    if (nvecs == 3)                                                           \
+      return VNx3x##MODE##mode;                                               \
+    if (nvecs == 4)                                                           \
+      return VNx4x##MODE##mode;                                               \
+    if (nvecs == 5)                                                           \
+      return VNx5x##MODE##mode;                                               \
+    if (nvecs == 6)                                                           \
+      return VNx6x##MODE##mode;                                               \
+    if (nvecs == 7)                                                           \
+      return VNx7x##MODE##mode;                                               \
+    if (nvecs == 8)                                                           \
+      return VNx8x##MODE##mode;                                               \
+    break;
+#define TUPLE_MODE_TUPLE4(MODE)                                               \
+  case VNx##MODE##mode:                                                       \
+    if (nvecs == 2)                                                           \
+      return VNx2x##MODE##mode;                                               \
+    if (nvecs == 3)                                                           \
+      return VNx3x##MODE##mode;                                               \
+    if (nvecs == 4)                                                           \
+      return VNx4x##MODE##mode;                                               \
+    break;
+#define TUPLE_MODE_TUPLE2(MODE)                                               \
+  case VNx##MODE##mode:                                                       \
+    if (nvecs == 2)                                                           \
+      return VNx2x##MODE##mode;                                               \
+    break;
+      TUPLE_MODE_TUPLE8 (8QI)
+      TUPLE_MODE_TUPLE8 (4HI)
+      TUPLE_MODE_TUPLE8 (2SI)
+      TUPLE_MODE_TUPLE8 (4HF)
+      TUPLE_MODE_TUPLE8 (2SF)
+      TUPLE_MODE_TUPLE8 (4QI)
+      TUPLE_MODE_TUPLE8 (2HI)
+      TUPLE_MODE_TUPLE8 (2HF)
+      TUPLE_MODE_TUPLE8 (2QI)
+      TUPLE_MODE_TUPLE8 (16QI)
+      TUPLE_MODE_TUPLE8 (8HI)
+      TUPLE_MODE_TUPLE8 (4SI)
+      TUPLE_MODE_TUPLE8 (2DI)
+      TUPLE_MODE_TUPLE8 (8HF)
+      TUPLE_MODE_TUPLE8 (4SF)
+      TUPLE_MODE_TUPLE8 (2DF)
+      TUPLE_MODE_TUPLE4 (32QI)
+      TUPLE_MODE_TUPLE4 (16HI)
+      TUPLE_MODE_TUPLE4 (8SI)
+      TUPLE_MODE_TUPLE4 (4DI)
+      TUPLE_MODE_TUPLE4 (16HF)
+      TUPLE_MODE_TUPLE4 (8SF)
+      TUPLE_MODE_TUPLE4 (4DF)
+      TUPLE_MODE_TUPLE2 (64QI)
+      TUPLE_MODE_TUPLE2 (32HI)
+      TUPLE_MODE_TUPLE2 (16SI)
+      TUPLE_MODE_TUPLE2 (8DI)
+      TUPLE_MODE_TUPLE2 (32HF)
+      TUPLE_MODE_TUPLE2 (16SF)
+      TUPLE_MODE_TUPLE2 (8DF)
+
+    default:
+      break;
+    }
+
+  return opt_machine_mode ();
+}
+
+/* Return true if X is a const_vector with all duplicate elements, which is in
+   the range between MINVAL and MAXVAL.  */
+
+bool
+riscv_const_vec_all_same_in_range_p (rtx x, HOST_WIDE_INT minval,
+                                     HOST_WIDE_INT maxval)
+{
+  rtx elt;
+  return (const_vec_duplicate_p (x, &elt)
+          && CONST_INT_P (elt)
+          && IN_RANGE (INTVAL (elt), minval, maxval));
+}
+
+/* Return true if VEC is a constant in which every element is in the range
+   [MINVAL, MAXVAL].  The elements do not need to have the same value.  */
+
+static bool
+riscv_const_vec_all_in_range_p (rtx vec,
+				  HOST_WIDE_INT minval,
+				  HOST_WIDE_INT maxval)
+{
+  if (!CONST_VECTOR_P (vec)
+      || GET_MODE_CLASS (GET_MODE (vec)) != MODE_VECTOR_INT)
+    return false;
+
+  unsigned int nunits;
+  if (!CONST_VECTOR_STEPPED_P (vec))
+    nunits = const_vector_encoded_nelts (vec);
+  else if (!CONST_VECTOR_NUNITS (vec).is_constant (&nunits))
+    return false;
+
+  for (unsigned int i = 0; i < nunits; i++)
+    {
+      rtx vec_elem = CONST_VECTOR_ELT (vec, i);
+      if (!CONST_INT_P (vec_elem)
+	  || !IN_RANGE (INTVAL (vec_elem), minval, maxval))
+	return false;
+    }
+  return true;
+}
+
+/* Return the number of temporary registers that riscv_add_offset_1
+   would need to add OFFSET to a register.  */
+
+static unsigned int
+riscv_add_offset_1_temporaries (HOST_WIDE_INT offset)
+{
+  return SMALL_OPERAND (offset) ? 0 : 1;
+}
+
+/* Return the number of temporary registers that riscv_add_offset
+   would need to move OFFSET into a register or add OFFSET to a register;
+   ADD_P is true if we want the latter rather than the former.  */
+
+static unsigned int
+riscv_offset_temporaries (bool add_p, poly_int64 offset)
+{
+  /* This follows the same structure as riscv_add_offset.  */
+  if (add_p && riscv_const_poly_int_p (gen_int_mode (offset, Pmode)))
+    return 0;
+
+  unsigned int count = 0;
+  HOST_WIDE_INT factor = offset.coeffs[1];
+  HOST_WIDE_INT constant = offset.coeffs[0] - factor;
+  poly_int64 poly_offset (factor, factor);
+  if (add_p && riscv_const_poly_int_p (gen_int_mode (offset, Pmode)))
+    /* Need one register for the csrr vlenb result.  */
+    count += 1;
+  else if (factor != 0)
+    {
+      factor = abs (factor);
+      if (!riscv_const_poly_int_p (gen_int_mode (poly_offset, Pmode)))
+        /* Need one register for the CNT result and one for the multiplication
+           factor.  If necessary, the second temporary can be reused for the
+           constant part of the offset.  */
+        return 2;
+      /* Need one register for the CNT result (which might then
+         be shifted).  */
+      count += 1;
+    }
+  return count + riscv_add_offset_1_temporaries (constant);
+}
+
 /* Implement TARGET_LEGITIMATE_CONSTANT_P.  */
 
 static bool
@@ -810,8 +1667,8 @@ riscv_valid_offset_p (rtx x, machine_mode mode)
 
   /* We may need to split multiword moves, so make sure that every word
      is accessible.  */
-  if (GET_MODE_SIZE (mode) > UNITS_PER_WORD
-      && !SMALL_OPERAND (INTVAL (x) + GET_MODE_SIZE (mode) - UNITS_PER_WORD))
+  if (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD
+      && !SMALL_OPERAND (INTVAL (x) + GET_MODE_SIZE (mode).to_constant () - UNITS_PER_WORD))
     return false;
 
   return true;
@@ -875,7 +1732,7 @@ riscv_valid_lo_sum_p (enum riscv_symbol_type sym_type, machine_mode mode,
   else
     {
       align = GET_MODE_ALIGNMENT (mode);
-      size = GET_MODE_BITSIZE (mode);
+      size = GET_MODE_BITSIZE (mode).to_constant ();
     }
 
   /* We may need to split multiword moves, so make sure that each word
@@ -905,6 +1762,11 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
       return riscv_valid_base_register_p (info->reg, mode, strict_p);
 
     case PLUS:
+
+      /* Vector load/store disallow any offset.  */
+      if (TARGET_VECTOR && riscv_vector_mode_p (mode))
+        return false;
+
       info->type = ADDRESS_REG;
       info->reg = XEXP (x, 0);
       info->offset = XEXP (x, 1);
@@ -912,6 +1774,11 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
 	      && riscv_valid_offset_p (info->offset, mode));
 
     case LO_SUM:
+
+      /* Vector load/store disallow LO_SUM.  */
+      if (TARGET_VECTOR && riscv_vector_mode_p (mode))
+        return false;
+
       info->type = ADDRESS_LO_SUM;
       info->reg = XEXP (x, 0);
       info->offset = XEXP (x, 1);
@@ -930,6 +1797,11 @@ riscv_classify_address (struct riscv_address_info *info, rtx x,
 	      && riscv_valid_lo_sum_p (info->symbol_type, mode, info->offset));
 
     case CONST_INT:
+
+      /* Vector load/store disallow CONST_INT.  */
+      if (TARGET_VECTOR && riscv_vector_mode_p (mode))
+        return false;
+
       /* Small-integer addresses don't occur very often, but they
 	 are legitimate if x0 is a valid base register.  */
       info->type = ADDRESS_CONST_INT;
@@ -1015,8 +1887,9 @@ riscv_address_insns (rtx x, machine_mode mode, bool might_split_p)
 
   /* BLKmode is used for single unaligned loads and stores and should
      not count as a multiword mode. */
-  if (mode != BLKmode && might_split_p)
-    n += (GET_MODE_SIZE (mode) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+  if (mode != BLKmode && might_split_p && !riscv_vector_mode_p (mode))
+    n += ((GET_MODE_SIZE (mode).to_constant () + UNITS_PER_WORD - 1)
+          / UNITS_PER_WORD);
 
   if (addr.type == ADDRESS_LO_SUM)
     n += riscv_symbol_insns (addr.symbol_type) - 1;
@@ -1051,9 +1924,79 @@ riscv_const_insns (rtx x)
       }
 
     case CONST_DOUBLE:
-    case CONST_VECTOR:
       /* We can use x0 to load floating-point zero.  */
       return x == CONST0_RTX (GET_MODE (x)) ? 1 : 0;
+    case CONST_VECTOR:
+      {
+        machine_mode mode = GET_MODE (x);
+        /* For the mode which is not RVV mode, we use
+           default configuration. */
+        if (!riscv_vector_mode_p (mode))
+          return x == CONST0_RTX (GET_MODE (x)) ? 1 : 0;
+
+        unsigned int factor = 0;
+        if (GET_MODE_CLASS (GET_MODE (x)) == MODE_VECTOR_BOOL)
+          {
+            /* In RVV, we can use vmclr.m/vmset.m to generate
+               all 0s/1s bool vector. Otherwise we can only use
+               load instructions. */
+            if (x == CONST0_RTX (GET_MODE (x))
+              || x == CONSTM1_RTX (GET_MODE (x)))
+              return 1;
+            else
+              return 0;
+          }
+        else if (FLOAT_MODE_P (GET_MODE (x)))
+          {
+            /* In RVV, Floating-point should be first load
+               into floating-point register
+               then duplicate. */
+            factor = 3;
+          }
+        else
+          {
+            rtx elt;
+            if (!const_vec_duplicate_p (x, &elt))
+              {
+                rtx base, step;
+                if (const_vec_series_p (x, &base, &step))
+                  {
+                    /* For const vector: {0, 1, 2, ......},
+                       we can use a single instruction vid.v
+                       to generate the vector. */
+                    if (INTVAL (step) == 1
+                      && INTVAL (base) == 0)
+                      factor = 1;
+                    /* We need a vid + li + vmul.vx instruction. */
+                    else if (INTVAL (base) == 0)
+                      factor = 2 + riscv_integer_cost (INTVAL (step));
+                    /* We need a vid + (li + vadd.vx)/vadd.vi instruction. */
+                    else if (INTVAL (step) == 1)
+                      factor = IN_RANGE (INTVAL (base), -16, 15) ? 2
+                          : 2 + riscv_integer_cost (INTVAL (base));
+                    /* We need a vid + (li + vadd.vx)/vadd.vi + li + vmul.vx instruction. */
+                    else
+                      factor = IN_RANGE (INTVAL (base), -16, 15) ? 4
+                          : 4 + riscv_integer_cost (INTVAL (base));
+                  }
+                else
+                  factor = 0;
+              }
+            else
+              {
+                /* Use vmv.v.i. */
+                if (riscv_const_vec_all_same_in_range_p (x, -15, 16))
+                  factor = 1;
+                /* Use li + vmv.v.x. */
+                else
+                  factor = 1 + riscv_integer_cost (INTVAL (elt));
+              }
+          }
+        if (riscv_tuple_mode_p (mode))
+          return factor * riscv_classify_nf (mode);
+        else
+          return factor;
+      }
 
     case CONST:
       /* See if we can refer to X directly.  */
@@ -1073,6 +2016,12 @@ riscv_const_insns (rtx x)
     case SYMBOL_REF:
     case LABEL_REF:
       return riscv_symbol_insns (riscv_classify_symbol (x));
+
+    /* FIXME: In RVV, we get CONST_POLY_INT by using csrr vlenb
+       instruction and several scalar shift or mult instructions,
+       it is so far unknown. We set it to 4 temporarily.  */
+    case CONST_POLY_INT:
+      return 4;
 
     default:
       return 0;
@@ -1109,9 +2058,10 @@ riscv_load_store_insns (rtx mem, rtx_insn *insn)
 
   /* Try to prove that INSN does not need to be split.  */
   might_split_p = true;
-  if (GET_MODE_BITSIZE (mode) <= 32)
+
+  if (GET_MODE_BITSIZE (mode).to_constant () <= 32)
     might_split_p = false;
-  else if (GET_MODE_BITSIZE (mode) == 64)
+  else if (GET_MODE_BITSIZE (mode).to_constant () == 64)
     {
       set = single_set (insn);
       if (set && !riscv_split_64bit_move_p (SET_DEST (set), SET_SRC (set)))
@@ -1878,14 +2828,14 @@ riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
         }
       return true;
     }
-  /* Expand 
-       (set (reg:QI target) (mem:QI (address))) 
+  /* Expand
+       (set (reg:QI target) (mem:QI (address)))
      to
        (set (reg:DI temp) (zero_extend:DI (mem:QI (address))))
        (set (reg:QI target) (subreg:QI (reg:DI temp) 0))
      with auto-sign/zero extend.  */
   if (GET_MODE_CLASS (mode) == MODE_INT
-      && GET_MODE_SIZE (mode) < UNITS_PER_WORD
+      && GET_MODE_SIZE (mode).to_constant () < UNITS_PER_WORD
       && can_create_pseudo_p ()
       && MEM_P (src))
     {
@@ -1905,13 +2855,14 @@ riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
       rtx reg;
 
       if (GET_CODE (src) == CONST_INT)
-	{
-	  /* Apply the equivalent of PROMOTE_MODE here for constants to
-	     improve cse.  */
-	  machine_mode promoted_mode = mode;
-	  if (GET_MODE_CLASS (mode) == MODE_INT
-	      && GET_MODE_SIZE (mode) < UNITS_PER_WORD)
-	    promoted_mode = word_mode;
+        {
+          /* Apply the equivalent of PROMOTE_MODE here for constants to
+             improve cse.  */
+          machine_mode promoted_mode = mode;
+
+          if (GET_MODE_CLASS (mode) == MODE_INT
+              && GET_MODE_SIZE (mode).to_constant () < UNITS_PER_WORD)
+            promoted_mode = word_mode;
 
 	  if (splittable_const_int_operand (src, mode))
 	    {
@@ -2008,7 +2959,8 @@ riscv_immediate_operand_p (int code, HOST_WIDE_INT x)
 static int
 riscv_binary_cost (rtx x, int single_insns, int double_insns)
 {
-  if (GET_MODE_SIZE (GET_MODE (x)) == UNITS_PER_WORD * 2)
+  if (!riscv_vector_mode_p (GET_MODE (x))
+      && GET_MODE_SIZE (GET_MODE (x)).to_constant () == UNITS_PER_WORD * 2)
     return COSTS_N_INSNS (double_insns);
   return COSTS_N_INSNS (single_insns);
 }
@@ -2108,7 +3060,7 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
       return false;
 
     case NOT:
-      *total = COSTS_N_INSNS (GET_MODE_SIZE (mode) > UNITS_PER_WORD ? 2 : 1);
+      *total = COSTS_N_INSNS (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD ? 2 : 1);
       return false;
 
     case AND:
@@ -2352,20 +3304,21 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 	  }
       }
 
-      if (float_mode_p)
-	*total = tune_param->fp_add[mode == DFmode];
-      else
-	*total = COSTS_N_INSNS (GET_MODE_SIZE (mode) > UNITS_PER_WORD ? 4 : 1);
-      return false;
+    if (float_mode_p)
+      *total = tune_param->fp_add[mode == DFmode];
+    else
+      *total = COSTS_N_INSNS (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD ? 4 : 1);
+
+    return false;
 
     case MULT:
       if (float_mode_p)
 	*total = tune_param->fp_mul[mode == DFmode];
       else if (!TARGET_MUL)
-	/* Estimate the cost of a library call.  */
-	*total = COSTS_N_INSNS (speed ? 32 : 6);
-      else if (GET_MODE_SIZE (mode) > UNITS_PER_WORD)
-	*total = 3 * tune_param->int_mul[0] + COSTS_N_INSNS (2);
+        /* Estimate the cost of a library call.  */
+        *total = COSTS_N_INSNS (speed ? 32 : 6);
+      else if (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD)
+        *total = 3 * tune_param->int_mul[0] + COSTS_N_INSNS (2);
       else if (!speed)
 	*total = COSTS_N_INSNS (1);
       else
@@ -2758,7 +3711,7 @@ static void
 riscv_extend_comparands (rtx_code code, rtx *op0, rtx *op1)
 {
   /* Comparisons consider all XLEN bits, so extend sub-XLEN values.  */
-  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (*op0)))
+  if (GET_MODE_SIZE (word_mode) > GET_MODE_SIZE (GET_MODE (*op0)).to_constant ())
     {
       /* It is more profitable to zero-extend QImode values.  But not if the
 	 first operand has already been sign-extended, and the second one is
@@ -3117,7 +4070,7 @@ riscv_flatten_aggregate_field (const_tree type,
 	if (n != 0)
 	  return -1;
 
-	HOST_WIDE_INT elt_size = GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (type)));
+      HOST_WIDE_INT elt_size = GET_MODE_SIZE (TYPE_MODE (TREE_TYPE (type))).to_constant ();
 
 	if (elt_size <= UNITS_PER_FP_ARG)
 	  {
@@ -3134,15 +4087,15 @@ riscv_flatten_aggregate_field (const_tree type,
 
     default:
       if (n < 2
-	  && ((SCALAR_FLOAT_TYPE_P (type)
-	       && GET_MODE_SIZE (TYPE_MODE (type)) <= UNITS_PER_FP_ARG)
-	      || (INTEGRAL_TYPE_P (type)
-		  && GET_MODE_SIZE (TYPE_MODE (type)) <= UNITS_PER_WORD)))
-	{
-	  fields[n].type = type;
-	  fields[n].offset = offset;
-	  return n + 1;
-	}
+          && ((SCALAR_FLOAT_TYPE_P (type)
+               && GET_MODE_SIZE (TYPE_MODE (type)).to_constant () <= UNITS_PER_FP_ARG)
+              || (INTEGRAL_TYPE_P (type)
+                  && GET_MODE_SIZE (TYPE_MODE (type)).to_constant () <= UNITS_PER_WORD)))
+        {
+          fields[n].type = type;
+          fields[n].offset = offset;
+          return n + 1;
+        }
       else
 	return -1;
     }
@@ -3373,7 +4326,7 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
     }
 
   /* Work out the size of the argument.  */
-  num_bytes = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode);
+  num_bytes = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode).to_constant ();
   num_words = (num_bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 
   /* Doubleword-aligned varargs start on an even register boundary.  */
@@ -3467,7 +4420,7 @@ riscv_function_value (const_tree type, const_tree func, machine_mode mode)
 static bool
 riscv_pass_by_reference (cumulative_args_t cum_v, const function_arg_info &arg)
 {
-  HOST_WIDE_INT size = arg.type_size_in_bytes ();
+  HOST_WIDE_INT size = arg.type_size_in_bytes ().to_constant ();
   struct riscv_arg_info info;
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
 
@@ -3478,6 +4431,7 @@ riscv_pass_by_reference (cumulative_args_t cum_v, const function_arg_info &arg)
     {
       /* Don't pass by reference if we can use a floating-point register.  */
       riscv_get_arg_info (&info, cum, arg.mode, arg.type, arg.named, false);
+
       if (info.num_fprs)
 	return false;
     }
@@ -4254,6 +5208,37 @@ riscv_print_operand (FILE *file, rtx op, int letter)
 	output_addr_const (file, newop);
 	break;
       }
+
+    case 'v':
+    {
+      rtx elt;
+
+      if (!const_vec_duplicate_p (op, &elt))
+        output_operand_lossage ("invalid vector constant");
+      else if (GET_MODE_CLASS (GET_MODE (op)) == MODE_VECTOR_INT)
+        asm_fprintf (file, "%wd", INTVAL (elt));
+      else
+        output_operand_lossage ("invalid vector constant");
+    }
+    break;
+
+    case 'V':
+    {
+      rtx elt;
+
+      if (!const_vec_duplicate_p (op, &elt))
+        output_operand_lossage ("invalid vector constant");
+      else if (GET_MODE_CLASS (GET_MODE (op)) == MODE_VECTOR_INT)
+        asm_fprintf (file, "%wd", -INTVAL (elt));
+      else
+        output_operand_lossage ("invalid vector constant");
+    }
+    break;
+
+    case 'B':
+      fputs (GET_RTX_NAME (code), file);
+      break;
+
     default:
       switch (code)
 	{
@@ -4270,15 +5255,31 @@ riscv_print_operand (FILE *file, rtx op, int letter)
 	    output_address (mode, XEXP (op, 0));
 	  break;
 
-	default:
-	  if (letter == 'z' && op == CONST0_RTX (GET_MODE (op)))
-	    fputs (reg_names[GP_REG_FIRST], file);
-	  else if (letter && letter != 'z')
-	    output_operand_lossage ("invalid use of '%%%c'", letter);
-	  else
-	    output_addr_const (file, riscv_strip_unspec_address (op));
-	  break;
-	}
+        case CONST_VECTOR:
+        {
+          rtx imm;
+
+          if (!const_vec_duplicate_p (op, &imm))
+            {
+              output_operand_lossage ("invalid immediate value for vector");
+              break;
+            }
+
+          gcc_assert (CONST_INT_P (imm));
+          asm_fprintf (file, "%wd", INTVAL (imm));
+          break;
+        }
+
+        default:
+          if (letter == 'z' && op == CONST0_RTX (GET_MODE (op)))
+            fputs (reg_names[GP_REG_FIRST], file);
+          else if (letter && letter != 'z')
+            output_operand_lossage ("invalid use of '%%%c'", letter);
+          else
+            output_addr_const (file, riscv_strip_unspec_address (op));
+
+          break;
+        }
     }
 }
 
@@ -4398,7 +5399,7 @@ riscv_elf_select_rtx_section (machine_mode mode, rtx x,
 {
   section *s = default_elf_select_rtx_section (mode, x, align);
 
-  if (riscv_size_ok_for_small_data_p (GET_MODE_SIZE (mode)))
+  if (riscv_size_ok_for_small_data_p (GET_MODE_SIZE (mode).to_constant ()))
     {
       if (startswith (s->named.name, ".rodata.cst"))
 	{
@@ -4674,10 +5675,10 @@ riscv_can_eliminate (const int from ATTRIBUTE_UNUSED, const int to)
    or argument pointer.  TO is either the stack pointer or hard frame
    pointer.  */
 
-HOST_WIDE_INT
+poly_int64
 riscv_initial_elimination_offset (int from, int to)
 {
-  HOST_WIDE_INT src, dest;
+  poly_int64 src, dest;
 
   riscv_compute_frame_info ();
 
@@ -4721,7 +5722,7 @@ riscv_set_return_address (rtx address, rtx scratch)
 
   gcc_assert (BITSET_P (cfun->machine->frame.mask, RETURN_ADDR_REGNUM));
   slot_address = riscv_add_offset (scratch, stack_pointer_rtx,
-				  cfun->machine->frame.gp_sp_offset);
+                                   cfun->machine->frame.gp_sp_offset.to_constant());
   riscv_emit_move (gen_frame_mem (GET_MODE (address), slot_address), address);
 }
 
@@ -4735,7 +5736,7 @@ typedef void (*riscv_save_restore_fn) (rtx, rtx);
 
 static void
 riscv_save_restore_reg (machine_mode mode, int regno,
-		       HOST_WIDE_INT offset, riscv_save_restore_fn fn)
+                        poly_int64 offset, riscv_save_restore_fn fn)
 {
   rtx mem;
 
@@ -4748,10 +5749,10 @@ riscv_save_restore_reg (machine_mode mode, int regno,
    of the frame.  */
 
 static void
-riscv_for_each_saved_reg (HOST_WIDE_INT sp_offset, riscv_save_restore_fn fn,
-			  bool epilogue, bool maybe_eh_return)
+riscv_for_each_saved_reg (poly_int64 sp_offset, riscv_save_restore_fn fn,
+                          bool epilogue, bool maybe_eh_return)
 {
-  HOST_WIDE_INT offset;
+  poly_int64 offset;
 
   /* Save the link register and s-registers. */
   offset = cfun->machine->frame.gp_sp_offset - sp_offset;
@@ -4834,21 +5835,27 @@ riscv_restore_reg (rtx reg, rtx mem)
 static HOST_WIDE_INT
 riscv_first_stack_step (struct riscv_frame_info *frame)
 {
-  if (SMALL_OPERAND (frame->total_size))
-    return frame->total_size;
+  HOST_WIDE_INT frame_total_size;
+  if (!frame->total_size.is_constant())
+    frame_total_size = frame->constant_offset;
+  else
+    frame_total_size = frame->total_size.to_constant();
+
+  if (SMALL_OPERAND (frame_total_size))
+    return frame_total_size;
 
   HOST_WIDE_INT min_first_step =
-    RISCV_STACK_ALIGN (frame->total_size - frame->fp_sp_offset);
+    RISCV_STACK_ALIGN (frame_total_size - frame->fp_sp_offset.to_constant());
   HOST_WIDE_INT max_first_step = IMM_REACH / 2 - PREFERRED_STACK_BOUNDARY / 8;
-  HOST_WIDE_INT min_second_step = frame->total_size - max_first_step;
+  HOST_WIDE_INT min_second_step = frame_total_size - max_first_step;
   gcc_assert (min_first_step <= max_first_step);
 
   /* As an optimization, use the least-significant bits of the total frame
      size, so that the second adjustment step is just LUI + ADD.  */
   if (!SMALL_OPERAND (min_second_step)
-      && frame->total_size % IMM_REACH < IMM_REACH / 2
-      && frame->total_size % IMM_REACH >= min_first_step)
-    return frame->total_size % IMM_REACH;
+      && frame_total_size % IMM_REACH < IMM_REACH / 2
+      && frame_total_size % IMM_REACH >= min_first_step)
+    return frame_total_size % IMM_REACH;
 
   if (TARGET_RVC)
     {
@@ -5285,8 +6292,8 @@ riscv_epilogue_uses (unsigned int regno)
 bool
 riscv_can_use_return_insn (void)
 {
-  return (reload_completed && cfun->machine->frame.total_size == 0
-	  && ! cfun->machine->interrupt_handler_p);
+  return (reload_completed && known_eq (cfun->machine->frame.total_size, 0)
+          && ! cfun->machine->interrupt_handler_p);
 }
 
 /* Given that there exists at least one variable that is set (produced)
@@ -5385,8 +6392,9 @@ static bool
 riscv_secondary_memory_needed (machine_mode mode, reg_class_t class1,
 			       reg_class_t class2)
 {
-  return (GET_MODE_SIZE (mode) > UNITS_PER_WORD
-	  && (class1 == FP_REGS) != (class2 == FP_REGS));
+  return (!riscv_vector_mode_p (mode)
+          && GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD
+          && (class1 == FP_REGS) != (class2 == FP_REGS));
 }
 
 /* Implement TARGET_REGISTER_MOVE_COST.  */
@@ -5395,6 +6403,11 @@ static int
 riscv_register_move_cost (machine_mode mode,
 			  reg_class_t from, reg_class_t to)
 {
+  /* There is no easy way to move fp16 value between FPR without ZFH
+     extension, it require an extra temp GPR to move that.  */
+  if (!TARGET_FP16 && mode == HFmode && from == FP_REGS && to == FP_REGS)
+    return 6;
+
   return riscv_secondary_memory_needed (mode, from, to) ? 8 : 2;
 }
 
