@@ -1607,6 +1607,425 @@ riscv_offset_temporaries (bool add_p, poly_int64 offset)
   return count + riscv_add_offset_1_temporaries (constant);
 }
 
+rtx
+gen_vlx2 (rtx vl)
+{
+  rtx vlx2;
+  if (CONST_SCALAR_INT_P (vl))
+    {
+      unsigned HOST_WIDE_INT vlen = UINTVAL (vl);
+      unsigned HOST_WIDE_INT vlenx2;
+      /* check for shift left overflow when think of vlen as unsigned int */
+      if (vlen >= 0x80000000)
+        {
+          vlenx2 = 0xFFFFFFFF;
+        }
+      else
+        {
+          vlenx2 = vlen << 1;
+        }
+
+      if (vlenx2 > 31)
+        vlx2 = force_reg (SImode, GEN_INT (vlenx2));
+      else
+        vlx2 = gen_int_mode (vlenx2, SImode);
+    }
+  else if (rtx_equal_p (vl, gen_rtx_REG (Pmode, X0_REGNUM)))
+    return vl;
+  else
+    {
+      rtx t = gen_reg_rtx (SImode);
+      vlx2 = gen_reg_rtx (GET_MODE (vl));
+      emit_insn (gen_vmv_vlx2_help (vlx2, vl, t));
+    }
+  return vlx2;
+}
+
+void
+emit_int64_to_vector_32bit (
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  rtx vd, rtx s, rtx vl, rtx tail)
+{
+  if (CONST_SCALAR_INT_P (s))
+    {
+      s = force_reg(DImode, s);
+    }
+
+  rtx hi = gen_highpart (SImode, s);
+  rtx lo = gen_lowpart (SImode, s);
+
+  rtx zero = gen_rtx_REG (SImode, X0_REGNUM);
+
+  /* make a "0101..." mask vector */
+  rtx vm1 = gen_reg_rtx (VNx4SImode);
+  emit_insn (gen_vmv_v_x_internal (VNx4SImode,
+    vm1, const0_rtx, force_reg(SImode, GEN_INT (0x55555555)),
+    zero, riscv_vector_gen_policy ()));
+  rtx vm2 = gen_reg_rtx (VMSImode);
+  emit_insn (gen_rtx_SET (vm2, gen_lowpart(VMSImode, vm1)));
+
+  rtx v2 = gen_reg_rtx (VSImode);
+  emit_insn (gen_vmv_v_x_internal (VSImode, v2, const0_rtx, hi,
+                                   vl, riscv_vector_gen_policy ()));
+
+  rtx vd_si = gen_reg_rtx(VSImode);
+  emit_insn (gen_vmerge_vxm_internal (VSImode,
+    vd_si, vm2, const0_rtx, v2, lo, vl, tail));
+
+  emit_insn (gen_rtx_SET (vd, gen_lowpart(Vmode, vd_si)));
+}
+
+
+bool
+imm32_p (rtx a)
+{
+  if (!CONST_SCALAR_INT_P (a))
+    return false;
+  unsigned HOST_WIDE_INT val = UINTVAL (a);
+  return val <= 0x7FFFFFFFULL || val >= 0xFFFFFFFF80000000ULL;
+}
+
+typedef bool imm_p (rtx);
+typedef rtx gen_3 (rtx, rtx, rtx);
+typedef rtx gen_4 (rtx, rtx, rtx, rtx);
+typedef rtx gen_5 (rtx, rtx, rtx, rtx, rtx);
+typedef rtx gen_6 (rtx, rtx, rtx, rtx, rtx, rtx);
+typedef rtx gen_7 (rtx, rtx, rtx, rtx, rtx, rtx, rtx);
+enum GEN_CLASS
+{
+  GEN_VX,
+  GEN_VX_32BIT,
+  GEN_VV
+};
+
+enum GEN_CLASS
+modify_operands(
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  bool (*imm5_p) (rtx),
+  int i, bool reverse
+)
+{
+  if (!TARGET_64BIT && VSUBmode == DImode)
+    {
+      if (imm32_p (operands[i]))
+        {
+          if (!imm5_p (operands[i]))
+            operands[i] = force_reg (SImode, operands[i]);
+          return GEN_VX_32BIT;
+        }
+      else
+        {
+          rtx result = gen_reg_rtx (Vmode);
+          rtx zero = gen_rtx_REG (SImode, X0_REGNUM);
+          rtx tail = riscv_vector_gen_policy ();
+
+          emit_int64_to_vector_32bit (
+            Vmode, VSImode, VMSImode,
+            result, operands[i], zero, tail);
+
+          operands[i] = result;
+
+          if (reverse)
+            {
+              rtx b = operands[i - 1];
+              operands[i - 1] = operands[i];
+              operands[i] = b;
+            }
+          return GEN_VV;
+        }
+    }
+  else
+    {
+      if (!imm5_p (operands[i]))
+        operands[i] = force_reg (VSUBmode, operands[i]);
+      return GEN_VX;
+    }
+}
+
+bool
+emit_op5_vmv_v_x (
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  int i
+)
+{
+  if (!TARGET_64BIT && VSUBmode == DImode)
+    {
+      if (!imm32_p (operands[i]))
+        {
+          rtx vd = operands[1];
+          if (rtx_equal_p (vd, const0_rtx))
+            {
+              vd = operands[0];
+            }
+          emit_int64_to_vector_32bit (
+            Vmode, VSImode, VMSImode,
+            vd, operands[i],
+            gen_vlx2(operands[3]), operands[4]
+          );
+
+          emit_insn (gen_rtx_SET (operands[0], vd));
+          return true;
+        }
+    }
+  return false;
+}
+
+bool
+emit_op5_vmv_s_x (
+  machine_mode Vmode, machine_mode VSImode, machine_mode VSUBmode,
+  rtx *operands,
+  int i
+)
+{
+  if (!TARGET_64BIT && VSUBmode == DImode)
+  {
+    if (!imm32_p (operands[i]))
+      {
+        rtx s = operands[i];
+        if (CONST_SCALAR_INT_P (s))
+          {
+            s = force_reg(DImode, s);
+          }
+
+        rtx hi = gen_highpart (SImode, s);
+        rtx lo = gen_lowpart (SImode, s);
+        rtx vlx2 = gen_vlx2 (operands[3]);;
+
+        rtx vret = operands[0];
+        rtx vd = operands[1];
+        if (vd == const0_rtx)
+          {
+            vd = gen_reg_rtx (Vmode);
+          }
+        rtx vd_si = gen_lowpart (VSImode, vd);
+
+        emit_insn (gen_vslide_vx (UNSPEC_SLIDEDOWN, VSImode,
+          vd_si, const0_rtx, vd_si, vd_si, const2_rtx, vlx2, operands[4]
+        ));
+        rtx v1 = gen_reg_rtx (VSImode);
+        emit_insn (gen_vslide1_vx_internal (UNSPEC_SLIDE1UP, VSImode,
+          v1, const0_rtx, vd_si, vd_si, hi, vlx2, operands[4]
+        ));
+        emit_insn (gen_vslide1_vx_internal (UNSPEC_SLIDE1UP, VSImode,
+          vd_si, const0_rtx, v1, v1, lo, vlx2, operands[4]
+        ));
+
+        emit_insn (gen_rtx_SET (
+          vret, gen_lowpart (Vmode, vd_si)
+        ));
+
+        return true;
+      }
+  }
+  return false;
+}
+
+void
+emit_op5 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  gen_5 *gen_vx,
+  gen_5 *gen_vx_32bit,
+  gen_5 *gen_vv,
+  imm_p *imm5_p,
+  int i, bool reverse
+)
+{
+  if (unspec == UNSPEC_VMV)
+    {
+      if (emit_op5_vmv_v_x (Vmode, VSImode, VMSImode, VSUBmode,
+                            operands, i))
+        {
+          return;
+        }
+    }
+  else if (unspec == UNSPEC_VMVS)
+    {
+      if (emit_op5_vmv_s_x (Vmode, VSImode, VSUBmode, operands, i))
+        {
+          return;
+        }
+    }
+
+  enum GEN_CLASS gen_class = modify_operands(
+    Vmode, VSImode, VMSImode, VSUBmode,
+    operands, imm5_p, i, reverse);
+
+  gen_5 *gen = gen_class == GEN_VX ? gen_vx
+              : gen_class == GEN_VV ? gen_vv
+              : gen_vx_32bit;
+
+  emit_insn ((*gen) (
+    operands[0], operands[1], operands[2], operands[3],
+    operands[4]
+  ));
+}
+
+void
+emit_op6 (
+  unsigned int unspec ATTRIBUTE_UNUSED,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  gen_6 *gen_vx,
+  gen_6 *gen_vx_32bit,
+  gen_6 *gen_vv,
+  imm_p *imm5_p,
+  int i, bool reverse
+)
+{
+  enum GEN_CLASS gen_class = modify_operands(
+    Vmode, VSImode, VMSImode, VSUBmode,
+    operands, imm5_p, i, reverse);
+
+  gen_6 *gen = gen_class == GEN_VX ? gen_vx
+              : gen_class == GEN_VV ? gen_vv
+              : gen_vx_32bit;
+
+  emit_insn ((*gen) (
+    operands[0], operands[1], operands[2], operands[3],
+    operands[4], operands[5]
+  ));
+}
+
+bool
+emit_op7_slide1 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VSUBmode,
+  rtx *operands,
+  int i
+)
+{
+  if (!TARGET_64BIT && VSUBmode == DImode)
+  {
+    if (!imm32_p (operands[i]))
+      {
+        rtx s = operands[i];
+        if (CONST_SCALAR_INT_P (s))
+          {
+            s = force_reg(DImode, s);
+          }
+
+        rtx hi = gen_highpart (SImode, s);
+        rtx lo = gen_lowpart (SImode, s);
+
+        rtx vret = operands[0];
+        rtx mask = operands[1];
+        rtx vs = operands[3];
+        rtx vlx2 = gen_vlx2 (operands[5]);
+        rtx vs_si = gen_lowpart (VSImode, vs);
+        rtx vtemp;
+        if (rtx_equal_p (operands[2], const0_rtx))
+          {
+            vtemp = gen_reg_rtx (VSImode);
+          }
+        else
+          {
+            vtemp = gen_lowpart (VSImode, operands[2]);
+          }
+
+        if (unspec == UNSPEC_SLIDE1UP)
+          {
+            rtx v1;
+            if (Vmode == VNx16DImode)
+              {
+                v1 = gen_rtx_REG (VSImode, V24_REGNUM);
+              }
+            else
+              {
+                v1 = gen_reg_rtx (VSImode);
+              }
+
+            emit_insn (gen_vslide1_vx_internal (
+              UNSPEC_SLIDE1UP, VSImode,
+              v1, const0_rtx, const0_rtx, vs_si, hi, vlx2, operands[6]
+            ));
+            emit_insn (gen_vslide1_vx_internal (
+              UNSPEC_SLIDE1UP, VSImode,
+              vtemp, const0_rtx, const0_rtx, v1, lo, vlx2, operands[6]
+            ));
+          }
+        else
+          {
+            emit_insn (gen_vslide1_vx_internal (
+              UNSPEC_SLIDE1DOWN, VSImode,
+              vtemp, const0_rtx, const0_rtx, vs_si, lo, vlx2, operands[6]
+            ));
+            emit_insn (gen_vslide1_vx_internal (
+              UNSPEC_SLIDE1DOWN, VSImode,
+              vtemp, const0_rtx, const0_rtx, vtemp, hi, vlx2, operands[6]
+            ));
+          }
+
+        if (rtx_equal_p (mask, const0_rtx))
+          {
+            emit_insn (gen_rtx_SET (
+              vret, gen_lowpart (Vmode, vtemp)
+            ));
+          }
+        else
+          {
+            rtx dest = operands[2];
+            if (rtx_equal_p (dest, const0_rtx))
+              {
+                dest = vret;
+              }
+            emit_insn (gen_vmerge_vvm (Vmode,
+              dest, mask, dest, dest,
+              gen_lowpart(Vmode, vtemp), operands[5], operands[6]
+            ));
+
+            emit_insn (gen_rtx_SET (vret, dest));
+          }
+
+
+        return true;
+      }
+  }
+  return false;
+}
+
+void
+emit_op7 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  gen_7 *gen_vx,
+  gen_7 *gen_vx_32bit,
+  gen_7 *gen_vv,
+  imm_p *imm5_p,
+  int i, bool reverse
+)
+{
+  if (unspec == UNSPEC_SLIDE1UP || unspec == UNSPEC_SLIDE1DOWN)
+    {
+      if (emit_op7_slide1 (unspec, Vmode, VSImode, VSUBmode, operands, i))
+        {
+          return;
+        }
+    }
+
+  enum GEN_CLASS gen_class = modify_operands(
+    Vmode, VSImode, VMSImode, VSUBmode,
+    operands, imm5_p, i, reverse);
+
+  gen_7 *gen = gen_class == GEN_VX ? gen_vx
+              : gen_class == GEN_VV ? gen_vv
+              : gen_vx_32bit;
+
+  emit_insn ((*gen) (
+    operands[0], operands[1], operands[2], operands[3],
+    operands[4], operands[5], operands[6]
+  ));
+}
+
 static void
 riscv_vector_emit_vec_duplicate (machine_mode mode, machine_mode inner_mode,
                                  rtx target, rtx x)
