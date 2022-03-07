@@ -6651,3 +6651,694 @@
   riscv_emit_move (operands[0], operands[3]);
   DONE;
 })
+
+;; =========================================================================
+;; == Vector-Scalar operations
+;; =========================================================================
+
+(define_expand "<optab>_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (int_binary:VI
+      (match_operand:VI 1 "register_operand")
+      (vec_duplicate:VI
+        (match_operand:<VSUB> 2 "reg_or_const_int_operand"))))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    emit_insn (gen_v<optab><mode>_vx (operands[0],
+        const0_rtx, const0_rtx, operands[1],
+        operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "add_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (plus:VI
+      (match_operand:VI 1 "register_operand")
+      (vec_duplicate:VI
+        (match_operand:<VSUB> 2 "reg_or_const_int_operand"))))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    emit_insn (gen_v_vx (UNSPEC_VADD, <MODE>mode,
+          operands[0], const0_rtx, const0_rtx,
+          operands[1], operands[2],
+          gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "sub_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (minus:VI
+      (match_operand:VI 1 "register_operand")
+      (vec_duplicate:VI
+        (match_operand:<VSUB> 2 "reg_or_const_int_operand"))))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    emit_insn (gen_v_vx (UNSPEC_VSUB, <MODE>mode,
+          operands[0], const0_rtx, const0_rtx,
+          operands[1], operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "sub_sv<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (minus:VI
+      (vec_duplicate:VI
+        (match_operand:<VSUB> 2 "reg_or_const_int_operand"))
+      (match_operand:VI 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    emit_insn (gen_v_vx (UNSPEC_VRSUB, <MODE>mode,
+          operands[0], const0_rtx, const0_rtx,
+          operands[1], operands[2],
+          gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "<optab>_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (fp_binary:VF
+      (match_operand:VF 1 "register_operand")
+      (vec_duplicate:VF
+        (match_operand:<VSUB> 2 "register_operand"))))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    emit_insn (gen_vf<optab><mode>_vf (operands[0],
+        const0_rtx, const0_rtx, operands[1],
+        operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "<optab>_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (minus_div:VF
+      (match_operand:VF 1 "register_operand")
+      (vec_duplicate:VF
+        (match_operand:<VSUB> 2 "register_operand"))))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    emit_insn (gen_vf<optab><mode>_vf (operands[0],
+        const0_rtx, const0_rtx, operands[1],
+        operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "<optab>_sv<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (minus_div:VF
+      (vec_duplicate:VF
+        (match_operand:<VSUB> 2 "register_operand"))
+      (match_operand:VF 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    emit_insn (gen_vfr<optab><mode>_vf (operands[0],
+        const0_rtx, const0_rtx, operands[1],
+        operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "fma_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+      [(plus:VI
+          (mult:VI
+            (match_operand:VI 1 "register_operand")
+            (vec_duplicate:VI
+              (match_operand:<VSUB> 2 "reg_or_const_int_operand")))
+          (match_operand:VI 3 "register_operand"))
+        (match_dup 4)
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!TARGET_64BIT && <VSUB>mode == DImode && !imm32_p (operands[2]))
+      {
+        rtx reg = gen_reg_rtx (<MODE>mode);
+        emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, reg, const0_rtx, operands[2],
+                   gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+        emit_insn (gen_fma<mode>4 (operands[0], operands[1], reg, operands[3]));
+        DONE;
+      }
+    operands[2] = force_reg (<VSUB>mode, operands[2]);
+    if (!TARGET_64BIT && <VSUB>mode == DImode)
+      operands[2] = gen_rtx_SIGN_EXTEND (<VSUB>mode, gen_lowpart (Pmode, operands[2]));
+    operands[4] = gen_rtx_REG (Pmode, X0_REGNUM);
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "fnma_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+      [(plus:VI
+        (mult:VI
+          (neg:VI
+            (match_operand:VI 1 "register_operand"))
+          (vec_duplicate:VI
+            (match_operand:<VSUB> 2 "reg_or_const_int_operand")))
+        (match_operand:VI 3 "register_operand"))
+        (match_dup 4)
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!TARGET_64BIT && <VSUB>mode == DImode && !imm32_p (operands[2]))
+      {
+        rtx reg = gen_reg_rtx (<MODE>mode);
+        emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, reg, const0_rtx, operands[2],
+                   gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+        emit_insn (gen_fnma<mode>4 (operands[0], operands[1], reg, operands[3]));
+        DONE;
+      }
+    operands[2] = force_reg (<VSUB>mode, operands[2]);
+    if (!TARGET_64BIT && <VSUB>mode == DImode)
+      operands[2] = gen_rtx_SIGN_EXTEND (<VSUB>mode, gen_lowpart (Pmode, operands[2]));
+    operands[4] = gen_rtx_REG (Pmode, X0_REGNUM);
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "fma_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(plus:VF
+          (mult:VF
+            (match_operand:VF 1 "register_operand")
+            (vec_duplicate:VF
+              (match_operand:<VSUB> 2 "register_operand")))
+          (match_operand:VF 3 "register_operand"))
+        (match_dup 4)
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    operands[4] = gen_rtx_REG (Pmode, X0_REGNUM);
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "fms_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(minus:VF
+        (mult:VF
+          (match_operand:VF 1 "register_operand")
+          (vec_duplicate:VF
+            (match_operand:<VSUB> 2 "register_operand")))
+        (match_operand:VF 3 "register_operand"))
+        (match_dup 4)
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    operands[4] = gen_rtx_REG (Pmode, X0_REGNUM);
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "fnma_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(plus:VF
+          (mult:VF
+            (neg:VF
+              (match_operand:VF 1 "register_operand"))
+            (vec_duplicate:VF
+              (match_operand:<VSUB> 2 "register_operand")))
+          (match_operand:VF 3 "register_operand"))
+        (match_dup 4)
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    operands[4] = gen_rtx_REG (Pmode, X0_REGNUM);
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "fnms_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(minus:VF
+        (mult:VF
+          (neg:VF
+            (match_operand:VF 1 "register_operand"))
+          (vec_duplicate:VF
+            (match_operand:<VSUB> 2 "register_operand")))
+        (match_operand:VF 3 "register_operand"))
+        (match_dup 4)
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    operands[4] = gen_rtx_REG (Pmode, X0_REGNUM);
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Len_*
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define_expand "len_<optab>_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+      [(int_binary:VI
+        (match_operand:VI 1 "register_operand")
+        (vec_duplicate:VI
+          (match_operand:<VSUB> 2 "reg_or_const_int_operand")))
+       (match_operand 3 "csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!CONSTANT_P (operands[3]))
+      operands[3] = gen_lowpart (Pmode, operands[3]);
+    emit_insn (gen_v<optab><mode>_vx (operands[0],
+        const0_rtx, const0_rtx, operands[1],
+        operands[2], operands[3],
+        riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "len_add_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+      [(plus:VI
+        (match_operand:VI 1 "register_operand")
+        (vec_duplicate:VI
+          (match_operand:<VSUB> 2 "reg_or_const_int_operand")))
+       (match_operand 3 "csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!CONSTANT_P (operands[3]))
+      operands[3] = gen_lowpart (Pmode, operands[3]);
+    emit_insn (gen_v_vx (UNSPEC_VADD, <MODE>mode,
+          operands[0], const0_rtx, const0_rtx,
+          operands[1], operands[2], operands[3],
+          riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "len_sub_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+      [(minus:VI
+        (match_operand:VI 1 "register_operand")
+        (vec_duplicate:VI
+          (match_operand:<VSUB> 2 "reg_or_const_int_operand")))
+       (match_operand 3 "csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!CONSTANT_P (operands[3]))
+      operands[3] = gen_lowpart (Pmode, operands[3]);
+    emit_insn (gen_v_vx (UNSPEC_VSUB, <MODE>mode,
+          operands[0], const0_rtx, const0_rtx,
+          operands[1], operands[2], operands[3],
+          riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "len_sub_sv<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+      [(minus:VI
+        (vec_duplicate:VI
+          (match_operand:<VSUB> 2 "reg_or_const_int_operand"))
+        (match_operand:VI 1 "register_operand"))
+       (match_operand 3 "csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!CONSTANT_P (operands[3]))
+      operands[3] = gen_lowpart (Pmode, operands[3]);
+    emit_insn (gen_v_vx (UNSPEC_VRSUB, <MODE>mode,
+          operands[0], const0_rtx, const0_rtx, operands[1],
+          operands[2], operands[3],
+          riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "len_<optab>_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(fp_binary:VF
+        (match_operand:VF 1 "register_operand")
+        (vec_duplicate:VF
+          (match_operand:<VSUB> 2 "register_operand")))
+       (match_operand 3 "csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!CONSTANT_P (operands[3]))
+      operands[3] = gen_lowpart (Pmode, operands[3]);
+    emit_insn (gen_vf<optab><mode>_vf (operands[0], const0_rtx, const0_rtx,
+        operands[1], operands[2], operands[3],
+        riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "len_<optab>_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(minus_div:VF
+        (match_operand:VF 1 "register_operand")
+        (vec_duplicate:VF
+          (match_operand:<VSUB> 2 "register_operand")))
+       (match_operand 3 "csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!CONSTANT_P (operands[3]))
+      operands[3] = gen_lowpart (Pmode, operands[3]);
+    emit_insn (gen_vf<optab><mode>_vf (operands[0], const0_rtx, const0_rtx,
+        operands[1], operands[2], operands[3],
+        riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "len_<optab>_sv<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(minus_div:VF
+        (vec_duplicate:VF
+          (match_operand:<VSUB> 2 "register_operand"))
+        (match_operand:VF 1 "register_operand"))
+       (match_operand 3 "csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!CONSTANT_P (operands[3]))
+      operands[3] = gen_lowpart (Pmode, operands[3]);
+    emit_insn (gen_vfr<optab><mode>_vf (operands[0], const0_rtx, const0_rtx,
+        operands[1], operands[2], operands[3],
+        riscv_vector_gen_policy ()));
+    DONE;
+  })
+
+(define_expand "len_fma_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+      [(plus:VI
+          (mult:VI
+            (match_operand:VI 1 "register_operand")
+            (vec_duplicate:VI
+              (match_operand:<VSUB> 2 "reg_or_const_int_operand")))
+          (match_operand:VI 3 "register_operand"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!TARGET_64BIT && <VSUB>mode == DImode && !imm32_p (operands[2]))
+      {
+        rtx reg = gen_reg_rtx (<MODE>mode);
+        emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, reg, const0_rtx, operands[2],
+                   gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+        emit_insn (gen_len_fma<mode> (operands[0], operands[1], reg, operands[3], operands[4]));
+        DONE;
+      }
+    operands[2] = force_reg (<VSUB>mode, operands[2]);
+    if (!TARGET_64BIT && <VSUB>mode == DImode)
+      operands[2] = gen_rtx_SIGN_EXTEND (<VSUB>mode, gen_lowpart (Pmode, operands[2]));
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "len_fnma_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+      [(plus:VI
+        (mult:VI
+          (neg:VI
+            (match_operand:VI 1 "register_operand"))
+          (vec_duplicate:VI
+            (match_operand:<VSUB> 2 "reg_or_const_int_operand")))
+        (match_operand:VI 3 "register_operand"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    if (!TARGET_64BIT && <VSUB>mode == DImode && !imm32_p (operands[2]))
+      {
+        rtx reg = gen_reg_rtx (<MODE>mode);
+        emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, reg, const0_rtx, operands[2],
+                   gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+        emit_insn (gen_len_fnma<mode> (operands[0], operands[1], reg, operands[3], operands[4]));
+        DONE;
+      }
+    operands[2] = force_reg (<VSUB>mode, operands[2]);
+    if (!TARGET_64BIT && <VSUB>mode == DImode)
+      operands[2] = gen_rtx_SIGN_EXTEND (<VSUB>mode, gen_lowpart (Pmode, operands[2]));
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "len_fma_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(plus:VF
+          (mult:VF
+            (match_operand:VF 1 "register_operand")
+            (vec_duplicate:VF
+              (match_operand:<VSUB> 2 "register_operand")))
+          (match_operand:VF 3 "register_operand"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "len_fms_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(minus:VF
+        (mult:VF
+          (match_operand:VF 1 "register_operand")
+          (vec_duplicate:VF
+            (match_operand:<VSUB> 2 "register_operand")))
+        (match_operand:VF 3 "register_operand"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "len_fnma_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(plus:VF
+          (mult:VF
+            (neg:VF
+              (match_operand:VF 1 "register_operand"))
+            (vec_duplicate:VF
+              (match_operand:<VSUB> 2 "register_operand")))
+          (match_operand:VF 3 "register_operand"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_expand "len_fnms_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(minus:VF
+        (mult:VF
+          (neg:VF
+            (match_operand:VF 1 "register_operand"))
+          (vec_duplicate:VF
+            (match_operand:<VSUB> 2 "register_operand")))
+        (match_operand:VF 3 "register_operand"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_dup 5)
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+  {
+    operands[5] = riscv_vector_gen_policy ();
+  })
+
+(define_insn "*len_fma_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr")
+    (unspec:VI
+      [(plus:VI
+          (mult:VI
+            (match_operand:VI 1 "register_operand" "%0, vr, vr")
+            (vec_duplicate:VI
+              (match_operand:<VSUB> 2 "register_operand" "r,r,r")))
+          (match_operand:VI 3 "register_operand" "vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_operand 5 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vmadd.vx\t%0,%2,%3
+   vmacc.vx\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vmacc.vx\t%0,%2,%1"
+  [(set_attr "type" "vmadd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*len_fma_vs<mode>_rv32"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr, vr, ?&vr")
+    (unspec:V64BITI
+      [(plus:V64BITI
+          (mult:V64BITI
+            (match_operand:V64BITI 1 "register_operand" "%0, vr, vr")
+            (vec_duplicate:V64BITI
+              (sign_extend:DI
+                (match_operand:SI 2 "register_operand" "r,r,r"))))
+          (match_operand:V64BITI 3 "register_operand" "vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_operand 5 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vmadd.vx\t%0,%2,%3
+   vmacc.vx\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vmacc.vx\t%0,%2,%1"
+  [(set_attr "type" "vmadd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*len_fnma_vs<mode>"
+  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr")
+    (unspec:VI
+      [(plus:VI
+        (mult:VI
+          (neg:VI
+            (match_operand:VI 1 "register_operand" "%0, vr, vr"))
+          (vec_duplicate:VI
+            (match_operand:<VSUB> 2 "register_operand" "r,r,r")))
+        (match_operand:VI 3 "register_operand" "vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_operand 5 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vnmsub.vx\t%0,%2,%3
+   vnmsac.vx\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vnmsac.vx\t%0,%2,%1"
+  [(set_attr "type" "vmadd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*len_fnma_vs<mode>_rv32"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr, vr, ?&vr")
+    (unspec:V64BITI
+      [(plus:V64BITI
+        (mult:V64BITI
+          (neg:V64BITI
+            (match_operand:V64BITI 1 "register_operand" "%0, vr, vr"))
+          (vec_duplicate:V64BITI
+            (sign_extend:DI
+              (match_operand:SI 2 "register_operand" "r,r,r"))))
+        (match_operand:V64BITI 3 "register_operand" "vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_operand 5 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vnmsub.vx\t%0,%2,%3
+   vnmsac.vx\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vnmsac.vx\t%0,%2,%1"
+  [(set_attr "type" "vmadd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*len_fma_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+    (unspec:VF
+      [(plus:VF
+          (mult:VF
+            (match_operand:VF 1 "register_operand" "%0, vr, vr")
+            (vec_duplicate:VF
+              (match_operand:<VSUB> 2 "register_operand" "f, f, f")))
+          (match_operand:VF 3 "register_operand" "vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_operand 5 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfmadd.vf\t%0,%2,%3
+   vfmacc.vf\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfmacc.vf\t%0,%2,%1"
+  [(set_attr "type" "vmadd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*len_fms_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+    (unspec:VF
+      [(minus:VF
+        (mult:VF
+          (match_operand:VF 1 "register_operand" "%0, vr, vr")
+          (vec_duplicate:VF
+            (match_operand:<VSUB> 2 "register_operand" "f, f, f")))
+        (match_operand:VF 3 "register_operand" "vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_operand 5 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfmsub.vf\t%0,%2,%3
+   vfmsac.vf\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfmsac.vf\t%0,%2,%1"
+  [(set_attr "type" "vmadd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*len_fnma_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+    (unspec:VF
+      [(plus:VF
+          (mult:VF
+            (neg:VF
+              (match_operand:VF 1 "register_operand" "%0, vr, vr"))
+            (vec_duplicate:VF
+              (match_operand:<VSUB> 2 "register_operand" "f, f, f")))
+          (match_operand:VF 3 "register_operand" "vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_operand 5 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfnmsub.vf\t%0,%2,%3
+   vfnmsac.vf\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfnmsac.vf\t%0,%2,%1"
+  [(set_attr "type" "vmadd")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*len_fnms_vs<mode>"
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+    (unspec:VF
+      [(minus:VF
+        (mult:VF
+          (neg:VF
+            (match_operand:VF 1 "register_operand" "%0, vr, vr"))
+          (vec_duplicate:VF
+            (match_operand:<VSUB> 2 "register_operand" "f, f, f")))
+        (match_operand:VF 3 "register_operand" "vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand")
+        (match_operand 5 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfnmadd.vf\t%0,%2,%3
+   vfnmacc.vf\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfnmacc.vf\t%0,%2,%1"
+  [(set_attr "type" "vmadd")
+   (set_attr "mode" "<MODE>")])
