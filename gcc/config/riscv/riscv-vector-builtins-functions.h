@@ -1560,6 +1560,132 @@ public:
   expand (const function_instance &instance, tree exp,
           rtx target) const OVERRIDE;
 };
+
+/* A function_base for vmv_x_s functions.  */
+class vmv_x_s : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmv_s_x functions.  */
+class vmv_s_x : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  rtx
+  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfmv_f_s functions.  */
+class vfmv_f_s : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfmv_s_f functions.  */
+class vfmv_s_f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+};
+
+/* A function_base for vslide functions.  */
+class vslide : public binop
+{
+public:
+  // use the same construction function as the ternop
+  using binop::binop;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vslide1 functions.  */
+class vslide1 : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vslide1 functions.  */
+class vfslide1 : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vrgather functions.  */
+class vrgather : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vrgather functions.  */
+class vrgatherei16 : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+class vcompress : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  size_t get_position_of_dest_arg (predication_index pred) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+};
+
 /* A function_base for vsadd functions.  */
 class vsadd : public binop
 {

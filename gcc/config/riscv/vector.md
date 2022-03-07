@@ -5841,3 +5841,460 @@
    vid.v\t%0"
   [(set_attr "type" "vid")
    (set_attr "mode" "<MODE>")])
+
+;; -------------------------------------------------------------------------------
+;; ---- 16. Vector Permutation Instructions
+;; -------------------------------------------------------------------------------
+;; Includes:
+;; - 16.1 Integer Scalar Move Instructions
+;; - 16.2 Floating-Point Scalar Move Instructions
+;; - 16.3 Vector slide Instructins
+;; - 16.4 Vector Register Gather Instructions
+;; - 16.5 Vector Compress Instructions
+;; -------------------------------------------------------------------------------
+
+;; Integer Scalar Move Instructions.
+(define_insn "@vmv<VNOT64BITI:mode>_x_s"
+  [(set (match_operand:<VSUB> 0 "register_operand" "=r")
+    (unspec:<VSUB>
+      [(vec_select:<VSUB>
+        (match_operand:VNOT64BITI 1 "register_operand" "vr")
+        (parallel [(const_int 0)]))
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "vmv.x.s\t%0,%1"
+  [(set_attr "type" "vmv_x_s")
+   (set_attr "mode" "<VNOT64BITI:MODE>")])
+
+(define_expand "@vmv<V64BITI:mode>_x_s"
+  [(set (match_operand:<VSUB> 0 "register_operand")
+    (unspec:<VSUB>
+      [(vec_select:<VSUB>
+         (match_operand:V64BITI 1 "register_operand")
+         (parallel [(const_int 0)]))
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  {
+    if (!TARGET_64BIT)
+      {
+        rtx vector = gen_reg_rtx (<V64BITI:MODE>mode);
+        rtx shift = gen_reg_rtx (Pmode);
+        shift = force_reg (Pmode, GEN_INT (32));
+
+        rtx lo = gen_lowpart (Pmode, operands[0]);
+        rtx hi = gen_highpart (Pmode, operands[0]);
+        emit_insn (gen_vlshr<V64BITI:mode>_vx (vector,
+              const0_rtx, const0_rtx, operands[1],
+              shift, GEN_INT(1), riscv_vector_gen_policy ()));
+        emit_insn (gen_vmv<V64BITI:mode>_x_s_lo (lo, operands[1]));
+        emit_insn (gen_vmv<V64BITI:mode>_x_s_hi (hi, vector));
+        DONE;
+      }
+
+    emit_insn (gen_vmv<V64BITI:mode>_x_s_di_internal (operands[0], operands[1]));
+    DONE;
+  })
+
+(define_insn "vmv<V64BITI:mode>_x_s_di_internal"
+  [(set (match_operand:<VSUB> 0 "register_operand" "=r")
+    (unspec:<VSUB>
+      [(vec_select:<VSUB>
+         (match_operand:V64BITI 1 "register_operand" "vr")
+         (parallel [(const_int 0)]))
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "vmv.x.s\t%0,%1"
+  [(set_attr "type" "vmv_x_s")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+(define_insn "vmv<V64BITI:mode>_x_s_lo"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+    (unspec:SI
+      [(vec_select:DI
+        (match_operand:V64BITI 1 "register_operand" "vr")
+        (parallel [(const_int 0)]))
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_LO))]
+  "TARGET_VECTOR"
+  "vmv.x.s\t%0,%1"
+  [(set_attr "type" "vmv_x_s")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+(define_insn "vmv<V64BITI:mode>_x_s_hi"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+    (unspec:SI
+      [(vec_select:DI
+        (match_operand:V64BITI 1 "register_operand" "vr")
+        (parallel [(const_int 0)]))
+      (reg:SI VTYPE_REGNUM)] UNSPEC_HI))]
+  "TARGET_VECTOR"
+  "vmv.x.s\t%0,%1"
+  [(set_attr "type" "vmv_x_s")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+(define_insn "@vmv<mode>_s_x_internal"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(vec_duplicate:VI
+         (match_operand:<VSUB> 2 "reg_or_0_operand" "r,J,r,J"))
+       (match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J")
+       (const_int 1)] UNSPEC_VMV_SX)
+     (match_operand 3 "p_reg_or_const_csr_operand")
+     (match_operand 4 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vmv.s.x\t%0,%2
+   vmv.s.x\t%0,zero
+   vmv.s.x\t%0,%2
+   vmv.s.x\t%0,zero"
+  [(set_attr "type" "vmv_s_x")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@vmv<V64BITI:mode>_s_x_32bit"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr")
+  (unspec:V64BITI
+    [(unspec:V64BITI
+      [(vec_duplicate:V64BITI
+         (sign_extend:<VSUB> (match_operand:SI 2 "reg_or_0_operand" "r,J,r,J")))
+       (match_operand:V64BITI 1 "vector_reg_or_const0_operand" "0,0,J,J")
+       (const_int 1)] UNSPEC_VMV_SX)
+     (match_operand:SI 3 "csr_operand")
+     (match_operand:SI 4 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vmv.s.x\t%0,%2
+   vmv.s.x\t%0,zero
+   vmv.s.x\t%0,%2
+   vmv.s.x\t%0,zero"
+  [(set_attr "type" "vmv_s_x")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+;; Floating-Point Scalar Move Instructions.
+(define_insn "@vfmv<mode>_f_s"
+  [(set (match_operand:<VSUB> 0 "register_operand" "=f")
+    (unspec:<VSUB>
+      [(vec_select:<VSUB>
+        (match_operand:VF 1 "register_operand" "vr")
+        (parallel [(const_int 0)]))
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "vfmv.f.s\t%0,%1"
+  [(set_attr "type" "vfmv_f_s")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@vfmv<mode>_s_f"
+  [(set (match_operand:VF 0 "register_operand" "=vr,vr")
+  (unspec:VF
+    [(unspec:VF
+      [(vec_duplicate:VF
+         (match_operand:<VSUB> 2 "register_operand" "f,f"))
+       (match_operand:VF 1 "vector_reg_or_const0_operand" "0,J")
+       (const_int 1)] UNSPEC_VMV_SX)
+     (match_operand 3 "p_reg_or_const_csr_operand")
+     (match_operand 4 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "vfmv.s.f\t%0,%2"
+  [(set_attr "type" "vfmv_s_f")
+   (set_attr "mode" "<MODE>")])
+
+;; Vector Slideup/Slidedown Instructions.
+(define_insn "@vslide<ud><V:mode>_vx"
+  [(set (match_operand:V 0 "register_operand" "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+    (unspec:V
+      [(unspec:V
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:V
+           [(match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")
+           (match_operand:V 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand 4 "p_reg_or_uimm5_operand" "r,K,r,K,r,K,r,K")] SLIDE_UP)
+         (match_dup 2)] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vslide<ud>.vx\t%0,%3,%4,%1.t
+   vslide<ud>.vi\t%0,%3,%4,%1.t
+   vslide<ud>.vx\t%0,%3,%4,%1.t
+   vslide<ud>.vi\t%0,%3,%4,%1.t
+   vslide<ud>.vx\t%0,%3,%4
+   vslide<ud>.vi\t%0,%3,%4
+   vslide<ud>.vx\t%0,%3,%4
+   vslide<ud>.vi\t%0,%3,%4"
+  [(set_attr "type" "vslide")
+   (set_attr "mode" "<V:MODE>")])
+
+(define_insn "@vslide<ud><V:mode>_vx"
+  [(set (match_operand:V 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+    (unspec:V
+      [(unspec:V
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:V
+           [(match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")
+           (match_operand:V 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand 4 "p_reg_or_uimm5_operand" "r,K,r,K,r,K,r,K")] SLIDE_DOWN)
+         (match_dup 2)] UNSPEC_SELECT)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vslide<ud>.vx\t%0,%3,%4,%1.t
+   vslide<ud>.vi\t%0,%3,%4,%1.t
+   vslide<ud>.vx\t%0,%3,%4,%1.t
+   vslide<ud>.vi\t%0,%3,%4,%1.t
+   vslide<ud>.vx\t%0,%3,%4
+   vslide<ud>.vi\t%0,%3,%4
+   vslide<ud>.vx\t%0,%3,%4
+   vslide<ud>.vi\t%0,%3,%4"
+  [(set_attr "type" "vslide")
+   (set_attr "mode" "<V:MODE>")])
+
+;; Vector Integer Slide1up/Slide1down Instructions.
+(define_insn "@vslide1<ud><mode>_vx_internal"
+  [(set (match_operand:VI 0 "register_operand" "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+    (unspec:VI
+      [(unspec:VI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:VI
+           [(match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand:<VSUB> 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J")] SLIDE1_UP)
+         (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vslide1<ud>.vx\t%0,%3,%4,%1.t
+   vslide1<ud>.vx\t%0,%3,zero,%1.t
+   vslide1<ud>.vx\t%0,%3,%4,%1.t
+   vslide1<ud>.vx\t%0,%3,zero,%1.t
+   vslide1<ud>.vx\t%0,%3,%4
+   vslide1<ud>.vx\t%0,%3,zero
+   vslide1<ud>.vx\t%0,%3,%4
+   vslide1<ud>.vx\t%0,%3,zero"
+  [(set_attr "type" "vslide")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@vslide1<ud><mode>_vx_internal"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+    (unspec:VI
+      [(unspec:VI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:VI
+           [(match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand:<VSUB> 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J")] SLIDE1_DOWN)
+         (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vslide1<ud>.vx\t%0,%3,%4,%1.t
+   vslide1<ud>.vx\t%0,%3,zero,%1.t
+   vslide1<ud>.vx\t%0,%3,%4,%1.t
+   vslide1<ud>.vx\t%0,%3,zero,%1.t
+   vslide1<ud>.vx\t%0,%3,%4
+   vslide1<ud>.vx\t%0,%3,zero
+   vslide1<ud>.vx\t%0,%3,%4
+   vslide1<ud>.vx\t%0,%3,zero"
+  [(set_attr "type" "vslide")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@vslide1<ud><V64BITI:mode>_vx_32bit"
+  [(set (match_operand:V64BITI 0 "register_operand" "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+    (unspec:V64BITI
+      [(unspec:V64BITI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:V64BITI
+           [(match_operand:V64BITI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+           (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J"))] SLIDE1_UP)
+         (match_operand:V64BITI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand:SI 5 "csr_operand")
+      (match_operand:SI 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vslide1<ud>.vx\t%0,%3,%4,%1.t
+   vslide1<ud>.vx\t%0,%3,zero,%1.t
+   vslide1<ud>.vx\t%0,%3,%4,%1.t
+   vslide1<ud>.vx\t%0,%3,zero,%1.t
+   vslide1<ud>.vx\t%0,%3,%4
+   vslide1<ud>.vx\t%0,%3,zero
+   vslide1<ud>.vx\t%0,%3,%4
+   vslide1<ud>.vx\t%0,%3,zero"
+  [(set_attr "type" "vslide")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+(define_insn "@vslide1<ud><V64BITI:mode>_vx_32bit"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+    (unspec:V64BITI
+      [(unspec:V64BITI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:V64BITI
+           [(match_operand:V64BITI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+           (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J"))] SLIDE1_DOWN)
+         (match_operand:V64BITI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand:SI 5 "csr_operand")
+      (match_operand:SI 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vslide1<ud>.vx\t%0,%3,%4,%1.t
+   vslide1<ud>.vx\t%0,%3,zero,%1.t
+   vslide1<ud>.vx\t%0,%3,%4,%1.t
+   vslide1<ud>.vx\t%0,%3,zero,%1.t
+   vslide1<ud>.vx\t%0,%3,%4
+   vslide1<ud>.vx\t%0,%3,zero
+   vslide1<ud>.vx\t%0,%3,%4
+   vslide1<ud>.vx\t%0,%3,zero"
+  [(set_attr "type" "vslide")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+;; Vector Floating-Point Slide1up/Slide1down Instructions.
+(define_insn "@vfslide1<ud><mode>_vf"
+  [(set (match_operand:VF 0 "register_operand" "=vr,vr,vr,vr")
+    (unspec:VF
+      [(unspec:VF
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (unspec:VF
+           [(match_operand:VF 3 "register_operand" "vr,vr,vr,vr")
+           (match_operand:<VSUB> 4 "register_operand" "f,f,f,f")] SLIDE1_DOWN)
+         (match_operand:VF 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfslide1<ud>.vf\t%0,%3,%4,%1.t
+   vfslide1<ud>.vf\t%0,%3,%4,%1.t
+   vfslide1<ud>.vf\t%0,%3,%4
+   vfslide1<ud>.vf\t%0,%3,%4"
+  [(set_attr "type" "vslide")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@vfslide1<ud><mode>_vf"
+  [(set (match_operand:VF 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:VF
+      [(unspec:VF
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (unspec:VF
+           [(match_operand:VF 3 "register_operand" "vr,vr,vr,vr")
+           (match_operand:<VSUB> 4 "register_operand" "f,f,f,f")] SLIDE1_UP)
+         (match_operand:VF 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vfslide1<ud>.vf\t%0,%3,%4,%1.t
+   vfslide1<ud>.vf\t%0,%3,%4,%1.t
+   vfslide1<ud>.vf\t%0,%3,%4
+   vfslide1<ud>.vf\t%0,%3,%4"
+  [(set_attr "type" "vslide")
+   (set_attr "mode" "<MODE>")])
+
+;; Vector-Vector vrgater instruction.
+(define_insn "@vrgather<V:mode>_vv"
+  [(set (match_operand:V 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V
+      [(unspec:V
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (unspec:V
+           [(match_operand:V 3 "register_operand" "vr,vr,vr,vr")
+            (match_operand:<VMAP> 4 "register_operand" "vr,vr,vr,vr")] UNSPEC_RGATHER)
+         (match_operand:V 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vrgather.vv\t%0,%3,%4,%1.t
+   vrgather.vv\t%0,%3,%4,%1.t
+   vrgather.vv\t%0,%3,%4
+   vrgather.vv\t%0,%3,%4"
+  [(set_attr "type" "vgather")
+   (set_attr "mode" "<V:MODE>")])
+
+;; Vector-Vector vrgaterei16 instruction.
+(define_insn "@vrgatherei16<V16:mode>_vv"
+  [(set (match_operand:V16 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V16
+      [(unspec:V16
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (unspec:V16
+           [(match_operand:V16 3 "register_operand" "vr,vr,vr,vr")
+            (match_operand:<VMAPI16> 4 "register_operand" "vr,vr,vr,vr")] UNSPEC_RGATHEREI16)
+         (match_operand:V16 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vrgatherei16.vv\t%0,%3,%4,%1.t
+   vrgatherei16.vv\t%0,%3,%4,%1.t
+   vrgatherei16.vv\t%0,%3,%4
+   vrgatherei16.vv\t%0,%3,%4"
+  [(set_attr "type" "vgather")
+   (set_attr "mode" "<V16:MODE>")])
+
+;; Vector-Scalar vrgater instruction.
+(define_insn "@vrgather<V:mode>_vx"
+  [(set (match_operand:V 0 "register_operand" "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+    (unspec:V
+      [(unspec:V
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:V
+           [(match_operand:V 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand 4 "p_reg_or_uimm5_operand" "r,K,r,K,r,K,r,K")] UNSPEC_RGATHER)
+         (match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vrgather.vx\t%0,%3,%4,%1.t
+   vrgather.vi\t%0,%3,%4,%1.t
+   vrgather.vx\t%0,%3,%4,%1.t
+   vrgather.vi\t%0,%3,%4,%1.t
+   vrgather.vx\t%0,%3,%4
+   vrgather.vi\t%0,%3,%4
+   vrgather.vx\t%0,%3,%4
+   vrgather.vi\t%0,%3,%4"
+  [(set_attr "type" "vgather")
+   (set_attr "mode" "<V:MODE>")])
+
+;; Vector Compress Instruction.
+(define_insn "@vcompress<V:mode>_vm"
+  [(set (match_operand:V 0 "register_operand" "=&vr,&vr")
+    (unspec:V
+      [(unspec:V
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
+         (match_operand:V 2 "vector_reg_or_const0_operand" "0,J")
+         (match_operand:V 3 "register_operand" "vr,vr")] UNSPEC_COMPRESS)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "vcompress.vm\t%0,%3,%1"
+  [(set_attr "type" "vcompress")
+   (set_attr "mode" "<V:MODE>")])

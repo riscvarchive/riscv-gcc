@@ -4304,6 +4304,170 @@ vid::expand (const function_instance &instance, tree exp, rtx target) const
   icode = code_for_vid_v (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
+
+/* A function_base for vmv_x_s functions.  */
+void
+vmv_x_s::get_name (char *name, const function_instance &instance) const
+{
+  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
+                       instance.get_data_type_list ()[0] == DT_unsigned, false,
+                       true, instance.get_arg_pattern ().arg_list[1],
+                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+}
+
+rtx
+vmv_x_s::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  insn_code icode = code_for_vmv_x_s (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vmv_s_x functions.  */
+rtx
+vmv_s_x::expand (const function_instance &instance, tree exp, rtx target) const
+{
+
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_v_s_x (UNSPEC_VMVS, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfmv_f_s functions.  */
+void
+vfmv_f_s::get_name (char *name, const function_instance &instance) const
+{
+  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
+                       instance.get_data_type_list ()[0] == DT_unsigned, false,
+                       true, instance.get_arg_pattern ().arg_list[1],
+                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+}
+
+rtx
+vfmv_f_s::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  insn_code icode = code_for_vfmv_f_s (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfmv_s_f functions.  */
+rtx
+vfmv_s_f::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vfmv_s_f (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vslide functions.  */
+void
+vslide::get_argument_types (const function_instance &instance,
+                            vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      if (i == 2)
+        argument_types.quick_push (size_type_node);
+      else
+        argument_types.quick_push (
+            get_dt_t (instance.get_arg_pattern ().arg_list[i],
+                      instance.get_data_type_list ()[i] == DT_unsigned));
+    }
+}
+
+rtx
+vslide::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  unsigned int unspec = strcmp (instance.get_base_name (), "vslideup") == 0
+                            ? UNSPEC_SLIDEUP
+                            : UNSPEC_SLIDEDOWN;
+  icode = code_for_vslide_vx (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vslide1 functions.  */
+rtx
+vslide1::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  unsigned int unspec = strcmp (instance.get_base_name (), "vslide1up") == 0
+                            ? UNSPEC_SLIDE1UP
+                            : UNSPEC_SLIDE1DOWN;
+  icode = code_for_vslide1_vx (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vslide1 functions.  */
+rtx
+vfslide1::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  unsigned int unspec = strcmp (instance.get_base_name (), "vfslide1up") == 0
+                            ? UNSPEC_SLIDE1UP
+                            : UNSPEC_SLIDE1DOWN;
+  icode = code_for_vfslide1_vf (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vrgather functions.  */
+void
+vrgather::get_argument_types (const function_instance &instance,
+                              vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      if ((instance.get_operation () == OP_vx) && i == 2)
+        argument_types.quick_push (size_type_node);
+      else
+        argument_types.quick_push (
+            get_dt_t (instance.get_arg_pattern ().arg_list[i],
+                      instance.get_data_type_list ()[i] == DT_unsigned));
+    }
+}
+
+rtx
+vrgather::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vrgather_vv (mode);
+  else
+    icode = code_for_vrgather_vx (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vrgather functions.  */
+rtx
+vrgatherei16::expand (const function_instance &instance, tree exp,
+                      rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_vrgatherei16_vv (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+size_t
+vcompress::get_position_of_dest_arg (predication_index) const
+{
+  return 1;
+}
+
+rtx
+vcompress::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vcompress_vm (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
 /* A function_base for vsadd functions.  */
 rtx
 vsadd::expand (const function_instance &instance, tree exp, rtx target) const
