@@ -698,6 +698,66 @@
   }
   [(set_attr "type" "vsetvl")
    (set_attr "mode" "none")])
+
+;; -------------------------------------------------------------------------------
+;; ---- 7. Vector Loads and Stores
+;; -------------------------------------------------------------------------------
+;; Includes:
+;; - 7.4. Vector Unit-Stride Instructions
+;; - 7.5. Vector Strided Instructions
+;; - 7.6. Vector Indexed Instructions
+;; - 7.7. Unit-stride Fault-Only-First Instructions
+;; - 7.8. Vector Load/Store Segment Instructions
+;;  -  7.8.1. Vector Unit-Stride Segment Loads and Stores
+;;  -  7.8.2. Vector Strided Segment Loads and Stores
+;;  -  7.8.3. Vector Indexed Segment Loads and Stores
+;; -------------------------------------------------------------------------------
+
+;; Vector Unit-Stride Loads.
+(define_insn "@vle<V:mode>"
+  [(set (match_operand:V 0 "register_operand" "=vd,vd,vr,vr")
+    (unspec:V
+      [(unspec:V
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+          (unspec:V
+            [(match_operand 3 "pmode_register_operand" "r,r,r,r")
+            (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_LOAD)
+         (match_operand:V 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vle<sew>.v\t%0,(%3),%1.t
+   vle<sew>.v\t%0,(%3),%1.t
+   vle<sew>.v\t%0,(%3)
+   vle<sew>.v\t%0,(%3)"
+  [(set_attr "type" "vle")
+   (set_attr "mode" "<V:MODE>")])
+
+;; Vector Unit-Stride Stores.
+(define_insn "@vse<V:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V
+        [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,J")
+         (unspec:BLK
+           [(match_operand 1 "pmode_register_operand" "r,r")
+            (match_operand:V 2 "register_operand" "vr,vr")
+            (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_STORE)
+         (match_dup 1)] UNSPEC_SELECT)
+      (match_operand 3 "p_reg_or_const_csr_operand")
+      (match_operand 4 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vse<sew>.v\t%2,(%1),%0.t
+   vse<sew>.v\t%2,(%1)"
+  [(set_attr "type" "vse")
+   (set_attr "mode" "<V:MODE>")])
+
 ;; Vector Unit-stride mask Loads.
 (define_insn "@vlm<VB:mode>"
   [(set (match_operand:VB 0 "register_operand" "=vr")

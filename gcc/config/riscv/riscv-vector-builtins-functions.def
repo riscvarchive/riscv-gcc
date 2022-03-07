@@ -68,6 +68,15 @@ DEF_RVV_FUNCTION(vset, misc, (4, VITER(VSETF, signed), VATTR(0, VSETF, signed), 
 DEF_RVV_FUNCTION(vget, misc, (3, VITER(VGETI, signed), VITER(VFULL, signed), VATTR(0, VSUB, signed)), PAT_none, PRED_none, OP_v)
 DEF_RVV_FUNCTION(vget, misc, (3, VITER(VGETI, unsigned), VITER(VFULL, unsigned), VATTR(0, VSUB, signed)), PAT_none, PRED_none, OP_v)
 DEF_RVV_FUNCTION(vget, misc, (3, VITER(VGETF, signed), VITER(VFULL, signed), VATTR(0, VSUB, signed)), PAT_none, PRED_none, OP_v)
+/* 7. Vector Loads and Stores. */
+DEF_RVV_FUNCTION(vle, vle, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vle, vle, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vle, vle, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vlm, vlm, (1, VITER(VB, signed)), PAT_none, PRED_void, OP_v)
+DEF_RVV_FUNCTION(vse, vse, (3, VITER(VI, signed), VATTR(0, VSUB, ptr), VATTR(0, VI, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vse, vse, (3, VITER(VI, unsigned), VATTR(0, VSUB, uptr), VATTR(0, VI, unsigned)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vse, vse, (3, VITER(VF, signed), VATTR(0, VSUB, ptr), VATTR(0, VF, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vsm, vsm, (1, VITER(VB, signed)), PAT_none, PRED_void, OP_v)
 
 #undef REQUIRED_EXTENSIONS
 #undef DEF_RVV_FUNCTION
