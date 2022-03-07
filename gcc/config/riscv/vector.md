@@ -845,3 +845,716 @@
    vsse<sew>.v\t%3,(%1),zero"
   [(set_attr "type" "vsse")
    (set_attr "mode" "<V:MODE>")])
+
+;; Vector Unordered and Ordered Indexed Loads.
+;; The following patterns are the patterns will be matched after
+;; reload. We split them to 2,4,8,16,32,64,128 to reduce patterns
+;; in CODE_FOR_xxxxx, thus reduce compilation time.
+
+;; pattern of indexed loads for nunits = 2.
+(define_insn "@vl<uo>xei<V2UNITS:mode><V2UNITSI:mode>"
+  [(set (match_operand:V2UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V2UNITS
+      [(unspec:V2UNITS
+        [(match_operand:<V2UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:V2UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V2UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xei<V2UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V2UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V2UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xei<V2UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xei")
+   (set_attr "mode" "<V2UNITS:MODE>")])
+
+;; pattern of indexed loads for nunits = 4.
+(define_insn "@vl<uo>xei<V4UNITS:mode><V4UNITSI:mode>"
+  [(set (match_operand:V4UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V4UNITS
+      [(unspec:V4UNITS
+        [(match_operand:<V4UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:V4UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V4UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xei<V4UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V4UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V4UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xei<V4UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xei")
+   (set_attr "mode" "<V4UNITS:MODE>")])
+
+;; pattern of indexed loads for nunits = 8.
+(define_insn "@vl<uo>xei<V8UNITS:mode><V8UNITSI:mode>"
+  [(set (match_operand:V8UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V8UNITS
+      [(unspec:V8UNITS
+        [(match_operand:<V8UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:V8UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V8UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xei<V8UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V8UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V8UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xei<V8UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xei")
+   (set_attr "mode" "<V8UNITS:MODE>")])
+
+;; pattern of indexed loads for nunits = 16.
+(define_insn "@vl<uo>xei<V16UNITS:mode><V16UNITSI:mode>"
+  [(set (match_operand:V16UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V16UNITS
+      [(unspec:V16UNITS
+        [(match_operand:<V16UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:V16UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V16UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xei<V16UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V16UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V16UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xei<V16UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xei")
+   (set_attr "mode" "<V16UNITS:MODE>")])
+
+;; pattern of indexed loads for nunits = 32.
+(define_insn "@vl<uo>xei<V32UNITS:mode><V32UNITSI:mode>"
+  [(set (match_operand:V32UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V32UNITS
+      [(unspec:V32UNITS
+        [(match_operand:<V32UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:V32UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V32UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xei<V32UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V32UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V32UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xei<V32UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xei")
+   (set_attr "mode" "<V32UNITS:MODE>")])
+
+;; pattern of indexed loads for nunits = 64.
+(define_insn "@vl<uo>xei<V64UNITS:mode><V64UNITSI:mode>"
+  [(set (match_operand:V64UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V64UNITS
+      [(unspec:V64UNITS
+        [(match_operand:<V64UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:V64UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V64UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xei<V64UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V64UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V64UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xei<V64UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xei")
+   (set_attr "mode" "<V64UNITS:MODE>")])
+
+;; pattern of indexed loads for nunits = 128.
+(define_insn "@vl<uo>xei<V128UNITSI:mode><V128UNITSI:mode>"
+  [(set (match_operand:V128UNITSI 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:V128UNITSI
+      [(unspec:V128UNITSI
+        [(match_operand:<V128UNITSI:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:V128UNITSI 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V128UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xei<V128UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V128UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xei<V128UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xei<V128UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xei")
+   (set_attr "mode" "<V128UNITSI:MODE>")])
+
+;; Vector Unordered and Ordered Indexed Stores.
+
+;; pattern of indexed stores for nunits = 2.
+(define_insn "@vs<uo>xei<V2UNITS:mode><V2UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V2UNITS
+         [(match_operand:<V2UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V2UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:V2UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xei<V2UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xei<V2UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xei")
+   (set_attr "mode" "<V2UNITS:MODE>")])
+
+;; pattern of indexed stores for nunits = 4.
+(define_insn "@vs<uo>xei<V4UNITS:mode><V4UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V4UNITS
+         [(match_operand:<V4UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V4UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:V4UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xei<V4UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xei<V4UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xei")
+   (set_attr "mode" "<V4UNITS:MODE>")])
+
+;; pattern of indexed stores for nunits = 8.
+(define_insn "@vs<uo>xei<V8UNITS:mode><V8UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V8UNITS
+         [(match_operand:<V8UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V8UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:V8UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xei<V8UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xei<V8UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xei")
+   (set_attr "mode" "<V8UNITS:MODE>")])
+
+;; pattern of indexed stores for nunits = 16.
+(define_insn "@vs<uo>xei<V16UNITS:mode><V16UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V16UNITS
+         [(match_operand:<V16UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V16UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:V16UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xei<V16UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xei<V16UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xei")
+   (set_attr "mode" "<V16UNITS:MODE>")])
+
+;; pattern of indexed stores for nunits = 32.
+(define_insn "@vs<uo>xei<V32UNITS:mode><V32UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V32UNITS
+         [(match_operand:<V32UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V32UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:V32UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xei<V32UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xei<V32UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xei")
+   (set_attr "mode" "<V32UNITS:MODE>")])
+
+;; pattern of indexed stores for nunits = 64.
+(define_insn "@vs<uo>xei<V64UNITS:mode><V64UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V64UNITS
+         [(match_operand:<V64UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V64UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:V64UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xei<V64UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xei<V64UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xei")
+   (set_attr "mode" "<V64UNITS:MODE>")])
+
+;; pattern of indexed stores for nunits = 128.
+(define_insn "@vs<uo>xei<V128UNITSI:mode><V128UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:V128UNITSI
+         [(match_operand:<V128UNITSI:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V128UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:V128UNITSI 3 "register_operand" "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xei<V128UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xei<V128UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xei")
+   (set_attr "mode" "<V128UNITSI:MODE>")])
+
+;; Unit-stride Fault-Only-First Loads.
+(define_insn "@vle<V:mode>ff"
+  [(set (match_operand:V 0 "register_operand" "=vr,vr,vr,vr")
+   (unspec:V
+    [(unspec:V
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (unspec:V
+         [(match_operand 3 "pmode_register_operand" "r,r,r,r")
+           (mem:BLK (scratch))] UNSPEC_FAULT_ONLY_FIRST_LOAD)
+       (match_operand:V 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (reg:SI VL_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vle<sew>ff.v\t%0,(%3),%1.t
+   vle<sew>ff.v\t%0,(%3),%1.t
+   vle<sew>ff.v\t%0,(%3)
+   vle<sew>ff.v\t%0,(%3)"
+  [(set_attr "type" "vleff")
+   (set_attr "mode" "<V:MODE>")])
+
+;; Vector Unit-Stride Segment Loads.
+(define_insn "@vlseg<VT:mode>"
+  [(set (match_operand:VT 0 "register_operand" "=vr,vr,vr,vr")
+    (unspec:VT
+      [(unspec:VT
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (unspec:VT
+           [(match_operand 3 "pmode_register_operand" "r,r,r,r")
+           (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_LOAD)
+         (match_operand:VT 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+    (match_operand 4 "p_reg_or_const_csr_operand")
+    (match_operand 5 "const_int_operand")
+    (reg:SI VL_REGNUM)
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vlseg<nf>e<sew>.v\t%0,(%3),%1.t
+   vlseg<nf>e<sew>.v\t%0,(%3),%1.t
+   vlseg<nf>e<sew>.v\t%0,(%3)
+   vlseg<nf>e<sew>.v\t%0,(%3)"
+  [(set_attr "type" "vlseg")
+   (set_attr "mode" "<VT:MODE>")])
+
+;; Vector Unit-Stride Segment Stores.
+(define_insn "@vsseg<VT:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:VT
+        [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,J")
+         (unspec:BLK
+           [(match_operand 1 "pmode_register_operand" "r,r")
+           (match_operand:VT 2 "register_operand" "vr,vr")
+           (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_STORE)
+         (match_dup 1)] UNSPEC_SELECT)
+      (match_operand 3 "p_reg_or_const_csr_operand")
+      (match_operand 4 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vsseg<nf>e<sew>.v\t%2,(%1),%0.t
+   vsseg<nf>e<sew>.v\t%2,(%1)"
+  [(set_attr "type" "vsseg")
+   (set_attr "mode" "<VT:MODE>")])
+
+;; Unit-stride Fault-Only-First Segment Loads
+(define_insn "@vlseg<VT:mode>ff"
+  [(set (match_operand:VT 0 "register_operand" "=vr,vr,vr,vr")
+    (unspec:VT
+      [(unspec:VT
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (unspec:VT
+           [(match_operand 3 "pmode_register_operand" "r,r,r,r")
+           (mem:BLK (scratch))] UNSPEC_FAULT_ONLY_FIRST_LOAD)
+         (match_operand:VT 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (reg:SI VL_REGNUM))]
+  "TARGET_VECTOR"
+  "@
+   vlseg<nf>e<sew>ff.v\t%0,(%3),%1.t
+   vlseg<nf>e<sew>ff.v\t%0,(%3),%1.t
+   vlseg<nf>e<sew>ff.v\t%0,(%3)
+   vlseg<nf>e<sew>ff.v\t%0,(%3)"
+  [(set_attr "type" "vlsegff")
+   (set_attr "mode" "<VT:MODE>")])
+
+;; Vector Strided Segment Loads.
+(define_insn "@vlsseg<VT:mode>"
+  [(set (match_operand:VT 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+    (unspec:VT
+      [(unspec:VT
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (unspec:VT
+           [(match_operand 3 "pmode_register_operand" "r,r,r,r,r,r,r,r")
+           (match_operand 4 "p_reg_or_const_csr_operand" "r,J,r,J,r,J,r,J")
+           (mem:BLK (scratch))] UNSPEC_STRIDED_LOAD)
+         (match_operand:VT 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vlsseg<nf>e<sew>.v\t%0,(%3),%4,%1.t
+   vlsseg<nf>e<sew>.v\t%0,(%3),zero,%1.t
+   vlsseg<nf>e<sew>.v\t%0,(%3),%4,%1.t
+   vlsseg<nf>e<sew>.v\t%0,(%3),zero,%1.t
+   vlsseg<nf>e<sew>.v\t%0,(%3),%4
+   vlsseg<nf>e<sew>.v\t%0,(%3),zero
+   vlsseg<nf>e<sew>.v\t%0,(%3),%4
+   vlsseg<nf>e<sew>.v\t%0,(%3),zero"
+  [(set_attr "type" "vlsseg")
+   (set_attr "mode" "<VT:MODE>")])
+
+;; Vector Strided Segment Stores.
+(define_insn "@vssseg<VT:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:VT
+        [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (unspec:BLK
+           [(match_operand 1 "pmode_register_operand" "r,r,r,r")
+             (match_operand 2 "p_reg_or_const_csr_operand" "r,J,r,J")
+             (match_operand:VT 3 "register_operand" "vr,vr,vr,vr")] UNSPEC_STRIDED_STORE)
+         (match_dup 1)] UNSPEC_SELECT)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vssseg<nf>e<sew>.v\t%3,(%1),%2,%0.t
+   vssseg<nf>e<sew>.v\t%3,(%1),zero,%0.t
+   vssseg<nf>e<sew>.v\t%3,(%1),%2
+   vssseg<nf>e<sew>.v\t%3,(%1),zero"
+  [(set_attr "type" "vssseg")
+   (set_attr "mode" "<VT:MODE>")])
+
+;; Vector Unordered and Ordered Indexed Segment Loads.
+;; pattern of segments indexed loads for nunits = 2.
+(define_insn "@vl<uo>xsegei<VT2UNITS:mode><V2UNITSI:mode>"
+  [(set (match_operand:VT2UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:VT2UNITS
+      [(unspec:VT2UNITS
+        [(match_operand:<VT2UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:VT2UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V2UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xseg<nf>ei<V2UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V2UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V2UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xseg<nf>ei<V2UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xsegei")
+   (set_attr "mode" "<VT2UNITS:MODE>")])
+
+;; pattern of segments indexed loads for nunits = 4.
+(define_insn "@vl<uo>xsegei<VT4UNITS:mode><V4UNITSI:mode>"
+  [(set (match_operand:VT4UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:VT4UNITS
+      [(unspec:VT4UNITS
+        [(match_operand:<VT4UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:VT4UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V4UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xseg<nf>ei<V4UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V4UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V4UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xseg<nf>ei<V4UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xsegei")
+   (set_attr "mode" "<VT4UNITS:MODE>")])
+
+;; pattern of segments indexed loads for nunits = 8.
+(define_insn "@vl<uo>xsegei<VT8UNITS:mode><V8UNITSI:mode>"
+  [(set (match_operand:VT8UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:VT8UNITS
+      [(unspec:VT8UNITS
+        [(match_operand:<VT8UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:VT8UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V8UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xseg<nf>ei<V8UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V8UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V8UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xseg<nf>ei<V8UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xsegei")
+   (set_attr "mode" "<VT8UNITS:MODE>")])
+
+;; pattern of segments indexed loads for nunits = 16.
+(define_insn "@vl<uo>xsegei<VT16UNITS:mode><V16UNITSI:mode>"
+  [(set (match_operand:VT16UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:VT16UNITS
+      [(unspec:VT16UNITS
+        [(match_operand:<VT16UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:VT16UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V16UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xseg<nf>ei<V16UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V16UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V16UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xseg<nf>ei<V16UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xsegei")
+   (set_attr "mode" "<VT16UNITS:MODE>")])
+
+;; pattern of segments indexed loads for nunits = 32.
+(define_insn "@vl<uo>xsegei<VT32UNITS:mode><V32UNITSI:mode>"
+  [(set (match_operand:VT32UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:VT32UNITS
+      [(unspec:VT32UNITS
+        [(match_operand:<VT32UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:VT32UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V32UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xseg<nf>ei<V32UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V32UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V32UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xseg<nf>ei<V32UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xsegei")
+   (set_attr "mode" "<VT32UNITS:MODE>")])
+
+;; pattern of segments indexed loads for nunits = 64.
+(define_insn "@vl<uo>xsegei<VT64UNITS:mode><V64UNITSI:mode>"
+  [(set (match_operand:VT64UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+    (unspec:VT64UNITS
+      [(unspec:VT64UNITS
+        [(match_operand:<VT64UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+         (match_operand:VT64UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
+         (match_operand 3 "pmode_register_operand" "r,r,r,r")
+         (match_operand:V64UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (mem:BLK (scratch))] INDEXED_LOAD)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vl<uo>xseg<nf>ei<V64UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V64UNITSI:sew>.v\t%0,(%3),%4,%1.t
+   vl<uo>xseg<nf>ei<V64UNITSI:sew>.v\t%0,(%3),%4
+   vl<uo>xseg<nf>ei<V64UNITSI:sew>.v\t%0,(%3),%4"
+  [(set_attr "type" "vl<uo>xsegei")
+   (set_attr "mode" "<VT64UNITS:MODE>")])
+
+;; Vector Unordered and Ordered Indexed Segment Stores.
+;; pattern of segments indexed stores for nunits = 2.
+(define_insn "@vs<uo>xsegei<VT2UNITS:mode><V2UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:VT2UNITS
+         [(match_operand:<VT2UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V2UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:VT2UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xseg<nf>ei<V2UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xseg<nf>ei<V2UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xsegei")
+   (set_attr "mode" "<VT2UNITS:MODE>")])
+
+;; pattern of segments indexed stores for nunits = 4.
+(define_insn "@vs<uo>xsegei<VT4UNITS:mode><V4UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:VT4UNITS
+         [(match_operand:<VT4UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V4UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:VT4UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xseg<nf>ei<V4UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xseg<nf>ei<V4UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xsegei")
+   (set_attr "mode" "<VT4UNITS:MODE>")])
+
+;; pattern of segments indexed stores for nunits = 8.
+(define_insn "@vs<uo>xsegei<VT8UNITS:mode><V8UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:VT8UNITS
+         [(match_operand:<VT8UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V8UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:VT8UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xseg<nf>ei<V8UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xseg<nf>ei<V8UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xsegei")
+   (set_attr "mode" "<VT8UNITS:MODE>")])
+
+;; pattern of segments indexed stores for nunits = 16.
+(define_insn "@vs<uo>xsegei<VT16UNITS:mode><V16UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:VT16UNITS
+         [(match_operand:<VT16UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V16UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:VT16UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xseg<nf>ei<V16UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xseg<nf>ei<V16UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xsegei")
+   (set_attr "mode" "<VT16UNITS:MODE>")])
+
+;; pattern of segments indexed stores for nunits = 32.
+(define_insn "@vs<uo>xsegei<VT32UNITS:mode><V32UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:VT32UNITS
+         [(match_operand:<VT32UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V32UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:VT32UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xseg<nf>ei<V32UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xseg<nf>ei<V32UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xsegei")
+   (set_attr "mode" "<VT32UNITS:MODE>")])
+
+;; pattern of segments indexed stores for nunits = 64.
+(define_insn "@vs<uo>xsegei<VT64UNITS:mode><V64UNITSI:mode>"
+  [(set (mem:BLK (scratch))
+    (unspec:BLK
+      [(unspec:VT64UNITS
+         [(match_operand:<VT64UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
+          (match_operand 1 "pmode_register_operand" "r,r")
+          (match_operand:V64UNITSI 2 "register_operand" "vr,vr")
+          (match_operand:VT64UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vs<uo>xseg<nf>ei<V64UNITSI:sew>.v\t%3,(%1),%2,%0.t
+   vs<uo>xseg<nf>ei<V64UNITSI:sew>.v\t%3,(%1),%2"
+  [(set_attr "type" "vs<uo>xsegei")
+   (set_attr "mode" "<VT64UNITS:MODE>")])
