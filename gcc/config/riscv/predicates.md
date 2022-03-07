@@ -55,6 +55,10 @@
   (and (match_code "const_int,const_wide_int,const_double,const_vector")
        (match_test "op == CONST0_RTX (GET_MODE (op))")))
 
+(define_predicate "const_1_operand"
+  (and (match_code "const_int,const_wide_int,const_double,const_vector")
+       (match_test "op == CONST1_RTX (GET_MODE (op))")))
+
 (define_predicate "reg_or_0_operand"
   (ior (match_operand 0 "const_0_operand")
        (match_operand 0 "register_operand")))
@@ -71,7 +75,7 @@
 {
   /* Don't handle multi-word moves this way; we don't want to introduce
      the individual word-mode moves until after reload.  */
-  if (GET_MODE_SIZE (mode) > UNITS_PER_WORD)
+  if (GET_MODE_SIZE (mode).to_constant () > UNITS_PER_WORD)
     return false;
 
   /* Check whether the constant can be loaded in a single
@@ -145,6 +149,9 @@
     {
     case CONST_INT:
       return !splittable_const_int_operand (op, mode);
+
+    case CONST_POLY_INT:
+      return riscv_const_poly_int_p (op);
 
     case CONST:
     case SYMBOL_REF:
@@ -222,6 +229,128 @@
 {
   return riscv_gpr_save_operation_p (op);
 })
+
+;; Vector Predicates.
+
+;; A special predicate that doesn't match a particular mode.
+(define_special_predicate "vector_any_register_operand"
+  (match_code "reg, subreg")
+{
+  return VECTOR_MODE_P (GET_MODE (op));
+})
+
+(define_special_predicate "p_reg_or_const_csr_operand"
+  (match_code "reg, subreg, const_int")
+{
+  if (CONST_INT_P (op))
+    return INTVAL (op) < 32;
+  return GET_MODE (op) == Pmode;
+})
+
+(define_special_predicate "p_reg_or_0_operand"
+  (match_code "reg, subreg, const_int")
+{
+  if (CONST_INT_P (op))
+    return op == const0_rtx;
+  return GET_MODE (op) == Pmode;
+})
+
+(define_special_predicate "p_reg_or_uimm5_operand"
+  (match_code "reg, subreg, const_int")
+{
+  if (CONST_INT_P (op))
+    return satisfies_constraint_K (op);
+  return GET_MODE (op) == Pmode;
+})
+
+(define_predicate "reg_or_mem_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "memory_operand")))
+
+(define_predicate "reg_or_const_int_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "const_int_operand")))
+
+(define_predicate "reg_or_simm5_operand"
+  (ior (match_operand 0 "register_operand")
+       (and (match_operand 0 "const_int_operand")
+	    (match_test "!FLOAT_MODE_P (GET_MODE (op)) && IN_RANGE (INTVAL (op), -16, 15)"))))
+
+(define_predicate "reg_or_uimm5_operand"
+  (match_operand 0 "csr_operand"))
+
+(define_predicate "reg_or_neg_simm5_operand"
+  (ior (match_operand 0 "register_operand")
+       (and (match_operand 0 "const_int_operand")
+	    (match_test "IN_RANGE (INTVAL (op), -15, 16)"))))
+
+(define_predicate "vector_const_simm5_operand"
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, -16, 15)")))
+
+(define_predicate "vector_neg_const_simm5_operand"
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, -15, 16)")))
+
+(define_predicate "vector_const_uimm5_operand"
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, 0, 31)")))
+
+(define_predicate "vector_const_int_1_operand"
+  (and (match_code "const_vector")
+       (match_test "riscv_const_vec_all_same_in_range_p (op, 1, 1)")))
+
+(define_predicate "vector_move_operand"
+  (ior (match_operand 0 "nonimmediate_operand")
+      (match_code "const_vector")))
+
+(define_predicate "vector_arith_operand"
+  (ior (match_operand 0 "vector_const_simm5_operand")
+       (match_operand 0 "register_operand")))
+
+(define_predicate "vector_neg_arith_operand"
+  (ior (match_operand 0 "vector_neg_const_simm5_operand")
+       (match_operand 0 "register_operand")))
+
+(define_predicate "vector_shift_operand"
+  (ior (match_operand 0 "vector_const_uimm5_operand")
+       (match_operand 0 "register_operand")))
+
+(define_predicate "vector_reg_or_const_dup_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_test "const_vec_duplicate_p (op)
+          && !CONST_POLY_INT_P (CONST_VECTOR_ELT (op, 0))")))
+
+(define_predicate "vector_gather_scatter_scale_operand_8"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 1")))
+
+(define_predicate "vector_gather_scatter_scale_operand_16"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 1 || INTVAL (op) == 2")))
+
+(define_predicate "vector_gather_scatter_scale_operand_32"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 1 || INTVAL (op) == 4")))
+
+(define_predicate "vector_gather_scatter_scale_operand_64"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) == 1 || INTVAL (op) == 8")))
+
+(define_predicate "vector_gather_scatter_offset_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_test "riscv_vector_strided_const_vector_p (op)")))
+
+(define_predicate "vector_constant_vector_operand"
+  (match_code "const,const_vector"))
+
+(define_predicate "vector_perm_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "vector_constant_vector_operand")))
+
+(define_predicate "vector_reg_or_const0_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_test "op == const0_rtx && !VECTOR_MODE_P (GET_MODE (op))")))
 
 ;; Predicates for the ZBS extension.
 (define_predicate "single_bit_mask_operand"
