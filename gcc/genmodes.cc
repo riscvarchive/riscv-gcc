@@ -1111,10 +1111,10 @@ inline __attribute__((__always_inline__))\n\
 #else\n\
 extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 #endif\n\
-poly_uint16\n\
+poly_uint_for_mode\n\
 mode_size_inline (machine_mode mode)\n\
 {\n\
-  extern %spoly_uint16_pod mode_size[NUM_MACHINE_MODES];\n\
+  extern %spoly_uint_pod_for_mode mode_size[NUM_MACHINE_MODES];\n\
   gcc_assert (mode >= 0 && mode < NUM_MACHINE_MODES);\n\
   switch (mode)\n\
     {\n", adj_nunits || adj_bytesize ? "" : "const ");
@@ -1145,10 +1145,10 @@ inline __attribute__((__always_inline__))\n\
 #else\n\
 extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 #endif\n\
-poly_uint16\n\
+poly_uint_for_mode\n\
 mode_nunits_inline (machine_mode mode)\n\
 {\n\
-  extern %spoly_uint16_pod mode_nunits[NUM_MACHINE_MODES];\n\
+  extern %spoly_uint_pod_for_mode mode_nunits[NUM_MACHINE_MODES];\n\
   switch (mode)\n\
     {\n", adj_nunits ? "" : "const ");
 
@@ -1245,10 +1245,10 @@ inline __attribute__((__always_inline__))\n\
 #else\n\
 extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 #endif\n\
-unsigned short\n\
+poly_coeff_type_for_mode\n\
 mode_unit_precision_inline (machine_mode mode)\n\
 {\n\
-  extern const unsigned short mode_unit_precision[NUM_MACHINE_MODES];\n\
+  extern const poly_coeff_type_for_mode mode_unit_precision[NUM_MACHINE_MODES];\n\
   gcc_assert (mode >= 0 && mode < NUM_MACHINE_MODES);\n\
   switch (mode)\n\
     {");
@@ -1502,7 +1502,7 @@ emit_mode_precision (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint16_pod", "mode_precision",
+  print_maybe_const_decl ("%spoly_uint_pod_for_mode", "mode_precision",
 			  "NUM_MACHINE_MODES", adj_nunits);
 
   for_all_modes (c, m)
@@ -1521,7 +1521,7 @@ emit_mode_size (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint16_pod", "mode_size",
+  print_maybe_const_decl ("%spoly_uint_pod_for_mode", "mode_size",
 			  "NUM_MACHINE_MODES", adj_nunits || adj_bytesize);
 
   for_all_modes (c, m)
@@ -1536,7 +1536,7 @@ emit_mode_nunits (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint16_pod", "mode_nunits",
+  print_maybe_const_decl ("%spoly_uint_pod_for_mode", "mode_nunits",
 			  "NUM_MACHINE_MODES", adj_nunits);
 
   for_all_modes (c, m)
@@ -1692,7 +1692,7 @@ emit_mode_unit_precision (void)
   int c;
   struct mode_data *m;
 
-  print_decl ("unsigned short", "mode_unit_precision", "NUM_MACHINE_MODES");
+  print_decl ("poly_coeff_type_for_mode", "mode_unit_precision", "NUM_MACHINE_MODES");
 
   for_all_modes (c, m)
     {
@@ -1808,7 +1808,7 @@ emit_mode_adjustments (void)
 \nvoid\
 \ninit_adjust_machine_modes (void)\
 \n{\
-\n  poly_uint16 ps ATTRIBUTE_UNUSED;\n\
+\n  poly_uint_for_mode ps ATTRIBUTE_UNUSED;\n\
   size_t s ATTRIBUTE_UNUSED;");
 
   for (a = adj_nunits; a; a = a->next)

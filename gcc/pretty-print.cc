@@ -829,6 +829,7 @@ pp_wide_integer (pretty_printer *pp, const poly_int_pod<N, T> &x)
 }
 
 template void pp_wide_integer (pretty_printer *, const poly_uint16_pod &);
+template void pp_wide_integer (pretty_printer *, const poly_uint32_pod &);
 template void pp_wide_integer (pretty_printer *, const poly_int64_pod &);
 template void pp_wide_integer (pretty_printer *, const poly_uint64_pod &);
 

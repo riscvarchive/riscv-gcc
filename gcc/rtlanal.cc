@@ -6962,7 +6962,7 @@ register_asm_p (const_rtx x)
 bool
 vec_series_highpart_p (machine_mode result_mode, machine_mode op_mode, rtx sel)
 {
-  int nunits;
+  unsigned int nunits;
   if (GET_MODE_NUNITS (op_mode).is_constant (&nunits)
       && targetm.can_change_mode_class (op_mode, result_mode, ALL_REGS))
     {
@@ -6981,7 +6981,7 @@ vec_series_highpart_p (machine_mode result_mode, machine_mode op_mode, rtx sel)
 bool
 vec_series_lowpart_p (machine_mode result_mode, machine_mode op_mode, rtx sel)
 {
-  int nunits;
+  unsigned int nunits;
   if (GET_MODE_NUNITS (op_mode).is_constant (&nunits)
       && targetm.can_change_mode_class (op_mode, result_mode, ALL_REGS))
     {

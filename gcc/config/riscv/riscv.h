@@ -1027,10 +1027,10 @@ while (0)
 extern const enum reg_class riscv_regno_to_class[];
 extern bool riscv_slow_unaligned_access_p;
 extern unsigned riscv_stack_boundary;
-extern poly_uint16 riscv_vector_chunks;
+extern poly_uint_for_mode riscv_vector_chunks;
 /* The number of bits and bytes in a RVV vector.  */
-#define BITS_PER_RISCV_VECTOR (poly_uint16 (riscv_vector_chunks * 64))
-#define BYTES_PER_RISCV_VECTOR (poly_uint16 (riscv_vector_chunks * 8))
+#define BITS_PER_RISCV_VECTOR (poly_uint_for_mode (riscv_vector_chunks * 64))
+#define BYTES_PER_RISCV_VECTOR (poly_uint_for_mode (riscv_vector_chunks * 8))
 #endif
 
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL) \

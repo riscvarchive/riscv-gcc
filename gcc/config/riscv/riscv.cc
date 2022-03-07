@@ -72,6 +72,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "riscv-vector-builtins.h"
 /* This file should be included last.  */
 #include "target-def.h"
+#include "riscv-vector-cost.h"
 
 /* True if X is an UNSPEC wrapper around a SYMBOL_REF or LABEL_REF.  */
 #define UNSPEC_ADDRESS_P(X)					\
@@ -253,6 +254,12 @@ struct riscv_tune_param
   bool slow_unaligned_access;
 };
 
+/* Cost for vector insn classes.  */
+struct riscv_vector_tune_param {
+    const vector_insn_cost_table* rvv_insn_costs_table;
+    const vector_stmt_cost_table* rvv_stmt_costs_table;
+};
+
 /* Information about one micro-arch we know about.  */
 struct riscv_tune_info {
   /* This micro-arch canonical name.  */
@@ -263,6 +270,9 @@ struct riscv_tune_info {
 
   /* Tuning parameters for this micro-arch.  */
   const struct riscv_tune_param *tune_param;
+
+  /* Tuning vector parameters for this micro-arch.  */
+  const struct riscv_vector_tune_param *vector_tune_param;
 };
 
 /* Global variables for machine-dependent things.  */
@@ -281,10 +291,17 @@ static int epilogue_cfa_sp_offset;
 /* Which tuning parameters to use.  */
 static const struct riscv_tune_param *tune_param;
 
+/* Which vector tuning parameters to use.  */
+static const struct riscv_vector_tune_param *vector_tune_param;
+
 /* Which automaton to use for tuning.  */
 enum riscv_microarchitecture_type riscv_microarchitecture;
+
 /* The number of 64-bit elements in an RVV vector.  */
-poly_uint16 riscv_vector_chunks;
+poly_uint_for_mode riscv_vector_chunks;
+
+/* Prefer vf for auto-vectorizer.  */
+unsigned riscv_vectorization_factor;
 
 /* Index R is the smallest register class that contains register R.  */
 const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
@@ -374,6 +391,47 @@ static const struct riscv_tune_param optimize_size_tune_info = {
   false,					/* slow_unaligned_access */
 };
 
+static const vector_insn_scale_table generic_rvv_insn_scale_table = {
+    4, /*load*/
+    1, /*store*/
+    1, /*alu*/
+    1, /*mult*/
+    1, /*movi*/
+    1, /*dup*/
+    1, /*extract*/
+    1, /*if_then_else*/
+};
+
+static const vector_stmt_scale_table generic_rvv_stmt_scale_table = {
+    1, /* scalar_int_stmt_cost  */
+    1, /* scalar_fp_stmt_cost  */
+    1, /* scalar_load_cost  */
+    1, /* scalar_store_cost  */
+    1, /* vec_int_stmt_cost  */
+    1, /* vec_fp_stmt_cost  */
+    1, /* vec_permute_cost  */
+    1, /* vec_to_scalar_cost  */
+    1, /* scalar_to_vec_cost  */
+    1, /* vec_align_load_cost  */
+    1, /* vec_unalign_load_cost  */
+    1, /* vec_unalign_store_cost  */
+    1, /* vec_store_cost  */
+    1, /* cond_taken_branch_cost  */
+    1 /* cond_not_taken_branch_cost  */
+};
+
+static const vector_insn_cost_table* generic_rvv_insn_cost_table =
+            new vector_insn_cost_table(&generic_rvv_insn_scale_table);
+
+static const vector_stmt_cost_table* generic_rvv_stmt_cost_table =
+            new vector_stmt_cost_table(&generic_rvv_stmt_scale_table);
+
+/* Costs to use when optimizing for riscv vector.  */
+static const struct riscv_vector_tune_param generic_rvv_tune_info = {
+  generic_rvv_insn_cost_table,
+  generic_rvv_stmt_cost_table
+};
+
 static tree riscv_handle_fndecl_attribute (tree *, tree, tree, int, bool *);
 static tree riscv_handle_type_attribute (tree *, tree, tree, int, bool *);
 
@@ -405,12 +463,12 @@ static const unsigned gpr_save_reg_order[] = {
 
 /* A table describing all the processors GCC knows about.  */
 static const struct riscv_tune_info riscv_tune_info_table[] = {
-  { "rocket", generic, &rocket_tune_info },
-  { "sifive-3-series", generic, &rocket_tune_info },
-  { "sifive-5-series", generic, &rocket_tune_info },
-  { "sifive-7-series", sifive_7, &sifive_7_tune_info },
-  { "thead-c906", generic, &thead_c906_tune_info },
-  { "size", generic, &optimize_size_tune_info },
+  { "rocket", generic, &rocket_tune_info, &generic_rvv_tune_info },
+  { "sifive-3-series", generic, &rocket_tune_info, &generic_rvv_tune_info },
+  { "sifive-5-series", generic, &rocket_tune_info, &generic_rvv_tune_info },
+  { "sifive-7-series", sifive_7, &sifive_7_tune_info, &generic_rvv_tune_info },
+  { "thead-c906", generic, &thead_c906_tune_info,  &generic_rvv_tune_info },
+  { "size", generic, &optimize_size_tune_info, &generic_rvv_tune_info },
 };
 
 /* Implement TARGET_MIN_ARITHMETIC_PRECISION.  */
@@ -4674,6 +4732,12 @@ static bool
 riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UNUSED,
 		 int *total, bool speed)
 {
+  /* FIXME: adjust vector cost. */
+  if (riscv_vector_mode_p (mode))
+    {
+      return vector_tune_param->rvv_insn_costs_table->get_cost (x, mode, total, speed);
+    }
+
   bool float_mode_p = FLOAT_MODE_P (mode);
   int cost;
 
@@ -8560,7 +8624,7 @@ riscv_init_machine_status (void)
 
 /* Return the Vlen value associated with -mriscv-vector-bits= value VALUE.  */
 
-static poly_uint16
+static poly_uint_for_mode
 riscv_convert_riscv_vector_bits (riscv_vector_bits_enum value)
 {
   /* 64-bit RVV modes use different register layouts
@@ -8573,7 +8637,7 @@ riscv_convert_riscv_vector_bits (riscv_vector_bits_enum value)
      For now, it seems better to generate length-agnostic code for that
      case instead.  */
   if (value == RVV_SCALABLE)
-    return poly_uint16 (2, 2);
+    return poly_uint_for_mode (2, 2);
   else
     return (int) value / 64;
 }
@@ -8612,6 +8676,7 @@ riscv_option_override (void)
 			   RISCV_TUNE_STRING_DEFAULT));
   riscv_microarchitecture = cpu->microarchitecture;
   tune_param = optimize_size ? &optimize_size_tune_info : cpu->tune_param;
+  vector_tune_param = cpu->vector_tune_param;
 
   /* Use -mtune's setting for slow_unaligned_access, even when optimizing
      for size.  For architectures that trap and emulate unaligned accesses,
@@ -9831,6 +9896,18 @@ riscv_autovectorize_vector_modes (vector_modes *modes, bool)
 
   return 0;
 }
+
+/* Additional target hook to define the approach that is
+   used in partial vector during autovectorization. */
+static bool
+riscv_autovectorize_partial_vectors_approach (bool, bool lens_is_empty)
+{
+  if (!lens_is_empty)
+    return true;
+
+  return false;
+}
+
 /* Implement TARGET_VECTORIZE_GET_MASK_MODE.  */
 
 static opt_machine_mode
@@ -9858,6 +9935,82 @@ riscv_empty_mask_is_expensive (unsigned)
 {
   return false;
 }
+
+/* Vectorizer cost model target hooks.  */
+
+/* Implement targetm.vectorize.builtin_vectorization_cost.  */
+int
+riscv_builtin_vectorization_cost (enum vect_cost_for_stmt type_of_cost,
+                                tree vectype,
+                                int misalign ATTRIBUTE_UNUSED)
+{
+    unsigned elements;
+    bool fp = false;
+    rtx x = NULL_RTX;
+    machine_mode mode = VOIDmode;
+
+    if (vectype != NULL) {
+        fp = FLOAT_TYPE_P (vectype);
+        mode = TYPE_MODE(vectype);
+    }
+
+    switch (type_of_cost) {
+        case scalar_stmt:
+            return fp ? vector_tune_param->rvv_stmt_costs_table->scalar_fp->cost(x, mode)
+                            : vector_tune_param->rvv_stmt_costs_table->scalar_int->cost(x, mode);
+
+        case scalar_load:
+            return vector_tune_param->rvv_stmt_costs_table->scalar_load->cost(x, mode);
+
+        case scalar_store:
+            return vector_tune_param->rvv_stmt_costs_table->scalar_store->cost(x, mode);
+
+        case vector_stmt:
+            return fp ? vector_tune_param->rvv_stmt_costs_table->vec_fp->cost(x, mode)
+                            : vector_tune_param->rvv_stmt_costs_table->vec_int->cost(x, mode);
+
+        case vector_load:
+            return vector_tune_param->rvv_stmt_costs_table->vec_align_load->cost(x, mode);
+
+        case vector_store:
+            return vector_tune_param->rvv_stmt_costs_table->vec_store->cost(x, mode);
+
+        case vec_to_scalar:
+            return vector_tune_param->rvv_stmt_costs_table->vec_to_scalar->cost(x, mode);
+
+        case scalar_to_vec:
+            return vector_tune_param->rvv_stmt_costs_table->scalar_to_vec->cost(x, mode);
+
+        case unaligned_load:
+        case vector_gather_load:
+            return vector_tune_param->rvv_stmt_costs_table->vec_unalign_load->cost(x, mode);
+
+        case unaligned_store:
+        case vector_scatter_store:
+            return vector_tune_param->rvv_stmt_costs_table->vec_unalign_store->cost(x, mode);
+
+        case cond_branch_taken:
+            return vector_tune_param->rvv_stmt_costs_table->cond_taken_branch->cost(x, mode);
+
+        case cond_branch_not_taken:
+            return vector_tune_param->rvv_stmt_costs_table->cond_not_taken_branch->cost(x, mode);
+
+        case vec_perm:
+            return vector_tune_param->rvv_stmt_costs_table->vec_permute->cost(x, mode);
+
+        case vec_promote_demote:
+            return fp ? vector_tune_param->rvv_stmt_costs_table->vec_fp->cost(x, mode)
+                            : vector_tune_param->rvv_stmt_costs_table->vec_int->cost(x, mode);
+
+        case vec_construct:
+            elements = estimated_poly_value (TYPE_VECTOR_SUBPARTS (vectype));
+            return elements / 2 + 1;
+
+        default:
+        gcc_unreachable ();
+    }
+}
+
 /* vec_perm support.  */
 
 struct expand_vec_perm_d
@@ -10563,6 +10716,13 @@ riscv_vectorize_create_costs (vec_info *vinfo, bool costing_for_scalar)
 
 #undef TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE
 #define TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE riscv_empty_mask_is_expensive
+
+#undef TARGET_VECTORIZE_BUILTIN_VECTORIZATION_COST
+#define TARGET_VECTORIZE_BUILTIN_VECTORIZATION_COST riscv_builtin_vectorization_cost
+
+#undef TARGET_VECTORIZE_CREATE_COSTS
+#define TARGET_VECTORIZE_CREATE_COSTS riscv_vectorize_create_costs
+
 #undef TARGET_VECTORIZE_VEC_PERM_CONST
 #define TARGET_VECTORIZE_VEC_PERM_CONST riscv_vectorize_vec_perm_const
 

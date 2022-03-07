@@ -21,6 +21,7 @@ along with GCC; see the file COPYING3.  If not see
 #define HAVE_POLY_INT_TYPES_H
 
 typedef poly_int_pod<NUM_POLY_INT_COEFFS, unsigned short> poly_uint16_pod;
+typedef poly_int_pod<NUM_POLY_INT_COEFFS, unsigned int> poly_uint32_pod;
 typedef poly_int_pod<NUM_POLY_INT_COEFFS, HOST_WIDE_INT> poly_int64_pod;
 typedef poly_int_pod<NUM_POLY_INT_COEFFS,
 		     unsigned HOST_WIDE_INT> poly_uint64_pod;
@@ -29,12 +30,22 @@ typedef poly_int_pod<NUM_POLY_INT_COEFFS, wide_int> poly_wide_int_pod;
 typedef poly_int_pod<NUM_POLY_INT_COEFFS, widest_int> poly_widest_int_pod;
 
 typedef poly_int<NUM_POLY_INT_COEFFS, unsigned short> poly_uint16;
+typedef poly_int<NUM_POLY_INT_COEFFS, unsigned int> poly_uint32;
 typedef poly_int<NUM_POLY_INT_COEFFS, HOST_WIDE_INT> poly_int64;
 typedef poly_int<NUM_POLY_INT_COEFFS, unsigned HOST_WIDE_INT> poly_uint64;
 typedef poly_int<NUM_POLY_INT_COEFFS, offset_int> poly_offset_int;
 typedef poly_int<NUM_POLY_INT_COEFFS, wide_int> poly_wide_int;
 typedef poly_int<NUM_POLY_INT_COEFFS, wide_int_ref> poly_wide_int_ref;
 typedef poly_int<NUM_POLY_INT_COEFFS, widest_int> poly_widest_int;
+
+#if defined (MAX_BITSIZE_MODE_ANY_MODE) && MAX_BITSIZE_MODE_ANY_MODE > 0xFFFF
+typedef unsigned int poly_coeff_type_for_mode;
+#else
+typedef unsigned short poly_coeff_type_for_mode;
+#endif
+
+typedef poly_int_pod<NUM_POLY_INT_COEFFS, poly_coeff_type_for_mode> poly_uint_pod_for_mode;
+typedef poly_int<NUM_POLY_INT_COEFFS, poly_coeff_type_for_mode> poly_uint_for_mode;
 
 /* Divide bit quantity X by BITS_PER_UNIT and round down (towards -Inf).
    If X is a bit size, this gives the number of whole bytes spanned by X.
