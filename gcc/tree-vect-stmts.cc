@@ -5964,10 +5964,10 @@ vectorizable_shift (vec_info *vinfo,
       bool with_len_loop_p = loop_vinfo && LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo);
       internal_fn len_fn = get_with_length_shift_internal_fn (code, VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (vop1))));
 
-      if (lens && with_len_loop_p && ((int)lens->length () == (1 * ncopies))
+      if (lens && with_len_loop_p && ((int)lens->length () == ncopies)
       	&& direct_internal_fn_supported_p (len_fn, vectype, OPTIMIZE_FOR_SPEED))
 	{
-          tree len = vect_get_loop_len (loop_vinfo, lens, vec_num * ncopies, i);
+      tree len = vect_get_loop_len (loop_vinfo, lens, ncopies, i);
 	  gcall *call = gimple_build_call_internal (len_fn, 3, vop0, vop1, len);
 	  new_stmt = call;
           new_temp = make_ssa_name (vec_dest, new_stmt);
@@ -5976,8 +5976,8 @@ vectorizable_shift (vec_info *vinfo,
       else
 	{
 	  new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1);
-      	  new_temp = make_ssa_name (vec_dest, new_stmt);
-      	  gimple_assign_set_lhs (new_stmt, new_temp);
+      new_temp = make_ssa_name (vec_dest, new_stmt);
+      gimple_assign_set_lhs (new_stmt, new_temp);
 	}
 
       vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
