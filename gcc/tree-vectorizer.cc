@@ -100,19 +100,15 @@ auto_purge_vect_location::~auto_purge_vect_location ()
 void
 dump_stmt_cost (FILE *f, int count, enum vect_cost_for_stmt kind,
 		stmt_vec_info stmt_info, tree, int misalign, unsigned cost,
-		enum vect_cost_model_location where, bool costing_for_scalar)
+		enum vect_cost_model_location where)
 {
-  const char *cost_type = "vector_cost";
-  if (costing_for_scalar)
-    cost_type = "scalar_cost";
-  fprintf (f, "  add_stmt_cost(%s): ", cost_type);
   if (stmt_info)
     {
       print_gimple_expr (f, STMT_VINFO_STMT (stmt_info), 0, TDF_SLIM);
-      fprintf (f, ", ");
+      fprintf (f, " ");
     }
   else
-    fprintf (f, "<unknown>, ");
+    fprintf (f, "<unknown> ");
   fprintf (f, "%d times ", count);
   const char *ks = "unknown";
   switch (kind)

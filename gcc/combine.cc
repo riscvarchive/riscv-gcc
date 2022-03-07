@@ -7316,7 +7316,7 @@ expand_field_assignment (const_rtx x)
 {
   rtx inner;
   rtx pos;			/* Always counts from low bit.  */
-  unsigned int len, inner_len;
+  int len, inner_len;
   rtx mask, cleared, masked;
   scalar_int_mode compute_mode;
 
@@ -7732,7 +7732,7 @@ make_extraction (machine_mode mode, rtx inner, HOST_WIDE_INT pos,
 	 If it's a MEM we need to recompute POS relative to that.
 	 However, if we're extracting from (or inserting into) a register,
 	 we want to recompute POS relative to wanted_inner_mode.  */
-      unsigned int width;
+      int width;
       if (!MEM_P (inner))
 	width = GET_MODE_BITSIZE (wanted_inner_mode);
       else if (!GET_MODE_BITSIZE (is_mode).is_constant (&width))
@@ -7937,7 +7937,7 @@ make_compound_operation_int (scalar_int_mode mode, rtx *x_ptr,
   rtx x = *x_ptr;
   enum rtx_code next_code = *next_code_ptr;
   enum rtx_code code = GET_CODE (x);
-  unsigned int mode_width = GET_MODE_PRECISION (mode);
+  int mode_width = GET_MODE_PRECISION (mode);
   rtx rhs, lhs;
   rtx new_rtx = 0;
   int i;
@@ -8160,7 +8160,7 @@ make_compound_operation_int (scalar_int_mode mode, rtx *x_ptr,
 
 	  sub = XEXP (XEXP (x, 0), 0);
 	  machine_mode sub_mode = GET_MODE (sub);
-	  unsigned int sub_width;
+	  int sub_width;
 	  if ((REG_P (sub) || MEM_P (sub))
 	      && GET_MODE_PRECISION (sub_mode).is_constant (&sub_width)
 	      && sub_width < mode_width)
@@ -8257,7 +8257,7 @@ make_compound_operation_int (scalar_int_mode mode, rtx *x_ptr,
 	    && subreg_lowpart_p (x))
 	  {
 	    new_rtx = make_compound_operation (XEXP (inner, 0), next_code);
-	    unsigned int width = GET_MODE_PRECISION (inner_mode)
+	    int width = GET_MODE_PRECISION (inner_mode)
 			- INTVAL (XEXP (inner, 1));
 	    if (width > mode_width)
 	      width = mode_width;

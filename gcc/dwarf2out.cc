@@ -14317,8 +14317,7 @@ static dw_loc_descr_ref
 multiple_reg_loc_descriptor (rtx rtl, rtx regs,
 			     enum var_init_status initialized)
 {
-  unsigned int size;
-  int i;
+  int size, i;
   dw_loc_descr_ref loc_result = NULL;
 
   /* Simple, contiguous registers.  */
@@ -17163,8 +17162,7 @@ loc_descriptor (rtx rtl, machine_mode mode,
 	rtvec par_elems = XVEC (rtl, 0);
 	int num_elem = GET_NUM_ELEM (par_elems);
 	machine_mode mode;
-	int i;
-  unsigned int size;
+	int i, size;
 
 	/* Create the first one, so we have something to add to.  */
 	loc_result = loc_descriptor (XEXP (RTVEC_ELT (par_elems, 0), 0),

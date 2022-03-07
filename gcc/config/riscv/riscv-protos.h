@@ -24,8 +24,7 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Symbol types we understand.  The order of this list must match that of
    the unspec enum in riscv.md, subsequent to UNSPEC_ADDRESS_FIRST.  */
-enum riscv_symbol_type
-{
+enum riscv_symbol_type {
   SYMBOL_ABSOLUTE,
   SYMBOL_PCREL,
   SYMBOL_GOT_DISP,
@@ -65,7 +64,7 @@ extern rtx riscv_legitimize_call_address (rtx);
 extern void riscv_set_return_address (rtx, rtx);
 extern bool riscv_expand_block_move (rtx, rtx, rtx);
 extern rtx riscv_return_addr (int, rtx);
-extern poly_int64 riscv_initial_elimination_offset (int, int);
+extern HOST_WIDE_INT riscv_initial_elimination_offset (int, int);
 extern void riscv_expand_prologue (void);
 extern void riscv_expand_epilogue (int);
 extern bool riscv_epilogue_uses (unsigned int);
@@ -76,81 +75,6 @@ extern bool riscv_store_data_bypass_p (rtx_insn *, rtx_insn *);
 extern rtx riscv_gen_gpr_save_insn (struct riscv_frame_info *);
 extern bool riscv_gpr_save_operation_p (rtx);
 
-/* Routines implemented for RVV support */
-extern poly_uint64 riscv_regmode_natural_size (machine_mode);
-extern bool riscv_vector_mask_mode_p (machine_mode);
-extern bool riscv_vector_data_mode_p (machine_mode);
-extern bool riscv_vector_mode_p (machine_mode);
-extern opt_machine_mode riscv_vector_data_mode (scalar_mode, poly_uint64);
-extern bool riscv_tuple_mode_p (machine_mode);
-extern unsigned int riscv_parse_vlmul_field (unsigned int);
-extern unsigned int riscv_parse_vsew_field (unsigned int);
-extern bool riscv_parse_vta_field (unsigned int);
-extern bool riscv_parse_vma_field (unsigned int);
-extern unsigned int riscv_classify_vlmul_field (machine_mode);
-extern unsigned int riscv_classify_vsew_field (machine_mode);
-extern machine_mode riscv_translate_attr_mode (rtx_insn *);
-extern int riscv_classify_nf (machine_mode);
-extern int riscv_vlmul_regsize(machine_mode);
-extern opt_machine_mode riscv_tuple_mode (machine_mode, unsigned int);
-extern bool riscv_const_vec_all_same_in_range_p (rtx, HOST_WIDE_INT, HOST_WIDE_INT);
-extern unsigned riscv_dbx_register_number (unsigned);
-extern bool riscv_const_poly_int_p (rtx);
-extern void riscv_expand_vcond (machine_mode, machine_mode, machine_mode, rtx *, bool);
-#ifdef RTX_CODE
-extern void riscv_expand_vec_cmp_int (rtx, enum rtx_code, rtx, rtx, rtx);
-extern void riscv_expand_vec_cmp_float (rtx, enum rtx_code, rtx, rtx, rtx);
-#endif
-extern void
-emit_op5 (
-  unsigned int unspec,
-  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
-  machine_mode VSUBmode,
-  rtx *operands,
-  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx),
-  bool (*imm_p) (rtx),
-  int i, bool reverse
-);
-extern void
-emit_op6 (
-  unsigned int unspec,
-  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
-  machine_mode VSUBmode,
-  rtx *operands,
-  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx),
-  bool (*imm_p) (rtx),
-  int i, bool reverse
-);
-extern void
-emit_op7 (
-  unsigned int unspec,
-  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
-  machine_mode VSUBmode,
-  rtx *operands,
-  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
-  bool (*imm_p) (rtx),
-  int i, bool reverse
-);
-extern void riscv_vector_expand_vector_init (rtx, rtx);
-extern bool riscv_vector_strided_const_vector_p (rtx);
-extern void riscv_vector_expand_series_const_vector (rtx, rtx);
-extern void riscv_vector_expand_vec_perm (rtx, rtx, rtx, rtx);
-extern void riscv_init_expanders (void);
-extern void riscv_vector_expand_gather_scatter (rtx *, unsigned int);
-extern rtx riscv_vector_constant_helper (const char *, machine_mode);
-extern bool riscv_vector_expand_block_move (rtx *);
-extern bool riscv_vector_expand_strlen (rtx *);
-extern bool riscv_vector_expand_strcpy (rtx *);
-extern bool riscv_vector_expand_strcmp (rtx *);
-extern rtx riscv_vector_gen_policy (unsigned int rvv_policy = 0);
-extern unsigned int get_vtype_for_mode (machine_mode);
-extern machine_mode get_vector_mode_for_mask (machine_mode);
 /* Routines implemented in riscv-c.cc.  */
 void riscv_cpu_cpp_builtins (cpp_reader *);
 
@@ -163,7 +87,6 @@ extern void riscv_atomic_assign_expand_fenv (tree *, tree *, tree *);
 extern rtx riscv_expand_builtin (tree, rtx, rtx, machine_mode, int);
 extern tree riscv_builtin_decl (unsigned int, bool);
 extern void riscv_init_builtins (void);
-extern bool riscv_gimple_fold_builtin (gimple_stmt_iterator *);
 
 /* Routines implemented in riscv-common.cc.  */
 extern std::string riscv_arch_str (bool version_p = true);
@@ -171,12 +94,9 @@ extern std::string riscv_arch_str (bool version_p = true);
 extern bool riscv_hard_regno_rename_ok (unsigned, unsigned);
 
 rtl_opt_pass * make_pass_shorten_memrefs (gcc::context *ctxt);
-rtl_opt_pass * make_pass_insert_vsetvli (gcc::context *ctxt);
-rtl_opt_pass * make_pass_insert_vsetvli2 (gcc::context *ctxt);
 
 /* Information about one CPU we know about.  */
-struct riscv_cpu_info
-{
+struct riscv_cpu_info {
   /* This CPU's canonical name.  */
   const char *name;
 
@@ -188,25 +108,5 @@ struct riscv_cpu_info
 };
 
 extern const riscv_cpu_info *riscv_find_cpu (const char *);
-
-void riscv_register_pragmas (void);
-
-/* We classify builtin types into two classes:
-   1. General builtin class which is using the
-      original builtin architecture built in
-      RISCV.
-   2. Vector builtin class which is a special
-      builtin architecture that implement
-      intrinsic short into "pragam".  */
-enum riscv_builtin_class
-{
-  RISCV_BUILTIN_GENERAL,
-  RISCV_BUILTIN_VECTOR
-};
-
-const unsigned int RISCV_BUILTIN_SHIFT = 1;
-
-/* Mask that selects the vector_builtin_class part of a function code.  */
-const unsigned int RISCV_BUILTIN_CLASS = (1 << RISCV_BUILTIN_SHIFT) - 1;
 
 #endif /* ! GCC_RISCV_PROTOS_H */

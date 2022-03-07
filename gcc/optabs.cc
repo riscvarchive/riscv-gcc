@@ -428,7 +428,7 @@ force_expand_binop (machine_mode mode, optab binoptab,
 rtx
 expand_vector_broadcast (machine_mode vmode, rtx op)
 {
-  unsigned int n;
+  int n;
   rtvec vec;
 
   gcc_checking_assert (VECTOR_MODE_P (vmode));
@@ -458,7 +458,7 @@ expand_vector_broadcast (machine_mode vmode, rtx op)
     return NULL;
 
   vec = rtvec_alloc (n);
-  for (unsigned int i = 0; i < n; ++i)
+  for (int i = 0; i < n; ++i)
     RTVEC_ELT (vec, i) = op;
   rtx ret = gen_reg_rtx (vmode);
   emit_insn (GEN_FCN (icode) (ret, gen_rtx_PARALLEL (vmode, vec)));
@@ -5362,7 +5362,7 @@ expand_float (rtx to, rtx from, int unsignedp)
 
 	if (fmode != GET_MODE (to)
 	    && (significand_size (fmode)
-		< (HOST_WIDE_INT)GET_MODE_UNIT_PRECISION (GET_MODE (from))))
+		< GET_MODE_UNIT_PRECISION (GET_MODE (from))))
 	  continue;
 
 	icode = can_float_p (fmode, imode, unsignedp);
@@ -7695,7 +7695,7 @@ bool
 valid_multiword_target_p (rtx target)
 {
   machine_mode mode;
-  unsigned int i, size;
+  int i, size;
 
   mode = GET_MODE (target);
   if (!GET_MODE_SIZE (mode).is_constant (&size))

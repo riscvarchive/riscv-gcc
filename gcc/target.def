@@ -1924,15 +1924,6 @@ transformations even in absence of specialized @acronym{SIMD} hardware.",
  (scalar_mode mode),
  default_preferred_simd_mode)
 
-/* Returns the partial vectors approach that is used by autovectorization.  */
-DEFHOOK
-(autovectorize_partial_vectors_approach,
- "Returns the partial vectors approach that is used by autovectorization.\n\
-The default is false which is masking approach, return true if use length\n\
-approach.",
- bool, (bool masks_is_empty, bool lens_is_empty),
- hook_bool_bool_bool_false)
-
 /* Returns the preferred mode for splitting SIMD reductions to.  */
 DEFHOOK
 (split_reduction,

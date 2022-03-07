@@ -546,59 +546,6 @@ make_vector_modes (enum mode_class cl, const char *prefix, unsigned int width,
     }
 }
 
-/* For all modes in class CL, construct vector modes of width
-   WIDTH, having as many components as necessary, and partition as
-   NPART subpart.  */
-#define VECTOR_TUPLE_MODES_WITH_PREFIX(PREFIX, C, W, N, ORDER) \
-  make_vector_tuple_modes (MODE_##C, #PREFIX, W, N, ORDER, __FILE__, __LINE__)
-static void ATTRIBUTE_UNUSED
-make_vector_tuple_modes (enum mode_class cl, const char *prefix,
-			 unsigned int width, unsigned nsubpart, unsigned int order,
-			 const char *file, unsigned int line)
-{
-  struct mode_data *m;
-  struct mode_data *v;
-  /* Big enough for a 32-bit UINT_MAX plus the text.  */
-  char buf[12];
-  unsigned int ncomponents;
-  enum mode_class vclass = vector_class (cl);
-
-  if (vclass == MODE_RANDOM)
-    return;
-
-  for (m = modes[cl]; m; m = m->next)
-    {
-      /* Do not construct vector modes with only one element, or
-	 vector modes where the element size doesn't divide the full
-	 size evenly.  */
-      ncomponents = width / m->bytesize / nsubpart;
-      if (ncomponents < 2)
-	continue;
-      if (width % m->bytesize)
-	continue;
-
-      /* Skip QFmode and BImode.  FIXME: this special case should
-	 not be necessary.  */
-      if (cl == MODE_FLOAT && m->bytesize == 1)
-	continue;
-      if (cl == MODE_INT && m->precision == 1)
-	continue;
-
-      if ((size_t) snprintf (buf, sizeof buf, "%s%ux%u%s", prefix,
-			     nsubpart, ncomponents, m->name) >= sizeof buf)
-	{
-	  error ("%s:%d: mode name \"%s\" is too long",
-		 m->file, m->line, m->name);
-	  continue;
-	}
-
-      v = new_mode (vclass, xstrdup (buf), file, line);
-      v->order = order;
-      v->component = m;
-      v->ncomponents = ncomponents;
-    }
-}
-
 /* Create a vector of booleans called NAME with COUNT elements and
    BYTESIZE bytes in total.  */
 #define VECTOR_BOOL_MODE(NAME, COUNT, BYTESIZE) \
@@ -1111,10 +1058,10 @@ inline __attribute__((__always_inline__))\n\
 #else\n\
 extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 #endif\n\
-poly_uint_for_mode\n\
+poly_uint16\n\
 mode_size_inline (machine_mode mode)\n\
 {\n\
-  extern %spoly_uint_pod_for_mode mode_size[NUM_MACHINE_MODES];\n\
+  extern %spoly_uint16_pod mode_size[NUM_MACHINE_MODES];\n\
   gcc_assert (mode >= 0 && mode < NUM_MACHINE_MODES);\n\
   switch (mode)\n\
     {\n", adj_nunits || adj_bytesize ? "" : "const ");
@@ -1145,10 +1092,10 @@ inline __attribute__((__always_inline__))\n\
 #else\n\
 extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 #endif\n\
-poly_uint_for_mode\n\
+poly_uint16\n\
 mode_nunits_inline (machine_mode mode)\n\
 {\n\
-  extern %spoly_uint_pod_for_mode mode_nunits[NUM_MACHINE_MODES];\n\
+  extern %spoly_uint16_pod mode_nunits[NUM_MACHINE_MODES];\n\
   switch (mode)\n\
     {\n", adj_nunits ? "" : "const ");
 
@@ -1245,10 +1192,10 @@ inline __attribute__((__always_inline__))\n\
 #else\n\
 extern __inline__ __attribute__((__always_inline__, __gnu_inline__))\n\
 #endif\n\
-poly_coeff_type_for_mode\n\
+unsigned short\n\
 mode_unit_precision_inline (machine_mode mode)\n\
 {\n\
-  extern const poly_coeff_type_for_mode mode_unit_precision[NUM_MACHINE_MODES];\n\
+  extern const unsigned short mode_unit_precision[NUM_MACHINE_MODES];\n\
   gcc_assert (mode >= 0 && mode < NUM_MACHINE_MODES);\n\
   switch (mode)\n\
     {");
@@ -1502,7 +1449,7 @@ emit_mode_precision (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint_pod_for_mode", "mode_precision",
+  print_maybe_const_decl ("%spoly_uint16_pod", "mode_precision",
 			  "NUM_MACHINE_MODES", adj_nunits);
 
   for_all_modes (c, m)
@@ -1521,7 +1468,7 @@ emit_mode_size (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint_pod_for_mode", "mode_size",
+  print_maybe_const_decl ("%spoly_uint16_pod", "mode_size",
 			  "NUM_MACHINE_MODES", adj_nunits || adj_bytesize);
 
   for_all_modes (c, m)
@@ -1536,7 +1483,7 @@ emit_mode_nunits (void)
   int c;
   struct mode_data *m;
 
-  print_maybe_const_decl ("%spoly_uint_pod_for_mode", "mode_nunits",
+  print_maybe_const_decl ("%spoly_uint16_pod", "mode_nunits",
 			  "NUM_MACHINE_MODES", adj_nunits);
 
   for_all_modes (c, m)
@@ -1692,7 +1639,7 @@ emit_mode_unit_precision (void)
   int c;
   struct mode_data *m;
 
-  print_decl ("poly_coeff_type_for_mode", "mode_unit_precision", "NUM_MACHINE_MODES");
+  print_decl ("unsigned short", "mode_unit_precision", "NUM_MACHINE_MODES");
 
   for_all_modes (c, m)
     {
@@ -1808,7 +1755,7 @@ emit_mode_adjustments (void)
 \nvoid\
 \ninit_adjust_machine_modes (void)\
 \n{\
-\n  poly_uint_for_mode ps ATTRIBUTE_UNUSED;\n\
+\n  poly_uint16 ps ATTRIBUTE_UNUSED;\n\
   size_t s ATTRIBUTE_UNUSED;");
 
   for (a = adj_nunits; a; a = a->next)

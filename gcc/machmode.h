@@ -22,12 +22,12 @@ along with GCC; see the file COPYING3.  If not see
 
 typedef opt_mode<machine_mode> opt_machine_mode;
 
-extern CONST_MODE_SIZE poly_uint_pod_for_mode mode_size[NUM_MACHINE_MODES];
-extern CONST_MODE_PRECISION poly_uint_pod_for_mode mode_precision[NUM_MACHINE_MODES];
+extern CONST_MODE_SIZE poly_uint16_pod mode_size[NUM_MACHINE_MODES];
+extern CONST_MODE_PRECISION poly_uint16_pod mode_precision[NUM_MACHINE_MODES];
 extern const unsigned char mode_inner[NUM_MACHINE_MODES];
-extern CONST_MODE_NUNITS poly_uint_pod_for_mode mode_nunits[NUM_MACHINE_MODES];
+extern CONST_MODE_NUNITS poly_uint16_pod mode_nunits[NUM_MACHINE_MODES];
 extern CONST_MODE_UNIT_SIZE unsigned char mode_unit_size[NUM_MACHINE_MODES];
-extern const poly_coeff_type_for_mode mode_unit_precision[NUM_MACHINE_MODES];
+extern const unsigned short mode_unit_precision[NUM_MACHINE_MODES];
 extern const unsigned char mode_wider[NUM_MACHINE_MODES];
 extern const unsigned char mode_2xwider[NUM_MACHINE_MODES];
 
@@ -542,7 +542,7 @@ complex_mode::includes_p (machine_mode m)
 
 /* Return the base GET_MODE_SIZE value for MODE.  */
 
-ALWAYS_INLINE poly_uint_for_mode
+ALWAYS_INLINE poly_uint16
 mode_to_bytes (machine_mode mode)
 {
 #if GCC_VERSION >= 4001
@@ -555,7 +555,7 @@ mode_to_bytes (machine_mode mode)
 
 /* Return the base GET_MODE_BITSIZE value for MODE.  */
 
-ALWAYS_INLINE poly_uint_for_mode
+ALWAYS_INLINE poly_uint16
 mode_to_bits (machine_mode mode)
 {
   return mode_to_bytes (mode) * BITS_PER_UNIT;
@@ -563,7 +563,7 @@ mode_to_bits (machine_mode mode)
 
 /* Return the base GET_MODE_PRECISION value for MODE.  */
 
-ALWAYS_INLINE poly_uint_for_mode
+ALWAYS_INLINE poly_uint16
 mode_to_precision (machine_mode mode)
 {
   return mode_precision[mode];
@@ -598,7 +598,7 @@ mode_to_unit_size (machine_mode mode)
 
 /* Return the base GET_MODE_UNIT_PRECISION value for MODE.  */
 
-ALWAYS_INLINE poly_coeff_type_for_mode
+ALWAYS_INLINE unsigned short
 mode_to_unit_precision (machine_mode mode)
 {
 #if GCC_VERSION >= 4001
@@ -611,7 +611,7 @@ mode_to_unit_precision (machine_mode mode)
 
 /* Return the base GET_MODE_NUNITS value for MODE.  */
 
-ALWAYS_INLINE poly_uint_for_mode
+ALWAYS_INLINE poly_uint16
 mode_to_nunits (machine_mode mode)
 {
 #if GCC_VERSION >= 4001
@@ -627,7 +627,7 @@ mode_to_nunits (machine_mode mode)
 #if ONLY_FIXED_SIZE_MODES
 #define GET_MODE_SIZE(MODE) ((unsigned short) mode_to_bytes (MODE).coeffs[0])
 #else
-ALWAYS_INLINE poly_uint_for_mode
+ALWAYS_INLINE poly_uint16
 GET_MODE_SIZE (machine_mode mode)
 {
   return mode_to_bytes (mode);
@@ -651,9 +651,9 @@ GET_MODE_SIZE (const T &mode)
 /* Get the size in bits of an object of mode MODE.  */
 
 #if ONLY_FIXED_SIZE_MODES
-#define GET_MODE_BITSIZE(MODE) ((poly_coeff_type_for_mode) mode_to_bits (MODE).coeffs[0])
+#define GET_MODE_BITSIZE(MODE) ((unsigned short) mode_to_bits (MODE).coeffs[0])
 #else
-ALWAYS_INLINE poly_uint_for_mode
+ALWAYS_INLINE poly_uint16
 GET_MODE_BITSIZE (machine_mode mode)
 {
   return mode_to_bits (mode);
@@ -680,7 +680,7 @@ GET_MODE_BITSIZE (const T &mode)
 #define GET_MODE_PRECISION(MODE) \
   ((unsigned short) mode_to_precision (MODE).coeffs[0])
 #else
-ALWAYS_INLINE poly_uint_for_mode
+ALWAYS_INLINE poly_uint16
 GET_MODE_PRECISION (machine_mode mode)
 {
   return mode_to_precision (mode);
@@ -739,7 +739,7 @@ extern CONST_MODE_MASK unsigned HOST_WIDE_INT
 #if ONLY_FIXED_SIZE_MODES
 #define GET_MODE_NUNITS(MODE) (mode_to_nunits (MODE).coeffs[0])
 #else
-ALWAYS_INLINE poly_uint_for_mode
+ALWAYS_INLINE poly_uint16
 GET_MODE_NUNITS (machine_mode mode)
 {
   return mode_to_nunits (mode);

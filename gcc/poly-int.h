@@ -124,15 +124,6 @@ struct poly_coeff_pair_traits
 				     && (poly_coeff_traits<T1>::precision
 					 > poly_coeff_traits<T2>::precision)));
 
-  /* true if T1 need change to wider type to forbiden -Wsign-compare warning
-     e.g. T1 is unsigned int, T2 is int, then T1 should be wider to HOST_WIDE_INT */
-  static const bool t1_need_wider_p = poly_coeff_traits<T1>::signedness == 0 
-                                        && poly_coeff_traits<T2>::signedness == 1 
-                                        && (poly_coeff_traits<T1>::precision
-                                            >= poly_coeff_traits<T2>::precision)
-                                        && (poly_coeff_traits<T1>::precision
-                                            < poly_coeff_traits<HOST_WIDE_INT>::precision);
-
   /* 0 if T1 op T2 should promote to HOST_WIDE_INT,
      1 if T1 op T2 should promote to unsigned HOST_WIDE_INT,
      2 if T1 op T2 should use wide-int rules.  */
@@ -145,22 +136,6 @@ struct poly_coeff_pair_traits
 	  && RANK (T2) <= RANK (unsigned HOST_WIDE_INT))
        ? 1 : 2);
 #undef RANK
-};
-
-template<typename T1, typename T2, 
-         bool t1_need_wider_p=poly_coeff_pair_traits<T1, T2>::t1_need_wider_p>
-struct get_enough_T1;
-
-template<typename T1, typename T2>
-struct get_enough_T1<T1, T2, true>
-{
-  typedef HOST_WIDE_INT type;
-};
-
-template<typename T1, typename T2>
-struct get_enough_T1<T1, T2, false>
-{
-  typedef T1 type;
 };
 
 /* SFINAE class that makes T3 available as "type" if T2 can represent all the
@@ -1263,8 +1238,7 @@ maybe_eq (const poly_int_pod<N, Ca> &a, const Cb &b)
   STATIC_ASSERT (N <= 2);
   if (N == 2)
     return maybe_eq_2 (a.coeffs[0], a.coeffs[1], b);
-  typedef typename get_enough_T1<Ca, Cb>::type T1;
-  return (T1)a.coeffs[0] == b;
+  return a.coeffs[0] == b;
 }
 
 template<unsigned int N, typename Ca, typename Cb>
@@ -1274,8 +1248,7 @@ maybe_eq (const Ca &a, const poly_int_pod<N, Cb> &b)
   STATIC_ASSERT (N <= 2);
   if (N == 2)
     return maybe_eq_2 (b.coeffs[0], b.coeffs[1], a);
-  typedef typename get_enough_T1<Cb, Ca>::type T1;
-  return a == (T1)b.coeffs[0];
+  return a == b.coeffs[0];
 }
 
 template<typename Ca, typename Cb>
@@ -1306,8 +1279,7 @@ maybe_ne (const poly_int_pod<N, Ca> &a, const Cb &b)
     for (unsigned int i = 1; i < N; i++)
       if (a.coeffs[i] != 0)
 	return true;
-  typedef typename get_enough_T1<Ca, Cb>::type T1;
-  return (T1)a.coeffs[0] != b;
+  return a.coeffs[0] != b;
 }
 
 template<unsigned int N, typename Ca, typename Cb>
@@ -1318,8 +1290,7 @@ maybe_ne (const Ca &a, const poly_int_pod<N, Cb> &b)
     for (unsigned int i = 1; i < N; i++)
       if (b.coeffs[i] != 0)
 	return true;
-  typedef typename get_enough_T1<Cb, Ca>::type T1;
-  return a != (T1)b.coeffs[0];
+  return a != b.coeffs[0];
 }
 
 template<typename Ca, typename Cb>
@@ -1357,8 +1328,7 @@ maybe_le (const poly_int_pod<N, Ca> &a, const Cb &b)
     for (unsigned int i = 1; i < N; i++)
       if (a.coeffs[i] < 0)
 	return true;
-  typedef typename get_enough_T1<Ca, Cb>::type T1;
-  return (T1)a.coeffs[0] <= b;
+  return a.coeffs[0] <= b;
 }
 
 template<unsigned int N, typename Ca, typename Cb>
@@ -1369,8 +1339,7 @@ maybe_le (const Ca &a, const poly_int_pod<N, Cb> &b)
     for (unsigned int i = 1; i < N; i++)
       if (b.coeffs[i] > 0)
 	return true;
-  typedef typename get_enough_T1<Cb, Ca>::type T1;
-  return a <= (T1)b.coeffs[0];
+  return a <= b.coeffs[0];
 }
 
 template<typename Ca, typename Cb>
@@ -1401,8 +1370,7 @@ maybe_lt (const poly_int_pod<N, Ca> &a, const Cb &b)
     for (unsigned int i = 1; i < N; i++)
       if (a.coeffs[i] < 0)
 	return true;
-  typedef typename get_enough_T1<Ca, Cb>::type T1;
-  return (T1)a.coeffs[0] < b;
+  return a.coeffs[0] < b;
 }
 
 template<unsigned int N, typename Ca, typename Cb>
@@ -1413,8 +1381,7 @@ maybe_lt (const Ca &a, const poly_int_pod<N, Cb> &b)
     for (unsigned int i = 1; i < N; i++)
       if (b.coeffs[i] > 0)
 	return true;
-  typedef typename get_enough_T1<Cb, Ca>::type T1;
-  return a < (T1)b.coeffs[0];
+  return a < b.coeffs[0];
 }
 
 template<typename Ca, typename Cb>
@@ -2380,15 +2347,10 @@ can_div_trunc_p (const poly_int_pod<N, Ca> &a,
 	      /* For Q == 0 we simply need: (3') |ai| <= |bi|.  */
 	      if (a.coeffs[i] != ICa (0))
 		{
-		  /* Use negative absolute to avoid overflow, i.e. -|ai| >= -|bi|.
-                     cast coeffs to C type before negate, the reason is
-                     if coeff's type is unsigned int and coeff[i] == 0x1
-                     then -coeff[i] == ~0x1 + 0x1 == 0xFFFFFFFF with unsigned int type
-                     then cast to C, if C is HOST_WIDE_INT type(64bit), then the cast 
-                     result of coeff[i] is 0x00000000 FFFFFFFF, a positive value, 
-                     it is not expected. */
-		  C neg_abs_a = (a.coeffs[i] < 0 ? a.coeffs[i] : -(C)a.coeffs[i]);
-		  C neg_abs_b = (b.coeffs[i] < 0 ? b.coeffs[i] : -(C)b.coeffs[i]);
+		  /* Use negative absolute to avoid overflow, i.e.
+		     -|ai| >= -|bi|.  */
+		  C neg_abs_a = (a.coeffs[i] < 0 ? a.coeffs[i] : -a.coeffs[i]);
+		  C neg_abs_b = (b.coeffs[i] < 0 ? b.coeffs[i] : -b.coeffs[i]);
 		  if (neg_abs_a < neg_abs_b)
 		    return false;
 		  rem_p = true;

@@ -25,17 +25,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "input.h"
-#include "memmodel.h"
-#include "tm_p.h"
-#include "flags.h"
 #include "c-family/c-common.h"
 #include "cpplib.h"
-#include "c-family/c-pragma.h"
-#include "langhooks.h"
-#include "target.h"
 #include "riscv-subset.h"
-#include "riscv-vector-builtins.h"
 
 #define builtin_define(TXT) cpp_define (pfile, TXT)
 
@@ -144,89 +136,4 @@ riscv_cpu_cpp_builtins (cpp_reader *pfile)
       sprintf (buf, "__riscv_%s", subset->name.c_str ());
       builtin_define_with_int_value (buf, version_value);
     }
-}
-
-/* Implement "#pragma riscv intrinsic".  */
-static void
-riscv_pragma_intrinsic (cpp_reader *)
-{
-  tree x;
-
-  if (pragma_lex (&x) != CPP_STRING)
-    {
-      error ("%<#pragma riscv intrinsic%> requires a string parameter");
-      return;
-    }
-
-  const char *name = TREE_STRING_POINTER (x);
-
-  if (strcmp (name, "vector") == 0)
-    {
-      if (!TARGET_VECTOR)
-	error ("%<#pragma riscv intrinsic%> option %qs needs 'V' extension enabled", name);
-
-      riscv_vector::handle_pragma_vector ();
-    }
-  else
-    error ("unknown %<#pragma riscv intrinsic%> option %qs", name);
-}
-
-/* FIXME: Only support C intrinsics so far, support C++
-   overloaded functions soon later. */
-#if 0
-/* Implement TARGET_RESOLVE_OVERLOADED_BUILTIN.  */
-static tree
-riscv_resolve_overloaded_builtin (unsigned int uncast_location,
-				  tree fndecl, void *uncast_arglist)
-{
-  return NULL_TREE;
-}
-
-
-/* Hook to validate the current #pragma riscv intrinsic target and set the state, and
-   update the macros based on what was changed. */
-
-static bool
-riscv_pragma_target_parse (tree args, tree pop_target)
-{
-  //FIXME:
-  return true;
-}
-#endif
-
-/* Implement TARGET_CHECK_BUILTIN_CALL.  */
-static bool
-riscv_check_builtin_call (location_t loc, vec<location_t> arg_loc,
-			  tree fndecl, tree orig_fndecl,
-			  unsigned int nargs, tree *args)
-{
-  unsigned int code = DECL_MD_FUNCTION_CODE (fndecl);
-  unsigned int subcode = code >> RISCV_BUILTIN_SHIFT;
-
-  switch (code & RISCV_BUILTIN_CLASS)
-    {
-    case RISCV_BUILTIN_GENERAL:
-      return true;
-
-    case RISCV_BUILTIN_VECTOR:
-      return riscv_vector::check_builtin_call (loc, arg_loc, subcode,
-					       orig_fndecl, nargs, args);
-    }
-
-  gcc_unreachable ();
-}
-
-
-/* Implement REGISTER_TARGET_PRAGMAS.  */
-
-void
-riscv_register_pragmas (void)
-{
-  /* Update pragma hook to allow parsing #pragma riscv intrinsic target.  */
-  //targetm.target_option.pragma_parse = riscv_pragma_target_parse;
-
-  //targetm.resolve_overloaded_builtin = riscv_resolve_overloaded_builtin;
-  targetm.check_builtin_call = riscv_check_builtin_call;
-
-  c_register_pragma ("riscv", "intrinsic", riscv_pragma_intrinsic);
 }
