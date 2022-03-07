@@ -3017,3 +3017,140 @@
   }
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
+
+;; =========================================================================
+;; == Reductions
+;; =========================================================================
+
+;; -------------------------------------------------------------------------
+;; ---- [INT] Tree reductions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vredsum.vs
+;; - vredmaxu.vs
+;; - vredmax.vs
+;; - vredminu.vs
+;; - vredmin.vs
+;; - vredand.vs
+;; - vredor.vs
+;; - vredxor.vs
+;; -------------------------------------------------------------------------
+
+(define_expand "reduc_<optab>_scal_<mode>"
+  [(set (match_operand:<VSUB> 0 "register_operand")
+    (unspec:<VSUB>
+      [(match_operand:VI 1 "register_operand")] REDUC))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  rtx x = riscv_vector_constant_helper ("<optab>", <VSUB>mode);
+  emit_insn (gen_v_v_x (UNSPEC_VMV, <VLMUL1>mode, accum, accum, x, zero,
+                        riscv_vector_gen_policy ()));
+  emit_insn (gen_vred<reduc><mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[1], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vmv_x_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+;; -------------------------------------------------------------------------
+;; ---- [FP] Tree reductions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfredusum.vs
+;; - vfredmax.vs
+;; - vfredmin.vs
+;; -------------------------------------------------------------------------
+
+(define_expand "reduc_plus_scal_<mode>"
+  [(set (match_operand:<VSUB> 0 "register_operand")
+    (unspec:<VSUB>
+      [(match_operand:VF 1 "register_operand")] UNSPEC_REDUC_UNORDERED_SUM))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  rtx f = riscv_vector_constant_helper ("plus", <VSUB>mode);
+  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx, f, zero,
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfredusum<mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[1], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+(define_expand "reduc_smin_scal_<mode>"
+  [(set (match_operand:<VSUB> 0 "register_operand")
+    (unspec:<VSUB>
+      [(match_operand:VF 1 "register_operand")] UNSPEC_REDUC_MIN))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  rtx f = riscv_vector_constant_helper ("smin", <VSUB>mode);
+  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx, f, zero,
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfredmin<mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[1], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+(define_expand "reduc_smax_scal_<mode>"
+  [(set (match_operand:<VSUB> 0 "register_operand")
+    (unspec:<VSUB>
+      [(match_operand:VF 1 "register_operand")] UNSPEC_REDUC_MAX))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  rtx f = riscv_vector_constant_helper ("smax", <VSUB>mode);
+  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx, f, zero,
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfredmax<mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[1], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+;; -------------------------------------------------------------------------
+;; ---- [FP] Left-to-right reductions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfredosum.vs
+;; -------------------------------------------------------------------------
+
+(define_expand "fold_left_plus_<mode>"
+  [(set (match_operand:<VSUB> 0 "register_operand")
+	(unspec:<VSUB> [(match_operand:<VSUB> 1 "register_operand")
+		       (match_operand:VF 2 "register_operand")]
+		      UNSPEC_REDUC_ORDERED_SUM))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx, operands[1], zero,
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfredosum<mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[2], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+(define_expand "mask_fold_left_plus_<mode>"
+  [(set (match_operand:<VSUB> 0 "register_operand")
+	(unspec:<VSUB> [(match_operand:<VSUB> 1 "register_operand")
+		       (match_operand:VF 2 "register_operand")
+           (match_operand:<VM> 3 "register_operand")]
+		      UNSPEC_REDUC_ORDERED_SUM))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx,
+      operands[1], zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vfredosum<mode>_vs (accum, operands[3], const0_rtx,
+        operands[2], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
