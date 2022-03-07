@@ -4204,6 +4204,19 @@ riscv_save_libcall_count (unsigned mask)
   abort ();
 }
 
+/* Handle stack align for poly_int.  */
+static poly_int64
+riscv_stack_align (poly_int64 value)
+{
+  return aligned_upper_bound (value, PREFERRED_STACK_BOUNDARY / 8);
+}
+
+static HOST_WIDE_INT
+riscv_stack_align (HOST_WIDE_INT value)
+{
+  return RISCV_STACK_ALIGN (value);
+}
+
 /* Populate the current function's riscv_frame_info structure.
 
    RISC-V stack frames grown downward.  High addresses are at the top.
@@ -4252,7 +4265,7 @@ static void
 riscv_compute_frame_info (void)
 {
   struct riscv_frame_info *frame;
-  HOST_WIDE_INT offset;
+  poly_int64 offset;
   bool interrupt_save_prologue_temp = false;
   unsigned int regno, i, num_x_saved = 0, num_f_saved = 0;
 
@@ -4263,8 +4276,11 @@ riscv_compute_frame_info (void)
   if (cfun->machine->interrupt_handler_p)
     {
       HOST_WIDE_INT step1 = riscv_first_stack_step (frame);
-      if (! SMALL_OPERAND (frame->total_size - step1))
-	interrupt_save_prologue_temp = true;
+
+      if (!frame->total_size.is_constant ()
+          || (frame->total_size.is_constant ()
+              && !SMALL_OPERAND (frame->total_size.to_constant() - step1)))
+        interrupt_save_prologue_temp = true;
     }
 
   memset (frame, 0, sizeof (*frame));
@@ -4293,28 +4309,29 @@ riscv_compute_frame_info (void)
     }
 
   /* At the bottom of the frame are any outgoing stack arguments. */
-  offset = RISCV_STACK_ALIGN (crtl->outgoing_args_size);
+  offset = riscv_stack_align (crtl->outgoing_args_size);
   /* Next are local stack variables. */
-  offset += RISCV_STACK_ALIGN (get_frame_size ());
+  offset += riscv_stack_align (get_frame_size ());
   /* The virtual frame pointer points above the local variables. */
   frame->frame_pointer_offset = offset;
   /* Next are the callee-saved FPRs. */
   if (frame->fmask)
-    offset += RISCV_STACK_ALIGN (num_f_saved * UNITS_PER_FP_REG);
+    offset += riscv_stack_align (num_f_saved * UNITS_PER_FP_REG);
+
   frame->fp_sp_offset = offset - UNITS_PER_FP_REG;
   /* Next are the callee-saved GPRs. */
   if (frame->mask)
     {
-      unsigned x_save_size = RISCV_STACK_ALIGN (num_x_saved * UNITS_PER_WORD);
+      unsigned x_save_size = riscv_stack_align (num_x_saved * UNITS_PER_WORD);
       unsigned num_save_restore = 1 + riscv_save_libcall_count (frame->mask);
 
       /* Only use save/restore routines if they don't alter the stack size.  */
-      if (RISCV_STACK_ALIGN (num_save_restore * UNITS_PER_WORD) == x_save_size)
-	{
-	  /* Libcall saves/restores 3 registers at once, so we need to
-	     allocate 12 bytes for callee-saved register.  */
-	  if (TARGET_RVE)
-	    x_save_size = 3 * UNITS_PER_WORD;
+      if (riscv_stack_align (num_save_restore * UNITS_PER_WORD) == x_save_size)
+        {
+          /* Libcall saves/restores 3 registers at once, so we need to
+             allocate 12 bytes for callee-saved register.  */
+          if (TARGET_RVE)
+            x_save_size = 3 * UNITS_PER_WORD;
 
 	  frame->save_libcall_adjustment = x_save_size;
 	}
@@ -4325,17 +4342,20 @@ riscv_compute_frame_info (void)
   /* The hard frame pointer points above the callee-saved GPRs. */
   frame->hard_frame_pointer_offset = offset;
   /* Above the hard frame pointer is the callee-allocated varags save area. */
-  offset += RISCV_STACK_ALIGN (cfun->machine->varargs_size);
+  offset += riscv_stack_align (cfun->machine->varargs_size);
   /* Next is the callee-allocated area for pretend stack arguments.  */
-  offset += RISCV_STACK_ALIGN (crtl->args.pretend_args_size);
+  offset += riscv_stack_align (crtl->args.pretend_args_size);
   /* Arg pointer must be below pretend args, but must be above alignment
      padding.  */
   frame->arg_pointer_offset = offset - crtl->args.pretend_args_size;
   frame->total_size = offset;
+
+  frame->constant_offset = riscv_stack_align (frame->total_size.coeffs[0] - frame->total_size.coeffs[1]);
+
   /* Next points the incoming stack pointer and any incoming arguments. */
 
   /* Only use save/restore routines when the GPRs are atop the frame.  */
-  if (frame->hard_frame_pointer_offset != frame->total_size)
+  if (known_ne (frame->hard_frame_pointer_offset, frame->total_size))
     frame->save_libcall_adjustment = 0;
 }
 
@@ -4593,18 +4613,45 @@ riscv_emit_stack_tie (void)
     emit_insn (gen_stack_tiedi (stack_pointer_rtx, hard_frame_pointer_rtx));
 }
 
+static void
+riscv_adjust_vector_frame (rtx target, poly_int64 offset)
+{
+  rtx clobber = RISCV_PROLOGUE_TEMP (Pmode);
+  rtx space = RISCV_PROLOGUE_TEMP2 (Pmode);
+  rtx insn, dwarf, adjust_frame_rtx;
+
+  riscv_expand_mov_const_poly_int (Pmode, space, clobber, gen_int_mode (offset, Pmode));
+
+  insn = gen_add3_insn (target,
+                        target,
+                        space);
+
+  insn = emit_insn (insn);
+
+  RTX_FRAME_RELATED_P (insn) = 1;
+
+  adjust_frame_rtx =
+    gen_rtx_SET (target,
+                 plus_constant (Pmode, target, offset));
+
+  dwarf = alloc_reg_note (REG_FRAME_RELATED_EXPR,
+                          copy_rtx (adjust_frame_rtx), NULL_RTX);
+
+  REG_NOTES (insn) = dwarf;
+}
+
 /* Expand the "prologue" pattern.  */
 
 void
 riscv_expand_prologue (void)
 {
   struct riscv_frame_info *frame = &cfun->machine->frame;
-  HOST_WIDE_INT size = frame->total_size;
+  poly_int64 size = frame->total_size;
   unsigned mask = frame->mask;
   rtx insn;
 
   if (flag_stack_usage_info)
-    current_function_static_stack_size = size;
+    current_function_static_stack_size = constant_lower_bound (size);
 
   if (cfun->machine->naked_p)
     return;
@@ -4626,7 +4673,10 @@ riscv_expand_prologue (void)
   /* Save the registers.  */
   if ((frame->mask | frame->fmask) != 0)
     {
-      HOST_WIDE_INT step1 = MIN (size, riscv_first_stack_step (frame));
+      HOST_WIDE_INT step1 = riscv_first_stack_step (frame);
+
+      if (size.is_constant ())
+        step1 = MIN (size.to_constant(), step1);
 
       insn = gen_add3_insn (stack_pointer_rtx,
 			    stack_pointer_rtx,
@@ -4641,34 +4691,47 @@ riscv_expand_prologue (void)
   /* Set up the frame pointer, if we're using one.  */
   if (frame_pointer_needed)
     {
+      poly_int64 offset = frame->hard_frame_pointer_offset - size;
       insn = gen_add3_insn (hard_frame_pointer_rtx, stack_pointer_rtx,
-			    GEN_INT (frame->hard_frame_pointer_offset - size));
+                            GEN_INT (offset.to_constant ()));
       RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
 
       riscv_emit_stack_tie ();
     }
 
   /* Allocate the rest of the frame.  */
-  if (size > 0)
+  if (known_gt (size, 0))
     {
-      if (SMALL_OPERAND (-size))
-	{
-	  insn = gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
-				GEN_INT (-size));
-	  RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
-	}
-      else
-	{
-	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), GEN_INT (-size));
-	  emit_insn (gen_add3_insn (stack_pointer_rtx,
-				    stack_pointer_rtx,
-				    RISCV_PROLOGUE_TEMP (Pmode)));
+      /* Allocate stack for vector if it has scalable vectors.  */
+      if (!size.is_constant ())
+        {
+          HOST_WIDE_INT factor = size.coeffs[1];
+          poly_int64 poly_offset (factor, factor);
+          riscv_adjust_vector_frame (stack_pointer_rtx, -poly_offset);
+          size -= poly_offset;
+        }
 
-	  /* Describe the effect of the previous instructions.  */
-	  insn = plus_constant (Pmode, stack_pointer_rtx, -size);
-	  insn = gen_rtx_SET (stack_pointer_rtx, insn);
-	  riscv_set_frame_expr (insn);
-	}
+      if (size.to_constant () == 0)
+        return;
+
+      if (SMALL_OPERAND (-size.to_constant ()))
+        {
+          insn = gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
+                                GEN_INT (-size.to_constant ()));
+          RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
+        }
+      else
+        {
+          riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), GEN_INT (-size.to_constant ()));
+          RTX_FRAME_RELATED_P (emit_insn (gen_add3_insn (stack_pointer_rtx,
+                                    stack_pointer_rtx,
+                                    RISCV_PROLOGUE_TEMP (Pmode)))) = 1;
+
+          /* Describe the effect of the previous instructions.  */
+          insn = plus_constant (Pmode, stack_pointer_rtx, -size.to_constant ());
+          insn = gen_rtx_SET (stack_pointer_rtx, insn);
+          riscv_set_frame_expr (insn);
+        }
     }
 }
 
@@ -4708,7 +4771,7 @@ riscv_expand_epilogue (int style)
      Start off by assuming that no registers need to be restored.  */
   struct riscv_frame_info *frame = &cfun->machine->frame;
   unsigned mask = frame->mask;
-  HOST_WIDE_INT step1 = frame->total_size;
+  poly_int64 step1 = frame->total_size;
   HOST_WIDE_INT step2 = 0;
   bool use_restore_libcall = ((style == NORMAL_RETURN)
 			      && riscv_use_save_libcall (frame));
@@ -4716,8 +4779,8 @@ riscv_expand_epilogue (int style)
   rtx insn;
 
   /* We need to add memory barrier to prevent read from deallocated stack.  */
-  bool need_barrier_p = (get_frame_size ()
-			 + cfun->machine->frame.arg_pointer_offset) != 0;
+  bool need_barrier_p = known_ne (get_frame_size ()
+                                  + cfun->machine->frame.arg_pointer_offset, 0);
 
   if (cfun->machine->naked_p)
     {
@@ -4744,12 +4807,22 @@ riscv_expand_epilogue (int style)
       riscv_emit_stack_tie ();
       need_barrier_p = false;
 
-      rtx adjust = GEN_INT (-frame->hard_frame_pointer_offset);
-      if (!SMALL_OPERAND (INTVAL (adjust)))
-	{
-	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
-	  adjust = RISCV_PROLOGUE_TEMP (Pmode);
-	}
+      rtx adjust = frame->hard_frame_pointer_offset.is_constant () ?
+                   GEN_INT (-frame->hard_frame_pointer_offset.to_constant ())
+                   : gen_int_mode (-frame->hard_frame_pointer_offset, Pmode);
+
+      if (!rtx_to_poly_int64 (adjust).is_constant ())
+        {
+          rtx clobber = RISCV_PROLOGUE_TEMP (Pmode);
+          rtx space = RISCV_PROLOGUE_TEMP2 (Pmode);
+          riscv_expand_mov_const_poly_int (Pmode, space, clobber, adjust);
+          adjust = space;
+        }
+      else if (!SMALL_OPERAND (INTVAL (adjust)))
+        {
+          riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
+          adjust = RISCV_PROLOGUE_TEMP (Pmode);
+        }
 
       insn = emit_insn (
 	       gen_add3_insn (stack_pointer_rtx, hard_frame_pointer_rtx,
@@ -4757,8 +4830,8 @@ riscv_expand_epilogue (int style)
 
       rtx dwarf = NULL_RTX;
       rtx cfa_adjust_value = gen_rtx_PLUS (
-			       Pmode, hard_frame_pointer_rtx,
-			       GEN_INT (-frame->hard_frame_pointer_offset));
+                               Pmode, hard_frame_pointer_rtx,
+                               gen_int_mode (-frame->hard_frame_pointer_offset, Pmode));
       rtx cfa_adjust_rtx = gen_rtx_SET (stack_pointer_rtx, cfa_adjust_value);
       dwarf = alloc_reg_note (REG_CFA_ADJUST_CFA, cfa_adjust_rtx, dwarf);
       RTX_FRAME_RELATED_P (insn) = 1;
@@ -4775,19 +4848,28 @@ riscv_expand_epilogue (int style)
     }
 
   /* Set TARGET to BASE + STEP1.  */
-  if (step1 > 0)
+  if (known_gt (step1, 0))
     {
       /* Emit a barrier to prevent loads from a deallocated stack.  */
       riscv_emit_stack_tie ();
       need_barrier_p = false;
 
       /* Get an rtx for STEP1 that we can add to BASE.  */
-      rtx adjust = GEN_INT (step1);
-      if (!SMALL_OPERAND (step1))
-	{
-	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
-	  adjust = RISCV_PROLOGUE_TEMP (Pmode);
-	}
+      rtx adjust = step1.is_constant () ?
+                   GEN_INT (step1.to_constant ()) : gen_int_mode (step1, Pmode);
+
+      if (!step1.is_constant ())
+        {
+          HOST_WIDE_INT factor = step1.coeffs[1];
+          poly_int64 poly_offset (factor, factor);
+          riscv_adjust_vector_frame (stack_pointer_rtx, poly_offset);
+          step1 -= poly_offset;
+        }
+      else if (!SMALL_OPERAND (step1.to_constant ()))
+        {
+          riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), adjust);
+          adjust = RISCV_PROLOGUE_TEMP (Pmode);
+        }
 
       insn = emit_insn (
 	       gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx, adjust));
