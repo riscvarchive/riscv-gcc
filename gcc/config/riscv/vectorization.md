@@ -3532,3 +3532,43 @@
 })
 ;; Signed integer comparisons.  Don't enforce an immediate range here, since
 })
+;; =========================================================================
+;; == Conversions
+;; =========================================================================
+
+;; -------------------------------------------------------------------------
+;; ---- [INT<-FP] Conversions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfcvt.rtz.xu.f.v
+;; - vfcvt.rtz.x.f.v
+;; -------------------------------------------------------------------------
+
+(define_expand "<optab><mode><vmap>2"
+  [(set (match_operand:<VMAP> 0 "register_operand")
+    (any_fix:<VMAP>
+      (match_operand:VF 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfcvt<vmap>_rtz_x<u>_f_v (operands[0], const0_rtx, const0_rtx, operands[1],
+        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [FP<-INT] Conversions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfcvt.f.xu.v
+;; - vfcvt.f.x.v
+;; -------------------------------------------------------------------------
+
+(define_expand "<optab><vmap><mode>2"
+  [(set (match_operand:VF 0 "register_operand")
+    (any_float:VF
+      (match_operand:<VMAP> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfcvt<mode>_f_x<u>_v (operands[0], const0_rtx, const0_rtx,
+        operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
