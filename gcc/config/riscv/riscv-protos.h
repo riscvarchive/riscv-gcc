@@ -87,6 +87,7 @@ extern void riscv_atomic_assign_expand_fenv (tree *, tree *, tree *);
 extern rtx riscv_expand_builtin (tree, rtx, rtx, machine_mode, int);
 extern tree riscv_builtin_decl (unsigned int, bool);
 extern void riscv_init_builtins (void);
+extern bool riscv_gimple_fold_builtin (gimple_stmt_iterator *);
 
 /* Routines implemented in riscv-common.cc.  */
 extern std::string riscv_arch_str (bool version_p = true);
@@ -94,6 +95,8 @@ extern std::string riscv_arch_str (bool version_p = true);
 extern bool riscv_hard_regno_rename_ok (unsigned, unsigned);
 
 rtl_opt_pass * make_pass_shorten_memrefs (gcc::context *ctxt);
+rtl_opt_pass * make_pass_insert_vsetvli (gcc::context *ctxt);
+rtl_opt_pass * make_pass_insert_vsetvli2 (gcc::context *ctxt);
 
 /* Information about one CPU we know about.  */
 struct riscv_cpu_info {
@@ -108,5 +111,23 @@ struct riscv_cpu_info {
 };
 
 extern const riscv_cpu_info *riscv_find_cpu (const char *);
+
+/* We classify builtin types into two classes:
+   1. General builtin class which is using the
+      original builtin architecture built in
+      RISCV.
+   2. Vector builtin class which is a special
+      builtin architecture that implement
+      intrinsic short into "pragam".  */
+enum riscv_builtin_class
+{
+  RISCV_BUILTIN_GENERAL,
+  RISCV_BUILTIN_VECTOR
+};
+
+const unsigned int RISCV_BUILTIN_SHIFT = 1;
+
+/* Mask that selects the vector_builtin_class part of a function code.  */
+const unsigned int RISCV_BUILTIN_CLASS = (1 << RISCV_BUILTIN_SHIFT) - 1;
 
 #endif /* ! GCC_RISCV_PROTOS_H */
