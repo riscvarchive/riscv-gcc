@@ -596,6 +596,33 @@ public:
   get_argument_types (const function_instance &instance,
                       vec<tree> &argument_types) const OVERRIDE;
 };
+class vleff : public function_builder
+{
+public:
+  // use the same construction function as the function_builder
+  using function_builder::function_builder;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
 } // namespace riscv_vector
 
 #endif // end GCC_RISCV_VECTOR_BUILTINS_FUNCTIONS_H

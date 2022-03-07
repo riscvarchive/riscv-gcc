@@ -2684,3 +2684,123 @@ gt_pch_nx (function_instance *, gt_pointer_operator, void *)
 }
 
 #include "gt-riscv-vector-builtins-functions.h"
+/* A function_base for vleff functions.  */
+unsigned int
+vleff::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY | CP_RAISE_LD_EXCEPTIONS;
+}
+
+void
+vleff::get_name (char *name, const function_instance &instance) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, "vle");
+  unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  char buf[8];
+  snprintf (buf, sizeof (buf), "%d", sew);
+  strcat (name, buf);
+  strcat (name, "ff");
+  strcat (name, "_");
+  const char *operation_suffix =
+      get_operation_suffix (instance.get_operation ());
+
+  if (strlen (operation_suffix) > 0)
+    {
+      strcat (name, operation_suffix);
+      strcat (name, "_");
+    }
+
+  strcat (name, mode2data_type_suffix (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_func_suffix (instance.get_pred ());
+
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
+}
+
+tree
+vleff::get_return_type (const function_instance &instance) const
+{
+  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                   instance.get_data_type_list ()[0] == DT_unsigned);
+}
+
+void
+vleff::get_argument_types (const function_instance &instance,
+                           vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
+                        (instance.get_data_type_list ()[i] == DT_uptr) ||
+                        (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_uptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      argument_types.quick_push (get_dt_t (
+          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
+    }
+
+  argument_types.quick_push (build_pointer_type (size_type_node));
+}
+
+gimple *
+vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+             gcall *call_in) const
+{
+  /* split vleff (a, b, c) -> d = vleff (a, c) + b = readvl (d). */
+  auto_vec<tree, 8> vargs;
+
+  unsigned int offset = 2;
+
+  for (unsigned int i = 0; i < gimple_call_num_args (call_in); i++)
+    {
+      if (i == gimple_call_num_args (call_in) - offset)
+        continue;
+
+      vargs.quick_push (gimple_call_arg (call_in, i));
+    }
+
+  gimple *repl = gimple_build_call_vec (gimple_call_fn (call_in), vargs);
+  gimple_call_set_lhs (repl, gimple_call_lhs (call_in));
+
+  tree var = create_tmp_var (size_type_node, "new_vl");
+  tree tem = make_ssa_name (size_type_node);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  function_instance *fn_instance = new function_instance ();
+  snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "readvl_%s",
+            mode2data_type_suffix (mode, unsigned_p, false));
+  hashval_t hashval = fn_instance->hash ();
+  registered_function *rfn_slot =
+      function_table->find_with_hash (*fn_instance, hashval);
+  tree decl = rfn_slot->decl;
+  gimple *g = gimple_build_call (decl, 1, gimple_call_lhs (call_in));
+  gimple_call_set_lhs (g, var);
+  tree indirect = fold_build2 (
+      MEM_REF, size_type_node,
+      gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset),
+      build_int_cst (build_pointer_type (size_type_node), 0));
+  gassign *assign = gimple_build_assign (indirect, tem);
+  gsi_insert_after (gsi_in, assign, GSI_SAME_STMT);
+  gsi_insert_after (gsi_in, gimple_build_assign (tem, var), GSI_SAME_STMT);
+  gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
+
+  delete fn_instance;
+  return repl;
+}
+
+rtx
+vleff::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vleff (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}

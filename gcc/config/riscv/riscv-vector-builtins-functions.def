@@ -139,6 +139,9 @@ DEF_RVV_FUNCTION(vsoxei, vsxei, (4, VITER(V64UNITS, signed), VATTR(0, VSUB, c_pt
 DEF_RVV_FUNCTION(vsoxei, vsxei, (4, VITER(V64UNITS, unsigned), VATTR(0, VSUB, c_uptr), VITER(V64UNITSI, unsigned), VATTR(0, V64UNITS, unsigned)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
 DEF_RVV_FUNCTION(vsoxei, vsxei, (4, VITER(V128UNITSI, signed), VATTR(0, VSUB, c_ptr), VITER(V128UNITSI, unsigned), VATTR(0, V128UNITSI, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
 DEF_RVV_FUNCTION(vsoxei, vsxei, (4, VITER(V128UNITSI, unsigned), VATTR(0, VSUB, c_uptr), VITER(V128UNITSI, unsigned), VATTR(0, V128UNITSI, unsigned)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vleff, vleff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vleff, vleff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vleff, vleff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
 
 #undef REQUIRED_EXTENSIONS
 #undef DEF_RVV_FUNCTION
