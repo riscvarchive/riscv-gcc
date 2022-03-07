@@ -55,6 +55,13 @@ hook_bool_bool_false (bool)
   return false;
 }
 
+/* Generic hook that takes (bool, bool) and returns false.  */
+bool
+hook_bool_bool_bool_false (bool, bool)
+{
+  return false;
+}
+
 /* Generic hook that takes (bool, struct gcc_options *) and returns false.  */
 bool
 hook_bool_bool_gcc_optionsp_false (bool, struct gcc_options *)

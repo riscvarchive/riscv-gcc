@@ -5203,9 +5203,26 @@ vectorizable_conversion (vec_info *vinfo,
 	{
 	  /* Arguments are ready, create the new vector stmt.  */
 	  gcc_assert (TREE_CODE_LENGTH (code1) == unary_op);
-	  gassign *new_stmt = gimple_build_assign (vec_dest, code1, vop0);
-	  new_temp = make_ssa_name (vec_dest, new_stmt);
-	  gimple_assign_set_lhs (new_stmt, new_temp);
+          gimple *new_stmt = NULL;
+
+	  /* bring length information to unary conversion. */
+          vec_loop_lens *lens = (loop_vinfo
+	  	&& LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo)
+		  ? &LOOP_VINFO_LENS (loop_vinfo) : NULL);
+	  internal_fn len_fn = get_length_conversion_internal_fn (code1, TREE_TYPE (vec_dest), TREE_TYPE (vop0));
+	  if (lens && len_fn != IFN_LAST && (int)lens->length () == ncopies)
+	    {
+	      tree len = vect_get_loop_len (loop_vinfo, lens, 1 * ncopies, i);
+	      new_stmt = gimple_build_call_internal (len_fn, 2, vop0, len);
+	      new_temp = make_ssa_name (vec_dest, new_stmt);
+	      gimple_call_set_lhs (new_stmt, new_temp);
+	    }
+	  else
+	    {
+	      new_stmt = gimple_build_assign (vec_dest, code1, vop0);
+	      new_temp = make_ssa_name (vec_dest, new_stmt);
+	      gimple_assign_set_lhs (new_stmt, new_temp);
+	    }
 	  vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 
 	  if (slp_node)
