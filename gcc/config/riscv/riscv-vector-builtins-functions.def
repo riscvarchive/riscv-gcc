@@ -240,6 +240,20 @@ DEF_RVV_FUNCTION(vmerge, vmerge, (3, VITER(VF, signed), VATTR(0, VF, signed), VA
 DEF_RVV_FUNCTION(vmv, vmv, (2, VITER(VI, signed), VATTR(0, VSUB, signed)), PAT_tail, PRED_void | PRED_ta | PRED_tu, OP_v_v | OP_v_x)
 DEF_RVV_FUNCTION(vmv, vmv, (2, VITER(VI, unsigned), VATTR(0, VSUB, unsigned)), PAT_tail, PRED_void | PRED_ta | PRED_tu, OP_v_v | OP_v_x)
 DEF_RVV_FUNCTION(vmv, vmv, (2, VITER(VF, signed), VATTR(0, VSUB, signed)), PAT_tail, PRED_void | PRED_ta | PRED_tu, OP_v_v)
+/* 12. Vector Fixed-Point Arithmetic Instructions. */
+DEF_RVV_FUNCTION(vsadd, vsadd, (3, VITER(VI, signed), VATTR(0, VI, signed), VATTR(0, VI, signed)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vsaddu, vsaddu, (3, VITER(VI, unsigned), VATTR(0, VI, unsigned), VATTR(0, VI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vaadd, vaadd, (3, VITER(VI, signed), VATTR(0, VI, signed), VATTR(0, VI, signed)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vaaddu, vaaddu, (3, VITER(VI, unsigned), VATTR(0, VI, unsigned), VATTR(0, VI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vssub, vssub, (3, VITER(VI, signed), VATTR(0, VI, signed), VATTR(0, VI, signed)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vssubu, vssubu, (3, VITER(VI, unsigned), VATTR(0, VI, unsigned), VATTR(0, VI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vasub, vasub, (3, VITER(VI, signed), VATTR(0, VI, signed), VATTR(0, VI, signed)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vasubu, vasubu, (3, VITER(VI, unsigned), VATTR(0, VI, unsigned), VATTR(0, VI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vsmul, vsmul, (3, VITER(VI, signed), VATTR(0, VI, signed), VATTR(0, VI, signed)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vssrl, vsshift, (3, VITER(VI, unsigned), VATTR(0, VI, unsigned), VATTR(0, VI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vssra, vsshift, (3, VITER(VI, signed), VATTR(0, VI, signed), VATTR(0, VI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_vv | OP_vx)
+DEF_RVV_FUNCTION(vnclip, vnclip, (3, VITER(VWI, signed), VATTR(0, VW, signed), VATTR(0, VWI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_wv | OP_wx)
+DEF_RVV_FUNCTION(vnclipu, vnclipu, (3, VITER(VWI, unsigned), VATTR(0, VW, unsigned), VATTR(0, VWI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_wv | OP_wx)
 
 /* 7. Segment Loads and Stores.  */
 /* vlseg */

@@ -4039,6 +4039,226 @@ vmv::get_argument_types (const function_instance &instance,
 rtx
 vmv::expand (const function_instance &instance, tree exp, rtx target) const
 {
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_v_x)
+    icode = code_for_v_v_x (UNSPEC_VMV, mode);
+  else
+    icode = code_for_vmv_v_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsadd functions.  */
+rtx
+vsadd::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (SS_PLUS, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSADD, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsaddu functions.  */
+rtx
+vsaddu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (US_PLUS, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSADDU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vaadd functions.  */
+rtx
+vaadd::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_AADD, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VAADD, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vaaddu functions.  */
+rtx
+vaaddu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_AADDU, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VAADDU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vssub functions.  */
+rtx
+vssub::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (SS_MINUS, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSSUB, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vssubu functions.  */
+rtx
+vssubu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (US_MINUS, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSSUBU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vasub functions.  */
+rtx
+vasub::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_ASUB, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VASUB, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vasubu functions.  */
+rtx
+vasubu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_ASUBU, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VASUBU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsshift functions.  */
+void
+vsshift::get_argument_types (const function_instance &instance,
+                             vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      if ((instance.get_operation () == OP_vx) && i == 2)
+        argument_types.quick_push (size_type_node);
+      else
+        argument_types.quick_push (
+            get_dt_t (instance.get_arg_pattern ().arg_list[i],
+                      instance.get_data_type_list ()[i] == DT_unsigned));
+    }
+}
+
+rtx
+vsshift::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  int unspec = strcmp (instance.get_base_name (), "vssrl") == 0 ? UNSPEC_SSRL
+                                                                : UNSPEC_SSRA;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (unspec, mode);
+  else
+    icode = code_for_v_vx (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsmul functions.  */
+rtx
+vsmul::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_SMUL, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSMUL, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vnclip functions.  */
+void
+vnclip::get_argument_types (const function_instance &instance,
+                            vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      if ((instance.get_operation () == OP_wx) && i == 2)
+        argument_types.quick_push (size_type_node);
+      else
+        argument_types.quick_push (
+            get_dt_t (instance.get_arg_pattern ().arg_list[i],
+                      instance.get_data_type_list ()[i] == DT_unsigned));
+    }
+}
+
+rtx
+vnclip::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_wv)
+    icode = code_for_vn_wv (UNSPEC_SIGNED_CLIP, mode);
+  else
+    icode = code_for_vn_wx (UNSPEC_SIGNED_CLIP, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vnclipu functions.  */
+void
+vnclipu::get_argument_types (const function_instance &instance,
+                             vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      if ((instance.get_operation () == OP_wx) && i == 2)
+        argument_types.quick_push (size_type_node);
+      else
+        argument_types.quick_push (
+            get_dt_t (instance.get_arg_pattern ().arg_list[i],
+                      instance.get_data_type_list ()[i] == DT_unsigned));
+    }
+}
+
+rtx
+vnclipu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_wv)
+    icode = code_for_vn_wv (UNSPEC_UNSIGNED_CLIP, mode);
+  else
+    icode = code_for_vn_wx (UNSPEC_UNSIGNED_CLIP, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+inline void
+gt_ggc_mx (function_instance *)
+{
+}
+
+inline void
+gt_pch_nx (function_instance *)
+{
 }
 
 inline void

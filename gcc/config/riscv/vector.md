@@ -4082,3 +4082,390 @@
   vmv.v.i\t%0,%2"
  [(set_attr "type" "vmove")
   (set_attr "mode" "<V64BITI:MODE>")])
+
+;; -------------------------------------------------------------------------------
+;; ---- 12. Vector Fixed-Point Arithmetic Instructions
+;; -------------------------------------------------------------------------------
+;; Includes:
+;; - 12.1 Vector Single-Width Saturating Add and Subtract
+;; - 12.2 Vector Single-Width Aaveraging Add and Subtract
+;; - 12.3 Vector Single-Width Fractional Multiply with Rounding and Saturation
+;; - 12.5 Vector Single-Width Scaling Shift Instructions
+;; - 12.6 Vector Narrowing Fixed-Point Clip Instructions
+;; -------------------------------------------------------------------------------
+
+;; Vector-Vector Single-Width Saturating Add.
+(define_insn "@v<optab><mode>_vv"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (any_satplus:VI
+         (match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:VI 4 "vector_arith_operand" "vr,vi,vr,vi,vr,vi,vr,vi"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vv\t%0,%3,%4,%1.t
+   v<insn>.vi\t%0,%3,%v4,%1.t
+   v<insn>.vv\t%0,%3,%4,%1.t
+   v<insn>.vi\t%0,%3,%v4,%1.t
+   v<insn>.vv\t%0,%3,%4
+   v<insn>.vi\t%0,%3,%v4
+   v<insn>.vv\t%0,%3,%4
+   v<insn>.vi\t%0,%3,%v4"
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<MODE>")])
+
+;; Vector-Vector Single-Width Saturating Sub.
+(define_insn "@v<optab><mode>_vv"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (any_satminus:VI
+         (match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:VI 4 "vector_neg_arith_operand" "vr,vj,vr,vj,vr,vj,vr,vj"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  {
+    const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
+    char buf[64] = {0};
+    if (satisfies_constraint_vj (operands[4]))
+      {
+        rtx elt;
+        const_vec_duplicate_p (operands[4], &elt);
+        const char *insn = "v<neginsn>.vi\t%0,%3";
+        const char *tail = "%1.t";
+        snprintf (buf, sizeof (buf), "%s,%d,%s", insn, (int)(-INTVAL (elt)), tail);
+      }
+    else
+      {
+        const char *insn = "v<insn>.vv\t%0,%3,%4";
+        snprintf (buf, sizeof (buf), "%s%s", insn, tail);
+      }
+    output_asm_insn (buf, operands);
+    return "";
+  }
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<MODE>")])
+
+;; Vector-Scalar Single-Width Saturating Add.
+(define_insn "@v<optab><mode>_vx_internal"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (any_satplus:VI
+        (match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+        (vec_duplicate:VI
+         (match_operand:<VSUB> 4 "reg_or_simm5_operand" "r,Ws5,r,Ws5,r,Ws5,r,Ws5")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vx\t%0,%3,%4,%1.t
+   v<insn>.vi\t%0,%3,%4,%1.t
+   v<insn>.vx\t%0,%3,%4,%1.t
+   v<insn>.vi\t%0,%3,%4,%1.t
+   v<insn>.vx\t%0,%3,%4
+   v<insn>.vi\t%0,%3,%4
+   v<insn>.vx\t%0,%3,%4
+   v<insn>.vi\t%0,%3,%4"
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@v<optab><V64BITI:mode>_vx_32bit"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:V64BITI
+    [(unspec:V64BITI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (any_satplus:V64BITI
+        (match_operand:V64BITI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+        (vec_duplicate:V64BITI
+         (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_simm5_operand" "r,Ws5,r,Ws5,r,Ws5,r,Ws5"))))
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand")
+     (match_operand:SI 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vx\t%0,%3,%4,%1.t
+   v<insn>.vi\t%0,%3,%4,%1.t
+   v<insn>.vx\t%0,%3,%4,%1.t
+   v<insn>.vi\t%0,%3,%4,%1.t
+   v<insn>.vx\t%0,%3,%4
+   v<insn>.vi\t%0,%3,%4
+   v<insn>.vx\t%0,%3,%4
+   v<insn>.vi\t%0,%3,%4"
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+;; Vector-Scalar Single-Width Saturating Sub.
+(define_insn "@v<optab><mode>_vx_internal"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (any_satminus:VI
+        (match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+        (vec_duplicate:VI
+         (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand" "r,Wn5,r,Wn5,r,Wn5,r,Wn5")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  {
+    const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
+    char buf[64] = {0};
+    if (satisfies_constraint_Wn5 (operands[4]))
+      {
+        const char *insn = "v<neginsn>.vi\t%0,%3";
+        snprintf (buf, sizeof (buf), "%s,%d%s", insn, (int)(-INTVAL (operands[4])), tail);
+      }
+    else
+      {
+        const char *insn = "v<insn>.vx\t%0,%3,%4";
+        snprintf (buf, sizeof (buf), "%s%s", insn, tail);
+      }
+    output_asm_insn (buf, operands);
+    return "";
+  }
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@v<optab><V64BITI:mode>_vx_32bit"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+    (unspec:V64BITI
+      [(unspec:V64BITI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+         (any_satminus:V64BITI
+           (match_operand:V64BITI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+           (vec_duplicate:V64BITI
+             (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_neg_simm5_operand" "r,Wn5,r,Wn5,r,Wn5,r,Wn5"))))
+         (match_operand:V64BITI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+        (match_operand:SI 5 "csr_operand")
+        (match_operand:SI 6 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  {
+    const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
+    char buf[64] = {0};
+    if (satisfies_constraint_Wn5 (operands[4]))
+      {
+        const char *insn = "v<neginsn>.vi\t%0,%3";
+        snprintf (buf, sizeof (buf), "%s,%d%s", insn, (int)(-INTVAL (operands[4])), tail);
+      }
+    else
+      {
+        const char *insn = "v<insn>.vx\t%0,%3,%4";
+        snprintf (buf, sizeof (buf), "%s%s", insn, tail);
+      }
+    output_asm_insn (buf, operands);
+    return "";
+  }
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+;; Vector-Vector Single-Width Averaging Add and Subtract.
+;; Vector-Vector Single-Width Fractional Multiply with Rounding and Saturation.
+(define_insn "@v<sat_op><mode>_vv"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (unspec:VI
+         [(match_operand:VI 3 "register_operand" "vr,vr,vr,vr")
+          (match_operand:VI 4 "register_operand" "vr,vr,vr,vr")] SAT_OP)
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<sat_op>.vv\t%0,%3,%4,%1.t
+   v<sat_op>.vv\t%0,%3,%4,%1.t
+   v<sat_op>.vv\t%0,%3,%4
+   v<sat_op>.vv\t%0,%3,%4"
+  [(set_attr "type" "<vsat>")
+   (set_attr "mode" "<MODE>")])
+
+;; Vector-Scalar Single-Width Averaging Add and Subtract.
+;; Vector-Scalar Single-Width Fractional Multiply with Rounding and Saturation.
+(define_insn "@v<sat_op><mode>_vx_internal"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (unspec:VI
+         [(match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+          (vec_duplicate:VI
+           (match_operand:<VSUB> 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J"))] SAT_OP)
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<sat_op>.vx\t%0,%3,%4,%1.t
+   v<sat_op>.vx\t%0,%3,zero,%1.t
+   v<sat_op>.vx\t%0,%3,%4,%1.t
+   v<sat_op>.vx\t%0,%3,zero,%1.t
+   v<sat_op>.vx\t%0,%3,%4
+   v<sat_op>.vx\t%0,%3,zero
+   v<sat_op>.vx\t%0,%3,%4
+   v<sat_op>.vx\t%0,%3,zero"
+  [(set_attr "type" "<vsat>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@v<sat_op><V64BITI:mode>_vx_32bit"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:V64BITI
+    [(unspec:V64BITI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (unspec:V64BITI
+         [(match_operand:V64BITI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+          (vec_duplicate:V64BITI
+           (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J")))] SAT_OP)
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand")
+     (match_operand:SI 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<sat_op>.vx\t%0,%3,%4,%1.t
+   v<sat_op>.vx\t%0,%3,zero,%1.t
+   v<sat_op>.vx\t%0,%3,%4,%1.t
+   v<sat_op>.vx\t%0,%3,zero,%1.t
+   v<sat_op>.vx\t%0,%3,%4
+   v<sat_op>.vx\t%0,%3,zero
+   v<sat_op>.vx\t%0,%3,%4
+   v<sat_op>.vx\t%0,%3,zero"
+  [(set_attr "type" "<vsat>")
+   (set_attr "mode" "<V64BITI:MODE>")])
+
+;; Vector-Vector Single-Width Scaling Shift Instructions.
+(define_insn "@v<sshift><mode>_vv"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (unspec:VI
+         [(match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+          (match_operand:VI 4 "vector_shift_operand" "vr,vk,vr,vk,vr,vk,vr,vk")] SSHIFT)
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<sshift>.vv\t%0,%3,%4,%1.t
+   v<sshift>.vi\t%0,%3,%v4,%1.t
+   v<sshift>.vv\t%0,%3,%4,%1.t
+   v<sshift>.vi\t%0,%3,%v4,%1.t
+   v<sshift>.vv\t%0,%3,%4
+   v<sshift>.vi\t%0,%3,%v4
+   v<sshift>.vv\t%0,%3,%4
+   v<sshift>.vi\t%0,%3,%v4"
+  [(set_attr "type" "vscaleshift")
+   (set_attr "mode" "<MODE>")])
+
+;; Vector-Scalar Single-Width Scaling Shift Instructions.
+(define_insn "@v<sshift><mode>_vx"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+       (unspec:VI
+        [(match_operand:VI 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand 4 "p_reg_or_uimm5_operand" "r,K,r,K,r,K,r,K")] SSHIFT)
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<sshift>.vx\t%0,%3,%4,%1.t
+   v<sshift>.vi\t%0,%3,%4,%1.t
+   v<sshift>.vx\t%0,%3,%4,%1.t
+   v<sshift>.vi\t%0,%3,%4,%1.t
+   v<sshift>.vx\t%0,%3,%4
+   v<sshift>.vi\t%0,%3,%4
+   v<sshift>.vx\t%0,%3,%4
+   v<sshift>.vi\t%0,%3,%4"
+  [(set_attr "type" "vscaleshift")
+   (set_attr "mode" "<MODE>")])
+
+;; Vector-Vector signed/unsigned clip.
+(define_insn "@vn<clip><VWI:mode>_wv"
+  [(set (match_operand:VWI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+    (unspec:VWI
+      [(unspec:VWI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+        (unspec:VWI
+          [(match_operand:<VW> 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+            (match_operand:VWI 4 "vector_shift_operand" "vr,vk,vr,vk,vr,vk,vr,vk")] CLIP)
+        (match_operand:VWI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vn<clip>.wv\t%0,%3,%4,%1.t
+   vn<clip>.wi\t%0,%3,%v4,%1.t
+   vn<clip>.wv\t%0,%3,%4,%1.t
+   vn<clip>.wi\t%0,%3,%v4,%1.t
+   vn<clip>.wv\t%0,%3,%4
+   vn<clip>.wi\t%0,%3,%v4
+   vn<clip>.wv\t%0,%3,%4
+   vn<clip>.wi\t%0,%3,%v4"
+  [(set_attr "type" "vclip")
+   (set_attr "mode" "<VWI:MODE>")])
+
+;; Vector-Scalar signed/unsigned clip.
+(define_insn "@vn<clip><VWI:mode>_wx"
+  [(set (match_operand:VWI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
+    (unspec:VWI
+      [(unspec:VWI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
+        (unspec:VWI
+          [(match_operand:<VW> 3 "register_operand" "vr,vr,vr,vr,vr,vr,vr,vr")
+            (match_operand 4 "p_reg_or_uimm5_operand" "r,K,r,K,r,K,r,K")] CLIP)
+        (match_operand:VWI 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 6 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vn<clip>.wx\t%0,%3,%4,%1.t
+   vn<clip>.wi\t%0,%3,%4,%1.t
+   vn<clip>.wx\t%0,%3,%4,%1.t
+   vn<clip>.wi\t%0,%3,%4,%1.t
+   vn<clip>.wx\t%0,%3,%4
+   vn<clip>.wi\t%0,%3,%4
+   vn<clip>.wx\t%0,%3,%4
+   vn<clip>.wi\t%0,%3,%4"
+  [(set_attr "type" "vclip")
+   (set_attr "mode" "<VWI:MODE>")])

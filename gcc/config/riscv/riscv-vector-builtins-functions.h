@@ -1337,6 +1337,158 @@ public:
   expand (const function_instance &instance, tree exp,
           rtx target) const OVERRIDE;
 };
+/* A function_base for vsadd functions.  */
+class vsadd : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsaddu functions.  */
+class vsaddu : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vaadd functions.  */
+class vaadd : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vaaddu functions.  */
+class vaaddu : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vssub functions.  */
+class vssub : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vssubu functions.  */
+class vssubu : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vasub functions.  */
+class vasub : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vasubu functions.  */
+class vasubu : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsshift functions.  */
+class vsshift : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsmul functions.  */
+class vsmul : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vnclip functions.  */
+class vnclip : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vnclipu functions.  */
+class vnclipu : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
 } // namespace riscv_vector
 
 #endif // end GCC_RISCV_VECTOR_BUILTINS_FUNCTIONS_H
