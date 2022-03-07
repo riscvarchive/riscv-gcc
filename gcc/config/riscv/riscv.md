@@ -117,6 +117,7 @@
 
 (include "predicates.md")
 (include "constraints.md")
+(include "vector-iterators.md")
 
 ;; ....................
 ;;
@@ -3184,3 +3185,4 @@
 (include "pic.md")
 (include "generic.md")
 (include "sifive-7.md")
+(include "vector.md")

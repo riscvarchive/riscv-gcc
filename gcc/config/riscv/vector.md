@@ -475,6 +475,229 @@
   DONE;
 })
 
+;; -------------------------------------------------------------------------
+;; ---- [INT,FP] Vector Transformation
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - Reinterpret between different vector modes
+;; - Vector LMUL extension
+;; - Vector LMUL truncation
+;; - insert a vector to a vector group
+;; - get a vector from a vector group
+;; -------------------------------------------------------------------------
+
+;; Reinterpret operand 1 in operand 0's mode, without changing its contents.
+;; This is equivalent to a subreg on little-endian targets but not for
+;; big-endian; see the comment at the head of the file for details.
+(define_expand "@vreinterpret<mode>"
+  [(set (match_operand:V 0 "register_operand")
+    (unspec:V
+      [(match_operand 1 "vector_any_register_operand")] UNSPEC_REINTERPRET))]
+  "TARGET_VECTOR"
+{
+  machine_mode src_mode = GET_MODE (operands[1]);
+  if (targetm.can_change_mode_class (<MODE>mode, src_mode, FP_REGS))
+    {
+      emit_move_insn (operands[0], gen_lowpart (<MODE>mode, operands[1]));
+      DONE;
+    }
+})
+
+;; Vector LMUL extension
+(define_expand "@vlmul_ext<mode>"
+  [(set (match_operand:VLMULEXT 0 "register_operand")
+    (unspec:VLMULEXT
+      [(match_operand 1 "vector_any_register_operand")] UNSPEC_LMUL_EXT))]
+  "TARGET_VECTOR"
+{
+})
+
+(define_insn_and_split "*vlmul_ext<VLMULEXT:mode><V:mode>"
+  [(set (match_operand:VLMULEXT 0 "register_operand" "=vr, ?&vr")
+    (unspec:VLMULEXT
+      [(match_operand:V 1 "register_operand" "0, vr")] UNSPEC_LMUL_EXT))]
+  "TARGET_VECTOR"
+  "#"
+  "&& reload_completed"
+  [(const_int 0)]
+  {
+    rtx subreg = simplify_gen_subreg (<V:MODE>mode, operands[0], <VLMULEXT:MODE>mode, 0);
+    riscv_emit_move (subreg, operands[1]);
+    DONE;
+  })
+
+;; Vector LMUL truncation
+(define_expand "@vlmul_trunc<mode>"
+  [(set (match_operand:VLMULTRUNC 0 "register_operand")
+    (unspec:VLMULTRUNC
+      [(match_operand 1 "vector_any_register_operand")] UNSPEC_LMUL_TRUNC))]
+  "TARGET_VECTOR"
+{
+  rtx subreg = simplify_gen_subreg (<MODE>mode, operands[1], GET_MODE (operands[1]), 0);
+  riscv_emit_move (operands[0], subreg);
+  DONE;
+})
+
+;; insert a vector to a vector group
+(define_expand "@vset<mode>"
+  [(set (match_operand:VSETI 0 "register_operand")
+    (unspec:VSETI
+      [(match_operand:VSETI 1 "register_operand" "0")
+       (match_operand 2 "const_int_operand")
+       (match_operand 3 "vector_any_register_operand")] UNSPEC_SET_VECTOR))]
+  "TARGET_VECTOR"
+{
+  unsigned int nvecs = exact_div (GET_MODE_SIZE (GET_MODE (operands[0])),
+        GET_MODE_SIZE (GET_MODE (operands[3]))).to_constant ();
+  poly_int64 offset = (INTVAL (operands[2]) & (nvecs - 1))
+        * GET_MODE_SIZE (GET_MODE (operands[3]));
+  rtx subreg = simplify_gen_subreg (GET_MODE (operands[3]), operands[1], GET_MODE (operands[1]), offset);
+  riscv_emit_move (subreg, operands[3]);
+  riscv_emit_move (operands[0], operands[1]);
+  DONE;
+})
+
+(define_expand "@vset<mode>"
+  [(set (match_operand:VSETF 0 "register_operand")
+    (unspec:VSETF
+      [(match_operand:VSETF 1 "register_operand" "0")
+       (match_operand 2 "const_int_operand")
+       (match_operand 3 "vector_any_register_operand")] UNSPEC_SET_VECTOR))]
+  "TARGET_VECTOR"
+{
+  unsigned int nvecs = exact_div (GET_MODE_SIZE (GET_MODE (operands[0])),
+        GET_MODE_SIZE (GET_MODE (operands[3]))).to_constant ();
+  poly_int64 offset = (INTVAL (operands[2]) & (nvecs - 1))
+        * GET_MODE_SIZE (GET_MODE (operands[3]));
+  rtx subreg = simplify_gen_subreg (GET_MODE (operands[3]), operands[1], GET_MODE (operands[1]), offset);
+  riscv_emit_move (subreg, operands[3]);
+  riscv_emit_move (operands[0], operands[1]);
+  DONE;
+})
+
+;; get a vector from a vector group
+(define_expand "@vget<mode>"
+  [(set (match_operand:VGETI 0 "register_operand")
+    (unspec:VGETI
+      [(match_operand 1 "vector_any_register_operand")
+       (match_operand 2 "const_int_operand")] UNSPEC_GET_VECTOR))]
+  "TARGET_VECTOR"
+{
+  unsigned int nvecs = exact_div (GET_MODE_SIZE (GET_MODE (operands[1])),
+        GET_MODE_SIZE (GET_MODE (operands[0]))).to_constant ();
+  poly_int64 offset = (INTVAL (operands[2]) & (nvecs - 1))
+        * GET_MODE_SIZE (GET_MODE (operands[0]));
+  rtx subreg = simplify_gen_subreg (GET_MODE (operands[0]), operands[1], GET_MODE (operands[1]), offset);
+  riscv_emit_move (operands[0], subreg);
+  DONE;
+})
+
+(define_expand "@vget<mode>"
+  [(set (match_operand:VGETF 0 "register_operand")
+    (unspec:VGETF
+      [(match_operand 1 "vector_any_register_operand")
+       (match_operand 2 "const_int_operand")] UNSPEC_GET_VECTOR))]
+  "TARGET_VECTOR"
+{
+  unsigned int nvecs = exact_div (GET_MODE_SIZE (GET_MODE (operands[1])),
+        GET_MODE_SIZE (GET_MODE (operands[0]))).to_constant ();
+  poly_int64 offset = (INTVAL (operands[2]) & (nvecs - 1))
+        * GET_MODE_SIZE (GET_MODE (operands[0]));
+  rtx subreg = simplify_gen_subreg (GET_MODE (operands[0]), operands[1], GET_MODE (operands[1]), offset);
+  riscv_emit_move (operands[0], subreg);
+  DONE;
+})
+
+(include "vectorization.md")
+
+;; =========================================================================
+;; == Intrinsics
+;; =========================================================================
+
+;; -------------------------------------------------------------------------------
+;; ---- 6. Configuration-Setting Instructions
+;; -------------------------------------------------------------------------------
+;; Includes:
+;; - 6.1 vsetvli/vsetivl/vsetvl instructions
+;; -------------------------------------------------------------------------------
+
+;; we dont't define vsetvli as unspec_volatile,
+;; because we want this instruction can be scheduling
+;; in the future.
+;; This means these instructions will be deleted when
+;; there is no instructions using vl or vtype in the following.
+;; rd  | rs1 | AVL value | Effect on vl
+;; -   | !x0 | x[rs1]    | Normal stripmining
+;; !x0 | x0  | ~0        | Set vl to VLMAX
+(define_insn "@vsetvl_<mode>"
+  [(parallel
+    [(set (match_operand:X 0 "register_operand" "=r,r")
+      (unspec:X
+        [(match_operand:X 1 "csr_operand" "K,r")] UNSPEC_VSETVLI))
+     (set (reg:SI VL_REGNUM)
+       (unspec:SI
+        [(match_dup 1)] UNSPEC_VSETVLI))
+     (set (reg:SI VTYPE_REGNUM)
+       (unspec:SI
+        [(match_operand 2 "const_int_operand")] UNSPEC_VSETVLI))])]
+  "TARGET_VECTOR"
+  {
+    char buf[64];
+    gcc_assert (CONSTANT_P (operands[2]));
+    const char *insn = satisfies_constraint_K (operands[1]) ? "vsetivli\t%0,%1"
+        : "vsetvli\t%0,%1";
+    unsigned int vsew = riscv_parse_vsew_field (INTVAL (operands[2]));
+    unsigned int vlmul = riscv_parse_vlmul_field (INTVAL (operands[2]));
+    unsigned int vta = riscv_parse_vta_field (INTVAL (operands[2]));
+    unsigned int vma = riscv_parse_vma_field (INTVAL (operands[2]));
+    const char *sew = vsew == 0 ? "e8"  : vsew == 1 ? "e16"
+          : vsew == 2 ? "e32" : "e64";
+    const char *lmul = vlmul == 0 ? "m1" : vlmul == 1 ? "m2"
+          : vlmul == 2 ? "m4" : vlmul == 3 ? "m8"
+          : vlmul == 5 ? "mf8" : vlmul == 6 ? "mf4" : "mf2";
+    const char *ta = vta == 0 ? "tu" : "ta";
+    const char *ma = vma == 0 ? "mu" : "ma";
+    snprintf (buf, sizeof (buf), "%s,%s,%s,%s,%s", insn, sew, lmul, ta, ma);
+    output_asm_insn (buf, operands);
+    return "";
+  }
+  [(set_attr "type" "vsetvl")
+   (set_attr "mode" "none")])
+
+(define_insn "@vsetvl_<mode>_volatile"
+  [(parallel
+    [(set (match_operand:X 0 "register_operand" "=r,r")
+      (unspec_volatile:X
+        [(match_operand:X 1 "csr_operand" "K,r")] UNSPEC_VSETVLI))
+     (set (reg:SI VL_REGNUM)
+       (unspec_volatile:SI
+        [(match_dup 1)] UNSPEC_VSETVLI))
+     (set (reg:SI VTYPE_REGNUM)
+       (unspec_volatile:SI
+        [(match_operand 2 "const_int_operand")] UNSPEC_VSETVLI))])]
+  "TARGET_VECTOR"
+  {
+    char buf[64];
+    gcc_assert (CONSTANT_P (operands[2]));
+    const char *insn = satisfies_constraint_K (operands[1]) ? "vsetivli\t%0,%1"
+        : "vsetvli\t%0,%1";
+    unsigned int vsew = riscv_parse_vsew_field (INTVAL (operands[2]));
+    unsigned int vlmul = riscv_parse_vlmul_field (INTVAL (operands[2]));
+    unsigned int vta = riscv_parse_vta_field (INTVAL (operands[2]));
+    unsigned int vma = riscv_parse_vma_field (INTVAL (operands[2]));
+    const char *sew = vsew == 0 ? "e8"  : vsew == 1 ? "e16"
+          : vsew == 2 ? "e32" : "e64";
+    const char *lmul = vlmul == 0 ? "m1" : vlmul == 1 ? "m2"
+          : vlmul == 2 ? "m4" : vlmul == 3 ? "m8"
+          : vlmul == 5 ? "mf8" : vlmul == 6 ? "mf4" : "mf2";
+    const char *ta = vta == 0 ? "tu" : "ta";
+    const char *ma = vma == 0 ? "mu" : "ma";
+    snprintf (buf, sizeof (buf), "%s,%s,%s,%s,%s", insn, sew, lmul, ta, ma);
+    output_asm_insn (buf, operands);
+    return "";
+  }
+  [(set_attr "type" "vsetvl")
+   (set_attr "mode" "none")])
 ;; Vector Unit-stride mask Loads.
 (define_insn "@vlm<VB:mode>"
   [(set (match_operand:VB 0 "register_operand" "=vr")

@@ -1,0 +1,75 @@
+/* Definitions of vector function for RISC-V built-in functions. -*- C -*-
+  Copyright (C) 2021-2021 Free Software Foundation, Inc.
+  Contributed by Juzhe Zhong (juzhe.zhong@rivai.ai), RiVAI Technologies Ltd.
+  Based on MIPS target for GNU compiler.
+
+This file is part of GCC.
+
+GCC is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3, or (at your option)
+any later version.
+
+GCC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GCC; see the file COPYING3. If not see
+<http://www.gnu.org/licenses/>. */
+
+#ifndef DEF_RVV_FUNCTION
+#define DEF_RVV_FUNCTION(A, B, C, D, E, F, G)
+#endif
+#ifndef VITER
+#define VITER(A)
+#endif
+#ifndef VATTR
+#define VATTR(A, B)
+#endif
+
+/* base name, arg_pattern, pred_type, operation_type */
+#define REQUIRED_EXTENSIONS (RISCV_TARGET_VECTOR)
+/* 6. Configuration-Setting Instructions. */
+DEF_RVV_FUNCTION(vsetvl, config, (1, VITER(VI, signed)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(vsetvlmax, config, (1, VITER(VI, signed)), PAT_none, PRED_none, OP_none)
+/* Helper misc intrinsics for software programmer. */
+DEF_RVV_FUNCTION(readvl, readvl, (1, VITER(VI, signed)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(readvl, readvl, (1, VITER(VI, unsigned)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(readvl, readvl, (1, VITER(VF, signed)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(readvl, readvl, (2, VITER(VTI, signed), VATTR(0, VTSUB, signed)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(readvl, readvl, (2, VITER(VTI, unsigned), VATTR(0, VTSUB, unsigned)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(readvl, readvl, (2, VITER(VTF, signed), VATTR(0, VTSUB, signed)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VI, unsigned), VATTR(0, VI, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VI, signed), VATTR(0, VI, unsigned)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VATTR(1, VCONVERFI, signed), VITER(VCONVERF, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VATTR(1, VCONVERFI, unsigned), VITER(VCONVERF, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VCONVERF, signed), VATTR(0, VCONVERFI, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VCONVERF, signed), VATTR(0, VCONVERFI, unsigned)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VCONVERI, signed), VATTR(0, VCONVERI, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VCONVERI, unsigned), VATTR(0, VCONVERI, unsigned)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VCONVERI2, signed), VATTR(0, VCONVERI2, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VCONVERI2, unsigned), VATTR(0, VCONVERI2, unsigned)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VCONVERI3, signed), VATTR(0, VCONVERI3, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vreinterpret, misc, (2, VITER(VCONVERI3, unsigned), VATTR(0, VCONVERI3, unsigned)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vlmul_ext, misc, (2, VITER(VLMULEXT, signed), VITER(VI, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vlmul_ext, misc, (2, VITER(VLMULEXT, unsigned), VITER(VI, unsigned)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vlmul_ext, misc, (2, VITER(VLMULEXT, signed), VITER(VF, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vlmul_trunc, misc, (2, VITER(VLMULTRUNC, signed), VITER(VI, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vlmul_trunc, misc, (2, VITER(VLMULTRUNC, unsigned), VITER(VI, unsigned)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vlmul_trunc, misc, (2, VITER(VLMULTRUNC, signed), VITER(VF, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vundefined, misc, (1, VITER(VI, signed)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(vundefined, misc, (1, VITER(VI, unsigned)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(vundefined, misc, (1, VITER(VF, signed)), PAT_none, PRED_none, OP_none)
+DEF_RVV_FUNCTION(vset, misc, (4, VITER(VSETI, signed), VATTR(0, VSETI, signed), VATTR(0, VSUB, signed), VITER(VFULL, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vset, misc, (4, VITER(VSETI, unsigned), VATTR(0, VSETI, unsigned), VATTR(0, VSUB, signed), VITER(VFULL, unsigned)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vset, misc, (4, VITER(VSETF, signed), VATTR(0, VSETF, signed), VATTR(0, VSUB, signed), VITER(VFULL, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vget, misc, (3, VITER(VGETI, signed), VITER(VFULL, signed), VATTR(0, VSUB, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vget, misc, (3, VITER(VGETI, unsigned), VITER(VFULL, unsigned), VATTR(0, VSUB, signed)), PAT_none, PRED_none, OP_v)
+DEF_RVV_FUNCTION(vget, misc, (3, VITER(VGETF, signed), VITER(VFULL, signed), VATTR(0, VSUB, signed)), PAT_none, PRED_none, OP_v)
+
+#undef REQUIRED_EXTENSIONS
+#undef DEF_RVV_FUNCTION
+#undef VITER
+#undef VATTR
