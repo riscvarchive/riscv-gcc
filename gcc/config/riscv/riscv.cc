@@ -1615,12 +1615,269 @@ riscv_legitimize_const_move (machine_mode mode, rtx dest, rtx src)
   riscv_emit_move (dest, src);
 }
 
+/* Report when we try to do something that requires vector when vector is disabled.
+   This is an error of last resort and isn't very high-quality.  It usually
+   involves attempts to measure the vector length in some way.  */
+static void
+riscv_report_vector_required (void)
+{
+  static bool reported_p = false;
+
+  /* Avoid reporting a slew of messages for a single oversight.  */
+  if (reported_p)
+    return;
+
+  error ("this operation requires the RVV ISA extension");
+  inform (input_location, "you can enable RVV using the command-line"
+          " option %<-march%>, or by using the %<target%>"
+          " attribute or pragma");
+  reported_p = true;
+}
+
+/* Note: clobber register holds the vlenb or 1/2 vlenb or 1/4 vlenb or 1/8 vlenb value. */
+/* Expand move for quotient.  */
+static void
+riscv_expand_quotient (int quotient, machine_mode mode, rtx clobber_vlenb, rtx dest)
+{
+  if (quotient == 0)
+    {
+      riscv_emit_move(dest, GEN_INT(0));
+      return;
+    }
+
+  bool is_neg = quotient < 0;
+  quotient = abs(quotient);
+  int log2 = exact_log2 (quotient);
+  int vlenb = BYTES_PER_RISCV_VECTOR.coeffs[1];
+
+  if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+    emit_insn (gen_rtx_SET (clobber_vlenb, gen_int_mode (poly_int64 (vlenb, vlenb), mode)));
+  else
+    {
+      riscv_emit_move (gen_highpart (Pmode, clobber_vlenb), GEN_INT (0));
+      emit_insn (gen_rtx_SET (gen_lowpart (Pmode, clobber_vlenb), gen_int_mode (poly_int64 (vlenb, vlenb), Pmode)));
+    }
+
+  if (log2 == 0)
+    {
+      if (is_neg)
+        {
+          if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+            emit_insn (gen_rtx_SET (dest, gen_rtx_NEG (mode, clobber_vlenb)));
+          else
+            {
+              /* We should use SImode to simulate DImode negation. */
+              /* prologue and epilogue can not go through this condition. */
+              gcc_assert (can_create_pseudo_p ());
+              rtx reg = gen_reg_rtx (Pmode);
+              riscv_emit_move(dest, clobber_vlenb);
+              emit_insn (gen_rtx_SET (reg,
+                  gen_rtx_NE (Pmode, gen_lowpart (Pmode, dest), const0_rtx)));
+              emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+                  gen_rtx_NEG (Pmode, gen_highpart (Pmode, dest))));
+              emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest),
+                  gen_rtx_NEG (Pmode, gen_lowpart (Pmode, dest))));
+              emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+                  gen_rtx_MINUS (Pmode, gen_highpart (Pmode, dest), reg)));
+            }
+        }
+      else
+        riscv_emit_move(dest, clobber_vlenb);
+    }
+  else if (log2 != -1
+    && GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+    {
+      gcc_assert (IN_RANGE (log2, 0, 31));
+
+      if (is_neg)
+        {
+          emit_insn (gen_rtx_SET (dest, gen_rtx_NEG (mode, clobber_vlenb)));
+          emit_insn (gen_rtx_SET (dest, gen_rtx_ASHIFT (mode, dest, GEN_INT (log2))));
+        }
+      else
+        emit_insn (gen_rtx_SET (dest, gen_rtx_ASHIFT (mode, clobber_vlenb, GEN_INT (log2))));
+    }
+  else if (exact_log2 (quotient + 1) != -1
+    && GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+    {
+      gcc_assert (IN_RANGE (exact_log2 (quotient + 1), 0, 31));
+      emit_insn (gen_rtx_SET (
+                   dest,
+                   gen_rtx_ASHIFT (mode, clobber_vlenb, GEN_INT (exact_log2 (quotient + 1)))));
+
+      if (is_neg)
+        emit_insn (gen_rtx_SET (dest, gen_rtx_MINUS (mode, clobber_vlenb, dest)));
+      else
+        emit_insn (gen_rtx_SET (dest, gen_rtx_MINUS (mode, dest, clobber_vlenb)));
+    }
+  else if (exact_log2 (quotient - 1) != -1
+    && GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+    {
+      gcc_assert (IN_RANGE (exact_log2 (quotient - 1), 0, 31));
+      emit_insn (gen_rtx_SET (
+                   dest, gen_rtx_ASHIFT (mode, clobber_vlenb,
+                                         GEN_INT (exact_log2 (quotient - 1)))));
+
+      if (is_neg)
+        {
+          emit_insn (gen_rtx_SET (dest, gen_rtx_NEG (mode, dest)));
+          emit_insn (gen_rtx_SET (dest, gen_rtx_MINUS (mode, dest, clobber_vlenb)));
+        }
+      else
+        emit_insn (gen_rtx_SET (dest, gen_rtx_PLUS (mode, dest, clobber_vlenb)));
+    }
+  else
+    {
+      gcc_assert (TARGET_MUL
+                  && "M-extension must be enabled to calculate the poly_int "
+                  "size/offset.");
+
+      if (is_neg)
+        riscv_emit_move (dest, GEN_INT (-quotient));
+      else
+        riscv_emit_move (dest, GEN_INT (quotient));
+
+      if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+        emit_insn (gen_rtx_SET (dest, gen_rtx_MULT (mode, dest, clobber_vlenb)));
+      else
+        {
+          /* We should use SImode to simulate DImode multiplication. */
+          /* prologue and epilogue can not go through this condition. */
+          gcc_assert (can_create_pseudo_p ());
+          rtx reg = gen_reg_rtx (Pmode);
+          emit_insn (gen_umulsi3_highpart (reg, gen_lowpart (Pmode, dest),
+              gen_lowpart (Pmode, clobber_vlenb)));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, clobber_vlenb),
+              gen_rtx_MULT (Pmode, gen_highpart (Pmode, clobber_vlenb),
+                  gen_lowpart (Pmode, dest))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+              gen_rtx_MULT (Pmode, gen_highpart (Pmode, dest),
+                  gen_lowpart (Pmode, clobber_vlenb))));
+          emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest),
+              gen_rtx_MULT (Pmode, gen_lowpart (Pmode, dest),
+                  gen_lowpart (Pmode, clobber_vlenb))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+              gen_rtx_PLUS (Pmode, gen_highpart (Pmode, dest),
+                  gen_highpart (Pmode, clobber_vlenb))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+              gen_rtx_PLUS (Pmode, gen_highpart (Pmode, dest), reg)));
+        }
+    }
+}
+
+/* Analyze src and emit const_poly_int mov sequence.  */
+
+static void
+riscv_expand_mov_const_poly_int (machine_mode mode, rtx dest, rtx clobber,
+                                 rtx src)
+{
+  poly_int64 value = rtx_to_poly_int64 (src);
+  int offset = value.coeffs[0];
+  int factor = value.coeffs[1];
+  int vlenb = BYTES_PER_RISCV_VECTOR.coeffs[1];
+  int div_factor = 0;
+
+  if ((factor % vlenb) == 0)
+    riscv_expand_quotient(factor / vlenb, mode, clobber, dest);
+  else if ((factor % (vlenb / 2)) == 0)
+    {
+      riscv_expand_quotient(factor / (vlenb / 2), mode, clobber, dest);
+      div_factor = 2;
+    }
+  else if ((factor % (vlenb / 4)) == 0)
+    {
+      riscv_expand_quotient(factor / (vlenb / 4), mode, clobber, dest);
+      div_factor = 4;
+    }
+  else if ((factor % (vlenb / 8)) == 0)
+    {
+      riscv_expand_quotient(factor / (vlenb / 8), mode, clobber, dest);
+      div_factor = 8;
+    }
+  else if ((factor % (vlenb / 16)) == 0)
+    {
+      riscv_expand_quotient(factor / (vlenb / 16), mode, clobber, dest);
+      div_factor = 16;
+    }
+  else
+    gcc_unreachable();
+
+  if (div_factor != 0)
+    {
+      if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+        emit_insn (gen_rtx_SET (dest, gen_rtx_ASHIFTRT (mode, dest, GEN_INT (exact_log2 (div_factor)))));
+      else
+        {
+          /* We should use SImode to simulate DImode shift. */
+          /* prologue and epilogue can not go through this condition. */
+          gcc_assert (can_create_pseudo_p ());
+          rtx reg = gen_reg_rtx (Pmode);
+          emit_insn (gen_rtx_SET (reg, gen_rtx_ASHIFT (Pmode, gen_highpart (Pmode, dest),
+              GEN_INT (GET_MODE_BITSIZE (Pmode) - exact_log2 (div_factor)))));
+          emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest),
+              gen_rtx_LSHIFTRT (Pmode, gen_lowpart (Pmode, dest),
+              GEN_INT (exact_log2 (div_factor)))));
+          emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest),
+              gen_rtx_IOR (Pmode, reg, gen_lowpart (Pmode, dest))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest),
+              gen_rtx_ASHIFTRT (Pmode, gen_highpart (Pmode, dest),
+              GEN_INT (exact_log2 (div_factor)))));
+        }
+    }
+
+  HOST_WIDE_INT constant = offset - factor;
+
+  if (constant == 0)
+    return;
+  else if (SMALL_OPERAND (constant))
+    {
+      if (GET_MODE_SIZE (mode).to_constant () <= GET_MODE_SIZE (Pmode))
+        emit_insn (gen_rtx_SET (dest, gen_rtx_PLUS (mode, dest, GEN_INT (constant))));
+      else
+        {
+          /* We should use SImode to simulate DImode addition. */
+          /* prologue and epilogue can not go through this condition. */
+          gcc_assert (can_create_pseudo_p ());
+          rtx reg = gen_reg_rtx (Pmode);
+          emit_insn (gen_rtx_SET (reg, gen_rtx_PLUS (Pmode, gen_lowpart (Pmode, dest), GEN_INT (constant))));
+          emit_insn (gen_rtx_SET (gen_lowpart (Pmode, dest), gen_rtx_LTU (Pmode, reg, gen_lowpart (Pmode, dest))));
+          emit_insn (gen_rtx_SET (gen_highpart (Pmode, dest), gen_rtx_PLUS (Pmode, gen_lowpart (Pmode, dest), gen_highpart (Pmode, dest))));
+          riscv_emit_move (gen_lowpart (Pmode, dest), reg);
+        }
+    }
+  else
+    emit_insn (gen_rtx_SET (dest, riscv_add_offset (clobber, dest, constant)));
+}
+
 /* If (set DEST SRC) is not a valid move instruction, emit an equivalent
    sequence that is valid.  */
 
 bool
 riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
 {
+  scalar_int_mode int_mode;
+  if (CONST_POLY_INT_P (src)
+    && is_a <scalar_int_mode> (mode, &int_mode))
+    {
+      poly_int64 value = rtx_to_poly_int64 (src);
+      if (!value.is_constant () && !TARGET_VECTOR)
+        {
+          riscv_report_vector_required ();
+          return true;
+        }
+
+      if (GET_MODE_SIZE (mode).to_constant () < GET_MODE_SIZE (Pmode))
+        {
+          rtx clobber = gen_reg_rtx (Pmode);
+          riscv_expand_mov_const_poly_int (Pmode, gen_lowpart (Pmode, dest), clobber, src);
+        }
+      else
+        {
+          rtx clobber = gen_reg_rtx (mode);
+          riscv_expand_mov_const_poly_int (mode, dest, clobber, src);
+        }
+      return true;
+    }
   /* Expand 
        (set (reg:QI target) (mem:QI (address))) 
      to
