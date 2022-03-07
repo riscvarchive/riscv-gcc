@@ -1,0 +1,223 @@
+/* { dg-do compile } */
+/* { dg-additional-options "-O2 -ftree-vectorize -fdump-tree-optimized" } */
+/* { dg-skip-if "test vectorization using rvv" { *-*-* } { "*" } { "-march=rv*v*zfh*" } } */
+
+#include <stddef.h>
+#include <stdint.h>
+
+#include <stdint.h>
+
+#ifndef TYPE
+#define TYPE uint8_t
+#define ITYPE int8_t
+#endif
+
+#ifndef NAME
+#define NAME(X) X
+#endif
+
+void __attribute__ ((noinline, noclone))
+NAME(f2) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      a[i] = c[i * 2];
+      b[i] = c[i * 2 + 1];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(f3) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      a[i] = d[i * 3];
+      b[i] = d[i * 3 + 1];
+      c[i] = d[i * 3 + 2];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(f4) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      a[i] = e[i * 4];
+      b[i] = e[i * 4 + 1];
+      c[i] = e[i * 4 + 2];
+      d[i] = e[i * 4 + 3];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(f5) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, TYPE *__restrict f, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      a[i] = f[i * 5];
+      b[i] = f[i * 5 + 1];
+      c[i] = f[i * 5 + 2];
+      d[i] = f[i * 5 + 3];
+      e[i] = f[i * 5 + 4];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(f6) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, TYPE *__restrict f,
+    TYPE *__restrict g, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      a[i] = g[i * 6];
+      b[i] = g[i * 6 + 1];
+      c[i] = g[i * 6 + 2];
+      d[i] = g[i * 6 + 3];
+      e[i] = g[i * 6 + 4];
+      f[i] = g[i * 6 + 5];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(f7) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, TYPE *__restrict f,
+    TYPE *__restrict g, TYPE *__restrict h, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      a[i] = h[i * 7];
+      b[i] = h[i * 7 + 1];
+      c[i] = h[i * 7 + 2];
+      d[i] = h[i * 7 + 3];
+      e[i] = h[i * 7 + 4];
+      f[i] = h[i * 7 + 5];
+      g[i] = h[i * 7 + 6];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(f8) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, TYPE *__restrict f,
+    TYPE *__restrict g, TYPE *__restrict h, TYPE *__restrict j, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      a[i] = j[i * 8];
+      b[i] = j[i * 8 + 1];
+      c[i] = j[i * 8 + 2];
+      d[i] = j[i * 8 + 3];
+      e[i] = j[i * 8 + 4];
+      f[i] = j[i * 8 + 5];
+      g[i] = j[i * 8 + 6];
+      h[i] = j[i * 8 + 7];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(g2) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      c[i * 2] = a[i];
+      c[i * 2 + 1] = b[i];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(g3) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      d[i * 3] = a[i];
+      d[i * 3 + 1] = b[i];
+      d[i * 3 + 2] = c[i];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(g4) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      e[i * 4] = a[i];
+      e[i * 4 + 1] = b[i];
+      e[i * 4 + 2] = c[i];
+      e[i * 4 + 3] = d[i];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(g5) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, TYPE *__restrict f, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      f[i * 5] = a[i];
+      f[i * 5 + 1] = b[i];
+      f[i * 5 + 2] = c[i];
+      f[i * 5 + 3] = d[i];
+      f[i * 5 + 4] = e[i];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(g6) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, TYPE *__restrict f,
+    TYPE *__restrict g, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      g[i * 6] = a[i];
+      g[i * 6 + 1] = b[i];
+      g[i * 6 + 2] = c[i];
+      g[i * 6 + 3] = d[i];
+      g[i * 6 + 4] = e[i];
+      g[i * 6 + 5] = f[i];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(g7) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, TYPE *__restrict f,
+    TYPE *__restrict g, TYPE *__restrict h, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      h[i * 7] = a[i];
+      h[i * 7 + 1] = b[i];
+      h[i * 7 + 2] = c[i];
+      h[i * 7 + 3] = d[i];
+      h[i * 7 + 4] = e[i];
+      h[i * 7 + 5] = f[i];
+      h[i * 7 + 6] = g[i];
+    }
+}
+
+void __attribute__ ((noinline, noclone))
+NAME(g8) (TYPE *__restrict a, TYPE *__restrict b, TYPE *__restrict c,
+	  TYPE *__restrict d, TYPE *__restrict e, TYPE *__restrict f,
+    TYPE *__restrict g, TYPE *__restrict h, TYPE *__restrict j, ITYPE n)
+{
+  for (ITYPE i = 0; i < n; ++i)
+    {
+      j[i * 8] = a[i];
+      j[i * 8 + 1] = b[i];
+      j[i * 8 + 2] = c[i];
+      j[i * 8 + 3] = d[i];
+      j[i * 8 + 4] = e[i];
+      j[i * 8 + 5] = f[i];
+      j[i * 8 + 6] = g[i];
+      j[i * 8 + 7] = h[i];
+    }
+}
+
+/* { dg-final { scan-tree-dump-times "\.LEN_LOAD_LANES" 7 "optimized" } } */
+/* { dg-final { scan-tree-dump-times "\.LEN_STORE_LANES" 7 "optimized" } } */
+/* { dg-final { scan-assembler-not {\tvmv1r.v} } } */
+/* { dg-final { scan-assembler-not {\tvmv2r.v} } } */
+/* { dg-final { scan-assembler-not {\tvmv4r.v} } } */
