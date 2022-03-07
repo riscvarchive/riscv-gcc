@@ -3684,6 +3684,19 @@ riscv_output_move (rtx dest, rtx src)
             return "fld\t%0,%1";
           }
     }
+
+  if (dest_code == REG
+      && GP_REG_P (REGNO (dest))
+      && src_code == CONST_POLY_INT)
+    {
+      /* we only want a single full vector register vlen
+         read after reload. */
+      poly_int64 value = rtx_to_poly_int64 (src);
+      gcc_assert (value.coeffs[0] == UNITS_PER_V_REG.coeffs[0]
+                  && value.coeffs[1] == UNITS_PER_V_REG.coeffs[1]);
+      return "csrr\t%0,vlenb";
+    }
+
   gcc_unreachable ();
 }
 
