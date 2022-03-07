@@ -2673,17 +2673,305 @@ indexedloadstore::get_argument_types (const function_instance &instance,
     }
 }
 
-inline void
-gt_pch_nx (function_instance *)
+/* A function_base for segment functions.  */
+void
+segment::get_name (char *name, const function_instance &instance) const
 {
+  machine_mode mode =
+      (strstr (instance.get_base_name (), "vlseg") != NULL ||
+       strstr (instance.get_base_name (), "vlsseg") != NULL ||
+       strstr (instance.get_base_name (), "vluxseg") != NULL ||
+       strstr (instance.get_base_name (), "vloxseg") != NULL)
+          ? instance.get_arg_pattern ().arg_list[0]
+      : (strstr (instance.get_base_name (), "vsuxseg") != NULL ||
+         strstr (instance.get_base_name (), "vsoxseg") != NULL)
+          ? instance.get_arg_pattern ().arg_list[3]
+          : instance.get_arg_pattern ().arg_list[2];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned ||
+                    instance.get_data_type_list ()[0] == DT_uptr ||
+                    instance.get_data_type_list ()[0] == DT_c_uptr;
+
+  if (strcmp (instance.get_base_name (), "vlsegff") == 0 ||
+      strcmp (instance.get_base_name (), "vlseg2ff") == 0 ||
+      strcmp (instance.get_base_name (), "vlseg3ff") == 0 ||
+      strcmp (instance.get_base_name (), "vlseg4ff") == 0 ||
+      strcmp (instance.get_base_name (), "vlseg5ff") == 0 ||
+      strcmp (instance.get_base_name (), "vlseg6ff") == 0 ||
+      strcmp (instance.get_base_name (), "vlseg7ff") == 0 ||
+      strcmp (instance.get_base_name (), "vlseg8ff") == 0)
+    strcat (name, "vlseg");
+  else
+    strcat (name, instance.get_base_name ());
+
+  unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  char buf[16];
+
+  if (strcmp (instance.get_base_name (), "vlseg") == 0 ||
+      strcmp (instance.get_base_name (), "vlsseg") == 0)
+    snprintf (buf, sizeof (buf), "%de%d", riscv_classify_nf (mode), sew);
+  else if (strcmp (instance.get_base_name (), "vlsegff") == 0)
+    snprintf (buf, sizeof (buf), "%de%dff", riscv_classify_nf (mode), sew);
+  else if (strcmp (instance.get_base_name (), "vlseg2ff") == 0)
+    snprintf (buf, sizeof (buf), "2e%dff", sew);
+  else if (strcmp (instance.get_base_name (), "vlseg3ff") == 0)
+    snprintf (buf, sizeof (buf), "3e%dff", sew);
+  else if (strcmp (instance.get_base_name (), "vlseg4ff") == 0)
+    snprintf (buf, sizeof (buf), "4e%dff", sew);
+  else if (strcmp (instance.get_base_name (), "vlseg5ff") == 0)
+    snprintf (buf, sizeof (buf), "5e%dff", sew);
+  else if (strcmp (instance.get_base_name (), "vlseg6ff") == 0)
+    snprintf (buf, sizeof (buf), "6e%dff", sew);
+  else if (strcmp (instance.get_base_name (), "vlseg7ff") == 0)
+    snprintf (buf, sizeof (buf), "7e%dff", sew);
+  else if (strcmp (instance.get_base_name (), "vlseg8ff") == 0)
+    snprintf (buf, sizeof (buf), "8e%dff", sew);
+  else if (strstr (instance.get_base_name (), "vluxseg") != NULL ||
+           strstr (instance.get_base_name (), "vloxseg") != NULL)
+    {
+      sew = GET_MODE_BITSIZE (GET_MODE_INNER (
+          instance.get_arg_pattern ()
+              .arg_list[instance.get_arg_pattern ().arg_len - 1]));
+
+      if (strcmp (instance.get_base_name (), "vluxseg") == 0 ||
+          strcmp (instance.get_base_name (), "vloxseg") == 0)
+        snprintf (buf, sizeof (buf), "%dei%d", riscv_classify_nf (mode), sew);
+      else
+        {
+          mode = instance.get_arg_pattern ().arg_list[1];
+          snprintf (buf, sizeof (buf), "ei%d", sew);
+        }
+    }
+  else if (strstr (instance.get_base_name (), "vsuxseg") != NULL ||
+           strstr (instance.get_base_name (), "vsoxseg") != NULL)
+    {
+      sew = GET_MODE_BITSIZE (
+          GET_MODE_INNER (instance.get_arg_pattern ().arg_list[2]));
+
+      if (strcmp (instance.get_base_name (), "vsuxseg") == 0 ||
+          strcmp (instance.get_base_name (), "vsoxseg") == 0)
+        snprintf (buf, sizeof (buf), "%dei%d", riscv_classify_nf (mode), sew);
+      else
+        {
+          mode = instance.get_arg_pattern ()
+                     .arg_list[instance.get_arg_pattern ().arg_len - 1];
+          snprintf (buf, sizeof (buf), "ei%d", sew);
+        }
+    }
+  else if (strcmp (instance.get_base_name (), "vsseg") == 0 ||
+           strcmp (instance.get_base_name (), "vssseg") == 0)
+    snprintf (buf, sizeof (buf), "%de%d", riscv_classify_nf (mode), sew);
+  else
+    snprintf (buf, sizeof (buf), "e%d", sew);
+
+  strcat (name, buf);
+  strcat (name, "_");
+  const char *operation_suffix =
+      get_operation_suffix (instance.get_operation ());
+
+  if (strlen (operation_suffix) > 0)
+    {
+      strcat (name, operation_suffix);
+      strcat (name, "_");
+    }
+
+  strcat (name, mode2data_type_suffix (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_func_suffix (instance.get_pred ());
+
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
+}
+/* A function_base for vle functions.  */
+unsigned int
+vle::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY;
 }
 
-inline void
-gt_pch_nx (function_instance *, gt_pointer_operator, void *)
+tree
+vle::get_return_type (const function_instance &instance) const
 {
+  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                   instance.get_data_type_list ()[0] == DT_unsigned);
 }
 
-#include "gt-riscv-vector-builtins-functions.h"
+rtx
+vle::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vle (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vse functions.  */
+unsigned int
+vse::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+rtx
+vse::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  insn_code icode = code_for_vse (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vlse functions.  */
+unsigned int
+vlse::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY;
+}
+
+tree
+vlse::get_return_type (const function_instance &instance) const
+{
+  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                   instance.get_data_type_list ()[0] == DT_unsigned);
+}
+
+void
+vlse::get_argument_types (const function_instance &instance,
+                          vec<tree> &argument_types) const
+{
+  loadstore::get_argument_types (instance, argument_types);
+  argument_types.quick_push (ptrdiff_type_node);
+}
+
+rtx
+vlse::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vlse (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsse functions.  */
+unsigned int
+vsse::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+void
+vsse::get_argument_types (const function_instance &instance,
+                          vec<tree> &argument_types) const
+{
+  loadstore::get_argument_types (instance, argument_types);
+  argument_types.quick_insert (1, ptrdiff_type_node);
+}
+
+rtx
+vsse::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  insn_code icode = code_for_vsse (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vlm functions.  */
+unsigned int
+vlm::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY;
+}
+
+tree
+vlm::get_return_type (const function_instance &instance) const
+{
+  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                   instance.get_data_type_list ()[0] == DT_unsigned);
+}
+
+void
+vlm::get_argument_types (const function_instance &,
+                         vec<tree> &argument_types) const
+{
+  argument_types.quick_push (const_unsigned_int8_ptr_type_node);
+}
+
+rtx
+vlm::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vlm (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsm functions.  */
+unsigned int
+vsm::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+void
+vsm::get_argument_types (const function_instance &instance,
+                         vec<tree> &argument_types) const
+{
+  argument_types.quick_push (unsigned_int8_ptr_type_node);
+  argument_types.quick_push (
+      get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                instance.get_data_type_list ()[0] == DT_unsigned));
+}
+
+rtx
+vsm::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  insn_code icode = code_for_vsm (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vlxei functions.  */
+unsigned int
+vlxei::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY;
+}
+
+tree
+vlxei::get_return_type (const function_instance &instance) const
+{
+  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                   instance.get_data_type_list ()[0] == DT_unsigned);
+}
+
+rtx
+vlxei::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
+  unsigned int unspec = strcmp (instance.get_base_name (), "vluxei") == 0
+                            ? UNSPEC_UNORDER_INDEXED_LOAD
+                            : UNSPEC_ORDER_INDEXED_LOAD;
+  insn_code icode = code_for_vlxei (unspec, mode1, mode2);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsxei functions.  */
+unsigned int
+vsxei::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+rtx
+vsxei::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
+  unsigned int unspec = strcmp (instance.get_base_name (), "vsuxei") == 0
+                            ? UNSPEC_UNORDER_INDEXED_STORE
+                            : UNSPEC_ORDER_INDEXED_STORE;
+  insn_code icode = code_for_vsxei (unspec, mode1, mode2);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
 /* A function_base for vleff functions.  */
 unsigned int
 vleff::call_properties (const function_instance &) const
@@ -2804,3 +3092,317 @@ vleff::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode = code_for_vleff (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
+
+/* A function_base for vlseg functions.  */
+unsigned int
+vlseg::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY;
+}
+
+tree
+vlseg::get_return_type (const function_instance &instance) const
+{
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  machine_mode tuple_mode = instance.get_arg_pattern ().arg_list[0];
+  machine_mode vector_mode = instance.get_arg_pattern ().arg_list[1];
+  unsigned int nelt =
+      exact_div (GET_MODE_SIZE (tuple_mode), GET_MODE_SIZE (vector_mode))
+          .to_constant ();
+  return get_tuple_t (vector_mode, unsigned_p, nelt);
+}
+
+
+void
+vlseg::get_argument_types (const function_instance &instance,
+                           vec<tree> &argument_types) const
+{
+  for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
+                        (instance.get_data_type_list ()[i] == DT_uptr) ||
+                        (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_uptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      argument_types.quick_push (get_dt_t (
+          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
+    }
+}
+
+rtx
+vlseg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vlseg (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vlsegff functions.  */
+unsigned int
+vlsegff::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY | CP_RAISE_LD_EXCEPTIONS;
+}
+
+void
+vlsegff::get_argument_types (const function_instance &instance,
+                             vec<tree> &argument_types) const
+{
+  vlseg::get_argument_types (instance, argument_types);
+  argument_types.quick_push (build_pointer_type (size_type_node));
+}
+
+gimple *
+vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+               gcall *call_in) const
+{
+  /* split vlsegff (a, b, c) -> d = vlsegff (a, c) + b = readvl (d). */
+  auto_vec<tree, 8> vargs;
+  unsigned int offset = 2;
+
+  for (unsigned int i = 0; i < gimple_call_num_args (call_in); i++)
+    {
+      if (i == gimple_call_num_args (call_in) - offset)
+        continue;
+
+      vargs.quick_push (gimple_call_arg (call_in, i));
+    }
+
+  gimple *repl = gimple_build_call_vec (gimple_call_fn (call_in), vargs);
+  gimple_call_set_lhs (repl, gimple_call_lhs (call_in));
+
+  tree var = create_tmp_var (size_type_node, "new_vl");
+  tree tem = make_ssa_name (size_type_node);
+
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_uptr;
+  function_instance *fn_instance = new function_instance ();
+  snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "readvl_%s",
+            mode2data_type_suffix (mode, unsigned_p, false));
+  hashval_t hashval = fn_instance->hash ();
+  registered_function *rfn_slot =
+      function_table->find_with_hash (*fn_instance, hashval);
+  tree decl = rfn_slot->decl;
+  gimple *g = gimple_build_call (decl, 1, gimple_call_lhs (call_in));
+  gimple_call_set_lhs (g, var);
+  tree indirect = fold_build2 (
+      MEM_REF, size_type_node,
+      gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset),
+      build_int_cst (build_pointer_type (size_type_node), 0));
+  gassign *assign = gimple_build_assign (indirect, tem);
+  gsi_insert_after (gsi_in, assign, GSI_SAME_STMT);
+  gsi_insert_after (gsi_in, gimple_build_assign (tem, var), GSI_SAME_STMT);
+  gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
+
+  delete fn_instance;
+  return repl;
+}
+
+rtx
+vlsegff::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vlsegff (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsseg functions.  */
+unsigned int
+vsseg::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+void
+vsseg::get_argument_types (const function_instance &instance,
+                           vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
+                        (instance.get_data_type_list ()[i] == DT_uptr) ||
+                        (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_uptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+
+      if (i == 2)
+        {
+          tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                                       unsigned_p, false, false);
+          unsigned int nelt =
+              exact_div (
+                  GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[2]),
+                  GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[0]))
+                  .to_constant ();
+          argument_types.quick_push (
+              get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nelt));
+        }
+      else
+        argument_types.quick_push (get_dt_t (
+            instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
+    }
+}
+
+rtx
+vsseg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  insn_code icode = code_for_vsseg (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vlsseg functions.  */
+void
+vlsseg::get_argument_types (const function_instance &instance,
+                            vec<tree> &argument_types) const
+{
+  vlseg::get_argument_types (instance, argument_types);
+  argument_types.quick_push (ptrdiff_type_node);
+}
+
+rtx
+vlsseg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vlsseg (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vssseg functions.  */
+void
+vssseg::get_argument_types (const function_instance &instance,
+                            vec<tree> &argument_types) const
+{
+  vsseg::get_argument_types (instance, argument_types);
+  argument_types.quick_insert (1, ptrdiff_type_node);
+}
+
+rtx
+vssseg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  insn_code icode = code_for_vssseg (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vlxseg functions.  */
+unsigned int
+vlxseg::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY;
+}
+
+tree
+vlxseg::get_return_type (const function_instance &instance) const
+{
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  machine_mode tuple_mode = instance.get_arg_pattern ().arg_list[0];
+  machine_mode vector_mode = instance.get_arg_pattern ().arg_list[1];
+  unsigned int nelt =
+      exact_div (GET_MODE_SIZE (tuple_mode), GET_MODE_SIZE (vector_mode))
+          .to_constant ();
+  return get_tuple_t (vector_mode, unsigned_p, nelt);
+}
+
+void
+vlxseg::get_argument_types (const function_instance &instance,
+                            vec<tree> &argument_types) const
+{
+  for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
+                        (instance.get_data_type_list ()[i] == DT_uptr) ||
+                        (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_uptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      argument_types.quick_push (get_dt_t (
+          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
+    }
+}
+
+rtx
+vlxseg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[3];
+  unsigned int unspec = strcmp (instance.get_base_name (), "vluxseg") == 0
+                            ? UNSPEC_UNORDER_INDEXED_LOAD
+                            : UNSPEC_ORDER_INDEXED_LOAD;
+  insn_code icode = code_for_vlxsegei (unspec, mode1, mode2);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vsxseg functions.  */
+unsigned int
+vsxseg::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+void
+vsxseg::get_argument_types (const function_instance &instance,
+                            vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
+                        (instance.get_data_type_list ()[i] == DT_uptr) ||
+                        (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_uptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+
+      if (i == 3)
+        {
+          tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                                       unsigned_p, false, false);
+          unsigned int nelt =
+              exact_div (
+                  GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[3]),
+                  GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[0]))
+                  .to_constant ();
+          argument_types.quick_push (
+              get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nelt));
+        }
+      else
+        argument_types.quick_push (get_dt_t (
+            instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
+    }
+}
+
+rtx
+vsxseg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
+  unsigned int unspec = strcmp (instance.get_base_name (), "vsuxseg") == 0
+                            ? UNSPEC_UNORDER_INDEXED_STORE
+                            : UNSPEC_ORDER_INDEXED_STORE;
+  insn_code icode = code_for_vsxsegei (unspec, mode1, mode2);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+gt_pch_nx (function_instance *)
+{
+}
+
+inline void
+gt_pch_nx (function_instance *, gt_pointer_operator, void *)
+{
+}
+
+#include "gt-riscv-vector-builtins-functions.h"

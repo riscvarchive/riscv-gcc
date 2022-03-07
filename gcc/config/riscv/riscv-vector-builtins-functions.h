@@ -596,6 +596,165 @@ public:
   get_argument_types (const function_instance &instance,
                       vec<tree> &argument_types) const OVERRIDE;
 };
+/* A function_base for segment functions.  */
+class segment : public function_builder
+{
+public:
+  // use the same construction function as the function_builder
+  using function_builder::function_builder;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+};
+
+/* A function_base for single-width unary functions.  */
+/* A function_base for vle functions.  */
+class vle : public loadstore
+{
+public:
+  // use the same construction function as the loadstore
+  using loadstore::loadstore;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vse functions.  */
+class vse : public loadstore
+{
+public:
+  // use the same construction function as the loadstore
+  using loadstore::loadstore;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vlse functions.  */
+class vlse : public loadstore
+{
+public:
+  // use the same construction function as the loadstore
+  using loadstore::loadstore;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsse functions.  */
+class vsse : public loadstore
+{
+public:
+  // use the same construction function as the loadstore
+  using loadstore::loadstore;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vlm functions.  */
+class vlm : public loadstore
+{
+public:
+  // use the same construction function as the loadstore
+  using loadstore::loadstore;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsm functions.  */
+class vsm : public loadstore
+{
+public:
+  // use the same construction function as the loadstore
+  using loadstore::loadstore;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vlxei functions.  */
+class vlxei : public indexedloadstore
+{
+public:
+  // use the same construction function as the indexedloadstore
+  using indexedloadstore::indexedloadstore;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsxei functions.  */
+class vsxei : public indexedloadstore
+{
+public:
+  // use the same construction function as the indexedloadstore
+  using indexedloadstore::indexedloadstore;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vleff functions.  */
 class vleff : public function_builder
 {
 public:
@@ -618,6 +777,141 @@ public:
   gimple *
   fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
         gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vlseg functions.  */
+class vlseg : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vlsegff functions.  */
+class vlsegff : public vlseg
+{
+public:
+  // use the same construction function as the function_builder
+  using vlseg::vlseg;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsseg functions.  */
+class vsseg : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vlsseg functions.  */
+class vlsseg : public vlseg
+{
+public:
+  // use the same construction function as the vlseg
+  using vlseg::vlseg;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vssseg functions.  */
+class vssseg : public vsseg
+{
+public:
+  // use the same construction function as the vlseg
+  using vsseg::vsseg;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vlxseg functions.  */
+class vlxseg : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsxseg functions.  */
+class vsxseg : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
 
   rtx
   expand (const function_instance &instance, tree exp,

@@ -142,6 +142,75 @@ DEF_RVV_FUNCTION(vsoxei, vsxei, (4, VITER(V128UNITSI, unsigned), VATTR(0, VSUB, 
 DEF_RVV_FUNCTION(vleff, vleff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
 DEF_RVV_FUNCTION(vleff, vleff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
 DEF_RVV_FUNCTION(vleff, vleff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vmv, vmv, (2, VITER(VF, signed), VATTR(0, VSUB, signed)), PAT_tail, PRED_void | PRED_ta | PRED_tu, OP_v_v)
+
+/* 7. Segment Loads and Stores.  */
+/* vlseg */
+DEF_RVV_FUNCTION(vlseg, vlseg, (3, VITER(VTI, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vlseg, vlseg, (3, VITER(VTI, unsigned), VATTR(0, VTSUB, unsigned), VATTR(0, VSUB, c_uptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vlseg, vlseg, (3, VITER(VTF, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+
+/* vlsegff */
+DEF_RVV_FUNCTION(vlsegff, vlsegff, (3, VITER(VTI, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vlsegff, vlsegff, (3, VITER(VTI, unsigned), VATTR(0, VTSUB, unsigned), VATTR(0, VSUB, c_uptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vlsegff, vlsegff, (3, VITER(VTF, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+
+/* vsseg */
+DEF_RVV_FUNCTION(vsseg, vsseg, (3, VATTR(2, VTSUB, signed), VATTR(2, VSUB, ptr), VITER(VTI, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vsseg, vsseg, (3, VATTR(2, VTSUB, unsigned), VATTR(2, VSUB, uptr), VITER(VTI, unsigned)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vsseg, vsseg, (3, VATTR(2, VTSUB, signed), VATTR(2, VSUB, ptr), VITER(VTF, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+
+/* vlsseg */
+DEF_RVV_FUNCTION(vlsseg, vlsseg, (3, VITER(VTI, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vlsseg, vlsseg, (3, VITER(VTI, unsigned), VATTR(0, VTSUB, unsigned), VATTR(0, VSUB, c_uptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vlsseg, vlsseg, (3, VITER(VTF, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+
+/* vssseg */
+DEF_RVV_FUNCTION(vssseg, vssseg, (3, VATTR(2, VTSUB, signed), VATTR(2, VSUB, ptr), VITER(VTI, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vssseg, vssseg, (3, VATTR(2, VTSUB, unsigned), VATTR(2, VSUB, uptr), VITER(VTI, unsigned)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vssseg, vssseg, (3, VATTR(2, VTSUB, signed), VATTR(2, VSUB, ptr), VITER(VTF, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+
+/* vl[uo]xseg */
+#define DEF_SEGMENT_INDEXED_LOAD(T, N) \
+   DEF_RVV_FUNCTION(vl##T##xseg, vlxseg, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v) \
+   DEF_RVV_FUNCTION(vl##T##xseg, vlxseg, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned), VATTR(0, VSUB, c_uptr), VITER(V##N##UNITSI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v) \
+   DEF_RVV_FUNCTION(vl##T##xseg, vlxseg, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_SEGMENT_INDEXED_LOAD(u, 2)
+DEF_SEGMENT_INDEXED_LOAD(u, 4)
+DEF_SEGMENT_INDEXED_LOAD(u, 8)
+DEF_SEGMENT_INDEXED_LOAD(u, 16)
+DEF_SEGMENT_INDEXED_LOAD(u, 32)
+DEF_SEGMENT_INDEXED_LOAD(o, 2)
+DEF_SEGMENT_INDEXED_LOAD(o, 4)
+DEF_SEGMENT_INDEXED_LOAD(o, 8)
+DEF_SEGMENT_INDEXED_LOAD(o, 16)
+DEF_SEGMENT_INDEXED_LOAD(o, 32)
+#undef DEF_SEGMENT_INDEXED_LOAD
+DEF_RVV_FUNCTION(vluxseg, vlxseg, (4, VITER(VT64UNITS, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr), VITER(V64UNITSI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vluxseg, vlxseg, (4, VITER(VT64UNITS, unsigned), VATTR(0, VTSUB, unsigned), VATTR(0, VSUB, c_uptr), VITER(V64UNITSI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vloxseg, vlxseg, (4, VITER(VT64UNITS, signed), VATTR(0, VTSUB, signed), VATTR(0, VSUB, c_ptr), VITER(V64UNITSI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vloxseg, vlxseg, (4, VITER(VT64UNITS, unsigned), VATTR(0, VTSUB, unsigned), VATTR(0, VSUB, c_uptr), VITER(V64UNITSI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+
+/* vs[uo]xseg */
+#define DEF_SEGMENT_INDEXED_STORE(T, N) \
+   DEF_RVV_FUNCTION(vs##T##xseg, vsxseg, (4, VATTR(3, VTSUB, signed), VATTR(3, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VITER(VT##N##UNITSI, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v) \
+   DEF_RVV_FUNCTION(vs##T##xseg, vsxseg, (4, VATTR(3, VTSUB, unsigned), VATTR(3, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VITER(VT##N##UNITSI, unsigned)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v) \
+   DEF_RVV_FUNCTION(vs##T##xseg, vsxseg, (4, VATTR(3, VTSUB, signed), VATTR(3, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VITER(VT##N##UNITSF, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_SEGMENT_INDEXED_STORE(u, 2)
+DEF_SEGMENT_INDEXED_STORE(u, 4)
+DEF_SEGMENT_INDEXED_STORE(u, 8)
+DEF_SEGMENT_INDEXED_STORE(u, 16)
+DEF_SEGMENT_INDEXED_STORE(u, 32)
+DEF_SEGMENT_INDEXED_STORE(o, 2)
+DEF_SEGMENT_INDEXED_STORE(o, 4)
+DEF_SEGMENT_INDEXED_STORE(o, 8)
+DEF_SEGMENT_INDEXED_STORE(o, 16)
+DEF_SEGMENT_INDEXED_STORE(o, 32)
+#undef DEF_SEGMENT_INDEXED_STORE
+DEF_RVV_FUNCTION(vsuxseg, vsxseg, (4, VATTR(3, VTSUB, signed), VATTR(3, VSUB, ptr), VITER(V64UNITSI, unsigned), VITER(VT64UNITS, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vsuxseg, vsxseg, (4, VATTR(3, VTSUB, unsigned), VATTR(3, VSUB, uptr), VITER(V64UNITSI, unsigned), VITER(VT64UNITS, unsigned)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vsoxseg, vsxseg, (4, VATTR(3, VTSUB, signed), VATTR(3, VSUB, ptr), VITER(V64UNITSI, unsigned), VITER(VT64UNITS, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
+DEF_RVV_FUNCTION(vsoxseg, vsxseg, (4, VATTR(3, VTSUB, unsigned), VATTR(3, VSUB, uptr), VITER(V64UNITSI, unsigned), VITER(VT64UNITS, unsigned)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_v)
 
 #undef REQUIRED_EXTENSIONS
 #undef DEF_RVV_FUNCTION
