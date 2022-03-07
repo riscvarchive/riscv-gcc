@@ -4041,3 +4041,31 @@
         operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   DONE;
 })
+;; =========================================================================
+;; == Permutes
+;; =========================================================================
+
+;; -------------------------------------------------------------------------
+;; ---- [INT,FP] General permutes
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vgather.vv
+;; - vgather.vx
+;; - vgather.vi
+;; - vmsgtu.vx
+;; - vmsgtu.vi
+;; - vadd.vi
+;; - vsub.vx
+;; -------------------------------------------------------------------------
+
+(define_expand "vec_perm<mode>"
+  [(match_operand:V 0 "register_operand")
+   (match_operand:V 1 "register_operand")
+   (match_operand:V 2 "register_operand")
+   (match_operand:<VMAP> 3 "vector_perm_operand")]
+  "TARGET_VECTOR && TARGET_RVV && GET_MODE_NUNITS (<MODE>mode).is_constant ()"
+{
+  riscv_vector_expand_vec_perm (operands[0], operands[1],
+			   operands[2], operands[3]);
+  DONE;
+})
