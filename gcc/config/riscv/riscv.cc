@@ -1607,6 +1607,18 @@ riscv_offset_temporaries (bool add_p, poly_int64 offset)
   return count + riscv_add_offset_1_temporaries (constant);
 }
 
+static void
+riscv_vector_emit_vec_duplicate (machine_mode mode, machine_mode inner_mode,
+                                 rtx target, rtx x)
+{
+  struct expand_operand ops[2];
+  enum insn_code icode = optab_handler (vec_duplicate_optab, mode);
+  gcc_assert (icode != CODE_FOR_nothing);
+  create_output_operand (&ops[0], target, mode);
+  create_input_operand (&ops[1], x, inner_mode);
+  expand_insn (icode, 2, ops);
+}
+
 /* Emit RTL corresponding to:
    vec_shl_insert_optab.  */
 
