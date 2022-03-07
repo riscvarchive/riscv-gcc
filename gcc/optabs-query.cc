@@ -597,6 +597,41 @@ can_vec_mask_load_store_p (machine_mode mode,
   return false;
 }
 
+/* Return true if target supports vector length load/store for mode.  */
+
+bool
+can_vec_len_load_store_p (machine_mode mode, bool is_load)
+{
+  optab op = is_load ? len_load_optab : len_store_optab;
+  machine_mode vmode;
+
+  /* If mode is vector mode, check it directly.  */
+  if (VECTOR_MODE_P (mode))
+    return direct_optab_handler (op, mode) != CODE_FOR_nothing;
+
+  /* Otherwise, return true if there is some vector mode with
+     the len load/store supported.  */
+
+  /* See if there is any chance the len load or store might be
+     vectorized.  If not, punt.  */
+  scalar_mode smode;
+  if (!is_a <scalar_mode> (mode, &smode))
+    return false;
+
+  vmode = targetm.vectorize.preferred_simd_mode (smode);
+  if (VECTOR_MODE_P (vmode)
+      && direct_optab_handler (op, vmode) != CODE_FOR_nothing)
+    return true;
+
+  auto_vector_modes vector_modes;
+  targetm.vectorize.autovectorize_vector_modes (&vector_modes, true);
+  for (machine_mode base_mode : vector_modes)
+    if (related_vector_mode (base_mode, smode).exists (&vmode)
+	&& direct_optab_handler (op, vmode) != CODE_FOR_nothing)
+      return true;
+  return false;
+}
+
 /* If target supports vector load/store with length for vector mode MODE,
    return the corresponding vector mode, otherwise return opt_machine_mode ().
    There are two flavors for vector load/store with length, one is to measure
@@ -620,6 +655,27 @@ get_len_load_store_mode (machine_mode mode, bool is_load)
   if (related_vector_mode (mode, QImode, nunits).exists (&vmode)
       && direct_optab_handler (op, vmode))
     return vmode;
+
+  return opt_machine_mode ();
+}
+
+/* If target supports vector load/store with length for vector mode MODE,
+   return the corresponding vector mode, otherwise return opt_machine_mode ().
+   There are two flavors for vector load/store with length, one is to measure
+   length with bytes, the other is to measure length with lanes.
+   As len_{gather,scatter}_{load,store} optabs point out, for the flavor with bytes, we use
+   VnQI to wrap the other supportable same size vector modes.  */
+
+opt_machine_mode
+get_len_gather_scatter_mode (machine_mode to_mode, machine_mode from_mode, bool is_load)
+{
+  optab op = is_load ? len_gather_load_optab : len_scatter_store_optab;
+  gcc_assert (VECTOR_MODE_P (to_mode));
+  gcc_assert (VECTOR_MODE_P (from_mode));
+
+  /* Check if length in lanes supported for this mode directly.  */
+  if (convert_optab_handler (op, to_mode, from_mode))
+    return to_mode;
 
   return opt_machine_mode ();
 }
@@ -742,6 +798,7 @@ supports_vec_gather_load_p (machine_mode mode)
     this_fn_optabs->supports_vec_gather_load[mode]
       = (supports_vec_convert_optab_p (gather_load_optab, mode)
 	 || supports_vec_convert_optab_p (mask_gather_load_optab, mode)
+   || supports_vec_convert_optab_p (len_gather_load_optab, mode)
 	 ? 1 : -1);
 
   return this_fn_optabs->supports_vec_gather_load[mode] > 0;
@@ -758,6 +815,7 @@ supports_vec_scatter_store_p (machine_mode mode)
     this_fn_optabs->supports_vec_scatter_store[mode]
       = (supports_vec_convert_optab_p (scatter_store_optab, mode)
 	 || supports_vec_convert_optab_p (mask_scatter_store_optab, mode)
+   || supports_vec_convert_optab_p (len_scatter_store_optab, mode)
 	 ? 1 : -1);
 
   return this_fn_optabs->supports_vec_scatter_store[mode] > 0;

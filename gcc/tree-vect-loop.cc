@@ -2554,13 +2554,24 @@ start_over:
       && !LOOP_VINFO_MASKS (loop_vinfo).is_empty ()
       && !LOOP_VINFO_LENS (loop_vinfo).is_empty ())
     {
-      if (dump_enabled_p ())
-	dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
-			 "can't vectorize a loop with partial vectors"
-			 " because we don't expect to mix different"
-			 " approaches with partial vectors for the"
-			 " same loop.\n");
-      LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo) = false;
+      if (targetm.vectorize.autovectorize_partial_vectors_approach (
+        LOOP_VINFO_MASKS (loop_vinfo).is_empty (), 
+        LOOP_VINFO_LENS (loop_vinfo).is_empty ()))
+        {
+          /* We use length approach if the target hook
+             force to. */
+          LOOP_VINFO_MASKS (loop_vinfo).release ();
+        }
+      else
+        {
+          if (dump_enabled_p ())
+	    dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
+	    		 "can't vectorize a loop with partial vectors"
+	    		 " because we don't expect to mix different"
+	    		 " approaches with partial vectors for the"
+	    		 " same loop.\n");
+          LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo) = false;
+        }
     }
 
   /* If we still have the option of using partial vectors,
