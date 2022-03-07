@@ -1790,9 +1790,6 @@ vect_analyze_loop_operations (loop_vec_info loop_vinfo)
         }
     } /* bbs */
 
-  if (dump_enabled_p ())
-    dump_printf_loc (MSG_NOTE, vect_location,
-                     "==> Computing vect stmts cost:\n");
   add_stmt_costs (loop_vinfo->vector_costs, &cost_vec);
 
   /* All operations in the loop are either irrelevant (deal with loop
@@ -1844,8 +1841,6 @@ vect_analyze_loop_costing (loop_vec_info loop_vinfo,
 {
   class loop *loop = LOOP_VINFO_LOOP (loop_vinfo);
   unsigned int assumed_vf = vect_vf_for_cost (loop_vinfo);
-
-  DUMP_VECT_SCOPE ("vect_analyze_loop_costing");
 
   /* Only loops that can handle partially-populated vectors can have iteration
      counts less than the vectorization factor.  */
@@ -2559,24 +2554,13 @@ start_over:
       && !LOOP_VINFO_MASKS (loop_vinfo).is_empty ()
       && !LOOP_VINFO_LENS (loop_vinfo).is_empty ())
     {
-      if (targetm.vectorize.autovectorize_partial_vectors_approach (
-        LOOP_VINFO_MASKS (loop_vinfo).is_empty (), 
-        LOOP_VINFO_LENS (loop_vinfo).is_empty ()))
-        {
-          /* We use length approach if the target hook
-             force to. */
-          LOOP_VINFO_MASKS (loop_vinfo).release ();
-        }
-      else
-        {
-          if (dump_enabled_p ())
-	    dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
-	    		 "can't vectorize a loop with partial vectors"
-	    		 " because we don't expect to mix different"
-	    		 " approaches with partial vectors for the"
-	    		 " same loop.\n");
-          LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo) = false;
-        }
+      if (dump_enabled_p ())
+	dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
+			 "can't vectorize a loop with partial vectors"
+			 " because we don't expect to mix different"
+			 " approaches with partial vectors for the"
+			 " same loop.\n");
+      LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo) = false;
     }
 
   /* If we still have the option of using partial vectors,
@@ -4219,10 +4203,6 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
 	      body_stmts += 3 * num_vectors;
 	  }
 
-      if (dump_enabled_p ())
-        dump_printf_loc (MSG_NOTE, vect_location,
-                        "==> Computing extra cost of vlen stmts:\n");
-
       (void) add_stmt_cost (target_cost_data, prologue_stmts,
 			    scalar_stmt, NULL, NULL_TREE, 0, vect_prologue);
       (void) add_stmt_cost (target_cost_data, body_stmts,
@@ -4340,7 +4320,6 @@ vect_estimate_min_profitable_iters (loop_vec_info loop_vinfo,
                    peel_iters_prologue);
       dump_printf (MSG_NOTE, "  epilogue iterations: %d\n",
                    peel_iters_epilogue);
-      dump_printf (MSG_NOTE, "  vector factor: %d\n", assumed_vf);
     }
 
   /* Calculate number of iterations required to make the vector version

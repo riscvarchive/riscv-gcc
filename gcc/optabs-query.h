@@ -122,20 +122,6 @@ get_vcond_icode (machine_mode vmode, machine_mode cmode, bool uns)
   return icode;
 }
 
-/* Return insn code for a conditional operator with a comparison in
-   mode CMODE, unsigned if UNS is true, resulting in a value of mode VMODE.  */
-
-inline enum insn_code
-get_len_vcond_icode (machine_mode vmode, machine_mode cmode, bool uns)
-{
-  enum insn_code icode = CODE_FOR_nothing;
-  if (uns)
-    icode = convert_optab_handler (len_vcondu_optab, vmode, cmode);
-  else
-    icode = convert_optab_handler (len_vcond_optab, vmode, cmode);
-  return icode;
-}
-
 /* Return insn code for a conditional operator with a mask mode
    MMODE resulting in a value of mode VMODE.  */
 
@@ -143,15 +129,6 @@ static inline enum insn_code
 get_vcond_mask_icode (machine_mode vmode, machine_mode mmode)
 {
   return convert_optab_handler (vcond_mask_optab, vmode, mmode);
-}
-
-/* Return insn code for a conditional operator with a mask mode
-   MMODE resulting in a value of mode VMODE.  */
-
-static inline enum insn_code
-get_len_vcond_mask_icode (machine_mode vmode, machine_mode mmode)
-{
-  return convert_optab_handler (len_vcond_mask_optab, vmode, mmode);
 }
 
 /* Return insn code for a conditional operator with a comparison in
@@ -211,9 +188,7 @@ enum insn_code find_widening_optab_handler_and_mode (optab, machine_mode,
 						     machine_mode *);
 int can_mult_highpart_p (machine_mode, bool);
 bool can_vec_mask_load_store_p (machine_mode, machine_mode, bool);
-bool can_vec_len_load_store_p (machine_mode mode, bool);
 opt_machine_mode get_len_load_store_mode (machine_mode, bool);
-opt_machine_mode get_len_gather_scatter_mode (machine_mode, machine_mode, bool);
 bool can_compare_and_swap_p (machine_mode, bool);
 bool can_atomic_exchange_p (machine_mode, bool);
 bool can_atomic_load_p (machine_mode);
