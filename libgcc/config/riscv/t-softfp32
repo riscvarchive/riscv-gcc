@@ -1,6 +1,7 @@
 ABI_SINGLE:=$(findstring __riscv_float_abi_single,$(shell $(gcc_compile_bare) -dM -E - </dev/null))
 ABI_DOUBLE:=$(findstring __riscv_float_abi_double,$(shell $(gcc_compile_bare) -dM -E - </dev/null))
 ABI_QUAD:=$(findstring __riscv_float_abi_quad,$(shell $(gcc_compile_bare) -dM -E - </dev/null))
+FP16_SUPPORT:=$(findstring __riscv_zfh,$(shell $(gcc_compile_bare) -dM -E - </dev/null))
 
 softfp_int_modes := si di
 softfp_exclude_libgcc2 := n
@@ -41,3 +42,9 @@ else
 softfp_extras := divsf3 divdf3 divtf3
 
 endif
+
+softfp_extensions += hfsf hfdf hftf
+softfp_truncations += tfhf dfhf sfhf
+softfp_extras += fixhfsi fixhfdi fixunshfsi fixunshfdi \
+		 floatsihf floatdihf floatunsihf floatundihf \
+		 eqhf2 gehf2 lehf2 unordhf2

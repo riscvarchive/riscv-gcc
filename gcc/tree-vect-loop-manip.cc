@@ -384,6 +384,120 @@ vect_maybe_permute_loop_masks (gimple_seq *seq, rgroup_controls *dest_rgm,
   return false;
 }
 
+/* Optimize loop controls using while_len pattern if it is defined.  */
+
+static tree
+vect_set_loop_controls_for_while_len (class loop *loop, loop_vec_info loop_vinfo,
+				      gimple_seq *preheader_seq,
+				      gimple_seq *header_seq,
+				      gimple_stmt_iterator loop_cond_gsi,
+				      rgroup_controls *rgc, tree niters,
+				      tree, bool)
+{
+  tree compare_type = LOOP_VINFO_RGROUP_COMPARE_TYPE (loop_vinfo);
+  tree iv_type = LOOP_VINFO_RGROUP_IV_TYPE (loop_vinfo);
+  tree ctrl_type = rgc->type;
+  unsigned int nitems_per_iter = rgc->max_nscalars_per_iter * rgc->factor;
+  poly_uint64 nitems_per_ctrl = TYPE_VECTOR_SUBPARTS (ctrl_type) * rgc->factor;
+  poly_uint64 vf = LOOP_VINFO_VECT_FACTOR (loop_vinfo);
+
+  /* Calculate the maximum number of item values that the rgroup
+     handles in total, the number that it handles for each iteration
+     of the vector loop, and the number that it should skip during the
+     first iteration of the vector loop.  */
+  tree nitems_total = niters;
+  if (nitems_per_iter != 1)
+    {
+      /* We checked before setting LOOP_VINFO_USING_PARTIAL_VECTORS_P that
+	 these multiplications don't overflow.  */
+      tree compare_factor = build_int_cst (compare_type, nitems_per_iter);
+      nitems_total = gimple_build (preheader_seq, MULT_EXPR, compare_type,
+				   nitems_total, compare_factor);
+    }
+
+  /* Create an induction variable that counts the number of items
+     processed.  */
+  tree index_before_incr, index_after_incr;
+  gimple_stmt_iterator incr_gsi;
+  bool insert_after;
+  standard_iv_increment_position (loop, &incr_gsi, &insert_after);
+  gimple_stmt_iterator *test_gsi;
+
+  /* Provide a definition of each control in the group.  */
+  tree next_ctrl = NULL_TREE;
+  tree test_limit, first_limit;
+  /* Test the incremented IV, which will always hit a value above
+     the bound before wrapping.  */
+  test_limit = nitems_total;
+  test_gsi = &loop_cond_gsi;
+  first_limit = test_limit;
+
+  tree total_iters = make_temp_ssa_name (iv_type, NULL, "total_iters");
+  gimple_seq_add_stmt (preheader_seq, gimple_build_assign (total_iters, nitems_total));
+
+  tree ctrl;
+  unsigned int i;
+  FOR_EACH_VEC_ELT_REVERSE (rgc->controls, i, ctrl)
+    {
+      poly_uint64 final_vf = nitems_per_iter == 1 ? vf : vf * nitems_per_iter;
+      /* Get the control value for the next iteration of the loop.  */
+      next_ctrl = make_temp_ssa_name (compare_type, NULL, "next_len");
+
+      vect_add_len_without_overflow (header_seq, total_iters, loop, ctrl,
+                                     compare_type, ctrl_type,
+				     build_int_cst (iv_type, final_vf),
+	                             &incr_gsi, insert_after, &index_before_incr, &index_after_incr);
+
+      /* Create the initial control.  First include all items that
+	 are within the loop limit.  */
+      tree init_ctrl = nitems_total;
+
+      /* Previous controls will cover BIAS items.  This control covers the
+	 next batch.  */
+      poly_uint64 bias = nitems_per_ctrl * i;
+      tree bias_tree = build_int_cst (compare_type, bias);
+
+      /* See whether the first iteration of the vector loop is known
+	 to have a full control.  */
+      poly_uint64 const_limit;
+      bool first_iteration_full
+	= (poly_int_tree_p (first_limit, &const_limit)
+	   && known_ge (const_limit, (i + 1) * nitems_per_ctrl));
+
+      /* Rather than have a new IV that starts at BIAS and goes up to
+	 TEST_LIMIT, prefer to use the same 0-based IV for each control
+	 and adjust the bound down by BIAS.  */
+      tree this_test_limit = test_limit;
+      if (i != 0)
+	{
+	  this_test_limit = gimple_build (preheader_seq, MAX_EXPR,
+					  compare_type, this_test_limit,
+					  bias_tree);
+	  this_test_limit = gimple_build (preheader_seq, MINUS_EXPR,
+					  compare_type, this_test_limit,
+					  bias_tree);
+	}
+
+      /* Create the initial control.  First include all items that
+	 are within the loop limit.  */
+      if (!first_iteration_full
+      	&& rgc->controls.length () > 1)
+	{
+          init_ctrl = gimple_build (preheader_seq, IFN_WHILE_LEN, compare_type,
+	  	this_test_limit, build_int_cst (iv_type,
+		GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (ctrl_type)))),
+		build_int_cst (iv_type, final_vf));
+	}
+      gimple_seq stmts = NULL;
+
+      gimple* stmt = gimple_build_assign (next_ctrl, index_after_incr);
+      gimple_seq_add_stmt (&stmts, stmt);
+      gsi_insert_seq_before (test_gsi, stmts, GSI_NEW_STMT);
+      vect_set_loop_control (loop, ctrl, init_ctrl, next_ctrl);
+    }
+  return next_ctrl;
+}
+
 /* Helper for vect_set_loop_condition_partial_vectors.  Generate definitions
    for all the rgroup controls in RGC and return a control that is nonzero
    when the loop needs to iterate.  Add any new preheader statements to
@@ -438,6 +552,14 @@ vect_set_loop_controls_directly (class loop *loop, loop_vec_info loop_vinfo,
   /* For length, we need length_limit to ensure length in range.  */
   if (!use_masks_p)
     length_limit = build_int_cst (compare_type, nitems_per_ctrl);
+
+  if (!use_masks_p && !niters_skip
+    && direct_internal_fn_supported_p (IFN_WHILE_LEN,
+				       compare_type, iv_type,
+				       OPTIMIZE_FOR_SPEED))
+    return vect_set_loop_controls_for_while_len (loop, loop_vinfo,
+				                 preheader_seq, header_seq, loop_cond_gsi,
+				                 rgc, niters, niters_skip, might_wrap_p);
 
   /* Calculate the maximum number of item values that the rgroup
      handles in total, the number that it handles for each iteration
@@ -3515,7 +3637,7 @@ vect_loop_versioning (loop_vec_info loop_vinfo,
      non-perfect nests but allow if-conversion versioned loops inside.  */
   class loop *loop_to_version = loop;
   if (flow_loop_nested_p (outermost, loop))
-    { 
+    {
       if (dump_enabled_p ())
 	dump_printf_loc (MSG_NOTE, vect_location,
 			 "trying to apply versioning to outer loop %d\n",
