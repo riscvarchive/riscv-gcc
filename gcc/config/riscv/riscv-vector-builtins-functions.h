@@ -2422,6 +2422,7 @@ public:
   expand (const function_instance &instance, tree exp,
           rtx target) const OVERRIDE;
 };
+
 } // namespace riscv_vector
 
 #endif // end GCC_RISCV_VECTOR_BUILTINS_FUNCTIONS_H
