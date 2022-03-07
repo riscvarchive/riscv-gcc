@@ -20,12 +20,14 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #define IN_TARGET_CODE 1
+#define VSET_TOLERATE 2
 
 #define INCLUDE_STRING
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
+#include "backend.h"
 #include "rtl.h"
 #include "regs.h"
 #include "insn-config.h"
@@ -46,7 +48,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "reload.h"
 #include "tm_p.h"
 #include "target.h"
-#include "target-def.h"
 #include "basic-block.h"
 #include "expr.h"
 #include "optabs.h"
@@ -57,6 +58,20 @@ along with GCC; see the file COPYING3.  If not see
 #include "predict.h"
 #include "tree-pass.h"
 #include "opts.h"
+#include "langhooks.h"
+#include "rtl-iter.h"
+#include "gimple.h"
+#include "cfghooks.h"
+#include "cfgloop.h"
+#include "fold-const.h"
+#include "gimple-iterator.h"
+#include "tree-vectorizer.h"
+#include "tree-ssa-loop-niter.h"
+#include "rtx-vector-builder.h"
+#include "fractional-cost.h"
+#include "riscv-vector-builtins.h"
+/* This file should be included last.  */
+#include "target-def.h"
 
 /* True if X is an UNSPEC wrapper around a SYMBOL_REF or LABEL_REF.  */
 #define UNSPEC_ADDRESS_P(X)					\
@@ -289,7 +304,22 @@ const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
   FP_REGS,	FP_REGS,	FP_REGS,	FP_REGS,
-  FRAME_REGS,	FRAME_REGS,
+  FRAME_REGS,        FRAME_REGS, VL_REGS,        VTYPE_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  NO_REGS,        NO_REGS,        NO_REGS,        NO_REGS,
+  V0_REGS, VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
+  VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,        VNoV0_REGS,
 };
 
 /* Costs to use when optimizing for rocket.  */
@@ -1582,6 +1612,16 @@ riscv_offset_temporaries (bool add_p, poly_int64 offset)
 static bool
 riscv_legitimate_constant_p (machine_mode mode ATTRIBUTE_UNUSED, rtx x)
 {
+  /* If an offset is being added to something else, we need to allow the
+     base to be moved into the destination register, meaning that there
+     are no free temporaries for the offset.  */
+  poly_int64 offset;
+  if (CONST_POLY_INT_P (x)
+    && poly_int_rtx_p (x, &offset)
+    && !offset.is_constant ()
+    && riscv_offset_temporaries (true, offset) > 0)
+    return false;
+
   return riscv_const_insns (x) > 0;
 }
 
@@ -3480,7 +3520,7 @@ riscv_output_move (rtx dest, rtx src)
   dest_code = GET_CODE (dest);
   src_code = GET_CODE (src);
   mode = GET_MODE (dest);
-  dbl_p = (GET_MODE_SIZE (mode) == 8);
+  dbl_p = (GET_MODE_SIZE (mode).to_constant () == 8);
 
   if (dbl_p && riscv_split_64bit_move_p (dest, src))
     return "#";
@@ -3488,16 +3528,37 @@ riscv_output_move (rtx dest, rtx src)
   if (dest_code == REG && GP_REG_P (REGNO (dest)))
     {
       if (src_code == REG && FP_REG_P (REGNO (src)))
-	return dbl_p ? "fmv.x.d\t%0,%1" : "fmv.x.w\t%0,%1";
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 2:
+            if (TARGET_FP16)
+              return "fmv.x.h\t%0,%1";
+            else
+              /* Using fmv.x.s + sign-extend to emulate.  */
+              return "fmv.x.w\t%0,%1;slli\t%0,%0,16;srai\t%0,%0,16";
+
+          case 4:
+            return "fmv.x.w\t%0,%1";
+
+          case 8:
+            return "fmv.x.d\t%0,%1";
+          }
 
       if (src_code == MEM)
-	switch (GET_MODE_SIZE (mode))
-	  {
-	  case 1: return "lbu\t%0,%1";
-	  case 2: return "lhu\t%0,%1";
-	  case 4: return "lw\t%0,%1";
-	  case 8: return "ld\t%0,%1";
-	  }
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 1:
+            return "lbu\t%0,%1";
+
+          case 2:
+            return "lhu\t%0,%1";
+
+          case 4:
+            return "lw\t%0,%1";
+
+          case 8:
+            return "ld\t%0,%1";
+          }
 
       if (src_code == CONST_INT)
 	{
@@ -3516,13 +3577,20 @@ riscv_output_move (rtx dest, rtx src)
 	return "lui\t%0,%h1";
 
       if (symbolic_operand (src, VOIDmode))
-	switch (riscv_classify_symbolic_expression (src))
-	  {
-	  case SYMBOL_GOT_DISP: return "la\t%0,%1";
-	  case SYMBOL_ABSOLUTE: return "lla\t%0,%1";
-	  case SYMBOL_PCREL: return "lla\t%0,%1";
-	  default: gcc_unreachable ();
-	  }
+        switch (riscv_classify_symbolic_expression (src))
+          {
+          case SYMBOL_GOT_DISP:
+            return "la\t%0,%1";
+
+          case SYMBOL_ABSOLUTE:
+            return "lla\t%0,%1";
+
+          case SYMBOL_PCREL:
+            return "lla\t%0,%1";
+
+          default:
+            gcc_unreachable ();
+          }
     }
   if ((src_code == REG && GP_REG_P (REGNO (src)))
       || (src == CONST0_RTX (mode)))
@@ -3532,38 +3600,89 @@ riscv_output_move (rtx dest, rtx src)
 	  if (GP_REG_P (REGNO (dest)))
 	    return "mv\t%0,%z1";
 
-	  if (FP_REG_P (REGNO (dest)))
-	    {
-	      if (!dbl_p)
-		return "fmv.w.x\t%0,%z1";
-	      if (TARGET_64BIT)
-		return "fmv.d.x\t%0,%z1";
-	      /* in RV32, we can emulate fmv.d.x %0, x0 using fcvt.d.w */
-	      gcc_assert (src == CONST0_RTX (mode));
-	      return "fcvt.d.w\t%0,x0";
-	    }
-	}
+          if (FP_REG_P (REGNO (dest)))
+            switch (GET_MODE_SIZE (mode).to_constant ())
+              {
+              case 2:
+                if (TARGET_FP16)
+                  return "fmv.h.x\t%0,%z1";
+                else
+                  /* High 16 bits should be all-1, otherwise HW will treated
+                     as a n-bit canonical NaN, but isn't matter for
+                     softfloat, because softfloat routines won't do that.  */
+                  return "fmv.w.x\t%0,%1";
+
+              case 4:
+                return "fmv.w.x\t%0,%z1";
+
+              case 8:
+                if (TARGET_64BIT)
+                  return "fmv.d.x\t%0,%z1";
+
+                /* in RV32, we can emulate fmv.d.x %0, x0 using fcvt.d.w */
+                gcc_assert (src == CONST0_RTX (mode));
+                return "fcvt.d.w\t%0,x0";
+              }
+        }
+
       if (dest_code == MEM)
-	switch (GET_MODE_SIZE (mode))
-	  {
-	  case 1: return "sb\t%z1,%0";
-	  case 2: return "sh\t%z1,%0";
-	  case 4: return "sw\t%z1,%0";
-	  case 8: return "sd\t%z1,%0";
-	  }
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 1:
+            return "sb\t%z1,%0";
+
+          case 2:
+            return "sh\t%z1,%0";
+
+          case 4:
+            return "sw\t%z1,%0";
+
+          case 8:
+            return "sd\t%z1,%0";
+          }
     }
   if (src_code == REG && FP_REG_P (REGNO (src)))
     {
       if (dest_code == REG && FP_REG_P (REGNO (dest)))
-	return dbl_p ? "fmv.d\t%0,%1" : "fmv.s\t%0,%1";
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 2:
+            return "fmv.h\t%0,%1";
+
+          case 4:
+            return "fmv.s\t%0,%1";
+
+          case 8:
+            return "fmv.d\t%0,%1";
+          }
 
       if (dest_code == MEM)
-	return dbl_p ? "fsd\t%1,%0" : "fsw\t%1,%0";
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 2:
+            return "fsh\t%1,%0";
+
+          case 4:
+            return "fsw\t%1,%0";
+
+          case 8:
+            return "fsd\t%1,%0";
+          }
     }
   if (dest_code == REG && FP_REG_P (REGNO (dest)))
     {
       if (src_code == MEM)
-	return dbl_p ? "fld\t%0,%1" : "flw\t%0,%1";
+        switch (GET_MODE_SIZE (mode).to_constant ())
+          {
+          case 2:
+            return "flh\t%0,%1";
+
+          case 4:
+            return "flw\t%0,%1";
+
+          case 8:
+            return "fld\t%0,%1";
+          }
     }
   gcc_unreachable ();
 }
@@ -3828,21 +3947,25 @@ riscv_emit_float_compare (enum rtx_code *code, rtx *op0, rtx *op1)
       *op1 = riscv_force_binary (word_mode, EQ, cmp_op0, cmp_op1);
       break;
 
-#define UNORDERED_COMPARISON(CODE, CMP)					\
-    case CODE:								\
-      *code = EQ;							\
-      *op0 = gen_reg_rtx (word_mode);					\
-      if (GET_MODE (cmp_op0) == SFmode && TARGET_64BIT)			\
-	emit_insn (gen_f##CMP##_quietsfdi4 (*op0, cmp_op0, cmp_op1));	\
-      else if (GET_MODE (cmp_op0) == SFmode)				\
-	emit_insn (gen_f##CMP##_quietsfsi4 (*op0, cmp_op0, cmp_op1));	\
-      else if (GET_MODE (cmp_op0) == DFmode && TARGET_64BIT)		\
-	emit_insn (gen_f##CMP##_quietdfdi4 (*op0, cmp_op0, cmp_op1));	\
-      else if (GET_MODE (cmp_op0) == DFmode)				\
-	emit_insn (gen_f##CMP##_quietdfsi4 (*op0, cmp_op0, cmp_op1));	\
-      else								\
-	gcc_unreachable ();						\
-      *op1 = const0_rtx;						\
+#define UNORDERED_COMPARISON(CODE, CMP)                                        \
+    case CODE:                                                                \
+      *code = EQ;                                                        \
+      *op0 = gen_reg_rtx (word_mode);                                        \
+      if (GET_MODE (cmp_op0) == SFmode && TARGET_64BIT)                        \
+        emit_insn (gen_f##CMP##_quietsfdi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == SFmode)                                \
+        emit_insn (gen_f##CMP##_quietsfsi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == DFmode && TARGET_64BIT)                \
+        emit_insn (gen_f##CMP##_quietdfdi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == DFmode)                                \
+        emit_insn (gen_f##CMP##_quietdfsi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == HFmode && TARGET_64BIT)                \
+        emit_insn (gen_f##CMP##_quiethfdi4 (*op0, cmp_op0, cmp_op1));        \
+      else if (GET_MODE (cmp_op0) == HFmode)                                \
+        emit_insn (gen_f##CMP##_quiethfsi4 (*op0, cmp_op0, cmp_op1));        \
+      else                                                                \
+        gcc_unreachable ();                                                \
+      *op1 = const0_rtx;                                                \
       break;
 
     case UNLT:
