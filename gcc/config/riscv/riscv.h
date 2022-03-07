@@ -955,6 +955,10 @@ while (0)
 extern const enum reg_class riscv_regno_to_class[];
 extern bool riscv_slow_unaligned_access_p;
 extern unsigned riscv_stack_boundary;
+extern poly_uint16 riscv_vector_chunks;
+/* The number of bits and bytes in a RVV vector.  */
+#define BITS_PER_RISCV_VECTOR (poly_uint16 (riscv_vector_chunks * 64))
+#define BYTES_PER_RISCV_VECTOR (poly_uint16 (riscv_vector_chunks * 8))
 #endif
 
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL) \
@@ -1004,4 +1008,5 @@ extern void riscv_remove_unneeded_save_restore_calls (void);
 
 #define HARD_REGNO_RENAME_OK(FROM, TO) riscv_hard_regno_rename_ok (FROM, TO)
 
+#define TARGET_SUPPORTS_WIDE_INT 1
 #endif /* ! GCC_RISCV_H */

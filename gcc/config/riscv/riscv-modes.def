@@ -20,3 +20,216 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 FLOAT_MODE (TF, 16, ieee_quad_format);
+
+/* Half-precision floating point for __fp16.  */
+FLOAT_MODE (HF, 2, 0);
+ADJUST_FLOAT_FORMAT (HF, &ieee_half_format);
+
+/* Vector modes.  */
+
+/* Encode the ratio of SEW/LMUL into the mask types. There are the following mask types.
+
+   | Type     | SEW/LMUL |
+   | VNx2BI   | 64       |
+   | VNx4BI   | 32       |
+   | VNx8BI   | 16       |
+   | VNx16BI  | 8        |
+   | VNx32BI  | 4        |
+   | VNx64BI  | 2        |
+   | VNx128BI | 1        |  */
+
+VECTOR_BOOL_MODE (VNx2BI, 2, 16);
+VECTOR_BOOL_MODE (VNx4BI, 4, 16);
+VECTOR_BOOL_MODE (VNx8BI, 8, 16);
+VECTOR_BOOL_MODE (VNx16BI, 16, 16);
+VECTOR_BOOL_MODE (VNx32BI, 32, 16);
+VECTOR_BOOL_MODE (VNx64BI, 64, 16);
+VECTOR_BOOL_MODE (VNx128BI, 128, 16);
+
+ADJUST_NUNITS (VNx2BI, riscv_vector_chunks * 1);
+ADJUST_NUNITS (VNx4BI, riscv_vector_chunks * 2);
+ADJUST_NUNITS (VNx8BI, riscv_vector_chunks * 4);
+ADJUST_NUNITS (VNx16BI, riscv_vector_chunks * 8);
+ADJUST_NUNITS (VNx32BI, riscv_vector_chunks * 16);
+ADJUST_NUNITS (VNx64BI, riscv_vector_chunks * 32);
+ADJUST_NUNITS (VNx128BI, riscv_vector_chunks * 64);
+
+ADJUST_ALIGNMENT (VNx2BI, 1);
+ADJUST_ALIGNMENT (VNx4BI, 1);
+ADJUST_ALIGNMENT (VNx8BI, 1);
+ADJUST_ALIGNMENT (VNx16BI, 1);
+ADJUST_ALIGNMENT (VNx32BI, 1);
+ADJUST_ALIGNMENT (VNx64BI, 1);
+ADJUST_ALIGNMENT (VNx128BI, 1);
+
+ADJUST_BYTESIZE (VNx2BI, riscv_vector_chunks * 8);
+ADJUST_BYTESIZE (VNx4BI, riscv_vector_chunks * 8);
+ADJUST_BYTESIZE (VNx8BI, riscv_vector_chunks * 8);
+ADJUST_BYTESIZE (VNx16BI, riscv_vector_chunks * 8);
+ADJUST_BYTESIZE (VNx32BI, riscv_vector_chunks * 8);
+ADJUST_BYTESIZE (VNx64BI, riscv_vector_chunks * 8);
+ADJUST_BYTESIZE (VNx128BI, riscv_vector_chunks * 8);
+
+/* Define RVV modes for NVECS vectors.  VB, VH, VS and VD are the prefixes
+   for 8-bit, 16-bit, 32-bit and 64-bit elements respectively.  It isn't
+   strictly necessary to set the alignment here, since the default would
+   be clamped to BIGGEST_ALIGNMENT anyhow, but it seems clearer.  */
+#define RVV_MODES(NVECS, VB, VH, VS, VD) \
+  VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS, 0); \
+  VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 16 * NVECS, 0); \
+  \
+  ADJUST_NUNITS (VB##QI, riscv_vector_chunks * NVECS * 8); \
+  ADJUST_NUNITS (VH##HI, riscv_vector_chunks * NVECS * 4); \
+  ADJUST_NUNITS (VS##SI, riscv_vector_chunks * NVECS * 2); \
+  ADJUST_NUNITS (VD##DI, riscv_vector_chunks * NVECS); \
+  ADJUST_NUNITS (VH##HF, riscv_vector_chunks * NVECS * 4); \
+  ADJUST_NUNITS (VS##SF, riscv_vector_chunks * NVECS * 2); \
+  ADJUST_NUNITS (VD##DF, riscv_vector_chunks * NVECS); \
+  \
+  ADJUST_ALIGNMENT (VB##QI, 1); \
+  ADJUST_ALIGNMENT (VH##HI, 2); \
+  ADJUST_ALIGNMENT (VS##SI, 4); \
+  ADJUST_ALIGNMENT (VD##DI, 8); \
+  ADJUST_ALIGNMENT (VH##HF, 2); \
+  ADJUST_ALIGNMENT (VS##SF, 4); \
+  ADJUST_ALIGNMENT (VD##DF, 8);
+
+/* Give vectors the names normally used for 128-bit vectors.
+   The actual number depends on command-line flags.  */
+RVV_MODES (1, VNx16, VNx8, VNx4, VNx2)
+RVV_MODES (2, VNx32, VNx16, VNx8, VNx4)
+RVV_MODES (4, VNx64, VNx32, VNx16, VNx8)
+RVV_MODES (8, VNx128, VNx64, VNx32, VNx16)
+
+/* Partial RVV vectors:
+
+      VNx8QI VNx4HI VNx2SI VNx4HF VNx2SF
+      VNx4QI VNx2HI VNx2HF
+      VNx2QI
+
+   In memory they occupy contiguous locations, in the same way as fixed-length
+   vectors.  E.g. VNx8QImode is half the size of VNx16QImode.
+
+   Passing 1 as the final argument ensures that the modes come after all
+   other modes in the GET_MODE_WIDER chain, so that we never pick them
+   in preference to a full vector mode.  */
+VECTOR_MODES_WITH_PREFIX (VNx, INT, 2, 1);
+VECTOR_MODES_WITH_PREFIX (VNx, INT, 4, 1);
+VECTOR_MODES_WITH_PREFIX (VNx, INT, 8, 1);
+VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 4, 1);
+VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 8, 1);
+
+ADJUST_NUNITS (VNx2QI, riscv_vector_chunks);
+ADJUST_NUNITS (VNx2HI, riscv_vector_chunks);
+ADJUST_NUNITS (VNx2SI, riscv_vector_chunks);
+ADJUST_NUNITS (VNx2HF, riscv_vector_chunks);
+ADJUST_NUNITS (VNx2SF, riscv_vector_chunks);
+
+ADJUST_NUNITS (VNx4QI, riscv_vector_chunks * 2);
+ADJUST_NUNITS (VNx4HI, riscv_vector_chunks * 2);
+ADJUST_NUNITS (VNx4HF, riscv_vector_chunks * 2);
+
+ADJUST_NUNITS (VNx8QI, riscv_vector_chunks * 4);
+
+ADJUST_ALIGNMENT (VNx2QI, 1);
+ADJUST_ALIGNMENT (VNx4QI, 1);
+ADJUST_ALIGNMENT (VNx8QI, 1);
+
+ADJUST_ALIGNMENT (VNx2HI, 2);
+ADJUST_ALIGNMENT (VNx4HI, 2);
+ADJUST_ALIGNMENT (VNx2HF, 2);
+ADJUST_ALIGNMENT (VNx4HF, 2);
+
+ADJUST_ALIGNMENT (VNx2SI, 4);
+ADJUST_ALIGNMENT (VNx2SF, 4);
+
+#define RVV_TUPLE_MODES(NVECS, NSUBPARTS, VB, VH, VS, VD) \
+  VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS * NSUBPARTS, NSUBPARTS, 1); \
+  VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, FLOAT, 16 * NVECS * NSUBPARTS, NSUBPARTS, 1); \
+  \
+  ADJUST_NUNITS (VB##QI, riscv_vector_chunks * NVECS * NSUBPARTS * 8); \
+  ADJUST_NUNITS (VH##HI, riscv_vector_chunks * NVECS * NSUBPARTS * 4); \
+  ADJUST_NUNITS (VS##SI, riscv_vector_chunks * NVECS * NSUBPARTS * 2); \
+  ADJUST_NUNITS (VD##DI, riscv_vector_chunks * NVECS * NSUBPARTS); \
+  ADJUST_NUNITS (VH##HF, riscv_vector_chunks * NVECS * NSUBPARTS * 4); \
+  ADJUST_NUNITS (VS##SF, riscv_vector_chunks * NVECS * NSUBPARTS * 2); \
+  ADJUST_NUNITS (VD##DF, riscv_vector_chunks * NVECS * NSUBPARTS); \
+  \
+  ADJUST_ALIGNMENT (VB##QI, 1); \
+  ADJUST_ALIGNMENT (VH##HI, 2); \
+  ADJUST_ALIGNMENT (VS##SI, 4); \
+  ADJUST_ALIGNMENT (VD##DI, 8); \
+  ADJUST_ALIGNMENT (VH##HF, 2); \
+  ADJUST_ALIGNMENT (VS##SF, 4); \
+  ADJUST_ALIGNMENT (VD##DF, 8);
+
+/* Modes for vector tuple.  */
+RVV_TUPLE_MODES (1, 2, VNx2x16, VNx2x8, VNx2x4, VNx2x2)
+RVV_TUPLE_MODES (1, 3, VNx3x16, VNx3x8, VNx3x4, VNx3x2)
+RVV_TUPLE_MODES (1, 4, VNx4x16, VNx4x8, VNx4x4, VNx4x2)
+RVV_TUPLE_MODES (1, 5, VNx5x16, VNx5x8, VNx5x4, VNx5x2)
+RVV_TUPLE_MODES (1, 6, VNx6x16, VNx6x8, VNx6x4, VNx6x2)
+RVV_TUPLE_MODES (1, 7, VNx7x16, VNx7x8, VNx7x4, VNx7x2)
+RVV_TUPLE_MODES (1, 8, VNx8x16, VNx8x8, VNx8x4, VNx8x2)
+
+RVV_TUPLE_MODES (2, 2, VNx2x32, VNx2x16, VNx2x8, VNx2x4)
+RVV_TUPLE_MODES (2, 3, VNx3x32, VNx3x16, VNx3x8, VNx3x4)
+RVV_TUPLE_MODES (2, 4, VNx4x32, VNx4x16, VNx4x8, VNx4x4)
+
+RVV_TUPLE_MODES (4, 2, VNx2x64, VNx2x32, VNx2x16, VNx2x8)
+
+/* Tuple mode of partial vector:
+
+   VNx2x8QI VNx3x8QI VNx4x8QI VNx5x8QI VNx6x8QI VNx7x8QI VNx8x8QI
+   VNx2x4QI VNx3x4QI VNx4x4QI VNx5x4QI VNx6x4QI VNx7x4QI VNx8x4QI
+   VNx2x2QI VNx3x2QI VNx4x2QI VNx5x2QI VNx6x2QI VNx7x2QI VNx8x2QI
+   VNx2x4HI VNx3x4HI VNx4x4HI VNx5x4HI VNx6x4HI VNx7x4HI VNx8x4HI
+   VNx2x2HI VNx3x2HI VNx4x2HI VNx5x2HI VNx6x2HI VNx7x2HI VNx8x2HI
+   VNx2x2SI VNx3x2SI VNx4x2SI VNx5x2SI VNx6x2SI VNx7x2SI VNx8x2SI
+   VNx2x4HF VNx3x4HF VNx4x4HF VNx5x4HF VNx6x4HF VNx7x4HF VNx8x4HF
+   VNx2x2HF VNx3x2HF VNx4x2HF VNx5x2HF VNx6x2HF VNx7x2HF VNx8x2HF
+   VNx2x2SF VNx3x2SF VNx4x2SF VNx5x2SF VNx6x2SF VNx7x2SF VNx8x2SF */
+#define RVV_TUPLE_PARTIAL_MODES(NSUBPARTS) \
+   VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 2 * NSUBPARTS, NSUBPARTS, 2); \
+   VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 4 * NSUBPARTS, NSUBPARTS, 2); \
+   VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 8 * NSUBPARTS, NSUBPARTS, 2); \
+   VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, FLOAT, 4 * NSUBPARTS, NSUBPARTS, 2); \
+   VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, FLOAT, 8 * NSUBPARTS, NSUBPARTS, 2); \
+   \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x2QI, riscv_vector_chunks * NSUBPARTS); \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x2HI, riscv_vector_chunks * NSUBPARTS); \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x2SI, riscv_vector_chunks * NSUBPARTS); \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x2HF, riscv_vector_chunks * NSUBPARTS); \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x2SF, riscv_vector_chunks * NSUBPARTS); \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x4QI, riscv_vector_chunks * 2 * NSUBPARTS); \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x4HI, riscv_vector_chunks * 2 * NSUBPARTS); \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x4HF, riscv_vector_chunks * 2 * NSUBPARTS); \
+   ADJUST_NUNITS (VNx##NSUBPARTS##x8QI, riscv_vector_chunks * 4 * NSUBPARTS); \
+   \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x2QI, 1); \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x2HI, 2); \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x2SI, 4); \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x2HF, 2); \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x2SF, 4); \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x4QI, 1); \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x4HI, 2); \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x4HF, 2); \
+   ADJUST_ALIGNMENT (VNx##NSUBPARTS##x8QI, 1);
+
+RVV_TUPLE_PARTIAL_MODES (2)
+RVV_TUPLE_PARTIAL_MODES (3)
+RVV_TUPLE_PARTIAL_MODES (4)
+RVV_TUPLE_PARTIAL_MODES (5)
+RVV_TUPLE_PARTIAL_MODES (6)
+RVV_TUPLE_PARTIAL_MODES (7)
+RVV_TUPLE_PARTIAL_MODES (8)
+
+/* A 8-tuple of RVV vectors with the maximum -mriscv-vector-bits= setting.
+   Note that this is a limit only on the compile-time sizes of modes;
+   it is not a limit on the runtime sizes, since VL-agnostic code
+   must work with arbitary vector lengths.  */
+#define MAX_BITSIZE_MODE_ANY_MODE (65536 * 8)
+
+/* Coefficient 1 is multiplied by the number of 64-bit chunks in a vector
+   minus one.  */
+#define NUM_POLY_INT_COEFFS 2

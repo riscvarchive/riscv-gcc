@@ -100,7 +100,7 @@ enum riscv_address_type {
 /* Information about a function's frame layout.  */
 struct GTY(())  riscv_frame_info {
   /* The size of the frame in bytes.  */
-  HOST_WIDE_INT total_size;
+  poly_int64 total_size;
 
   /* Bit X is set if the function saves or restores GPR X.  */
   unsigned int mask;
@@ -112,17 +112,20 @@ struct GTY(())  riscv_frame_info {
   unsigned save_libcall_adjustment;
 
   /* Offsets of fixed-point and floating-point save areas from frame bottom */
-  HOST_WIDE_INT gp_sp_offset;
-  HOST_WIDE_INT fp_sp_offset;
+  poly_int64 gp_sp_offset;
+  poly_int64 fp_sp_offset;
+
+  /* offset of all arguments. */
+  HOST_WIDE_INT constant_offset;
 
   /* Offset of virtual frame pointer from stack pointer/frame bottom */
-  HOST_WIDE_INT frame_pointer_offset;
+  poly_int64 frame_pointer_offset;
 
   /* Offset of hard frame pointer from stack pointer/frame bottom */
-  HOST_WIDE_INT hard_frame_pointer_offset;
+  poly_int64 hard_frame_pointer_offset;
 
   /* The offset of arg_pointer_rtx from the bottom of the frame.  */
-  HOST_WIDE_INT arg_pointer_offset;
+  poly_int64 arg_pointer_offset;
 };
 
 enum riscv_privilege_levels {
@@ -166,6 +169,18 @@ struct riscv_arg_info {
 
   /* The offset of the first register used, provided num_fprs is nonzero.  */
   unsigned int fpr_offset;
+
+  /* The number of vector registers allocated to this argument.  */
+  unsigned int num_vrs;
+
+  /* The offset of the first register used, provided num_vrs is nonzero.  */
+  unsigned int vr_offset;
+
+  /* The number of mask registers allocated to this argument.  */
+  unsigned int num_mrs;
+
+  /* The offset of the first register used, provided num_mrs is nonzero.  */
+  unsigned int mr_offset;
 };
 
 /* Information about an address described by riscv_address_type.
@@ -253,6 +268,8 @@ static const struct riscv_tune_param *tune_param;
 
 /* Which automaton to use for tuning.  */
 enum riscv_microarchitecture_type riscv_microarchitecture;
+/* The number of 64-bit elements in an RVV vector.  */
+poly_uint16 riscv_vector_chunks;
 
 /* Index R is the smallest register class that contains register R.  */
 const enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER] = {
