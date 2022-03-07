@@ -1607,6 +1607,169 @@ riscv_offset_temporaries (bool add_p, poly_int64 offset)
   return count + riscv_add_offset_1_temporaries (constant);
 }
 
+/* Emit a comparison CMP between OP0 and OP1, both of which have mode
+   DATA_MODE, and return the result in a predicate of mode MASK_MODE.
+   Use TARGET as the target register if nonnull and convenient.  */
+
+static rtx
+riscv_vector_emit_int_cmp (rtx target, machine_mode mask_mode, rtx_code cmp,
+			  machine_mode data_mode, rtx op1, rtx op2, rtx op3)
+{
+  rtx x;
+  insn_code icode;
+  expand_operand ops[7];
+  create_output_operand (&ops[0], target, mask_mode);
+  create_input_operand (&ops[1], const0_rtx, Pmode);
+  create_input_operand (&ops[2], const0_rtx, Pmode);
+  op1 = force_reg (data_mode, op1);
+  create_input_operand (&ops[3], op1, data_mode);
+  if (const_vec_duplicate_p(op2, &x))
+    {
+      icode = code_for_vms_vx (cmp, data_mode);
+      create_input_operand (&ops[4], x, GET_MODE_INNER (data_mode));
+    }
+  else
+    {
+      if (VECTOR_MODE_P (GET_MODE (op2)))
+        {
+          op2 = force_reg (data_mode, op2);
+          icode = code_for_vms_vv (cmp, data_mode);
+          create_input_operand (&ops[4], op2, data_mode);
+        }
+      else
+        {
+          icode = code_for_vms_vx (cmp, data_mode);
+          create_input_operand (&ops[4], op2, GET_MODE (op2));
+        }
+    }
+  if (op3)
+    create_input_operand (&ops[5], op3, Pmode);
+  else
+    create_input_operand (&ops[5], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
+  create_input_operand (&ops[6], riscv_vector_gen_policy (), Pmode);
+  expand_insn (icode, 7, ops);
+  return ops[0].value;
+}
+
+/* Expand an RVV integer comparison using the RVV equivalent of:
+
+     (set TARGET (CODE OP0 OP1)).  */
+
+void
+riscv_expand_vec_cmp_int (rtx target, rtx_code code, rtx op0, rtx op1, rtx op2)
+{
+  machine_mode mask_mode = GET_MODE (target);
+  machine_mode data_mode = GET_MODE (op0);
+  rtx res = riscv_vector_emit_int_cmp (target, mask_mode, code, data_mode,
+				       op0, op1, op2);
+  if (!rtx_equal_p (target, res))
+    emit_move_insn (target, res);
+}
+
+/* Emit a comparison CMP between OP0 and OP1, both of which have mode
+   DATA_MODE, and return the result in a predicate of mode MASK_MODE.
+   Use TARGET as the target register if nonnull and convenient.  */
+
+static rtx
+riscv_vector_emit_float_cmp (rtx target, machine_mode mask_mode, rtx_code cmp,
+			  machine_mode data_mode, rtx op1, rtx op2, rtx op3)
+{
+  rtx f;
+  insn_code icode;
+  expand_operand ops[7];
+  create_output_operand (&ops[0], target, mask_mode);
+  create_input_operand (&ops[1], const0_rtx, Pmode);
+  create_input_operand (&ops[2], const0_rtx, Pmode);
+  op1 = force_reg (data_mode, op1);
+  create_input_operand (&ops[3], op1, data_mode);
+  if (const_vec_duplicate_p(op2, &f))
+    {
+      icode = code_for_vmf_vf (cmp, data_mode);
+      create_input_operand (&ops[4], f, GET_MODE_INNER (data_mode));
+    }
+  else
+    {
+      if (VECTOR_MODE_P (GET_MODE (op2)))
+        {
+          op2 = force_reg (data_mode, op2);
+          icode = code_for_vmf_vv (cmp, data_mode);
+          create_input_operand (&ops[4], op2, data_mode);
+        }
+      else
+        {
+          if (cmp == UNEQ)
+            cmp = EQ;
+          if (cmp == UNGE)
+            cmp = GE;
+          if (cmp == UNGT)
+            cmp = GT;
+          if (cmp == UNLE)
+            cmp = LE;
+          if (cmp == UNLT)
+            cmp = UNLT;
+          icode = code_for_vmf_vf (cmp, data_mode);
+          create_input_operand (&ops[4], op2, GET_MODE (op2));
+        }
+    }
+  if (op3)
+    create_input_operand (&ops[5], op3, Pmode);
+  else
+    create_input_operand (&ops[5], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
+
+  create_input_operand (&ops[6], riscv_vector_gen_policy (), Pmode);
+  expand_insn (icode, 7, ops);
+  return ops[0].value;
+}
+
+/* Expand an RVV integer comparison using the RVV equivalent of:
+
+     (set TARGET (CODE OP0 OP1)).  */
+
+void
+riscv_expand_vec_cmp_float (rtx target, rtx_code code, rtx op0, rtx op1, rtx op2)
+{
+  machine_mode mask_mode = GET_MODE (target);
+  machine_mode data_mode = GET_MODE (op0);
+  rtx res = riscv_vector_emit_float_cmp (target, mask_mode, code, data_mode,
+				         op0, op1, op2);
+  if (!rtx_equal_p (target, res))
+    emit_move_insn (target, res);
+}
+
+/* Expand an RVV vcond pattern with operands OPS.  DATA_MODE is the mode
+   of the data being selected and CMP_MODE is the mode of the values being
+   compared.  */
+
+void
+riscv_expand_vcond (machine_mode data_mode, machine_mode cmp_mode,
+		    machine_mode mask_mode, rtx *ops, bool len_p)
+{
+  rtx mask = gen_reg_rtx (mask_mode);
+  if (FLOAT_MODE_P (cmp_mode))
+    {
+      if (len_p)
+        riscv_expand_vec_cmp_float (mask, GET_CODE (ops[3]), ops[4], ops[5], ops[6]);
+      else
+        riscv_expand_vec_cmp_float (mask, GET_CODE (ops[3]), ops[4], ops[5], NULL_RTX);
+    }
+  else
+    {
+      if (len_p)
+        riscv_expand_vec_cmp_int (mask, GET_CODE (ops[3]), ops[4], ops[5], ops[6]);
+      else
+        riscv_expand_vec_cmp_int (mask, GET_CODE (ops[3]), ops[4], ops[5], NULL_RTX);
+    }
+
+  if (len_p)
+    emit_insn (gen_len_vcond_mask (data_mode, data_mode,
+    	       force_reg (data_mode, ops[0]), ops[1],
+	       force_reg (data_mode, ops[2]), mask, ops[6]));
+  else
+    emit_insn (gen_vcond_mask (data_mode, data_mode,
+    	       force_reg (data_mode, ops[0]), ops[1],
+	       force_reg (data_mode, ops[2]), mask));
+}
+
 rtx
 gen_vlx2 (rtx vl)
 {
