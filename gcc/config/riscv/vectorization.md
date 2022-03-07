@@ -397,7 +397,18 @@
 ;; - vle32.v
 ;; - vle64.v
 ;; -------------------------------------------------------------------------
-
+(define_expand "maskload<mode><vm>"
+  [(match_operand:V 0 "register_operand")
+   (match_operand:V 1 "memory_operand")
+   (match_operand:<VM> 2 "register_operand")]
+  "TARGET_VECTOR"
+{
+  gcc_assert (REG_P (XEXP (operands[1], 0)));
+  emit_insn (gen_vle (<MODE>mode, operands[0], operands[2], const0_rtx,
+        XEXP (operands[1], 0), gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy (RVV_POLICY_MU)));
+  DONE;
+})
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Normal lanes loads
 ;; -------------------------------------------------------------------------
@@ -444,7 +455,19 @@
       riscv_vector_gen_policy ()));
   DONE;
 })
-
+(define_expand "vec_mask_load_lanes<mode><vtsub>"
+  [(match_operand:VT 0 "register_operand")
+	 (match_operand:VT 1 "memory_operand")
+   (match_operand:<VM> 2 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_vlseg (<MODE>mode,
+      operands[0], operands[2], operands[0],
+      XEXP (operands[1], 0),
+      gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Normal gather loads
 ;; -------------------------------------------------------------------------
@@ -538,6 +561,188 @@
   riscv_vector_expand_gather_scatter (operands, ENUM_GATHER_LOAD);
   DONE;
 })
+
+(define_expand "len_gather_load<V2UNITS:mode><V2UNITSI:mode>"
+  [(match_operand:V2UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V2UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V2UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V2UNITS:sew>")
+   (match_operand 5 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "len_gather_load<V4UNITS:mode><V4UNITSI:mode>"
+  [(match_operand:V4UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V4UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V4UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V4UNITS:sew>")
+   (match_operand 5 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "len_gather_load<V8UNITS:mode><V8UNITSI:mode>"
+  [(match_operand:V8UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V8UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V8UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V8UNITS:sew>")
+   (match_operand 5 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "len_gather_load<V16UNITS:mode><V16UNITSI:mode>"
+  [(match_operand:V16UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V16UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V16UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V16UNITS:sew>")
+   (match_operand 5 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "len_gather_load<V32UNITS:mode><V32UNITSI:mode>"
+  [(match_operand:V32UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V32UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V32UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V32UNITS:sew>")
+   (match_operand 5 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "len_gather_load<V64UNITS:mode><V64UNITSI:mode>"
+  [(match_operand:V64UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V64UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V64UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V64UNITS:sew>")
+   (match_operand 5 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "len_gather_load<V128UNITSI:mode><V128UNITSI:mode>"
+  [(match_operand:V128UNITSI 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V128UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V128UNITSI:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V128UNITSI:sew>")
+   (match_operand 5 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "mask_gather_load<V2UNITS:mode><V2UNITSI:mode>"
+  [(match_operand:V2UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V2UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V2UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V2UNITS:sew>")
+   (match_operand:<V2UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "mask_gather_load<V4UNITS:mode><V4UNITSI:mode>"
+  [(match_operand:V4UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V4UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V4UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V4UNITS:sew>")
+   (match_operand:<V4UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "mask_gather_load<V8UNITS:mode><V8UNITSI:mode>"
+  [(match_operand:V8UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V8UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V8UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V8UNITS:sew>")
+   (match_operand:<V8UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "mask_gather_load<V16UNITS:mode><V16UNITSI:mode>"
+  [(match_operand:V16UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V16UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V16UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V16UNITS:sew>")
+   (match_operand:<V16UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "mask_gather_load<V32UNITS:mode><V32UNITSI:mode>"
+  [(match_operand:V32UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V32UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V32UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V32UNITS:sew>")
+   (match_operand:<V32UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "mask_gather_load<V64UNITS:mode><V64UNITSI:mode>"
+  [(match_operand:V64UNITS 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V64UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V64UNITS:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V64UNITS:sew>")
+   (match_operand:<V64UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  DONE;
+})
+
+(define_expand "mask_gather_load<V128UNITSI:mode><V128UNITSI:mode>"
+  [(match_operand:V128UNITSI 0 "register_operand")
+   (match_operand 1 "register_operand")
+   (match_operand:V128UNITSI 2 "vector_gather_scatter_offset_operand")
+   (match_operand 3 "<V128UNITSI:gather_scatter_operand>")
+   (match_operand 4 "vector_gather_scatter_scale_operand_<V128UNITSI:sew>")
+   (match_operand:<V128UNITSI:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  DONE;
+})
 ;; =========================================================================
 ;; == Stores
 ;; =========================================================================
@@ -551,6 +756,17 @@
 ;; - vse32.v
 ;; - vse64.v
 ;; -------------------------------------------------------------------------
+(define_expand "maskstore<mode><vm>"
+  [(match_operand:V 0 "memory_operand")
+   (match_operand:V 1 "register_operand")
+   (match_operand:<VM> 2 "register_operand")]
+  "TARGET_VECTOR"
+{
+  gcc_assert (REG_P (XEXP (operands[0], 0)));
+  emit_insn (gen_vse (<MODE>mode, operands[2], XEXP (operands[0], 0),
+        operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Normal lanes Stores
 ;; -------------------------------------------------------------------------
@@ -593,6 +809,17 @@
   emit_insn (gen_vsseg (<MODE>mode, const0_rtx,
       XEXP (operands[0], 0), operands[1],
       gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+(define_expand "vec_mask_store_lanes<mode><vtsub>"
+  [(match_operand:VT 0 "memory_operand")
+	 (match_operand:VT 1 "register_operand")
+   (match_operand:<VM> 2 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_vsseg (<MODE>mode,
+      operands[2], XEXP (operands[0], 0),
+      operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   DONE;
 })
 ;; -------------------------------------------------------------------------
@@ -686,5 +913,95 @@
   "TARGET_VECTOR"
 {
   riscv_vector_expand_gather_scatter (operands, ENUM_SCATTER_STORE);
+  DONE;
+})
+(define_expand "mask_scatter_store<V2UNITS:mode><V2UNITSI:mode>"
+  [(match_operand 0 "register_operand")
+   (match_operand:V2UNITSI 1 "vector_gather_scatter_offset_operand")
+   (match_operand 2 "<V2UNITS:gather_scatter_operand>")
+   (match_operand 3 "vector_gather_scatter_scale_operand_<V2UNITS:sew>")
+   (match_operand:V2UNITS 4 "register_operand")
+   (match_operand:<V2UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  DONE;
+})
+
+(define_expand "mask_scatter_store<V4UNITS:mode><V4UNITSI:mode>"
+  [(match_operand 0 "register_operand")
+   (match_operand:V4UNITSI 1 "vector_gather_scatter_offset_operand")
+   (match_operand 2 "<V4UNITS:gather_scatter_operand>")
+   (match_operand 3 "vector_gather_scatter_scale_operand_<V4UNITS:sew>")
+   (match_operand:V4UNITS 4 "register_operand")
+   (match_operand:<V4UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  DONE;
+})
+
+(define_expand "mask_scatter_store<V8UNITS:mode><V8UNITSI:mode>"
+  [(match_operand 0 "register_operand")
+   (match_operand:V8UNITSI 1 "vector_gather_scatter_offset_operand")
+   (match_operand 2 "<V8UNITS:gather_scatter_operand>")
+   (match_operand 3 "vector_gather_scatter_scale_operand_<V8UNITS:sew>")
+   (match_operand:V8UNITS 4 "register_operand")
+   (match_operand:<V8UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  DONE;
+})
+
+(define_expand "mask_scatter_store<V16UNITS:mode><V16UNITSI:mode>"
+  [(match_operand 0 "register_operand")
+   (match_operand:V16UNITSI 1 "vector_gather_scatter_offset_operand")
+   (match_operand 2 "<V16UNITS:gather_scatter_operand>")
+   (match_operand 3 "vector_gather_scatter_scale_operand_<V16UNITS:sew>")
+   (match_operand:V16UNITS 4 "register_operand")
+   (match_operand:<V16UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  DONE;
+})
+
+(define_expand "mask_scatter_store<V32UNITS:mode><V32UNITSI:mode>"
+  [(match_operand 0 "register_operand")
+   (match_operand:V32UNITSI 1 "vector_gather_scatter_offset_operand")
+   (match_operand 2 "<V32UNITS:gather_scatter_operand>")
+   (match_operand 3 "vector_gather_scatter_scale_operand_<V32UNITS:sew>")
+   (match_operand:V32UNITS 4 "register_operand")
+   (match_operand:<V32UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  DONE;
+})
+
+(define_expand "mask_scatter_store<V64UNITS:mode><V64UNITSI:mode>"
+  [(match_operand 0 "register_operand")
+   (match_operand:V64UNITSI 1 "vector_gather_scatter_offset_operand")
+   (match_operand 2 "<V64UNITS:gather_scatter_operand>")
+   (match_operand 3 "vector_gather_scatter_scale_operand_<V64UNITS:sew>")
+   (match_operand:V64UNITS 4 "register_operand")
+   (match_operand:<V64UNITS:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  DONE;
+})
+
+(define_expand "mask_scatter_store<V128UNITSI:mode><V128UNITSI:mode>"
+  [(match_operand 0 "register_operand")
+   (match_operand:V128UNITSI 1 "vector_gather_scatter_offset_operand")
+   (match_operand 2 "<V128UNITSI:gather_scatter_operand>")
+   (match_operand 3 "vector_gather_scatter_scale_operand_<V128UNITSI:sew>")
+   (match_operand:V128UNITSI 4 "register_operand")
+   (match_operand:<V128UNITSI:VM> 5 "register_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
   DONE;
 })

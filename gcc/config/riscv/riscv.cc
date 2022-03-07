@@ -9246,6 +9246,33 @@ riscv_autovectorize_vector_modes (vector_modes *modes, bool)
 
   return 0;
 }
+/* Implement TARGET_VECTORIZE_GET_MASK_MODE.  */
+
+static opt_machine_mode
+riscv_get_mask_mode (machine_mode mode)
+{
+  if (TARGET_VECTOR && TARGET_RVV)
+    {
+      machine_mode mask_mode;
+      FOR_EACH_MODE_IN_CLASS (mask_mode, MODE_VECTOR_BOOL)
+        if (GET_MODE_INNER (mask_mode) == BImode
+          && known_eq (GET_MODE_NUNITS (mask_mode),
+            GET_MODE_NUNITS (mode))
+          && riscv_vector_mask_mode_p (mask_mode))
+          return mask_mode;
+    }
+  return default_get_mask_mode (mode);
+}
+
+/* Implement TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE.  Assume for now that
+   it isn't worth branching around empty masked ops (including masked
+   stores).  */
+
+static bool
+riscv_empty_mask_is_expensive (unsigned)
+{
+  return false;
+}
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
@@ -9495,6 +9522,11 @@ riscv_autovectorize_vector_modes (vector_modes *modes, bool)
 
 #undef TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES
 #define TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES riscv_autovectorize_vector_modes
+#undef TARGET_VECTORIZE_GET_MASK_MODE
+#define TARGET_VECTORIZE_GET_MASK_MODE riscv_get_mask_mode
+
+#undef TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE
+#define TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE riscv_empty_mask_is_expensive
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 #include "gt-riscv.h"
