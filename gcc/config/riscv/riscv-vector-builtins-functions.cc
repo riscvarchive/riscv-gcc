@@ -4251,6 +4251,748 @@ vnclipu::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
+/* A function_base for vfadd,vfsub,vfmul,vfdiv... functions.  */
+unsigned int
+vfoptab::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfoptab::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  rtx_code code = strcmp (instance.get_base_name (), "vfadd") == 0   ? PLUS
+                  : strcmp (instance.get_base_name (), "vfsub") == 0 ? MINUS
+                  : strcmp (instance.get_base_name (), "vfmul") == 0 ? MULT
+                  : strcmp (instance.get_base_name (), "vfdiv") == 0 ? DIV
+                  : strcmp (instance.get_base_name (), "vfmax") == 0 ? SMAX
+                  : strcmp (instance.get_base_name (), "vfmin") == 0 ? SMIN
+                                                                     : UNKNOWN;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (code, mode);
+  else
+    icode = code_for_vf_vf (code, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfrsub and vfrdiv functions.  */
+unsigned int
+vfrsub_div::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfrsub_div::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  rtx_code code =
+      strcmp (instance.get_base_name (), "vfrsub") == 0 ? MINUS : DIV;
+  icode = code_for_vfr_vf (code, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfneg functions.  */
+unsigned int
+vfneg::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfneg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_vfneg_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwadd and vfwsub functions.  */
+unsigned int
+vfwadd_vwsub::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwadd_vwsub::expand (const function_instance &instance, tree exp,
+                      rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  rtx_code code =
+      strcmp (instance.get_base_name (), "vfwadd") == 0 ? PLUS : MINUS;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfw_vv (code, mode);
+  else if (instance.get_operation () == OP_vf)
+    icode = code_for_vfw_vf (code, mode);
+  else if (instance.get_operation () == OP_wv)
+    icode = code_for_vfw_wv (code, mode);
+  else
+    icode = code_for_vfw_wf (code, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwmul functions.  */
+unsigned int
+vfwmul::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwmul::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwmul_vv (mode);
+  else
+    icode = code_for_vfwmul_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfmac functions.  */
+unsigned int
+vfmac::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfmac::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  unsigned int unspec =
+      strcmp (instance.get_base_name (), "vfmacc") == 0    ? UNSPEC_MACC
+      : strcmp (instance.get_base_name (), "vfnmacc") == 0 ? UNSPEC_NMACC
+      : strcmp (instance.get_base_name (), "vfmsac") == 0  ? UNSPEC_MSAC
+      : strcmp (instance.get_base_name (), "vfnmsac") == 0 ? UNSPEC_NMSAC
+      : strcmp (instance.get_base_name (), "vfmadd") == 0  ? UNSPEC_MADD
+      : strcmp (instance.get_base_name (), "vfnmadd") == 0 ? UNSPEC_NMADD
+      : strcmp (instance.get_base_name (), "vfmsub") == 0  ? UNSPEC_MSUB
+                                                           : UNSPEC_NMSUB;
+
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (unspec, mode);
+  else
+    icode = code_for_vf_vf (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwmacc functions.  */
+unsigned int
+vfwmacc::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwmacc::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwmacc_vv (mode);
+  else
+    icode = code_for_vfwmacc_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwnmacc functions.  */
+unsigned int
+vfwnmacc::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwnmacc::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwnmacc_vv (mode);
+  else
+    icode = code_for_vfwnmacc_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwmsac functions.  */
+unsigned int
+vfwmsac::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwmsac::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwmsac_vv (mode);
+  else
+    icode = code_for_vfwmsac_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwnmsac functions.  */
+unsigned int
+vfwnmsac::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwnmsac::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwnmsac_vv (mode);
+  else
+    icode = code_for_vfwnmsac_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfsqrt functions.  */
+unsigned int
+vfsqrt::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfsqrt::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_vfsqrt_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfsqrt7 and vfrec7 functions.  */
+unsigned int
+vfsqrt7_rec7::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfsqrt7_rec7::expand (const function_instance &instance, tree exp,
+                      rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  int unspec = strcmp (instance.get_base_name (), "vfrsqrt7") == 0
+                   ? UNSPEC_RSQRT7
+                   : UNSPEC_REC7;
+  icode = code_for_vf_v (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfsgnj, vfsgnjn and vfsgnjx functions.  */
+unsigned int
+vfsgnj_all::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfsgnj_all::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  int unspec =
+      strcmp (instance.get_base_name (), "vfsgnj") == 0    ? UNSPEC_COPYSIGN
+      : strcmp (instance.get_base_name (), "vfsgnjn") == 0 ? UNSPEC_NCOPYSIGN
+      : strcmp (instance.get_base_name (), "vfsgnjx") == 0 ? UNSPEC_XORSIGN
+                                                           : -1;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfsgnj_vv (unspec, mode);
+  else
+    icode = code_for_vfsgnj_vf (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfabs functions.  */
+unsigned int
+vfabs::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfabs::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_vfabs_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfcmp functions.  */
+void
+vfcmp::get_name (char *name, const function_instance &instance) const
+{
+  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
+                       false, false, true,
+                       instance.get_arg_pattern ().arg_list[1], false, false);
+}
+
+unsigned int
+vfcmp::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfcmp::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  rtx_code code = strcmp (instance.get_base_name (), "vmfeq") == 0    ? EQ
+                  : strcmp (instance.get_base_name (), "vmfne") == 0  ? NE
+                  : strcmp (instance.get_base_name (), "vmflt") == 0  ? LT
+                  : strcmp (instance.get_base_name (), "vmfltu") == 0 ? LTU
+                  : strcmp (instance.get_base_name (), "vmfgt") == 0  ? GT
+                  : strcmp (instance.get_base_name (), "vmfgtu") == 0 ? GTU
+                  : strcmp (instance.get_base_name (), "vmfle") == 0  ? LE
+                  : strcmp (instance.get_base_name (), "vmfleu") == 0 ? LEU
+                  : strcmp (instance.get_base_name (), "vmfge") == 0  ? GE
+                                                                      : GEU;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vmf_vv (code, mode);
+  else
+    icode = code_for_vmf_vf (code, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfclass functions.  */
+rtx
+vfclass::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfclass_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfmerge functions.  */
+void
+vfmerge::get_argument_types (const function_instance &instance,
+                             vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      if (i == 2)
+        argument_types.quick_push (
+            get_dt_t (GET_MODE_INNER (instance.get_arg_pattern ().arg_list[i]),
+                      instance.get_data_type_list ()[i] == DT_unsigned));
+      else
+        argument_types.quick_push (
+            get_dt_t (instance.get_arg_pattern ().arg_list[i],
+                      instance.get_data_type_list ()[i] == DT_unsigned));
+    }
+}
+
+size_t
+vfmerge::get_position_of_dest_arg (predication_index) const
+{
+  return 1;
+}
+
+rtx
+vfmerge::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_vfmerge_vfm (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfmv functions.  */
+rtx
+vfmv::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  if (instance.get_operation () == OP_v_f)
+    icode = code_for_vfmv_v_f (mode);
+  else
+    icode = code_for_vmv_v_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfcvt_x_f_v functions.  */
+unsigned int
+vfcvt_f2i::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfcvt_f2i::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfcvt_xu_f_v functions.  */
+unsigned int
+vfcvt_f2u::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfcvt_f2u::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfcvt_rtz_x_f_v functions.  */
+unsigned int
+vfcvt_rtz_f2i::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfcvt_rtz_f2i::expand (const function_instance &instance, tree exp,
+                       rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfcvt_rtz_x_f_v (mode, FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfcvt_rtz_xu_f_v functions.  */
+unsigned int
+vfcvt_rtz_f2u::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfcvt_rtz_f2u::expand (const function_instance &instance, tree exp,
+                       rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfcvt_rtz_x_f_v (mode, UNSIGNED_FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfcvt_f_x_v functions.  */
+unsigned int
+vfcvt_i2f::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfcvt_i2f::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  icode = code_for_vfcvt_f_x_v (mode, FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfcvt_f_xu_v functions.  */
+unsigned int
+vfcvt_u2f::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfcvt_u2f::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  icode = code_for_vfcvt_f_x_v (mode, UNSIGNED_FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwcvt_x_f_v functions.  */
+unsigned int
+vfwcvt_f2i::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwcvt_f2i::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwcvt_xu_f_v functions.  */
+unsigned int
+vfwcvt_f2u::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwcvt_f2u::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwcvt_rtz_x_f_v functions.  */
+unsigned int
+vfwcvt_rtz_f2i::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwcvt_rtz_f2i::expand (const function_instance &instance, tree exp,
+                        rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwcvt_rtz_x_f_v (mode, FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwcvt_rtz_xu_f_v functions.  */
+unsigned int
+vfwcvt_rtz_f2u::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwcvt_rtz_f2u::expand (const function_instance &instance, tree exp,
+                        rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwcvt_rtz_x_f_v (mode, UNSIGNED_FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwcvt_f_x_v functions.  */
+unsigned int
+vfwcvt_i2f::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwcvt_i2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwcvt_f_x_v (mode, FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwcvt_f_xu_v functions.  */
+unsigned int
+vfwcvt_u2f::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwcvt_u2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwcvt_f_x_v (mode, UNSIGNED_FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfwcvt_f_f_v functions.  */
+unsigned int
+vfwcvt_f2f::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfwcvt_f2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  icode = code_for_vfwcvt_f_f_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfncvt_x_f_w functions.  */
+unsigned int
+vfncvt_f2i::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfncvt_f2i::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  icode = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfncvt_xu_f_w functions.  */
+unsigned int
+vfncvt_f2u::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfncvt_f2u::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  icode = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfncvt_rtz_x_f_w functions.  */
+unsigned int
+vfncvt_rtz_f2i::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfncvt_rtz_f2i::expand (const function_instance &instance, tree exp,
+                        rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  icode = code_for_vfncvt_rtz_x_f_w (mode, FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfncvt_rtz_xu_f_w functions.  */
+unsigned int
+vfncvt_rtz_f2u::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfncvt_rtz_f2u::expand (const function_instance &instance, tree exp,
+                        rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  icode = code_for_vfncvt_rtz_x_f_w (mode, UNSIGNED_FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfncvt_f_x_w functions.  */
+unsigned int
+vfncvt_i2f::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfncvt_i2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  icode = code_for_vfncvt_f_x_w (mode, FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfncvt_f_xu_w functions.  */
+unsigned int
+vfncvt_u2f::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfncvt_u2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  icode = code_for_vfncvt_f_x_w (mode, UNSIGNED_FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfncvt_f_f_w functions.  */
+unsigned int
+vfncvt_f2f::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfncvt_f2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_vfncvt_f_f_w (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfncvt_rod_f_f_w functions.  */
+unsigned int
+vfncvt_f2rodf::call_properties (const function_instance &) const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+rtx
+vfncvt_f2rodf::expand (const function_instance &instance, tree exp,
+                       rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_vfncvt_rod_f_f_w (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+} // end namespace riscv_vector
+
+using namespace riscv_vector;
+
 inline void
 gt_ggc_mx (function_instance *)
 {

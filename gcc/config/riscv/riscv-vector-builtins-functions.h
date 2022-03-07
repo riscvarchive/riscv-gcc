@@ -1489,6 +1489,590 @@ public:
   expand (const function_instance &instance, tree exp,
           rtx target) const OVERRIDE;
 };
+
+/* A function_base for vfadd,vfsub,vfmul,vfdiv... functions.  */
+class vfoptab : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfrsub and vfrdiv functions.  */
+class vfrsub_div : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfneg functions.  */
+class vfneg : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwadd and vfwsub functions.  */
+class vfwadd_vwsub : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwmul functions.  */
+class vfwmul : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfmac functions.  */
+class vfmac : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwmacc functions.  */
+class vfwmacc : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwnmacc functions.  */
+class vfwnmacc : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwmsac functions.  */
+class vfwmsac : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwnmsac functions.  */
+class vfwnmsac : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfsqrt functions.  */
+class vfsqrt : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfsqrt7 and vfrec7 functions.  */
+class vfsqrt7_rec7 : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfsgnj, vfsgnjn and vfsgnjx functions.  */
+class vfsgnj_all : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfabs functions.  */
+class vfabs : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfcmp functions.  */
+class vfcmp : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfclass functions.  */
+class vfclass : public unop
+{
+public:
+  // use the same construction function as the binop
+  using unop::unop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfmerge functions.  */
+class vfmerge : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  size_t get_position_of_dest_arg (predication_index pred) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfmv functions.  */
+class vfmv : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfcvt_x_f_v functions.  */
+class vfcvt_f2i : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfcvt_xu_f_v functions.  */
+class vfcvt_f2u : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfcvt_rtz_x_f_v functions.  */
+class vfcvt_rtz_f2i : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfcvt_rtz_xu_f_v functions.  */
+class vfcvt_rtz_f2u : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfcvt_f_x_v functions.  */
+class vfcvt_i2f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfcvt_f_xu_v functions.  */
+class vfcvt_u2f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwcvt_x_f_v functions.  */
+class vfwcvt_f2i : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwcvt_xu_f_v functions.  */
+class vfwcvt_f2u : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwcvt_rtz_x_f_v functions.  */
+class vfwcvt_rtz_f2i : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwcvt_rtz_xu_f_v functions.  */
+class vfwcvt_rtz_f2u : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwcvt_f_x_v functions.  */
+class vfwcvt_i2f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwcvt_f_xu_v functions.  */
+class vfwcvt_u2f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfwcvt_f_f_v functions.  */
+class vfwcvt_f2f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfncvt_x_f_w functions.  */
+class vfncvt_f2i : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfncvt_xu_f_w functions.  */
+class vfncvt_f2u : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfncvt_rtz_x_f_w functions.  */
+class vfncvt_rtz_f2i : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfncvt_rtz_xu_f_w functions.  */
+class vfncvt_rtz_f2u : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfncvt_f_x_w functions.  */
+class vfncvt_i2f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfncvt_f_xu_w functions.  */
+class vfncvt_u2f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfncvt_f_f_w functions.  */
+class vfncvt_f2f : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfncvt_rod_f_f_w functions.  */
+class vfncvt_f2rodf : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
 } // namespace riscv_vector
 
 #endif // end GCC_RISCV_VECTOR_BUILTINS_FUNCTIONS_H
