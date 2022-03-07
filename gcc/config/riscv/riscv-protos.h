@@ -75,6 +75,82 @@ extern bool riscv_store_data_bypass_p (rtx_insn *, rtx_insn *);
 extern rtx riscv_gen_gpr_save_insn (struct riscv_frame_info *);
 extern bool riscv_gpr_save_operation_p (rtx);
 
+/* Routines implemented for RVV support */
+extern poly_uint64 riscv_regmode_natural_size (machine_mode);
+extern bool riscv_vector_mask_mode_p (machine_mode);
+extern bool riscv_vector_data_mode_p (machine_mode);
+extern bool riscv_vector_mode_p (machine_mode);
+extern opt_machine_mode riscv_vector_data_mode (scalar_mode, poly_uint64);
+extern bool riscv_tuple_mode_p (machine_mode);
+extern unsigned int riscv_parse_vlmul_field (unsigned int);
+extern unsigned int riscv_parse_vsew_field (unsigned int);
+extern bool riscv_parse_vta_field (unsigned int);
+extern bool riscv_parse_vma_field (unsigned int);
+extern unsigned int riscv_classify_vlmul_field (machine_mode);
+extern unsigned int riscv_classify_vsew_field (machine_mode);
+extern machine_mode riscv_translate_attr_mode (rtx_insn *);
+extern int riscv_classify_nf (machine_mode);
+extern int riscv_vlmul_regsize(machine_mode);
+extern opt_machine_mode riscv_tuple_mode (machine_mode, unsigned int);
+extern bool riscv_const_vec_all_same_in_range_p (rtx, HOST_WIDE_INT, HOST_WIDE_INT);
+extern unsigned riscv_dbx_register_number (unsigned);
+extern bool riscv_const_poly_int_p (rtx);
+extern bool imm32_p (rtx);
+extern void riscv_expand_vcond (machine_mode, machine_mode, machine_mode, rtx *, bool);
+#ifdef RTX_CODE
+extern void riscv_expand_vec_cmp_int (rtx, enum rtx_code, rtx, rtx, rtx);
+extern void riscv_expand_vec_cmp_float (rtx, enum rtx_code, rtx, rtx, rtx);
+#endif
+extern void
+emit_op5 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx),
+  bool (*imm_p) (rtx),
+  int i, bool reverse
+);
+extern void
+emit_op6 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx),
+  bool (*imm_p) (rtx),
+  int i, bool reverse
+);
+extern void
+emit_op7 (
+  unsigned int unspec,
+  machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
+  machine_mode VSUBmode,
+  rtx *operands,
+  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
+  bool (*imm_p) (rtx),
+  int i, bool reverse
+);
+extern void riscv_vector_expand_vector_init (rtx, rtx);
+extern bool riscv_vector_strided_const_vector_p (rtx);
+extern void riscv_vector_expand_series_const_vector (rtx, rtx);
+extern void riscv_vector_expand_vec_perm (rtx, rtx, rtx, rtx);
+extern void riscv_init_expanders (void);
+extern void riscv_vector_expand_gather_scatter (rtx *, unsigned int);
+extern rtx riscv_vector_constant_helper (const char *, machine_mode);
+extern bool riscv_vector_expand_block_move (rtx *);
+extern bool riscv_vector_expand_strlen (rtx *);
+extern bool riscv_vector_expand_strcpy (rtx *);
+extern bool riscv_vector_expand_strcmp (rtx *);
+extern rtx riscv_vector_gen_policy (unsigned int rvv_policy = 0);
+extern unsigned int get_vtype_for_mode (machine_mode);
+extern machine_mode get_vector_mode_for_mask (machine_mode);
 /* Routines implemented in riscv-c.cc.  */
 void riscv_cpu_cpp_builtins (cpp_reader *);
 
