@@ -1659,3 +1659,482 @@
              middle_reg, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   DONE;
 })
+;; =========================================================================
+;; == Binary arithmetic
+;; =========================================================================
+
+;; -------------------------------------------------------------------------
+;; ---- [INT] General binary arithmetic corresponding to rtx codes
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vand.vv
+;; - vand.vx
+;; - vand.vi
+;; - vor.vv
+;; - vor.vx
+;; - vor.vi
+;; - vxor.vv
+;; - vxor.vx
+;; - vxor.vi
+;; - vminu.vv
+;; - vminu.vx
+;; - vmin.vv
+;; - vmin.vx
+;; - vmaxu.vv
+;; - vmaxu.vx
+;; - vmax.vv
+;; - vmax.vx
+;; - vmul.vv
+;; - vmul.vx
+;; - vdivu.vv
+;; - vdivu.vx
+;; - vdiv.vv
+;; - vdiv.vx
+;; - vremu.vv
+;; - vremu.vx
+;; - vrem.vv
+;; - vrem.vx
+;; -------------------------------------------------------------------------
+
+(define_expand "<optab><mode>3"
+  [(set (match_operand:VI 0 "register_operand")
+    (int_binary:VI
+      (match_operand:VI 1 "register_operand")
+      (match_operand:VI 2 "vector_reg_or_const_dup_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[2], <MODE>mode))
+    emit_insn (gen_v<optab><mode>_vv (operands[0],
+            const0_rtx, const0_rtx, operands[1],
+            operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy ()));
+  else
+    {
+      rtx x;
+      gcc_assert (const_vec_duplicate_p(operands[2], &x));
+      emit_insn (gen_v<optab><mode>_vx (operands[0],
+        const0_rtx, const0_rtx, operands[1],
+        x, gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+(define_expand "cond_<optab><mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (if_then_else:VI
+      (match_operand:<VM> 1 "register_operand")
+      (int_binary:VI
+        (match_operand:VI 2 "register_operand")
+        (match_operand:VI 3 "vector_reg_or_const_dup_operand"))
+      (match_operand:VI 4 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[3], <MODE>mode))
+    emit_insn (gen_v<optab><mode>_vv (operands[0], operands[1], operands[4],
+            operands[2], operands[3], gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy (RVV_POLICY_MU)));
+  else
+    {
+      rtx x;
+      gcc_assert (const_vec_duplicate_p(operands[3], &x));
+      emit_insn (gen_v<optab><mode>_vx (operands[0], operands[1], operands[4],
+            operands[2], x, gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy (RVV_POLICY_MU)));
+    }
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [INT] Addition
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vadd.vv
+;; - vadd.vx
+;; - vadd.vi
+;; -------------------------------------------------------------------------
+
+(define_expand "add<mode>3"
+  [(set (match_operand:VI 0 "register_operand")
+    (plus:VI
+      (match_operand:VI 1 "register_operand")
+      (match_operand:VI 2 "vector_reg_or_const_dup_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[2], <MODE>mode))
+    emit_insn (gen_vadd_vv (<MODE>mode, operands[0],
+        const0_rtx, const0_rtx, operands[1], operands[2],
+        gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  else
+    {
+      rtx x;
+      gcc_assert (const_vec_duplicate_p(operands[2], &x));
+      emit_insn (gen_v_vx (UNSPEC_VADD, <MODE>mode,
+        operands[0], const0_rtx, const0_rtx,
+        operands[1], x, gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+(define_expand "cond_add<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (if_then_else:VI
+      (match_operand:<VM> 1 "register_operand")
+      (plus:VI
+        (match_operand:VI 2 "register_operand")
+        (match_operand:VI 3 "vector_reg_or_const_dup_operand"))
+      (match_operand:VI 4 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[3], <MODE>mode))
+    emit_insn (gen_vadd_vv (<MODE>mode,
+        operands[0], operands[1], operands[4],
+        operands[2], operands[3], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy (RVV_POLICY_MU)));
+  else
+    {
+      rtx x;
+      gcc_assert (const_vec_duplicate_p(operands[3], &x));
+      emit_insn (gen_v_vx (UNSPEC_VADD, <MODE>mode,
+          operands[0], operands[1], operands[4],
+          operands[2], x, gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy (RVV_POLICY_MU)));
+    }
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [INT] Subtraction
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vsub.vv
+;; - vsub.vx
+;; - vadd.vi
+;; - vrsub.vx
+;; - vrsub.vi
+;; -------------------------------------------------------------------------
+
+(define_expand "sub<mode>3"
+  [(set (match_operand:VI 0 "register_operand")
+    (minus:VI
+      (match_operand:VI 1 "register_operand")
+      (match_operand:VI 2 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vsub_vv (<MODE>mode, operands[0],
+      const0_rtx, const0_rtx, operands[1], operands[2],
+      gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "cond_sub<mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (if_then_else:VI
+      (match_operand:<VM> 1 "register_operand")
+      (minus:VI
+        (match_operand:VI 2 "register_operand")
+        (match_operand:VI 3 "register_operand"))
+      (match_operand:VI 4 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vsub_vv (<MODE>mode,
+        operands[0], operands[1], operands[4],
+        operands[2], operands[3], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy (RVV_POLICY_MU)));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [INT] Shifts
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vsll.vv
+;; - vsll.vx
+;; - vsll.vi
+;; - vsrl.vv
+;; - vsrl.vx
+;; - vsrl.vi
+;; - vsra.vv
+;; - vsra.vx
+;; - vsra.vi
+;; -------------------------------------------------------------------------
+
+(define_expand "<optab><mode>3"
+  [(set (match_operand:VI 0 "register_operand")
+	(any_shift:VI
+	  (match_operand:VI 1 "register_operand")
+	  (match_operand:<VSUB> 2 "reg_or_uimm5_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[2]))
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+  emit_insn (gen_v<optab><mode>_vx (operands[0],
+        const0_rtx, const0_rtx, operands[1],
+        operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "v<optab><mode>3"
+  [(set (match_operand:VI 0 "register_operand")
+	(any_shift:VI
+	  (match_operand:VI 1 "register_operand")
+	  (match_operand:VI 2 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_v<optab><mode>_vv (operands[0],
+        const0_rtx, const0_rtx, operands[1],
+        operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "cond_<optab><mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (if_then_else:VI
+      (match_operand:<VM> 1 "register_operand")
+      (any_shift:VI
+        (match_operand:VI 2 "register_operand")
+        (match_operand:VI 3 "vector_reg_or_const_dup_operand"))
+      (match_operand:VI 4 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[3], <MODE>mode))
+    emit_insn (gen_v<optab><mode>_vv (operands[0], operands[1],
+            operands[4], operands[2], operands[3],
+            gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy (RVV_POLICY_MU)));
+  else
+    {
+      rtx x;
+      gcc_assert (const_vec_duplicate_p(operands[3], &x));
+      if (!satisfies_constraint_K (x))
+        x = force_reg (Pmode, x);
+
+      emit_insn (gen_v<optab><mode>_vx (operands[0], operands[1], operands[4],
+          operands[2], x, gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy (RVV_POLICY_MU)));
+    }
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [INT] Highpart multiplication
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vmulh.vv
+;; - vmulh.vx
+;; - vmulhu.vv
+;; - vmulhu.vx
+;; -------------------------------------------------------------------------
+
+(define_expand "<su>mul<mode>3_highpart"
+  [(set (match_operand:VI 0 "register_operand")
+	  (unspec:VI
+	    [(match_operand:VI 1 "register_operand")
+	     (match_operand:VI 2 "vector_reg_or_const_dup_operand")]
+      MUL_HIGHPART))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[2], <MODE>mode))
+    {
+      emit_insn (gen_vmulh<u><mode>_vv (operands[0],
+            const0_rtx, const0_rtx, operands[1],
+            operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy ()));
+    }
+  else
+    {
+      rtx x;
+      gcc_assert (const_vec_duplicate_p(operands[2], &x));
+      emit_insn (gen_vmulh<u><mode>_vx (
+        operands[0], const0_rtx, const0_rtx,
+        operands[1], x, gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+;; -------------------------------------------------------------------------
+;; ---- [FP] General binary arithmetic corresponding to rtx codes
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfadd.vv
+;; - vfadd.vf
+;; - vfmul.vv
+;; - vfmul.vf
+;; - vfmin.vv
+;; - vfmin.vf
+;; - vfmax.vv
+;; - vfmax.vf
+;; -------------------------------------------------------------------------
+
+(define_expand "<optab><mode>3"
+  [(set (match_operand:VF 0 "register_operand")
+    (fp_binary:VF
+      (match_operand:VF 1 "register_operand")
+      (match_operand:VF 2 "vector_reg_or_const_dup_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[2], <MODE>mode))
+    emit_insn (gen_vf<optab><mode>_vv (operands[0],
+            const0_rtx, const0_rtx, operands[1],
+            operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy ()));
+  else
+    {
+      rtx f;
+      gcc_assert (const_vec_duplicate_p(operands[2], &f));
+      emit_insn (gen_vf<optab><mode>_vf (operands[0],
+            const0_rtx, const0_rtx, operands[1],
+            force_reg (<VSUB>mode, f), gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+(define_expand "cond_<optab><mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (if_then_else:VF
+      (match_operand:<VM> 1 "register_operand")
+      (fp_binary:VF
+        (match_operand:VF 2 "register_operand")
+        (match_operand:VF 3 "vector_reg_or_const_dup_operand"))
+      (match_operand:VF 4 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[3], <MODE>mode))
+    emit_insn (gen_vf<optab><mode>_vv (operands[0], operands[1],
+            operands[4], operands[2], operands[3],
+            gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy (RVV_POLICY_MU)));
+  else
+    {
+      rtx f;
+      gcc_assert (const_vec_duplicate_p(operands[3], &f));
+      emit_insn (gen_vf<optab><mode>_vf (operands[0], operands[1], operands[4],
+          operands[2], force_reg (<VSUB>mode, f), gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy (RVV_POLICY_MU)));
+    }
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [FP] Subtraction & Division
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfsub.vv
+;; - vfsub.vf
+;; - vfrsub.vf
+;; - vfdiv.vv
+;; - vfdiv.vf
+;; - vfrdiv.vf
+;; -------------------------------------------------------------------------
+
+(define_expand "<optab><mode>3"
+  [(set (match_operand:VF 0 "register_operand")
+    (minus_div:VF
+      (match_operand:VF 1 "register_operand")
+      (match_operand:VF 2 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vf<optab><mode>_vv (operands[0],
+            const0_rtx, const0_rtx, operands[1],
+            operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "cond_<optab><mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (if_then_else:VF
+      (match_operand:<VM> 1 "register_operand")
+      (minus_div:VF
+        (match_operand:VF 2 "register_operand")
+        (match_operand:VF 3 "register_operand"))
+      (match_operand:VF 4 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vf<optab><mode>_vv (operands[0], operands[1],
+            operands[4], operands[2], operands[3],
+            gen_rtx_REG (Pmode, X0_REGNUM),
+            riscv_vector_gen_policy (RVV_POLICY_MU)));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [FP] Sign-injection
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfsgnj.vv
+;; - vfsgnjx.vv
+;; -------------------------------------------------------------------------
+
+(define_expand "copysign<mode>3"
+  [(set (match_operand:VF 0 "register_operand")
+	(unspec:VF [(match_operand:VF 1 "register_operand")
+		      (match_operand:VF 2 "vector_reg_or_const_dup_operand")]
+		     UNSPEC_COPYSIGN))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[2], <MODE>mode))
+    {
+      emit_insn (gen_vfsgnj_vv (UNSPEC_COPYSIGN,
+          <MODE>mode, operands[0], const0_rtx, const0_rtx,
+          operands[1], operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    }
+  else
+    {
+      rtx f;
+      gcc_assert (const_vec_duplicate_p(operands[2], &f));
+      emit_insn (gen_vfsgnj_vf (UNSPEC_COPYSIGN,
+          <MODE>mode, operands[0], const0_rtx, const0_rtx, operands[1],
+          force_reg (<VSUB>mode, f), gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+(define_expand "xorsign<mode>3"
+  [(set (match_operand:VF 0 "register_operand")
+	(unspec:VF [(match_operand:VF 1 "register_operand")
+		      (match_operand:VF 2 "vector_reg_or_const_dup_operand")]
+		     UNSPEC_XORSIGN))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (register_operand (operands[2], <MODE>mode))
+    {
+      emit_insn (gen_vfsgnj_vv (UNSPEC_XORSIGN,
+          <MODE>mode, operands[0], const0_rtx, const0_rtx,
+          operands[1], operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    }
+  else
+    {
+      rtx f;
+      gcc_assert (const_vec_duplicate_p(operands[2], &f));
+      emit_insn (gen_vfsgnj_vf (UNSPEC_XORSIGN,
+          <MODE>mode, operands[0], operands[1], const0_rtx, const0_rtx,
+          force_reg (<VSUB>mode, f), gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+;; -------------------------------------------------------------------------
+;; ---- [BOOL] Binary logical operations
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vmand.mm
+;; - vmxor.mm
+;; - vmor.mm
+;; -------------------------------------------------------------------------
+
+(define_expand "<optab><mode>3"
+  [(set (match_operand:VB 0 "register_operand")
+    (any_bitwise:VB
+      (match_operand:VB 1 "register_operand")
+      (match_operand:VB 2 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vm<optab><mode>_mm (operands[0],
+        operands[1], operands[2], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
