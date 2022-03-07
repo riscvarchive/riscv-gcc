@@ -1426,6 +1426,140 @@ public:
   expand (const function_instance &instance, tree exp,
           rtx target) const OVERRIDE;
 };
+
+/* A function_base for vmlogic functions.  */
+class vmlogic : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmnlogic functions.  */
+class vmnlogic : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmlogicn functions.  */
+class vmlogicn : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmmv functions.  */
+class vmmv : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmnot functions.  */
+class vmnot : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmclr functions.  */
+class vmclr : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmset functions.  */
+class vmset : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+};
+
+/* A function_base for vcpop functions.  */
+class vcpop : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  tree
+  get_return_type (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vfirst functions.  */
+class vfirst : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  tree
+  get_return_type (const function_instance &) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmsetbit functions.  */
+class vmsetbit : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for viota functions.  */
+class viota : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vid functions.  */
+class vid : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
 /* A function_base for vsadd functions.  */
 class vsadd : public binop
 {

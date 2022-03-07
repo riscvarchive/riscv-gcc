@@ -4171,6 +4171,139 @@ vfwredusum::expand (const function_instance &instance, tree exp,
   icode = code_for_vfwredusum_vs (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
+
+/* A function_base for vmlogic functions.  */
+rtx
+vmlogic::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  rtx_code code = strcmp (instance.get_base_name (), "vmand") == 0  ? AND
+                  : strcmp (instance.get_base_name (), "vmor") == 0 ? IOR
+                                                                    : XOR;
+  insn_code icode = code_for_vm_mm (code, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vmnlogic functions.  */
+rtx
+vmnlogic::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  rtx_code code = strcmp (instance.get_base_name (), "vmnand") == 0  ? AND
+                  : strcmp (instance.get_base_name (), "vmnor") == 0 ? IOR
+                                                                     : XOR;
+  insn_code icode = code_for_vmn_mm (code, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vmlogicn functions.  */
+rtx
+vmlogicn::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  rtx_code code = strcmp (instance.get_base_name (), "vmandn") == 0 ? AND : IOR;
+  insn_code icode = code_for_vmnot_mm (code, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vmmv functions.  */
+rtx
+vmmv::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vmmv_m (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vmnot functions.  */
+rtx
+vmnot::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vmnot_m (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vmclr functions.  */
+rtx
+vmclr::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vmclr_m (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vmset functions.  */
+rtx
+vmset::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  insn_code icode = code_for_vmset_m (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vcpop functions.  */
+tree
+vcpop::get_return_type (const function_instance &) const
+{
+  return long_unsigned_type_node;
+}
+
+rtx
+vcpop::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  insn_code icode = code_for_vcpop_m (mode, Pmode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vfirst functions.  */
+tree
+vfirst::get_return_type (const function_instance &) const
+{
+  return long_integer_type_node;
+}
+
+rtx
+vfirst::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  insn_code icode = code_for_vfirst_m (mode, Pmode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vmsetbit functions.  */
+rtx
+vmsetbit::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  unsigned int unspec =
+      strcmp (instance.get_base_name (), "vmsbf") == 0   ? UNSPEC_SBF
+      : strcmp (instance.get_base_name (), "vmsif") == 0 ? UNSPEC_SIF
+                                                         : UNSPEC_SOF;
+  insn_code icode = code_for_vm_m (unspec, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for viota functions.  */
+rtx
+viota::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_viota_m (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function_base for vid functions.  */
+rtx
+vid::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  insn_code icode;
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  icode = code_for_vid_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
 /* A function_base for vsadd functions.  */
 rtx
 vsadd::expand (const function_instance &instance, tree exp, rtx target) const

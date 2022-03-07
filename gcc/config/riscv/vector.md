@@ -5621,3 +5621,223 @@
    vfwredosum.vs\t%0,%3,%4"
   [(set_attr "type" "vwreduc")
    (set_attr "mode" "<VWREDF:MODE>")])
+
+;; -------------------------------------------------------------------------------
+;; ---- 15. Vector Mask Instructions
+;; -------------------------------------------------------------------------------
+;; Includes:
+;; - 15.1 Vector Mask-Register Logical Instructions
+;; - 15.2 Vector mask population count vpopc
+;; - 15.3 vfirst find-first-set mask bit
+;; - 15.4 vmsbf.m set-before-first mask bit
+;; - 15.5 vmsif.m set-including-fisrt mask bit
+;; - 15.6 vmsof.m set-only-first mask bit
+;; - 15.8 Vector Iota Instruction
+;; - 15.9 Vector Element Index Instructions
+;; -------------------------------------------------------------------------------
+
+;; Vector Mask-Register Logical Instructions.
+(define_insn "@vm<optab><VB:mode>_mm"
+  [(set (match_operand:VB 0 "register_operand" "=vr")
+    (unspec:VB
+      [(any_bitwise:VB
+        (match_operand:VB 1 "register_operand" "vr")
+        (match_operand:VB 2 "register_operand" "vr"))
+       (match_operand 3 "p_reg_or_const_csr_operand")
+       (match_operand 4 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "vm<insn>.mm\t%0,%1,%2"
+ [(set_attr "type" "vmask")
+  (set_attr "mode" "<VB:MODE>")])
+
+(define_insn "@vmn<optab><VB:mode>_mm"
+  [(set (match_operand:VB 0 "register_operand" "=vr")
+    (unspec:VB
+      [(not:VB
+        (any_bitwise:VB
+          (match_operand:VB 1 "register_operand" "vr")
+          (match_operand:VB 2 "register_operand" "vr")))
+       (match_operand 3 "p_reg_or_const_csr_operand")
+       (match_operand 4 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "vm<ninsn>.mm\t%0,%1,%2"
+ [(set_attr "type" "vmask")
+  (set_attr "mode" "<VB:MODE>")])
+
+(define_insn "@vm<optab>not<VB:mode>_mm"
+  [(set (match_operand:VB 0 "register_operand" "=vr")
+    (unspec:VB
+      [(any_logicalnot:VB
+        (match_operand:VB 1 "register_operand" "vr")
+        (not:VB
+          (match_operand:VB 2 "register_operand" "vr")))
+       (match_operand 3 "p_reg_or_const_csr_operand")
+       (match_operand 4 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "vm<insn>n.mm\t%0,%1,%2"
+ [(set_attr "type" "vmask")
+  (set_attr "mode" "<VB:MODE>")])
+
+;; vmmv.m vd,vs -> vmand.mm vd,vs,vs # Copy mask register
+(define_insn "@vmmv<VB:mode>_m"
+  [(set (match_operand:VB 0 "register_operand" "=vr")
+    (unspec:VB
+      [(match_operand:VB 1 "register_operand" "vr")
+       (match_operand 2 "p_reg_or_const_csr_operand")
+       (match_operand 3 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "vmmv.m\t%0,%1"
+ [(set_attr "type" "vmask")
+  (set_attr "mode" "<VB:MODE>")])
+
+;; vmclr.m vd -> vmxor.mm vd,vd,vd # Clear mask register
+(define_insn "@vmclr<VB:mode>_m"
+  [(set (match_operand:VB 0 "register_operand" "=vr")
+    (unspec:VB
+      [(vec_duplicate:VB (const_int 0))
+       (match_operand 1 "p_reg_or_const_csr_operand")
+       (match_operand 2 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "vmclr.m\t%0"
+ [(set_attr "type" "vmask")
+  (set_attr "mode" "<VB:MODE>")])
+
+;; vmset.m vd -> vmxnor.mm vd,vd,vd # Set mask register
+(define_insn "@vmset<VB:mode>_m"
+  [(set (match_operand:VB 0 "register_operand" "=vr")
+    (unspec:VB
+      [(vec_duplicate:VB (const_int 1))
+       (match_operand 1 "p_reg_or_const_csr_operand")
+       (match_operand 2 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "vmset.m\t%0"
+ [(set_attr "type" "vmask")
+  (set_attr "mode" "<VB:MODE>")])
+
+;; vmnot.m vd,vs -> vmnand.mm vd,vs,vs # Invert bits
+(define_insn "@vmnot<VB:mode>_m"
+  [(set (match_operand:VB 0 "register_operand" "=vr")
+    (unspec:VB
+      [(not:VB
+        (match_operand:VB 1 "register_operand" "vr"))
+       (match_operand 2 "p_reg_or_const_csr_operand")
+       (match_operand 3 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "vmnot.m\t%0,%1"
+ [(set_attr "type" "vmask")
+  (set_attr "mode" "<VB:MODE>")])
+
+;; Vector mask population count vpopc
+(define_insn "@vcpop<VB:mode>_<X:mode>_m"
+  [(set (match_operand:X 0 "register_operand" "=r,r")
+    (unspec:X
+      [(unspec:VB
+         [(match_operand:VB 1 "vector_reg_or_const0_operand" "vr,J")
+          (match_operand:VB 2 "register_operand" "vr,vr")] UNSPEC_VCPOP)
+       (match_operand 3 "p_reg_or_const_csr_operand")
+       (match_operand 4 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "@
+  vcpop.m\t%0,%2,%1.t
+  vcpop.m\t%0,%2"
+ [(set_attr "type" "vcpop")
+  (set_attr "mode" "<VB:MODE>")])
+
+;; vfirst find-first-set mask bit
+(define_insn "@vfirst<VB:mode>_<X:mode>_m"
+  [(set (match_operand:X 0 "register_operand" "=r,r")
+    (unspec:X
+      [(unspec:VB
+        [(match_operand:VB 1 "vector_reg_or_const0_operand" "vr,J")
+         (match_operand:VB 2 "register_operand" "vr,vr")] UNSPEC_FIRST)
+       (match_operand 3 "p_reg_or_const_csr_operand")
+       (match_operand 4 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "@
+  vfirst.m\t%0,%2,%1.t
+  vfirst.m\t%0,%2"
+ [(set_attr "type" "vmsetbit")
+  (set_attr "mode" "<VB:MODE>")])
+
+;; vmsbf.m set-before-first mask bit.
+;; vmsif.m set-including-fisrt mask bit.
+;; vmsof.m set-only-first mask bit.
+(define_insn "@vm<smb><VB:mode>_m"
+  [(set (match_operand:VB 0 "register_operand" "=&vr,&vr")
+    (unspec:VB
+      [(unspec:VB
+        [(match_operand:VB 1 "vector_reg_or_const0_operand" "vm,J")
+         (unspec:VB
+           [(match_operand:VB 3 "register_operand" "vr,vr")] MASK_SET)
+         (match_operand:VB 2 "vector_reg_or_const0_operand" "0,J")] UNSPEC_SELECT)
+       (match_operand 4 "p_reg_or_const_csr_operand")
+       (match_operand 5 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "@
+  vm<smb>.m\t%0,%3,%1.t
+  vm<smb>.m\t%0,%3"
+ [(set_attr "type" "vmsetbit")
+  (set_attr "mode" "<VB:MODE>")])
+
+;; Vector Iota Instruction.
+(define_insn "@viota<mode>_m"
+  [(set (match_operand:VI 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (unspec:VI
+         [(match_operand:<VM> 3 "register_operand" "vr,vr,vr,vr")] UNSPEC_IOTA)
+       (match_operand:VI 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand")
+     (match_operand 5 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+ "TARGET_VECTOR"
+ "@
+  viota.m\t%0,%3,%1.t
+  viota.m\t%0,%3,%1.t
+  viota.m\t%0,%3
+  viota.m\t%0,%3"
+ [(set_attr "type" "viota")
+  (set_attr "mode" "<MODE>")])
+
+;; Vector Element Index Instructions.
+(define_insn "@vid<mode>_v"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+    (unspec:VI
+     [(unspec:VI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "=vm,vm,J,J")
+         (unspec:VI
+           [(match_operand 3 "p_reg_or_const_csr_operand")
+            (match_operand 4 "const_int_operand")] UNSPEC_ID)
+         (match_operand:VI 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vid.v\t%0,%1.t
+   vid.v\t%0,%1.t
+   vid.v\t%0
+   vid.v\t%0"
+  [(set_attr "type" "vid")
+   (set_attr "mode" "<MODE>")])

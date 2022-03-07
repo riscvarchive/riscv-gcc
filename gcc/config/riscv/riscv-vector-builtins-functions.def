@@ -339,6 +339,27 @@ DEF_RVV_FUNCTION(vfredmax, vfred, (3, VATTR(1, VLMUL1, signed), VITER(VF, signed
 DEF_RVV_FUNCTION(vfredmin, vfred, (3, VATTR(1, VLMUL1, signed), VITER(VF, signed), VATTR(1, VLMUL1, signed)), PAT_mask | PAT_tail | PAT_void_dest | PAT_ignore_mask_policy, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_m_ta | PRED_m_tu, OP_vs)
 DEF_RVV_FUNCTION(vfwredosum, vfwredosum, (3, VATTR(1, VWLMUL1, signed), VITER(VWREDF, signed), VATTR(1, VWLMUL1, signed)), PAT_mask | PAT_tail | PAT_void_dest | PAT_ignore_mask_policy, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_m_ta | PRED_m_tu, OP_vs)
 DEF_RVV_FUNCTION(vfwredusum, vfwredusum, (3, VATTR(1, VWLMUL1, signed), VITER(VWREDF, signed), VATTR(1, VWLMUL1, signed)), PAT_mask | PAT_tail | PAT_void_dest | PAT_ignore_mask_policy, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_m_ta | PRED_m_tu, OP_vs)
+/* 15. Vector Mask Instructions. */
+DEF_RVV_FUNCTION(vmand, vmlogic, (3, VITER(VB, signed), VATTR(0, VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_mm)
+DEF_RVV_FUNCTION(vmor, vmlogic, (3, VITER(VB, signed), VATTR(0, VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_mm)
+DEF_RVV_FUNCTION(vmxor, vmlogic, (3, VITER(VB, signed), VATTR(0, VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_mm)
+DEF_RVV_FUNCTION(vmnand, vmnlogic, (3, VITER(VB, signed), VATTR(0, VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_mm)
+DEF_RVV_FUNCTION(vmnor, vmnlogic, (3, VITER(VB, signed), VATTR(0, VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_mm)
+DEF_RVV_FUNCTION(vmxnor, vmnlogic, (3, VITER(VB, signed), VATTR(0, VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_mm)
+DEF_RVV_FUNCTION(vmandn, vmlogicn, (3, VITER(VB, signed), VATTR(0, VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_mm)
+DEF_RVV_FUNCTION(vmorn, vmlogicn, (3, VITER(VB, signed), VATTR(0, VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_mm)
+DEF_RVV_FUNCTION(vmmv, vmmv, (2, VITER(VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_m)
+DEF_RVV_FUNCTION(vmnot, vmnot, (2, VITER(VB, signed), VATTR(0, VB, signed)), PAT_none, PRED_void, OP_m)
+DEF_RVV_FUNCTION(vmclr, vmclr, (1, VITER(VB, signed)), PAT_none, PRED_void, OP_m)
+DEF_RVV_FUNCTION(vmset, vmset, (1, VITER(VB, signed)), PAT_none, PRED_void, OP_m)
+DEF_RVV_FUNCTION(vcpop, vcpop, (2, VITER(VB, signed), VATTR(0, VB, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_m)
+DEF_RVV_FUNCTION(vfirst, vfirst, (2, VITER(VB, signed), VATTR(0, VB, signed)), PAT_mask | PAT_ignore_policy, PRED_void | PRED_m, OP_m)
+DEF_RVV_FUNCTION(vmsbf, vmsetbit, (2, VITER(VB, signed), VATTR(0, VB, signed)), PAT_mask | PAT_ignore_tail_policy, PRED_void | PRED_m | PRED_ma | PRED_mu, OP_m)
+DEF_RVV_FUNCTION(vmsif, vmsetbit, (2, VITER(VB, signed), VATTR(0, VB, signed)), PAT_mask | PAT_ignore_tail_policy, PRED_void | PRED_m | PRED_ma | PRED_mu, OP_m)
+DEF_RVV_FUNCTION(vmsof, vmsetbit, (2, VITER(VB, signed), VATTR(0, VB, signed)), PAT_mask | PAT_ignore_tail_policy, PRED_void | PRED_m | PRED_ma | PRED_mu, OP_m)
+DEF_RVV_FUNCTION(viota, viota, (2, VITER(VI, unsigned), VATTR(0, VM, signed)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_m)
+DEF_RVV_FUNCTION(vid, vid, (1, VITER(VI, signed)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
+DEF_RVV_FUNCTION(vid, vid, (1, VITER(VI, unsigned)), PAT_mask | PAT_tail, PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu, OP_v)
 
 /* 7. Segment Loads and Stores.  */
 /* vlseg */
