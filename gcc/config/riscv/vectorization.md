@@ -1130,3 +1130,532 @@
       operands[0], operands[1], operands[2], riscv_vector_gen_policy ()));
   DONE;
 })
+
+;; -------------------------------------------------------------------------
+;; ---- [INT<-INT] Sign and zero extension
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vsext.vf2
+;; - vzext.vf2
+;; - vsext.vf4
+;; - vzext.vf4
+;; - vsext.vf8
+;; - vzext.vf8
+;; -------------------------------------------------------------------------
+
+(define_expand "extend<vn><mode>2"
+  [(set (match_operand:VEXTI 0 "register_operand")
+	  (sign_extend:VEXTI
+	    (match_operand:<VN> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vext_vf2 (SIGN_EXTEND, <VN>mode,
+        operands[0], const0_rtx, const0_rtx, operands[1],
+        gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "zero_extend<vn><mode>2"
+  [(set (match_operand:VEXTI 0 "register_operand")
+	  (zero_extend:VEXTI
+	    (match_operand:<VN> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vext_vf2 (ZERO_EXTEND, <VN>mode,
+        operands[0], const0_rtx, const0_rtx,
+        operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "extend<vqn><mode>2"
+  [(set (match_operand:VQEXTI 0 "register_operand")
+	  (sign_extend:VQEXTI
+	    (match_operand:<VQN> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vext_vf4 (SIGN_EXTEND, <VQN>mode,
+        operands[0], const0_rtx, const0_rtx,
+        operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "zero_extend<vqn><mode>2"
+  [(set (match_operand:VQEXTI 0 "register_operand")
+	  (zero_extend:VQEXTI
+	    (match_operand:<VQN> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vext_vf4 (ZERO_EXTEND, <VQN>mode,
+        operands[0], const0_rtx, const0_rtx, operands[1],
+        gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "extend<von><mode>2"
+  [(set (match_operand:VOEXTI 0 "register_operand")
+	  (sign_extend:VOEXTI
+	    (match_operand:<VON> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vext_vf8 (SIGN_EXTEND, <VON>mode,
+        operands[0], const0_rtx, const0_rtx, operands[1],
+        gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "zero_extend<von><mode>2"
+  [(set (match_operand:VOEXTI 0 "register_operand")
+	  (zero_extend:VOEXTI
+	    (match_operand:<VON> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vext_vf8 (ZERO_EXTEND, <VON>mode,
+        operands[0], const0_rtx, const0_rtx, operands[1],
+        gen_rtx_REG (Pmode, X0_REGNUM),
+        riscv_vector_gen_policy ()));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [FP<-FP] Extension
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfwcvt.f.f.v
+;; -------------------------------------------------------------------------
+
+(define_expand "extend<vn><mode>2"
+  [(set (match_operand:VEXTF 0 "register_operand")
+	  (float_extend:VEXTF
+	    (match_operand:<VN> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfwcvt_f_f_v (<VN>mode, operands[0], const0_rtx, const0_rtx,
+      operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "extend<vqn><mode>2"
+  [(set (match_operand:VQEXTF 0 "register_operand")
+	  (float_extend:VQEXTF
+	    (match_operand:<VQN> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vfwcvt_f_f_v (<VQN>mode, middle_reg, const0_rtx, const0_rtx,
+      operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfwcvt_f_f_v (<VN>mode, operands[0], const0_rtx, const0_rtx,
+      middle_reg, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [FP<-INT] Extension
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfwcvt.f.xu.w
+;; - vfwcvt.f.x.w
+;; -------------------------------------------------------------------------
+
+(define_expand "float<vndiff><mode>2"
+  [(set (match_operand:VF 0 "register_operand")
+	(float:VF
+	  (match_operand:<VNDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfwcvt_f_x_v (<VNDIFF>mode, FLOAT,
+      operands[0], const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "floatuns<vndiff><mode>2"
+  [(set (match_operand:VF 0 "register_operand")
+	(unsigned_float:VF
+	  (match_operand:<VNDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfwcvt_f_x_v (<VNDIFF>mode, UNSIGNED_FLOAT,
+      operands[0], const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "float<vqndiff><mode>2"
+  [(set (match_operand:VEXTF 0 "register_operand")
+	(float:VEXTF
+	  (match_operand:<VQNDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vfwcvt_f_x_v (<VQNDIFF>mode, FLOAT,
+      middle_reg, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfwcvt_f_f_v (<VN>mode,
+      operands[0], const0_rtx, const0_rtx, middle_reg, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "floatuns<vqndiff><mode>2"
+  [(set (match_operand:VEXTF 0 "register_operand")
+	(unsigned_float:VEXTF
+	  (match_operand:<VQNDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vfwcvt_f_x_v (<VQNDIFF>mode, UNSIGNED_FLOAT,
+      middle_reg, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfwcvt_f_f_v (<VN>mode,
+      operands[0], const0_rtx, const0_rtx, middle_reg, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "float<vondiff><mode>2"
+  [(set (match_operand:VQEXTF 0 "register_operand")
+	(float:VQEXTF
+	  (match_operand:<VONDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg1 = gen_reg_rtx (<VQN>mode);
+  rtx middle_reg2 = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vfwcvt_f_x_v (<VONDIFF>mode, FLOAT,
+      middle_reg1, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfwcvt_f_f_v (<VQN>mode,
+      middle_reg2, const0_rtx, const0_rtx, middle_reg1, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfwcvt_f_f_v (<VN>mode,
+      operands[0], const0_rtx, const0_rtx, middle_reg2, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "floatuns<vondiff><mode>2"
+  [(set (match_operand:VQEXTF 0 "register_operand")
+	(unsigned_float:VQEXTF
+	  (match_operand:<VONDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg1 = gen_reg_rtx (<VQN>mode);
+  rtx middle_reg2 = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vfwcvt_f_x_v (<VONDIFF>mode, UNSIGNED_FLOAT,
+      middle_reg1, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfwcvt_f_f_v (<VQN>mode,
+      middle_reg2, const0_rtx, const0_rtx, middle_reg1, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfwcvt_f_f_v (<VN>mode,
+      operands[0], const0_rtx, const0_rtx, middle_reg2, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [INT<-FP] Extension
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfwcvt.rtz.xu.f.w
+;; - vfwcvt.rtz.x.f.w
+;; -------------------------------------------------------------------------
+
+(define_expand "fix_trunc<vndiff><mode>2"
+  [(set (match_operand:VEXTI2 0 "register_operand")
+	(fix:VEXTI2
+	  (match_operand:<VNDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfwcvt_rtz_x_f_v (<VNDIFF>mode, FIX,
+      operands[0], const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "fixuns_trunc<vndiff><mode>2"
+  [(set (match_operand:VEXTI2 0 "register_operand")
+	(unsigned_fix:VEXTI2
+	  (match_operand:<VNDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfwcvt_rtz_x_f_v (<VNDIFF>mode, UNSIGNED_FIX,
+      operands[0], const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "fix_trunc<vqndiff><mode>2"
+  [(set (match_operand:VOEXTI 0 "register_operand")
+	(fix:VOEXTI
+	  (match_operand:<VQNDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vfwcvt_rtz_x_f_v (<VQNDIFF>mode, FIX,
+      middle_reg, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vwcvt_x_x_v (SIGN_EXTEND, <VN>mode,
+      operands[0], const0_rtx, const0_rtx,
+      middle_reg, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "fixuns_trunc<vqndiff><mode>2"
+  [(set (match_operand:VOEXTI 0 "register_operand")
+	(unsigned_fix:VOEXTI
+	  (match_operand:<VQNDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vfwcvt_rtz_x_f_v (<VQNDIFF>mode, UNSIGNED_FIX,
+      middle_reg, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vwcvt_x_x_v (ZERO_EXTEND, <VN>mode,
+      operands[0], const0_rtx, const0_rtx,
+      middle_reg, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [INT<-INT] Truncation
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vncvt.x.x.w
+;; -------------------------------------------------------------------------
+
+(define_expand "trunc<mode><vn>2"
+  [(set (match_operand:<VN> 0 "register_operand")
+	(truncate:<VN>
+	  (match_operand:VEXTI 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vncvt_x_x_w (<VN>mode, operands[0],
+             const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+             riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "trunc<mode><vqn>2"
+  [(set (match_operand:<VQN> 0 "register_operand")
+	(truncate:<VQN>
+	  (match_operand:VQEXTI 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vncvt_x_x_w (<VN>mode, middle_reg, const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<VQN>mode, operands[0], const0_rtx, const0_rtx,
+             middle_reg, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "trunc<mode><von>2"
+  [(set (match_operand:<VON> 0 "register_operand")
+	(truncate:<VON>
+	  (match_operand:VOEXTI 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg1 = gen_reg_rtx (<VN>mode);
+  rtx middle_reg2 = gen_reg_rtx (<VQN>mode);
+  emit_insn (gen_vncvt_x_x_w (<VN>mode, middle_reg1, const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<VQN>mode, middle_reg2, const0_rtx, const0_rtx,
+             middle_reg1, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<VON>mode, operands[0], const0_rtx, const0_rtx,
+             middle_reg2, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [FP<-FP] Truncation
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfncvt.f.f.w
+;; -------------------------------------------------------------------------
+
+(define_expand "trunc<mode><vn>2"
+  [(set (match_operand:<VN> 0 "register_operand")
+	(float_truncate:<VN>
+	  (match_operand:VEXTF 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfncvt_f_f_w (<VN>mode, operands[0], const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+             riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "trunc<mode><vqn>2"
+  [(set (match_operand:<VQN> 0 "register_operand")
+	  (float_truncate:<VQN>
+	    (match_operand:VQEXTF 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VN>mode);
+  emit_insn (gen_vfncvt_f_f_w (<VN>mode,
+      middle_reg, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfncvt_f_f_w (<VQN>mode,
+      operands[0], const0_rtx, const0_rtx, middle_reg, gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [INT<-FP] Truncation
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfncvt.rtz.xu.f.w
+;; - vfncvt.rtz.x.f.w
+;; -------------------------------------------------------------------------
+
+(define_expand "fix_trunc<vwdiff><mode>2"
+  [(set (match_operand:VTRUNCI 0 "register_operand")
+	(fix:VTRUNCI
+	  (match_operand:<VWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfncvt_rtz_x_f_w (<MODE>mode, FIX, operands[0],
+             const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+             riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "fixuns_trunc<vwdiff><mode>2"
+  [(set (match_operand:VTRUNCI 0 "register_operand")
+	(unsigned_fix:VTRUNCI
+	  (match_operand:<VWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfncvt_rtz_x_f_w (<MODE>mode, UNSIGNED_FIX, operands[0],
+             const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+             riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "fix_trunc<vqwdiff><mode>2"
+  [(set (match_operand:VQTRUNCI 0 "register_operand")
+	(fix:VQTRUNCI
+	  (match_operand:<VQWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VW>mode);
+  emit_insn (gen_vfncvt_rtz_x_f_w (<VW>mode, FIX, middle_reg, const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+             riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<MODE>mode, operands[0], const0_rtx, const0_rtx,
+             middle_reg, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "fixuns_trunc<vqwdiff><mode>2"
+  [(set (match_operand:VQTRUNCI 0 "register_operand")
+	(unsigned_fix:VQTRUNCI
+	  (match_operand:<VQWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VW>mode);
+  emit_insn (gen_vfncvt_rtz_x_f_w (<VW>mode, UNSIGNED_FIX, middle_reg, const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<MODE>mode, operands[0], const0_rtx, const0_rtx,
+             middle_reg, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "fix_trunc<vowdiff><mode>2"
+  [(set (match_operand:VOTRUNCI 0 "register_operand")
+	(fix:VOTRUNCI
+	  (match_operand:<VOWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg1 = gen_reg_rtx (<VQW>mode);
+  rtx middle_reg2 = gen_reg_rtx (<VW>mode);
+  emit_insn (gen_vfncvt_rtz_x_f_w (<VQW>mode, FIX, middle_reg1, const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<VW>mode, middle_reg2, const0_rtx, const0_rtx,
+             middle_reg1, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<MODE>mode, operands[0], const0_rtx, const0_rtx,
+             middle_reg2, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "fixuns_trunc<vowdiff><mode>2"
+  [(set (match_operand:VOTRUNCI 0 "register_operand")
+	(unsigned_fix:VOTRUNCI
+	  (match_operand:<VOWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg1 = gen_reg_rtx (<VQW>mode);
+  rtx middle_reg2 = gen_reg_rtx (<VW>mode);
+  emit_insn (gen_vfncvt_rtz_x_f_w (<VQW>mode, UNSIGNED_FIX, middle_reg1, const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<VW>mode, middle_reg2, const0_rtx, const0_rtx,
+             middle_reg1, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vncvt_x_x_w (<MODE>mode, operands[0], const0_rtx, const0_rtx,
+             middle_reg2, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+;; -------------------------------------------------------------------------
+;; ---- [FP<-INT] Truncation
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfncvt.f.xu.w
+;; - vfncvt.f.x.w
+;; -------------------------------------------------------------------------
+
+(define_expand "float<vwdiff><mode>2"
+  [(set (match_operand:VTRUNCF 0 "register_operand")
+	(float:VTRUNCF
+	  (match_operand:<VWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfncvt_f_x_w (<MODE>mode, FLOAT, operands[0], const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "floatuns<vwdiff><mode>2"
+  [(set (match_operand:VTRUNCF 0 "register_operand")
+	(unsigned_float:VTRUNCF
+	  (match_operand:<VWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vfncvt_f_x_w (<MODE>mode, UNSIGNED_FLOAT, operands[0],const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "float<vqwdiff><mode>2"
+  [(set (match_operand:VQTRUNCF 0 "register_operand")
+	(float:VQTRUNCF
+	  (match_operand:<VQWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VW>mode);
+  emit_insn (gen_vfncvt_f_x_w (<VW>mode, FLOAT, middle_reg, const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vfncvt_f_f_w (<MODE>mode, operands[0], const0_rtx, const0_rtx,
+             middle_reg, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "floatuns<vqwdiff><mode>2"
+  [(set (match_operand:VQTRUNCF 0 "register_operand")
+	(unsigned_float:VQTRUNCF
+	  (match_operand:<VQWDIFF> 1 "register_operand")))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx middle_reg = gen_reg_rtx (<VW>mode);
+  emit_insn (gen_vfncvt_f_x_w (<VW>mode, UNSIGNED_FLOAT, middle_reg, const0_rtx, const0_rtx,
+             operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vfncvt_f_f_w (<MODE>mode, operands[0], const0_rtx, const0_rtx,
+             middle_reg, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
