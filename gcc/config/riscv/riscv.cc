@@ -8726,6 +8726,9 @@ riscv_option_override (void)
 
   /* Convert -mriscv-vector-bits to a chunks count.  */
   riscv_vector_chunks = riscv_convert_riscv_vector_bits (riscv_vector_bits);
+
+  if (TARGET_VECTOR && TARGET_RVV)
+    riscv_vectorization_factor = riscv_vector_lmul;
 }
 
 /* Implement TARGET_CONDITIONAL_REGISTER_USAGE.  */
@@ -10288,6 +10291,20 @@ riscv_vectorize_vec_perm_const (machine_mode vmode, rtx target, rtx op0,
 
   return ret;
 }
+
+void
+riscv_init_expanders (void)
+{
+  init_machine_status = riscv_init_machine_status;
+}
+
+/* Implement TARGET_VECTORIZE_CREATE_COSTS.  */
+vector_costs *
+riscv_vectorize_create_costs (vec_info *vinfo, bool costing_for_scalar)
+{
+  return new riscv_vector_costs (vinfo, costing_for_scalar);
+}
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
@@ -10537,6 +10554,10 @@ riscv_vectorize_vec_perm_const (machine_mode vmode, rtx target, rtx op0,
 
 #undef TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES
 #define TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES riscv_autovectorize_vector_modes
+
+#undef TARGET_VECTORIZE_AUTOVECTORIZE_PARTIAL_VECTORS_APPROACH
+#define TARGET_VECTORIZE_AUTOVECTORIZE_PARTIAL_VECTORS_APPROACH riscv_autovectorize_partial_vectors_approach
+
 #undef TARGET_VECTORIZE_GET_MASK_MODE
 #define TARGET_VECTORIZE_GET_MASK_MODE riscv_get_mask_mode
 

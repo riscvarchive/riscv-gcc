@@ -127,6 +127,9 @@ init_internal_fns ()
 #define cond_unary_direct { 1, 1, true }
 #define cond_binary_direct { 1, 1, true }
 #define cond_ternary_direct { 1, 1, true }
+#define len_unary_direct { 0, 0, true }
+#define len_binary_direct { 0, 0, true }
+#define len_ternary_direct { 0, 0, true }
 #define while_direct { 0, 2, false }
 #define fold_extract_direct { 2, 2, false }
 #define fold_left_direct { 1, 1, false }
@@ -3743,6 +3746,15 @@ expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 #define expand_cond_ternary_optab_fn(FN, STMT, OPTAB) \
   expand_direct_optab_fn (FN, STMT, OPTAB, 5)
 
+#define expand_len_unary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 2)
+
+#define expand_len_binary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 3)
+
+#define expand_len_ternary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 4)
+
 #define expand_fold_extract_optab_fn(FN, STMT, OPTAB) \
   expand_direct_optab_fn (FN, STMT, OPTAB, 3)
 
@@ -3993,6 +4005,10 @@ commutative_ternary_fn_p (internal_fn fn)
     case IFN_FMS:
     case IFN_FNMA:
     case IFN_FNMS:
+    case IFN_LEN_FMA:
+    case IFN_LEN_FMS:
+    case IFN_LEN_FNMA:
+    case IFN_LEN_FNMS:
       return true;
 
     default:
@@ -4133,6 +4149,63 @@ get_conditional_internal_fn (tree_code code)
     }
 }
 
+/* Invoke T(CODE, IFN) for each length control function IFN that maps to a
+   tree code CODE.  */
+#define FOR_EACH_CODE_MAPPING_WTIH_LENGTH(T) \
+  T (PLUS_EXPR, IFN_LEN_ADD) \
+  T (MINUS_EXPR, IFN_LEN_SUB) \
+  T (MULT_EXPR, IFN_LEN_MUL) \
+  T (TRUNC_DIV_EXPR, IFN_LEN_DIV) \
+  T (TRUNC_MOD_EXPR, IFN_LEN_MOD) \
+  T (RDIV_EXPR, IFN_LEN_RDIV) \
+  T (MIN_EXPR, IFN_LEN_MIN) \
+  T (MAX_EXPR, IFN_LEN_MAX) \
+  T (BIT_AND_EXPR, IFN_LEN_AND) \
+  T (BIT_IOR_EXPR, IFN_LEN_IOR) \
+  T (BIT_XOR_EXPR, IFN_LEN_XOR) \
+  T (LSHIFT_EXPR, IFN_LEN_SHL) \
+  T (RSHIFT_EXPR, IFN_LEN_SHR) \
+  T (NEGATE_EXPR, IFN_LEN_NEG) \
+  T (BIT_NOT_EXPR, IFN_LEN_NOT)
+
+/* Return a function that only performs CODE when a certain condition is met
+   and that uses a given fallback value otherwise.  For example, if CODE is
+   a binary operation associated with conditional function FN:
+
+     LHS = FN (LEN, A, B, ELSE)
+
+   is equivalent to the C expression:
+
+     LHS = LEN ? A CODE B : ELSE;
+
+   operating elementwise if the operands are vectors.
+
+   Return IFN_LAST if no such function exists.  */
+
+internal_fn
+get_with_length_internal_fn (tree_code code)
+{
+  switch (code)
+    {
+#define CASE(CODE, IFN) case CODE: return IFN;
+      FOR_EACH_CODE_MAPPING_WTIH_LENGTH(CASE)
+#undef CASE
+    default:
+      return IFN_LAST;
+    }
+}
+
+internal_fn
+get_with_length_shift_internal_fn (tree_code code, bool v)
+{
+  switch (code)
+    {
+    case LSHIFT_EXPR: return v ? IFN_LEN_VSHL : IFN_LEN_SHL;
+    case RSHIFT_EXPR: return v ? IFN_LEN_VSHR : IFN_LEN_SHR;
+    default:
+      return IFN_LAST;
+    }
+}
 /* If IFN implements the conditional form of a tree code, return that
    tree code, otherwise return ERROR_MARK.  */
 
@@ -4143,6 +4216,22 @@ conditional_internal_fn_code (internal_fn ifn)
     {
 #define CASE(CODE, IFN) case IFN: return CODE;
       FOR_EACH_CODE_MAPPING(CASE)
+#undef CASE
+    default:
+      return ERROR_MARK;
+    }
+}
+
+/* If IFN implements the with length form of a tree code, return that
+   tree code, otherwise return ERROR_MARK.  */
+
+tree_code
+with_length_internal_fn_code (internal_fn ifn)
+{
+  switch (ifn)
+    {
+#define CASE(CODE, IFN) case IFN: return CODE;
+      FOR_EACH_CODE_MAPPING_WTIH_LENGTH(CASE)
 #undef CASE
     default:
       return ERROR_MARK;

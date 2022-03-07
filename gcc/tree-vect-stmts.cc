@@ -5941,9 +5941,28 @@ vectorizable_shift (vec_info *vinfo,
 	}
       else
 	vop1 = vec_oprnds1[i];
-      gassign *new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1);
-      new_temp = make_ssa_name (vec_dest, new_stmt);
-      gimple_assign_set_lhs (new_stmt, new_temp);
+
+      gimple *new_stmt;
+      vec_loop_lens *lens = (loop_vinfo ? &LOOP_VINFO_LENS (loop_vinfo) : NULL);
+      bool with_len_loop_p = loop_vinfo && LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo);
+      internal_fn len_fn = get_with_length_shift_internal_fn (code, VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (vop1))));
+
+      if (lens && with_len_loop_p && ((int)lens->length () == (1 * ncopies))
+      	&& direct_internal_fn_supported_p (len_fn, vectype, OPTIMIZE_FOR_SPEED))
+	{
+          tree len = vect_get_loop_len (loop_vinfo, lens, vec_num * ncopies, i);
+	  gcall *call = gimple_build_call_internal (len_fn, 3, vop0, vop1, len);
+	  new_stmt = call;
+          new_temp = make_ssa_name (vec_dest, new_stmt);
+	  gimple_call_set_lhs (new_stmt, new_temp);
+	}
+      else
+	{
+	  new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1);
+      	  new_temp = make_ssa_name (vec_dest, new_stmt);
+      	  gimple_assign_set_lhs (new_stmt, new_temp);
+	}
+
       vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
       if (slp_node)
 	SLP_TREE_VEC_STMTS (slp_node).quick_push (new_stmt);
@@ -6221,7 +6240,9 @@ vectorizable_operation (vec_info *vinfo,
 
   int reduc_idx = STMT_VINFO_REDUC_IDX (stmt_info);
   vec_loop_masks *masks = (loop_vinfo ? &LOOP_VINFO_MASKS (loop_vinfo) : NULL);
+  vec_loop_lens *lens = (loop_vinfo ? &LOOP_VINFO_LENS (loop_vinfo) : NULL);
   internal_fn cond_fn = get_conditional_internal_fn (code);
+  internal_fn len_fn = get_with_length_internal_fn (code);
 
   if (!vec_stmt) /* transformation not required.  */
     {
@@ -6296,6 +6317,7 @@ vectorizable_operation (vec_info *vinfo,
                      "transform binary/unary operation.\n");
 
   bool masked_loop_p = loop_vinfo && LOOP_VINFO_FULLY_MASKED_P (loop_vinfo);
+  bool with_len_loop_p = loop_vinfo && LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo);
 
   /* POINTER_DIFF_EXPR has pointer arguments which are vectorized as
      vectors with unsigned elements, but the result is signed.  So, we
@@ -6420,11 +6442,44 @@ vectorizable_operation (vec_info *vinfo,
 		}
 	    }
 
-	  new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1, vop2);
-	  new_temp = make_ssa_name (vec_dest, new_stmt);
-	  gimple_assign_set_lhs (new_stmt, new_temp);
-	  vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
-
+	  /* FIXME: For fully control with length vector and unconditional operation,
+	     we change it into IFN_LEN_* version of arithmetic operations so that they
+	     explicitly ignore the inactive elements. In RISC-V 'V' Extension,
+	     we prefer agnostic value for tailed elements meaning we don't care about
+	     the value for tailed elements in most cases, so don't need to
+	     bring the 'DEST' into the argument. But we are not sure about other targets like
+	     MVE or PowerPc. */
+	  if (!masked_loop_p && lens && with_len_loop_p && len_fn != IFN_LAST
+	    && direct_internal_fn_supported_p (len_fn, vectype,
+					       OPTIMIZE_FOR_SPEED)
+			&& ((int)lens->length () == (vec_num * ncopies)))
+	    {
+              tree len = vect_get_loop_len (loop_vinfo, lens,
+				            vec_num * ncopies, i);
+	      gcall *call;
+	      /* Unary Operation. */
+	      if (!vop1)
+	      	call = gimple_build_call_internal
+			(len_fn, 2, vop0, len);
+	      /* Binary Operation. */
+	      else if (!vop2)
+	        call = gimple_build_call_internal
+			(len_fn, 3, vop0, vop1, len);
+	      /* Ternary Operation. */
+	      else
+	        call = gimple_build_call_internal
+			(len_fn, 4, vop0, vop1, vop2, len);
+	      new_stmt = call;
+              new_temp = make_ssa_name (vec_dest, new_stmt);
+	      gimple_call_set_lhs (new_stmt, new_temp);
+	    }
+	  else
+	    {
+              new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1, vop2);
+	      new_temp = make_ssa_name (vec_dest, new_stmt);
+	      gimple_assign_set_lhs (new_stmt, new_temp);
+	    }
+          vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 	  /* Enter the combined value into the vector cond hash so we don't
 	     AND it with a loop mask again.  */
 	  if (mask)

@@ -1481,6 +1481,23 @@
       riscv_vector_gen_policy (RVV_POLICY_MU)));
   DONE;
 })
+
+(define_expand "len_<optab><mode>"
+  [(set (match_operand:VI 0 "register_operand")
+    (unspec:VI
+	    [(int_unary:VI
+	      (match_operand:VI 1 "register_operand"))
+       (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+  emit_insn (gen_v<insn>_v (<MODE>mode, operands[0],
+      const0_rtx, const0_rtx, operands[1], operands[2],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [FP] General unary arithmetic corresponding to rtx codes
 ;; -------------------------------------------------------------------------
@@ -1518,6 +1535,23 @@
       riscv_vector_gen_policy ()));
   DONE;
 })
+
+(define_expand "len_neg<mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+	    [(neg:VF
+	      (match_operand:VF 1 "register_operand"))
+       (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+  emit_insn (gen_vfneg_v (<MODE>mode, operands[0], const0_rtx, const0_rtx,
+      operands[1], operands[2],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [BOOL] Inverse
 ;; -------------------------------------------------------------------------
