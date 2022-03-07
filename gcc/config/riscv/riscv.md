@@ -2051,7 +2051,59 @@
 	      (use (match_operand:SI 3 "const_int_operand"))])]
   ""
 {
-  if (riscv_expand_block_move (operands[0], operands[1], operands[2]))
+  if (TARGET_VECTOR && TARGET_RVV
+    && riscv_vector_expand_block_move (operands))
+    DONE;
+  else if (riscv_expand_block_move (operands[0], operands[1], operands[2]))
+    DONE;
+  else
+    FAIL;
+})
+
+;;
+;;  ....................
+;;
+;;	STRING
+;;
+;;  ....................
+;;
+
+(define_expand "strlen<mode>"
+  [(match_operand:P   0 "register_operand" "")  ; result
+   (match_operand:BLK 1 "memory_operand" "")    ; input string
+   (match_operand:SI  2 "immediate_operand" "") ; search character
+   (match_operand:SI  3 "immediate_operand" "")] ; known alignment
+  ""
+{
+  if (TARGET_VECTOR && TARGET_RVV
+    && riscv_vector_expand_strlen (operands))
+    DONE;
+  else
+    FAIL;
+})
+
+(define_expand "movstr"
+  [(match_operand 0 "register_operand" "")
+   (match_operand 1 "memory_operand" "")
+   (match_operand 2 "memory_operand" "")]
+  ""
+{
+  if (TARGET_VECTOR && TARGET_RVV
+    && riscv_vector_expand_strcpy (operands))
+    DONE;
+  else
+    FAIL;
+})
+
+(define_expand "cmpstr<mode>"
+  [(match_operand:ANYI  0 "register_operand")   ;; Result
+	 (match_operand:BLK   1 "memory_operand")     ;; String1
+	 (match_operand:BLK   2 "memory_operand")    ;; String2
+   (match_operand:SI    3 "immediate_operand")] ;; Known Align
+  ""
+{
+  if (TARGET_VECTOR && TARGET_RVV
+    && riscv_vector_expand_strcmp (operands))
     DONE;
   else
     FAIL;
