@@ -4392,11 +4392,13 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
   unsigned num_bytes, num_words;
   unsigned fpr_base = return_p ? FP_RETURN : FP_ARG_FIRST;
   unsigned gpr_base = return_p ? GP_RETURN : GP_ARG_FIRST;
+  unsigned vr_base = return_p ? V_RETURN : V_ARG_FIRST;
   unsigned alignment = riscv_function_arg_boundary (mode, type);
 
   memset (info, 0, sizeof (*info));
   info->gpr_offset = cum->num_gprs;
   info->fpr_offset = cum->num_fprs;
+  info->mr_offset = cum->num_mrs;
 
   if (named)
     {
@@ -4454,11 +4456,81 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
 	  if (!SCALAR_FLOAT_TYPE_P (fields[0].type))
 	    std::swap (fregno, gregno);
 
-	  return riscv_pass_fpr_pair (mode, fregno, TYPE_MODE (fields[0].type),
-				      fields[0].offset,
-				      gregno, TYPE_MODE (fields[1].type),
-				      fields[1].offset);
-	}
+          return riscv_pass_fpr_pair (mode, fregno, TYPE_MODE (fields[0].type),
+                                      fields[0].offset,
+                                      gregno, TYPE_MODE (fields[1].type),
+                                      fields[1].offset);
+        }
+
+      /*  Pass vectors in VRs. For the argument contain scalable vectors,
+          for example: foo (vint8m1_t a), we pass this in VRs to reduce
+          redundant register spills. The maximum vector arg registers is
+          MAX_ARGS_IN_VECTOR_REGISTERS. */
+      if (riscv_vector_mode_p (mode))
+        {
+          /*  For return vector register, we use V_RETURN as default. */
+          if (return_p)
+            {
+              if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
+                return gen_rtx_REG (mode, V_REG_FIRST);
+              else
+                return gen_rtx_REG (mode, vr_base);
+            }
+
+          /* The first mask register in argument we use is v0, the res of them
+             we use v8,v9,.....etc same as vector registers.  */
+          if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
+            {
+              info->num_mrs = 1;
+
+              if (info->mr_offset + info->num_mrs <= MAX_ARGS_IN_MASK_REGISTERS)
+                return gen_rtx_REG (mode, V_REG_FIRST);
+            }
+
+          /*  The number of vectors to pass in the function arg.
+              When the mode size is less than a full vector, we
+              use 1 vector to pass. */
+          int nvecs;
+          if (riscv_tuple_mode_p (mode))
+            nvecs = riscv_classify_nf (mode);
+          else
+            nvecs = known_le (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR) ? 1 :
+                exact_div (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR).to_constant ();
+
+          int align = riscv_vlmul_regsize(mode);
+
+          for (int i = 0; i + nvecs <= MAX_ARGS_IN_VECTOR_REGISTERS; i += 1)
+            {
+              if (!cum->used_vrs[i] && (i + 8) % align == 0)
+                {
+                  bool find_space = true;
+                  int j = 1;
+                  for (; j < nvecs; j += 1)
+                    {
+                      if (cum->used_vrs[i + j])
+                        {
+                          find_space = false;
+                          break;
+                        }
+                    }
+                  if (find_space)
+                    {
+                      info->num_vrs = nvecs;
+                      info->vr_offset = i;
+                      return gen_rtx_REG(mode, vr_base + i);
+                    }
+                  else
+                    {
+                      /* skip the j num registers which can not be used */
+                      i += j;
+                    }
+                }
+            }
+
+          info->num_vrs = 0;
+          info->num_mrs = 0;
+          return NULL_RTX;
+        }
     }
 
   /* Work out the size of the argument.  */
@@ -4509,8 +4581,18 @@ riscv_function_arg_advance (cumulative_args_t cum_v,
      num_gprs to MAX_ARGS_IN_REGISTERS if a doubleword-aligned
      argument required us to skip the final GPR and pass the whole
      argument on the stack.  */
+
+  if (info.num_vrs > 0)
+    {
+      for (unsigned int i = 0; i < info.num_vrs; i += 1)
+        {
+          /* set current used vector registers */
+          cum->used_vrs[info.vr_offset + i] = true;
+        }
+    }
   cum->num_fprs = info.fpr_offset + info.num_fprs;
   cum->num_gprs = info.gpr_offset + info.num_gprs;
+  cum->num_mrs = info.mr_offset + info.num_mrs;
 }
 
 /* Implement TARGET_ARG_PARTIAL_BYTES.  */
@@ -4569,7 +4651,15 @@ riscv_pass_by_reference (cumulative_args_t cum_v, const function_arg_info &arg)
       riscv_get_arg_info (&info, cum, arg.mode, arg.type, arg.named, false);
 
       if (info.num_fprs)
-	return false;
+        return false;
+
+      /* Don't pass by reference if we can use a vector register.  */
+      if (info.num_vrs)
+        return false;
+
+      /* Don't pass by reference if we can use a mask register.  */
+      if (info.num_mrs)
+        return false;
     }
 
   /* Pass by reference if the data do not fit in two integer registers.  */
@@ -6569,12 +6659,18 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
   if (GP_REG_P (regno))
     {
       if (!GP_REG_P (regno + nregs - 1))
-	return false;
+        return false;
+
+      if (riscv_vector_mode_p (mode))
+        return false;
     }
   else if (FP_REG_P (regno))
     {
       if (!FP_REG_P (regno + nregs - 1))
 	return false;
+
+      if (!FLOAT_MODE_P (mode))
+        return false;
 
       if (GET_MODE_CLASS (mode) != MODE_FLOAT
 	  && GET_MODE_CLASS (mode) != MODE_COMPLEX_FLOAT)
@@ -6587,6 +6683,20 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	      && GET_MODE_UNIT_SIZE (mode) > UNITS_PER_FP_ARG))
 	return false;
     }
+  else if (V_REG_P (regno))
+    {
+      if (!riscv_vector_mode_p (mode))
+        return false;
+
+      /* 3.3.2. LMUL = 2,4,8, register numbers should be multiple of 2,4,8. */
+      int regsize = riscv_vlmul_regsize(mode);
+
+      if (regsize != 1)
+        return ((regno % regsize) == 0);
+    }
+  else if (regno == VTYPE_REGNUM
+           || regno == VL_REGNUM)
+    return (nregs == 1 && mode == SImode);
   else
     return false;
 
