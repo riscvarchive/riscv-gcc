@@ -3758,6 +3758,87 @@ riscv_block_move_loop (rtx dest, rtx src, unsigned HOST_WIDE_INT length,
     emit_insn(gen_nop ());
 }
 
+/* Subroutine of riscv_expand_block_move function using
+   RVV instructions. */
+
+bool
+riscv_vector_expand_block_move (rtx *operands)
+{
+  /*
+  memcpy:
+      mv a3, a0 # Copy destination
+  loop:
+    vsetvli t0, a2, e8, m8, ta, ma   # Vectors of 8b
+    vle8.v v0, (a1)               # Load bytes
+      add a1, a1, t0              # Bump pointer
+      sub a2, a2, t0              # Decrement count
+    vse8.v v0, (a3)               # Store bytes
+      add a3, a3, t0              # Bump pointer
+      bnez a2, loop               # Any more?
+      ret                         # Return
+  */
+  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
+  bool size_p = optimize_function_for_size_p (cfun);
+  rtx src, dst;
+  rtx end = gen_reg_rtx (Pmode);
+  rtx cnt = gen_reg_rtx (Pmode);
+  rtx vec = gen_reg_rtx (cur_mode);
+  /* FIXME: we consider the num of bytes to be memcpy is
+     worthwhile as 16 bytes, but it is under disscussion. */
+  unsigned int worthwhile_bytes = 16;
+
+  /* A memcpy libcall in the worst case takes 3 instructions to prepare the
+     arguments + 1 for the call.  When RVV should take 7 instructions and
+     we're optimizing for size a libcall my be preferable.  */
+  if (size_p)
+    return false;
+
+  if (CONST_INT_P (operands[2]) && INTVAL (operands[2]) < worthwhile_bytes)
+    return false;
+
+  if (CONST_POLY_INT_P (operands[2]))
+    {
+      if (GET_MODE (operands[2]) != Pmode)
+        {
+          poly_int64 value = rtx_to_poly_int64 (operands[2]);
+          emit_insn (gen_rtx_SET (end, gen_int_mode (poly_int64 (value.coeffs[0], value.coeffs[1]), Pmode)));
+        }
+      else
+        emit_insn (gen_rtx_SET (end, operands[2]));
+    }
+  else
+    {
+      if (GET_MODE (operands[2]) != Pmode)
+        riscv_emit_move (end, gen_lowpart (Pmode, operands[2]));
+      else
+        riscv_emit_move (end, operands[2]);
+    }
+
+  /* Move the address into scratch registers.  */
+  dst = copy_addr_to_reg (XEXP (operands[0], 0));
+  src = copy_addr_to_reg (XEXP (operands[1], 0));
+
+  unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
+  unsigned int vsew = riscv_classify_vsew_field (cur_mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+
+  rtx label = gen_label_rtx ();
+  emit_label (label);
+  emit_insn (gen_vsetvl (Pmode, cnt, end, GEN_INT (vtype)));
+  emit_insn (gen_vle (cur_mode, vec, const0_rtx, const0_rtx, src, end,
+                      riscv_vector_gen_policy ()));
+  emit_insn (gen_vse (cur_mode, const0_rtx, dst, vec, end, riscv_vector_gen_policy ()));
+  emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
+  emit_insn (gen_rtx_SET (dst, gen_rtx_PLUS (Pmode, dst, cnt)));
+  emit_insn (gen_rtx_SET (end, gen_rtx_MINUS (Pmode, end, cnt)));
+
+  /* Emit the loop condition.  */
+  rtx test = gen_rtx_NE (VOIDmode, end, const0_rtx);
+  emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
+  emit_insn (gen_nop ());
+  return true;
+}
+
 /* Expand a cpymemsi instruction, which copies LENGTH bytes from
    memory reference SRC to memory reference DEST.  */
 
@@ -3803,6 +3884,227 @@ riscv_expand_block_move (rtx dest, rtx src, rtx length)
 	}
     }
   return false;
+}
+
+bool
+riscv_vector_expand_strlen (rtx *operands)
+{
+  /*
+  strlen:
+      mv a3, a0             # Save start
+  loop:
+      vsetvli a1, x0, e8, m8, ta, ma  # Vector of bytes of maximum length
+      vle8ff.v v8, (a3)      # Load bytes
+      csrr a1, vl           # Get bytes read
+      vmseq.vi v0, v8, 0    # Set v0[i] where v8[i] = 0
+      vfirst.m a2, v0       # Find first set bit
+      add a3, a3, a1        # Bump pointer
+      bltz a2, loop         # Not found?
+
+      add a0, a0, a1        # Sum start + bump
+      add a3, a3, a2        # Add index
+      sub a0, a3, a0        # Subtract start address+bump
+
+      ret
+  */
+  if (optimize < 1 || operands[2] != const0_rtx)
+    return false;
+
+  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
+  machine_mode mask_mode;
+  gcc_assert (targetm.vectorize.get_mask_mode (cur_mode).exists (&mask_mode));
+  rtx src;
+  rtx cnt = gen_reg_rtx (Pmode);
+  rtx end = gen_reg_rtx (Pmode);
+  rtx save = operands[0];
+  rtx vec = gen_reg_rtx (cur_mode);
+  rtx mask = gen_reg_rtx (mask_mode);
+
+  /* Move the address into scratch registers.  */
+  src = copy_addr_to_reg (XEXP (operands[1], 0));
+  riscv_emit_move (save, src);
+
+  unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
+  unsigned int vsew = riscv_classify_vsew_field (cur_mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+
+  rtx label = gen_label_rtx ();
+  emit_label (label);
+  emit_insn (gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
+  emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, save, gen_rtx_REG (Pmode, X0_REGNUM),
+                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_readvl (Pmode, cnt, vec));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec, const0_rtx,
+                         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_any_policy ()));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, cnt)));
+
+  /* Emit the loop condition.  */
+  rtx test = gen_rtx_LT (VOIDmode, end, const0_rtx);
+  emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
+
+  emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
+  emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, end)));
+  emit_insn (gen_rtx_SET (save, gen_rtx_MINUS (Pmode, save, src)));
+  return true;
+}
+
+bool
+riscv_vector_expand_strcpy (rtx *operands)
+{
+  /*
+  strcpy:
+      mv a2, a0             # Copy dst
+      li t0, -1             # Infinite AVL
+  loop:
+    vsetvli x0, t0, e8, m8, ta, ma  # Max length vectors of bytes
+    vle8ff.v v8, (a1)        # Get src bytes
+      csrr t1, vl           # Get number of bytes fetched
+    vmseq.vi v1, v8, 0      # Flag zero bytes
+    vfirst.m a3, v1         # Zero found?
+      add a1, a1, t1        # Bump pointer
+    vmsif.m v0, v1          # Set mask up to and including zero byte.
+    vse8.v v8, (a2), v0.t    # Write out bytes
+      add a2, a2, t1        # Bump pointer
+      bltz a3, loop         # Zero byte not found, so loop
+
+      ret
+  */
+  if (optimize < 1)
+    return false;
+
+  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
+  machine_mode mask_mode;
+  gcc_assert (targetm.vectorize.get_mask_mode (cur_mode).exists (&mask_mode));
+  rtx src, dst;
+  rtx cnt = gen_reg_rtx (Pmode);
+  rtx end = gen_reg_rtx (Pmode);
+  rtx save = gen_reg_rtx (Pmode);
+  rtx init = gen_reg_rtx (Pmode);
+  rtx vec = gen_reg_rtx (cur_mode);
+  rtx mask = gen_reg_rtx (mask_mode);
+  rtx mask2 = gen_reg_rtx (mask_mode);
+
+  /* Move the address into scratch registers.  */
+  dst = copy_addr_to_reg (XEXP (operands[1], 0));
+  src = copy_addr_to_reg (XEXP (operands[2], 0));
+  riscv_emit_move (save, dst);
+  riscv_emit_move (init, constm1_rtx);
+
+  unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
+  unsigned int vsew = riscv_classify_vsew_field (cur_mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+
+  rtx label = gen_label_rtx ();
+  emit_label (label);
+  emit_insn (gen_vsetvl (Pmode, gen_rtx_REG (Pmode, X0_REGNUM), init, GEN_INT (vtype)));
+  emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, src, init,
+                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_readvl (Pmode, cnt, vec));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec, const0_rtx, init,
+                         riscv_vector::gen_any_policy ()));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, init, riscv_vector_gen_policy ()));
+  emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
+  emit_insn (gen_vm_m (UNSPEC_SIF, mask_mode, mask2, const0_rtx, const0_rtx, mask, init,
+                       riscv_vector_gen_policy ()));
+  emit_insn (gen_vse (cur_mode, mask2, save, vec, init, riscv_vector_gen_policy ()));
+  emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, cnt)));
+
+  /* Emit the loop condition.  */
+  rtx test = gen_rtx_LT (VOIDmode, end, const0_rtx);
+  emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
+
+  /* store NULL pointer to operands[0]. */
+  riscv_emit_move (operands[0], save);
+  return true;
+}
+
+bool
+riscv_vector_expand_strcmp (rtx *operands)
+{
+/*
+strcmp:
+    ##  Using LMUL=2, but same register names work for larger LMULs
+    li t1, 0                # Initial pointer bump
+loop:
+    vsetvli t0, x0, e8, m2, ta, ma  # Max length vectors of bytes
+    add a0, a0, t1          # Bump src1 pointer
+    vle8ff.v v8, (a0)       # Get src1 bytes
+    add a1, a1, t1          # Bump src2 pointer
+    vle8ff.v v16, (a1)      # Get src2 bytes
+
+    vmseq.vi v0, v8, 0      # Flag zero bytes in src1
+    vmsne.vv v1, v8, v16    # Flag if src1 != src2
+    vmor.mm v0, v0, v1      # Combine exit conditions
+
+    vfirst.m a2, v0         # ==0 or != ?
+    csrr t1, vl             # Get number of bytes fetched
+
+    bltz a2, loop           # Loop if all same and no zero byte
+
+    add a0, a0, a2          # Get src1 element address
+    lbu a3, (a0)            # Get src1 byte from memory
+
+    add a1, a1, a2          # Get src2 element address
+    lbu a4, (a1)            # Get src2 byte from memory
+
+    sub a0, a3, a4          # Return value.
+
+    ret
+*/
+  if (optimize < 1)
+    return false;
+
+  machine_mode cur_mode = VNx32QImode;
+  machine_mode mask_mode = VNx32BImode;
+
+  rtx src1, src2;
+  rtx cnt = gen_reg_rtx (Pmode);
+  rtx end = gen_reg_rtx (Pmode);
+  rtx offset = gen_reg_rtx (Pmode);
+  rtx vec1 = gen_reg_rtx (cur_mode);
+  rtx vec2 = gen_reg_rtx (cur_mode);
+  rtx mask = gen_reg_rtx (mask_mode);
+  rtx mask2 = gen_reg_rtx (mask_mode);
+
+  /* Move the address into scratch registers.  */
+  src1 = copy_addr_to_reg (XEXP (operands[1], 0));
+  src2 = copy_addr_to_reg (XEXP (operands[2], 0));
+  riscv_emit_move (offset, const0_rtx);
+
+  unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
+  unsigned int vsew = riscv_classify_vsew_field (cur_mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+
+  rtx label = gen_label_rtx ();
+  emit_label (label);
+  emit_insn (gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
+  emit_insn (gen_rtx_SET (src1, gen_rtx_PLUS (Pmode, src1, offset)));
+  emit_insn (gen_vleff (cur_mode, vec1, const0_rtx, const0_rtx, src1,
+                        gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_rtx_SET (src2, gen_rtx_PLUS (Pmode, src2, offset)));
+  emit_insn (gen_vleff (cur_mode, vec2, const0_rtx, const0_rtx, src2,
+                        gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec1, const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vms_vv (NE, cur_mode, mask2, const0_rtx, const0_rtx, vec1, vec2,
+                         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vm_mm (IOR, mask_mode, mask, mask, mask2, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_readvl (Pmode, offset, mask));
+
+  /* Emit the loop condition.  */
+  rtx test = gen_rtx_LT (VOIDmode, end, const0_rtx);
+  emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
+
+  emit_insn (gen_rtx_SET (src1, gen_rtx_PLUS (Pmode, src1, end)));
+  emit_insn (gen_rtx_SET (src2, gen_rtx_PLUS (Pmode, src2, end)));
+  rtx result1 = gen_reg_rtx (GET_MODE (operands[0]));
+  rtx result2 = gen_reg_rtx (GET_MODE (operands[0]));
+  riscv_emit_move (result1, gen_rtx_MEM (GET_MODE (operands[0]), src1));
+  riscv_emit_move (result2, gen_rtx_MEM (GET_MODE (operands[0]), src2));
+  emit_insn (gen_rtx_SET (operands[0],
+      gen_rtx_MINUS (GET_MODE (operands[0]), result1, result2)));
+  return true;
 }
 
 /* Print symbolic operand OP, which is part of a HIGH or LO_SUM
