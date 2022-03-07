@@ -596,6 +596,7 @@ public:
   get_argument_types (const function_instance &instance,
                       vec<tree> &argument_types) const OVERRIDE;
 };
+
 /* A function_base for segment functions.  */
 class segment : public function_builder
 {
@@ -607,6 +608,56 @@ public:
 };
 
 /* A function_base for single-width unary functions.  */
+class unop : public function_builder
+{
+public:
+  // use the same construction function as the function_builder
+  using function_builder::function_builder;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+};
+
+/* A function_base for single-width binary functions.  */
+class binop : public function_builder
+{
+public:
+  // use the same construction function as the function_builder
+  using function_builder::function_builder;
+
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+};
+
+/* A function_base for single-width ternary functions.  */
+class ternop : public function_builder
+{
+public:
+  // use the same construction function as the function_builder
+  using function_builder::function_builder;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  tree
+  get_return_type (const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+};
 /* A function_base for vle functions.  */
 class vle : public loadstore
 {
@@ -909,6 +960,375 @@ public:
   unsigned int
   call_properties (const function_instance &) const OVERRIDE;
 
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vadd functions.  */
+class vadd : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsub functions.  */
+class vsub : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vrsub functions.  */
+class vrsub : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vneg functions.  */
+class vneg : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vwadd and vwsub functions.  */
+class vwadd_vwsub : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vwcvt functions.  */
+class vwcvt : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsext/vzext functions.  */
+class vext : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vadc functions.  */
+class vadc : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vsbc functions.  */
+class vsbc : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmadc functions.  */
+class vmadc : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmsbc functions.  */
+class vmsbc : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vlogic functions.  */
+class vlogic : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vnot functions.  */
+class vnot : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vshift functions.  */
+class vshift : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vnshift functions.  */
+class vnshift : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vncvt functions.  */
+class vncvt : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vcmp functions.  */
+class vcmp : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmin/vmax functions.  */
+class vmin_vmax : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmul functions.  */
+class vmul : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmulh functions.  */
+class vmulh : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmulhsu functions.  */
+class vmulhsu : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vdiv functions.  */
+class vdiv : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vwmul functions.  */
+class vwmul : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vwmulsusu functions.  */
+class vwmulsu : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vimac functions.  */
+class vimac : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vwmacc functions.  */
+class vwmacc : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vwmaccsu functions.  */
+class vwmaccsu : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vwmaccus functions.  */
+class vwmaccus : public ternop
+{
+public:
+  // use the same construction function as the ternop
+  using ternop::ternop;
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmerge functions.  */
+class vmerge : public binop
+{
+public:
+  // use the same construction function as the binop
+  using binop::binop;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  size_t get_position_of_dest_arg (predication_index pred) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &instance, tree exp,
+          rtx target) const OVERRIDE;
+};
+
+/* A function_base for vmv functions.  */
+class vmv : public unop
+{
+public:
+  // use the same construction function as the unop
+  using unop::unop;
   void
   get_argument_types (const function_instance &instance,
                       vec<tree> &argument_types) const OVERRIDE;
