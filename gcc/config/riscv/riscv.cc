@@ -7135,7 +7135,16 @@ riscv_conditional_register_usage (void)
   if (UNITS_PER_FP_ARG == 0)
     {
       for (int regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
-	call_used_regs[regno] = 1;
+        call_used_regs[regno] = 1;
+    }
+
+  if (!TARGET_VECTOR)
+    {
+      for (int regno = V_REG_FIRST; regno <= V_REG_LAST; regno++)
+        fixed_regs[regno] = call_used_regs[regno] = 1;
+
+      fixed_regs[VTYPE_REGNUM] = call_used_regs[VTYPE_REGNUM] = 1;
+      fixed_regs[VL_REGNUM] = call_used_regs[VL_REGNUM] = 1;
     }
 }
 
@@ -7790,6 +7799,107 @@ riscv_dbx_register_number (unsigned regno)
      equivalent DWARF register.  */
   return DWARF_FRAME_REGISTERS;
 }
+
+/* Implement TARGET_VECTOR_MODE_SUPPORTED_P.  */
+
+static bool
+riscv_vector_mode_supported_p (machine_mode mode)
+{
+  if (TARGET_VECTOR && riscv_vector_mode_p (mode))
+    return true;
+
+  return false;
+}
+
+/* Implement target hook TARGET_ARRAY_MODE.  */
+
+static opt_machine_mode
+riscv_array_mode (machine_mode mode, unsigned HOST_WIDE_INT nelems)
+{
+  #define RVV_ARRAY_MODE8(MODE) \
+    case VNx##MODE##mode: \
+    if (nelems == 2) \
+      return VNx2x##MODE##mode; \
+    else if (nelems == 3) \
+      return VNx3x##MODE##mode; \
+    else if (nelems == 4) \
+      return VNx4x##MODE##mode; \
+    else if (nelems == 5) \
+      return VNx5x##MODE##mode; \
+    else if (nelems == 6) \
+      return VNx6x##MODE##mode; \
+    else if (nelems == 7) \
+      return VNx7x##MODE##mode; \
+    else if (nelems == 8) \
+      return VNx8x##MODE##mode; \
+    else \
+      break;
+  #define RVV_ARRAY_MODE4(MODE) \
+    case VNx##MODE##mode: \
+    if (nelems == 2) \
+      return VNx2x##MODE##mode; \
+    else if (nelems == 3) \
+      return VNx3x##MODE##mode; \
+    else if (nelems == 4) \
+      return VNx4x##MODE##mode; \
+    else \
+      break;
+  #define RVV_ARRAY_MODE2(MODE) \
+    case VNx##MODE##mode: \
+    if (nelems == 2) \
+      return VNx2x##MODE##mode; \
+    else \
+      break;
+  if (TARGET_VECTOR && TARGET_RVV)
+    {
+      switch (mode)
+      {
+      RVV_ARRAY_MODE8 (8QI)
+      RVV_ARRAY_MODE8 (4HI)
+      RVV_ARRAY_MODE8 (2SI)
+      RVV_ARRAY_MODE8 (4HF)
+      RVV_ARRAY_MODE8 (2SF)
+      RVV_ARRAY_MODE8 (4QI)
+      RVV_ARRAY_MODE8 (2HI)
+      RVV_ARRAY_MODE8 (2HF)
+      RVV_ARRAY_MODE8 (2QI)
+      RVV_ARRAY_MODE8 (16QI)
+      RVV_ARRAY_MODE8 (8HI)
+      RVV_ARRAY_MODE8 (4SI)
+      RVV_ARRAY_MODE8 (2DI)
+      RVV_ARRAY_MODE8 (8HF)
+      RVV_ARRAY_MODE8 (4SF)
+      RVV_ARRAY_MODE8 (2DF)
+      RVV_ARRAY_MODE4 (32QI)
+      RVV_ARRAY_MODE4 (16HI)
+      RVV_ARRAY_MODE4 (8SI)
+      RVV_ARRAY_MODE4 (4DI)
+      RVV_ARRAY_MODE4 (16HF)
+      RVV_ARRAY_MODE4 (8SF)
+      RVV_ARRAY_MODE4 (4DF)
+      RVV_ARRAY_MODE2 (64QI)
+      RVV_ARRAY_MODE2 (32HI)
+      RVV_ARRAY_MODE2 (16SI)
+      RVV_ARRAY_MODE2 (8DI)
+      RVV_ARRAY_MODE2 (32HF)
+      RVV_ARRAY_MODE2 (16SF)
+      RVV_ARRAY_MODE2 (8DF)
+      default:
+        break;
+      }
+    }
+
+  return opt_machine_mode ();
+}
+
+/* Implement target hook TARGET_ARRAY_MODE_SUPPORTED_P.  */
+
+static bool
+riscv_array_mode_supported_p (machine_mode, unsigned HOST_WIDE_INT)
+{
+  return false;
+}
+
 /* Implement TARGET_VERIFY_TYPE_CONTEXT.  */
 
 static bool
@@ -7874,6 +7984,228 @@ riscv_verify_type_context (location_t loc, type_context_kind context,
     }
 
   gcc_unreachable ();
+}
+
+/* Implement TARGET_VECTOR_ALIGNMENT.  */
+
+static HOST_WIDE_INT
+riscv_vector_alignment (const_tree type)
+{
+  /* ??? Checking the mode isn't ideal, but VECTOR_BOOLEAN_TYPE_P can
+     be set for non-predicate vectors of booleans.  Modes are the most
+     direct way we have of identifying real RVV predicate types.  */
+  /* FIXME: RVV didn't mention the alignment of bool, we uses
+     one byte align.  */
+  if (GET_MODE_CLASS (TYPE_MODE (type)) == MODE_VECTOR_BOOL)
+    return 8;
+
+  widest_int min_size
+    = constant_lower_bound (wi::to_poly_widest (TYPE_SIZE (type)));
+  return wi::umin (min_size, 128).to_uhwi ();
+}
+
+/* Implement target hook TARGET_VECTORIZE_PREFERRED_VECTOR_ALIGNMENT.  */
+
+static poly_uint64
+riscv_vectorize_preferred_vector_alignment (const_tree type)
+{
+  if (riscv_vector_mode_p (TYPE_MODE (type)))
+    {
+      /* If the length of the vector is a fixed power of 2, try to align
+      to that length, otherwise don't try to align at all.  */
+      HOST_WIDE_INT result;
+
+      if (!GET_MODE_BITSIZE (TYPE_MODE (type)).is_constant (&result)
+          || !pow2p_hwi (result))
+        result = TYPE_ALIGN (TREE_TYPE (type));
+
+      return result;
+    }
+
+  return default_preferred_vector_alignment (type);
+}
+
+/* Implement target hook TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE.  */
+
+static bool
+riscv_simd_vector_alignment_reachable (const_tree type, bool is_packed)
+{
+  if (is_packed)
+    return false;
+
+  /* For fixed-length vectors, check that the vectorizer will aim for
+     full-vector alignment.  This isn't true for generic GCC vectors
+     that are wider than the ABI maximum of 128 bits.  */
+  poly_uint64 preferred_alignment =
+    riscv_vectorize_preferred_vector_alignment (type);
+  if (TREE_CODE (TYPE_SIZE (type)) == INTEGER_CST
+      && maybe_ne (wi::to_widest (TYPE_SIZE (type)),
+                   preferred_alignment))
+    return false;
+
+  /* Vectors whose size is <= BIGGEST_ALIGNMENT are naturally aligned.  */
+  return true;
+}
+
+/* Return true if the vector misalignment factor is supported by the
+   target.  */
+
+static bool
+riscv_builtin_support_vector_misalignment (machine_mode mode,
+                                             const_tree type, int misalignment,
+                                             bool is_packed)
+{
+  return default_builtin_support_vector_misalignment (mode, type, misalignment,
+                                                      is_packed);
+}
+
+/* Implement TARGET_COMPATIBLE_VECTOR_TYPES_P.  */
+
+static bool
+riscv_compatible_vector_types_p (const_tree type1, const_tree type2)
+{
+  return (riscv_vector::builtin_type_p (type1)
+          == riscv_vector::builtin_type_p (type2));
+}
+
+/* Implement TARGET_VECTORIZE_PREFERRED_SIMD_MODE.  */
+
+static machine_mode
+riscv_preferred_simd_mode (scalar_mode mode)
+{
+  if (TARGET_VECTOR && TARGET_RVV)
+    switch (mode)
+      {
+      case E_QImode:
+        return riscv_vectorization_factor == 1 ? VNx16QImode
+            : riscv_vectorization_factor == 2 ? VNx32QImode
+            : riscv_vectorization_factor == 4 ? VNx64QImode
+            : VNx128QImode;
+      case E_HImode:
+        return riscv_vectorization_factor == 1 ? VNx8HImode
+            : riscv_vectorization_factor == 2 ? VNx16HImode
+            : riscv_vectorization_factor == 4 ? VNx32HImode
+            : VNx64HImode;
+      case E_SImode:
+        return riscv_vectorization_factor == 1 ? VNx4SImode
+            : riscv_vectorization_factor == 2 ? VNx8SImode
+            : riscv_vectorization_factor == 4 ? VNx16SImode
+            : VNx32SImode;
+      case E_DImode:
+        return riscv_vectorization_factor == 1 ? VNx2DImode
+            : riscv_vectorization_factor == 2 ? VNx4DImode
+            : riscv_vectorization_factor == 4 ? VNx8DImode
+            : VNx16DImode;
+      case E_HFmode:
+        if (TARGET_FP16)
+          return riscv_vectorization_factor == 1 ? VNx8HFmode
+            : riscv_vectorization_factor == 2 ? VNx16HFmode
+            : riscv_vectorization_factor == 4 ? VNx32HFmode
+            : VNx64HImode;
+        break;
+      case E_SFmode:
+        if (TARGET_HARD_FLOAT)
+          return riscv_vectorization_factor == 1 ? VNx4SFmode
+            : riscv_vectorization_factor == 2 ? VNx8SFmode
+            : riscv_vectorization_factor == 4 ? VNx16SFmode
+            : VNx32SImode;
+        break;
+      case E_DFmode:
+        if (TARGET_DOUBLE_FLOAT)
+          return riscv_vectorization_factor == 1 ? VNx2DFmode
+            : riscv_vectorization_factor == 2 ? VNx4DFmode
+            : riscv_vectorization_factor == 4 ? VNx8DFmode
+            : VNx16DImode;
+        break;
+      default:
+        break;
+      }
+
+  return word_mode;
+}
+
+/* Implement TARGET_VECTORIZE_RELATED_MODE.  */
+
+static opt_machine_mode
+riscv_vectorize_related_mode (machine_mode vector_mode,
+                              scalar_mode element_mode,
+                              poly_uint64 nunits)
+{
+  unsigned int is_rvv_mode = TARGET_VECTOR & riscv_vector_mode_p (vector_mode) & TARGET_RVV;
+
+  /* If we're operating on RVV vectors, try to return an RVV mode.  */
+  poly_uint64 rvv_nunits;
+  if (is_rvv_mode
+      && multiple_p (BYTES_PER_RISCV_VECTOR * riscv_vectorization_factor,
+                     GET_MODE_SIZE (element_mode), &rvv_nunits))
+    {
+      machine_mode rvv_mode;
+      if (maybe_ne (nunits, 0U))
+        {
+          /* Try to find a full or partial RVV mode with exactly
+             NUNITS units.  */
+          if (multiple_p (rvv_nunits, nunits)
+              && riscv_vector_data_mode (element_mode,
+                                         nunits).exists (&rvv_mode))
+              return rvv_mode;
+        }
+      else
+        {
+          /* Take the preferred number of units from the number of bytes
+             that fit in VECTOR_MODE.  We always start by "autodetecting"
+             a full vector mode with preferred_simd_mode, so vectors
+             chosen here will also be full vector modes.  Then
+             autovectorize_vector_modes tries smaller starting modes
+             and thus smaller preferred numbers of units.  */
+          rvv_nunits = ordered_min (rvv_nunits, GET_MODE_SIZE (vector_mode));
+          if (riscv_vector_data_mode (element_mode,
+                                      rvv_nunits).exists (&rvv_mode))
+            return rvv_mode;
+        }
+    }
+
+  return default_vectorize_related_mode (vector_mode, element_mode, nunits);
+}
+
+/* Return a list of possible vector sizes for the vectorizer
+   to iterate over.  */
+static unsigned int
+riscv_autovectorize_vector_modes (vector_modes *modes, bool)
+{
+  if (TARGET_VECTOR && TARGET_RVV)
+    {
+
+      if (riscv_vectorization_factor == RVV_LMUL1)
+        {
+          modes->safe_push (VNx16QImode);
+          modes->safe_push (VNx8QImode);
+          modes->safe_push (VNx4QImode);
+          modes->safe_push (VNx2QImode);
+        }
+      else if (riscv_vectorization_factor == RVV_LMUL2)
+        {
+          modes->safe_push (VNx32QImode);
+          modes->safe_push (VNx16QImode);
+          modes->safe_push (VNx8QImode);
+          modes->safe_push (VNx4QImode);
+        }
+      else if (riscv_vectorization_factor == RVV_LMUL4)
+        {
+          modes->safe_push (VNx64QImode);
+          modes->safe_push (VNx32QImode);
+          modes->safe_push (VNx16QImode);
+          modes->safe_push (VNx8QImode);
+        }
+      else
+        {
+          modes->safe_push (VNx128QImode);
+          modes->safe_push (VNx64QImode);
+          modes->safe_push (VNx32QImode);
+          modes->safe_push (VNx16QImode);
+        }
+    }
+
+  return 0;
 }
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
@@ -8100,6 +8432,22 @@ riscv_verify_type_context (location_t loc, type_context_kind context,
 
 #undef TARGET_VERIFY_TYPE_CONTEXT
 #define TARGET_VERIFY_TYPE_CONTEXT riscv_verify_type_context
+
+#undef TARGET_VECTOR_ALIGNMENT
+#define TARGET_VECTOR_ALIGNMENT riscv_vector_alignment
+
+#undef TARGET_VECTORIZE_PREFERRED_VECTOR_ALIGNMENT
+#define TARGET_VECTORIZE_PREFERRED_VECTOR_ALIGNMENT riscv_vectorize_preferred_vector_alignment
+
+#undef TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE
+#define TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE riscv_simd_vector_alignment_reachable
+
+#undef TARGET_VECTORIZE_SUPPORT_VECTOR_MISALIGNMENT
+#define TARGET_VECTORIZE_SUPPORT_VECTOR_MISALIGNMENT riscv_builtin_support_vector_misalignment
+
+#undef TARGET_COMPATIBLE_VECTOR_TYPES_P
+#define TARGET_COMPATIBLE_VECTOR_TYPES_P riscv_compatible_vector_types_p
+
 #undef TARGET_VECTORIZE_PREFERRED_SIMD_MODE
 #define TARGET_VECTORIZE_PREFERRED_SIMD_MODE riscv_preferred_simd_mode
 
