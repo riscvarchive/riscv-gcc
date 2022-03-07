@@ -3024,6 +3024,20 @@ convert_mult_to_fma_1 (tree mul_result, tree op1, tree op2)
 	  gsi = gsi_for_stmt (use_stmt);
 	  negate_p = true;
 	}
+      if (is_gimple_call (use_stmt) && gimple_call_internal_p (use_stmt)
+    && gimple_call_internal_fn (use_stmt) == IFN_LEN_NEG)
+	{
+	  result = gimple_call_lhs (use_stmt);
+	  use_operand_p use_p;
+	  gimple *neguse_stmt;
+	  single_imm_use (gimple_call_lhs (use_stmt), &use_p, &neguse_stmt);
+	  gsi_remove (&gsi, true);
+	  release_defs (use_stmt);
+
+	  use_stmt = neguse_stmt;
+	  gsi = gsi_for_stmt (use_stmt);
+	  negate_p = true;
+	}
 
       tree cond, else_value, ops[3];
       tree_code code;
@@ -3036,14 +3050,26 @@ convert_mult_to_fma_1 (tree mul_result, tree op1, tree op2)
 	{
 	  if (ops[0] == result)
 	    /* a * b - c -> a * b + (-c)  */
-	    addop = gimple_build (&seq, NEGATE_EXPR, type, addop);
+	    {
+	      if (is_gimple_call (use_stmt) && gimple_call_internal_p (use_stmt)
+	          && gimple_call_internal_fn (use_stmt) == IFN_LEN_SUB)
+	        addop = gimple_build (&seq, UNKNOWN_LOCATION, as_combined_fn (IFN_LEN_NEG), type, addop, ops[2]);
+	      else
+	        addop = gimple_build (&seq, NEGATE_EXPR, type, addop);
+	    }
 	  else
 	    /* a - b * c -> (-b) * c + a */
 	    negate_p = !negate_p;
 	}
 
       if (negate_p)
-	mulop1 = gimple_build (&seq, NEGATE_EXPR, type, mulop1);
+        {
+	  if (is_gimple_call (use_stmt) && gimple_call_internal_p (use_stmt)
+	      && gimple_call_internal_fn (use_stmt) == IFN_LEN_SUB)
+	    mulop1 = gimple_build (&seq, UNKNOWN_LOCATION, as_combined_fn (IFN_LEN_NEG), type, mulop1, ops[2]);
+	  else
+	    mulop1 = gimple_build (&seq, NEGATE_EXPR, type, mulop1);
+	}
 
       if (seq)
 	gsi_insert_seq_before (&gsi, seq, GSI_SAME_STMT);
@@ -3051,6 +3077,10 @@ convert_mult_to_fma_1 (tree mul_result, tree op1, tree op2)
       if (cond)
 	fma_stmt = gimple_build_call_internal (IFN_COND_FMA, 5, cond, mulop1,
 					       op2, addop, else_value);
+      else if (is_gimple_call (use_stmt) && gimple_call_internal_p (use_stmt)
+        && (gimple_call_internal_fn (use_stmt) == IFN_LEN_ADD
+	|| gimple_call_internal_fn (use_stmt) == IFN_LEN_SUB))
+	fma_stmt = gimple_build_call_internal (IFN_LEN_FMA, 4, mulop1, op2, addop, ops[2]);
       else
 	fma_stmt = gimple_build_call_internal (IFN_FMA, 3, mulop1, op2, addop);
       gimple_set_lhs (fma_stmt, gimple_get_lhs (use_stmt));
@@ -3084,8 +3114,10 @@ convert_mult_to_fma_1 (tree mul_result, tree op1, tree op2)
 	  && gimple_call_lhs (orig_stmt)
 	  && TREE_CODE (gimple_call_lhs (orig_stmt)) == SSA_NAME
 	  && single_imm_use (gimple_call_lhs (orig_stmt), &use_p, &neg_stmt)
-	  && is_gimple_assign (neg_stmt)
-	  && gimple_assign_rhs_code (neg_stmt) == NEGATE_EXPR
+	  && ((is_gimple_assign (neg_stmt)
+	  && gimple_assign_rhs_code (neg_stmt) == NEGATE_EXPR)
+	  || (is_gimple_call (neg_stmt) && gimple_call_internal_p (neg_stmt)
+          && gimple_call_internal_fn (neg_stmt) == IFN_LEN_NEG))
 	  && !stmt_could_throw_p (cfun, neg_stmt))
 	{
 	  gsi = gsi_for_stmt (neg_stmt);
@@ -3259,6 +3291,11 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
   optimization_type opt_type = bb_optimization_type (gimple_bb (mul_stmt));
   if (!direct_internal_fn_supported_p (IFN_FMA, type, opt_type))
     return false;
+  
+  if (is_gimple_call (mul_stmt) && gimple_call_internal_p (mul_stmt)
+    && gimple_call_internal_fn (mul_stmt) == IFN_LEN_MUL
+    && !direct_internal_fn_supported_p (IFN_LEN_FMA, type, opt_type))
+    return false;
 
   /* If the multiplication has zero uses, it is kept around probably because
      of -fnon-call-exceptions.  Don't optimize it away in that case,
@@ -3334,6 +3371,21 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
 
       tree cond, else_value, ops[3];
       tree_code code;
+
+      if (is_gimple_call (mul_stmt) && gimple_call_internal_p (mul_stmt)
+        && gimple_call_internal_fn (mul_stmt) == IFN_LEN_MUL)
+	{
+	  if (!is_gimple_call (use_stmt))
+	    return false;
+
+	  if (!gimple_call_internal_p (use_stmt))
+	    return false;
+	  
+	  if (gimple_call_internal_fn (use_stmt) != IFN_LEN_ADD
+      && gimple_call_internal_fn (use_stmt) != IFN_LEN_SUB)
+	    return false;
+	}
+
       if (!can_interpret_as_conditional_op_p (use_stmt, &cond, &code, ops,
 					      &else_value))
 	return false;
@@ -3378,6 +3430,20 @@ convert_mult_to_fma (gimple *mul_stmt, tree op1, tree op2,
 	  gimple *stmt2 = SSA_NAME_DEF_STMT (ops[1]);
 	  if (is_gimple_assign (stmt2)
 	      && gimple_assign_rhs_code (stmt2) == MULT_EXPR)
+	    return false;
+	}
+
+      if (code == MINUS_EXPR
+	  && !negate_p
+	  && ops[0] == result
+	  && !direct_internal_fn_supported_p (IFN_LEN_FMS, type, opt_type)
+	  && direct_internal_fn_supported_p (IFN_LEN_FNMA, type, opt_type)
+	  && TREE_CODE (ops[1]) == SSA_NAME
+	  && has_single_use (ops[1]))
+	{
+	  gimple *stmt2 = SSA_NAME_DEF_STMT (ops[1]);
+	  if (is_gimple_call (stmt2) && gimple_call_internal_p (stmt2)
+	      && gimple_call_internal_fn (stmt2) == IFN_LEN_MUL)
 	    return false;
 	}
 
@@ -5007,6 +5073,18 @@ math_opts_dom_walker::after_dom_children (basic_block bb)
 				       gimple_call_arg (stmt, 2),
 				       &fma_state,
 				       gimple_call_arg (stmt, 0)))
+
+		{
+		  gsi_remove (&gsi, true);
+		  release_defs (stmt);
+		  continue;
+		}
+	      break;
+	    case CFN_LEN_MUL:
+	      if (convert_mult_to_fma (stmt,
+				       gimple_call_arg (stmt, 0),
+				       gimple_call_arg (stmt, 1),
+				       &fma_state))
 
 		{
 		  gsi_remove (&gsi, true);

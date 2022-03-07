@@ -10735,7 +10735,16 @@ vectorizable_condition (vec_info *vinfo,
 
       if (swap_cond_operands)
 	std::swap (vec_then_clause, vec_else_clause);
-
+      vec_loop_lens *loop_lens = (loop_vinfo && LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo)
+       		? &LOOP_VINFO_LENS (loop_vinfo)
+       		: NULL);
+      tree len = (loop_lens && ((int)loop_lens->length() == (vec_num * ncopies))
+		? vect_get_loop_len (loop_vinfo, loop_lens,
+				     vec_num * ncopies, i)
+		: NULL);
+      /* We change VEC_COND_EXPR to LEN_VCOND/LEN_VCONDU which brings length into
+         vector condition. */
+      bool unsigned_p = TYPE_UNSIGNED (TREE_TYPE (vec_cond_lhs));
       if (masked)
 	vec_compare = vec_cond_lhs;
       else
@@ -10744,21 +10753,56 @@ vectorizable_condition (vec_info *vinfo,
 	  if (bitop1 == NOP_EXPR)
 	    {
 	      gimple_seq stmts = NULL;
-	      vec_compare = gimple_build (&stmts, cond_code, vec_cmp_type,
-					   vec_cond_lhs, vec_cond_rhs);
+
+	      if (len && ((!unsigned_p && direct_internal_fn_supported_p (IFN_LEN_VEC_CMP,
+	  	tree_pair (TREE_TYPE (vec_cond_lhs), vec_cmp_type),
+		OPTIMIZE_FOR_SPEED))
+	      || (unsigned_p && direct_internal_fn_supported_p (IFN_LEN_VEC_CMPU,
+	  	tree_pair (TREE_TYPE (vec_cond_lhs), vec_cmp_type),
+		OPTIMIZE_FOR_SPEED))))
+	        {
+		  vec_compare = create_tmp_reg_or_ssa_name (vec_cmp_type);
+                  tree code_tree = build_int_cst (integer_type_node, cond_code);
+	          gimple *call = gimple_build_call_internal (unsigned_p ? IFN_LEN_VEC_CMPU : IFN_LEN_VEC_CMP,
+	    			                             4, vec_cond_lhs, vec_cond_rhs, len, code_tree);
+	          gimple_call_set_lhs (call, vec_compare);
+		  gimple_seq_add_stmt (&stmts, call);
+	        }
+	      else
+	        vec_compare = gimple_build (&stmts, cond_code, vec_cmp_type,
+					    vec_cond_lhs, vec_cond_rhs);
 	      gsi_insert_before (gsi, stmts, GSI_SAME_STMT);
 	    }
 	  else
 	    {
 	      new_temp = make_ssa_name (vec_cmp_type);
-	      gassign *new_stmt;
+	      gimple *new_stmt;
 	      if (bitop1 == BIT_NOT_EXPR)
-		new_stmt = gimple_build_assign (new_temp, bitop1,
-						vec_cond_rhs);
+	        {
+		  if (len && direct_internal_fn_supported_p (IFN_LEN_NOT, vec_cmp_type,
+						             OPTIMIZE_FOR_SPEED))
+		    {
+		      new_stmt = gimple_build_call_internal (IFN_LEN_NOT, 2, vec_cond_rhs, len);
+	    	      gimple_call_set_lhs (new_stmt, new_temp);
+		    }
+		  else
+		    new_stmt = gimple_build_assign (new_temp, bitop1,
+						    vec_cond_rhs);
+		}
 	      else
-		new_stmt
-		  = gimple_build_assign (new_temp, bitop1, vec_cond_lhs,
-					 vec_cond_rhs);
+	        {
+		  internal_fn len_fn = get_with_length_internal_fn (bitop1);
+		  if (len && len_fn != IFN_LAST && direct_internal_fn_supported_p (len_fn, vec_cmp_type,
+						OPTIMIZE_FOR_SPEED))
+		    {
+		      new_stmt = gimple_build_call_internal (len_fn, 3, vec_cond_lhs, vec_cond_rhs, len);
+	    	      gimple_call_set_lhs (new_stmt, new_temp);
+		    }
+		  else
+		    new_stmt
+		      = gimple_build_assign (new_temp, bitop1, vec_cond_lhs,
+					     vec_cond_rhs);
+		}
 	      vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 	      if (bitop2 == NOP_EXPR)
 		vec_compare = new_temp;
@@ -10771,9 +10815,17 @@ vectorizable_condition (vec_info *vinfo,
 	      else
 		{
 		  vec_compare = make_ssa_name (vec_cmp_type);
-		  new_stmt
-		    = gimple_build_assign (vec_compare, bitop2,
-					   vec_cond_lhs, new_temp);
+		  internal_fn len_fn = get_with_length_internal_fn (bitop2);
+                  if (len && len_fn != IFN_LAST && direct_internal_fn_supported_p (len_fn, vec_cmp_type,
+						OPTIMIZE_FOR_SPEED))
+		    {
+		      new_stmt = gimple_build_call_internal (len_fn, 3, vec_cond_lhs, new_temp, len);
+	    	      gimple_call_set_lhs (new_stmt, vec_compare);
+		    }
+		  else
+		    new_stmt
+		      = gimple_build_assign (vec_compare, bitop2,
+					     vec_cond_lhs, new_temp);
 		  vect_finish_stmt_generation (vinfo, stmt_info,
 					       new_stmt, gsi);
 		}
@@ -10864,10 +10916,29 @@ vectorizable_condition (vec_info *vinfo,
 	}
       else
 	{
-	  new_temp = make_ssa_name (vec_dest);
-	  new_stmt = gimple_build_assign (new_temp, VEC_COND_EXPR, vec_compare,
-					  vec_then_clause, vec_else_clause);
-	  vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
+	  internal_fn cond_fn = unsigned_p ? IFN_LEN_VCONDU : IFN_LEN_VCOND;
+	  if (len && (direct_internal_fn_supported_p (cond_fn,
+	        tree_pair (vectype, TREE_TYPE (vec_cond_lhs)),
+		OPTIMIZE_FOR_SPEED)
+	      || (VECTOR_BOOLEAN_TYPE_P (TREE_TYPE (vec_cond_lhs))
+	      && direct_internal_fn_supported_p (IFN_LEN_VCOND_MASK,
+	        tree_pair (vectype, TREE_TYPE (vec_cond_lhs)),
+		OPTIMIZE_FOR_SPEED))))
+	    {
+	      new_temp = make_ssa_name (vec_dest);
+	      gcall *call = gimple_build_call_internal (cond_fn, 4, vec_compare,
+					      vec_then_clause, vec_else_clause, len);
+	      gimple_call_set_lhs (call, new_temp);
+	      vect_finish_stmt_generation (vinfo, stmt_info, call, gsi);
+	      new_stmt = call;
+	    }
+	  else
+	    {
+	      new_temp = make_ssa_name (vec_dest);
+	      new_stmt = gimple_build_assign (new_temp, VEC_COND_EXPR, vec_compare,
+					      vec_then_clause, vec_else_clause);
+	      vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
+	    }
 	}
       if (slp_node)
 	SLP_TREE_VEC_STMTS (slp_node).quick_push (new_stmt);
@@ -11074,6 +11145,11 @@ vectorizable_comparison (vec_info *vinfo,
   if (swap_p)
     std::swap (vec_oprnds0, vec_oprnds1);
 
+  /* Bring length into comparison operations. */
+  vec_loop_lens *loop_lens = (loop_vinfo && LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo)
+  			      ? &LOOP_VINFO_LENS (loop_vinfo)
+			      : NULL);
+
   /* Arguments are ready.  Create the new vector stmt.  */
   FOR_EACH_VEC_ELT (vec_oprnds0, i, vec_rhs1)
     {
@@ -11081,28 +11157,87 @@ vectorizable_comparison (vec_info *vinfo,
       vec_rhs2 = vec_oprnds1[i];
 
       new_temp = make_ssa_name (mask);
+
+      tree len = (loop_lens && (int)loop_lens->length () == ncopies
+		? vect_get_loop_len (loop_vinfo, loop_lens,
+				     1 * ncopies, i)
+		: NULL);
       if (bitop1 == NOP_EXPR)
 	{
-	  new_stmt = gimple_build_assign (new_temp, code,
-					  vec_rhs1, vec_rhs2);
+	  bool unsignedp = TYPE_UNSIGNED (TREE_TYPE (vec_rhs1));
+	  if (len && ((!unsignedp && direct_internal_fn_supported_p (IFN_LEN_VEC_CMP,
+	  	tree_pair (TREE_TYPE (vec_rhs1), TREE_TYPE (new_temp)),
+		OPTIMIZE_FOR_SPEED))
+	      || (unsignedp && direct_internal_fn_supported_p (IFN_LEN_VEC_CMPU,
+	  	tree_pair (TREE_TYPE (vec_rhs1), TREE_TYPE (new_temp)),
+		OPTIMIZE_FOR_SPEED))))
+	    {
+              tree code_tree = build_int_cst (integer_type_node, code);
+	      new_stmt = gimple_build_call_internal (unsignedp ? IFN_LEN_VEC_CMPU : IFN_LEN_VEC_CMP,
+				                     4, vec_rhs1, vec_rhs2, len, code_tree);
+	      gimple_call_set_lhs (new_stmt, new_temp);
+	    }
+          else
+	    new_stmt = gimple_build_assign (new_temp, code,
+	  				    vec_rhs1, vec_rhs2);
 	  vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 	}
       else
 	{
 	  if (bitop1 == BIT_NOT_EXPR)
-	    new_stmt = gimple_build_assign (new_temp, bitop1, vec_rhs2);
+	    {
+	      if (len && direct_internal_fn_supported_p (IFN_LEN_NOT,
+	      		TREE_TYPE (new_temp), OPTIMIZE_FOR_SPEED))
+	        {
+		  new_stmt = gimple_build_call_internal (IFN_LEN_NOT, 2, vec_rhs2, len);
+	          gimple_call_set_lhs (new_stmt, new_temp);
+		}
+	      else
+	        new_stmt = gimple_build_assign (new_temp, bitop1, vec_rhs2);
+	    }
 	  else
-	    new_stmt = gimple_build_assign (new_temp, bitop1, vec_rhs1,
-					    vec_rhs2);
+	    {
+	      internal_fn len_fn = get_with_length_internal_fn (bitop1);
+	      if (len_fn != IFN_LAST
+	      	&& direct_internal_fn_supported_p (len_fn, TREE_TYPE (new_temp),
+					           OPTIMIZE_FOR_SPEED))
+		{
+		  new_stmt = gimple_build_call_internal (len_fn, 3, vec_rhs1, vec_rhs2, len);
+	          gimple_call_set_lhs (new_stmt, new_temp);
+		}
+	      else
+	        new_stmt = gimple_build_assign (new_temp, bitop1, vec_rhs1,
+					        vec_rhs2);
+	    }
 	  vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 	  if (bitop2 != NOP_EXPR)
 	    {
 	      tree res = make_ssa_name (mask);
 	      if (bitop2 == BIT_NOT_EXPR)
-		new_stmt = gimple_build_assign (res, bitop2, new_temp);
+	        {
+	          if (len && direct_internal_fn_supported_p (IFN_LEN_NOT,
+	      		TREE_TYPE (res), OPTIMIZE_FOR_SPEED))
+	            {
+		      new_stmt = gimple_build_call_internal (IFN_LEN_NOT, 2, new_temp, len);
+	              gimple_call_set_lhs (new_stmt, res);
+		    }
+	          else
+	            new_stmt = gimple_build_assign (res, bitop2, new_temp);
+		}
 	      else
-		new_stmt = gimple_build_assign (res, bitop2, vec_rhs1,
-						new_temp);
+	    	{
+	    	  internal_fn len_fn = get_with_length_internal_fn (bitop2);
+	    	  if (len_fn != IFN_LAST
+	    	  	&& direct_internal_fn_supported_p (len_fn, TREE_TYPE (res),
+						           OPTIMIZE_FOR_SPEED))
+		    {
+		      new_stmt = gimple_build_call_internal (len_fn, 3, vec_rhs1, new_temp, len);
+	    	      gimple_call_set_lhs (new_stmt, res);
+		    }
+	    	  else
+	    	    new_stmt = gimple_build_assign (res, bitop2, vec_rhs1,
+						    new_temp);
+	    	}
 	      vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 	    }
 	}

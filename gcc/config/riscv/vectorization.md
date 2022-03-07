@@ -4503,6 +4503,148 @@
     }
   DONE;
 })
+
+(define_expand "@len_vcond_mask_<mode><vm>"
+  [(match_operand:V 0 "register_operand")
+   (match_operand:V 1 "nonmemory_operand")
+   (match_operand:V 2 "register_operand")
+   (match_operand:<VM> 3 "register_operand")
+   (match_operand 4 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx x;
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+
+  if (const_vec_duplicate_p (operands[1], &x))
+    {
+      if (FLOAT_MODE_P (<MODE>mode))
+        {
+          emit_insn (gen_vfmerge_vfm (<MODE>mode, operands[0],
+              operands[3], const0_rtx, operands[2], force_reg (<VSUB>mode, x),
+              operands[4], riscv_vector_gen_policy ()));
+        }
+      else
+        {
+          emit_insn (gen_v_vxm (UNSPEC_VMERGE, <MODE>mode, operands[0],
+              operands[3], const0_rtx, operands[2], x,
+              operands[4], riscv_vector_gen_policy ()));
+        }
+    }
+  else
+    {
+      operands[1] = force_reg (<MODE>mode, operands[1]);
+      emit_insn (gen_vmerge_vvm (<MODE>mode, operands[0],
+          operands[3], const0_rtx, operands[2], operands[1],
+          operands[4], riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+(define_expand "@vcond_mask_vs<mode><vm>"
+  [(match_operand:V 0 "register_operand")
+   (match_operand:V 1 "register_operand")
+   (match_operand:<VSUB> 2 "reg_or_simm5_operand")
+   (match_operand:<VM> 3 "register_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx invert = gen_reg_rtx (<VM>mode);
+  emit_insn (gen_vmnot_m (<VM>mode, invert, operands[3], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  if (FLOAT_MODE_P (<MODE>mode))
+    {
+      emit_insn (gen_vfmerge_vfm (<MODE>mode, operands[0],
+          invert, const0_rtx, operands[1], operands[2],
+          gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    }
+  else
+    {
+      emit_insn (gen_v_vxm (UNSPEC_VMERGE, <MODE>mode, operands[0],
+          invert, const0_rtx, operands[1], operands[2],
+          gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+(define_expand "@len_vcond_mask_vs<mode><vm>"
+  [(match_operand:V 0 "register_operand")
+   (match_operand:V 1 "register_operand")
+   (match_operand:<VSUB> 2 "reg_or_simm5_operand")
+   (match_operand:<VM> 3 "register_operand")
+   (match_operand 4 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+  rtx invert = gen_reg_rtx (<VM>mode);
+  emit_insn (gen_vmnot_m (<VM>mode, invert, operands[3], operands[4], riscv_vector_gen_policy ()));
+
+  if (FLOAT_MODE_P (<MODE>mode))
+    {
+      emit_insn (gen_vfmerge_vfm (<MODE>mode, operands[0],
+          invert, const0_rtx, operands[1], operands[2],
+          operands[4], riscv_vector_gen_policy ()));
+    }
+  else
+    {
+      emit_insn (gen_v_vxm (UNSPEC_VMERGE, <MODE>mode, operands[0],
+          invert, const0_rtx, operands[1], operands[2],
+          operands[4], riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+(define_expand "@vcond_mask_sv<mode><vm>"
+  [(match_operand:V 0 "register_operand")
+   (match_operand:<VSUB> 1 "reg_or_simm5_operand")
+   (match_operand:V 2 "register_operand")
+   (match_operand:<VM> 3 "register_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (FLOAT_MODE_P (<MODE>mode))
+    {
+      emit_insn (gen_vfmerge_vfm (<MODE>mode, operands[0],
+          operands[3], const0_rtx, operands[2], operands[1],
+          gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    }
+  else
+    {
+      emit_insn (gen_v_vxm (UNSPEC_VMERGE, <MODE>mode, operands[0],
+          operands[3], const0_rtx, operands[2], operands[1],
+          gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
+(define_expand "@len_vcond_mask_sv<mode><vm>"
+  [(match_operand:V 0 "register_operand")
+   (match_operand:<VSUB> 1 "reg_or_simm5_operand")
+   (match_operand:V 2 "register_operand")
+   (match_operand:<VM> 3 "register_operand")
+   (match_operand 4 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+
+  if (FLOAT_MODE_P (<MODE>mode))
+    {
+      emit_insn (gen_vfmerge_vfm (<MODE>mode, operands[0],
+          operands[3], const0_rtx, operands[2], operands[1],
+          operands[4], riscv_vector_gen_policy ()));
+    }
+  else
+    {
+      emit_insn (gen_v_vxm (UNSPEC_VMERGE, <MODE>mode, operands[0],
+          operands[3], const0_rtx, operands[2], operands[1],
+          operands[4], riscv_vector_gen_policy ()));
+    }
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Compare and select
 ;; -------------------------------------------------------------------------
@@ -4524,6 +4666,25 @@
   riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSI:MODE>mode, <V2UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V2UNITS:mode><V2UNITSI:mode>"
+  [(set (match_operand:V2UNITS 0 "register_operand")
+  (unspec:V2UNITS
+	  [(if_then_else:V2UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V2UNITSI 4 "register_operand")
+	       (match_operand:V2UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V2UNITS 1 "nonmemory_operand")
+	    (match_operand:V2UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSI:MODE>mode, <V2UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V4UNITS:mode><V4UNITSI:mode>"
   [(set (match_operand:V4UNITS 0 "register_operand")
 	(if_then_else:V4UNITS
@@ -4537,6 +4698,25 @@
   riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSI:MODE>mode, <V4UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V4UNITS:mode><V4UNITSI:mode>"
+  [(set (match_operand:V4UNITS 0 "register_operand")
+  (unspec:V4UNITS
+	  [(if_then_else:V4UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V4UNITSI 4 "register_operand")
+	       (match_operand:V4UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V4UNITS 1 "nonmemory_operand")
+	    (match_operand:V4UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSI:MODE>mode, <V4UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V8UNITS:mode><V8UNITSI:mode>"
   [(set (match_operand:V8UNITS 0 "register_operand")
 	(if_then_else:V8UNITS
@@ -4550,6 +4730,25 @@
   riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSI:MODE>mode, <V8UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V8UNITS:mode><V8UNITSI:mode>"
+  [(set (match_operand:V8UNITS 0 "register_operand")
+  (unspec:V8UNITS
+	  [(if_then_else:V8UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V8UNITSI 4 "register_operand")
+	       (match_operand:V8UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V8UNITS 1 "nonmemory_operand")
+	    (match_operand:V8UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSI:MODE>mode, <V8UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V16UNITS:mode><V16UNITSI:mode>"
   [(set (match_operand:V16UNITS 0 "register_operand")
 	(if_then_else:V16UNITS
@@ -4563,6 +4762,25 @@
   riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSI:MODE>mode, <V16UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V16UNITS:mode><V16UNITSI:mode>"
+  [(set (match_operand:V16UNITS 0 "register_operand")
+  (unspec:V16UNITS
+	  [(if_then_else:V16UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V16UNITSI 4 "register_operand")
+	       (match_operand:V16UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V16UNITS 1 "nonmemory_operand")
+	    (match_operand:V16UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSI:MODE>mode, <V16UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V32UNITS:mode><V32UNITSI:mode>"
   [(set (match_operand:V32UNITS 0 "register_operand")
 	(if_then_else:V32UNITS
@@ -4576,6 +4794,25 @@
   riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSI:MODE>mode, <V32UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V32UNITS:mode><V32UNITSI:mode>"
+  [(set (match_operand:V32UNITS 0 "register_operand")
+  (unspec:V32UNITS
+	  [(if_then_else:V32UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V32UNITSI 4 "register_operand")
+	       (match_operand:V32UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V32UNITS 1 "nonmemory_operand")
+	    (match_operand:V32UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSI:MODE>mode, <V32UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V64UNITS:mode><V64UNITSI:mode>"
   [(set (match_operand:V64UNITS 0 "register_operand")
 	(if_then_else:V64UNITS
@@ -4589,6 +4826,25 @@
   riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSI:MODE>mode, <V64UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V64UNITS:mode><V64UNITSI:mode>"
+  [(set (match_operand:V64UNITS 0 "register_operand")
+  (unspec:V64UNITS
+	  [(if_then_else:V64UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V64UNITSI 4 "register_operand")
+	       (match_operand:V64UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V64UNITS 1 "nonmemory_operand")
+	    (match_operand:V64UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSI:MODE>mode, <V64UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V128UNITSI:mode><V128UNITSI:mode>"
   [(set (match_operand:V128UNITSI 0 "register_operand")
 	(if_then_else:V128UNITSI
@@ -4602,6 +4858,25 @@
   riscv_expand_vcond (<MODE>mode, <MODE>mode, <VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V128UNITSI:mode><V128UNITSI:mode>"
+  [(set (match_operand:V128UNITSI 0 "register_operand")
+  (unspec:V128UNITSI
+	  [(if_then_else:V128UNITSI
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V128UNITSI 4 "register_operand")
+	       (match_operand:V128UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V128UNITSI 1 "nonmemory_operand")
+	    (match_operand:V128UNITSI 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<MODE>mode, <MODE>mode, <VM>mode, operands, true);
+  DONE;
+})
+
 ;; Integer vcondu.  Don't enforce an immediate range here, since it
 ;; depends on the comparison; leave it to riscv_expand_vcond instead.
 (define_expand "vcondu<V2UNITS:mode><V2UNITSI:mode>"
@@ -4617,6 +4892,25 @@
   riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSI:MODE>mode, <V2UNITSI:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcondu<V2UNITS:mode><V2UNITSI:mode>"
+  [(set (match_operand:V2UNITS 0 "register_operand")
+  (unspec:V2UNITS
+	  [(if_then_else:V2UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V2UNITSI 4 "register_operand")
+	       (match_operand:V2UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V2UNITS 1 "nonmemory_operand")
+	    (match_operand:V2UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSI:MODE>mode, <V2UNITSI:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcondu<V4UNITS:mode><V4UNITSI:mode>"
   [(set (match_operand:V4UNITS 0 "register_operand")
 	(if_then_else:V4UNITS
@@ -4630,6 +4924,25 @@
   riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSI:MODE>mode, <V4UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcondu<V4UNITS:mode><V4UNITSI:mode>"
+  [(set (match_operand:V4UNITS 0 "register_operand")
+  (unspec:V4UNITS
+	  [(if_then_else:V4UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V4UNITSI 4 "register_operand")
+	       (match_operand:V4UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V4UNITS 1 "nonmemory_operand")
+	    (match_operand:V4UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSI:MODE>mode, <V4UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcondu<V8UNITS:mode><V8UNITSI:mode>"
   [(set (match_operand:V8UNITS 0 "register_operand")
 	(if_then_else:V8UNITS
@@ -4643,6 +4956,25 @@
   riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSI:MODE>mode, <V8UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcondu<V8UNITS:mode><V8UNITSI:mode>"
+  [(set (match_operand:V8UNITS 0 "register_operand")
+  (unspec:V8UNITS
+	  [(if_then_else:V8UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V8UNITSI 4 "register_operand")
+	       (match_operand:V8UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V8UNITS 1 "nonmemory_operand")
+	    (match_operand:V8UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSI:MODE>mode, <V8UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcondu<V16UNITS:mode><V16UNITSI:mode>"
   [(set (match_operand:V16UNITS 0 "register_operand")
 	(if_then_else:V16UNITS
@@ -4656,6 +4988,25 @@
   riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSI:MODE>mode, <V16UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcondu<V16UNITS:mode><V16UNITSI:mode>"
+  [(set (match_operand:V16UNITS 0 "register_operand")
+  (unspec:V16UNITS
+	  [(if_then_else:V16UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V16UNITSI 4 "register_operand")
+	       (match_operand:V16UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V16UNITS 1 "nonmemory_operand")
+	    (match_operand:V16UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSI:MODE>mode, <V16UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcondu<V32UNITS:mode><V32UNITSI:mode>"
   [(set (match_operand:V32UNITS 0 "register_operand")
 	(if_then_else:V32UNITS
@@ -4669,6 +5020,25 @@
   riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSI:MODE>mode, <V32UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcondu<V32UNITS:mode><V32UNITSI:mode>"
+  [(set (match_operand:V32UNITS 0 "register_operand")
+  (unspec:V32UNITS
+	  [(if_then_else:V32UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V32UNITSI 4 "register_operand")
+	       (match_operand:V32UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V32UNITS 1 "nonmemory_operand")
+	    (match_operand:V32UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSI:MODE>mode, <V32UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcondu<V64UNITS:mode><V64UNITSI:mode>"
   [(set (match_operand:V64UNITS 0 "register_operand")
 	(if_then_else:V64UNITS
@@ -4682,6 +5052,25 @@
   riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSI:MODE>mode, <V64UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcondu<V64UNITS:mode><V64UNITSI:mode>"
+  [(set (match_operand:V64UNITS 0 "register_operand")
+  (unspec:V64UNITS
+	  [(if_then_else:V64UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V64UNITSI 4 "register_operand")
+	       (match_operand:V64UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V64UNITS 1 "nonmemory_operand")
+	    (match_operand:V64UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSI:MODE>mode, <V64UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcondu<V128UNITSI:mode><V128UNITSI:mode>"
   [(set (match_operand:V128UNITSI 0 "register_operand")
 	(if_then_else:V128UNITSI
@@ -4695,6 +5084,25 @@
   riscv_expand_vcond (<MODE>mode, <MODE>mode, <VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcondu<V128UNITSI:mode><V128UNITSI:mode>"
+  [(set (match_operand:V128UNITSI 0 "register_operand")
+  (unspec:V128UNITSI
+	  [(if_then_else:V128UNITSI
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V128UNITSI 4 "register_operand")
+	       (match_operand:V128UNITSI 5 "nonmemory_operand")])
+	    (match_operand:V128UNITSI 1 "nonmemory_operand")
+	    (match_operand:V128UNITSI 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<MODE>mode, <MODE>mode, <VM>mode, operands, true);
+  DONE;
+})
+
 ;; Floating-point vcond.  All comparisons except FCMUO allow a zero operand;
 ;; riscv_expand_vcond handles the case of an FCMUO with zero.
 (define_expand "vcond<V2UNITS:mode><V2UNITSF:mode>"
@@ -4710,6 +5118,25 @@
   riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSF:MODE>mode, <V2UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V2UNITS:mode><V2UNITSF:mode>"
+  [(set (match_operand:V2UNITS 0 "register_operand")
+  (unspec:V2UNITS
+	  [(if_then_else:V2UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V2UNITSF 4 "register_operand")
+	       (match_operand:V2UNITSF 5 "nonmemory_operand")])
+	    (match_operand:V2UNITS 1 "nonmemory_operand")
+	    (match_operand:V2UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSF:MODE>mode, <V2UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V4UNITS:mode><V4UNITSF:mode>"
   [(set (match_operand:V4UNITS 0 "register_operand")
 	(if_then_else:V4UNITS
@@ -4723,6 +5150,25 @@
   riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSF:MODE>mode, <V4UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V4UNITS:mode><V4UNITSF:mode>"
+  [(set (match_operand:V4UNITS 0 "register_operand")
+  (unspec:V4UNITS
+	  [(if_then_else:V4UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V4UNITSF 4 "register_operand")
+	       (match_operand:V4UNITSF 5 "nonmemory_operand")])
+	    (match_operand:V4UNITS 1 "nonmemory_operand")
+	    (match_operand:V4UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSF:MODE>mode, <V4UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V8UNITS:mode><V8UNITSF:mode>"
   [(set (match_operand:V8UNITS 0 "register_operand")
 	(if_then_else:V8UNITS
@@ -4736,6 +5182,25 @@
   riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSF:MODE>mode, <V8UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V8UNITS:mode><V8UNITSF:mode>"
+  [(set (match_operand:V8UNITS 0 "register_operand")
+  (unspec:V8UNITS
+	  [(if_then_else:V8UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V8UNITSF 4 "register_operand")
+	       (match_operand:V8UNITSF 5 "nonmemory_operand")])
+	    (match_operand:V8UNITS 1 "nonmemory_operand")
+	    (match_operand:V8UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSF:MODE>mode, <V8UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V16UNITS:mode><V16UNITSF:mode>"
   [(set (match_operand:V16UNITS 0 "register_operand")
 	(if_then_else:V16UNITS
@@ -4749,6 +5214,25 @@
   riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSF:MODE>mode, <V16UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V16UNITS:mode><V16UNITSF:mode>"
+  [(set (match_operand:V16UNITS 0 "register_operand")
+  (unspec:V16UNITS
+	  [(if_then_else:V16UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V16UNITSF 4 "register_operand")
+	       (match_operand:V16UNITSF 5 "nonmemory_operand")])
+	    (match_operand:V16UNITS 1 "nonmemory_operand")
+	    (match_operand:V16UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSF:MODE>mode, <V16UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V32UNITS:mode><V32UNITSF:mode>"
   [(set (match_operand:V32UNITS 0 "register_operand")
 	(if_then_else:V32UNITS
@@ -4762,6 +5246,25 @@
   riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSF:MODE>mode, <V32UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V32UNITS:mode><V32UNITSF:mode>"
+  [(set (match_operand:V32UNITS 0 "register_operand")
+  (unspec:V32UNITS
+	  [(if_then_else:V32UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V32UNITSF 4 "register_operand")
+	       (match_operand:V32UNITSF 5 "nonmemory_operand")])
+	    (match_operand:V32UNITS 1 "nonmemory_operand")
+	    (match_operand:V32UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSF:MODE>mode, <V32UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 (define_expand "vcond<V64UNITS:mode><V64UNITSF:mode>"
   [(set (match_operand:V64UNITS 0 "register_operand")
 	(if_then_else:V64UNITS
@@ -4775,6 +5278,25 @@
   riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSF:MODE>mode, <V64UNITS:VM>mode, operands, false);
   DONE;
 })
+
+(define_expand "len_vcond<V64UNITS:mode><V64UNITSF:mode>"
+  [(set (match_operand:V64UNITS 0 "register_operand")
+  (unspec:V64UNITS
+	  [(if_then_else:V64UNITS
+	    (match_operator 3 "comparison_operator"
+	      [(match_operand:V64UNITSF 4 "register_operand")
+	       (match_operand:V64UNITSF 5 "nonmemory_operand")])
+	    (match_operand:V64UNITS 1 "nonmemory_operand")
+	    (match_operand:V64UNITS 2 "nonmemory_operand"))
+     (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+    operands[6] = gen_lowpart (Pmode, operands[6]);
+  riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSF:MODE>mode, <V64UNITS:VM>mode, operands, true);
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Comparisons
 ;; -------------------------------------------------------------------------
@@ -4801,6 +5323,24 @@
 				    operands[2], operands[3], NULL_RTX);
   DONE;
 })
+
+(define_expand "len_vec_cmp<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+    (unspec:<VM>
+	    [(match_operator:<VM> 1 "comparison_operator"
+	      [(match_operand:VI 2 "register_operand")
+	       (match_operand:VI 3 "nonmemory_operand")])
+       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+
+  riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
+				    operands[2], operands[3], operands[4]);
+  DONE;
+})
+
 ;; Unsigned integer comparisons.  Don't enforce an immediate range here, since
 ;; it depends on the comparison; leave it to riscv_expand_vec_cmp_int
 ;; instead.
@@ -4815,6 +5355,24 @@
 				    operands[2], operands[3], NULL_RTX);
   DONE;
 })
+
+(define_expand "len_vec_cmpu<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+    (unspec:<VM>
+	    [(match_operator:<VM> 1 "comparison_operator"
+	      [(match_operand:VI 2 "register_operand")
+	       (match_operand:VI 3 "nonmemory_operand")])
+       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+
+  riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
+				    operands[2], operands[3], operands[4]);
+  DONE;
+})
+
 ;; Floating-point comparisons.  All comparisons except FCMUO allow a zero
 ;; operand; riscv_expand_vec_cmp_float handles the case of an FCMUO
 ;; with zero.
@@ -4829,8 +5387,126 @@
 			      operands[2], operands[3], NULL_RTX);
   DONE;
 })
-;; Signed integer comparisons.  Don't enforce an immediate range here, since
+
+(define_expand "len_vec_cmp<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+    (unspec:<VM>
+	    [(match_operator:<VM> 1 "comparison_operator"
+	      [(match_operand:VF 2 "register_operand")
+	       (match_operand:VF 3 "nonmemory_operand")])
+       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+
+  riscv_expand_vec_cmp_float (operands[0], GET_CODE (operands[1]),
+				    operands[2], operands[3], operands[4]);
+  DONE;
 })
+
+;; Signed integer comparisons.  Don't enforce an immediate range here, since
+;; it depends on the comparison; leave it to riscv_expand_vec_cmp_int
+;; instead.
+(define_expand "vec_cmp_vs<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+	  (match_operator:<VM> 1 "comparison_operator"
+	    [(match_operand:VI 2 "register_operand")
+	     (vec_duplicate:VI
+        (match_operand:<VSUB> 3 "register_operand"))]))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
+				    operands[2], operands[3], NULL_RTX);
+  DONE;
+})
+
+(define_expand "len_vec_cmp_vs<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+    (unspec:<VM>
+	    [(match_operator:<VM> 1 "comparison_operator"
+	      [(match_operand:VI 2 "register_operand")
+	       (vec_duplicate:VI
+          (match_operand:<VSUB> 3 "register_operand"))])
+       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+
+  riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
+				    operands[2], operands[3], operands[4]);
+  DONE;
+})
+
+;; Unsigned integer comparisons.  Don't enforce an immediate range here, since
+;; it depends on the comparison; leave it to riscv_expand_vec_cmp_int
+;; instead.
+(define_expand "vec_cmpu_vs<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+	(match_operator:<VM> 1 "comparison_operator"
+	  [(match_operand:VI 2 "register_operand")
+	   (vec_duplicate:VI
+      (match_operand:<VSUB> 3 "register_operand"))]))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
+				    operands[2], operands[3], NULL_RTX);
+  DONE;
+})
+
+(define_expand "len_vec_cmpu_vs<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+    (unspec:<VM>
+	    [(match_operator:<VM> 1 "comparison_operator"
+	      [(match_operand:VI 2 "register_operand")
+	       (vec_duplicate:VI
+          (match_operand:<VSUB> 3 "register_operand"))])
+       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+
+  riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
+				    operands[2], operands[3], operands[4]);
+  DONE;
+})
+
+;; Floating-point comparisons.  All comparisons except FCMUO allow a zero
+;; operand; riscv_expand_vec_cmp_float handles the case of an FCMUO
+;; with zero.
+(define_expand "vec_cmp_vs<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+	(match_operator:<VM> 1 "comparison_operator"
+	  [(match_operand:VF 2 "register_operand")
+	   (vec_duplicate:VF
+      (match_operand:<VSUB> 3 "register_operand"))]))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  riscv_expand_vec_cmp_float (operands[0], GET_CODE (operands[1]),
+			      operands[2], operands[3], NULL_RTX);
+  DONE;
+})
+
+(define_expand "len_vec_cmp_vs<mode><vm>"
+  [(set (match_operand:<VM> 0 "register_operand")
+    (unspec:<VM>
+	    [(match_operator:<VM> 1 "comparison_operator"
+	      [(match_operand:VF 2 "register_operand")
+	       (vec_duplicate:VF
+          (match_operand:<VSUB> 3 "register_operand"))])
+       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+    operands[4] = gen_lowpart (Pmode, operands[4]);
+
+  riscv_expand_vec_cmp_float (operands[0], GET_CODE (operands[1]),
+				    operands[2], operands[3], operands[4]);
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT] While_len
 ;; -------------------------------------------------------------------------
@@ -4902,6 +5578,22 @@
         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   DONE;
 })
+
+(define_expand "len_<optab><mode><vmap>"
+  [(set (match_operand:<VMAP> 0 "register_operand")
+    (unspec:<VMAP>
+      [(any_fix:<VMAP>
+        (match_operand:VF 1 "register_operand"))
+       (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+  emit_insn (gen_vfcvt<vmap>_rtz_x<u>_f_v (operands[0], const0_rtx, const0_rtx, operands[1],
+        operands[2], riscv_vector_gen_policy ()));
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [FP<-INT] Conversions
 ;; -------------------------------------------------------------------------
@@ -4920,6 +5612,22 @@
         operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   DONE;
 })
+
+(define_expand "len_<optab><vmap><mode>"
+  [(set (match_operand:VF 0 "register_operand")
+    (unspec:VF
+      [(any_float:VF
+        (match_operand:<VMAP> 1 "register_operand"))
+       (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+  emit_insn (gen_vfcvt<mode>_f_x<u>_v (operands[0], const0_rtx, const0_rtx,
+        operands[1], operands[2], riscv_vector_gen_policy ()));
+  DONE;
+})
+
 ;; =========================================================================
 ;; == Permutes
 ;; =========================================================================
