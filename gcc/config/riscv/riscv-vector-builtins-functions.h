@@ -582,6 +582,20 @@ public:
   get_argument_types (const function_instance &instance,
                       vec<tree> &argument_types) const OVERRIDE;
 };
+
+/* A function_base for indexed loadstore functions.  */
+class indexedloadstore : public function_builder
+{
+public:
+  // use the same construction function as the function_builder
+  using function_builder::function_builder;
+  void
+  get_name (char *name, const function_instance &instance) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+};
 } // namespace riscv_vector
 
 #endif // end GCC_RISCV_VECTOR_BUILTINS_FUNCTIONS_H

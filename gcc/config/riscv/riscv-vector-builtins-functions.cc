@@ -2620,8 +2620,57 @@ loadstore::get_argument_types (const function_instance &instance,
           instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
     }
 }
-gt_ggc_mx (function_instance *)
+
+/* A function_base for indexed loadstore functions.  */
+void
+indexedloadstore::get_name (char *name, const function_instance &instance) const
 {
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  unsigned int sew = GET_MODE_BITSIZE (
+      GET_MODE_INNER (instance.get_arg_pattern ().arg_list[2]));
+  char buf[8];
+  snprintf (buf, sizeof (buf), "%d", sew);
+  strcat (name, buf);
+  strcat (name, "_");
+  const char *operation_suffix =
+      get_operation_suffix (instance.get_operation ());
+
+  if (strlen (operation_suffix) > 0)
+    {
+      strcat (name, operation_suffix);
+      strcat (name, "_");
+    }
+
+  strcat (name, mode2data_type_suffix (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_func_suffix (instance.get_pred ());
+
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
+}
+
+void
+indexedloadstore::get_argument_types (const function_instance &instance,
+                                      vec<tree> &argument_types) const
+{
+  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+    {
+      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
+                        (instance.get_data_type_list ()[i] == DT_uptr) ||
+                        (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                   (instance.get_data_type_list ()[i] == DT_uptr) ||
+                   (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
+                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      argument_types.quick_push (get_dt_t (
+          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
+    }
 }
 
 inline void
