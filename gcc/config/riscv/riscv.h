@@ -1090,5 +1090,24 @@ extern void riscv_remove_unneeded_save_restore_calls (void);
 
 #define HARD_REGNO_RENAME_OK(FROM, TO) riscv_hard_regno_rename_ok (FROM, TO)
 
+#define REGMODE_NATURAL_SIZE(MODE) riscv_regmode_natural_size (MODE)
+
+#define DBX_REGISTER_NUMBER(REGNO) riscv_dbx_register_number (REGNO)
+
+#define REGISTER_TARGET_PRAGMAS() riscv_register_pragmas ()
+
+/* RTL generation support.  */
+#define INIT_EXPANDERS riscv_init_expanders ()
+
 #define TARGET_SUPPORTS_WIDE_INT 1
+
+/* The maximum number of bytes in a fixed-size vector.  This is 8192 bytes
+   (for -msve-vector-bits=65536) multiplied by the maximum number of
+   vectors in a structure mode (8).
+
+   This limit must not be used for variable-size vectors, since
+   VL-agnostic code must work with arbitary vector lengths.  */
+   
+#define MAX_COMPILE_TIME_VEC_BYTES (8192 * 8)
+
 #endif /* ! GCC_RISCV_H */

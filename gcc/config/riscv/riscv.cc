@@ -7689,6 +7689,192 @@ riscv_floatn_mode (int n, bool extended)
 
   return default_floatn_mode (n, extended);
 }
+
+/* Implement REGMODE_NATURAL_SIZE.  */
+
+poly_uint64
+riscv_regmode_natural_size (machine_mode mode)
+{
+  /* The natural size for RVV data modes is one RVV data vector,
+     and similarly for predicates.  We can't independently modify
+     anything smaller than that.  */
+  /* ??? For now, only do this for variable-width RVV registers.
+     Doing it for constant-sized registers breaks lower-subreg.c.  */
+  /* For partial tuple vector, we should
+     use the mode of the vector subpart,
+     in case of segment loads and stores. */
+  if ((!riscv_vector_chunks.is_constant () && riscv_vector_mode_p (mode))
+    || riscv_partial_tuple_vector_mode_p (mode))
+    return riscv_vector_natural_size (mode);
+
+  return UNITS_PER_WORD;
+}
+
+/* Implement the TARGET_DWARF_POLY_INDETERMINATE_VALUE hook.  */
+
+static unsigned int
+riscv_dwarf_poly_indeterminate_value (unsigned int i, unsigned int *factor,
+                                      int *offset)
+{
+  /* Polynomial invariant 1 == (VLENB / 16) - 1.  */
+  gcc_assert (i == 1);
+  *factor = 16;
+  *offset = 1;
+  return RISCV_DWARF_VLENB;
+}
+
+/* Implement TARGET_ESTIMATED_POLY_VALUE.
+   Look into the tuning structure for an estimate.
+   KIND specifies the type of requested estimate: min, max or likely.
+   For cores with a known RVV width all three estimates are the same.
+   For generic RVV tuning we want to distinguish the maximum estimate from
+   the minimum and likely ones.
+   The likely estimate is the same as the minimum in that case to give a
+   conservative behavior of auto-vectorizing with RVV when it is a win
+   even for 128-bit RVV.
+   When RVV width information is available VAL.coeffs[1] is multiplied by
+   the number of VQ chunks over the initial Advanced SIMD 128 bits.  */
+
+static HOST_WIDE_INT
+riscv_estimated_poly_value (poly_int64 val,
+                            poly_value_estimate_kind kind = POLY_VALUE_LIKELY)
+{
+  unsigned int width_source
+    = BITS_PER_RISCV_VECTOR.is_constant ()
+      ? (unsigned int)BITS_PER_RISCV_VECTOR.to_constant ()
+      : (unsigned int)RVV_SCALABLE;
+
+  /* If there is no core-specific information then the minimum and likely
+     values are based on 128-bit vectors and the maximum is based on
+     the architectural maximum of 2048 bits.  */
+  if (width_source == RVV_SCALABLE)
+    switch (kind)
+      {
+      case POLY_VALUE_MIN:
+      case POLY_VALUE_LIKELY:
+        return val.coeffs[0];
+
+      case POLY_VALUE_MAX:
+        return val.coeffs[0] + val.coeffs[1] * 15;
+      }
+
+  /* Allow BITS_PER_RISCV_VECTOR to be a bitmask of different VL, treating the
+     lowest as likely.  This could be made more general if future -mtune
+     options need it to be.  */
+  if (kind == POLY_VALUE_MAX)
+    width_source = 1 << floor_log2 (width_source);
+  else
+    width_source = least_bit_hwi (width_source);
+
+  /* If the core provides width information, use that.  */
+  HOST_WIDE_INT over_128 = width_source - 128;
+  return val.coeffs[0] + val.coeffs[1] * over_128 / 128;
+}
+
+/* Provide a mapping from gcc register numbers to dwarf register numbers.  */
+unsigned
+riscv_dbx_register_number (unsigned regno)
+{
+  if (GP_REG_P (regno))
+    return RISCV_DWARF_GP + regno - GP_REG_FIRST;
+  else if (FP_REG_P (regno))
+    return RISCV_DWARF_FP + regno - FP_REG_FIRST;
+  else if (V_REG_P (regno))
+    return RISCV_DWARF_V + regno - V_REG_FIRST;
+  else if (regno == VL_REGNUM)
+    return RISCV_DWARF_VL;
+  else if (regno == VTYPE_REGNUM)
+    return RISCV_DWARF_VTYPE;
+
+  /* Return values >= DWARF_FRAME_REGISTERS indicate that there is no
+     equivalent DWARF register.  */
+  return DWARF_FRAME_REGISTERS;
+}
+/* Implement TARGET_VERIFY_TYPE_CONTEXT.  */
+
+static bool
+riscv_verify_type_context (location_t loc, type_context_kind context,
+                           const_tree type, bool silent_p)
+{
+  if (type == error_mark_node)
+    return true;
+
+  if (!lookup_attribute ("RVV sizeless type", TYPE_ATTRIBUTES (type)))
+    return true;
+
+  switch (context)
+    {
+    case TCTX_SIZEOF:
+    case TCTX_STATIC_STORAGE:
+      if (!silent_p)
+        error_at (loc, "RVV type %qT does not have a fixed size", type);
+
+      return false;
+
+    case TCTX_ALIGNOF:
+      if (!silent_p)
+        error_at (loc, "RVV type %qT does not have a defined alignment", type);
+
+      return false;
+
+    case TCTX_THREAD_STORAGE:
+      if (!silent_p)
+        error_at (loc,
+                  "variables of type %qT cannot have thread-local"
+                  " storage duration",
+                  type);
+
+      return false;
+
+    case TCTX_POINTER_ARITH:
+      if (!silent_p)
+        error_at (loc, "arithmetic on pointer to RVV type %qT", type);
+
+      return false;
+
+    case TCTX_FIELD:
+      if (silent_p)
+        ;
+      else if (lang_GNU_CXX ())
+        error_at (loc, "member variables cannot have RVV type %qT", type);
+      else
+        error_at (loc, "fields cannot have RVV type %qT", type);
+
+      return false;
+
+    case TCTX_ARRAY_ELEMENT:
+      if (!silent_p)
+        error_at (loc, "array elements cannot have RVV type %qT", type);
+
+      return false;
+
+    case TCTX_ALLOCATION:
+      if (!silent_p)
+        error_at (loc, "cannot allocate objects with RVV type %qT", type);
+
+      return false;
+
+    case TCTX_DEALLOCATION:
+      if (!silent_p)
+        error_at (loc, "cannot delete objects with RVV type %qT", type);
+
+      return false;
+
+    case TCTX_EXCEPTIONS:
+      if (!silent_p)
+        error_at (loc, "cannot throw or catch RVV type %qT", type);
+
+      return false;
+
+    case TCTX_CAPTURE_BY_COPY:
+      if (!silent_p)
+        error_at (loc, "capture by copy of RVV type %qT", type);
+
+      return false;
+    }
+
+  gcc_unreachable ();
+}
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
@@ -7880,6 +8066,30 @@ riscv_floatn_mode (int n, bool extended)
 #define TARGET_DEFAULT_TARGET_FLAGS (MASK_BIG_ENDIAN)
 #endif
 
+#undef TARGET_GIMPLE_FOLD_BUILTIN
+#define TARGET_GIMPLE_FOLD_BUILTIN riscv_gimple_fold_builtin
+
+#undef TARGET_MANGLE_TYPE
+#define TARGET_MANGLE_TYPE riscv_mangle_type
+
+#undef TARGET_SCALAR_MODE_SUPPORTED_P
+#define TARGET_SCALAR_MODE_SUPPORTED_P riscv_scalar_mode_supported_p
+
+#undef TARGET_LIBGCC_FLOATING_MODE_SUPPORTED_P
+#define TARGET_LIBGCC_FLOATING_MODE_SUPPORTED_P riscv_libgcc_floating_mode_supported_p
+
+#undef TARGET_C_EXCESS_PRECISION
+#define TARGET_C_EXCESS_PRECISION riscv_excess_precision
+
+#undef TARGET_FLOATN_MODE
+#define TARGET_FLOATN_MODE riscv_floatn_mode
+
+#undef TARGET_DWARF_POLY_INDETERMINATE_VALUE
+#define TARGET_DWARF_POLY_INDETERMINATE_VALUE riscv_dwarf_poly_indeterminate_value
+#undef TARGET_ESTIMATED_POLY_VALUE
+#define TARGET_ESTIMATED_POLY_VALUE riscv_estimated_poly_value
+#undef TARGET_VERIFY_TYPE_CONTEXT
+#define TARGET_VERIFY_TYPE_CONTEXT riscv_verify_type_context
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 #include "gt-riscv.h"
