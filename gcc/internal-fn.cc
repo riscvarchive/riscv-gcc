@@ -3633,15 +3633,15 @@ expand_direct_optab_fn (internal_fn fn, gcall *stmt, direct_optab optab,
 static void
 expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 {
-  expand_operand ops[3];
-  tree rhs_type[2];
+  expand_operand ops[5];
+  tree rhs_type[4];
 
   tree lhs = gimple_call_lhs (stmt);
   tree lhs_type = TREE_TYPE (lhs);
   rtx lhs_rtx = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
   create_output_operand (&ops[0], lhs_rtx, TYPE_MODE (lhs_type));
 
-  for (unsigned int i = 0; i < 2; ++i)
+  for (unsigned int i = 0; i < gimple_call_num_args (stmt); ++i)
     {
       tree rhs = gimple_call_arg (stmt, i);
       rhs_type[i] = TREE_TYPE (rhs);
@@ -3652,7 +3652,7 @@ expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   insn_code icode = convert_optab_handler (optab, TYPE_MODE (rhs_type[0]),
 					   TYPE_MODE (lhs_type));
 
-  expand_insn (icode, 3, ops);
+  expand_insn (icode, gimple_call_num_args (stmt) + 1, ops);
   if (!rtx_equal_p (lhs_rtx, ops[0].value))
     emit_move_insn (lhs_rtx, ops[0].value);
 }
