@@ -81,20 +81,18 @@ using namespace rtl_ssa;
     phase 2 is used to prevent inserting a vsetvli before the first vector
     instruction in the block if possible.  */
 
-#define VSETVLI_INSN_P(INSN) \
-  INSN && INSN_P(INSN) \
-  && recog_memoized (INSN) >= 0 \
+#define VSETVLI_INSN_P(INSN)              \
+  INSN && INSN_P(INSN)                    \
+  && recog_memoized (INSN) >= 0           \
   && get_attr_type (INSN) == TYPE_VSETVL
 
 /* if the insn use vtype reg should always be the last
    of a parallel. */
-#define USE_VTYPE_P(INSN) \
-  use_vtype_p (INSN)
+#define USE_VTYPE_P(INSN) use_vtype_p (INSN)
 
 /* if the insn use vl reg should always be the second
    of a parallel. */
-#define USE_VL_P(INSN) \
-  use_vl_p (INSN)
+#define USE_VL_P(INSN) use_vl_p (INSN)
 
 enum state_enum
 {
@@ -113,14 +111,13 @@ static bool
 rvv_insn_p (rtx_insn *insn, rtx *src)
 {
   *src = NULL_RTX;
-  if (!(insn && INSN_P (insn)
-    && recog_memoized (insn) >= 0))
+  if (!(insn && INSN_P (insn) && recog_memoized (insn) >= 0))
     return false;
 
-  if ((get_attr_type (insn) == TYPE_VCMP
-    || get_attr_type (insn) == TYPE_VLEFF
-    || get_attr_type (insn) == TYPE_VLSEGFF)
-    && GET_CODE (PATTERN (insn)) == PARALLEL)
+  if ((get_attr_type (insn) == TYPE_VCMP ||
+       get_attr_type (insn) == TYPE_VLEFF ||
+       get_attr_type (insn) == TYPE_VLSEGFF) &&
+      GET_CODE (PATTERN (insn)) == PARALLEL)
     {
       *src = SET_SRC (XVECEXP (PATTERN (insn), 0, 0));
       return true;
@@ -148,15 +145,13 @@ use_vl_p (rtx_insn *insn)
   if (!rvv_insn_p (insn, &src))
     return false;
 
-  if (rtx_equal_p (XVECEXP (src, 0,
-    XVECLEN (src, 0) - 1),
-    gen_rtx_REG (SImode, VL_REGNUM)))
+  if (rtx_equal_p (XVECEXP (src, 0, XVECLEN (src, 0) - 1),
+                   gen_rtx_REG (SImode, VL_REGNUM)))
     return true;
 
-  if (XVECLEN (src, 0) > 1
-    && rtx_equal_p (XVECEXP (src, 0,
-       XVECLEN (src, 0) - 2),
-       gen_rtx_REG (SImode, VL_REGNUM)))
+  if (XVECLEN (src, 0) > 1 &&
+      rtx_equal_p (XVECEXP (src, 0, XVECLEN (src, 0) - 2),
+                   gen_rtx_REG (SImode, VL_REGNUM)))
     return true;
 
   return false;
@@ -169,9 +164,8 @@ use_vtype_p (rtx_insn *insn)
   if (!rvv_insn_p (insn, &src))
     return false;
 
-  if (rtx_equal_p (XVECEXP (src, 0,
-    XVECLEN (src, 0) - 1),
-    gen_rtx_REG (SImode, VTYPE_REGNUM)))
+  if (rtx_equal_p (XVECEXP (src, 0, XVECLEN (src, 0) - 1),
+                   gen_rtx_REG (SImode, VTYPE_REGNUM)))
     return true;
 
   return false;
@@ -189,15 +183,15 @@ use_vlmax_p (rtx_insn *insn)
     return false;
 
   if (rtx_equal_p (XVECEXP (src, 0, length - 1),
-    gen_rtx_REG (SImode, VL_REGNUM)))
+                   gen_rtx_REG (SImode, VL_REGNUM)))
     return rtx_equal_p (XVECEXP (src, 0, length - 2),
-      gen_rtx_REG (Pmode, X0_REGNUM));
+                        gen_rtx_REG (Pmode, X0_REGNUM));
 
   if (length < 3)
     return false;
 
   return rtx_equal_p (XVECEXP (src, 0, length - 3),
-      gen_rtx_REG (Pmode, X0_REGNUM));
+                      gen_rtx_REG (Pmode, X0_REGNUM));
 }
 
 static bool
@@ -214,7 +208,7 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 {
   extract_insn_cached (insn);
   if (replace == REPLACE_VTYPE)
-    validate_change (insn, recog_data.operand_loc [2], x, false);
+    validate_change (insn, recog_data.operand_loc[2], x, false);
 
   if (replace == REPLACE_VL && !use_vlmax_p (insn))
     {
@@ -224,7 +218,9 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
           if (get_attr_type (insn) == TYPE_VCMP)
             offset = 3;
         }
-      validate_change (insn, recog_data.operand_loc [recog_data.n_operands - offset], x, false);
+      validate_change (insn,
+                       recog_data.operand_loc[recog_data.n_operands - offset],
+                       x, false);
     }
 }
 
@@ -233,19 +229,18 @@ update_vlvtyp_p (rtx_insn *insn)
 {
   if (insn && INSN_P (insn))
     {
-      if (recog_memoized (insn) >= 0
-        && (get_attr_type (insn) == TYPE_VLEFF
-	|| get_attr_type (insn) == TYPE_VLSEGFF))
+      if (recog_memoized (insn) >= 0 && (get_attr_type (insn) == TYPE_VLEFF ||
+                                         get_attr_type (insn) == TYPE_VLSEGFF))
         {
           extract_insn_cached (insn);
-          if (INTVAL (recog_data.operand [recog_data.n_operands - 1])
-	      == DO_NOT_UPDATE_VL_VTYPE)
+          if (INTVAL (recog_data.operand[recog_data.n_operands - 1]) ==
+              DO_NOT_UPDATE_VL_VTYPE)
             return false;
-	  return true;
+          return true;
         }
       if (GET_CODE (PATTERN (insn)) == SET &&
-          (REGNO (SET_DEST (PATTERN (insn))) == VTYPE_REGNUM
-	  || REGNO (SET_DEST (PATTERN (insn))) == VL_REGNUM))
+          (REGNO (SET_DEST (PATTERN (insn))) == VTYPE_REGNUM ||
+           REGNO (SET_DEST (PATTERN (insn))) == VL_REGNUM))
         return true;
 
       if (GET_CODE (PATTERN (insn)) == PARALLEL)
@@ -256,8 +251,8 @@ update_vlvtyp_p (rtx_insn *insn)
           if (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)) == CALL)
             return true;
 
-	  if (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)) == SET
-	    && GET_CODE (SET_SRC (XVECEXP (PATTERN (insn), 0, 0))) == CALL)
+          if (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)) == SET &&
+              GET_CODE (SET_SRC (XVECEXP (PATTERN (insn), 0, 0))) == CALL)
             return true;
         }
 
@@ -287,31 +282,31 @@ get_avl_source (rtx avl, rtx_insn *rtl)
       next = insn->next_any_insn ();
       if (insn->rtl () == rtl)
         {
-	  resource_info resource { GET_MODE (avl), REGNO (avl) };
-	  def_lookup dl = crtl->ssa->find_def (resource, insn);
-	  def_info *def = dl.prev_def ();
+          resource_info resource{GET_MODE (avl), REGNO (avl)};
+          def_lookup dl = crtl->ssa->find_def (resource, insn);
+          def_info *def = dl.prev_def ();
 
-	  if (!def)
+          if (!def)
             return NULL_RTX;
 
-          if (!is_a <set_info *> (def))
+          if (!is_a<set_info *> (def))
             return NULL_RTX;
 
-	  insn_info *def_insn = def->insn ();
+          insn_info *def_insn = def->insn ();
 
-	  if (!def_insn)
-	    return NULL_RTX;
-	  rtx_insn *def_rtl = def_insn->rtl ();
+          if (!def_insn)
+            return NULL_RTX;
+          rtx_insn *def_rtl = def_insn->rtl ();
 
-	  if (!def_rtl)
+          if (!def_rtl)
             return NULL_RTX;
 
-         if (INSN_P (def_rtl) && single_set (def_rtl))
-	   {
-	     avl_source = SET_SRC (single_set (def_rtl));
-	     break;
-	   }
-	}
+          if (INSN_P (def_rtl) && single_set (def_rtl))
+            {
+              avl_source = SET_SRC (single_set (def_rtl));
+              break;
+            }
+        }
     }
 
   return avl_source;
@@ -334,9 +329,9 @@ private:
 
 public:
   vinfo ()
-    : state (STATE_UNINITIALIZED), vma (false), vta (false), vsew (0),
-      vlmul (0), all_maskop_p (false), sew_lmul_ratio_only_p (false),
-      avl (NULL_RTX), avl_source (NULL_RTX)
+      : state (STATE_UNINITIALIZED), vma (false), vta (false), vsew (0),
+        vlmul (0), all_maskop_p (false), sew_lmul_ratio_only_p (false),
+        avl (NULL_RTX), avl_source (NULL_RTX)
   {
   }
 
@@ -414,15 +409,13 @@ public:
   vector_policy
   getvma () const
   {
-    return vma ? vector_policy::agnostic
-    	: vector_policy::undisturbed;
+    return vma ? vector_policy::agnostic : vector_policy::undisturbed;
   }
 
   vector_policy
   getvta () const
   {
-    return vta ? vector_policy::agnostic
-    	: vector_policy::undisturbed;
+    return vta ? vector_policy::agnostic : vector_policy::undisturbed;
   }
 
   bool
@@ -430,93 +423,108 @@ public:
   {
     if (!valid_p () && !other.valid_p ())
       {
-	if (dump_file)
-	  fprintf (dump_file, "-------- Can't compare invalid VSETVLI Infos --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file,
+                   "-------- Can't compare invalid VSETVLI Infos --------\n\n");
+        gcc_unreachable ();
       }
     if (unknown_p () || other.unknown_p ())
       {
-	if (dump_file)
-	  fprintf (dump_file, "-------- Can't compare AVL in unknown state --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file,
+                   "-------- Can't compare AVL in unknown state --------\n\n");
+        gcc_unreachable ();
       }
 
-    if (getavl () != NULL_RTX && REG_P (getavl ()) && REGNO (getavl ()) == X0_REGNUM)
+    if (getavl () != NULL_RTX && REG_P (getavl ()) &&
+        REGNO (getavl ()) == X0_REGNUM)
       {
-	if (other.getavl () == NULL_RTX)
-	  return false;
-	unsigned int vsew = other.getvsew ();
+        if (other.getavl () == NULL_RTX)
+          return false;
+        unsigned int vsew = other.getvsew ();
         unsigned int vlmul = other.getvlmul ();
-        machine_mode inner = vsew == 0 ? QImode
-            : vsew == 1 ? HImode
-            : vsew == 2 ? SImode : DImode;
-        unsigned int lmul = vlmul == 0 ? riscv_vector::LMUL_1
-            : vlmul == 1 ? riscv_vector::LMUL_2
-            : vlmul == 2 ? riscv_vector::LMUL_4
-            : vlmul == 3 ? riscv_vector::LMUL_8
-            : vlmul == 5 ? riscv_vector::LMUL_1F8
-            : vlmul == 6 ? riscv_vector::LMUL_1F4 : riscv_vector::LMUL_1F2;
-        machine_mode mode = riscv_vector::vector_builtin_mode (as_a <scalar_mode> (inner), lmul);
+        machine_mode inner = vsew == 0   ? QImode
+                             : vsew == 1 ? HImode
+                             : vsew == 2 ? SImode
+                                         : DImode;
+        unsigned int lmul = vlmul == 0   ? riscv_vector::LMUL_1
+                            : vlmul == 1 ? riscv_vector::LMUL_2
+                            : vlmul == 2 ? riscv_vector::LMUL_4
+                            : vlmul == 3 ? riscv_vector::LMUL_8
+                            : vlmul == 5 ? riscv_vector::LMUL_1F8
+                            : vlmul == 6 ? riscv_vector::LMUL_1F4
+                                         : riscv_vector::LMUL_1F2;
+        machine_mode mode =
+            riscv_vector::vector_builtin_mode (as_a<scalar_mode> (inner), lmul);
         if (CONST_INT_P (other.getavl ()))
-	  {
-            if (GET_MODE_NUNITS (mode).is_constant ()
-	      && INTVAL (other.getavl ()) == GET_MODE_NUNITS (mode).to_constant ())
-	      return true;
-	  }
+          {
+            if (GET_MODE_NUNITS (mode).is_constant () &&
+                INTVAL (other.getavl ()) ==
+                    GET_MODE_NUNITS (mode).to_constant ())
+              return true;
+          }
 
         if (REG_P (other.getavl ()) || SUBREG_P (other.getavl ()))
-	  {
-	    if (other.getavl_source ())
-	      {
-		if (CONST_INT_P (other.getavl_source ())
-		  && GET_MODE_NUNITS (mode).is_constant ()
-		  && INTVAL (other.getavl_source ()) == GET_MODE_NUNITS (mode).to_constant ())
-		  return true;
-		if (CONST_POLY_INT_P (other.getavl_source ())
-		  && !GET_MODE_NUNITS (mode).is_constant ()
-		  && known_eq (rtx_to_poly_int64 (other.getavl_source ()), GET_MODE_NUNITS (mode)))
-		  return true;
-	      }
-	  }
+          {
+            if (other.getavl_source ())
+              {
+                if (CONST_INT_P (other.getavl_source ()) &&
+                    GET_MODE_NUNITS (mode).is_constant () &&
+                    INTVAL (other.getavl_source ()) ==
+                        GET_MODE_NUNITS (mode).to_constant ())
+                  return true;
+                if (CONST_POLY_INT_P (other.getavl_source ()) &&
+                    !GET_MODE_NUNITS (mode).is_constant () &&
+                    known_eq (rtx_to_poly_int64 (other.getavl_source ()),
+                              GET_MODE_NUNITS (mode)))
+                  return true;
+              }
+          }
       }
 
-    if (other.getavl () != NULL_RTX && REG_P (other.getavl ()) && REGNO (other.getavl ()) == X0_REGNUM)
+    if (other.getavl () != NULL_RTX && REG_P (other.getavl ()) &&
+        REGNO (other.getavl ()) == X0_REGNUM)
       {
-	if (getavl () == NULL_RTX)
-	  return false;
-	unsigned int vsew = getvsew ();
+        if (getavl () == NULL_RTX)
+          return false;
+        unsigned int vsew = getvsew ();
         unsigned int vlmul = getvlmul ();
-        machine_mode inner = vsew == 0 ? QImode
-            : vsew == 1 ? HImode
-            : vsew == 2 ? SImode : DImode;
-        unsigned int lmul = vlmul == 0 ? riscv_vector::LMUL_1
-            : vlmul == 1 ? riscv_vector::LMUL_2
-            : vlmul == 2 ? riscv_vector::LMUL_4
-            : vlmul == 3 ? riscv_vector::LMUL_8
-            : vlmul == 5 ? riscv_vector::LMUL_1F8
-            : vlmul == 6 ? riscv_vector::LMUL_1F4 : riscv_vector::LMUL_1F2;
-        machine_mode mode = riscv_vector::vector_builtin_mode (as_a <scalar_mode> (inner), lmul);
+        machine_mode inner = vsew == 0   ? QImode
+                             : vsew == 1 ? HImode
+                             : vsew == 2 ? SImode
+                                         : DImode;
+        unsigned int lmul = vlmul == 0   ? riscv_vector::LMUL_1
+                            : vlmul == 1 ? riscv_vector::LMUL_2
+                            : vlmul == 2 ? riscv_vector::LMUL_4
+                            : vlmul == 3 ? riscv_vector::LMUL_8
+                            : vlmul == 5 ? riscv_vector::LMUL_1F8
+                            : vlmul == 6 ? riscv_vector::LMUL_1F4
+                                         : riscv_vector::LMUL_1F2;
+        machine_mode mode =
+            riscv_vector::vector_builtin_mode (as_a<scalar_mode> (inner), lmul);
         if (CONST_INT_P (getavl ()))
-	  {
-            if (GET_MODE_NUNITS (mode).is_constant ()
-	      && INTVAL (getavl ()) == GET_MODE_NUNITS (mode).to_constant ())
-	      return true;
-	  }
+          {
+            if (GET_MODE_NUNITS (mode).is_constant () &&
+                INTVAL (getavl ()) == GET_MODE_NUNITS (mode).to_constant ())
+              return true;
+          }
 
-	if (REG_P (getavl ()) || SUBREG_P (getavl ()))
-	  {
-	    if (getavl_source ())
-	      {
-		if (CONST_INT_P (getavl_source ())
-		  && GET_MODE_NUNITS (mode).is_constant ()
-		  && INTVAL (getavl_source ()) == GET_MODE_NUNITS (mode).to_constant ())
-		  return true;
-		if (CONST_POLY_INT_P (getavl_source ())
-		  && !GET_MODE_NUNITS (mode).is_constant ()
-		  && known_eq (rtx_to_poly_int64 (getavl_source ()), GET_MODE_NUNITS (mode)))
-		  return true;
-	      }
-	  }
+        if (REG_P (getavl ()) || SUBREG_P (getavl ()))
+          {
+            if (getavl_source ())
+              {
+                if (CONST_INT_P (getavl_source ()) &&
+                    GET_MODE_NUNITS (mode).is_constant () &&
+                    INTVAL (getavl_source ()) ==
+                        GET_MODE_NUNITS (mode).to_constant ())
+                  return true;
+                if (CONST_POLY_INT_P (getavl_source ()) &&
+                    !GET_MODE_NUNITS (mode).is_constant () &&
+                    known_eq (rtx_to_poly_int64 (getavl_source ()),
+                              GET_MODE_NUNITS (mode)))
+                  return true;
+              }
+          }
       }
 
     if (rtx_equal_p (getavl (), other.getavl ()))
@@ -528,7 +536,8 @@ public:
     if (getavl_source () && rtx_equal_p (getavl_source (), other.getavl ()))
       return true;
 
-    if (other.getavl_source () && rtx_equal_p (other.getavl_source (), getavl ()))
+    if (other.getavl_source () &&
+        rtx_equal_p (other.getavl_source (), getavl ()))
       return true;
 
     return rtx_equal_p (getavl_source (), other.getavl_source ());
@@ -539,9 +548,10 @@ public:
   {
     if (!valid_p () || unknown_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't set VTYPE for uninitialized or unknown --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file, "-------- Can't set VTYPE for uninitialized or "
+                              "unknown --------\n\n");
+        gcc_unreachable ();
       }
     vma = riscv_parse_vma_field (vtype);
     vta = riscv_parse_vta_field (vtype);
@@ -554,9 +564,10 @@ public:
   {
     if (!valid_p () || unknown_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't set VTYPE for uninitialized or unknown --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file, "-------- Can't set VTYPE for uninitialized or "
+                              "unknown --------\n\n");
+        gcc_unreachable ();
       }
     vma = vm;
     vta = vt;
@@ -579,15 +590,16 @@ public:
   {
     if (!valid_p () || unknown_p () || sew_lmul_ratio_only_p)
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't set VTYPE for uninitialized or unknown --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file, "-------- Can't set VTYPE for uninitialized or "
+                              "unknown --------\n\n");
+        gcc_unreachable ();
       }
     if (!(vsew >= 0 && vsew <= 7))
       {
-	if (dump_file)
+        if (dump_file)
           fprintf (dump_file, "-------- Invalid SEW --------\n\n");
-	gcc_unreachable ();
+        gcc_unreachable ();
       }
     unsigned vtype = (vsew << 3) | (vlmul & 0x7);
     if (vta)
@@ -609,24 +621,28 @@ public:
   {
     if (!valid_p () || !other.valid_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't compare invalid VSETVLI Infos --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file,
+                   "-------- Can't compare invalid VSETVLI Infos --------\n\n");
+        gcc_unreachable ();
       }
     if (unknown_p () || other.unknown_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't compare VTYPE in unknown state --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (
+              dump_file,
+              "-------- Can't compare VTYPE in unknown state --------\n\n");
+        gcc_unreachable ();
       }
     if (sew_lmul_ratio_only_p || other.sew_lmul_ratio_only_p)
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't compare when only LMUL/SEW ratio is valid --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file, "-------- Can't compare when only LMUL/SEW ratio "
+                              "is valid --------\n\n");
+        gcc_unreachable ();
       }
-    return std::tie (vma, vta, vsew, vlmul)
-	   == std::tie (other.vma, other.vta, other.vsew, other.vlmul);
+    return std::tie (vma, vta, vsew, vlmul) ==
+           std::tie (other.vma, other.vta, other.vsew, other.vlmul);
   }
 
   unsigned
@@ -634,9 +650,10 @@ public:
   {
     if (!valid_p () || unknown_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't use VTYPE for uninitialized or unknown --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file, "-------- Can't use VTYPE for uninitialized or "
+                              "unknown --------\n\n");
+        gcc_unreachable ();
       }
 
     unsigned lmul;
@@ -646,72 +663,72 @@ public:
     switch (vsew_arg)
       {
       default:
-	gcc_unreachable ();
+        gcc_unreachable ();
       case 0:
-	sew = 8;
-	break;
+        sew = 8;
+        break;
       case 1:
-	sew = 16;
-	break;
+        sew = 16;
+        break;
       case 2:
-	sew = 32;
-	break;
+        sew = 32;
+        break;
       case 3:
-	sew = 64;
-	break;
+        sew = 64;
+        break;
       case 4:
-	sew = 128;
-	break;
+        sew = 128;
+        break;
       case 5:
-	sew = 256;
-	break;
+        sew = 256;
+        break;
       case 6:
-	sew = 512;
-	break;
+        sew = 512;
+        break;
       case 7:
-	sew = 1024;
-	break;
+        sew = 1024;
+        break;
       }
 
     switch (vlmul_arg)
       {
       default:
-	gcc_unreachable ();
+        gcc_unreachable ();
       case 0:
-	lmul = 1;
-	fractional = false;
-	break;
+        lmul = 1;
+        fractional = false;
+        break;
       case 1:
-	lmul = 2;
-	fractional = false;
-	break;
+        lmul = 2;
+        fractional = false;
+        break;
       case 2:
-	lmul = 4;
-	fractional = false;
-	break;
+        lmul = 4;
+        fractional = false;
+        break;
       case 3:
-	lmul = 8;
-	fractional = false;
-	break;
+        lmul = 8;
+        fractional = false;
+        break;
       case 5:
-	lmul = 8;
-	fractional = true;
-	break;
+        lmul = 8;
+        fractional = true;
+        break;
       case 6:
-	lmul = 4;
-	fractional = true;
-	break;
+        lmul = 4;
+        fractional = true;
+        break;
       case 7:
-	lmul = 2;
-	fractional = true;
-	break;
+        lmul = 2;
+        fractional = true;
+        break;
       }
 
     if (sew < 8)
       {
-	if (dump_file)
+        if (dump_file)
           fprintf (dump_file, "-------- Unexpected SEW value --------\n\n");
-	gcc_unreachable ();
+        gcc_unreachable ();
       }
     unsigned int sew_mul_ratio = fractional ? sew * lmul : sew / lmul;
 
@@ -730,15 +747,18 @@ public:
   {
     if (!valid_p () || !other.valid_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't compare invalid VSETVLI Infos --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file,
+                   "-------- Can't compare invalid VSETVLI Infos --------\n\n");
+        gcc_unreachable ();
       }
     if (unknown_p () || other.unknown_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't compare VTYPE in unknown state --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (
+              dump_file,
+              "-------- Can't compare VTYPE in unknown state --------\n\n");
+        gcc_unreachable ();
       }
     return calcsew_lmul_ratio () == other.calcsew_lmul_ratio ();
   }
@@ -751,15 +771,18 @@ public:
   {
     if (!valid_p () || !info.valid_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't compare invalid vinfos --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file,
+                   "-------- Can't compare invalid vinfos --------\n\n");
+        gcc_unreachable ();
       }
     if (info.sew_lmul_ratio_only_p)
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Expected a valid VTYPE for instruction --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (
+              dump_file,
+              "-------- Expected a valid VTYPE for instruction --------\n\n");
+        gcc_unreachable ();
       }
 
     // Nothing is compatible with Unknown.
@@ -774,15 +797,14 @@ public:
     // it compatible.
     if (info.known_p () && info.avl == NULL_RTX)
       {
-	if (vsew == info.vsew)
-	  return true;
+        if (vsew == info.vsew)
+          return true;
       }
 
     // VTypes must match unless the instruction is a mask reg operation, then
     // it only care about VLMAX.
-    if (!vtype_equal_p (info)
-	&& !(info.all_maskop_p && vlmax_equal_p (info) && vta == info.vta
-	     && vma == info.vma))
+    if (!vtype_equal_p (info) && !(info.all_maskop_p && vlmax_equal_p (info) &&
+                                   vta == info.vta && vma == info.vma))
       return false;
 
     return avl_equal_p (info);
@@ -790,25 +812,29 @@ public:
 
   bool
   load_store_compatible_p (unsigned vsew_arg, const vinfo &info, bool check_p,
-			   bool stride_p) const
+                           bool stride_p) const
   {
     if (!valid_p () || !info.valid_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can't compare invalid vinfos --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file,
+                   "-------- Can't compare invalid vinfos --------\n\n");
+        gcc_unreachable ();
       }
     if (info.sew_lmul_ratio_only_p)
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Expected a valid VTYPE for instruction --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (
+              dump_file,
+              "-------- Expected a valid VTYPE for instruction --------\n\n");
+        gcc_unreachable ();
       }
     if (vsew_arg != info.vsew)
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Mismatched EEW/SEW for store --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (dump_file,
+                   "-------- Mismatched EEW/SEW for store --------\n\n");
+        gcc_unreachable ();
       }
 
     if (unknown_p () || getsew_lmul_ratio_only_p ())
@@ -823,8 +849,9 @@ public:
       return false;
 
     if (!stride_p)
-      return (vsew == info.vsew) && (vlmul == info.vlmul)
-	&& (calcsew_lmul_ratio () == calcsew_lmul_ratio (vsew_arg, info.vlmul));
+      return (vsew == info.vsew) && (vlmul == info.vlmul) &&
+             (calcsew_lmul_ratio () ==
+              calcsew_lmul_ratio (vsew_arg, info.vlmul));
 
     return calcsew_lmul_ratio () == calcsew_lmul_ratio (vsew_arg, info.vlmul);
   }
@@ -861,7 +888,8 @@ public:
     return false;
   }
 
-  bool operator!=(const vinfo &Other) const
+  bool
+  operator!= (const vinfo &Other) const
   {
     return !(*this == Other);
   }
@@ -905,9 +933,9 @@ public:
     // return an SEW/LMUL ratio only value.
     if (avl_equal_p (other) && vlmax_equal_p (other))
       {
-	vinfo merge_info = *this;
-	merge_info.sew_lmul_ratio_only_p = true;
-	return merge_info;
+        vinfo merge_info = *this;
+        merge_info.sew_lmul_ratio_only_p = true;
+        return merge_info;
       }
 
     // otherwise the result is unknown.
@@ -921,9 +949,11 @@ public:
   {
     if (!valid_p ())
       {
-	if (dump_file)
-          fprintf (dump_file, "-------- Can only merge with a valid VSETVLInfo --------\n\n");
-	gcc_unreachable ();
+        if (dump_file)
+          fprintf (
+              dump_file,
+              "-------- Can only merge with a valid VSETVLInfo --------\n\n");
+        gcc_unreachable ();
       }
 
     // Nothing changed from the predecessor, keep it.
@@ -966,8 +996,9 @@ std::queue<basic_block> m_bb_queue;
 static void
 emit_vsetvl_insn (rtx op0, rtx op1, rtx op2, rtx_insn *insn)
 {
-	if (dump_file)
-    fprintf (dump_file, "-------- replace insn %d  --------\n\n", INSN_UID (insn));
+  if (dump_file)
+    fprintf (dump_file, "-------- replace insn %d  --------\n\n",
+             INSN_UID (insn));
   emit_insn_before (gen_vsetvl (Pmode, op0, op1, op2), insn);
 }
 
@@ -991,11 +1022,12 @@ getinfoforvsetvli (rtx_insn *insn, vinfo curr_info)
   rtx vl = recog_data.operand[1];
   rtx vtype = recog_data.operand[2];
   if (!CONSTANT_P (vtype))
-      {
-	if (dump_file)
-	  fprintf (dump_file, "-------- Invalid vtype in vsetvli instruction --------\n\n");
-	gcc_unreachable ();
-      }
+    {
+      if (dump_file)
+        fprintf (dump_file,
+                 "-------- Invalid vtype in vsetvli instruction --------\n\n");
+      gcc_unreachable ();
+    }
   new_info.setavl (vl);
   new_info.setavl_source (get_avl_source (vl, insn));
   new_info.setvtype (INTVAL (vtype));
@@ -1016,15 +1048,17 @@ analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
         offset = 2;
     }
   extract_insn_cached (insn);
-  vector_policy vma = get_vma (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
-  vector_policy vta = get_vta (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
+  vector_policy vma =
+      get_vma (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
+  vector_policy vta =
+      get_vta (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
   if (vma == vector_policy::any)
     {
       /* For N/A vma we remain the last vma if it valid. */
       if (curr_info.valid_p () && !curr_info.unknown_p ())
         vma = curr_info.getvma ();
       else
-      	vma = vma_default;
+        vma = vma_default;
     }
   if (vta == vector_policy::any)
     {
@@ -1032,7 +1066,7 @@ analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
       if (curr_info.valid_p () && !curr_info.unknown_p ())
         vta = curr_info.getvta ();
       else
-      	vta = vta_default;
+        vta = vta_default;
     }
   return get_vma_vta (vma, vta);
 }
@@ -1052,14 +1086,15 @@ computeinfoforinstr (rtx_insn *insn, vinfo curr_info)
         info.setavl (gen_rtx_REG (Pmode, X0_REGNUM));
       else
         {
-	  unsigned int offset = 2;
-	  if (GET_CODE (PATTERN (insn)) == PARALLEL)
-	    {
-	      if (get_attr_type (insn) == TYPE_VCMP)
-	        offset = 3;
-	    }
-	  info.setavl_source (get_avl_source (recog_data.operand[recog_data.n_operands - offset], insn));
-	  info.setavl (recog_data.operand[recog_data.n_operands - offset]);
+          unsigned int offset = 2;
+          if (GET_CODE (PATTERN (insn)) == PARALLEL)
+            {
+              if (get_attr_type (insn) == TYPE_VCMP)
+                offset = 3;
+            }
+          info.setavl_source (get_avl_source (
+              recog_data.operand[recog_data.n_operands - offset], insn));
+          info.setavl (recog_data.operand[recog_data.n_operands - offset]);
         }
     }
   else
@@ -1067,13 +1102,12 @@ computeinfoforinstr (rtx_insn *insn, vinfo curr_info)
 
   machine_mode mode = riscv_translate_attr_mode (insn);
 
-  unsigned int vta = get_vta (vma_vta)
-  	== vector_policy::agnostic ? 1 : 0;
-  unsigned int vma = get_vma (vma_vta)
-  	== vector_policy::agnostic ? 1 : 0;
-  info.setvtype (
-    riscv_classify_vlmul_field (mode), riscv_classify_vsew_field (mode),
-    /*TailAgnostic*/ vta, /*MaskAgnostic*/ vma, riscv_vector_mask_mode_p (mode));
+  unsigned int vta = get_vta (vma_vta) == vector_policy::agnostic ? 1 : 0;
+  unsigned int vma = get_vma (vma_vta) == vector_policy::agnostic ? 1 : 0;
+  info.setvtype (riscv_classify_vlmul_field (mode),
+                 riscv_classify_vsew_field (mode),
+                 /*TailAgnostic*/ vta, /*MaskAgnostic*/ vma,
+                 riscv_vector_mask_mode_p (mode));
 
   return info;
 }
@@ -1089,30 +1123,29 @@ canskipvsetvliforloadstore (rtx_insn *insn, vinfo &new_info, vinfo &curr_info)
 
   if (get_attr_type (insn))
     {
-      if (get_attr_type (insn) == TYPE_VLE
-	  || get_attr_type (insn) == TYPE_VLSE)
-	{
-	  check_p = true;
-	  stride_p = true;
-	}
-      else if (get_attr_type (insn) == TYPE_VSE
-	       || get_attr_type (insn) == TYPE_VSSE)
-	{
-	  check_p = false;
-	  stride_p = true;
-	}
-      else if (get_attr_type (insn) == TYPE_VSUXEI
-	       || get_attr_type (insn) == TYPE_VSOXEI
-	       || get_attr_type (insn) == TYPE_VSSEG
-	       || get_attr_type (insn) == TYPE_VSSSEG
-	       || get_attr_type (insn) == TYPE_VSUXSEGEI
-	       || get_attr_type (insn) == TYPE_VSOXSEGEI)
-	{
-	  check_p = false;
-	  stride_p = false;
-	}
+      if (get_attr_type (insn) == TYPE_VLE || get_attr_type (insn) == TYPE_VLSE)
+        {
+          check_p = true;
+          stride_p = true;
+        }
+      else if (get_attr_type (insn) == TYPE_VSE ||
+               get_attr_type (insn) == TYPE_VSSE)
+        {
+          check_p = false;
+          stride_p = true;
+        }
+      else if (get_attr_type (insn) == TYPE_VSUXEI ||
+               get_attr_type (insn) == TYPE_VSOXEI ||
+               get_attr_type (insn) == TYPE_VSSEG ||
+               get_attr_type (insn) == TYPE_VSSSEG ||
+               get_attr_type (insn) == TYPE_VSUXSEGEI ||
+               get_attr_type (insn) == TYPE_VSOXSEGEI)
+        {
+          check_p = false;
+          stride_p = false;
+        }
       else
-	return false;
+        return false;
     }
   else
     return false;
@@ -1146,8 +1179,8 @@ needvsetvliphi (vinfo &new_info, rtx_insn *rtl)
       avl = vsetvl_e8mf8 (vl << 2);
     for (int i = 0; i < m; i++)
       {
-	v0 = vle8_v_i8mf8 (base + i * 32,avl);
-	v0 = vadd_vv_i8mf8 (v0,v0,avl);
+        v0 = vle8_v_i8mf8 (base + i * 32,avl);
+        v0 = vadd_vv_i8mf8 (v0,v0,avl);
       }
     *(vint8mf8_t*)out = v0;
   } */
@@ -1157,8 +1190,8 @@ needvsetvliphi (vinfo &new_info, rtx_insn *rtl)
   if (optimize < 2)
     return true;
 
-  if (!(!new_info.unknown_p () && new_info.getavl ()
-	&& GET_CODE (new_info.getavl ()) == REG))
+  if (!(!new_info.unknown_p () && new_info.getavl () &&
+        GET_CODE (new_info.getavl ()) == REG))
     return true;
 
   rtx avl = new_info.getavl ();
@@ -1169,63 +1202,64 @@ needvsetvliphi (vinfo &new_info, rtx_insn *rtl)
     {
       next = insn->next_any_insn ();
       if (insn->rtl () == rtl)
-	{
-	  bb_info *bb = insn->bb ();
-	  ebb_info *ebb = bb->ebb ();
-	  resource_info resource{ GET_MODE (avl), REGNO (avl) };
-	  insn_info *phi_insn = ebb->phi_insn ();
-	  phi_info *phi;
-	  def_lookup dl = crtl->ssa->find_def (resource, phi_insn);
-	  def_info *set = dl.prev_def ();
+        {
+          bb_info *bb = insn->bb ();
+          ebb_info *ebb = bb->ebb ();
+          resource_info resource{GET_MODE (avl), REGNO (avl)};
+          insn_info *phi_insn = ebb->phi_insn ();
+          phi_info *phi;
+          def_lookup dl = crtl->ssa->find_def (resource, phi_insn);
+          def_info *set = dl.prev_def ();
 
-	  if (!set)
-	    return true;
+          if (!set)
+            return true;
 
-	  if (!is_a <phi_info *> (set))
-	    return true;
+          if (!is_a<phi_info *> (set))
+            return true;
 
-	  // There is an existing phi.
-	  phi = as_a<phi_info *> (set);
-	  for (unsigned int i = 0; i < phi->num_inputs (); i++)
-	    {
-	      def_info *def = phi->input_value (i);
-	      if (!def)
-		return true;
-	      insn_info *def_insn = def->insn ();
-	      rtx_insn *def_rtl = def_insn->rtl ();
+          // There is an existing phi.
+          phi = as_a<phi_info *> (set);
+          for (unsigned int i = 0; i < phi->num_inputs (); i++)
+            {
+              def_info *def = phi->input_value (i);
+              if (!def)
+                return true;
+              insn_info *def_insn = def->insn ();
+              rtx_insn *def_rtl = def_insn->rtl ();
 
-	      if (!def_rtl)
-		return true;
-	      if (!INSN_P (def_rtl))
-		return true;
-	      extract_insn_cached (def_rtl);
-	      if (recog_data.n_operands > 0
-		  && rtx_equal_p (recog_data.operand[0], avl))
-		{
-		  if (get_attr_type (def_rtl)
-		      && get_attr_type (def_rtl) == TYPE_VSETVL)
-		    {
-		      basic_block def_bb = BLOCK_FOR_INSN (def_rtl);
-		      bb_vinfo &info = m_bb_vinfo_map[def_bb->index];
-		      // If the exit from the predecessor has the VTYPE
-		      // we are looking for we might be able to avoid a
-		      // VSETVLI.
-		      if (info.exit.unknown_p ()
-			  || !info.exit.vtype_equal_p (new_info))
-			return true;
-		      // We found a VSET(I)VLI make sure it matches the
-		      // output of the predecessor block.
-		      vinfo curr_info;
-		      vinfo avl_def_info = getinfoforvsetvli (def_rtl, curr_info);
-		      if (!avl_def_info.vtype_equal_p (info.exit)
-			  || !avl_def_info.avl_equal_p (info.exit))
-			return true;
-		    }
-		  else
-		    return true;
-		}
-	    }
-	}
+              if (!def_rtl)
+                return true;
+              if (!INSN_P (def_rtl))
+                return true;
+              extract_insn_cached (def_rtl);
+              if (recog_data.n_operands > 0 &&
+                  rtx_equal_p (recog_data.operand[0], avl))
+                {
+                  if (get_attr_type (def_rtl) &&
+                      get_attr_type (def_rtl) == TYPE_VSETVL)
+                    {
+                      basic_block def_bb = BLOCK_FOR_INSN (def_rtl);
+                      bb_vinfo &info = m_bb_vinfo_map[def_bb->index];
+                      // If the exit from the predecessor has the VTYPE
+                      // we are looking for we might be able to avoid a
+                      // VSETVLI.
+                      if (info.exit.unknown_p () ||
+                          !info.exit.vtype_equal_p (new_info))
+                        return true;
+                      // We found a VSET(I)VLI make sure it matches the
+                      // output of the predecessor block.
+                      vinfo curr_info;
+                      vinfo avl_def_info =
+                          getinfoforvsetvli (def_rtl, curr_info);
+                      if (!avl_def_info.vtype_equal_p (info.exit) ||
+                          !avl_def_info.avl_equal_p (info.exit))
+                        return true;
+                    }
+                  else
+                    return true;
+                }
+            }
+        }
     }
 
   // If all the incoming values to the PHI checked out, we don't need
@@ -1277,27 +1311,27 @@ compare_avl_from_source (vinfo &new_info, rtx_insn *vsetvl, rtx_insn *rtl)
     {
       next = insn->next_any_insn ();
       if (insn->rtl () == rtl)
-	{
-	  resource_info resource{ GET_MODE (avl), REGNO (avl) };
-	  def_lookup dl = crtl->ssa->find_def (resource, insn);
-	  def_info *def = dl.prev_def ();
+        {
+          resource_info resource{GET_MODE (avl), REGNO (avl)};
+          def_lookup dl = crtl->ssa->find_def (resource, insn);
+          def_info *def = dl.prev_def ();
 
-	  if (!def)
-	    return false;
+          if (!def)
+            return false;
 
-	  if (!is_a <set_info *> (def))
-	    return false;
+          if (!is_a<set_info *> (def))
+            return false;
 
-	  insn_info *def_insn = def->insn ();
-	  rtx_insn *def_rtl = def_insn->rtl ();
+          insn_info *def_insn = def->insn ();
+          rtx_insn *def_rtl = def_insn->rtl ();
 
-	  if (!def_rtl)
-	    return false;
-	  if (!INSN_P (def_rtl))
-	    return false;
-	  if (def_rtl == vsetvl)
-	    return true;
-	}
+          if (!def_rtl)
+            return false;
+          if (!INSN_P (def_rtl))
+            return false;
+          if (def_rtl == vsetvl)
+            return true;
+        }
     }
 
   return false;
@@ -1317,37 +1351,37 @@ computevlvtypechanges (basic_block bb)
     // If this is an explicit VSETVLI or VSETIVLI, update our state.
     if (VSETVLI_INSN_P (insn))
       {
-	vector_p = true;
-	info.change = getinfoforvsetvli (insn, curr_info);
-	curr_info = info.change;
-	continue;
+        vector_p = true;
+        info.change = getinfoforvsetvli (insn, curr_info);
+        curr_info = info.change;
+        continue;
       }
     /*  According to vector.md, each instruction pattern parallel.
-	It should have at least 2 side effects.
-	The last 2 side effects are use vl && use vtype  */
+        It should have at least 2 side effects.
+        The last 2 side effects are use vl && use vtype  */
     if (USE_VTYPE_P (insn))
       {
-	vector_p = true;
+        vector_p = true;
 
-	vinfo new_info = computeinfoforinstr (insn, curr_info);
+        vinfo new_info = computeinfoforinstr (insn, curr_info);
         curr_info = new_info;
-	if (!info.change.valid_p ())
-	  {
-	    info.change = new_info;
-	  }
-	else
-	  {
-	    // If this instruction isn't compatible with the previous VL/VTYPE
-	    // we need to insert a VSETVLI.
-	    // If this is a unit-stride or strided load/store, we may be able
-	    // to use the EMUL=(EEW/SEW)*LMUL relationship to avoid changing
-	    // vtype. NOTE: We only do this if the vtype we're comparing
-	    // against was created in this block. We need the first and third
-	    // phase to treat the store the same way.
-	    if (!canskipvsetvliforloadstore (insn, new_info, info.change)
-		&& needvsetvli (insn, new_info, info.change))
-	      info.change = new_info;
-	  }
+        if (!info.change.valid_p ())
+          {
+            info.change = new_info;
+          }
+        else
+          {
+            // If this instruction isn't compatible with the previous VL/VTYPE
+            // we need to insert a VSETVLI.
+            // If this is a unit-stride or strided load/store, we may be able
+            // to use the EMUL=(EEW/SEW)*LMUL relationship to avoid changing
+            // vtype. NOTE: We only do this if the vtype we're comparing
+            // against was created in this block. We need the first and third
+            // phase to treat the store the same way.
+            if (!canskipvsetvliforloadstore (insn, new_info, info.change) &&
+                needvsetvli (insn, new_info, info.change))
+              info.change = new_info;
+          }
       }
     // If this is something that updates VL/VTYPE that we don't know about, set
     // the state to unknown.
@@ -1378,8 +1412,8 @@ computeincomingvlvtype (const basic_block bb)
       edge_iterator ei;
       FOR_EACH_EDGE (e, ei, bb->preds)
       {
-	basic_block ancestor = e->src;
-	in_info = in_info.intersect (m_bb_vinfo_map[ancestor->index].exit);
+        basic_block ancestor = e->src;
+        in_info = in_info.intersect (m_bb_vinfo_map[ancestor->index].exit);
       }
     }
 
@@ -1420,9 +1454,8 @@ insertvsetvli (rtx_insn *insn, const vinfo &curr_info, const vinfo &prev_info)
 
   // Use X0, X0 form if the AVL is the same and the SEW+LMUL gives the same
   // VLMAX
-  if (prev_info.valid_p () && !prev_info.unknown_p ()
-      && curr_info.avl_equal_p (prev_info)
-      && curr_info.vlmax_equal_p (prev_info))
+  if (prev_info.valid_p () && !prev_info.unknown_p () &&
+      curr_info.avl_equal_p (prev_info) && curr_info.vlmax_equal_p (prev_info))
     {
       emit_vsetvl_insn (zero, zero, vtype, insn);
       return;
@@ -1430,12 +1463,12 @@ insertvsetvli (rtx_insn *insn, const vinfo &curr_info, const vinfo &prev_info)
 
   if (curr_info.getavl () == NULL_RTX)
     {
-      if (prev_info.valid_p () && !prev_info.unknown_p ()
-	  && curr_info.vlmax_equal_p (prev_info))
-	{
-	  emit_vsetvl_insn (zero, zero, vtype, insn);
-	  return;
-	}
+      if (prev_info.valid_p () && !prev_info.unknown_p () &&
+          curr_info.vlmax_equal_p (prev_info))
+        {
+          emit_vsetvl_insn (zero, zero, vtype, insn);
+          return;
+        }
       // Otherwise use an AVL of 0 to avoid depending on previous vl.
       emit_vsetvl_insn (zero, GEN_INT (0), vtype, insn);
       return;
@@ -1464,82 +1497,84 @@ emitvsetvlis (const basic_block bb)
     // If this is an explicit VSETVLI or VSETIVLI, update our state.
     if (VSETVLI_INSN_P (insn))
       {
-	curr_info = getinfoforvsetvli (insn, curr_info);
-	prev_insn = insn;
-	continue;
+        curr_info = getinfoforvsetvli (insn, curr_info);
+        prev_insn = insn;
+        continue;
       }
     if (USE_VTYPE_P (insn))
       {
-	vinfo new_info = computeinfoforinstr (insn, curr_info);
+        vinfo new_info = computeinfoforinstr (insn, curr_info);
 
-	if (!curr_info.valid_p ())
-	  {
-	    // We haven't found any vector instructions or VL/VTYPE changes
-	    // yet, use the predecessor information.
-	    if (!m_bb_vinfo_map[bb->index].pred.valid_p ())
-	      {
-		if (dump_file)
-		   fprintf (dump_file, "-------- Expected a valid predecessor state --------\n\n");
-		gcc_unreachable ();
-	      }
-	    if (needvsetvli (insn, new_info, m_bb_vinfo_map[bb->index].pred)
-		&& needvsetvliphi (new_info, insn))
-	      {
-		insertvsetvli (insn, new_info, m_bb_vinfo_map[bb->index].pred);
-		curr_info = new_info;
-	      }
-	  }
-	else
-	  {
-	    // If this instruction isn't compatible with the previous VL/VTYPE
-	    // we need to insert a VSETVLI.
-	    // If this is a unit-stride or strided load/store, we may be able
-	    // to use the EMUL=(EEW/SEW)*LMUL relationship to avoid changing
-	    // vtype. NOTE: We can't use predecessor information for the store.
-	    // We must treat it the same as the first phase so that we produce
-	    // the correct vl/vtype for succesor blocks.
-	    if (!canskipvsetvliforloadstore (insn, new_info, curr_info)
-		&& needvsetvli (insn, new_info, curr_info))
-	      {
-		// If the previous VL/VTYPE is set by VSETVLI and do not use,
-		// Merge it with current VL/VTYPE.
-		bool need_insert_vsetvli_p = true;
-		if (prev_insn)
-		  {
-		    extract_insn_cached (prev_insn);
-		    bool sameavl_p
-		      = curr_info.avl_equal_p (new_info)
-			|| (new_info.unknown_p () && new_info.getavl ()
-			    && rtx_equal_p (new_info.getavl (), recog_data.operand[0]));
-		    if (!sameavl_p)
-	              sameavl_p = compare_avl_from_source (new_info, prev_insn, insn);
-		    // If these two VSETVLI have the same AVL and the same
-		    // VLMAX, we could merge these two VSETVLI.
-		    if (sameavl_p
-			&& curr_info.calcsew_lmul_ratio ()
-			== new_info.calcsew_lmul_ratio ())
-		      {
-			extract_insn_cached (prev_insn);
-			replace_op (prev_insn,
-				    GEN_INT (new_info.encodevtype ()),
-				    REPLACE_VTYPE);
-			need_insert_vsetvli_p = false;
-		      }
-		  }
+        if (!curr_info.valid_p ())
+          {
+            // We haven't found any vector instructions or VL/VTYPE changes
+            // yet, use the predecessor information.
+            if (!m_bb_vinfo_map[bb->index].pred.valid_p ())
+              {
+                if (dump_file)
+                  fprintf (dump_file, "-------- Expected a valid predecessor "
+                                      "state --------\n\n");
+                gcc_unreachable ();
+              }
+            if (needvsetvli (insn, new_info, m_bb_vinfo_map[bb->index].pred) &&
+                needvsetvliphi (new_info, insn))
+              {
+                insertvsetvli (insn, new_info, m_bb_vinfo_map[bb->index].pred);
+                curr_info = new_info;
+              }
+          }
+        else
+          {
+            // If this instruction isn't compatible with the previous VL/VTYPE
+            // we need to insert a VSETVLI.
+            // If this is a unit-stride or strided load/store, we may be able
+            // to use the EMUL=(EEW/SEW)*LMUL relationship to avoid changing
+            // vtype. NOTE: We can't use predecessor information for the store.
+            // We must treat it the same as the first phase so that we produce
+            // the correct vl/vtype for succesor blocks.
+            if (!canskipvsetvliforloadstore (insn, new_info, curr_info) &&
+                needvsetvli (insn, new_info, curr_info))
+              {
+                // If the previous VL/VTYPE is set by VSETVLI and do not use,
+                // Merge it with current VL/VTYPE.
+                bool need_insert_vsetvli_p = true;
+                if (prev_insn)
+                  {
+                    extract_insn_cached (prev_insn);
+                    bool sameavl_p =
+                        curr_info.avl_equal_p (new_info) ||
+                        (new_info.unknown_p () && new_info.getavl () &&
+                         rtx_equal_p (new_info.getavl (),
+                                      recog_data.operand[0]));
+                    if (!sameavl_p)
+                      sameavl_p =
+                          compare_avl_from_source (new_info, prev_insn, insn);
+                    // If these two VSETVLI have the same AVL and the same
+                    // VLMAX, we could merge these two VSETVLI.
+                    if (sameavl_p && curr_info.calcsew_lmul_ratio () ==
+                                         new_info.calcsew_lmul_ratio ())
+                      {
+                        extract_insn_cached (prev_insn);
+                        replace_op (prev_insn,
+                                    GEN_INT (new_info.encodevtype ()),
+                                    REPLACE_VTYPE);
+                        need_insert_vsetvli_p = false;
+                      }
+                  }
 
-		if (need_insert_vsetvli_p)
-		  insertvsetvli (insn, new_info, curr_info);
-		curr_info = new_info;
-	      }
-	  }
-	prev_insn = NULL;
+                if (need_insert_vsetvli_p)
+                  insertvsetvli (insn, new_info, curr_info);
+                curr_info = new_info;
+              }
+          }
+        prev_insn = NULL;
       }
     // If this is something updates VL/VTYPE that we don't know about, set
     // the state to unknown.
     if (update_vlvtyp_p (insn))
       {
-	curr_info = vinfo::getunknown ();
-	prev_insn = NULL;
+        curr_info = vinfo::getunknown ();
+        prev_insn = NULL;
       }
 
     // If we reach the end of the block and our current info doesn't match the
@@ -1547,34 +1582,33 @@ emitvsetvlis (const basic_block bb)
     if (insn == BB_END (bb))
       {
         const vinfo &exit_info = m_bb_vinfo_map[bb->index].exit;
-        if (curr_info.valid_p () && exit_info.valid_p () && !exit_info.unknown_p() &&
-            curr_info != exit_info)
-	  {
-	    insertvsetvli (insn, exit_info, curr_info);
+        if (curr_info.valid_p () && exit_info.valid_p () &&
+            !exit_info.unknown_p () && curr_info != exit_info)
+          {
+            insertvsetvli (insn, exit_info, curr_info);
             curr_info = exit_info;
           }
       }
   }
 }
 
-const pass_data pass_data_insert_vsetvli =
-{
-  RTL_PASS,         /* type */
-  "insert_vsetvli", /* name */
-  OPTGROUP_NONE,    /* optinfo_flags */
-  TV_NONE,          /* tv_id */
-  0,                /* properties_required */
-  0,                /* properties_provided */
-  0,                /* properties_destroyed */
-  0,                /* todo_flags_start */
-  0,                /* todo_flags_finish */
+const pass_data pass_data_insert_vsetvli = {
+    RTL_PASS,         /* type */
+    "insert_vsetvli", /* name */
+    OPTGROUP_NONE,    /* optinfo_flags */
+    TV_NONE,          /* tv_id */
+    0,                /* properties_required */
+    0,                /* properties_provided */
+    0,                /* properties_destroyed */
+    0,                /* todo_flags_start */
+    0,                /* todo_flags_finish */
 };
 
 class pass_insert_vsetvli : public rtl_opt_pass
 {
 public:
   pass_insert_vsetvli (gcc::context *ctxt)
-    : rtl_opt_pass (pass_data_insert_vsetvli, ctxt)
+      : rtl_opt_pass (pass_data_insert_vsetvli, ctxt)
   {
   }
 
@@ -1584,7 +1618,8 @@ public:
   {
     return TARGET_VECTOR;
   }
-  virtual unsigned int execute (function *);
+  virtual unsigned int
+  execute (function *);
 
 }; // class pass_insert_vsetvli
 
@@ -1623,41 +1658,41 @@ pass_insert_vsetvli::execute (function *fn)
   }
 
   if (dump_file)
-    fprintf (dump_file, "-------- Phase 1 determine how VL/VTYPE are affected by the each block --------\n\n");
+    fprintf (dump_file, "-------- Phase 1 determine how VL/VTYPE are affected "
+                        "by the each block --------\n\n");
 
   // Phase 1 - determine how VL/VTYPE are affected by the each block.
   FOR_ALL_BB_FN (bb, fn)
-    vector_p |= computevlvtypechanges (bb);
+  vector_p |= computevlvtypechanges (bb);
 
   if (vector_p)
     {
       if (dump_file)
-        fprintf (dump_file, "-------- Phase 2 determine the exit VL/VTYPE from each block --------\n\n");
+        fprintf (dump_file, "-------- Phase 2 determine the exit VL/VTYPE from "
+                            "each block --------\n\n");
       // Phase 2 - determine the exit VL/VTYPE from each block. We add all
       // blocks to the list here, but will also add any that need to be
       // revisited during Phase 2 processing.
       FOR_ALL_BB_FN (bb, fn)
       {
-	m_bb_queue.push (bb);
-	m_bb_vinfo_map[bb->index].inqueue = true;
+        m_bb_queue.push (bb);
+        m_bb_vinfo_map[bb->index].inqueue = true;
       }
       while (!m_bb_queue.empty ())
-	{
-	  bb = m_bb_queue.front ();
-	  m_bb_queue.pop ();
-	  computeincomingvlvtype (bb);
-	}
+        {
+          bb = m_bb_queue.front ();
+          m_bb_queue.pop ();
+          computeincomingvlvtype (bb);
+        }
 
       if (dump_file)
-        fprintf (dump_file, "-------- Phase 3 add any vsetvli instructions needed in the block. --------\n\n");
+        fprintf (dump_file, "-------- Phase 3 add any vsetvli instructions "
+                            "needed in the block. --------\n\n");
       // Phase 3 - add any vsetvli instructions needed in the block. Use the
       // Phase 2 information to avoid adding vsetvlis before the first vector
       // instruction in the block if the VL/VTYPE is satisfied by its
       // predecessors.
-      FOR_ALL_BB_FN (bb, fn)
-      {
-	emitvsetvlis (bb);
-      }
+      FOR_ALL_BB_FN (bb, fn) { emitvsetvlis (bb); }
     }
 
   m_bb_vinfo_map.clear ();
@@ -1681,29 +1716,28 @@ make_pass_insert_vsetvli (gcc::context *ctxt)
   return new pass_insert_vsetvli (ctxt);
 }
 
-/* Insert vsetvli Pass after reload. This pass handles the vsetvli that can not be handled
-   by insert_vsetvli which is insert before combine pass.
-   Because we have some cases that GCC will generate some register spilling after reload
-   when the registers are used up. This kind of register spilling needs to insert vsetvli
-   to gurantee the result. */
-const pass_data pass_data_insert_vsetvli2 =
-{
-  RTL_PASS,         /* type */
-  "insert_vsetvli2", /* name */
-  OPTGROUP_NONE,    /* optinfo_flags */
-  TV_NONE,          /* tv_id */
-  0,                /* properties_required */
-  0,                /* properties_provided */
-  0,                /* properties_destroyed */
-  0,                /* todo_flags_start */
-  0,                /* todo_flags_finish */
+/* Insert vsetvli Pass after reload. This pass handles the vsetvli that can not
+   be handled by insert_vsetvli which is insert before combine pass. Because we
+   have some cases that GCC will generate some register spilling after reload
+   when the registers are used up. This kind of register spilling needs to
+   insert vsetvli to gurantee the result. */
+const pass_data pass_data_insert_vsetvli2 = {
+    RTL_PASS,          /* type */
+    "insert_vsetvli2", /* name */
+    OPTGROUP_NONE,     /* optinfo_flags */
+    TV_NONE,           /* tv_id */
+    0,                 /* properties_required */
+    0,                 /* properties_provided */
+    0,                 /* properties_destroyed */
+    0,                 /* todo_flags_start */
+    0,                 /* todo_flags_finish */
 };
 
 class pass_insert_vsetvli2 : public rtl_opt_pass
 {
 public:
   pass_insert_vsetvli2 (gcc::context *ctxt)
-    : rtl_opt_pass (pass_data_insert_vsetvli2, ctxt)
+      : rtl_opt_pass (pass_data_insert_vsetvli2, ctxt)
   {
   }
 
@@ -1713,7 +1747,8 @@ public:
   {
     return TARGET_VECTOR;
   }
-  virtual unsigned int execute (function *);
+  virtual unsigned int
+  execute (function *);
 
 }; // class pass_insert_vsetvli2
 
@@ -1725,10 +1760,9 @@ recog_need_insert_vsetvli_after_reload_p (rtx_insn *insn, rtx *clobber)
          (match_operand 1 "reg_or_mem_operand" "m,vr,vr"))
          (clobber (match_scratch:SI 2 "=&r,&r,X"))] */
 
-  if (!(insn && INSN_P(insn)
-    && recog_memoized (insn) >= 0
-    && (get_attr_type (insn) == TYPE_VLE_RELOAD
-    || get_attr_type (insn) == TYPE_VSE_RELOAD)))
+  if (!(insn && INSN_P (insn) && recog_memoized (insn) >= 0 &&
+        (get_attr_type (insn) == TYPE_VLE_RELOAD ||
+         get_attr_type (insn) == TYPE_VSE_RELOAD)))
     return false;
 
   extract_insn_cached (insn);
@@ -1747,7 +1781,8 @@ pass_insert_vsetvli2::execute (function *fn)
     return 0;
 
   if (dump_file)
-    fprintf (dump_file, "-------- Start of Insert vsetvli instructions --------\n\n");
+    fprintf (dump_file,
+             "-------- Start of Insert vsetvli instructions --------\n\n");
 
   if (optimize >= 2)
     {
@@ -1771,66 +1806,74 @@ pass_insert_vsetvli2::execute (function *fn)
       rtx clobber;
       if (recog_need_insert_vsetvli_after_reload_p (insn, &clobber))
         {
-	  machine_mode mode = riscv_translate_attr_mode (insn);
-	  unsigned int vtype = get_vtype_for_mode (mode);
+          machine_mode mode = riscv_translate_attr_mode (insn);
+          unsigned int vtype = get_vtype_for_mode (mode);
           vinfo new_info;
-	  new_info.setavl (gen_rtx_REG (Pmode, X0_REGNUM));
+          new_info.setavl (gen_rtx_REG (Pmode, X0_REGNUM));
           new_info.setvtype (vtype);
 
-	  if (!curr_info.valid_p () || curr_info.unknown_p ()
-	    || !curr_info.load_store_compatible_p (riscv_parse_vsew_field (vtype), new_info, false, true))
-	    {
-	      changed_p = true;
+          if (!curr_info.valid_p () || curr_info.unknown_p () ||
+              !curr_info.load_store_compatible_p (
+                  riscv_parse_vsew_field (vtype), new_info, false, true))
+            {
+              changed_p = true;
               curr_info.setavl (gen_rtx_REG (Pmode, X0_REGNUM));
               curr_info.setvtype (vtype);
-	      emit_vsetvl_insn (clobber, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype), insn);
-	    }
-	  else
-	    changed_p = false;
+              emit_vsetvl_insn (clobber, gen_rtx_REG (Pmode, X0_REGNUM),
+                                GEN_INT (vtype), insn);
+            }
+          else
+            changed_p = false;
 
-	  rtx pat;
-	  extract_insn_cached (insn);
-	  if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
-	    {
-	      if (get_attr_type (insn) == TYPE_VLE_RELOAD)
-	        pat = gen_vlm (mode, recog_data.operand[0],
-	          XEXP (recog_data.operand[1], 0), const0_rtx, const0_rtx);
-	      else
-	        pat = gen_vsm (mode, XEXP (recog_data.operand[0], 0),
-	          recog_data.operand[1], const0_rtx, const0_rtx);
-	    }
-	  else
-	    {
-	      if (get_attr_type (insn) == TYPE_VLE_RELOAD)
-	        pat = gen_vle (mode, recog_data.operand[0], const0_rtx, const0_rtx,
-	          XEXP (recog_data.operand[1], 0), const0_rtx, const0_rtx);
-	      else
-	        pat = gen_vse (mode, const0_rtx, XEXP (recog_data.operand[0], 0),
-	          recog_data.operand[1], const0_rtx, const0_rtx);
-	    }
+          rtx pat;
+          extract_insn_cached (insn);
+          if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
+            {
+              if (get_attr_type (insn) == TYPE_VLE_RELOAD)
+                pat = gen_vlm (mode, recog_data.operand[0],
+                               XEXP (recog_data.operand[1], 0), const0_rtx,
+                               const0_rtx);
+              else
+                pat = gen_vsm (mode, XEXP (recog_data.operand[0], 0),
+                               recog_data.operand[1], const0_rtx, const0_rtx);
+            }
+          else
+            {
+              if (get_attr_type (insn) == TYPE_VLE_RELOAD)
+                pat = gen_vle (mode, recog_data.operand[0], const0_rtx,
+                               const0_rtx, XEXP (recog_data.operand[1], 0),
+                               const0_rtx, const0_rtx);
+              else
+                pat =
+                    gen_vse (mode, const0_rtx, XEXP (recog_data.operand[0], 0),
+                             recog_data.operand[1], const0_rtx, const0_rtx);
+            }
 
           validate_change (insn, &PATTERN (insn), pat, false);
-	  continue;
-	}
+          continue;
+        }
       if (USE_VTYPE_P (insn))
         {
-	  vinfo new_info = computeinfoforinstr (insn, curr_info);
-	  if (changed_p && needvsetvli (insn, new_info, curr_info))
-	    emit_vsetvl_insn (gen_rtx_REG (Pmode, X0_REGNUM), new_info.getavl (), GEN_INT (new_info.encodevtype ()), insn);
-	  changed_p = false;
+          vinfo new_info = computeinfoforinstr (insn, curr_info);
+          if (changed_p && needvsetvli (insn, new_info, curr_info))
+            emit_vsetvl_insn (gen_rtx_REG (Pmode, X0_REGNUM),
+                              new_info.getavl (),
+                              GEN_INT (new_info.encodevtype ()), insn);
+          changed_p = false;
           curr_info = new_info;
-	  replace_op (insn, const0_rtx, REPLACE_VL);
-	  continue;
-	}
+          replace_op (insn, const0_rtx, REPLACE_VL);
+          continue;
+        }
 
-    // If this is something updates VL/VTYPE that we don't know about, set
-    // the state to unknown.
-    if (update_vlvtyp_p (insn))
-	curr_info = vinfo::getunknown ();
+      // If this is something updates VL/VTYPE that we don't know about, set
+      // the state to unknown.
+      if (update_vlvtyp_p (insn))
+        curr_info = vinfo::getunknown ();
     }
   }
   if (dump_file)
-    fprintf (dump_file, "-------- End of Insert vsetvli instructions --------\n\n");
+    fprintf (dump_file,
+             "-------- End of Insert vsetvli instructions --------\n\n");
 
   if (optimize >= 2)
     {

@@ -385,87 +385,84 @@ register_builtin_types ()
   for (unsigned int i = 0; i < NUM_VECTOR_TYPES; i++)
     {
       tree eltype = scalar_types[i];
-      scalar_mode elmode
-	= (eltype == boolean_type_node) ? BImode : SCALAR_TYPE_MODE (eltype);
+      scalar_mode elmode =
+          (eltype == boolean_type_node) ? BImode : SCALAR_TYPE_MODE (eltype);
 
       for (unsigned int lmul = vector_legal_lmul (elmode); lmul < NUM_LMUL;
-	   lmul++)
-	{
-	  char abi_name[NAME_MAXLEN] = { 0 };
-	  char mangled_name[NAME_MAXLEN] = { 0 };
-	  bool is_bool;
-	  tree vectype;
-	  unsigned int sew = GET_MODE_BITSIZE (elmode);
-	  machine_mode mode = vector_builtin_mode (elmode, lmul);
+           lmul++)
+        {
+          char abi_name[NAME_MAXLEN] = {0};
+          char mangled_name[NAME_MAXLEN] = {0};
+          bool is_bool;
+          tree vectype;
+          unsigned int sew = GET_MODE_BITSIZE (elmode);
+          machine_mode mode = vector_builtin_mode (elmode, lmul);
 
-	  if (eltype == boolean_type_node)
-	    {
-	      /* mask type in RVV.  */
-	      vectype = build_truth_vector_type_for_mode (
-			  BYTES_PER_RISCV_VECTOR, mode);
+          if (eltype == boolean_type_node)
+            {
+              /* mask type in RVV.  */
+              vectype = build_truth_vector_type_for_mode (
+                  BYTES_PER_RISCV_VECTOR, mode);
 
-	      /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
-		 omp-low.c. We don't know why we need this protection, it seems
-		 to make the buildup of GCC more reliable. */
-	      if (TYPE_MODE (vectype) != mode)
-		continue;
+              /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
+                 omp-low.c. We don't know why we need this protection, it seems
+                 to make the buildup of GCC more reliable. */
+              if (TYPE_MODE (vectype) != mode)
+                continue;
 
-	      gcc_assert (
-		VECTOR_MODE_P (TYPE_MODE (vectype))
-		&& TYPE_MODE (vectype) == mode
-		&& TYPE_MODE (vectype) == TYPE_MODE_RAW (vectype)
-		&& TYPE_ALIGN (vectype) == 8
-		&& known_eq (tree_to_poly_uint64 (TYPE_SIZE (vectype)),
-			     BITS_PER_RISCV_VECTOR));
-	      is_bool = true;
-	    }
-	  else
-	    {
-	      /* data type in RVV.  */
-	      vectype = build_vector_type_for_mode (eltype, mode);
+              gcc_assert (VECTOR_MODE_P (TYPE_MODE (vectype)) &&
+                          TYPE_MODE (vectype) == mode &&
+                          TYPE_MODE (vectype) == TYPE_MODE_RAW (vectype) &&
+                          TYPE_ALIGN (vectype) == 8 &&
+                          known_eq (tree_to_poly_uint64 (TYPE_SIZE (vectype)),
+                                    BITS_PER_RISCV_VECTOR));
+              is_bool = true;
+            }
+          else
+            {
+              /* data type in RVV.  */
+              vectype = build_vector_type_for_mode (eltype, mode);
 
-	      /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
-		 omp-low.c. We don't know why we need this protection, it seems
-		 to make the buildup of GCC more reliable. */
-	      if (TYPE_MODE (vectype) != mode)
-		continue;
+              /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
+                 omp-low.c. We don't know why we need this protection, it seems
+                 to make the buildup of GCC more reliable. */
+              if (TYPE_MODE (vectype) != mode)
+                continue;
 
-	      gcc_assert (
-		VECTOR_MODE_P (TYPE_MODE (vectype))
-		&& TYPE_MODE (vectype) == mode
-		&& TYPE_MODE_RAW (vectype) == mode
-		&& TYPE_ALIGN (vectype) <= 128
-		&& known_eq (tree_to_poly_uint64 (TYPE_SIZE (vectype)),
-			     GET_MODE_BITSIZE (mode)));
-	      is_bool = false;
-	    }
-    /* These codes copied from ARM. */
-	  /* abi_name and api_name follows vector type implementation in LLVM.
-	     Take sew = 8, lmul = 1/8 for example,
-	     abi_name = __rvv_int8mf8_t,
-	     api_name = vint8mf8_t.
-	     The mangle name follows the rule of aarch64
-	     that is "u" + length of (abi_name) + abi_name.
-	     So that mangle_name = u15__rvv_int8mf8_t.  */
-	  snprintf (abi_name, NAME_MAXLEN, "__rvv_%s%s_t",
-		    vector_type_infos[i].elem_name,
-		    is_bool ? vector_lmuls[lmul].boolnum
-		    : vector_lmuls[lmul].suffix);
-	  snprintf (mangled_name, NAME_MAXLEN, "u%d__rvv_%s%s_t",
-		    (int)strlen (abi_name), vector_type_infos[i].elem_name,
-		    is_bool ? vector_lmuls[lmul].boolnum
-		    : vector_lmuls[lmul].suffix);
-	  vectype = build_distinct_type_copy (vectype);
-	  gcc_assert (vectype == TYPE_MAIN_VARIANT (vectype));
-	  SET_TYPE_STRUCTURAL_EQUALITY (vectype);
-	  TYPE_ARTIFICIAL (vectype) = 1;
-	  TYPE_INDIVISIBLE_P (vectype) = 1;
-	  add_vector_type_attribute (vectype, sew, lmul, is_bool,
-				     mangled_name);
-	  make_type_sizeless (vectype);
-	  abi_vector_types[i][lmul] = vectype;
-	  lang_hooks.types.register_builtin_type (vectype, abi_name);
-	}
+              gcc_assert (VECTOR_MODE_P (TYPE_MODE (vectype)) &&
+                          TYPE_MODE (vectype) == mode &&
+                          TYPE_MODE_RAW (vectype) == mode &&
+                          TYPE_ALIGN (vectype) <= 128 &&
+                          known_eq (tree_to_poly_uint64 (TYPE_SIZE (vectype)),
+                                    GET_MODE_BITSIZE (mode)));
+              is_bool = false;
+            }
+          /* These codes copied from ARM. */
+          /* abi_name and api_name follows vector type implementation in LLVM.
+             Take sew = 8, lmul = 1/8 for example,
+             abi_name = __rvv_int8mf8_t,
+             api_name = vint8mf8_t.
+             The mangle name follows the rule of aarch64
+             that is "u" + length of (abi_name) + abi_name.
+             So that mangle_name = u15__rvv_int8mf8_t.  */
+          snprintf (abi_name, NAME_MAXLEN, "__rvv_%s%s_t",
+                    vector_type_infos[i].elem_name,
+                    is_bool ? vector_lmuls[lmul].boolnum
+                            : vector_lmuls[lmul].suffix);
+          snprintf (mangled_name, NAME_MAXLEN, "u%d__rvv_%s%s_t",
+                    (int)strlen (abi_name), vector_type_infos[i].elem_name,
+                    is_bool ? vector_lmuls[lmul].boolnum
+                            : vector_lmuls[lmul].suffix);
+          vectype = build_distinct_type_copy (vectype);
+          gcc_assert (vectype == TYPE_MAIN_VARIANT (vectype));
+          SET_TYPE_STRUCTURAL_EQUALITY (vectype);
+          TYPE_ARTIFICIAL (vectype) = 1;
+          TYPE_INDIVISIBLE_P (vectype) = 1;
+          add_vector_type_attribute (vectype, sew, lmul, is_bool, mangled_name);
+          make_type_sizeless (vectype);
+          abi_vector_types[i][lmul] = vectype;
+          lang_hooks.types.register_builtin_type (vectype, abi_name);
+        }
     }
 }
 
@@ -491,12 +488,11 @@ static void
 register_vector_type (unsigned int type, unsigned int lmul)
 {
   tree vectype = abi_vector_types[type][lmul];
-  char rvv_name[NAME_MAXLEN] = { 0 };
-  snprintf (rvv_name, NAME_MAXLEN, "v%s%s_t",
-	    vector_type_infos[type].elem_name,
-	    strcmp (vector_type_infos[type].elem_name, "bool") == 0
-	    ? vector_lmuls[lmul].boolnum
-	    : vector_lmuls[lmul].suffix);
+  char rvv_name[NAME_MAXLEN] = {0};
+  snprintf (rvv_name, NAME_MAXLEN, "v%s%s_t", vector_type_infos[type].elem_name,
+            strcmp (vector_type_infos[type].elem_name, "bool") == 0
+                ? vector_lmuls[lmul].boolnum
+                : vector_lmuls[lmul].suffix);
   tree id = get_identifier (rvv_name);
   tree decl = build_decl (input_location, TYPE_DECL, id, vectype);
   decl = lang_hooks.decls.pushdecl (decl);
@@ -506,9 +502,9 @@ register_vector_type (unsigned int type, unsigned int lmul)
      right form, even if it doesn't have the right name.  This should give
      better error recovery behavior than installing error_mark_node or
      installing an incorrect type.  */
-  if (decl && TREE_CODE (decl) == TYPE_DECL
-      && TREE_TYPE (decl) != error_mark_node
-      && TYPE_MAIN_VARIANT (TREE_TYPE (decl)) == vectype)
+  if (decl && TREE_CODE (decl) == TYPE_DECL &&
+      TREE_TYPE (decl) != error_mark_node &&
+      TYPE_MAIN_VARIANT (TREE_TYPE (decl)) == vectype)
     vectype = TREE_TYPE (decl);
 
   riscv_vector_types[0][type][lmul] = vectype;
@@ -608,20 +604,6 @@ register_tuple_type (unsigned int num_vectors, unsigned int type,
   char mangled_name[NAME_MAXLEN] = { 0 };
   snprintf (mangled_name, NAME_MAXLEN, "u%d__rvv_%s%s_t", (int)strlen (buffer),
 	    vector_type_infos[lmul].elem_name, vector_lmuls[lmul].suffix);
-
-  /* The contents of the type are opaque, so we can define them in any
-     way that maps to the correct ABI type.
-
-     Here we choose to use the same layout as for arm_neon.h, but with
-     "__val" instead of "val":
-
-	struct svfooxN_t { svfoo_t __val[N]; };
-
-     (It wouldn't be possible to write that directly in C or C++ for
-     sizeless types, but that's not a problem for this function.)
-
-     Using arrays simplifies the handling of svget and svset for variable
-     arguments.  */
   tree vector_type = riscv_vector_types[0][type][lmul];
   tree array_type = build_array_type_nelts (vector_type, num_vectors);
   machine_mode tuple_mode
@@ -682,27 +664,28 @@ handle_pragma_vector ()
   for (unsigned int type_i = 0; type_i < NUM_VECTOR_TYPES; ++type_i)
     {
       tree eltype = scalar_types[type_i];
-      scalar_mode elmode
-	= (eltype == boolean_type_node) ? BImode : SCALAR_TYPE_MODE (eltype);
+      scalar_mode elmode =
+          (eltype == boolean_type_node) ? BImode : SCALAR_TYPE_MODE (eltype);
 
       for (unsigned int lmul = vector_legal_lmul (elmode); lmul < NUM_LMUL;
-	   lmul++)
-	{
-	  register_vector_type (type_i, lmul);
+           lmul++)
+        {
+          register_vector_type (type_i, lmul);
 
-	  if (type_i != VECTOR_TYPE_bool)
-	    {
-	      for (unsigned int count = 2; count <= MAX_TUPLE_SIZE; ++count)
-		{
-		  if (lmul == LMUL_1F8 || lmul == LMUL_1F4 || lmul == LMUL_1F2
-		      || lmul == LMUL_1 || (lmul == LMUL_2 && count <= 4)
-		      || (lmul == LMUL_4 && count <= 2))
-		    register_tuple_type (count, type_i, lmul);
-		  else
-		    continue;
-		}
-	    }
-	}
+          if (type_i != VECTOR_TYPE_bool)
+            {
+              for (unsigned int count = 2; count <= MAX_TUPLE_SIZE; ++count)
+                {
+                  if (lmul == LMUL_1F8 || lmul == LMUL_1F4 ||
+                      lmul == LMUL_1F2 || lmul == LMUL_1 ||
+                      (lmul == LMUL_2 && count <= 4) ||
+                      (lmul == LMUL_4 && count <= 2))
+                    register_tuple_type (count, type_i, lmul);
+                  else
+                    continue;
+                }
+            }
+        }
     }
 
   init_def_variables ();
@@ -734,15 +717,17 @@ builtin_decl (unsigned int code, bool)
    Return true if the call is valid, otherwise report a suitable error.  */
 bool
 check_builtin_call (location_t location, vec<location_t>, unsigned int code,
-		    tree fndecl, unsigned int nargs, tree *args)
+                    tree fndecl, unsigned int nargs, tree *args)
 {
   const registered_function &rfn = *(*registered_functions)[code];
-  function_builder* builder = rfn.instance.builder();
+  function_builder *builder = rfn.instance.builder ();
 
-  if (!builder->check_required_extensions (location, rfn.decl, rfn.instance.get_arg_pattern().arg_extensions))
+  if (!builder->check_required_extensions (
+          location, rfn.decl, rfn.instance.get_arg_pattern ().arg_extensions))
     return false;
 
-  return rfn.instance.check (location, fndecl, TREE_TYPE (rfn.decl), nargs, args);
+  return rfn.instance.check (location, fndecl, TREE_TYPE (rfn.decl), nargs,
+                             args);
 }
 
 /* Return true if TYPE is a built-in RVV type defined by the ABI or RVV.  */

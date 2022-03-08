@@ -20,8 +20,8 @@ along with GCC; see the file COPYING3. If not see
 
 #define IN_TARGET_CODE 1
 
-#include <algorithm>
 #include "riscv-vector-builtins-functions.h"
+#include <algorithm>
 namespace riscv_vector
 {
 
@@ -1169,7 +1169,6 @@ mode2lmul (machine_mode mode)
   gcc_unreachable ();
 }
 
-
 inline tree
 get_tuple_t (machine_mode mode, bool u, unsigned int nelt)
 {
@@ -1224,7 +1223,8 @@ get_tuple_t (machine_mode mode, bool u, unsigned int nelt)
 }
 
 inline tree
-get_dt_t (machine_mode mode, bool u, bool ptr = false, bool c = false, unsigned int nelt = 1)
+get_dt_t (machine_mode mode, bool u, bool ptr = false, bool c = false,
+          unsigned int nelt = 1)
 {
   if (riscv_tuple_mode_p (mode))
     {
@@ -1696,9 +1696,8 @@ function_builder::function_builder (const char *_base_name,
                                     uint64_t _target_op_types,
                                     const unsigned int _extensions)
     : m_base_name (_base_name), m_target_arg_patterns (_target_arg_patterns),
-      m_target_pattern (_target_pattern),
-      m_target_preds (_target_preds), m_target_op_types (_target_op_types),
-      m_required_extensions (_extensions)
+      m_target_pattern (_target_pattern), m_target_preds (_target_preds),
+      m_target_op_types (_target_op_types), m_required_extensions (_extensions)
 {
   gcc_obstack_init (&m_string_obstack);
   m_iter_idx_cnt = 0;
@@ -1731,8 +1730,9 @@ function_builder::~function_builder ()
 }
 
 rtx
-function_builder::expand_builtin_insn (enum insn_code icode, tree exp, rtx target,
-                                        const function_instance &instance) const
+function_builder::expand_builtin_insn (enum insn_code icode, tree exp,
+                                       rtx target,
+                                       const function_instance &instance) const
 {
   gcc_assert (call_expr_nargs (exp) > 0);
   struct expand_operand ops[MAX_RECOG_OPERANDS];
@@ -1805,12 +1805,12 @@ function_builder::get_dest_arguments_length () const
 }
 
 tree
-function_builder::get_mask_type (const tree &return_type, const tree &first_type,
-                                 const vec<tree> &, lmul_value_index lmul) const
+function_builder::get_mask_type (const tree &return_type,
+                                 const tree &first_type, const vec<tree> &,
+                                 lmul_value_index lmul) const
 {
-  const tree type = VECTOR_MODE_P (TYPE_MODE (return_type))
-    ? return_type
-    : first_type;
+  const tree type =
+      VECTOR_MODE_P (TYPE_MODE (return_type)) ? return_type : first_type;
 
   if (GET_MODE_CLASS (TYPE_MODE (type)) == MODE_VECTOR_BOOL)
     return type;
@@ -1824,7 +1824,6 @@ function_builder::get_dest_type (const tree &return_type, const vec<tree> &,
 {
   return return_type;
 }
-
 
 void
 function_builder::get_argument_types (const function_instance &,
@@ -1856,8 +1855,7 @@ function_builder::need_dest_operand_p () const
 {
   uint64_t pat = get_pattern ();
 
-  return (pat & PAT_tail) ||
-         ((pat & PAT_mask) && !(pat & PAT_ignore_policy));
+  return (pat & PAT_tail) || ((pat & PAT_mask) && !(pat & PAT_ignore_policy));
 }
 
 bool
@@ -1866,8 +1864,9 @@ function_builder::has_mask_arg_p (predication_index pred) const
   uint64_t pat = get_pattern ();
 
   return pred == PRED_m || pred == PRED_m_ta || pred == PRED_m_tu ||
-         pred == PRED_tama || pred == PRED_tamu || pred == PRED_tuma || pred == PRED_tumu ||
-         pred == PRED_ma || pred == PRED_mu || (pat & PAT_merge);
+         pred == PRED_tama || pred == PRED_tamu || pred == PRED_tuma ||
+         pred == PRED_tumu || pred == PRED_ma || pred == PRED_mu ||
+         (pat & PAT_merge);
 }
 
 bool
@@ -1877,22 +1876,22 @@ function_builder::has_dest_arg_p (predication_index pred) const
 
   switch (pred)
     {
-      case PRED_void:
-        return (pat & PAT_void_dest) || (pat & PAT_dest);
-      case PRED_ta:
-      case PRED_tama:
-        return (pat & PAT_dest);
-      case PRED_m:
-        return !(pat & PAT_ignore_policy);
-      case PRED_tu:
-      case PRED_m_tu:
-      case PRED_mu:
-      case PRED_tamu:
-      case PRED_tuma:
-      case PRED_tumu:
-        return true;
-      default:
-        return false;
+    case PRED_void:
+      return (pat & PAT_void_dest) || (pat & PAT_dest);
+    case PRED_ta:
+    case PRED_tama:
+      return (pat & PAT_dest);
+    case PRED_m:
+      return !(pat & PAT_ignore_policy);
+    case PRED_tu:
+    case PRED_m_tu:
+    case PRED_mu:
+    case PRED_tamu:
+    case PRED_tuma:
+    case PRED_tumu:
+      return true;
+    default:
+      return false;
     }
 }
 
@@ -1903,45 +1902,45 @@ function_builder::get_policy (predication_index pred) const
 
   switch (pred)
     {
-      case PRED_void:
-        return (pat & PAT_void_dest || pat & PAT_dest)
-                ? tu_policy : ta_policy;
-      case PRED_m:
-        if (pat & PAT_ignore_policy)
-          {
-            return any_policy;
-          }
-        else if (pat & PAT_ignore_mask_policy)
-          {
-            return tu_policy;
-          }
-        else if (pat & PAT_ignore_tail_policy)
-          {
-            return mu_policy;
-          }
-        else {
+    case PRED_void:
+      return (pat & PAT_void_dest || pat & PAT_dest) ? tu_policy : ta_policy;
+    case PRED_m:
+      if (pat & PAT_ignore_policy)
+        {
+          return any_policy;
+        }
+      else if (pat & PAT_ignore_mask_policy)
+        {
+          return tu_policy;
+        }
+      else if (pat & PAT_ignore_tail_policy)
+        {
+          return mu_policy;
+        }
+      else
+        {
           return tumu_policy;
         }
-      case PRED_ta:
-      case PRED_m_ta:
-        return ta_policy;
-      case PRED_tu:
-      case PRED_m_tu:
-        return tu_policy;
-      case PRED_ma:
-        return ma_policy;
-      case PRED_mu:
-        return mu_policy;
-      case PRED_tama:
-        return tama_policy;
-      case PRED_tamu:
-        return tamu_policy;
-      case PRED_tuma:
-        return tuma_policy;
-      case PRED_tumu:
-        return tumu_policy;
-      default:
-        return any_policy;
+    case PRED_ta:
+    case PRED_m_ta:
+      return ta_policy;
+    case PRED_tu:
+    case PRED_m_tu:
+      return tu_policy;
+    case PRED_ma:
+      return ma_policy;
+    case PRED_mu:
+      return mu_policy;
+    case PRED_tama:
+      return tama_policy;
+    case PRED_tamu:
+      return tamu_policy;
+    case PRED_tuma:
+      return tuma_policy;
+    case PRED_tumu:
+      return tumu_policy;
+    default:
+      return any_policy;
     }
 }
 
@@ -1955,12 +1954,9 @@ size_t
 function_builder::get_position_of_dest_arg (predication_index pred) const
 {
   uint64_t pat = get_pattern ();
-  if (
-    pred == PRED_tu ||
-    (pred == PRED_void &&
-      (pat & PAT_void_dest || pat & PAT_dest)) ||
-    (pred == PRED_ta && pat & PAT_dest)
-  )
+  if (pred == PRED_tu ||
+      (pred == PRED_void && (pat & PAT_void_dest || pat & PAT_dest)) ||
+      (pred == PRED_ta && pat & PAT_dest))
     return 0;
   else
     return 1;
@@ -2121,8 +2117,7 @@ function_builder::check_required_extensions (location_t location, tree fndecl,
    types in ARGUMENT_TYPES.  RETURN_TYPE is the type returned by the
    function.  */
 void
-function_builder::apply_predication (tree &return_type,
-                                     tree &first_type,
+function_builder::apply_predication (tree &return_type, tree &first_type,
                                      vec<tree> &argument_types,
                                      lmul_value_index lmul,
                                      predication_index pred) const
@@ -2130,8 +2125,9 @@ function_builder::apply_predication (tree &return_type,
   /* check if mask parameter need. */
   if (has_mask_arg_p (pred))
     {
-      argument_types.quick_insert (get_position_of_mask_arg (pred),
-        get_mask_type (return_type, first_type, argument_types, lmul));
+      argument_types.quick_insert (
+          get_position_of_mask_arg (pred),
+          get_mask_type (return_type, first_type, argument_types, lmul));
     }
 
   /* check if dest parameter need. */
@@ -2144,7 +2140,8 @@ function_builder::apply_predication (tree &return_type,
           argument_types.quick_push (dest_type);
       else
         for (size_t i = 0; i < size; i += 1)
-          argument_types.quick_insert (get_position_of_dest_arg (pred) + i, dest_type);
+          argument_types.quick_insert (get_position_of_dest_arg (pred) + i,
+                                       dest_type);
     }
 
   /* check if vl parameter need  */
@@ -2163,8 +2160,9 @@ function_builder::build_one (const function_instance &instance)
                           ? instance.get_arg_pattern ().arg_list[0]
                           : instance.get_arg_pattern ().arg_list[1];
   tree first_type = get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                         instance.get_data_type_list ()[0] == DT_unsigned);
-  apply_predication (return_type, first_type, argument_types, mode2lmul (mode), instance.get_pred ());
+                              instance.get_data_type_list ()[0] == DT_unsigned);
+  apply_predication (return_type, first_type, argument_types, mode2lmul (mode),
+                     instance.get_pred ());
   add_unique_function (instance, return_type, argument_types);
 }
 
@@ -2908,7 +2906,8 @@ reduceop::get_argument_types (const function_instance &instance,
 }
 
 tree
-reduceop::get_mask_type (const tree &, const tree &, const vec<tree> &argument_types,
+reduceop::get_mask_type (const tree &, const tree &,
+                         const vec<tree> &argument_types,
                          lmul_value_index) const
 {
   return lmul2mask_t (GET_MODE_INNER (TYPE_MODE (argument_types[0])),
@@ -3243,7 +3242,6 @@ vlseg::get_return_type (const function_instance &instance) const
           .to_constant ();
   return get_tuple_t (vector_mode, unsigned_p, nelt);
 }
-
 
 void
 vlseg::get_argument_types (const function_instance &instance,

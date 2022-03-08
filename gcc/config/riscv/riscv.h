@@ -454,8 +454,8 @@ enum reg_class
   FRAME_REGS,			/* arg pointer and frame pointer */
   VL_REGS,			/* vl register */
   VTYPE_REGS,			/* vype register */
-  V0_REGS,		    /* v0.t registers */
-  VNoV0_REGS,		/* vector registers except v0.t */
+  V0_REGS,			/* v0.t registers */
+  VNoV0_REGS,			/* vector registers except v0.t */
   V_REGS,			/* vector registers */
   ALL_REGS,			/* all registers */
   LIM_REG_CLASSES		/* max value + 1 */
@@ -496,8 +496,8 @@ enum reg_class
    sub-initializer must be suitable as an initializer for the type
    `HARD_REG_SET' which is defined in `hard-reg-set.h'.  */
 
-#define REG_CLASS_CONTENTS						\
-{									\
+#define REG_CLASS_CONTENTS							\
+{										\
   { 0x00000000, 0x00000000, 0x00000000, 0x00000000 },	/* NO_REGS */		\
   { 0xf003fcc0, 0x00000000, 0x00000000, 0x00000000 },	/* SIBCALL_REGS */	\
   { 0xffffffc0, 0x00000000, 0x00000000, 0x00000000 },	/* JALR_REGS */		\
@@ -505,9 +505,9 @@ enum reg_class
   { 0x00000000, 0xffffffff, 0x00000000, 0x00000000 },	/* FP_REGS */		\
   { 0x00000000, 0x00000000, 0x00000003, 0x00000000 },	/* FRAME_REGS */	\
   { 0x00000000, 0x00000000, 0x00000004, 0x00000000 },	/* VL_REGS */		\
-  { 0x00000000, 0x00000000, 0x00000008, 0x00000000 },	/* VTYPE_REGS */		\
+  { 0x00000000, 0x00000000, 0x00000008, 0x00000000 },	/* VTYPE_REGS */	\
   { 0x00000000, 0x00000000, 0x00000000, 0x00000001 },	/* V0_REGS */		\
-  { 0x00000000, 0x00000000, 0x00000000, 0xfffffffe },	/* VNoV0_REGS */		\
+  { 0x00000000, 0x00000000, 0x00000000, 0xfffffffe },	/* VNoV0_REGS */	\
   { 0x00000000, 0x00000000, 0x00000000, 0xffffffff },	/* V_REGS */		\
   { 0xffffffff, 0xffffffff, 0x0000000f, 0xffffffff }	/* ALL_REGS */		\
 }
@@ -549,16 +549,16 @@ enum reg_class
   60, 61, 62, 63,							\
   /* Call-saved FPRs.  */						\
   40, 41, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,			\
-  /* V24 ~ V31.  */						\
-  120, 121, 122, 123, 124, 125, 126, 127,						\
-  /* V8 ~ V23.  */						\
-  104, 105, 106, 107, 108, 109, 110, 111,						\
-  112, 113, 114, 115, 116, 117, 118, 119,						\
-  /* V0 ~ V7.  */						\
-  96, 97, 98, 99, 100, 101, 102, 103,						\
+  /* V24 ~ V31.  */							\
+  120, 121, 122, 123, 124, 125, 126, 127,				\
+  /* V8 ~ V23.  */							\
+  104, 105, 106, 107, 108, 109, 110, 111,				\
+  112, 113, 114, 115, 116, 117, 118, 119,				\
+  /* V0 ~ V7.  */							\
+  96, 97, 98, 99, 100, 101, 102, 103,					\
   /* None of the remaining classes have defined call-saved		\
      registers.  */							\
-  64, 65, 66, 67								\
+  64, 65, 66, 67							\
 }
 
 /* True if VALUE is a signed 12-bit number.  */
@@ -838,14 +838,14 @@ typedef struct {
   "fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5",	\
   "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7",	\
   "fs8", "fs9", "fs10","fs11","ft8", "ft9", "ft10","ft11",	\
-  "arg", "frame","vl","vtype","N/A", "N/A", "N/A", "N/A", \
-  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
-  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
-  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
+  "arg", "frame","vl","vtype","N/A", "N/A", "N/A", "N/A",	\
+  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",	\
+  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",	\
+  "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A",	\
   "v0",  "v1",  "v2",  "v3",  "v4",  "v5",  "v6",  "v7",	\
   "v8",  "v9",  "v10", "v11", "v12", "v13", "v14", "v15",	\
   "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",	\
-  "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31" 	}
+  "v24", "v25", "v26", "v27", "v28", "v29", "v30", "v31", }
 
 #define ADDITIONAL_REGISTER_NAMES					\
 {									\

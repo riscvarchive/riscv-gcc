@@ -821,7 +821,6 @@ public:
 
   unsigned int
   call_properties (const function_instance &) const OVERRIDE;
-
   rtx
   expand (const function_instance &instance, tree exp,
           rtx target) const OVERRIDE;

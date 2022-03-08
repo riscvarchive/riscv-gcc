@@ -17164,7 +17164,7 @@ loc_descriptor (rtx rtl, machine_mode mode,
 	int num_elem = GET_NUM_ELEM (par_elems);
 	machine_mode mode;
 	int i;
-  unsigned int size;
+	unsigned int size;
 
 	/* Create the first one, so we have something to add to.  */
 	loc_result = loc_descriptor (XEXP (RTVEC_ELT (par_elems, 0), 0),

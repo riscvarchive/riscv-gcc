@@ -4679,11 +4679,11 @@ can_interpret_as_conditional_op_p (gimple *stmt, tree *cond_out,
 	code = with_length_internal_fn_code (ifn);
 	if (code != ERROR_MARK)
 	  {
-            *cond_out = NULL_TREE;
+	    *cond_out = NULL_TREE;
 	    *code_out = code;
 	    ops[0] = gimple_call_arg (call, 0);
-            ops[1] = gimple_call_arg (call, 1);
-            ops[2] = gimple_call_arg (call, 2);
+	    ops[1] = gimple_call_arg (call, 1);
+	    ops[2] = gimple_call_arg (call, 2);
 	    *else_out = NULL_TREE;
 	    return true;
 	  }

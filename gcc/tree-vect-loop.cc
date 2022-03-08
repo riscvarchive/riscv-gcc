@@ -2555,8 +2555,8 @@ start_over:
       && !LOOP_VINFO_LENS (loop_vinfo).is_empty ())
     {
       if (targetm.vectorize.autovectorize_partial_vectors_approach (
-        LOOP_VINFO_MASKS (loop_vinfo).is_empty (), 
-        LOOP_VINFO_LENS (loop_vinfo).is_empty ()))
+              LOOP_VINFO_MASKS (loop_vinfo).is_empty (),
+              LOOP_VINFO_LENS (loop_vinfo).is_empty ()))
         {
           /* We use length approach if the target hook
              force to. */
