@@ -289,16 +289,13 @@ ASM_MISA_SPEC
 
    - 32 integer registers
    - 32 floating point registers
-   - 4 fake registers:
+   - 2 fake registers:
 	- ARG_POINTER_REGNUM
 	- FRAME_POINTER_REGNUM
-  - VL_REGNUM
-	- VTYPE_REGNUM
+   - 1 vl register
+   - 1 vtype register
    - 30 unused registers for future expansion
-   - 32 vector registers:
-  - V0_REGS
-  - VNoV0_REGS
-  - V_REGS		*/
+   - 32 vector registers */
 
 #define FIRST_PSEUDO_REGISTER 128
 
@@ -402,8 +399,6 @@ ASM_MISA_SPEC
 #define RISCV_PROLOGUE_TEMP(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP_REGNUM)
 #define RISCV_PROLOGUE_TEMP2_REGNUM (GP_TEMP_FIRST + 1)
 #define RISCV_PROLOGUE_TEMP2(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP2_REGNUM)
-#define RISCV_PROLOGUE_TEMP3_REGNUM (GP_TEMP_FIRST + 1)
-#define RISCV_PROLOGUE_TEMP3(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP3_REGNUM)
 
 #define RISCV_CALL_ADDRESS_TEMP_REGNUM (GP_TEMP_FIRST + 1)
 #define RISCV_CALL_ADDRESS_TEMP(MODE) \
@@ -1107,7 +1102,7 @@ extern void riscv_remove_unneeded_save_restore_calls (void);
 
    This limit must not be used for variable-size vectors, since
    VL-agnostic code must work with arbitary vector lengths.  */
-   
+
 #define MAX_COMPILE_TIME_VEC_BYTES (8192 * 8)
 
 #endif /* ! GCC_RISCV_H */
