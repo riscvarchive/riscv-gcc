@@ -351,7 +351,6 @@ ASM_MISA_SPEC
 #define FP_REG_LAST  63
 #define FP_REG_NUM   (FP_REG_LAST - FP_REG_FIRST + 1)
 
-/* To be consistent with Clang+LLVM Compiler, Vector Registers DwarfRegNum starts at 96 */
 #define V_REG_FIRST 96
 #define V_REG_LAST  127
 #define V_REG_NUM   (V_REG_LAST - V_REG_FIRST + 1)
@@ -550,7 +549,6 @@ enum reg_class
   60, 61, 62, 63,							\
   /* Call-saved FPRs.  */						\
   40, 41, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,			\
-  /* Call-clobbered vector registers, the order is consistent with Clang+LLVM Compiler */ \
   /* V24 ~ V31.  */						\
   120, 121, 122, 123, 124, 125, 126, 127,						\
   /* V8 ~ V23.  */						\
@@ -840,7 +838,7 @@ typedef struct {
   "fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5",	\
   "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7",	\
   "fs8", "fs9", "fs10","fs11","ft8", "ft9", "ft10","ft11",	\
-  "arg", "frame","vl","vtype","vxsat", "vxrm", "N/A", "N/A", \
+  "arg", "frame","vl","vtype","N/A", "N/A", "N/A", "N/A", \
   "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
   "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
   "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", "N/A", \
@@ -1097,7 +1095,7 @@ extern void riscv_remove_unneeded_save_restore_calls (void);
 #define TARGET_SUPPORTS_WIDE_INT 1
 
 /* The maximum number of bytes in a fixed-size vector.  This is 8192 bytes
-   (for -msve-vector-bits=65536) multiplied by the maximum number of
+   (for -mriscv-vector-bits=65536) multiplied by the maximum number of
    vectors in a structure mode (8).
 
    This limit must not be used for variable-size vectors, since
