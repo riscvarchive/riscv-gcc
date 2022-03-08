@@ -9906,17 +9906,6 @@ riscv_autovectorize_vector_modes (vector_modes *modes, bool)
   return 0;
 }
 
-/* Additional target hook to define the approach that is
-   used in partial vector during autovectorization. */
-static bool
-riscv_autovectorize_partial_vectors_approach (bool, bool lens_is_empty)
-{
-  if (!lens_is_empty)
-    return true;
-
-  return false;
-}
-
 /* Implement TARGET_VECTORIZE_GET_MASK_MODE.  */
 
 static opt_machine_mode
@@ -10716,9 +10705,6 @@ riscv_vectorize_create_costs (vec_info *vinfo, bool costing_for_scalar)
 
 #undef TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES
 #define TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES riscv_autovectorize_vector_modes
-
-#undef TARGET_VECTORIZE_AUTOVECTORIZE_PARTIAL_VECTORS_APPROACH
-#define TARGET_VECTORIZE_AUTOVECTORIZE_PARTIAL_VECTORS_APPROACH riscv_autovectorize_partial_vectors_approach
 
 #undef TARGET_VECTORIZE_GET_MASK_MODE
 #define TARGET_VECTORIZE_GET_MASK_MODE riscv_get_mask_mode

@@ -6138,12 +6138,6 @@ equal to @code{word_mode}, because the vectorizer can do some
 transformations even in absence of specialized @acronym{SIMD} hardware.
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_VECTORIZE_AUTOVECTORIZE_PARTIAL_VECTORS_APPROACH (bool @var{masks_is_empty}, bool @var{lens_is_empty})
-Returns the partial vectors approach that is used by autovectorization.
-The default is false which is masking approach, return true if use length
-approach.
-@end deftypefn
-
 @deftypefn {Target Hook} machine_mode TARGET_VECTORIZE_SPLIT_REDUCTION (machine_mode)
 This hook should return the preferred mode to split the final reduction
 step on @var{mode} to.  The reduction is then carried out reducing upper
