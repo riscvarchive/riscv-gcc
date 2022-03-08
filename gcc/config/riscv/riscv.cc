@@ -4569,7 +4569,7 @@ riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
 
       temp_reg = gen_reg_rtx (word_mode);
       zero_extend_p = (LOAD_EXTEND_OP (mode) == ZERO_EXTEND);
-      emit_insn (gen_extend_insn (temp_reg, src, word_mode, mode,
+      emit_insn (gen_extend_insn (temp_reg, src, word_mode, mode, 
 				  zero_extend_p));
       riscv_emit_move (dest, gen_lowpart (mode, temp_reg));
       return true;

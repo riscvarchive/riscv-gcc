@@ -21,8 +21,7 @@ along with GCC; see the file COPYING3.  If not see
 #ifndef GCC_RISCV_OPTS_H
 #define GCC_RISCV_OPTS_H
 
-enum riscv_abi_type
-{
+enum riscv_abi_type {
   ABI_ILP32,
   ABI_ILP32E,
   ABI_ILP32F,
