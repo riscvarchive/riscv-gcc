@@ -1970,6 +1970,9 @@
 ;; All operation valid for floating-point comparison.
 (define_code_iterator any_fcmp [eq ne lt le gt ge])
 
+;; All operation valid for floating-point no trapping comparison.
+(define_code_iterator any_fcmp_no_trapping [unordered ordered unlt unle unge ungt uneq ltgt])
+
 ;; All integer comparison except GE.
 (define_code_iterator cmp_noltge [eq ne le gt leu gtu])
 

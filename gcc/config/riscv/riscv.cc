@@ -1749,16 +1749,6 @@ riscv_vector_emit_float_cmp (rtx target, machine_mode mask_mode, rtx_code cmp,
         }
       else
         {
-          if (cmp == UNEQ)
-            cmp = EQ;
-          if (cmp == UNGE)
-            cmp = GE;
-          if (cmp == UNGT)
-            cmp = GT;
-          if (cmp == UNLE)
-            cmp = LE;
-          if (cmp == UNLT)
-            cmp = UNLT;
           icode = code_for_vmf_vf (cmp, data_mode);
           create_input_operand (&ops[4], op2, GET_MODE (op2));
         }
@@ -1783,6 +1773,25 @@ riscv_expand_vec_cmp_float (rtx target, rtx_code code, rtx op0, rtx op1,
 {
   machine_mode mask_mode = GET_MODE (target);
   machine_mode data_mode = GET_MODE (op0);
+
+  if (code == UNORDERED || code == ORDERED || code == UNEQ || code == UNGE ||
+      code == UNGT || code == UNLE || code == UNLT)
+    {
+      rtx len = op2 ? op2 : gen_rtx_REG (Pmode, X0_REGNUM);
+      if (VECTOR_MODE_P (GET_MODE (op1)))
+        emit_insn (gen_vmf_vv (code, data_mode, target, const0_rtx, const0_rtx,
+                               op0, op1, len, riscv_vector_gen_policy ()));
+      else
+        {
+          rtx reg = gen_reg_rtx (data_mode);
+          emit_insn (gen_vfmv_v_f (data_mode, reg, const0_rtx, op1, op2,
+                                   riscv_vector_gen_policy ()));
+          emit_insn (gen_vmf_vv (code, data_mode, target, const0_rtx,
+                                 const0_rtx, op0, reg, len,
+                                 riscv_vector_gen_policy ()));
+        }
+      return;
+    }
   rtx res = riscv_vector_emit_float_cmp (target, mask_mode, code, data_mode,
                                          op0, op1, op2);
   if (!rtx_equal_p (target, res))

@@ -5156,6 +5156,68 @@
   [(set_attr "type" "vcmp")
    (set_attr "mode" "<MODE>")])
 
+;; Vector-Vector Floating-Point Comparison with no trapping.
+;; These are used by auto-vectorization.
+(define_expand "@vmf<optab><mode>_vv"
+  [(set (match_operand:<VM> 0 "register_operand")
+    (unspec:<VM>
+      [(unspec:<VM>
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand")
+         (any_fcmp_no_trapping:<VM>
+          (match_operand:VF 3 "register_operand")
+          (match_operand:VF 4 "register_operand"))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand")] UNSPEC_SELECT)
+       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 6 "const_int_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+{
+  rtx mask = gen_reg_rtx (<VM>mode);
+  if (strcmp ("<optab>", "ltgt") == 0)
+    {
+      emit_insn (gen_vmf_vv (GT, <MODE>mode, operands[0],
+                 operands[1], operands[2], operands[3], operands[4],
+                 operands[5], operands[6]));
+      emit_insn (gen_vmf_vv (GT, <MODE>mode, mask,
+                 operands[1], operands[2], operands[4], operands[3],
+                 operands[5], operands[6]));
+      emit_insn (gen_vm_mm (IOR, <VM>mode, operands[0], operands[0], mask,
+                 operands[5], operands[6]));
+    }
+  else
+    {
+      /* Example of implementing isgreater()
+         vmfeq.vv v0, va, va ;; Only set where A is not NaN.
+         vmfeq.vv v1, vb, vb ;; Only set where B is not NaN.
+         vmand.mm v0, v0, v1 ;; Only set where A and B are ordered,
+         vmfgt.vv v0, va, vb, v0.t ;; so only set flags on ordered values. */
+      emit_insn (gen_vmf_vv (EQ, <MODE>mode, operands[0],
+                 operands[1], operands[2], operands[3], operands[3],
+                 operands[5], operands[6]));
+      emit_insn (gen_vmf_vv (EQ, <MODE>mode, mask,
+                 operands[1], operands[2], operands[4], operands[4],
+                 operands[5], operands[6]));
+      emit_insn (gen_vm_mm (AND, <VM>mode, operands[0], operands[0], mask,
+                 operands[5], operands[6]));
+      
+      if (strcmp ("<optab>", "ordered") != 0)
+        {
+          if (strcmp ("<optab>", "unordered") == 0)
+            emit_insn (gen_vmnot_m (<VM>mode, operands[0], operands[0], operands[5], operands[6]));
+          else
+            {
+              enum rtx_code code = strcmp ("<optab>", "unlt") == 0 ? LT :
+                    strcmp ("<optab>", "unle") == 0 ? LE : 
+                    strcmp ("<optab>", "unge") == 0 ? GE :
+                    strcmp ("<optab>", "ungt") == 0 ? GT : EQ;
+              emit_insn (gen_vmf_vv (code, <MODE>mode, operands[0],
+                    operands[0], operands[0], operands[3], operands[4],
+                    operands[5], operands[6]));
+            }
+        }
+    }
+  DONE;
+})
+
 ;; Floating-Point Classify Instruction.
 (define_insn "@vfclass<vmap>_v"
   [(set (match_operand:<VMAP> 0 "register_operand" "=vr,vr,vr,vr")
