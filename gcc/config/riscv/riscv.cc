@@ -4569,7 +4569,7 @@ riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
 
       temp_reg = gen_reg_rtx (word_mode);
       zero_extend_p = (LOAD_EXTEND_OP (mode) == ZERO_EXTEND);
-      emit_insn (gen_extend_insn (temp_reg, src, word_mode, mode, 
+      emit_insn (gen_extend_insn (temp_reg, src, word_mode, mode,
 				  zero_extend_p));
       riscv_emit_move (dest, gen_lowpart (mode, temp_reg));
       return true;
@@ -6635,7 +6635,7 @@ riscv_block_move_loop (rtx dest, rtx src, unsigned HOST_WIDE_INT length,
 bool
 riscv_vector_expand_block_move (rtx *operands)
 {
-  /*
+/*
   memcpy:
       mv a3, a0 # Copy destination
   loop:
@@ -6647,7 +6647,9 @@ riscv_vector_expand_block_move (rtx *operands)
       add a3, a3, t0              # Bump pointer
       bnez a2, loop               # Any more?
       ret                         # Return
-  */
+*/
+  if (!TARGET_VECTOR || !TARGET_RVV)
+    return false;
   machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
   bool size_p = optimize_function_for_size_p (cfun);
   rtx src, dst;
@@ -6760,7 +6762,7 @@ riscv_expand_block_move (rtx dest, rtx src, rtx length)
 bool
 riscv_vector_expand_strlen (rtx *operands)
 {
-  /*
+/*
   strlen:
       mv a3, a0             # Save start
   loop:
@@ -6777,7 +6779,9 @@ riscv_vector_expand_strlen (rtx *operands)
       sub a0, a3, a0        # Subtract start address+bump
 
       ret
-  */
+*/
+  if (!TARGET_VECTOR || !TARGET_RVV)
+    return false;
   if (optimize < 1 || operands[2] != const0_rtx)
     return false;
 
@@ -6823,7 +6827,7 @@ riscv_vector_expand_strlen (rtx *operands)
 bool
 riscv_vector_expand_strcpy (rtx *operands)
 {
-  /*
+/*
   strcpy:
       mv a2, a0             # Copy dst
       li t0, -1             # Infinite AVL
@@ -6840,7 +6844,9 @@ riscv_vector_expand_strcpy (rtx *operands)
       bltz a3, loop         # Zero byte not found, so loop
 
       ret
-  */
+*/
+  if (!TARGET_VECTOR || !TARGET_RVV)
+    return false;
   if (optimize < 1)
     return false;
 
@@ -6923,6 +6929,8 @@ loop:
 
     ret
 */
+  if (!TARGET_VECTOR || !TARGET_RVV)
+    return false;
   if (optimize < 1)
     return false;
 

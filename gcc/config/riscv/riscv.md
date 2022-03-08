@@ -2052,8 +2052,7 @@
 	      (use (match_operand:SI 3 "const_int_operand"))])]
   ""
 {
-  if (TARGET_VECTOR && TARGET_RVV
-    && riscv_vector_expand_block_move (operands))
+  if (riscv_vector_expand_block_move (operands))
     DONE;
   else if (riscv_expand_block_move (operands[0], operands[1], operands[2]))
     DONE;
@@ -2076,8 +2075,7 @@
    (match_operand:SI  3 "immediate_operand" "")] ; known alignment
   ""
 {
-  if (TARGET_VECTOR && TARGET_RVV
-    && riscv_vector_expand_strlen (operands))
+  if (riscv_vector_expand_strlen (operands))
     DONE;
   else
     FAIL;
@@ -2089,8 +2087,7 @@
    (match_operand 2 "memory_operand" "")]
   ""
 {
-  if (TARGET_VECTOR && TARGET_RVV
-    && riscv_vector_expand_strcpy (operands))
+  if (riscv_vector_expand_strcpy (operands))
     DONE;
   else
     FAIL;
@@ -2103,8 +2100,7 @@
    (match_operand:SI    3 "immediate_operand")] ;; Known Align
   ""
 {
-  if (TARGET_VECTOR && TARGET_RVV
-    && riscv_vector_expand_strcmp (operands))
+  if (riscv_vector_expand_strcmp (operands))
     DONE;
   else
     FAIL;
