@@ -62,6 +62,22 @@
 #include "riscv-vector-builtins-functions.h"
 namespace riscv_vector
 {
+
+/* define help variables */
+static uint64_t pred_all = PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu;
+static uint64_t pred_tail = PRED_void | PRED_ta | PRED_tu;
+static uint64_t pred_mask = PRED_void | PRED_m | PRED_ma | PRED_mu;
+static uint64_t pred_mask2 = PRED_void | PRED_m;
+static uint64_t pred_reduce = PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_m_ta | PRED_m_tu;
+
+static uint64_t pat_mask_tail = PAT_mask | PAT_tail;
+static uint64_t pat_mask_tail_dest = PAT_mask | PAT_tail | PAT_dest;
+static uint64_t pat_mask_tail_void_dest = PAT_mask | PAT_tail | PAT_void_dest;
+static uint64_t pat_tail_void_dest = PAT_tail | PAT_void_dest;
+static uint64_t pat_void_dest_ignore_mp = PAT_mask | PAT_tail | PAT_void_dest | PAT_ignore_mask_policy;
+static uint64_t pat_mask_ignore_tp = PAT_mask | PAT_ignore_tail_policy;
+static uint64_t pat_mask_ignore_policy = PAT_mask | PAT_ignore_policy;
+
 /* share global variables */
 
 const unsigned int NAME_MAXLEN = 64;
