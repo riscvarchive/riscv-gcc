@@ -1775,7 +1775,7 @@ riscv_expand_vec_cmp_float (rtx target, rtx_code code, rtx op0, rtx op1,
   machine_mode data_mode = GET_MODE (op0);
 
   if (code == UNORDERED || code == ORDERED || code == UNEQ || code == UNGE ||
-      code == UNGT || code == UNLE || code == UNLT)
+      code == UNGT || code == UNLE || code == UNLT || code == LTGT)
     {
       rtx len = op2 ? op2 : gen_rtx_REG (Pmode, X0_REGNUM);
       if (VECTOR_MODE_P (GET_MODE (op1)))
@@ -2141,10 +2141,10 @@ emit_op7_slide1 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
             {
               emit_insn (gen_vslide1_vx_internal (
                   UNSPEC_SLIDE1DOWN, VSImode, vtemp, const0_rtx, const0_rtx,
-                  vs_si, lo, vlx2, operands[6]));
+                  vs_si, force_reg (GET_MODE (lo), lo), vlx2, operands[6]));
               emit_insn (gen_vslide1_vx_internal (
                   UNSPEC_SLIDE1DOWN, VSImode, vtemp, const0_rtx, const0_rtx,
-                  vtemp, hi, vlx2, operands[6]));
+                  vtemp, force_reg (GET_MODE (hi), hi), vlx2, operands[6]));
             }
 
           if (rtx_equal_p (mask, const0_rtx))
