@@ -2422,6 +2422,253 @@ public:
           rtx target) const OVERRIDE;
 };
 
+
+/* Non-tuple type segement load/store */
+
+/* A function_base for vlseg_template functions.  */
+template <unsigned int NF>
+class vlseg_template : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  bool has_dest_arg_p (predication_index) const OVERRIDE;
+
+  size_t get_position_of_mask_arg (predication_index pred) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
+};
+
+using vlseg2 = vlseg_template<2>;
+using vlseg3 = vlseg_template<3>;
+using vlseg4 = vlseg_template<4>;
+using vlseg5 = vlseg_template<5>;
+using vlseg6 = vlseg_template<6>;
+using vlseg7 = vlseg_template<7>;
+using vlseg8 = vlseg_template<8>;
+
+/* A function_base for vlsegff_template functions.  */
+template <unsigned int NF>
+class vlsegff_template : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  bool has_dest_arg_p (predication_index) const OVERRIDE;
+
+  size_t get_position_of_mask_arg (predication_index pred) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
+};
+
+using vlseg2ff = vlsegff_template<2>;
+using vlseg3ff = vlsegff_template<3>;
+using vlseg4ff = vlsegff_template<4>;
+using vlseg5ff = vlsegff_template<5>;
+using vlseg6ff = vlsegff_template<6>;
+using vlseg7ff = vlsegff_template<7>;
+using vlseg8ff = vlsegff_template<8>;
+
+
+/* A function_base for vsseg_template functions.  */
+template <unsigned int NF>
+class vsseg_template : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
+};
+
+using vsseg2 = vsseg_template<2>;
+using vsseg3 = vsseg_template<3>;
+using vsseg4 = vsseg_template<4>;
+using vsseg5 = vsseg_template<5>;
+using vsseg6 = vsseg_template<6>;
+using vsseg7 = vsseg_template<7>;
+using vsseg8 = vsseg_template<8>;
+
+/* A function_base for vlsseg_template functions.  */
+template <unsigned int NF>
+class vlsseg_template : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  bool has_dest_arg_p (predication_index) const OVERRIDE;
+
+  size_t get_position_of_mask_arg (predication_index pred) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
+};
+
+using vlsseg2 = vlsseg_template<2>;
+using vlsseg3 = vlsseg_template<3>;
+using vlsseg4 = vlsseg_template<4>;
+using vlsseg5 = vlsseg_template<5>;
+using vlsseg6 = vlsseg_template<6>;
+using vlsseg7 = vlsseg_template<7>;
+using vlsseg8 = vlsseg_template<8>;
+
+/* A function_base for vssseg_template functions.  */
+template <unsigned int NF>
+class vssseg_template : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
+};
+
+using vssseg2 = vssseg_template<2>;
+using vssseg3 = vssseg_template<3>;
+using vssseg4 = vssseg_template<4>;
+using vssseg5 = vssseg_template<5>;
+using vssseg6 = vssseg_template<6>;
+using vssseg7 = vssseg_template<7>;
+using vssseg8 = vssseg_template<8>;
+
+/* A function_base for vlxseg_template functions.  */
+template <unsigned int NF, indexed_mode uo>
+class vlxseg_template : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  bool has_dest_arg_p (predication_index) const OVERRIDE;
+
+  size_t get_position_of_mask_arg (predication_index pred) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
+};
+
+using vluxseg2 = vlxseg_template<2, INDEXED_u>;
+using vluxseg3 = vlxseg_template<3, INDEXED_u>;
+using vluxseg4 = vlxseg_template<4, INDEXED_u>;
+using vluxseg5 = vlxseg_template<5, INDEXED_u>;
+using vluxseg6 = vlxseg_template<6, INDEXED_u>;
+using vluxseg7 = vlxseg_template<7, INDEXED_u>;
+using vluxseg8 = vlxseg_template<8, INDEXED_u>;
+using vloxseg2 = vlxseg_template<2, INDEXED_o>;
+using vloxseg3 = vlxseg_template<3, INDEXED_o>;
+using vloxseg4 = vlxseg_template<4, INDEXED_o>;
+using vloxseg5 = vlxseg_template<5, INDEXED_o>;
+using vloxseg6 = vlxseg_template<6, INDEXED_o>;
+using vloxseg7 = vlxseg_template<7, INDEXED_o>;
+using vloxseg8 = vlxseg_template<8, INDEXED_o>;
+
+/* A function_base for vsxseg_template functions.  */
+template <unsigned int NF, indexed_mode uo>
+class vsxseg_template : public segment
+{
+public:
+  // use the same construction function as the function_builder
+  using segment::segment;
+
+  unsigned int
+  call_properties (const function_instance &) const OVERRIDE;
+
+  void
+  get_argument_types (const function_instance &instance,
+                      vec<tree> &argument_types) const OVERRIDE;
+
+  gimple *
+  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+        gcall *call_in) const OVERRIDE;
+
+  rtx
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
+};
+
+using vsuxseg2 = vsxseg_template<2, INDEXED_u>;
+using vsuxseg3 = vsxseg_template<3, INDEXED_u>;
+using vsuxseg4 = vsxseg_template<4, INDEXED_u>;
+using vsuxseg5 = vsxseg_template<5, INDEXED_u>;
+using vsuxseg6 = vsxseg_template<6, INDEXED_u>;
+using vsuxseg7 = vsxseg_template<7, INDEXED_u>;
+using vsuxseg8 = vsxseg_template<8, INDEXED_u>;
+using vsoxseg2 = vsxseg_template<2, INDEXED_o>;
+using vsoxseg3 = vsxseg_template<3, INDEXED_o>;
+using vsoxseg4 = vsxseg_template<4, INDEXED_o>;
+using vsoxseg5 = vsxseg_template<5, INDEXED_o>;
+using vsoxseg6 = vsxseg_template<6, INDEXED_o>;
+using vsoxseg7 = vsxseg_template<7, INDEXED_o>;
+using vsoxseg8 = vsxseg_template<8, INDEXED_o>;
+
 } // namespace riscv_vector
 
 #endif // end GCC_RISCV_VECTOR_BUILTINS_FUNCTIONS_H

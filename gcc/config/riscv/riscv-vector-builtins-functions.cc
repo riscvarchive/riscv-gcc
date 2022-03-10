@@ -2684,7 +2684,10 @@ segment::get_name (char *name, const function_instance &instance) const
       : (strstr (instance.get_base_name (), "vsuxseg") != NULL ||
          strstr (instance.get_base_name (), "vsoxseg") != NULL)
           ? instance.get_arg_pattern ().arg_list[3]
-          : instance.get_arg_pattern ().arg_list[2];
+      : (strcmp (instance.get_base_name (), "vsseg") == 0 ||
+         strcmp (instance.get_base_name (), "vssseg") == 0)
+          ? instance.get_arg_pattern ().arg_list[2]
+          : instance.get_arg_pattern ().arg_list[1];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned ||
                     instance.get_data_type_list ()[0] == DT_uptr ||
                     instance.get_data_type_list ()[0] == DT_c_uptr;
@@ -5406,6 +5409,628 @@ vfncvt_f2rodf::expand (const function_instance &instance, tree exp,
   icode = code_for_vfncvt_rod_f_f_w (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
+
+/* Non-tuple type segement load/store */
+
+static void
+push_argment_for_segment_load (const function_instance &instance,
+                               vec<tree> &argument_types, unsigned int nf,
+                               bool indexed_p)
+{
+  unsigned int offset = indexed_p ? 1 : 0;
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  for (unsigned int i = 0; i < nf; i++)
+    argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p, true, false));
+  
+  if (instance.get_pred () == PRED_m)
+    {
+      for (unsigned int i = 0; i < nf; i++)
+        argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p, false, false));
+    }
+  argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset + 1], unsigned_p, true, true));
+  if (indexed_p)
+    argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset + 2], true, false, false));
+}
+
+static gimple *
+fold_non_tuple_segment_load (
+    const function_instance &instance, gimple_stmt_iterator *gsi_in,
+    gcall *call_in, unsigned int nf, bool ff)
+{
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[0], unsigned_p, false, false);
+  tree tuple_type = get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nf);
+  tree tuple = create_tmp_var (tuple_type, "tuple");
+  auto_vec<tree, 16> vargs;
+
+  if (instance.get_pred () != PRED_void
+    && instance.get_pred () != PRED_tama
+    && instance.get_pred () != PRED_ta)
+    {
+      for (unsigned int i = 0; i < nf; i++)
+        {
+          tree rhs_vector;
+          if (instance.get_pred () != PRED_m)
+            {
+              rhs_vector = create_tmp_var (vector_type);
+              tree indirect = fold_build2 (MEM_REF, vector_type, gimple_call_arg (call_in, i),
+                    build_int_cst (build_pointer_type (vector_type), 0));
+              gsi_insert_before (gsi_in, gimple_build_assign (rhs_vector, indirect), GSI_SAME_STMT);
+            }
+          else
+            rhs_vector = gimple_call_arg (call_in, i + nf + 1);
+          
+          tree field = tuple_type_field (TREE_TYPE (tuple));
+          tree lhs_array = build3 (COMPONENT_REF, TREE_TYPE (field), tuple,
+                                   field, NULL_TREE);
+          tree lhs_vector =
+              build4 (ARRAY_REF, TREE_TYPE (rhs_vector), lhs_array,
+                      size_int (i), NULL_TREE, NULL_TREE);
+          gassign *assign = gimple_build_assign (lhs_vector, rhs_vector);
+          gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
+        }
+    }
+  
+  if (instance.get_pred () == PRED_tama)
+    {
+      /* push a mask. */
+      vargs.quick_push (gimple_call_arg (call_in, nf));
+    }
+  if (instance.get_pred () == PRED_m
+    || instance.get_pred () == PRED_tamu
+    || instance.get_pred () == PRED_tuma
+    || instance.get_pred () == PRED_tumu)
+    {
+      /* push a mask. */
+      vargs.quick_push (gimple_call_arg (call_in, nf));
+      /* push a tuple. */
+      vargs.quick_push (tuple);
+    }
+  if (instance.get_pred () == PRED_tu)
+    {
+      /* push a tuple. */
+      vargs.quick_push (tuple);
+    }
+    
+  if (strstr (instance.get_base_name (), "vlseg") != NULL && !ff)
+    vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
+  else
+    {
+      vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 3));
+      vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
+    }
+  /* push the vl. */
+  vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
+  
+  function_instance *fn_instance = new function_instance ();
+  char buff[16];
+  
+  if (strstr (instance.get_base_name (), "vlseg") != NULL)
+    {
+      if (ff)
+        snprintf (buff, sizeof (buff), "vlseg%de%dff", nf, GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+      else
+        snprintf (buff, sizeof (buff), "vlseg%de%d", nf, GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+    }
+  else if (strstr (instance.get_base_name (), "vlsseg") != NULL)
+    snprintf (buff, sizeof (buff), "vlsseg%de%d", nf, GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+  else if (strstr (instance.get_base_name (), "vluxseg") != NULL)
+    {
+      machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[instance.get_arg_pattern ().arg_len - 1];
+      snprintf (buff, sizeof (buff), "vluxseg%dei%d", nf, GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+    }
+  else if (strstr (instance.get_base_name (), "vloxseg") != NULL)
+    {
+      machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[instance.get_arg_pattern ().arg_len - 1];
+      snprintf (buff, sizeof (buff), "vloxseg%dei%d", nf, GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+    }
+  else
+    gcc_unreachable ();
+
+  if (instance.get_pred () == PRED_void)
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+  else if (instance.get_pred () == PRED_ta)
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_ta", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+  else if (instance.get_pred () == PRED_tu)
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tu", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+  else if (instance.get_pred () == PRED_tama)
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tama", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+  else if (instance.get_pred () == PRED_tamu)
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tamu", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+  else if (instance.get_pred () == PRED_tuma)
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tuma", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+  else if (instance.get_pred () == PRED_tumu)
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tumu", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+  else
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_m", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+
+  hashval_t hashval = fn_instance->hash ();
+  registered_function *rfn_slot =
+      function_table->find_with_hash (*fn_instance, hashval);
+  tree decl = rfn_slot->decl;
+  gimple *repl = gimple_build_call_vec (decl, vargs);
+  gimple_call_set_lhs (repl, tuple);
+
+  for (unsigned int i = nf; i-- > 0;)
+    {
+      tree field = tuple_type_field (TREE_TYPE (tuple));
+      tree tuple_array =
+          build3 (COMPONENT_REF, TREE_TYPE (field), tuple, field, NULL_TREE);
+      tree tuple_vector = build4 (ARRAY_REF, vector_type, tuple_array,
+                                  size_int (i), NULL_TREE, NULL_TREE);
+
+      tree tem = make_ssa_name (vector_type);
+
+      tree indirect =
+          fold_build2 (MEM_REF, vector_type, gimple_call_arg (call_in, i),
+                       build_int_cst (build_pointer_type (vector_type), 0));
+      gassign *assign = gimple_build_assign (indirect, tem);
+      gsi_insert_after (gsi_in, assign, GSI_SAME_STMT);
+      gsi_insert_after (gsi_in, gimple_build_assign (tem, tuple_vector),
+                        GSI_SAME_STMT);
+    }
+
+  delete fn_instance;
+  return repl;
+}
+
+static void
+push_argment_for_segment_store (const function_instance &instance,
+                               vec<tree> &argument_types, unsigned int nf,
+                               bool indexed_p)
+{
+  unsigned int offset = indexed_p ? 3 : 1;
+  bool unsigned_p = instance.get_data_type_list ()[offset] == DT_unsigned;
+  
+  if (indexed_p)
+    {
+      argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[1], unsigned_p, true, false));
+      argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[2], true, false, false));
+    }
+  else
+    argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[0], unsigned_p, true, false));
+  
+  for (unsigned int i = 0; i < nf; i++)
+    argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p, false, false));
+}
+
+static gimple *
+fold_non_tuple_segment_store (const function_instance &instance,
+                              gimple_stmt_iterator *gsi_in, gcall *call_in,
+                              unsigned int nf)
+{
+  bool unsigned_p = instance.get_data_type_list ()[instance.get_arg_pattern ().arg_len - 1] == DT_unsigned;
+  tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[instance.get_arg_pattern ().arg_len - 1],
+                               unsigned_p, false, false);
+  tree tuple_type = get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nf);
+  tree tuple = create_tmp_var (tuple_type, "tuple");
+  auto_vec<tree, 16> vargs;
+
+  unsigned int offset = instance.get_pred () == PRED_m ? 2 : 1;
+  for (unsigned int i = 0; i < offset; i++)
+    vargs.quick_push (gimple_call_arg (call_in, i));
+
+  if (strstr (instance.get_base_name (), "vsseg") == NULL)
+    {
+      vargs.quick_push (gimple_call_arg (call_in, offset));
+      offset++;
+    }
+
+  for (unsigned int i = 0; i < nf; i++)
+    {
+      tree rhs_vector = gimple_call_arg (call_in, i + offset);
+      tree field = tuple_type_field (TREE_TYPE (tuple));
+      tree lhs_array =
+          build3 (COMPONENT_REF, TREE_TYPE (field), tuple, field, NULL_TREE);
+      tree lhs_vector = build4 (ARRAY_REF, TREE_TYPE (rhs_vector), lhs_array,
+                                size_int (i), NULL_TREE, NULL_TREE);
+      gassign *assign = gimple_build_assign (lhs_vector, rhs_vector);
+      gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
+    }
+
+  vargs.quick_push (tuple);
+  /* push the vl. */
+  vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
+
+  function_instance *fn_instance = new function_instance ();
+  char buff[16];
+
+  if (strstr (instance.get_base_name (), "vsseg") != NULL)
+    snprintf (buff, sizeof (buff), "vsseg%de%d", nf,
+              GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+  else if (strstr (instance.get_base_name (), "vssseg") != NULL)
+    snprintf (buff, sizeof (buff), "vssseg%de%d", nf,
+              GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+  else if (strstr (instance.get_base_name (), "vsuxseg") != NULL)
+    {
+      machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[2];
+      snprintf (buff, sizeof (buff), "vsuxseg%dei%d", nf,
+                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+    }
+  else if (strstr (instance.get_base_name (), "vsoxseg") != NULL)
+    {
+      machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[2];
+      snprintf (buff, sizeof (buff), "vsoxseg%dei%d", nf,
+                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+    }
+  else
+    gcc_unreachable ();
+
+  if (instance.get_pred () == PRED_void)
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+  else
+    snprintf (
+        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_m", buff,
+        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+
+  hashval_t hashval = fn_instance->hash ();
+  registered_function *rfn_slot =
+      function_table->find_with_hash (*fn_instance, hashval);
+  tree decl = rfn_slot->decl;
+  gimple *repl = gimple_build_call_vec (decl, vargs);
+
+  delete fn_instance;
+  return repl;
+}
+
+/* A function_base for vlseg_template functions.  */
+template <unsigned int NF>
+unsigned int
+vlseg_template<NF>::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY;
+}
+
+template <unsigned int NF>
+void
+vlseg_template<NF>::get_argument_types (const function_instance &instance,
+                                        vec<tree> &argument_types) const
+{
+  push_argment_for_segment_load (instance, argument_types, NF, false);
+}
+
+template <unsigned int NF>
+bool
+vlseg_template<NF>::has_dest_arg_p (predication_index) const
+{
+  return false;
+}
+
+template <unsigned int NF>
+size_t
+vlseg_template<NF>::get_position_of_mask_arg (predication_index) const
+{
+  return NF;
+}
+
+template <unsigned int NF>
+gimple *
+vlseg_template<NF>::fold (const function_instance &instance,
+                          gimple_stmt_iterator *gsi_in, gcall *call_in) const
+{
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false);
+}
+
+template <unsigned int NF>
+rtx
+vlseg_template<NF>::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+}
+
+template class vlseg_template<2>;
+template class vlseg_template<3>;
+template class vlseg_template<4>;
+template class vlseg_template<5>;
+template class vlseg_template<6>;
+template class vlseg_template<7>;
+template class vlseg_template<8>;
+
+/* A function_base for vlsegff_template functions.  */
+template <unsigned int NF>
+unsigned int
+vlsegff_template<NF>::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY | CP_RAISE_LD_EXCEPTIONS;
+}
+
+template <unsigned int NF>
+void
+vlsegff_template<NF>::get_argument_types (const function_instance &instance,
+                                          vec<tree> &argument_types) const
+{
+  push_argment_for_segment_load (instance, argument_types, NF, false);
+  argument_types.quick_push (build_pointer_type (size_type_node));
+}
+
+template <unsigned int NF>
+bool
+vlsegff_template<NF>::has_dest_arg_p (predication_index) const
+{
+  return false;
+}
+
+template <unsigned int NF>
+size_t
+vlsegff_template<NF>::get_position_of_mask_arg (predication_index) const
+{
+  return NF;
+}
+
+template <unsigned int NF>
+gimple *
+vlsegff_template<NF>::fold (const function_instance &instance,
+                            gimple_stmt_iterator *gsi_in, gcall *call_in) const
+{
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, true);
+}
+
+template <unsigned int NF>
+rtx
+vlsegff_template<NF>::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+}
+
+template class vlsegff_template<2>;
+template class vlsegff_template<3>;
+template class vlsegff_template<4>;
+template class vlsegff_template<5>;
+template class vlsegff_template<6>;
+template class vlsegff_template<7>;
+template class vlsegff_template<8>;
+
+/* A function_base for vsseg_template functions.  */
+template <unsigned int NF>
+unsigned int
+vsseg_template<NF>::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+template <unsigned int NF>
+void
+vsseg_template<NF>::get_argument_types (const function_instance &instance,
+                                        vec<tree> &argument_types) const
+{
+  push_argment_for_segment_store (instance, argument_types, NF, false);
+}
+
+template <unsigned int NF>
+gimple *
+vsseg_template<NF>::fold (const function_instance &instance,
+                          gimple_stmt_iterator *gsi_in, gcall *call_in) const
+{
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF);
+}
+
+template <unsigned int NF>
+rtx
+vsseg_template<NF>::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+}
+
+template class vsseg_template<2>;
+template class vsseg_template<3>;
+template class vsseg_template<4>;
+template class vsseg_template<5>;
+template class vsseg_template<6>;
+template class vsseg_template<7>;
+template class vsseg_template<8>;
+
+/* A function_base for vlsseg_template functions.  */
+template <unsigned int NF>
+void
+vlsseg_template<NF>::get_argument_types (const function_instance &instance,
+                                         vec<tree> &argument_types) const
+{
+  push_argment_for_segment_load (instance, argument_types, NF, false);
+  argument_types.quick_push (ptrdiff_type_node);
+}
+
+template <unsigned int NF>
+bool
+vlsseg_template<NF>::has_dest_arg_p (predication_index) const
+{
+  return false;
+}
+
+template <unsigned int NF>
+size_t
+vlsseg_template<NF>::get_position_of_mask_arg (predication_index) const
+{
+  return NF;
+}
+
+template <unsigned int NF>
+gimple *
+vlsseg_template<NF>::fold (const function_instance &instance,
+                           gimple_stmt_iterator *gsi_in, gcall *call_in) const
+{
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false);
+}
+
+template <unsigned int NF>
+rtx
+vlsseg_template<NF>::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+}
+
+template class vlsseg_template<2>;
+template class vlsseg_template<3>;
+template class vlsseg_template<4>;
+template class vlsseg_template<5>;
+template class vlsseg_template<6>;
+template class vlsseg_template<7>;
+template class vlsseg_template<8>;
+
+/* A function_base for vssseg_template functions.  */
+template <unsigned int NF>
+unsigned int
+vssseg_template<NF>::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+template <unsigned int NF>
+void
+vssseg_template<NF>::get_argument_types (const function_instance &instance,
+                                         vec<tree> &argument_types) const
+{
+  push_argment_for_segment_store (instance, argument_types, NF, false);
+  argument_types.quick_insert (1, ptrdiff_type_node);
+}
+
+template <unsigned int NF>
+gimple *
+vssseg_template<NF>::fold (const function_instance &instance,
+                           gimple_stmt_iterator *gsi_in, gcall *call_in) const
+{
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF);
+}
+
+template <unsigned int NF>
+rtx
+vssseg_template<NF>::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+}
+
+template class vssseg_template<2>;
+template class vssseg_template<3>;
+template class vssseg_template<4>;
+template class vssseg_template<5>;
+template class vssseg_template<6>;
+template class vssseg_template<7>;
+template class vssseg_template<8>;
+
+/* A function_base for vlxseg_template functions.  */
+template <unsigned int NF, indexed_mode uo>
+unsigned int
+vlxseg_template<NF, uo>::call_properties (const function_instance &) const
+{
+  return CP_READ_MEMORY;
+}
+
+template <unsigned int NF, indexed_mode uo>
+void
+vlxseg_template<NF, uo>::get_argument_types (const function_instance &instance,
+                                             vec<tree> &argument_types) const
+{
+  push_argment_for_segment_load (instance, argument_types, NF, true);
+}
+
+template <unsigned int NF, indexed_mode uo>
+bool
+vlxseg_template<NF, uo>::has_dest_arg_p (predication_index) const
+{
+  return false;
+}
+
+template <unsigned int NF, indexed_mode uo>
+size_t
+vlxseg_template<NF, uo>::get_position_of_mask_arg (predication_index) const
+{
+  return NF;
+}
+
+template <unsigned int NF, indexed_mode uo>
+gimple *
+vlxseg_template<NF, uo>::fold (const function_instance &instance,
+                               gimple_stmt_iterator *gsi_in,
+                               gcall *call_in) const
+{
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false);
+}
+
+template <unsigned int NF, indexed_mode uo>
+rtx
+vlxseg_template<NF, uo>::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+}
+
+template class vlxseg_template<2, INDEXED_u>;
+template class vlxseg_template<3, INDEXED_u>;
+template class vlxseg_template<4, INDEXED_u>;
+template class vlxseg_template<5, INDEXED_u>;
+template class vlxseg_template<6, INDEXED_u>;
+template class vlxseg_template<7, INDEXED_u>;
+template class vlxseg_template<8, INDEXED_u>;
+template class vlxseg_template<2, INDEXED_o>;
+template class vlxseg_template<3, INDEXED_o>;
+template class vlxseg_template<4, INDEXED_o>;
+template class vlxseg_template<5, INDEXED_o>;
+template class vlxseg_template<6, INDEXED_o>;
+template class vlxseg_template<7, INDEXED_o>;
+template class vlxseg_template<8, INDEXED_o>;
+
+/* A function_base for vsxseg_template functions.  */
+template <unsigned int NF, indexed_mode uo>
+unsigned int
+vsxseg_template<NF, uo>::call_properties (const function_instance &) const
+{
+  return CP_WRITE_MEMORY;
+}
+
+template <unsigned int NF, indexed_mode uo>
+void
+vsxseg_template<NF, uo>::get_argument_types (const function_instance &instance,
+                                             vec<tree> &argument_types) const
+{
+  push_argment_for_segment_store (instance, argument_types, NF, true);
+}
+
+template <unsigned int NF, indexed_mode uo>
+gimple *
+vsxseg_template<NF, uo>::fold (const function_instance &instance,
+                               gimple_stmt_iterator *gsi_in,
+                               gcall *call_in) const
+{
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF);
+}
+
+template <unsigned int NF, indexed_mode uo>
+rtx
+vsxseg_template<NF, uo>::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+}
+
+template class vsxseg_template<2, INDEXED_u>;
+template class vsxseg_template<3, INDEXED_u>;
+template class vsxseg_template<4, INDEXED_u>;
+template class vsxseg_template<5, INDEXED_u>;
+template class vsxseg_template<6, INDEXED_u>;
+template class vsxseg_template<7, INDEXED_u>;
+template class vsxseg_template<8, INDEXED_u>;
+template class vsxseg_template<2, INDEXED_o>;
+template class vsxseg_template<3, INDEXED_o>;
+template class vsxseg_template<4, INDEXED_o>;
+template class vsxseg_template<5, INDEXED_o>;
+template class vsxseg_template<6, INDEXED_o>;
+template class vsxseg_template<7, INDEXED_o>;
+template class vsxseg_template<8, INDEXED_o>;
 
 } // end namespace riscv_vector
 

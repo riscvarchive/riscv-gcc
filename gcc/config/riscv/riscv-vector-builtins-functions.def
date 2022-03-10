@@ -459,6 +459,229 @@ DEF_RVV_FUNCTION(vsuxseg, vsxseg, (4, VATTR(3, VTSUB, unsigned), VATTR(3, VSUB, 
 DEF_RVV_FUNCTION(vsoxseg, vsxseg, (4, VATTR(3, VTSUB, signed), VATTR(3, VSUB, ptr), VITER(V64UNITSI, unsigned), VITER(VT64UNITS, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
 DEF_RVV_FUNCTION(vsoxseg, vsxseg, (4, VATTR(3, VTSUB, unsigned), VATTR(3, VSUB, uptr), VITER(V64UNITSI, unsigned), VITER(VT64UNITS, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
 
+/* Non-tuple segment load/store. */
+
+/* vlseg */
+DEF_RVV_FUNCTION(vlseg2, vlseg2, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg2, vlseg2, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg2, vlseg2, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg3, vlseg3, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg3, vlseg3, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg3, vlseg3, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg4, vlseg4, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg4, vlseg4, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg4, vlseg4, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg5, vlseg5, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg5, vlseg5, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg5, vlseg5, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg6, vlseg6, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg6, vlseg6, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg6, vlseg6, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg7, vlseg7, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg7, vlseg7, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg7, vlseg7, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg8, vlseg8, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg8, vlseg8, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg8, vlseg8, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+
+/* vsseg */
+DEF_RVV_FUNCTION(vsseg2, vsseg2, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg2, vsseg2, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg2, vsseg2, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg3, vsseg3, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg3, vsseg3, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg3, vsseg3, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg4, vsseg4, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg4, vsseg4, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg4, vsseg4, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg5, vsseg5, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg5, vsseg5, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg5, vsseg5, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg6, vsseg6, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg6, vsseg6, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg6, vsseg6, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg7, vsseg7, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg7, vsseg7, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg7, vsseg7, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg8, vsseg8, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg8, vsseg8, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vsseg8, vsseg8, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+
+/* vlsegff */
+DEF_RVV_FUNCTION(vlseg2ff, vlseg2ff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg2ff, vlseg2ff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg2ff, vlseg2ff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg3ff, vlseg3ff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg3ff, vlseg3ff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg3ff, vlseg3ff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg4ff, vlseg4ff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg4ff, vlseg4ff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg4ff, vlseg4ff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg5ff, vlseg5ff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg5ff, vlseg5ff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg5ff, vlseg5ff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg6ff, vlseg6ff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg6ff, vlseg6ff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg6ff, vlseg6ff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg7ff, vlseg7ff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg7ff, vlseg7ff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg7ff, vlseg7ff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg8ff, vlseg8ff, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg8ff, vlseg8ff, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlseg8ff, vlseg8ff, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+
+/* vlsseg */
+DEF_RVV_FUNCTION(vlsseg2, vlsseg2, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg2, vlsseg2, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg2, vlsseg2, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg3, vlsseg3, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg3, vlsseg3, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg3, vlsseg3, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg4, vlsseg4, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg4, vlsseg4, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg4, vlsseg4, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg5, vlsseg5, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg5, vlsseg5, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg5, vlsseg5, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg6, vlsseg6, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg6, vlsseg6, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg6, vlsseg6, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg7, vlsseg7, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg7, vlsseg7, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg7, vlsseg7, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg8, vlsseg8, (2, VITER(VI, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg8, vlsseg8, (2, VITER(VI, unsigned), VATTR(0, VSUB, c_uptr)), pat_mask_tail, pred_all, OP_v)
+DEF_RVV_FUNCTION(vlsseg8, vlsseg8, (2, VITER(VF, signed), VATTR(0, VSUB, c_ptr)), pat_mask_tail, pred_all, OP_v)
+
+/* vssseg */
+DEF_RVV_FUNCTION(vssseg2, vssseg2, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg2, vssseg2, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg2, vssseg2, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg3, vssseg3, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg3, vssseg3, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg3, vssseg3, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg4, vssseg4, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg4, vssseg4, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg4, vssseg4, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg5, vssseg5, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg5, vssseg5, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg5, vssseg5, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg6, vssseg6, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg6, vssseg6, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg6, vssseg6, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg7, vssseg7, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg7, vssseg7, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg7, vssseg7, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg8, vssseg8, (2, VATTR(1, VSUB, ptr), VITER(VI, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg8, vssseg8, (2, VATTR(1, VSUB, uptr), VITER(VI, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_RVV_FUNCTION(vssseg8, vssseg8, (2, VATTR(1, VSUB, ptr), VITER(VF, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+
+/* vl[uo]xseg */
+#define DEF_SEGMENT_INDEXED_LOAD(T, N) \
+  DEF_RVV_FUNCTION(vl##T##xseg2, vl##T##xseg2, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg2, vl##T##xseg2, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg2, vl##T##xseg2, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg3, vl##T##xseg3, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg3, vl##T##xseg3, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg3, vl##T##xseg3, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg4, vl##T##xseg4, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg4, vl##T##xseg4, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg4, vl##T##xseg4, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg5, vl##T##xseg5, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg5, vl##T##xseg5, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg5, vl##T##xseg5, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg6, vl##T##xseg6, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg6, vl##T##xseg6, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg6, vl##T##xseg6, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg7, vl##T##xseg7, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg7, vl##T##xseg7, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg7, vl##T##xseg7, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg8, vl##T##xseg8, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg8, vl##T##xseg8, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg8, vl##T##xseg8, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v)
+DEF_SEGMENT_INDEXED_LOAD(u, 2)
+DEF_SEGMENT_INDEXED_LOAD(u, 4)
+DEF_SEGMENT_INDEXED_LOAD(u, 8)
+DEF_SEGMENT_INDEXED_LOAD(u, 16)
+DEF_SEGMENT_INDEXED_LOAD(u, 32)
+DEF_SEGMENT_INDEXED_LOAD(o, 2)
+DEF_SEGMENT_INDEXED_LOAD(o, 4)
+DEF_SEGMENT_INDEXED_LOAD(o, 8)
+DEF_SEGMENT_INDEXED_LOAD(o, 16)
+DEF_SEGMENT_INDEXED_LOAD(o, 32)
+#undef DEF_SEGMENT_INDEXED_LOAD
+#define DEF_SEGMENT_INDEXED_LOAD(T, N) \
+  DEF_RVV_FUNCTION(vl##T##xseg2, vl##T##xseg2, (4, VITER(VT##N##UNITS, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg2, vl##T##xseg2, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg3, vl##T##xseg3, (4, VITER(VT##N##UNITS, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg3, vl##T##xseg3, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg4, vl##T##xseg4, (4, VITER(VT##N##UNITS, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg4, vl##T##xseg4, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg5, vl##T##xseg5, (4, VITER(VT##N##UNITS, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg5, vl##T##xseg5, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg6, vl##T##xseg6, (4, VITER(VT##N##UNITS, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg6, vl##T##xseg6, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg7, vl##T##xseg7, (4, VITER(VT##N##UNITS, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg7, vl##T##xseg7, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg8, vl##T##xseg8, (4, VITER(VT##N##UNITS, signed), VATTR(0, VTSUB, ptr), VATTR(0, VSUB, c_ptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v) \
+  DEF_RVV_FUNCTION(vl##T##xseg8, vl##T##xseg8, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VTSUB, uptr), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned)), pat_mask_tail, pred_all, OP_v)
+DEF_SEGMENT_INDEXED_LOAD(u, 64)
+DEF_SEGMENT_INDEXED_LOAD(o, 64)
+#undef DEF_SEGMENT_INDEXED_LOAD
+
+/* vs[uo]xseg */
+#define DEF_SEGMENT_INDEXED_STORE(T, N) \
+  DEF_RVV_FUNCTION(vs##T##xseg2, vs##T##xseg2, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg2, vs##T##xseg2, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg2, vs##T##xseg2, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg3, vs##T##xseg3, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg3, vs##T##xseg3, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg3, vs##T##xseg3, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg4, vs##T##xseg4, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg4, vs##T##xseg4, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg4, vs##T##xseg4, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg5, vs##T##xseg5, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg5, vs##T##xseg5, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg5, vs##T##xseg5, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg6, vs##T##xseg6, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg6, vs##T##xseg6, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg6, vs##T##xseg6, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg7, vs##T##xseg7, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg7, vs##T##xseg7, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg7, vs##T##xseg7, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg8, vs##T##xseg8, (4, VITER(VT##N##UNITSI, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg8, vs##T##xseg8, (4, VITER(VT##N##UNITSI, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg8, vs##T##xseg8, (4, VITER(VT##N##UNITSF, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_SEGMENT_INDEXED_STORE(u, 2)
+DEF_SEGMENT_INDEXED_STORE(u, 4)
+DEF_SEGMENT_INDEXED_STORE(u, 8)
+DEF_SEGMENT_INDEXED_STORE(u, 16)
+DEF_SEGMENT_INDEXED_STORE(u, 32)
+DEF_SEGMENT_INDEXED_STORE(o, 2)
+DEF_SEGMENT_INDEXED_STORE(o, 4)
+DEF_SEGMENT_INDEXED_STORE(o, 8)
+DEF_SEGMENT_INDEXED_STORE(o, 16)
+DEF_SEGMENT_INDEXED_STORE(o, 32)
+#undef DEF_SEGMENT_INDEXED_STORE
+#define DEF_SEGMENT_INDEXED_STORE(T, N) \
+  DEF_RVV_FUNCTION(vs##T##xseg2, vs##T##xseg2, (4, VITER(VT##N##UNITS, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg2, vs##T##xseg2, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg3, vs##T##xseg3, (4, VITER(VT##N##UNITS, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg3, vs##T##xseg3, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg4, vs##T##xseg4, (4, VITER(VT##N##UNITS, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg4, vs##T##xseg4, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg5, vs##T##xseg5, (4, VITER(VT##N##UNITS, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg5, vs##T##xseg5, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg6, vs##T##xseg6, (4, VITER(VT##N##UNITS, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg6, vs##T##xseg6, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg7, vs##T##xseg7, (4, VITER(VT##N##UNITS, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg7, vs##T##xseg7, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg8, vs##T##xseg8, (4, VITER(VT##N##UNITS, signed), VATTR(0, VSUB, ptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, signed)), pat_mask_ignore_policy, pred_mask2, OP_v) \
+  DEF_RVV_FUNCTION(vs##T##xseg8, vs##T##xseg8, (4, VITER(VT##N##UNITS, unsigned), VATTR(0, VSUB, uptr), VITER(V##N##UNITSI, unsigned), VATTR(0, VTSUB, unsigned)), pat_mask_ignore_policy, pred_mask2, OP_v)
+DEF_SEGMENT_INDEXED_STORE(u, 64)
+DEF_SEGMENT_INDEXED_STORE(o, 64)
+#undef DEF_SEGMENT_INDEXED_STORE
+
 #undef REQUIRED_EXTENSIONS
 #undef DEF_RVV_FUNCTION
 #undef VITER
