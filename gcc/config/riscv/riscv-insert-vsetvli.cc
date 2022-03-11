@@ -65,7 +65,7 @@ using namespace riscv_vector;
 
 using namespace rtl_ssa;
 
-/*  This pass is to insert vsetvli instructions for RVV instructions that depend on vtype && vl.
+/*  This pass is to insert vsetvli instructions for RVV instructions that depend on vtype or vl.
     Because Clang+LLVM compiler has the mature pass to insert vsetvli instructions and works well,
     algorithm follows the Clang+LLVM compiler Pass.
 
@@ -1186,7 +1186,7 @@ needvsetvliphi (vinfo &new_info, rtx_insn *rtl)
   } */
 
   /* We need use rtl ssa phi to optimize which needs
-     optimization to large or equal than 2. */
+     optimization to large than or equal to 2. */
   if (optimize < 2)
     return true;
 
@@ -1293,8 +1293,8 @@ compare_avl_from_source (vinfo &new_info, rtx_insn *vsetvl, rtx_insn *rtl)
     }
 
 }*/
-  /* We need use rtl ssa phi to optimize which needs
-     optimization to large or equal than 2. */
+  /* We need use rtl ssa def_info to optimize which needs
+     optimization to large than or equal to 2. */
   if (optimize < 2)
     return false;
 
