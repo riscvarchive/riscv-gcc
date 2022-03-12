@@ -5393,7 +5393,7 @@
 (define_insn "@vfwcvt<vw>_f_f_v"
   [(set (match_operand:<VW> 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
-    [(unspec:VWF
+    [(unspec:<VW>
       [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (float_extend:<VW>
          (match_operand:VWF 3 "register_operand" "vr,vr,vr,vr"))

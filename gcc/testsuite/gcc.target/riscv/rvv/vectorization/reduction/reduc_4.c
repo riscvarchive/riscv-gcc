@@ -12,4 +12,4 @@ f (double *restrict a, double *restrict b, int *lookup)
 }
 
 /* { dg-final { scan-assembler-times {\tvfmacc.v} 1 } } */
-/* { dg-final { scan-assembler-times {\tvfredusum.vs} 1 } } */
+/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 1 } } */

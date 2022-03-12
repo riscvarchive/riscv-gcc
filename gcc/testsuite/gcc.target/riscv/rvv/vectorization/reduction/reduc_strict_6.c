@@ -22,4 +22,4 @@ slp_non_chained_reduc (int n, double * restrict out)
 }
 
 /* { dg-final { scan-assembler-times {\tvlseg3e64.v} 1 } } */
-/* { dg-final { scan-assembler-times {\tvfredosum.vs} 3 } } */
+/* { dg-final { scan-assembler-times {\tvfredosum\.vs} 3 } } */

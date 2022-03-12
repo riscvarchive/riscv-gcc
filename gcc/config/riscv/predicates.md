@@ -296,6 +296,11 @@
   (and (match_code "const_vector")
        (match_test "riscv_const_vec_all_same_in_range_p (op, 0, 31)")))
 
+(define_predicate "const_vector_0_operand"
+  (and (match_code "const_vector")
+       (match_test "const_vec_duplicate_p (op) 
+         && CONST_VECTOR_ELT (op, 0) == CONST0_RTX (GET_MODE (CONST_VECTOR_ELT (op, 0)))")))
+       
 (define_predicate "vector_const_int_1_operand"
   (and (match_code "const_vector")
        (match_test "riscv_const_vec_all_same_in_range_p (op, 1, 1)")))

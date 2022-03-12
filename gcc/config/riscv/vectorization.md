@@ -7373,3 +7373,124 @@
    vmv<lmul>r.v\t%0,%3\;vfnmacc.vf\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
+
+;; -------------------------------------------------------------------------
+;; ---- [INT,FP] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vwredsum.vs
+;; - vwredsumu.vs
+;; - vfwredosum.vs
+;; - vfwredusum.vs
+;; -------------------------------------------------------------------------
+
+(define_insn "v<sz>ext_vredsum<VWREDI:mode>_to_vwredsum<u>_<P:mode>"
+  [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr")
+    (unspec:<VWLMUL1> 
+      [(unspec:<VM> 
+        [(const_int 0)
+         (unspec:<VWLMUL1> 
+          [(const_int 0)
+           (unspec:<VWLMUL1> 
+            [(unspec:<VWLMUL1> 
+              [(const_int 0)
+               (any_extend:<VWLMUL1> 
+                (match_operand:VWREDI 1 "register_operand" "vr"))
+               (const_int 0)] UNSPEC_SELECT)
+             (match_operand 4 "p_reg_or_const_csr_operand")
+             (match_operand 5 "const_int_operand")
+             (reg:SI VL_REGNUM)
+             (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)
+           (unspec:<VWLMUL1> 
+             [(unspec:<VWLMUL1> 
+               [(match_operand:<VWLMUL1> 2 "const_vector_0_operand")
+                (const_int 0)
+                (const_int 1)] UNSPEC_VMV_SX)
+              (reg:P X0_REGNUM)
+              (match_dup 5)
+              (reg:SI VL_REGNUM)
+              (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_REDUC_SUM)
+         (const_int 0)] UNSPEC_SELECT)
+       (reg:P X0_REGNUM)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+   (clobber (match_scratch:<VWLMUL1> 3 "=&vr"))]
+  "TARGET_VECTOR"
+  "vmv.v.i\t%3,0\;vwredsum<u>.vs\t%0,%1,%3"
+  [(set_attr "type" "vwreduc")
+   (set_attr "mode" "<VWREDI:MODE>")])
+
+(define_insn "vfwcvt_vfredsum<VWREDF:mode>_to_vfwredusum_<P:mode>"
+  [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr")
+    (unspec:<VWLMUL1> 
+      [(unspec:<VM> 
+        [(const_int 0)
+         (unspec:<VWLMUL1> 
+          [(const_int 0)
+           (unspec:<VWLMUL1> 
+            [(unspec:<VWLMUL1> 
+             [(const_int 0)
+              (float_extend:<VWLMUL1> 
+                (match_operand:VWREDF 1 "register_operand" "vr"))
+              (const_int 0)] UNSPEC_SELECT)
+             (match_operand 3 "p_reg_or_const_csr_operand")
+             (match_operand 4 "const_int_operand")
+             (reg:SI VL_REGNUM)
+             (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)
+           (unspec:<VWLMUL1> 
+            [(unspec:<VWLMUL1> 
+             [(const_int 0)
+              (const_int 1)] UNSPEC_VMV_SX)
+             (reg:P X0_REGNUM)
+             (match_dup 4)
+             (reg:SI VL_REGNUM)
+             (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_REDUC_UNORDERED_SUM)
+         (const_int 0)] UNSPEC_SELECT)
+       (reg:P X0_REGNUM)
+       (match_dup 4)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+   (clobber (match_scratch:<VWLMUL1> 2 "=&vr"))]
+  "TARGET_VECTOR"
+  "vmv.v.i\t%2,0\;vfwredusum.vs\t%0,%1,%2"
+  [(set_attr "type" "vwreduc")
+   (set_attr "mode" "<VWREDF:MODE>")])
+
+(define_insn "vfwcvt_vfredsum<VWREDF:mode>_to_vfwredosum_<P:mode>"
+  [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr")
+    (unspec:<VWLMUL1> 
+      [(unspec:<VM> 
+        [(const_int 0)
+         (unspec:<VWLMUL1> 
+          [(const_int 0)
+           (unspec:<VWLMUL1> 
+            [(unspec:<VWLMUL1> 
+              [(const_int 0)
+               (float_extend:<VWLMUL1> 
+                (match_operand:VWREDF 1 "register_operand" "vr"))
+               (const_int 0)] UNSPEC_SELECT)
+             (match_operand 4 "p_reg_or_const_csr_operand")
+             (match_operand 5 "const_int_operand")
+             (reg:SI VL_REGNUM)
+             (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)
+           (unspec:<VWLMUL1> 
+             [(unspec:<VWLMUL1> 
+               [(vec_duplicate:<VWLMUL1> 
+                 (match_operand:<VWSUB> 2 "register_operand" "r"))
+                (const_int 0)
+                (const_int 1)] UNSPEC_VMV_SX)
+              (reg:P X0_REGNUM)
+              (match_dup 5)
+              (reg:SI VL_REGNUM)
+              (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_REDUC_ORDERED_SUM)
+         (const_int 0)] UNSPEC_SELECT)
+       (reg:P X0_REGNUM)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+   (clobber (match_scratch:<VWLMUL1> 3 "=&vr"))]
+  "TARGET_VECTOR"
+  "vfmv.s.f\t%3,%2\;vfwredosum.vs\t%0,%1,%3"
+  [(set_attr "type" "vwreduc")
+   (set_attr "mode" "<VWREDF:MODE>")])

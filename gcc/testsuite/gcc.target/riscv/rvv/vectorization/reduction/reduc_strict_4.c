@@ -22,4 +22,4 @@ slp_reduc_plus (int n)
   return tmp;
 }
 
-/* { dg-final { scan-assembler-times {\tvfredosum.vs} 4 } } */
+/* { dg-final { scan-assembler-times {\tvfredosum\.vs} 4 } } */
