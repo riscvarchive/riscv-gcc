@@ -1782,6 +1782,9 @@
           UNSPEC_REDUC_OR
           UNSPEC_REDUC_XOR])
 
+;; Iterator for integer reduction min/max operations.
+(define_int_iterator REDUC_MAXMIN [UNSPEC_REDUC_MAX UNSPEC_REDUC_MAXU UNSPEC_REDUC_MIN UNSPEC_REDUC_MINU])
+
 ;; Iterator for floating-point reduction instructions.
 (define_int_iterator FREDUC [UNSPEC_REDUC_UNORDERED_SUM UNSPEC_REDUC_ORDERED_SUM UNSPEC_REDUC_MAX UNSPEC_REDUC_MIN])
 

@@ -398,6 +398,7 @@ vect_set_loop_controls_for_while_len (
   unsigned int nitems_per_iter = rgc->max_nscalars_per_iter * rgc->factor;
   poly_uint64 nitems_per_ctrl = TYPE_VECTOR_SUBPARTS (ctrl_type) * rgc->factor;
   poly_uint64 vf = LOOP_VINFO_VECT_FACTOR (loop_vinfo);
+  poly_uint64 final_vf = vf;
 
   /* Calculate the maximum number of item values that the rgroup
      handles in total, the number that it handles for each iteration
@@ -411,6 +412,7 @@ vect_set_loop_controls_for_while_len (
       tree compare_factor = build_int_cst (compare_type, nitems_per_iter);
       nitems_total = gimple_build (preheader_seq, MULT_EXPR, compare_type,
                                    nitems_total, compare_factor);
+      final_vf = vf * nitems_per_iter;
     }
 
   /* Create an induction variable that counts the number of items
@@ -438,7 +440,6 @@ vect_set_loop_controls_for_while_len (
   unsigned int i;
   FOR_EACH_VEC_ELT_REVERSE (rgc->controls, i, ctrl)
   {
-    poly_uint64 final_vf = nitems_per_iter == 1 ? vf : vf * nitems_per_iter;
     /* Get the control value for the next iteration of the loop.  */
     next_ctrl = make_temp_ssa_name (compare_type, NULL, "next_len");
 
@@ -459,9 +460,9 @@ vect_set_loop_controls_for_while_len (
     /* See whether the first iteration of the vector loop is known
        to have a full control.  */
     poly_uint64 const_limit;
-    bool first_iteration_full =
-        (poly_int_tree_p (first_limit, &const_limit) &&
-         known_ge (const_limit, (i + 1) * nitems_per_ctrl));
+    bool first_iteration_full
+        = (poly_int_tree_p (first_limit, &const_limit)
+           && known_ge (const_limit, (i + 1) * nitems_per_ctrl));
 
     /* Rather than have a new IV that starts at BIAS and goes up to
        TEST_LIMIT, prefer to use the same 0-based IV for each control
@@ -471,8 +472,9 @@ vect_set_loop_controls_for_while_len (
       {
         this_test_limit = gimple_build (preheader_seq, MAX_EXPR, compare_type,
                                         this_test_limit, bias_tree);
-        this_test_limit = gimple_build (preheader_seq, MINUS_EXPR, compare_type,
-                                        this_test_limit, bias_tree);
+        this_test_limit
+            = gimple_build (preheader_seq, MINUS_EXPR, compare_type,
+                            this_test_limit, bias_tree);
       }
 
     /* Create the initial control.  First include all items that

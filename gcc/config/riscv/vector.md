@@ -6010,6 +6010,25 @@
   [(set_attr "type" "vmv_s_x")
    (set_attr "mode" "<V64BITI:MODE>")])
 
+;; This pattern is used by auto-vectorization to
+;; initiate a vector whose value of element 0 is
+;; zero. We dont't want to use subreg to generate
+;; transformation between floating-point and integer.
+(define_insn "@vmv<mode>_s_x_internal"
+  [(set (match_operand:VF 0 "register_operand" "=vr")
+  (unspec:VF
+    [(unspec:VF
+      [(const_int 0)
+       (const_int 1)] UNSPEC_VMV_SX)
+     (match_operand 1 "p_reg_or_const_csr_operand")
+     (match_operand 2 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "vmv.s.x\t%0,zero"
+  [(set_attr "type" "vmv_s_x")
+   (set_attr "mode" "<MODE>")])
+
 ;; Floating-Point Scalar Move Instructions.
 (define_insn "@vfmv<mode>_f_s"
   [(set (match_operand:<VSUB> 0 "register_operand" "=f")

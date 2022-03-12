@@ -3043,88 +3043,6 @@ riscv_vector_expand_gather_scatter (rtx *ops, unsigned int gather_scatter_flag)
     }
 }
 
-rtx
-riscv_vector_constant_helper (const char *str, machine_mode mode)
-{
-  if (SCALAR_INT_MODE_P (mode) &&
-      (strcmp (str, "plus") == 0 || strcmp (str, "umax") == 0 ||
-       strcmp (str, "ior") == 0 || strcmp (str, "xor") == 0))
-    return GEN_INT (0);
-
-  if (strcmp (str, "and") == 0)
-    return GEN_INT (-1);
-
-  if (strcmp (str, "plus") == 0)
-    return force_reg (mode, CONST0_RTX (mode));
-
-  switch (mode)
-    {
-    case QImode:
-      if (strcmp (str, "umin") == 0)
-        return force_reg (mode, GEN_INT (0xFF));
-      else if (strcmp (str, "smin") == 0)
-        return force_reg (mode, GEN_INT (0x7F));
-      else if (strcmp (str, "smax") == 0)
-        return force_reg (mode, GEN_INT (0xFFFFFFFFFFFFFF80));
-      else
-        break;
-    case HImode:
-      if (strcmp (str, "umin") == 0)
-        return force_reg (mode, GEN_INT (0xFFFF));
-      else if (strcmp (str, "smin") == 0)
-        return force_reg (mode, GEN_INT (0x7FFF));
-      else if (strcmp (str, "smax") == 0)
-        return force_reg (mode, GEN_INT (0xFFFFFFFFFFFF8000));
-      else
-        break;
-    case SImode:
-      if (strcmp (str, "umin") == 0)
-        return force_reg (mode, GEN_INT (0xFFFFFFFF));
-      else if (strcmp (str, "smin") == 0)
-        return force_reg (mode, GEN_INT (0x7FFFFFFF));
-      else if (strcmp (str, "smax") == 0)
-        return force_reg (mode, GEN_INT (0xFFFFFFFF80000000));
-      else
-        break;
-    case DImode:
-      if (strcmp (str, "umin") == 0)
-        return force_reg (mode, GEN_INT (0xFFFFFFFFFFFFFFFF));
-      else if (strcmp (str, "smin") == 0)
-        return force_reg (mode, GEN_INT (0x7FFFFFFFFFFFFFFF));
-      else if (strcmp (str, "smax") == 0)
-        return force_reg (mode, GEN_INT (0x8000000000000000));
-      else
-        break;
-    case HFmode:
-      if (strcmp (str, "smin") == 0)
-        return gen_lowpart (mode, force_reg (HImode, GEN_INT (0x7BFF)));
-      else if (strcmp (str, "smax") == 0)
-        return gen_lowpart (mode, force_reg (HImode, GEN_INT (0xFC00)));
-      else
-        break;
-    case SFmode:
-      if (strcmp (str, "smin") == 0)
-        return gen_lowpart (mode, force_reg (SImode, GEN_INT (0x7F7FFFFF)));
-      else if (strcmp (str, "smax") == 0)
-        return gen_lowpart (mode, force_reg (SImode, GEN_INT (0xFF7FFFFF)));
-      else
-        break;
-    case DFmode:
-      if (strcmp (str, "smin") == 0)
-        return gen_lowpart (mode,
-                            force_reg (DImode, GEN_INT (0x7FEFFFFFFFFFFFFF)));
-      else if (strcmp (str, "smax") == 0)
-        return gen_lowpart (mode,
-                            force_reg (DImode, GEN_INT (0xFFEFFFFFFFFFFFFF)));
-      else
-        break;
-    default:
-      break;
-    }
-
-  gcc_unreachable ();
-}
-
 /* Return the RVV vector mode that has NUNITS elements or bytes of mode
  * INNER_MODE.  */
 
@@ -6994,6 +6912,44 @@ loop:
   emit_insn (gen_rtx_SET (operands[0],
       gen_rtx_MINUS (GET_MODE (operands[0]), result1, result2)));
   return true;
+}
+
+void
+riscv_vector_expand_while_len (rtx *operands)
+{
+  poly_int64 offset;
+  machine_mode mode;
+  scalar_mode inner_mode;
+  switch (INTVAL (operands[2]))
+    {
+    case 8:
+      inner_mode = QImode;
+      break;
+    case 16:
+      inner_mode = HImode;
+      break;
+    case 32:
+      inner_mode = SImode;
+      break;
+    case 64:
+      inner_mode = DImode;
+      break;
+    default:
+      gcc_unreachable ();
+    }
+
+  if (!poly_int_rtx_p (operands[3], &offset))
+    offset = poly_int64 (INTVAL (operands[3]), 0);
+  if (!riscv_vector_data_mode (inner_mode, offset).exists (&mode))
+    {
+      rtx clobber = gen_reg_rtx (Pmode);
+      riscv_expand_mov_const_poly_int (Pmode, operands[0], clobber, gen_int_mode (offset, Pmode));
+      return;
+    }
+  unsigned int vlmul = riscv_classify_vlmul_field (mode);
+  unsigned int vsew = riscv_classify_vsew_field (mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+  emit_insn (gen_vsetvl (Pmode, operands[0], operands[1], GEN_INT (vtype)));
 }
 
 /* Print symbolic operand OP, which is part of a HIGH or LO_SUM

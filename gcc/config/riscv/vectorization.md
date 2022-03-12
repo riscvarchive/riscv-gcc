@@ -4335,18 +4335,79 @@
 ;; - vredxor.vs
 ;; -------------------------------------------------------------------------
 
-(define_expand "reduc_<optab>_scal_<mode>"
-  [(set (match_operand:<VSUB> 0 "register_operand")
-    (unspec:<VSUB>
-      [(match_operand:VI 1 "register_operand")] REDUC))]
+(define_expand "reduc_plus_scal_<mode>"
+  [(match_operand:<VSUB> 0 "register_operand")
+   (match_operand:VI 1 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
-  rtx x = riscv_vector_constant_helper ("<optab>", <VSUB>mode);
-  emit_insn (gen_v_v_x (UNSPEC_VMV, <VLMUL1>mode, accum, accum, x, zero,
-                        riscv_vector_gen_policy ()));
+  emit_insn (gen_v_s_x (UNSPEC_VMVS, <VLMUL1>mode, accum, 
+             const0_rtx, GEN_INT (0), zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vredsum<mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[1], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vmv_x_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+(define_expand "reduc_<optab>_scal_<mode>"
+  [(set (match_operand:<VSUB> 0 "register_operand")
+    (unspec:<VSUB>
+      [(match_operand:VI 1 "register_operand")] REDUC_MAXMIN))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  rtx x = gen_reg_rtx (<VSUB>mode);
+  emit_insn (gen_vmv_x_s (<MODE>mode, x, operands[1]));
+  emit_insn (gen_v_s_x (UNSPEC_VMVS, <VLMUL1>mode, accum, 
+             const0_rtx, x, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vred<reduc><mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[1], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vmv_x_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+(define_expand "reduc_and_scal_<mode>"
+  [(match_operand:<VSUB> 0 "register_operand")
+   (match_operand:VI 1 "register_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  emit_insn (gen_vmv<mode>_v_x (accum, const0_rtx, GEN_INT (-1),
+             zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vredand<mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[1], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vmv_x_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+(define_expand "reduc_ior_scal_<mode>"
+  [(match_operand:<VSUB> 0 "register_operand")
+   (match_operand:VI 1 "register_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  emit_insn (gen_v_s_x (UNSPEC_VMVS, <VLMUL1>mode, accum, 
+             const0_rtx, GEN_INT (0), zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vredor<mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[1], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vmv_x_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+(define_expand "reduc_xor_scal_<mode>"
+  [(match_operand:<VSUB> 0 "register_operand")
+   (match_operand:VI 1 "register_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  emit_insn (gen_v_s_x (UNSPEC_VMVS, <VLMUL1>mode, accum, 
+             const0_rtx, GEN_INT (0), zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vredxor<mode>_vs (accum, const0_rtx, const0_rtx,
         operands[1], accum, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vmv_x_s (<VLMUL1>mode, operands[0], accum));
   DONE;
@@ -4362,16 +4423,14 @@
 ;; -------------------------------------------------------------------------
 
 (define_expand "reduc_plus_scal_<mode>"
-  [(set (match_operand:<VSUB> 0 "register_operand")
-    (unspec:<VSUB>
-      [(match_operand:VF 1 "register_operand")] UNSPEC_REDUC_UNORDERED_SUM))]
+  [(match_operand:<VSUB> 0 "register_operand")
+   (match_operand:VF 1 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
-  rtx f = riscv_vector_constant_helper ("plus", <VSUB>mode);
-  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx, f, zero,
-      riscv_vector_gen_policy ()));
+  emit_insn (gen_vmv_s_x_internal (<VLMUL1>mode, accum, zero, 
+        riscv_vector_gen_policy ()));
   emit_insn (gen_vfredusum<mode>_vs (accum, const0_rtx, const0_rtx,
         operands[1], accum, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
@@ -4379,16 +4438,16 @@
 })
 
 (define_expand "reduc_smin_scal_<mode>"
-  [(set (match_operand:<VSUB> 0 "register_operand")
-    (unspec:<VSUB>
-      [(match_operand:VF 1 "register_operand")] UNSPEC_REDUC_MIN))]
+  [(match_operand:<VSUB> 0 "register_operand")
+   (match_operand:VF 1 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
-  rtx f = riscv_vector_constant_helper ("smin", <VSUB>mode);
-  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx, f, zero,
-      riscv_vector_gen_policy ()));
+  rtx f = gen_reg_rtx (<VSUB>mode);
+  emit_insn (gen_vfmv_f_s (<MODE>mode, f, operands[1]));
+  emit_insn (gen_vfmv_s_f (<VLMUL1>mode, accum, 
+             const0_rtx, f, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfredmin<mode>_vs (accum, const0_rtx, const0_rtx,
         operands[1], accum, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
@@ -4396,16 +4455,16 @@
 })
 
 (define_expand "reduc_smax_scal_<mode>"
-  [(set (match_operand:<VSUB> 0 "register_operand")
-    (unspec:<VSUB>
-      [(match_operand:VF 1 "register_operand")] UNSPEC_REDUC_MAX))]
+  [(match_operand:<VSUB> 0 "register_operand")
+   (match_operand:VF 1 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
-  rtx f = riscv_vector_constant_helper ("smax", <VSUB>mode);
-  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx, f, zero,
-      riscv_vector_gen_policy ()));
+  rtx f = gen_reg_rtx (<VSUB>mode);
+  emit_insn (gen_vfmv_f_s (<MODE>mode, f, operands[1]));
+  emit_insn (gen_vfmv_s_f (<VLMUL1>mode, accum, 
+             const0_rtx, f, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfredmax<mode>_vs (accum, const0_rtx, const0_rtx,
         operands[1], accum, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
@@ -4428,8 +4487,8 @@
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
-  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx, operands[1], zero,
-      riscv_vector_gen_policy ()));
+  emit_insn (gen_vfmv_s_f (<VLMUL1>mode, accum, 
+             const0_rtx, operands[1], zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfredosum<mode>_vs (accum, const0_rtx, const0_rtx,
         operands[2], accum, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
@@ -4446,8 +4505,8 @@
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
-  emit_insn (gen_vfmv_v_f (<VLMUL1>mode, accum, const0_rtx,
-      operands[1], zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vfmv_s_f (<VLMUL1>mode, accum, 
+             const0_rtx, operands[1], zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfredosum<mode>_vs (accum, operands[3], const0_rtx,
         operands[2], accum, zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
@@ -5524,35 +5583,7 @@
    (match_operand 3 "")]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  poly_int64 offset;
-  machine_mode mode;
-  scalar_mode inner_mode;
-  switch (INTVAL (operands[2]))
-      {
-	case 8:
-	  inner_mode = QImode;
-    break;
-	case 16:
-	  inner_mode = HImode;
-    break;
-	case 32:
-	  inner_mode = SImode;
-    break;
-  case 64:
-    inner_mode = DImode;
-    break;
-	default:
-	  gcc_unreachable ();
-      }
-
-  if (!poly_int_rtx_p (operands[3], &offset))
-    offset = poly_int64 (INTVAL (operands[3]), 0);
-
-  gcc_assert (riscv_vector_data_mode (inner_mode, offset).exists (&mode));
-  unsigned int vlmul = riscv_classify_vlmul_field (mode);
-  unsigned int vsew = riscv_classify_vsew_field (mode);
-  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
-  emit_insn (gen_vsetvl (Pmode, operands[0], operands[1], GEN_INT (vtype)));
+  riscv_vector_expand_while_len (operands);
   DONE;
 })
 
