@@ -254,34 +254,6 @@ DEF_INTERNAL_OPTAB_FN (COND_FNMS, ECF_CONST, cond_fnms, cond_ternary)
 
 DEF_INTERNAL_OPTAB_FN (COND_NEG, ECF_CONST, cond_neg, cond_unary)
 
-DEF_INTERNAL_OPTAB_FN (COND_ADD_VS, ECF_CONST, cond_add_vs, cond_binary)
-DEF_INTERNAL_OPTAB_FN (COND_SUB_VS, ECF_CONST, cond_sub_vs, cond_binary)
-DEF_INTERNAL_OPTAB_FN (COND_SUB_SV, ECF_CONST, cond_sub_sv, cond_binary)
-DEF_INTERNAL_OPTAB_FN (COND_MUL_VS, ECF_CONST, cond_smul_vs, cond_binary)
-DEF_INTERNAL_SIGNED_OPTAB_FN (COND_DIV_VS, ECF_CONST, first,
-			      cond_sdiv_vs, cond_udiv_vs, cond_binary)
-DEF_INTERNAL_SIGNED_OPTAB_FN (COND_DIV_SV, ECF_CONST, first,
-			      cond_sdiv_sv, cond_udiv_sv, cond_binary)
-DEF_INTERNAL_SIGNED_OPTAB_FN (COND_MOD_VS, ECF_CONST, first,
-			      cond_smod_vs, cond_umod_vs, cond_binary)
-DEF_INTERNAL_OPTAB_FN (COND_RDIV_VS, ECF_CONST, cond_sdiv_vs, cond_binary)
-DEF_INTERNAL_OPTAB_FN (COND_RDIV_SV, ECF_CONST, cond_sdiv_sv, cond_binary)
-DEF_INTERNAL_SIGNED_OPTAB_FN (COND_MIN_VS, ECF_CONST, first,
-			      cond_smin_vs, cond_umin_vs, cond_binary)
-DEF_INTERNAL_SIGNED_OPTAB_FN (COND_MAX_VS, ECF_CONST, first,
-			      cond_smax_vs, cond_umax_vs, cond_binary)
-DEF_INTERNAL_OPTAB_FN (COND_AND_VS, ECF_CONST | ECF_NOTHROW,
-		       cond_and_vs, cond_binary)
-DEF_INTERNAL_OPTAB_FN (COND_IOR_VS, ECF_CONST | ECF_NOTHROW,
-		       cond_ior_vs, cond_binary)
-DEF_INTERNAL_OPTAB_FN (COND_XOR_VS, ECF_CONST | ECF_NOTHROW,
-		       cond_xor_vs, cond_binary)
-
-DEF_INTERNAL_OPTAB_FN (COND_FMA_VS, ECF_CONST, cond_fma_vs, cond_ternary)
-DEF_INTERNAL_OPTAB_FN (COND_FMS_VS, ECF_CONST, cond_fms_vs, cond_ternary)
-DEF_INTERNAL_OPTAB_FN (COND_FNMA_VS, ECF_CONST, cond_fnma_vs, cond_ternary)
-DEF_INTERNAL_OPTAB_FN (COND_FNMS_VS, ECF_CONST, cond_fnms_vs, cond_ternary)
-
 DEF_INTERNAL_OPTAB_FN (LEN_ADD, ECF_CONST, len_add, len_binary)
 DEF_INTERNAL_OPTAB_FN (LEN_SUB, ECF_CONST, len_sub, len_binary)
 DEF_INTERNAL_OPTAB_FN (LEN_MUL, ECF_CONST, len_smul, len_binary)
