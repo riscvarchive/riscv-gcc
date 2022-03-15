@@ -48,6 +48,7 @@ bool check_builtin_call (location_t, vec<location_t>, unsigned int,
 bool builtin_type_p (const_tree);
 const char * mangle_builtin_type (const_tree);
 machine_mode vector_builtin_mode (scalar_mode, unsigned int);
+bool verify_type_context (location_t, type_context_kind, const_tree, bool);
 
 } // end namespace riscv_vector
 

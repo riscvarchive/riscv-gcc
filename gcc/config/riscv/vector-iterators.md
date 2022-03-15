@@ -2045,8 +2045,21 @@
 ;; RVV integer binary operations.
 (define_code_iterator int_binary [and ior xor smin umin smax umax mult div udiv mod umod])
 
+;; RVV integer binary vector-scalar operations.
+(define_code_iterator int_binary_vs [plus minus mult and ior xor smin umin smax umax])
+
+(define_code_iterator int_binary_vs_simm5 [plus and ior xor])
+
+(define_code_iterator int_binary_vs_reg [mult smin umin smax umax])
+
 ;; RVV floating-point binary operations.
 (define_code_iterator fp_binary [plus mult smax smin])
+
+;; RVV floating-point binary vector-scalar operations.
+(define_code_iterator fp_binary_vs [plus minus mult smax smin])
+
+;; comparison code.
+(define_code_iterator cmp_all [eq ne le gt leu gtu lt ltu ge geu])
 
 ;; <sz> expand to the name of the wcvt and wcvtu that implements a
 ;; particular code.
@@ -2055,24 +2068,25 @@
 ;; map neg insn for specific code
 (define_code_attr neginsn [(ss_minus "sadd") (us_minus "saddu")])
 
-;; map code to type
-(define_code_attr vftype [(plus "varith") (mult "vmul")
-    (smax "varith") (smin "varith") (minus "varith") (div "vdiv")])
+;; map code to type.
+(define_code_attr rvv_type [(plus "varith") (minus "varith") 
+    (and "vlogical") (ior "vlogical") (xor "vlogical") (mult "vmul")
+    (smax "varith") (smin "varith") (umax "varith") (umin "varith") 
+    (div "vdiv") (udiv "vdiv") (mod "vdiv") (umod "vdiv")])
 
-;; map not insn for not logic
+;; map code to reverse operand.
+(define_code_attr rinsn [(plus "add") (minus "rsub") (mult "mul") 
+        (and "and") (ior "or") (xor "xor") 
+        (smin "min") (umin "minu") (smax "max") (umax "maxu")])
+
+;; map not insn for not logic.
 (define_code_attr ninsn [(and "nand") (ior "nor") (xor "xnor")])
 
-;; map not insn for not after compare
-(define_code_attr ncmp_insn [(eq "ne") (ne "eq") (ge "lt") (le "gt") (gt "le") (lt "ge")
-    (geu "ltu") (leu "gtu") (gtu "leu") (ltu "geu")])
-
-;; map not insn for not after compare_vx and scalar is at operand1
-(define_code_attr ncmpvx1_insn [(eq "ne") (ne "eq") (ge "ge") (le "le") (gt "gt") (lt "lt")
-    (geu "geu") (leu "leu") (gtu "gtu") (ltu "ltu")])
-
-;; map to combine attribute
-(define_code_attr combine [(plus "commutative") (mult "commutative")
-    (smax "commutative") (smin "commutative") (minus "noncommutative") (div "noncommutative")])
+;; map comparison code to the constraint.
+(define_code_attr cmp_imm_p_tab [
+  (eq "Ws5") (ne "Ws5") (le "Ws5") (gt "Ws5") (leu "Ws5") (gtu "Ws5")
+  (lt "Wn5") (ltu "Wn5") (ge "Wn5") (geu "Wn5")
+])
 
 (define_int_attr vxoptab [
   (UNSPEC_VADD "add") (UNSPEC_VSUB "sub") (UNSPEC_VRSUB "rsub")
@@ -2127,10 +2141,4 @@
   (UNSPEC_VMV "Ws5")
   (UNSPEC_VMVS "J")
   (UNSPEC_SLIDE1UP "J") (UNSPEC_SLIDE1DOWN "J")
-])
-
-(define_code_iterator cmp_all [eq ne le gt leu gtu lt ltu ge geu])
-(define_code_attr cmp_imm_p_tab [
-  (eq "Ws5") (ne "Ws5") (le "Ws5") (gt "Ws5") (leu "Ws5") (gtu "Ws5")
-  (lt "Wn5") (ltu "Wn5") (ge "Wn5") (geu "Wn5")
 ])

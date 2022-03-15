@@ -162,6 +162,15 @@ make_type_sizeless (tree type)
 				      NULL_TREE, TYPE_ATTRIBUTES (type));
 }
 
+/* Return true if TYPE is a sizeless type.  */
+static bool
+sizeless_type_p (const_tree type)
+{
+  if (type == error_mark_node)
+    return NULL_TREE;
+  return lookup_attribute ("RVV sizeless type", TYPE_ATTRIBUTES (type));
+}
+
 machine_mode
 vector_builtin_mode (scalar_mode inner_mode, unsigned int lmul)
 {
@@ -247,6 +256,88 @@ vector_builtin_mode (scalar_mode inner_mode, unsigned int lmul)
 
     default:
       gcc_unreachable ();
+    }
+
+  gcc_unreachable ();
+}
+
+/* Implement TARGET_VERIFY_TYPE_CONTEXT for RVV types.  */
+bool
+verify_type_context (location_t loc, type_context_kind context,
+                     const_tree type, bool silent_p)
+{
+  if (!sizeless_type_p (type))
+    return true;
+
+  switch (context)
+    {
+    case TCTX_SIZEOF:
+    case TCTX_STATIC_STORAGE:
+      if (!silent_p)
+        error_at (loc, "RVV type %qT does not have a fixed size", type);
+
+      return false;
+
+    case TCTX_ALIGNOF:
+      if (!silent_p)
+        error_at (loc, "RVV type %qT does not have a defined alignment", type);
+
+      return false;
+
+    case TCTX_THREAD_STORAGE:
+      if (!silent_p)
+        error_at (loc,
+                  "variables of type %qT cannot have thread-local"
+                  " storage duration",
+                  type);
+
+      return false;
+
+    case TCTX_POINTER_ARITH:
+      if (!silent_p)
+        error_at (loc, "arithmetic on pointer to RVV type %qT", type);
+
+      return false;
+
+    case TCTX_FIELD:
+      if (silent_p)
+        ;
+      else if (lang_GNU_CXX ())
+        error_at (loc, "member variables cannot have RVV type %qT", type);
+      else
+        error_at (loc, "fields cannot have RVV type %qT", type);
+
+      return false;
+
+    case TCTX_ARRAY_ELEMENT:
+      if (!silent_p)
+        error_at (loc, "array elements cannot have RVV type %qT", type);
+
+      return false;
+
+    case TCTX_ALLOCATION:
+      if (!silent_p)
+        error_at (loc, "cannot allocate objects with RVV type %qT", type);
+
+      return false;
+
+    case TCTX_DEALLOCATION:
+      if (!silent_p)
+        error_at (loc, "cannot delete objects with RVV type %qT", type);
+
+      return false;
+
+    case TCTX_EXCEPTIONS:
+      if (!silent_p)
+        error_at (loc, "cannot throw or catch RVV type %qT", type);
+
+      return false;
+
+    case TCTX_CAPTURE_BY_COPY:
+      if (!silent_p)
+        error_at (loc, "capture by copy of RVV type %qT", type);
+
+      return false;
     }
 
   gcc_unreachable ();

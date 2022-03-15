@@ -1,4 +1,4 @@
-/* Definitions of vector type for RISC-V built-in functions.  -*- C -*-
+/* Cost Model of RVV support.  -*- C -*-
    Copyright (C) 2021-2021 Free Software Foundation, Inc.
    Contributed by Juzhe Zhong (juzhe.zhong@rivai.ai), RiVAI Technologies Ltd.
 

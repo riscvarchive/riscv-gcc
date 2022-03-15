@@ -7382,6 +7382,27 @@
 ;; - vwredsumu.vs
 ;; - vfwredosum.vs
 ;; - vfwredusum.vs
+;; - vadd.vx
+;; - vadd.vi
+;; - vsub.vx
+;; - vrsub.vx
+;; - vrsub.vi
+;; - vmul.vx
+;; - vand.vx 
+;; - vor.vx
+;; - vxor.vx 
+;; - vmin.vx  
+;; - vminu.vx  
+;; - vmax.vx  
+;; - vmaxu.vx  
+;; - vmul.vx 
+;; - vdiv.vx 
+;; - vdivu.vx 
+;; - vrem.vx 
+;; - vremu.vx
+;; - vsrl.vx
+;; - vsll.vx
+;; - vsra.vx
 ;; -------------------------------------------------------------------------
 
 (define_insn "v<sz>ext_vredsum<VWREDI:mode>_to_vwredsum<u>_<P:mode>"
@@ -7494,3 +7515,308 @@
   "vfmv.s.f\t%3,%2\;vfwredosum.vs\t%0,%1,%3"
   [(set_attr "type" "vwreduc")
    (set_attr "mode" "<VWREDF:MODE>")])
+
+;; cond_binary operations.
+(define_insn "v<optab><mode>_vmerge_to_v<optab>_mask"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr")
+    (unspec:VI 
+      [(const_int 0)
+       (unspec:VI 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
+         (match_operand:VI 2 "register_operand" "0,vr")
+         (unspec:VI 
+          [(unspec:VI 
+            [(const_int 0)
+             (int_binary_vs:VI 
+              (match_operand:VI 3 "register_operand" "vr,vr")
+              (vec_duplicate:VI 
+                (match_operand:<VSUB> 4 "register_operand" "r,r")))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vx\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<insn>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_2"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr")
+    (unspec:VI 
+      [(const_int 0)
+       (unspec:VI 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
+         (match_operand:VI 2 "register_operand" "0,vr")
+         (unspec:VI 
+          [(unspec:VI 
+            [(const_int 0)
+             (int_binary_vs:VI
+              (vec_duplicate:VI 
+                (match_operand:<VSUB> 4 "register_operand" "r,r"))
+              (match_operand:VI 3 "register_operand" "vr,vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<rinsn>.vx\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<rinsn>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_3"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+    (unspec:VI 
+      [(const_int 0)
+       (unspec:VI 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm,vm,vm")
+         (match_operand:VI 2 "register_operand" "0,0,vr,vr")
+         (unspec:VI 
+          [(unspec:VI 
+            [(const_int 0)
+             (int_binary_vs_simm5:VI 
+              (match_operand:VI 3 "register_operand" "vr,vr,vr,vr")
+              (match_operand:VI 4 "vector_arith_operand" "vr,vi,vr,vi"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vv\t%0,%3,%4,%1.t
+   v<insn>.vi\t%0,%3,%v4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<insn>.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<insn>.vi\t%0,%3,%v4,%1.t"
+  [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "vsub<mode>_vmerge_to_vsub_mask_3"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+    (unspec:VI 
+      [(const_int 0)
+       (unspec:VI 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm,vm,vm")
+         (match_operand:VI 2 "register_operand" "0,0,vr,vr")
+         (unspec:VI 
+          [(unspec:VI 
+            [(const_int 0)
+             (minus:VI 
+              (match_operand:VI 3 "register_operand" "vr,vr,vr,vr")
+              (match_operand:VI 4 "vector_neg_arith_operand" "vr,vj,vr,vj"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vsub.vv\t%0,%3,%4,%1.t
+   vadd.vi\t%0,%3,%v4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vsub.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vadd.vi\t%0,%3,%v4,%1.t"
+  [(set_attr "type" "varith")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_3"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr")
+    (unspec:VI 
+      [(const_int 0)
+       (unspec:VI 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
+         (match_operand:VI 2 "register_operand" "0,vr")
+         (unspec:VI 
+          [(unspec:VI 
+            [(const_int 0)
+             (int_binary_vs_reg:VI 
+              (match_operand:VI 3 "register_operand" "vr,vr")
+              (match_operand:VI 4 "register_operand" "vr,vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<insn>.vv\t%0,%3,%4,%1.t"
+  [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_4"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr")
+    (unspec:V64BITI 
+      [(const_int 0)
+       (unspec:V64BITI 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
+         (match_operand:V64BITI 2 "register_operand" "0,vr")
+         (unspec:V64BITI 
+          [(unspec:V64BITI 
+            [(const_int 0)
+             (int_binary_vs:V64BITI 
+              (match_operand:V64BITI 3 "register_operand" "vr,vr")
+              (vec_duplicate:V64BITI
+                (sign_extend:<VSUB>
+                  (match_operand:SI 4 "register_operand" "r,r"))))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vx\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<insn>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_5"
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr")
+    (unspec:V64BITI 
+      [(const_int 0)
+       (unspec:V64BITI 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
+         (match_operand:V64BITI 2 "register_operand" "0,vr")
+         (unspec:V64BITI 
+          [(unspec:V64BITI 
+            [(const_int 0)
+             (int_binary_vs:V64BITI 
+              (vec_duplicate:V64BITI
+                (sign_extend:<VSUB>
+                  (match_operand:SI 4 "register_operand" "r,r")))
+              (match_operand:V64BITI 3 "register_operand" "vr,vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vx\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<insn>.vx\t%0,%3,%4,%1.t"
+  [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "vf<optab><mode>_vmerge_to_vf<optab>_mask"
+  [(set (match_operand:VF 0 "register_operand" "=vr,vr")
+    (unspec:VF 
+      [(const_int 0)
+       (unspec:VF 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
+         (match_operand:VF 2 "register_operand" "0,vr")
+         (unspec:VF 
+          [(unspec:VF 
+            [(const_int 0)
+             (fp_binary_vs:VF 
+              (match_operand:VF 3 "register_operand" "vr,vr")
+              (vec_duplicate:VF 
+                (match_operand:<VSUB> 4 "register_operand" "f,f")))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vf<insn>.vf\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vf<insn>.vf\t%0,%3,%4,%1.t"
+  [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "vf<optab><mode>_vmerge_to_v<optab>_mask_2"
+  [(set (match_operand:VF 0 "register_operand" "=vr,vr")
+    (unspec:VF 
+      [(const_int 0)
+       (unspec:VF 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
+         (match_operand:VF 2 "register_operand" "0,vr")
+         (unspec:VF 
+          [(unspec:VF 
+            [(const_int 0)
+             (fp_binary_vs:VF
+              (vec_duplicate:VF 
+                (match_operand:<VSUB> 4 "register_operand" "f,f"))
+              (match_operand:VF 3 "register_operand" "vr,vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vf<rinsn>.vf\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vf<rinsn>.vf\t%0,%3,%4,%1.t"
+  [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "v<optab><mode>_vmerge_to_v<optab>_mask"
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+    (unspec:VI 
+      [(const_int 0)
+       (unspec:VI 
+        [(match_operand:<VM> 1 "register_operand" "vm,vm,vm,vm")
+         (match_operand:VI 2 "register_operand" "0,0,vr,vr")
+         (unspec:VI 
+          [(unspec:VI 
+            [(const_int 0)
+             (any_shift:VI 
+              (match_operand:VI 3 "register_operand" "vr,vr,vr,vr")
+              (match_operand 4 "p_reg_or_uimm5_operand" "r,K,r,K"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 5)
+       (match_dup 6)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<insn>.vx\t%0,%3,%4,%1.t
+   v<insn>.vi\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<insn>.vx\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<insn>.vi\t%0,%3,%4,%1.t"
+  [(set_attr "type" "vshift")
+   (set_attr "mode" "<MODE>")])

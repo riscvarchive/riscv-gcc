@@ -9347,64 +9347,23 @@ and,
      (len_ternary_op_vs @0 @1 @2 @3)))
  (simplify
    (len_ternary_op @0 (VECTOR_CST@1) @2 @3)
-    (with
-    {
-      tree tem = uniform_vector_p (@1);
-      bool simplify_p = false;
-      if (TREE_CODE(@0) == SSA_NAME)
-        {
-          gimple *def_stmt = SSA_NAME_DEF_STMT (@0);
-          if (gimple_code(def_stmt) == GIMPLE_PHI)
-            {
-              unsigned arg_num = gimple_phi_num_args (def_stmt);
-              for (unsigned i = 0; i < arg_num; i++)
-                {
-                  tree arg = gimple_phi_arg_def (def_stmt, i);
-                  if (TREE_CODE (arg) == VECTOR_CST)
-                    {
-                      tem = NULL_TREE;
-                      break;
-                    }
-                }
-            }
-            else if (gimple_code(def_stmt) == GIMPLE_ASSIGN
-                      && TREE_CODE(gimple_assign_rhs1 (def_stmt)) == VECTOR_CST)
-              tem = NULL_TREE;
-        }
-    }
-    (if (tem && vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type)
+    (if (uniform_vector_p (@1) && vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type)
           && current_pass && strcmp (current_pass->name, "vect") == 0)
-      (len_ternary_op_vs @0 { tem; } @2 @3))))
+      (len_ternary_op_vs @0 { uniform_vector_p (@1); } @2 @3)))
  (simplify
    (len_ternary_op (VECTOR_CST@1) @0 @2 @3)
     (with
-    {
-      tree tem = uniform_vector_p (@1);
-      bool simplify_p = false;
-      if (TREE_CODE(@0) == SSA_NAME)
-        {
-          gimple *def_stmt = SSA_NAME_DEF_STMT (@0);
-          if (gimple_code(def_stmt) == GIMPLE_PHI)
-            {
-              unsigned arg_num = gimple_phi_num_args (def_stmt);
-              for (unsigned i = 0; i < arg_num; i++)
-                {
-                  tree arg = gimple_phi_arg_def (def_stmt, i);
-                  if (TREE_CODE (arg) == VECTOR_CST)
-                    {
-                      tem = NULL_TREE;
-                      break;
-                    }
-                }
-            }
-            else if (gimple_code(def_stmt) == GIMPLE_ASSIGN
-                      && TREE_CODE(gimple_assign_rhs1 (def_stmt)) == VECTOR_CST)
-              tem = NULL_TREE;
-        }
-    }
-    (if (tem && vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type)
-          && current_pass && strcmp (current_pass->name, "vect") == 0)
-      (len_ternary_op_vs @0 { tem; } @2 @3))))
+     {
+       gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
+       tree e = NULL_TREE;
+ 
+       if (VECTOR_TYPE_P (type)
+         && def_stmt && is_gimple_assign (def_stmt)
+         && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
+         e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+     }
+    (if (e && vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type))
+      (len_ternary_op_vs @0 { e; } @2 @3))))
  (simplify
   (len_ternary_op @0 SSA_NAME@1 @2 @3)
    (with

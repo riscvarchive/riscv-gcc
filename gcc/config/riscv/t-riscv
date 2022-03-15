@@ -58,6 +58,10 @@ riscv-vector-cost.o: $(srcdir)/config/riscv/riscv-vector-cost.cc $(CONFIG_H) $(S
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 		$(srcdir)/config/riscv/riscv-vector-cost.cc
 
+riscv-vector.o: $(srcdir)/config/riscv/riscv-vector.cc
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+  
 riscv-d.o: $(srcdir)/config/riscv/riscv-d.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)

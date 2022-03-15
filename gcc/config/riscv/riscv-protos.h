@@ -74,6 +74,7 @@ extern bool riscv_expand_block_move (rtx, rtx, rtx);
 extern bool riscv_store_data_bypass_p (rtx_insn *, rtx_insn *);
 extern rtx riscv_gen_gpr_save_insn (struct riscv_frame_info *);
 extern bool riscv_gpr_save_operation_p (rtx);
+extern rtx riscv_add_offset (rtx, rtx, HOST_WIDE_INT);
 
 /* Routines implemented for RVV support */
 extern poly_uint64 riscv_regmode_natural_size (machine_mode);
@@ -150,7 +151,6 @@ extern bool riscv_vector_expand_strcmp (rtx *);
 extern void riscv_vector_expand_while_len (rtx *);
 extern rtx riscv_vector_gen_policy (unsigned int rvv_policy = 0);
 extern unsigned int get_vtype_for_mode (machine_mode);
-extern machine_mode get_vector_mode_for_mask (machine_mode);
 /* Routines implemented in riscv-c.cc.  */
 void riscv_cpu_cpp_builtins (cpp_reader *);
 

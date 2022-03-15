@@ -510,7 +510,7 @@ pru-*-*)
 riscv*)
 	cpu_type=riscv
 	extra_headers="riscv_vector.h"
-	extra_objs="riscv-builtins.o riscv-vector-builtins.o riscv-c.o riscv-sr.o riscv-shorten-memrefs.o riscv-insert-vsetvli.o"
+	extra_objs="riscv-builtins.o riscv-vector-builtins.o riscv-c.o riscv-sr.o riscv-vector.o riscv-shorten-memrefs.o riscv-insert-vsetvli.o"
 	extra_objs="${extra_objs} riscv-vector-cost.o riscv-vector-builtins-functions.o"
 	d_target_objs="riscv-d.o"
 	target_gtfiles="$target_gtfiles \$(srcdir)/config/riscv/riscv-builtins.cc \$(srcdir)/config/riscv/riscv-vector-builtins.cc"

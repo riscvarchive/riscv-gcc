@@ -1973,7 +1973,7 @@
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vadd<V64BITI:mode>_vx_32bit"
+(define_insn "@vadd<mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -1999,7 +1999,7 @@
    vadd.vx\t%0,%3,%4
    vadd.vi\t%0,%3,%4"
   [(set_attr "type" "varith")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-scalar Integer sub: vsub.vx
 ;; Since RVV doesn't have vsub.vi
@@ -2040,7 +2040,7 @@
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vsub<V64BITI:mode>_vx_32bit"
+(define_insn "@vsub<mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -2073,7 +2073,7 @@
     return "";
   }
   [(set_attr "type" "varith")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar and Vector-immediate
 ;; Integer Reverse Sub.
@@ -2104,7 +2104,7 @@
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vrsub<V64BITI:mode>_vx_32bit"
+(define_insn "@vrsub<mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -2130,7 +2130,7 @@
    vrsub.vx\t%0,%3,%4
    vrsub.vi\t%0,%3,%4"
   [(set_attr "type" "varith")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; pseudo-instruction vneg.v vd,vs = vrsub.vx vd,vs,x0.
 (define_insn "@vneg<mode>_v"
@@ -2172,12 +2172,12 @@
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vw<plus_minus:insn><u>.vv\t%0,%3,%4,%1.t
-   vw<plus_minus:insn><u>.vv\t%0,%3,%4,%1.t
-   vw<plus_minus:insn><u>.vv\t%0,%3,%4
-   vw<plus_minus:insn><u>.vv\t%0,%3,%4"
+   vw<insn><u>.vv\t%0,%3,%4,%1.t
+   vw<insn><u>.vv\t%0,%3,%4,%1.t
+   vw<insn><u>.vv\t%0,%3,%4
+   vw<insn><u>.vv\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening Signed/Unsigned Integer Add/Subtract.
 (define_insn "@vw<plus_minus:optab><u><vw>_vx"
@@ -2198,16 +2198,16 @@
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vw<plus_minus:insn><u>.vx\t%0,%3,%4,%1.t
-   vw<plus_minus:insn><u>.vx\t%0,%3,zero,%1.t
-   vw<plus_minus:insn><u>.vx\t%0,%3,%4,%1.t
-   vw<plus_minus:insn><u>.vx\t%0,%3,zero,%1.t
-   vw<plus_minus:insn><u>.vx\t%0,%3,%4
-   vw<plus_minus:insn><u>.vx\t%0,%3,zero
-   vw<plus_minus:insn><u>.vx\t%0,%3,%4
-   vw<plus_minus:insn><u>.vx\t%0,%3,zero"
+   vw<insn><u>.vx\t%0,%3,%4,%1.t
+   vw<insn><u>.vx\t%0,%3,zero,%1.t
+   vw<insn><u>.vx\t%0,%3,%4,%1.t
+   vw<insn><u>.vx\t%0,%3,zero,%1.t
+   vw<insn><u>.vx\t%0,%3,%4
+   vw<insn><u>.vx\t%0,%3,zero
+   vw<insn><u>.vx\t%0,%3,%4
+   vw<insn><u>.vx\t%0,%3,zero"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Widening Signed/Unsigned Integer Add/Subtract.
 (define_insn "@vw<plus_minus:optab><u><vw>_wv"
@@ -2226,12 +2226,12 @@
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vw<plus_minus:insn><u>.wv\t%0,%3,%4,%1.t
-   vw<plus_minus:insn><u>.wv\t%0,%3,%4,%1.t
-   vw<plus_minus:insn><u>.wv\t%0,%3,%4
-   vw<plus_minus:insn><u>.wv\t%0,%3,%4"
+   vw<insn><u>.wv\t%0,%3,%4,%1.t
+   vw<insn><u>.wv\t%0,%3,%4,%1.t
+   vw<insn><u>.wv\t%0,%3,%4
+   vw<insn><u>.wv\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening Signed/Unsigned Integer Add/Subtract.
 (define_insn "@vw<plus_minus:optab><u><vw>_wx"
@@ -2251,16 +2251,16 @@
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vw<plus_minus:insn><u>.wx\t%0,%3,%4,%1.t
-   vw<plus_minus:insn><u>.wx\t%0,%3,zero,%1.t
-   vw<plus_minus:insn><u>.wx\t%0,%3,%4,%1.t
-   vw<plus_minus:insn><u>.wx\t%0,%3,zero,%1.t
-   vw<plus_minus:insn><u>.wx\t%0,%3,%4
-   vw<plus_minus:insn><u>.wx\t%0,%3,zero
-   vw<plus_minus:insn><u>.wx\t%0,%3,%4
-   vw<plus_minus:insn><u>.wx\t%0,%3,zero"
+   vw<insn><u>.wx\t%0,%3,%4,%1.t
+   vw<insn><u>.wx\t%0,%3,zero,%1.t
+   vw<insn><u>.wx\t%0,%3,%4,%1.t
+   vw<insn><u>.wx\t%0,%3,zero,%1.t
+   vw<insn><u>.wx\t%0,%3,%4
+   vw<insn><u>.wx\t%0,%3,zero
+   vw<insn><u>.wx\t%0,%3,%4
+   vw<insn><u>.wx\t%0,%3,zero"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; pseudo-instruction vwcvt.x.x.v vd,vs,vm = vwadd.vx vd,vs,x0,vm.
 (define_insn "@vwcvt<u><vw>_x_x_v"
@@ -2283,7 +2283,7 @@
    vwcvt<u>.x.x.v\t%0,%3
    vwcvt<u>.x.x.v\t%0,%3"
   [(set_attr "type" "vwcvt")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Double-Widening Sign-extend and Zero-extend.
 (define_insn "@v<any_extend:sz>ext<vw>_vf2"
@@ -2429,7 +2429,7 @@
   [(set_attr "type" "vadc")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vadc<V64BITI:mode>_vxm_32bit"
+(define_insn "@vadc<mode>_vxm_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=&vd,&vd,&vd,&vd")
   (unspec:V64BITI
     [(match_operand:V64BITI 1 "vector_reg_or_const0_operand" "0,0,J,J")
@@ -2454,7 +2454,7 @@
    vadc.vxm\t%0,%2,%3,%4
    vadc.vim\t%0,%2,%3,%4"
   [(set_attr "type" "vadc")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Scalar difference with borrow.
 (define_insn "@vsbc<mode>_vxm_internal"
@@ -2483,7 +2483,7 @@
   [(set_attr "type" "vadc")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vsbc<V64BITI:mode>_vxm_32bit"
+(define_insn "@vsbc<mode>_vxm_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=&vd,&vd,&vd,&vd")
   (unspec:V64BITI
     [(match_operand:V64BITI 1 "vector_reg_or_const0_operand" "0,0,J,J")
@@ -2507,7 +2507,7 @@
    vsbc.vxm \t%0,%2,%3,%4
    vsbc.vxm \t%0,%2,zero,%4"
   [(set_attr "type" "vadc")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Produce carry out in mask register format.
 (define_insn "@vmadc<mode>_vvm"
@@ -2577,7 +2577,7 @@
   [(set_attr "type" "vmadc")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmadc<V64BITI:mode>_vxm_32bit"
+(define_insn "@vmadc<mode>_vxm_32bit"
   [(set (match_operand:<VM> 0 "register_operand" "=&vr,&vr")
   (unspec:<VM>
     [(plus:V64BITI
@@ -2598,7 +2598,7 @@
    vmadc.vxm\t%0,%1,%2,%3
    vmadc.vim\t%0,%1,%2,%3"
   [(set_attr "type" "vmadc")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Produce borrow out in mask register format.
 (define_insn "@vmsbc<mode>_vxm_internal"
@@ -2624,7 +2624,7 @@
   [(set_attr "type" "vmadc")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmsbc<V64BITI:mode>_vxm_32bit"
+(define_insn "@vmsbc<mode>_vxm_32bit"
   [(set (match_operand:<VM> 0 "register_operand" "=&vr,&vr")
   (unspec:<VM>
     [(minus:V64BITI
@@ -2645,7 +2645,7 @@
    vmsbc.vxm\t%0,%1,%2,%3
    vmsbc.vxm\t%0,%1,zero,%3"
   [(set_attr "type" "vmadc")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Produce carry out in mask register format.
 (define_insn "@vmadc<mode>_vv"
@@ -2700,7 +2700,7 @@
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmadc<V64BITI:mode>_vx_32bit"
+(define_insn "@vmadc<mode>_vx_32bit"
   [(set (match_operand:<VM> 0 "register_operand" "=&vr,&vr")
     (unspec:<VM>
       [(plus:V64BITI
@@ -2716,7 +2716,7 @@
    vmadc.vx \t%0,%1,%2
    vmadc.vi \t%0,%1,%2"
   [(set_attr "type" "varith")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Produce borrow out in mask register format.
 (define_insn "@vmsbc<mode>_vx_internal"
@@ -2737,7 +2737,7 @@
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmsbc<V64BITI:mode>_vx_32bit"
+(define_insn "@vmsbc<mode>_vx_32bit"
   [(set (match_operand:<VM> 0 "register_operand" "=&vr,&vr")
     (unspec:<VM>
       [(minus:V64BITI
@@ -2753,7 +2753,7 @@
    vmsbc.vx \t%0,%1,%2
    vmsbc.vx \t%0,%1,zero"
   [(set_attr "type" "varith")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Bitwise logical operations.
 (define_insn "@v<optab><mode>_vv"
@@ -2810,7 +2810,7 @@
   [(set_attr "type" "vlogical")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@v<optab><V64BITI:mode>_vx_32bit"
+(define_insn "@v<optab><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -2835,7 +2835,7 @@
    v<insn>.vx\t%0,%3,%4
    v<insn>.vi\t%0,%3,%4"
   [(set_attr "type" "vlogical")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; pseudo-instruction vnot.v vd,vs = vxor.vi vd,vs,-1.
 (define_insn "@vnot<mode>_v"
@@ -2914,7 +2914,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Narrowing Integer Right Shift Instructions.
-(define_insn "@vn<optab><VWI:mode>_wv"
+(define_insn "@vn<optab><mode>_wv"
   [(set (match_operand:VWI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:VWI
     [(unspec:VWI
@@ -2939,10 +2939,10 @@
    vn<insn>.wv\t%0,%3,%4
    vn<insn>.wi\t%0,%3,%v4"
   [(set_attr "type" "vshift")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Narrowing Integer Right Shift Instructions.
-(define_insn "@vn<optab><VWI:mode>_wx"
+(define_insn "@vn<optab><mode>_wx"
   [(set (match_operand:VWI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:VWI
     [(unspec:VWI
@@ -2967,10 +2967,10 @@
    vn<insn>.wx\t%0,%3,%4
    vn<insn>.wi\t%0,%3,%4"
   [(set_attr "type" "vshift")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; pseudo-instruction vncvt.x.x.w vd,vs,vm = vnsrl.wx vd,vs,x0,vm.
-(define_insn "@vncvt<VWI:mode>_x_x_w"
+(define_insn "@vncvt<mode>_x_x_w"
   [(set (match_operand:VWI 0 "register_operand" "=vr,vr,vr,vr")
   (unspec:VWI
     [(unspec:VWI
@@ -2989,7 +2989,7 @@
    vncvt.x.x.w\t%0,%3
    vncvt.x.x.w\t%0,%3"
   [(set_attr "type" "vshift")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Integer Comparision Instructions.
 (define_insn "@vms<optab><mode>_vv"
@@ -3068,7 +3068,7 @@
   [(set_attr "type" "vcmp")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vms<optab><V64BITI:mode>_vx_32bit"
+(define_insn "@vms<optab><mode>_vx_32bit"
   [(set (match_operand:<VM> 0 "register_operand" "=vr,vr,vr,vr")
     (unspec:<VM>
       [(unspec:<VM>
@@ -3089,7 +3089,7 @@
    vms<insn>.vx\t%0,%3,%4
    vms<insn>.vi\t%0,%3,%4"
   [(set_attr "type" "vcmp")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vms<optab><mode>_vx_internal"
   [(set (match_operand:<VM> 0 "register_operand" "=vr,vr,vr,vr")
@@ -3114,7 +3114,7 @@
   [(set_attr "type" "vcmp")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vms<optab><V64BITI:mode>_vx_32bit"
+(define_insn "@vms<optab><mode>_vx_32bit"
   [(set (match_operand:<VM> 0 "register_operand" "=vr,vr,vr,vr")
     (unspec:<VM>
       [(unspec:<VM>
@@ -3135,7 +3135,7 @@
    vms<insn>.vx\t%0,%3,%4
    vms<insn>.vi\t%0,%3,%4"
   [(set_attr "type" "vcmp")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 (define_expand "@vms<optab><mode>_vx_internal"
   [(parallel
@@ -3157,7 +3157,7 @@
   {
   })
 
-(define_expand "@vms<optab><V64BITI:mode>_vx_32bit"
+(define_expand "@vms<optab><mode>_vx_32bit"
   [(parallel
     [(set (match_operand:<VM> 0 "register_operand")
       (unspec:<VM>
@@ -3202,7 +3202,7 @@
   [(set_attr "type" "vcmp")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "*vms<optab><V64BITI:mode>_vx_32bit"
+(define_insn "*vms<optab><mode>_vx_32bit"
   [(set (match_operand:<VM> 0 "register_operand" "=vr,vd,vm,vr,vr")
     (unspec:<VM>
       [(unspec:<VM>
@@ -3225,7 +3225,7 @@
    vms<insn>.vx\t%0,%3,%4
    vms<insn>.vi\t%0,%3,%4"
   [(set_attr "type" "vcmp")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Integer Signed/Unsigned Minimum/Maximum.
 (define_insn "@v<optab><mode>_vv"
@@ -3278,7 +3278,7 @@
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@v<optab><V64BITI:mode>_vx_32bit"
+(define_insn "@v<optab><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -3303,7 +3303,7 @@
    v<insn>.vx\t%0,%3,%4
    v<insn>.vx\t%0,%3,zero"
   [(set_attr "type" "varith")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Signed multiply, returning low bits of product.
 (define_insn "@vmul<mode>_vv"
@@ -3356,7 +3356,7 @@
   [(set_attr "type" "vmul")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmul<V64BITI:mode>_vx_32bit"
+(define_insn "@vmul<mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -3381,7 +3381,7 @@
    vmul.vx\t%0,%3,%4
    vmul.vx\t%0,%3,zero"
   [(set_attr "type" "vmul")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Signed/Unsigned highpart multiply, returning high bits of product.
 (define_insn "@vmulh<u><mode>_vv"
@@ -3435,7 +3435,7 @@
   [(set_attr "type" "vmulh")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmulh<u><V64BITI:mode>_vx_32bit"
+(define_insn "@vmulh<u><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -3460,7 +3460,7 @@
    vmulh<u>.vx\t%0,%3,%4
    vmulh<u>.vx\t%0,%3,zero"
   [(set_attr "type" "vmulh")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Signed(vs2)-Unsigned multiply, returning high bits of product.
 (define_insn "@vmulhsu<mode>_vv"
@@ -3513,7 +3513,7 @@
   [(set_attr "type" "vmulh")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmulhsu<V64BITI:mode>_vx_32bit"
+(define_insn "@vmulhsu<mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -3538,7 +3538,7 @@
    vmulhsu.vx\t%0,%3,%4
    vmulhsu.vx\t%0,%3,zero"
   [(set_attr "type" "vmulh")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Signed/Unsigned divide/remainder.
 (define_insn "@v<optab><mode>_vv"
@@ -3591,7 +3591,7 @@
   [(set_attr "type" "vdiv")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@v<optab><V64BITI:mode>_vx_32bit"
+(define_insn "@v<optab><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -3616,7 +3616,7 @@
    v<insn>.vx\t%0,%3,%4
    v<insn>.vx\t%0,%3,zero"
   [(set_attr "type" "vdiv")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Widening Signed/Unsigned Integer multiply.
 (define_insn "@vwmul<u><vw>_vv"
@@ -3775,7 +3775,7 @@
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@v<imac><V64BITI:mode>_vx_32bit"
+(define_insn "@v<imac><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -3797,7 +3797,7 @@
    v<imac>.vx\t%0,%3,%4
    v<imac>.vx\t%0,zero,%4"
   [(set_attr "type" "vmadd")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Widening signed-integer multiply-add, overwrite addend.
 ;; Vector-Vector Widening unsigned-integer multiply-add, overwrite addend.
@@ -3980,7 +3980,7 @@
  [(set_attr "type" "vmerge")
   (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmerge<V64BITI:mode>_vxm_32bit"
+(define_insn "@vmerge<mode>_vxm_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vd,vd,vd,vd")
     (unspec:V64BITI
       [(match_operand:V64BITI 2 "vector_reg_or_const0_operand" "0,0,J,J")
@@ -4000,7 +4000,7 @@
   vmerge.vxm\t%0,%3,%4,%1
   vmerge.vim\t%0,%3,%4,%1"
  [(set_attr "type" "vmerge")
-  (set_attr "mode" "<V64BITI:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Integer/Float Move.
 (define_insn "@vmv<V:mode>_v_v"
@@ -4038,7 +4038,7 @@
  [(set_attr "type" "vmove")
   (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmv<V64BITI:mode>_v_x_32bit"
+(define_insn "@vmv<mode>_v_x_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr")
   (unspec:V64BITI
     [(match_operand:V64BITI 1 "vector_reg_or_const0_operand" "0,0,J,J")
@@ -4055,7 +4055,7 @@
   vmv.v.x\t%0,%2
   vmv.v.i\t%0,%2"
  [(set_attr "type" "vmove")
-  (set_attr "mode" "<V64BITI:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; -------------------------------------------------------------------------------
 ;; ---- 12. Vector Fixed-Point Arithmetic Instructions
@@ -4160,7 +4160,7 @@
   [(set_attr "type" "vsarith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@v<optab><V64BITI:mode>_vx_32bit"
+(define_insn "@v<optab><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -4185,7 +4185,7 @@
    v<insn>.vx\t%0,%3,%4
    v<insn>.vi\t%0,%3,%4"
   [(set_attr "type" "vsarith")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Single-Width Saturating Sub.
 (define_insn "@v<optab><mode>_vx_internal"
@@ -4222,7 +4222,7 @@
   [(set_attr "type" "vsarith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@v<optab><V64BITI:mode>_vx_32bit"
+(define_insn "@v<optab><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
     (unspec:V64BITI
       [(unspec:V64BITI
@@ -4254,7 +4254,7 @@
     return "";
   }
   [(set_attr "type" "vsarith")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Single-Width Averaging Add and Subtract.
 ;; Vector-Vector Single-Width Fractional Multiply with Rounding and Saturation.
@@ -4309,7 +4309,7 @@
   [(set_attr "type" "<vsat>")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@v<sat_op><V64BITI:mode>_vx_32bit"
+(define_insn "@v<sat_op><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -4334,7 +4334,7 @@
    v<sat_op>.vx\t%0,%3,%4
    v<sat_op>.vx\t%0,%3,zero"
   [(set_attr "type" "<vsat>")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Single-Width Scaling Shift Instructions.
 (define_insn "@v<sshift><mode>_vv"
@@ -4391,7 +4391,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector signed/unsigned clip.
-(define_insn "@vn<clip><VWI:mode>_wv"
+(define_insn "@vn<clip><mode>_wv"
   [(set (match_operand:VWI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
     (unspec:VWI
       [(unspec:VWI
@@ -4415,10 +4415,10 @@
    vn<clip>.wv\t%0,%3,%4
    vn<clip>.wi\t%0,%3,%v4"
   [(set_attr "type" "vclip")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar signed/unsigned clip.
-(define_insn "@vn<clip><VWI:mode>_wx"
+(define_insn "@vn<clip><mode>_wx"
   [(set (match_operand:VWI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
     (unspec:VWI
       [(unspec:VWI
@@ -4442,7 +4442,7 @@
    vn<clip>.wx\t%0,%3,%4
    vn<clip>.wi\t%0,%3,%4"
   [(set_attr "type" "vclip")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; -------------------------------------------------------------------------------
 ;; ---- 13. Vector Floating-Point Arithmetic Instructions
@@ -4490,7 +4490,7 @@
    vf<insn>.vv\t%0,%3,%4,%1.t
    vf<insn>.vv\t%0,%3,%4
    vf<insn>.vv\t%0,%3,%4"
-  [(set_attr "type" "<vftype>")
+  [(set_attr "type" "<rvv_type>")
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Single-Width Floating-Point Add/Subtract Instructions.
@@ -4516,7 +4516,7 @@
    vf<insn>.vf\t%0,%3,%4,%1.t
    vf<insn>.vf\t%0,%3,%4
    vf<insn>.vf\t%0,%3,%4"
-  [(set_attr "type" "<vftype>")
+  [(set_attr "type" "<rvv_type>")
    (set_attr "mode" "<MODE>")])
 
 ;; Floating-Point Reverse Sub/Div.
@@ -4561,12 +4561,12 @@
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfw<plus_minus:insn>.vv\t%0,%3,%4,%1.t
-   vfw<plus_minus:insn>.vv\t%0,%3,%4,%1.t
-   vfw<plus_minus:insn>.vv\t%0,%3,%4
-   vfw<plus_minus:insn>.vv\t%0,%3,%4"
+   vfw<insn>.vv\t%0,%3,%4,%1.t
+   vfw<insn>.vv\t%0,%3,%4,%1.t
+   vfw<insn>.vv\t%0,%3,%4
+   vfw<insn>.vv\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening Float Add/Subtract.
 (define_insn "@vfw<plus_minus:optab><vw>_vf"
@@ -4587,12 +4587,12 @@
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfw<plus_minus:insn>.vf\t%0,%3,%4,%1.t
-   vfw<plus_minus:insn>.vf\t%0,%3,%4,%1.t
-   vfw<plus_minus:insn>.vf\t%0,%3,%4
-   vfw<plus_minus:insn>.vf\t%0,%3,%4"
+   vfw<insn>.vf\t%0,%3,%4,%1.t
+   vfw<insn>.vf\t%0,%3,%4,%1.t
+   vfw<insn>.vf\t%0,%3,%4
+   vfw<insn>.vf\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Widening Float Add/Subtract.
 (define_insn "@vfw<plus_minus:optab><vw>_wv"
@@ -4611,12 +4611,12 @@
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfw<plus_minus:insn>.wv\t%0,%3,%4,%1.t
-   vfw<plus_minus:insn>.wv\t%0,%3,%4,%1.t
-   vfw<plus_minus:insn>.wv\t%0,%3,%4
-   vfw<plus_minus:insn>.wv\t%0,%3,%4"
+   vfw<insn>.wv\t%0,%3,%4,%1.t
+   vfw<insn>.wv\t%0,%3,%4,%1.t
+   vfw<insn>.wv\t%0,%3,%4
+   vfw<insn>.wv\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening Float Add/Subtract.
 (define_insn "@vfw<plus_minus:optab><vw>_wf"
@@ -4636,12 +4636,12 @@
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfw<plus_minus:insn>.wf\t%0,%3,%4,%1.t
-   vfw<plus_minus:insn>.wf\t%0,%3,%4,%1.t
-   vfw<plus_minus:insn>.wf\t%0,%3,%4
-   vfw<plus_minus:insn>.wf\t%0,%3,%4"
+   vfw<insn>.wf\t%0,%3,%4,%1.t
+   vfw<insn>.wf\t%0,%3,%4,%1.t
+   vfw<insn>.wf\t%0,%3,%4
+   vfw<insn>.wf\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Widening Float multiply.
 (define_insn "@vfwmul<vw>_vv"
@@ -4666,7 +4666,7 @@
    vfwmul.vv\t%0,%3,%4
    vfwmul.vv\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening Float multiply.
 (define_insn "@vfwmul<vw>_vf"
@@ -4692,7 +4692,7 @@
    vfwmul.vf\t%0,%3,%4
    vfwmul.vf\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Single-Width Floating-Point Fused Multiply-Add Instrucions.
 (define_insn "@vf<fmac><mode>_vv"
@@ -4763,7 +4763,7 @@
    vfwmacc.vv\t%0,%3,%4,%1.t
    vfwmacc.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfwmsac<vw>_vv"
   [(set (match_operand:<VW> 0 "register_operand" "=&vr,&vr")
@@ -4787,7 +4787,7 @@
    vfwmsac.vv\t%0,%3,%4,%1.t
    vfwmsac.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening multiply-accumulate, overwrite addend.
 ;; Vector-Scalar Widening multiply-subtract-accumulate, overwrite addend.
@@ -4814,7 +4814,7 @@
    vfwmacc.vf\t%0,%3,%4,%1.t
    vfwmacc.vf\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfwmsac<vw>_vf"
   [(set (match_operand:<VW> 0 "register_operand" "=&vr,&vr")
@@ -4839,7 +4839,7 @@
    vfwmsac.vf\t%0,%3,%4,%1.t
    vfwmsac.vf\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Widening negate-(multiply-accumulate), overwrite addend.
 ;; Vector-Vector Widening negate-(multiply-subtract-accumulate), overwrite addend.
@@ -4866,7 +4866,7 @@
    vfwnmacc.vv\t%0,%3,%4,%1.t
    vfwnmacc.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfwnmsac<vw>_vv"
   [(set (match_operand:<VW> 0 "register_operand" "=&vr,&vr")
@@ -4891,7 +4891,7 @@
    vfwnmsac.vv\t%0,%3,%4,%1.t
    vfwnmsac.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening negate-(multiply-accumulate), overwrite addend.
 ;; Vector-Scalar Widening negate-(multiply-subtract-accumulate), overwrite addend.
@@ -4919,7 +4919,7 @@
    vfwnmacc.vf\t%0,%3,%4,%1.t
    vfwnmacc.vf\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfwnmsac<vw>_vf"
   [(set (match_operand:<VW> 0 "register_operand" "=&vr,&vr")
@@ -4945,7 +4945,7 @@
    vfwnmsac.vf\t%0,%3,%4,%1.t
    vfwnmsac.vf\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Floating-Point square root.
 (define_insn "@vfsqrt<mode>_v"
@@ -5341,7 +5341,7 @@
    vfwcvt.x<fu>.f.v\t%0,%3
    vfwcvt.x<fu>.f.v\t%0,%3"
   [(set_attr "type" "vfwcvt")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Convert float to double-width unsigned integer, truncating.
 ;; Convert float to double-width signed integer, truncating.
@@ -5364,7 +5364,7 @@
    vfwcvt.rtz.x<u>.f.v\t%0,%3
    vfwcvt.rtz.x<u>.f.v\t%0,%3"
   [(set_attr "type" "vfwcvt")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Convert unsigned integer to double-width float.
 ;; Convert signed integer to double-width float.
@@ -5409,11 +5409,11 @@
    vfwcvt.f.f.v\t%0,%3
    vfwcvt.f.f.v\t%0,%3"
   [(set_attr "type" "vfwcvt")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Convert double-width float to unsigned integer.
 ;; Convert double-width float to signed integer.
-(define_insn "@vfncvt<VWI:mode>_x<fu>_f_w"
+(define_insn "@vfncvt<mode>_x<fu>_f_w"
   [(set (match_operand:VWI 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:VWI
     [(unspec:VWI
@@ -5432,11 +5432,11 @@
    vfncvt.x<fu>.f.w\t%0,%3
    vfncvt.x<fu>.f.w\t%0,%3"
   [(set_attr "type" "vfncvt")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Convert double-width float to unsigned integer, truncating.
 ;; Convert double-width float to signed integer, truncating.
-(define_insn "@vfncvt<VWI:mode>_rtz_x<u>_f_w"
+(define_insn "@vfncvt<mode>_rtz_x<u>_f_w"
   [(set (match_operand:VWI 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:VWI
     [(unspec:VWI
@@ -5455,11 +5455,11 @@
    vfncvt.rtz.x<u>.f.w\t%0,%3
    vfncvt.rtz.x<u>.f.w\t%0,%3"
   [(set_attr "type" "vfncvt")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Convert double-width unsigned integer to float.
 ;; Convert double-width signed integer to float.
-(define_insn "@vfncvt<VWF:mode>_f_x<u>_w"
+(define_insn "@vfncvt<mode>_f_x<u>_w"
   [(set (match_operand:VWF 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:VWF
     [(unspec:VWF
@@ -5478,10 +5478,10 @@
    vfncvt.f.x<u>.w\t%0,%3
    vfncvt.f.x<u>.w\t%0,%3"
   [(set_attr "type" "vfncvt")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Convert double-width float to single-width float.
-(define_insn "@vfncvt<VWF:mode>_f_f_w"
+(define_insn "@vfncvt<mode>_f_f_w"
   [(set (match_operand:VWF 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:VWF
     [(unspec:VWF
@@ -5500,10 +5500,10 @@
    vfncvt.f.f.w\t%0,%3
    vfncvt.f.f.w\t%0,%3"
   [(set_attr "type" "vfncvt")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Convert double-width float to single-width float, rounding towards odd.
-(define_insn "@vfncvt<VWF:mode>_rod_f_f_w"
+(define_insn "@vfncvt<mode>_rod_f_f_w"
   [(set (match_operand:VWF 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:VWF
     [(unspec:VWF
@@ -5523,7 +5523,7 @@
    vfncvt.rod.f.f.w\t%0,%3
    vfncvt.rod.f.f.w\t%0,%3"
   [(set_attr "type" "vfncvt")
-   (set_attr "mode" "<VWF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; -------------------------------------------------------------------------------
 ;; ---- 14. Vector Reduction Operations
@@ -5560,7 +5560,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Signed/Unsigned sum reduction into double-width accumulator.
-(define_insn "@vwredsum<u><VWREDI:mode>_vs"
+(define_insn "@vwredsum<u><mode>_vs"
   [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
     [(unspec:<VM>
@@ -5582,7 +5582,7 @@
    vwredsum<u>.vs\t%0,%3,%4
    vwredsum<u>.vs\t%0,%3,%4"
   [(set_attr "type" "vwreduc")
-   (set_attr "mode" "<VWREDI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Floating-Point simple-reductions.
 (define_insn "@vfred<reduc><mode>_vs"
@@ -5609,7 +5609,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; unordered sum reduction into double-width accumulator.
-(define_insn "@vfwredusum<VWREDF:mode>_vs"
+(define_insn "@vfwredusum<mode>_vs"
   [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
     [(unspec:<VM>
@@ -5631,10 +5631,10 @@
    vfwredusum.vs\t%0,%3,%4
    vfwredusum.vs\t%0,%3,%4"
   [(set_attr "type" "vwreduc")
-   (set_attr "mode" "<VWREDF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; ordered sum reduction into double-width accumulator.
-(define_insn "@vfwredosum<VWREDF:mode>_vs"
+(define_insn "@vfwredosum<mode>_vs"
   [(set (match_operand:<VWLMUL1> 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
     [(unspec:<VM>
@@ -5656,7 +5656,7 @@
    vfwredosum.vs\t%0,%3,%4
    vfwredosum.vs\t%0,%3,%4"
   [(set_attr "type" "vwreduc")
-   (set_attr "mode" "<VWREDF:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; -------------------------------------------------------------------------------
 ;; ---- 15. Vector Mask Instructions
@@ -5890,7 +5890,7 @@
 ;; -------------------------------------------------------------------------------
 
 ;; Integer Scalar Move Instructions.
-(define_insn "@vmv<VNOT64BITI:mode>_x_s"
+(define_insn "@vmv<mode>_x_s"
   [(set (match_operand:<VSUB> 0 "register_operand" "=r")
     (unspec:<VSUB>
       [(vec_select:<VSUB>
@@ -5900,9 +5900,9 @@
   "TARGET_VECTOR"
   "vmv.x.s\t%0,%1"
   [(set_attr "type" "vmv_x_s")
-   (set_attr "mode" "<VNOT64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
-(define_expand "@vmv<V64BITI:mode>_x_s"
+(define_expand "@vmv<mode>_x_s"
   [(set (match_operand:<VSUB> 0 "register_operand")
     (unspec:<VSUB>
       [(vec_select:<VSUB>
@@ -5913,25 +5913,25 @@
   {
     if (!TARGET_64BIT)
       {
-        rtx vector = gen_reg_rtx (<V64BITI:MODE>mode);
+        rtx vector = gen_reg_rtx (<MODE>mode);
         rtx shift = gen_reg_rtx (Pmode);
         shift = force_reg (Pmode, GEN_INT (32));
 
         rtx lo = gen_lowpart (Pmode, operands[0]);
         rtx hi = gen_highpart (Pmode, operands[0]);
-        emit_insn (gen_vlshr<V64BITI:mode>_vx (vector,
+        emit_insn (gen_vlshr<mode>_vx (vector,
               const0_rtx, const0_rtx, operands[1],
               shift, GEN_INT(1), riscv_vector_gen_policy ()));
-        emit_insn (gen_vmv<V64BITI:mode>_x_s_lo (lo, operands[1]));
-        emit_insn (gen_vmv<V64BITI:mode>_x_s_hi (hi, vector));
+        emit_insn (gen_vmv<mode>_x_s_lo (lo, operands[1]));
+        emit_insn (gen_vmv<mode>_x_s_hi (hi, vector));
         DONE;
       }
 
-    emit_insn (gen_vmv<V64BITI:mode>_x_s_di_internal (operands[0], operands[1]));
+    emit_insn (gen_vmv<mode>_x_s_di_internal (operands[0], operands[1]));
     DONE;
   })
 
-(define_insn "vmv<V64BITI:mode>_x_s_di_internal"
+(define_insn "vmv<mode>_x_s_di_internal"
   [(set (match_operand:<VSUB> 0 "register_operand" "=r")
     (unspec:<VSUB>
       [(vec_select:<VSUB>
@@ -5941,9 +5941,9 @@
   "TARGET_VECTOR"
   "vmv.x.s\t%0,%1"
   [(set_attr "type" "vmv_x_s")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
-(define_insn "vmv<V64BITI:mode>_x_s_lo"
+(define_insn "vmv<mode>_x_s_lo"
   [(set (match_operand:SI 0 "register_operand" "=r")
     (unspec:SI
       [(vec_select:DI
@@ -5954,9 +5954,9 @@
   "TARGET_VECTOR"
   "vmv.x.s\t%0,%1"
   [(set_attr "type" "vmv_x_s")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
-(define_insn "vmv<V64BITI:mode>_x_s_hi"
+(define_insn "vmv<mode>_x_s_hi"
   [(set (match_operand:SI 0 "register_operand" "=r")
     (unspec:SI
       [(vec_select:DI
@@ -5966,7 +5966,7 @@
   "TARGET_VECTOR"
   "vmv.x.s\t%0,%1"
   [(set_attr "type" "vmv_x_s")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmv<mode>_s_x_internal"
   [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
@@ -5989,7 +5989,7 @@
   [(set_attr "type" "vmv_s_x")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmv<V64BITI:mode>_s_x_32bit"
+(define_insn "@vmv<mode>_s_x_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
@@ -6008,7 +6008,7 @@
    vmv.s.x\t%0,%2
    vmv.s.x\t%0,zero"
   [(set_attr "type" "vmv_s_x")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; This pattern is used by auto-vectorization to
 ;; initiate a vector whose value of element 0 is
@@ -6167,7 +6167,7 @@
   [(set_attr "type" "vslide")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@vslide1<ud><V64BITI:mode>_vx_32bit"
+(define_insn "@vslide1<ud><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
     (unspec:V64BITI
       [(unspec:V64BITI
@@ -6191,9 +6191,9 @@
    vslide1<ud>.vx\t%0,%3,%4
    vslide1<ud>.vx\t%0,%3,zero"
   [(set_attr "type" "vslide")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
-(define_insn "@vslide1<ud><V64BITI:mode>_vx_32bit"
+(define_insn "@vslide1<ud><mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
     (unspec:V64BITI
       [(unspec:V64BITI
@@ -6217,7 +6217,7 @@
    vslide1<ud>.vx\t%0,%3,%4
    vslide1<ud>.vx\t%0,%3,zero"
   [(set_attr "type" "vslide")
-   (set_attr "mode" "<V64BITI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Floating-Point Slide1up/Slide1down Instructions.
 (define_insn "@vfslide1<ud><mode>_vf"
