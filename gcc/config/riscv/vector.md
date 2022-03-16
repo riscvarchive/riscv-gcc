@@ -26,7 +26,7 @@
 ;; This file include :
 ;;
 ;; - Intrinsic (Be consistent with https://github.com/riscv/rvv-intrinsic-doc/blob/master/rvv-intrinsic-api.md)
-;; - Auto-vectorization (vectorization.md)
+;; - Auto-vectorization (vector-auto.md)
 
 ;; -------------------------------------------------------------------------------
 ;; ---- CSR Instructions
@@ -582,7 +582,8 @@
   DONE;
 })
 
-(include "vectorization.md")
+(include "vector-auto.md")
+(include "vector-opt.md")
 
 ;; =========================================================================
 ;; == Intrinsics
