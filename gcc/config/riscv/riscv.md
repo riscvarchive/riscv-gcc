@@ -272,7 +272,6 @@
 ;; vloxsegei vector ordered indexed segment load
 ;; vsuxsegei vector unordered indexed segment store
 ;; vsoxsegei vector ordered indexed segment store
-;; vamo vector amo operations
 ;; varith vector single-width integer and floating-point arithmetic instructions
 ;; vadc vector single-width add-with-carry instructions with non-mask dest
 ;; vmadc vector single-width add-with-carry instructions with mask dest
@@ -320,7 +319,7 @@
    csr,vload,vstore,vcopy,vsetvl,
    vle,vle_reload,vse,vse_reload,vlse,vsse,vluxei,vloxei,vsuxei,vsoxei,vleff,
    vlseg,vsseg,vlsegff,vlsseg,vssseg,vluxsegei,vloxsegei,vsuxsegei,vsoxsegei,
-   vamo,varith,vadc,vmadc,vwarith,vlogical,vshift,vcmp,vmul,vmulh,vdiv,vwmul,vmadd,vwmadd,
+   varith,vadc,vmadc,vwarith,vlogical,vshift,vcmp,vmul,vmulh,vdiv,vwmul,vmadd,vwmadd,
    vmerge,vmove,vsarith,vsmul,vscaleshift,vclip,vfsqrt,vfsgnj,vfclass,vfcvt,vfwcvt,vfncvt,
    vwcvt,vncvt,vreduc,vwreduc,vmask,vcpop,vmsetbit,viota,vid,vmv_x_s,vmv_s_x,vfmv_f_s,vfmv_s_f,
    vslide,vgather,vcompress"
