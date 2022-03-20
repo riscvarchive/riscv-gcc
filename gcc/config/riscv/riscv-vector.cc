@@ -1538,13 +1538,10 @@ riscv_vector_emit_int_cmp (rtx target, machine_mode mask_mode, rtx_code cmp,
       else
         {
           icode = code_for_vms_vx (cmp, data_mode);
-          create_input_operand (&ops[4], op2, GET_MODE (op2));
+          create_input_operand (&ops[4], op2, GET_MODE_INNER (data_mode));
         }
     }
-  if (op3)
-    create_input_operand (&ops[5], op3, Pmode);
-  else
-    create_input_operand (&ops[5], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
+  create_input_operand (&ops[5], op3, Pmode);
   create_input_operand (&ops[6], riscv_vector_gen_policy (), Pmode);
   expand_insn (icode, 7, ops);
   return ops[0].value;
@@ -1600,11 +1597,7 @@ riscv_vector_emit_float_cmp (rtx target, machine_mode mask_mode, rtx_code cmp,
           create_input_operand (&ops[4], op2, GET_MODE (op2));
         }
     }
-  if (op3)
-    create_input_operand (&ops[5], op3, Pmode);
-  else
-    create_input_operand (&ops[5], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
-
+  create_input_operand (&ops[5], op3, Pmode);
   create_input_operand (&ops[6], riscv_vector_gen_policy (), Pmode);
   expand_insn (icode, 7, ops);
   return ops[0].value;
@@ -1639,8 +1632,10 @@ riscv_expand_vec_cmp_float (rtx target, rtx_code code, rtx op0, rtx op1,
         }
       return;
     }
+
   rtx res = riscv_vector_emit_float_cmp (target, mask_mode, code, data_mode,
                                          op0, op1, op2);
+
   if (!rtx_equal_p (target, res))
     emit_move_insn (target, res);
 }
@@ -1661,7 +1656,7 @@ riscv_expand_vcond (machine_mode data_mode, machine_mode cmp_mode,
                                     ops[6]);
       else
         riscv_expand_vec_cmp_float (mask, GET_CODE (ops[3]), ops[4], ops[5],
-                                    NULL_RTX);
+                                    gen_rtx_REG (Pmode, X0_REGNUM));
     }
   else
     {
@@ -1670,7 +1665,7 @@ riscv_expand_vcond (machine_mode data_mode, machine_mode cmp_mode,
                                   ops[6]);
       else
         riscv_expand_vec_cmp_int (mask, GET_CODE (ops[3]), ops[4], ops[5],
-                                  NULL_RTX);
+                                  gen_rtx_REG (Pmode, X0_REGNUM));
     }
 
   if (len_p)

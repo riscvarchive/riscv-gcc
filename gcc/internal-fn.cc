@@ -2932,7 +2932,6 @@ expand_vec_cond_mask_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   create_input_operand (&ops[i++], mask, mask_mode);
 
   if (optab == len_vcond_mask_optab
-    || optab == len_vcond_mask_sv_optab
     || optab == len_vcond_mask_vs_optab)
     {
       tree len = gimple_call_arg (stmt, 3);

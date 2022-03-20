@@ -39,7 +39,8 @@ along with GCC; see the file COPYING3.  If not see
    HONOR_NANS
    uniform_vector_p
    expand_vec_cmp_expr_p
-   bitmask_inv_cst_vector_p)
+   bitmask_inv_cst_vector_p
+   splat_vector_p)
 
 /* Operator lists.  */
 (define_operator_list tcc_comparison
@@ -9046,257 +9047,61 @@ and,
                    IFN_MIN_VS IFN_MAX_VS IFN_AND_VS
                    IFN_IOR_VS IFN_XOR_VS)
  (simplify
-  (binary_op @0 (vec_duplicate @1))
-   (if (VECTOR_TYPE_P (type)
-     && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
-     (binary_op_vs @0 @1)))
- (simplify
-  (binary_op @0 (VECTOR_CST@1))
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
-      (binary_op_vs @0 { uniform_vector_p (@1); })))
- (simplify
-  (binary_op @0 (CONSTRUCTOR@1))
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
-      (binary_op_vs @0 { uniform_vector_p (@1); })))
- (simplify
-  (binary_op @0 SSA_NAME@1)
-   (with
-    {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-    }
-    (if (e && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
-      (binary_op_vs @0 { e; })))))
+  (binary_op @0 splat_vector_p@1)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
+      (binary_op_vs @0 { splat_vector_p (@1); }))))
 
-(for binary_op (plus mult min max
-                bit_and bit_ior bit_xor)
-     binary_op_vs (IFN_ADD_VS IFN_MUL_VS IFN_MIN_VS IFN_MAX_VS
-                   IFN_AND_VS IFN_IOR_VS IFN_XOR_VS)
+(for binary_op (plus minus mult trunc_div rdiv
+                min max bit_and bit_ior bit_xor)
+     binary_op_sv (IFN_ADD_VS IFN_SUB_SV IFN_MUL_VS
+                   IFN_DIV_SV IFN_RDIV_SV
+                   IFN_MIN_VS IFN_MAX_VS IFN_AND_VS
+                   IFN_IOR_VS IFN_XOR_VS)
  (simplify
-  (binary_op (vec_duplicate @1) @0)
-   (if (VECTOR_TYPE_P (type)
-    && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
-     (binary_op_vs @0 @1)))
- (simplify
-  (binary_op (VECTOR_CST@1) @0)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
-      (binary_op_vs @0 { uniform_vector_p (@1); })))
- (simplify
-  (binary_op (CONSTRUCTOR@1) @0)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
-      (binary_op_vs @0 { uniform_vector_p (@1); })))
- (simplify
-  (binary_op SSA_NAME@1 @0)
-   (with
-    {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-    }
-    (if (e && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
-      (binary_op_vs @0 { e; })))))
-
-(for binary_op (minus trunc_div rdiv)
-     binary_op_sv (IFN_SUB_SV IFN_DIV_SV IFN_RDIV_SV)
- (simplify
-  (binary_op (vec_duplicate @1) @0)
-   (if (VECTOR_TYPE_P (type)
-    && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_sv), type))
-     (binary_op_sv @0 @1)))
- (simplify
-  (binary_op (VECTOR_CST@1) @0)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_sv), type))
-      (binary_op_sv @0 { uniform_vector_p (@1); })))
- (simplify
-  (binary_op (CONSTRUCTOR@1) @0)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_sv), type))
-      (binary_op_sv @0 { uniform_vector_p (@1); })))
- (simplify
-  (binary_op SSA_NAME@1 @0)
-   (with
-    {
-      tree e = NULL_TREE;
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-    }
-    (if (e && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_sv), type))
-      (binary_op_sv @0 { e; })))))
+  (binary_op splat_vector_p@1 @0)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_sv), type))
+      (binary_op_sv @0 { splat_vector_p (@1); }))))
 
 /* len_* operation. */
-(for len_binary_op (IFN_LEN_ADD IFN_LEN_SUB IFN_LEN_MUL IFN_LEN_DIV IFN_LEN_MOD
-                    IFN_LEN_RDIV IFN_LEN_MIN IFN_LEN_MAX IFN_LEN_AND
-                    IFN_LEN_IOR IFN_LEN_XOR)
-     len_binary_op_vs (IFN_LEN_ADD_VS IFN_LEN_SUB_VS IFN_LEN_MUL_VS
-                       IFN_LEN_DIV_VS IFN_LEN_MOD_VS IFN_LEN_RDIV_VS
-                       IFN_LEN_MIN_VS IFN_LEN_MAX_VS IFN_LEN_AND_VS
-                       IFN_LEN_IOR_VS IFN_LEN_XOR_VS)
+(for binary_op (IFN_LEN_ADD IFN_LEN_SUB IFN_LEN_MUL 
+                IFN_LEN_DIV IFN_LEN_MOD IFN_LEN_RDIV 
+                IFN_LEN_MIN IFN_LEN_MAX IFN_LEN_AND
+                IFN_LEN_IOR IFN_LEN_XOR)
+     binary_op_vs (IFN_LEN_ADD_VS IFN_LEN_SUB_VS IFN_LEN_MUL_VS
+                   IFN_LEN_DIV_VS IFN_LEN_MOD_VS IFN_LEN_RDIV_VS
+                   IFN_LEN_MIN_VS IFN_LEN_MAX_VS IFN_LEN_AND_VS
+                   IFN_LEN_IOR_VS IFN_LEN_XOR_VS)
  (simplify
-   (len_binary_op @0 (vec_duplicate @1) @2)
-    (if (VECTOR_TYPE_P (type)
-    && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_vs), type))
-      (len_binary_op_vs @0 @1 @2)))
- (simplify
-   (len_binary_op @0 (VECTOR_CST@1) @2)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_vs), type))
-     (len_binary_op_vs @0 { uniform_vector_p (@1); } @2)))
- (simplify
-   (len_binary_op @0 (CONSTRUCTOR@1) @2)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_vs), type))
-     (len_binary_op_vs @0 { uniform_vector_p (@1); } @2)))
- (simplify
-   (len_binary_op @0 SSA_NAME@1 @2)
-    (with
-     {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
+  (binary_op @0 splat_vector_p@1 @2)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
+      (binary_op_vs @0 { splat_vector_p (@1); } @2))))
 
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-      }
-    (if (e && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_vs), type))
-      (len_binary_op_vs @0 { e; } @2)))))
-
-(for len_binary_op (IFN_LEN_ADD IFN_LEN_MUL IFN_LEN_MIN IFN_LEN_MAX
-                    IFN_LEN_AND IFN_LEN_IOR IFN_LEN_XOR)
-     len_binary_op_vs (IFN_LEN_ADD_VS IFN_LEN_MUL_VS IFN_LEN_MIN_VS IFN_LEN_MAX_VS
-                       IFN_LEN_AND_VS IFN_LEN_IOR_VS IFN_LEN_XOR_VS)
+(for binary_op (IFN_LEN_ADD IFN_LEN_SUB IFN_LEN_MUL 
+                IFN_LEN_DIV IFN_LEN_RDIV 
+                IFN_LEN_MIN IFN_LEN_MAX IFN_LEN_AND
+                IFN_LEN_IOR IFN_LEN_XOR)
+     binary_op_sv (IFN_LEN_ADD_VS IFN_LEN_SUB_SV IFN_LEN_MUL_VS
+                   IFN_LEN_DIV_SV IFN_LEN_RDIV_SV
+                   IFN_LEN_MIN_VS IFN_LEN_MAX_VS IFN_LEN_AND_VS
+                   IFN_LEN_IOR_VS IFN_LEN_XOR_VS)
  (simplify
-   (len_binary_op (vec_duplicate @1) @0 @2)
-    (if (VECTOR_TYPE_P (type)
-      && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_vs), type))
-      (len_binary_op_vs @0 @1 @2)))
- (simplify
-   (len_binary_op (VECTOR_CST@1) @0 @2)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_vs), type))
-     (len_binary_op_vs @0 { uniform_vector_p (@1); } @2)))
- (simplify
-   (len_binary_op (CONSTRUCTOR@1) @0 @2)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_vs), type))
-     (len_binary_op_vs @0 { uniform_vector_p (@1); } @2)))
- (simplify
-   (len_binary_op SSA_NAME@1 @0 @2)
-    (with
-     {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
-
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-      }
-    (if (e && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_vs), type))
-      (len_binary_op_vs @0 { e; } @2)))))
-
-(for len_binary_op (IFN_LEN_SUB IFN_LEN_DIV IFN_LEN_RDIV)
-     len_binary_op_sv (IFN_LEN_SUB_SV IFN_LEN_DIV_SV IFN_LEN_RDIV_SV)
- (simplify
-   (len_binary_op (vec_duplicate @1) @0 @2)
-    (if (VECTOR_TYPE_P (type)
-      && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_sv), type))
-      (len_binary_op_sv @0 @1 @2)))
- (simplify
-   (len_binary_op (VECTOR_CST@1) @0 @2)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_sv), type))
-     (len_binary_op_sv @0 { uniform_vector_p (@1); } @2)))
- (simplify
-   (len_binary_op (CONSTRUCTOR@1) @0 @2)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_sv), type))
-     (len_binary_op_sv @0 { uniform_vector_p (@1); } @2)))
- (simplify
-   (len_binary_op SSA_NAME@1 @0 @2)
-    (with
-     {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
-
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-      }
-    (if (e && vectorized_internal_fn_supported_p (as_internal_fn (len_binary_op_sv), type))
-      (len_binary_op_sv @0 { e; } @2)))))
-
+  (binary_op splat_vector_p@1 @0 @2)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_sv), type))
+      (binary_op_sv @0 { splat_vector_p (@1); } @2))))
+      
 /* Ternary operation. */
 
 /* normal operation. */
 (for ternary_op (IFN_FMA IFN_FMS IFN_FNMA IFN_FNMS)
      ternary_op_vs (IFN_FMA_VS IFN_FMS_VS IFN_FNMA_VS IFN_FNMS_VS)
  (simplify
-  (ternary_op @0 (vec_duplicate @1) @2)
-   (if (VECTOR_TYPE_P (type)
-     && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
-     (ternary_op_vs @0 @1 @2)))
+  (ternary_op @0 splat_vector_p@1 @2)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
+      (ternary_op_vs @0 { splat_vector_p (@1); } @2)))
  (simplify
-  (ternary_op (vec_duplicate @1) @0 @2)
-   (if (VECTOR_TYPE_P (type)
-     && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
-      (ternary_op_vs @0 @1 @2)))
- (simplify
-   (ternary_op @0 (VECTOR_CST@1) @2)
-    (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1)
-      && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
-     (ternary_op_vs @0 { uniform_vector_p (@1); } @2)))
- (simplify
-   (ternary_op (VECTOR_CST@1) @0 @2)
-      (if (uniform_vector_p (@1)
-        && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
-       (ternary_op_vs @0 { uniform_vector_p (@1); } @2)))
- (simplify
-  (ternary_op @0 SSA_NAME@1 @2)
-   (with
-    {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
-
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-    }
-  (if (e && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
-     (ternary_op_vs @0 { e; } @2))))
- (simplify
-  (ternary_op SSA_NAME@1 @0 @2)
-   (with
-    {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
-
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-    }
-  (if (e && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
-    (ternary_op_vs @0 { e; } @2)))))
-
+  (ternary_op splat_vector_p@1 @0 @2)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
+      (ternary_op_vs @0 { splat_vector_p (@1); } @2))))
 (simplify
   (plus (IFN_MUL_VS @0 @1) @2)
    (if (vectorized_internal_fn_supported_p (IFN_FMA_VS, type))
@@ -9335,64 +9140,16 @@ and,
      (IFN_FNMS_VS @0 @1 @2)))
 
 /* len_* operation. */
-(for len_ternary_op (IFN_LEN_FMA IFN_LEN_FMS IFN_LEN_FNMA IFN_LEN_FNMS)
-     len_ternary_op_vs (IFN_LEN_FMA_VS IFN_LEN_FMS_VS IFN_LEN_FNMA_VS IFN_LEN_FNMS_VS)
+(for ternary_op (IFN_LEN_FMA IFN_LEN_FMS IFN_LEN_FNMA IFN_LEN_FNMS)
+     ternary_op_vs (IFN_LEN_FMA_VS IFN_LEN_FMS_VS IFN_LEN_FNMA_VS IFN_LEN_FNMS_VS)
  (simplify
-  (len_ternary_op @0 (vec_duplicate @1) @2 @3)
-   (if (vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type))
-     (len_ternary_op_vs @0 @1 @2 @3)))
+  (ternary_op @0 splat_vector_p@1 @2 @3)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
+      (ternary_op_vs @0 { splat_vector_p (@1); } @2 @3)))
  (simplify
-  (len_ternary_op (vec_duplicate @1) @0 @2 @3)
-   (if (vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type))
-     (len_ternary_op_vs @0 @1 @2 @3)))
- (simplify
-   (len_ternary_op @0 (VECTOR_CST@1) @2 @3)
-    (if (uniform_vector_p (@1) && vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type)
-          && current_pass && strcmp (current_pass->name, "vect") == 0)
-      (len_ternary_op_vs @0 { uniform_vector_p (@1); } @2 @3)))
- (simplify
-   (len_ternary_op (VECTOR_CST@1) @0 @2 @3)
-    (with
-     {
-       gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-       tree e = NULL_TREE;
- 
-       if (VECTOR_TYPE_P (type)
-         && def_stmt && is_gimple_assign (def_stmt)
-         && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-         e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-     }
-    (if (e && vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type))
-      (len_ternary_op_vs @0 { e; } @2 @3))))
- (simplify
-  (len_ternary_op @0 SSA_NAME@1 @2 @3)
-   (with
-    {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
-
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-    }
-  (if (e && vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type))
-     (len_ternary_op_vs @0 { e; } @2 @3))))
- (simplify
-  (len_ternary_op SSA_NAME@1 @0 @2 @3)
-   (with
-    {
-      gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-      tree e = NULL_TREE;
-
-      if (VECTOR_TYPE_P (type)
-        && def_stmt && is_gimple_assign (def_stmt)
-        && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-    }
-  (if (e && vectorized_internal_fn_supported_p (as_internal_fn (len_ternary_op_vs), type))
-    (len_ternary_op_vs @0 { e; } @2 @3)))))
-
+  (ternary_op splat_vector_p@1 @0 @2 @3)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
+      (ternary_op_vs @0 { splat_vector_p (@1); } @2 @3))))
 (simplify
   (IFN_LEN_ADD (IFN_LEN_MUL_VS @0 @1 @2) @3 @2)
    (if (vectorized_internal_fn_supported_p (IFN_LEN_FMA_VS, type))
@@ -9429,81 +9186,4 @@ and,
   (IFN_LEN_SUB (IFN_LEN_NEG (IFN_LEN_MUL_VS @0 @1 @2) @2) @3 @2)
    (if (vectorized_internal_fn_supported_p (IFN_LEN_FNMS_VS, type))
      (IFN_LEN_FNMS_VS @0 @1 @3 @2)))
-
-(for code (eq ne lt gt le ge)
- (simplify
-  (code @0 (vec_duplicate @1))
-   (switch
-     (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_VEC_CMPU_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-      (IFN_VEC_CMPU_VS @0 @1 { build_int_cst (integer_type_node, code); }))
-     (if (VECTOR_TYPE_P (type) && !TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_VEC_CMP_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-      (IFN_VEC_CMP_VS @0 @1 { build_int_cst (integer_type_node, code); }))))
-  (simplify
-   (code @0 VECTOR_CST@1)
-    (switch
-      (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1) && TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_VEC_CMPU_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-        (IFN_VEC_CMPU_VS @0 { uniform_vector_p (@1); } { build_int_cst (integer_type_node, code); }))
-      (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1) && !TYPE_UNSIGNED (TREE_TYPE (@0))
-        && direct_internal_fn_supported_p (IFN_VEC_CMP_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-        (IFN_VEC_CMP_VS @0 { uniform_vector_p (@1); } { build_int_cst (integer_type_node, code); }))))
-  (simplify
-   (code @0 SSA_NAME@1)
-    (with
-     {
-       gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-       tree e = NULL_TREE;
-       if (VECTOR_TYPE_P (type)
-           && def_stmt && is_gimple_assign (def_stmt)
-           && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-     }
-     (switch
-      (if (e && TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_VEC_CMPU_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-        (IFN_VEC_CMPU_VS @0 { CONSTRUCTOR_ELT (gimple_assign_rhs1 (def_stmt), 0)->value; } { build_int_cst (integer_type_node, code); }))
-      (if (e && TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_VEC_CMPU_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-        (IFN_VEC_CMPU_VS @0 { CONSTRUCTOR_ELT (gimple_assign_rhs1 (def_stmt), 0)->value; } { build_int_cst (integer_type_node, code); }))))))
-
-(for code (IFN_LEN_VEC_CMP IFN_LEN_VEC_CMPU)
- (simplify
-  (code @0 (vec_duplicate @1) @2 @3)
-   (switch
-     (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_LEN_VEC_CMPU_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-      (IFN_LEN_VEC_CMPU_VS @0 @1 @2 @3))
-     (if (VECTOR_TYPE_P (type) && !TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_LEN_VEC_CMP_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-      (IFN_LEN_VEC_CMP_VS @0 @1 @2 @3))))
-  (simplify
-   (code @0 VECTOR_CST@1 @2 @3)
-    (switch
-      (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1) && TYPE_UNSIGNED (TREE_TYPE (@0))
-        && direct_internal_fn_supported_p (IFN_LEN_VEC_CMPU_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-        (IFN_LEN_VEC_CMPU_VS @0 { uniform_vector_p (@1); } @2 @3))
-      (if (VECTOR_TYPE_P (type) && uniform_vector_p (@1) && !TYPE_UNSIGNED (TREE_TYPE (@0))
-        && direct_internal_fn_supported_p (IFN_LEN_VEC_CMP_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-        (IFN_LEN_VEC_CMP_VS @0 { uniform_vector_p (@1); } @2 @3))))
-  (simplify
-   (code @0 SSA_NAME@1 @2 @3)
-    (with
-     {
-       gimple *def_stmt = SSA_NAME_DEF_STMT (@1);
-       tree e = NULL_TREE;
-
-       if (VECTOR_TYPE_P (type)
-           && def_stmt && is_gimple_assign (def_stmt)
-           && gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
-        e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
-     }
-     (switch
-      (if (e && TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_LEN_VEC_CMPU_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-        (IFN_LEN_VEC_CMPU_VS @0 { CONSTRUCTOR_ELT (gimple_assign_rhs1 (def_stmt), 0)->value; } @2 @3))
-      (if (e && TYPE_UNSIGNED (TREE_TYPE (@0))
-       && direct_internal_fn_supported_p (IFN_LEN_VEC_CMPU_VS, tree_pair (TREE_TYPE (@0), type), OPTIMIZE_FOR_BOTH))
-        (IFN_LEN_VEC_CMPU_VS @0 { CONSTRUCTOR_ELT (gimple_assign_rhs1 (def_stmt), 0)->value; } @2 @3))))))
 #endif

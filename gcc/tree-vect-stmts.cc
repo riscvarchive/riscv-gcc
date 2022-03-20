@@ -10767,23 +10767,16 @@ vectorizable_condition (vec_info *vinfo,
       if (masked)
 	vec_compare = vec_cond_lhs;
       else
-	{
+        {
           vec_cond_rhs = vec_oprnds1[i];
           if (bitop1 == NOP_EXPR)
             {
               gimple_seq stmts = NULL;
 
               if (len &&
-                  ((!unsigned_p &&
-                    direct_internal_fn_supported_p (
-                        IFN_LEN_VEC_CMP,
-                        tree_pair (TREE_TYPE (vec_cond_lhs), vec_cmp_type),
-                        OPTIMIZE_FOR_SPEED)) ||
-                   (unsigned_p &&
-                    direct_internal_fn_supported_p (
-                        IFN_LEN_VEC_CMPU,
-                        tree_pair (TREE_TYPE (vec_cond_lhs), vec_cmp_type),
-                        OPTIMIZE_FOR_SPEED))))
+                  get_len_vec_cmp_icode (TYPE_MODE (TREE_TYPE (vec_cond_lhs)),
+                                         TYPE_MODE (vec_cmp_type),
+                                         unsigned_p) != CODE_FOR_nothing)
                 {
                   vec_compare = create_tmp_reg_or_ssa_name (vec_cmp_type);
                   tree code_tree = build_int_cst (integer_type_node, cond_code);
@@ -10832,8 +10825,8 @@ vectorizable_condition (vec_info *vinfo,
                 }
               vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
               if (bitop2 == NOP_EXPR)
-		vec_compare = new_temp;
-	      else if (bitop2 == BIT_NOT_EXPR)
+                vec_compare = new_temp;
+              else if (bitop2 == BIT_NOT_EXPR)
 		{
 		  /* Instead of doing ~x ? y : z do x ? z : y.  */
 		  vec_compare = new_temp;
@@ -10942,17 +10935,11 @@ vectorizable_condition (vec_info *vinfo,
 	    }
 	}
       else
-	{
+        {
           internal_fn cond_fn = unsigned_p ? IFN_LEN_VCONDU : IFN_LEN_VCOND;
           if (len &&
-              (direct_internal_fn_supported_p (
-                   cond_fn, tree_pair (vectype, TREE_TYPE (vec_cond_lhs)),
-                   OPTIMIZE_FOR_SPEED) ||
-               (VECTOR_BOOLEAN_TYPE_P (TREE_TYPE (vec_cond_lhs)) &&
-                direct_internal_fn_supported_p (
-                    IFN_LEN_VCOND_MASK,
-                    tree_pair (vectype, TREE_TYPE (vec_cond_lhs)),
-                    OPTIMIZE_FOR_SPEED))))
+              get_len_vcond_mask_icode (TYPE_MODE (TREE_TYPE (vec_cond_lhs)),
+                                        TYPE_MODE (TREE_TYPE (vec_compare))))
             {
               new_temp = make_ssa_name (vec_dest);
               gcall *call = gimple_build_call_internal (cond_fn, 4, vec_compare,
@@ -11196,16 +11183,10 @@ vectorizable_comparison (vec_info *vinfo,
     if (bitop1 == NOP_EXPR)
       {
         bool unsignedp = TYPE_UNSIGNED (TREE_TYPE (vec_rhs1));
-        if (len && ((!unsignedp &&
-                     direct_internal_fn_supported_p (
-                         IFN_LEN_VEC_CMP,
-                         tree_pair (TREE_TYPE (vec_rhs1), TREE_TYPE (new_temp)),
-                         OPTIMIZE_FOR_SPEED)) ||
-                    (unsignedp &&
-                     direct_internal_fn_supported_p (
-                         IFN_LEN_VEC_CMPU,
-                         tree_pair (TREE_TYPE (vec_rhs1), TREE_TYPE (new_temp)),
-                         OPTIMIZE_FOR_SPEED))))
+        if (len &&
+            get_len_vec_cmp_icode (TYPE_MODE (TREE_TYPE (vec_rhs1)),
+                                   TYPE_MODE (TREE_TYPE (new_temp)),
+                                   unsignedp) != CODE_FOR_nothing)
           {
             tree code_tree = build_int_cst (integer_type_node, code);
             new_stmt = gimple_build_call_internal (

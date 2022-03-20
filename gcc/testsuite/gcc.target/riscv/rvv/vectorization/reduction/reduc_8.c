@@ -17,4 +17,3 @@ reduc (int *restrict a, int *restrict b, int *restrict c)
 
 /* { dg-final { scan-assembler-times {vmsne.vi} 1 } } */
 /* { dg-final { scan-assembler-not {vmseq.vi} } } */
-/* { dg-final { scan-assembler-times {\tvmerge} 1 } } */

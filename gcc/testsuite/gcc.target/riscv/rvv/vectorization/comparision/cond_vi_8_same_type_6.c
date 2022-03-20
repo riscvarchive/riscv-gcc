@@ -42,15 +42,15 @@
 
 TEST_ALL (TEST_LOOP)
 
-/* { dg-final { scan-assembler-times "\tvmsgt\.vx" 33 {target riscv32-*-*} } } */
-/* { dg-final { scan-assembler-times "\tvmerge\.vim" 88 {target riscv32-*-*} } } */
-/* { dg-final { scan-assembler-times "\tvmerge\.vxm" 44 {target riscv32-*-*} } } */
+/* { dg-final { scan-assembler-times "\tvmsgt\.vx" 44 {target riscv32-*-*} } } */
+
+
 /* { dg-final { scan-assembler-times "\tvfmerge\.vfm" 33 {target riscv32-*-*} } } */
-/* { dg-final { scan-assembler-times "\tvmsgtu\.vx" 33 {target riscv32-*-*} } } */
+/* { dg-final { scan-assembler-times "\tvmsgtu\.vx" 44 {target riscv32-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvmfge\.vf" 33 {target riscv32-*-*} } } */
 /* { dg-final { scan-tree-dump-times "\.WHILE_LEN" 121 "optimized" {target riscv32-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvmsgt\.vx" 44 {target riscv64-*-*} } } */
-/* { dg-final { scan-assembler-times "\tvmerge\.vim" 88 {target riscv64-*-*} } } */
+
 /* { dg-final { scan-assembler-times "\tvfmerge\.vfm" 33 {target riscv64-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvmsgtu\.vx" 44 {target riscv64-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvmfge\.vf" 33 {target riscv64-*-*} } } */

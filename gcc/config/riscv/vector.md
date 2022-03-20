@@ -689,7 +689,7 @@
 ;; -------------------------------------------------------------------------------
 
 ;; Vector Unit-Stride Loads.
-(define_insn "@vle<V:mode>"
+(define_insn "@vle<mode>"
   [(set (match_operand:V 0 "register_operand" "=vd,vd,vr,vr")
     (unspec:V
       [(unspec:V
@@ -709,10 +709,10 @@
    vle<sew>.v\t%0,(%3)
    vle<sew>.v\t%0,(%3)"
   [(set_attr "type" "vle")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Unit-Stride Stores.
-(define_insn "@vse<V:mode>"
+(define_insn "@vse<mode>"
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:V
@@ -731,10 +731,10 @@
    vse<sew>.v\t%2,(%1),%0.t
    vse<sew>.v\t%2,(%1)"
   [(set_attr "type" "vse")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Unit-stride mask Loads.
-(define_insn "@vlm<VB:mode>"
+(define_insn "@vlm<mode>"
   [(set (match_operand:VB 0 "register_operand" "=vr")
   (unspec:VB
     [(unspec:VB
@@ -747,10 +747,10 @@
   "TARGET_VECTOR"
   "vlm.v\t%0,(%1)"
   [(set_attr "type" "vle")
-   (set_attr "mode" "<VB:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Unit-stride mask Stores.
-(define_insn "@vsm<VB:mode>"
+(define_insn "@vsm<mode>"
   [(set (mem:BLK (scratch))
   (unspec:BLK
     [(unspec:BLK
@@ -764,13 +764,13 @@
   "TARGET_VECTOR"
   "vsm.v\t%1,(%0)"
   [(set_attr "type" "vse")
-   (set_attr "mode" "<VB:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Strided Loads.
 
 ;; This special pattern, we add policy operand because
 ;; we need it in the expansion.
-(define_insn "@vlse<V:mode>"
+(define_insn "@vlse<mode>"
   [(set (match_operand:V 0 "register_operand" "=vd,vd,vd,vd,vr,vr,vr,vr")
     (unspec:V
       [(unspec:V
@@ -795,10 +795,10 @@
    vlse<sew>.v\t%0,(%3),%4
    vlse<sew>.v\t%0,(%3),zero"
   [(set_attr "type" "vlse")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Strided Stores.
-(define_insn "@vsse<V:mode>"
+(define_insn "@vsse<mode>"
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:V
@@ -819,7 +819,7 @@
    vsse<sew>.v\t%3,(%1),%2
    vsse<sew>.v\t%3,(%1),zero"
   [(set_attr "type" "vsse")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Unordered and Ordered Indexed Loads.
 ;; The following patterns are the patterns will be matched after
@@ -1130,7 +1130,7 @@
    (set_attr "mode" "<V128UNITSI:MODE>")])
 
 ;; Unit-stride Fault-Only-First Loads.
-(define_insn "@vle<V:mode>ff"
+(define_insn "@vle<mode>ff"
   [(set (match_operand:V 0 "register_operand" "=vr,vr,vr,vr")
    (unspec:V
     [(unspec:V
@@ -1151,10 +1151,10 @@
    vle<sew>ff.v\t%0,(%3)
    vle<sew>ff.v\t%0,(%3)"
   [(set_attr "type" "vleff")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Unit-Stride Segment Loads.
-(define_insn "@vlseg<VT:mode>"
+(define_insn "@vlseg<mode>"
   [(set (match_operand:VT 0 "register_operand" "=vr,vr,vr,vr")
     (unspec:VT
       [(unspec:VT
@@ -1174,10 +1174,10 @@
    vlseg<nf>e<sew>.v\t%0,(%3)
    vlseg<nf>e<sew>.v\t%0,(%3)"
   [(set_attr "type" "vlseg")
-   (set_attr "mode" "<VT:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Unit-Stride Segment Stores.
-(define_insn "@vsseg<VT:mode>"
+(define_insn "@vsseg<mode>"
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:VT
@@ -1196,10 +1196,10 @@
    vsseg<nf>e<sew>.v\t%2,(%1),%0.t
    vsseg<nf>e<sew>.v\t%2,(%1)"
   [(set_attr "type" "vsseg")
-   (set_attr "mode" "<VT:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Unit-stride Fault-Only-First Segment Loads
-(define_insn "@vlseg<VT:mode>ff"
+(define_insn "@vlseg<mode>ff"
   [(set (match_operand:VT 0 "register_operand" "=vr,vr,vr,vr")
     (unspec:VT
       [(unspec:VT
@@ -1220,10 +1220,10 @@
    vlseg<nf>e<sew>ff.v\t%0,(%3)
    vlseg<nf>e<sew>ff.v\t%0,(%3)"
   [(set_attr "type" "vlsegff")
-   (set_attr "mode" "<VT:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Strided Segment Loads.
-(define_insn "@vlsseg<VT:mode>"
+(define_insn "@vlsseg<mode>"
   [(set (match_operand:VT 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
     (unspec:VT
       [(unspec:VT
@@ -1248,10 +1248,10 @@
    vlsseg<nf>e<sew>.v\t%0,(%3),%4
    vlsseg<nf>e<sew>.v\t%0,(%3),zero"
   [(set_attr "type" "vlsseg")
-   (set_attr "mode" "<VT:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Strided Segment Stores.
-(define_insn "@vssseg<VT:mode>"
+(define_insn "@vssseg<mode>"
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:VT
@@ -1272,7 +1272,7 @@
    vssseg<nf>e<sew>.v\t%3,(%1),%2
    vssseg<nf>e<sew>.v\t%3,(%1),zero"
   [(set_attr "type" "vssseg")
-   (set_attr "mode" "<VT:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Unordered and Ordered Indexed Segment Loads.
 ;; pattern of segments indexed loads for nunits = 2.
@@ -2287,7 +2287,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Vector Double-Widening Sign-extend and Zero-extend.
-(define_insn "@v<any_extend:sz>ext<vw>_vf2"
+(define_insn "@v<sz>ext<vw>_vf2"
   [(set (match_operand:<VW> 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
@@ -2309,7 +2309,7 @@
    (set_attr "mode" "<VW>")])
 
 ;; Vector Quad-Widening Sign-extend and Zero-extend.
-(define_insn "@v<any_extend:sz>ext<vqw>_vf4"
+(define_insn "@v<sz>ext<vqw>_vf4"
   [(set (match_operand:<VQW> 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:<VQW>
     [(unspec:<VQW>
@@ -2331,7 +2331,7 @@
    (set_attr "mode" "<VQW>")])
 
 ;; Vector Oct-Widening Sign-extend and Zero-extend.
-(define_insn "@v<any_extend:sz>ext<vow>_vf8"
+(define_insn "@v<sz>ext<vow>_vf8"
   [(set (match_operand:<VOW> 0 "register_operand" "=&vr,&vr,&vr,&vr")
   (unspec:<VOW>
     [(unspec:<VOW>
@@ -3937,7 +3937,7 @@
    (set_attr "mode" "<VWI:MODE>")])
 
 ;; Vector-Vector integer and float merge.
-(define_insn "@vmerge<V:mode>_vvm"
+(define_insn "@vmerge<mode>_vvm"
   [(set (match_operand:V 0 "register_operand" "=vd,vd,vd,vd")
     (unspec:V
       [(match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J")
@@ -4004,7 +4004,7 @@
   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Integer/Float Move.
-(define_insn "@vmv<V:mode>_v_v"
+(define_insn "@vmv<mode>_v_v"
   [(set (match_operand:V 0 "register_operand" "=vr,vr")
     (unspec:V
       [(match_operand:V 1 "vector_reg_or_const0_operand" "0,J")
@@ -4017,7 +4017,7 @@
  "TARGET_VECTOR"
  "vmv.v.v\t%0,%2"
  [(set_attr "type" "vmove")
-  (set_attr "mode" "<V:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Integer Move.
 (define_insn "@vmv<mode>_v_x_internal"
@@ -5674,7 +5674,7 @@
 ;; -------------------------------------------------------------------------------
 
 ;; Vector Mask-Register Logical Instructions.
-(define_insn "@vm<optab><VB:mode>_mm"
+(define_insn "@vm<optab><mode>_mm"
   [(set (match_operand:VB 0 "register_operand" "=vr")
     (unspec:VB
       [(any_bitwise:VB
@@ -5687,9 +5687,9 @@
  "TARGET_VECTOR"
  "vm<insn>.mm\t%0,%1,%2"
  [(set_attr "type" "vmask")
-  (set_attr "mode" "<VB:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
-(define_insn "@vmn<optab><VB:mode>_mm"
+(define_insn "@vmn<optab><mode>_mm"
   [(set (match_operand:VB 0 "register_operand" "=vr")
     (unspec:VB
       [(not:VB
@@ -5703,9 +5703,9 @@
  "TARGET_VECTOR"
  "vm<ninsn>.mm\t%0,%1,%2"
  [(set_attr "type" "vmask")
-  (set_attr "mode" "<VB:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
-(define_insn "@vm<optab>not<VB:mode>_mm"
+(define_insn "@vm<optab>not<mode>_mm"
   [(set (match_operand:VB 0 "register_operand" "=vr")
     (unspec:VB
       [(any_logicalnot:VB
@@ -5719,10 +5719,10 @@
  "TARGET_VECTOR"
  "vm<insn>n.mm\t%0,%1,%2"
  [(set_attr "type" "vmask")
-  (set_attr "mode" "<VB:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; vmmv.m vd,vs -> vmand.mm vd,vs,vs # Copy mask register
-(define_insn "@vmmv<VB:mode>_m"
+(define_insn "@vmmv<mode>_m"
   [(set (match_operand:VB 0 "register_operand" "=vr")
     (unspec:VB
       [(match_operand:VB 1 "register_operand" "vr")
@@ -5733,10 +5733,10 @@
  "TARGET_VECTOR"
  "vmmv.m\t%0,%1"
  [(set_attr "type" "vmask")
-  (set_attr "mode" "<VB:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; vmclr.m vd -> vmxor.mm vd,vd,vd # Clear mask register
-(define_insn "@vmclr<VB:mode>_m"
+(define_insn "@vmclr<mode>_m"
   [(set (match_operand:VB 0 "register_operand" "=vr")
     (unspec:VB
       [(vec_duplicate:VB (const_int 0))
@@ -5747,10 +5747,10 @@
  "TARGET_VECTOR"
  "vmclr.m\t%0"
  [(set_attr "type" "vmask")
-  (set_attr "mode" "<VB:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; vmset.m vd -> vmxnor.mm vd,vd,vd # Set mask register
-(define_insn "@vmset<VB:mode>_m"
+(define_insn "@vmset<mode>_m"
   [(set (match_operand:VB 0 "register_operand" "=vr")
     (unspec:VB
       [(vec_duplicate:VB (const_int 1))
@@ -5761,10 +5761,10 @@
  "TARGET_VECTOR"
  "vmset.m\t%0"
  [(set_attr "type" "vmask")
-  (set_attr "mode" "<VB:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; vmnot.m vd,vs -> vmnand.mm vd,vs,vs # Invert bits
-(define_insn "@vmnot<VB:mode>_m"
+(define_insn "@vmnot<mode>_m"
   [(set (match_operand:VB 0 "register_operand" "=vr")
     (unspec:VB
       [(not:VB
@@ -5776,7 +5776,7 @@
  "TARGET_VECTOR"
  "vmnot.m\t%0,%1"
  [(set_attr "type" "vmask")
-  (set_attr "mode" "<VB:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; Vector mask population count vpopc
 (define_insn "@vcpop<VB:mode>_<X:mode>_m"
@@ -5817,7 +5817,7 @@
 ;; vmsbf.m set-before-first mask bit.
 ;; vmsif.m set-including-fisrt mask bit.
 ;; vmsof.m set-only-first mask bit.
-(define_insn "@vm<smb><VB:mode>_m"
+(define_insn "@vm<smb><mode>_m"
   [(set (match_operand:VB 0 "register_operand" "=&vr,&vr")
     (unspec:VB
       [(unspec:VB
@@ -5834,7 +5834,7 @@
   vm<smb>.m\t%0,%3,%1.t
   vm<smb>.m\t%0,%3"
  [(set_attr "type" "vmsetbit")
-  (set_attr "mode" "<VB:MODE>")])
+  (set_attr "mode" "<MODE>")])
 
 ;; Vector Iota Instruction.
 (define_insn "@viota<mode>_m"
@@ -6061,7 +6061,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Vector Slideup/Slidedown Instructions.
-(define_insn "@vslide<ud><V:mode>_vx"
+(define_insn "@vslide<ud><mode>_vx"
   [(set (match_operand:V 0 "register_operand" "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
     (unspec:V
       [(unspec:V
@@ -6086,9 +6086,9 @@
    vslide<ud>.vx\t%0,%3,%4
    vslide<ud>.vi\t%0,%3,%4"
   [(set_attr "type" "vslide")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
-(define_insn "@vslide<ud><V:mode>_vx"
+(define_insn "@vslide<ud><mode>_vx"
   [(set (match_operand:V 0 "register_operand" "=vr,vr,vr,vr,vr,vr,vr,vr")
     (unspec:V
       [(unspec:V
@@ -6113,7 +6113,7 @@
    vslide<ud>.vx\t%0,%3,%4
    vslide<ud>.vi\t%0,%3,%4"
   [(set_attr "type" "vslide")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Integer Slide1up/Slide1down Instructions.
 (define_insn "@vslide1<ud><mode>_vx_internal"
@@ -6266,7 +6266,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector vrgater instruction.
-(define_insn "@vrgather<V:mode>_vv"
+(define_insn "@vrgather<mode>_vv"
   [(set (match_operand:V 0 "register_operand" "=&vr,&vr,&vr,&vr")
     (unspec:V
       [(unspec:V
@@ -6286,7 +6286,7 @@
    vrgather.vv\t%0,%3,%4
    vrgather.vv\t%0,%3,%4"
   [(set_attr "type" "vgather")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector vrgaterei16 instruction.
 (define_insn "@vrgatherei16<V16:mode>_vv"
@@ -6312,7 +6312,7 @@
    (set_attr "mode" "<V16:MODE>")])
 
 ;; Vector-Scalar vrgater instruction.
-(define_insn "@vrgather<V:mode>_vx"
+(define_insn "@vrgather<mode>_vx"
   [(set (match_operand:V 0 "register_operand" "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
     (unspec:V
       [(unspec:V
@@ -6336,10 +6336,10 @@
    vrgather.vx\t%0,%3,%4
    vrgather.vi\t%0,%3,%4"
   [(set_attr "type" "vgather")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector Compress Instruction.
-(define_insn "@vcompress<V:mode>_vm"
+(define_insn "@vcompress<mode>_vm"
   [(set (match_operand:V 0 "register_operand" "=&vr,&vr")
     (unspec:V
       [(unspec:V
@@ -6353,4 +6353,4 @@
   "TARGET_VECTOR"
   "vcompress.vm\t%0,%3,%1"
   [(set_attr "type" "vcompress")
-   (set_attr "mode" "<V:MODE>")])
+   (set_attr "mode" "<MODE>")])

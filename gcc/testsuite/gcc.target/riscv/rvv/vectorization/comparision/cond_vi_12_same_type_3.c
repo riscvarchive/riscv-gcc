@@ -42,6 +42,6 @@
 
 TEST_ALL (TEST_LOOP)
         
-/* { dg-final { scan-assembler-times "\tvmerge\.vxm" 22 {target riscv32-*-*} } } */
+
 /* { dg-final { scan-tree-dump-times "\.WHILE_LEN" 99 "optimized" {target riscv32-*-*} } } */
 /* { dg-final { scan-tree-dump-times "\.WHILE_LEN" 99 "optimized" {target riscv64-*-*} } } */

@@ -142,6 +142,49 @@
 ;; -------------------------------------------------------------------------
 ;; ---- [INT] Canonicalization of Instructions
 ;; -------------------------------------------------------------------------
+;; Includes contiguous forms of:
+;; - vle8.v
+;; - vle16.v
+;; - vle32.v
+;; - vle64.v
+;; -------------------------------------------------------------------------
+
+(define_insn_and_rewrite "vload<mode>_vmerge_to_vle<mode>_mask"
+  [(set (match_operand:V 0 "register_operand" "=vr")
+    (unspec:V 
+      [(const_int 0)
+       (unspec:V 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:V 3 "register_operand" "vr")
+         (unspec:V 
+          [(unspec:V 
+            [(match_operand:<VM> 2 "register_operand" "vm")
+             (unspec:V 
+              [(match_operand 4 "pmode_register_operand" "r")
+               (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_LOAD)
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 6 "p_reg_or_const_csr_operand")
+           (match_operand 7 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+      (match_dup 6)
+      (match_operand 5 "const_int_operand")
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vle (<MODE>mode, operands[0], operands[1], operands[3],
+        operands[4], operands[6], operands[7]));
+    DONE;
+  }
+  [(set_attr "type" "vle")
+   (set_attr "mode" "<MODE>")])
+        
+;; -------------------------------------------------------------------------
+;; ---- [INT] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
 ;; Includes:
 ;; - vadd.vx
 ;; - vadd.vi
@@ -167,7 +210,7 @@
 ;; -------------------------------------------------------------------------
 
 (define_insn "v<optab><mode>_vmerge_to_v<optab>_mask"
-  [(set (match_operand:VI 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr,?&vr")
     (unspec:VI 
       [(const_int 0)
        (unspec:VI 
@@ -197,7 +240,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_2"
-  [(set (match_operand:VI 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr,?&vr")
     (unspec:VI 
       [(const_int 0)
        (unspec:VI 
@@ -227,7 +270,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_3"
-  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,?&vr,?&vr")
     (unspec:VI 
       [(const_int 0)
        (unspec:VI 
@@ -258,7 +301,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "vsub<mode>_vmerge_to_vsub_mask_3"
-  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,?&vr,?&vr")
     (unspec:VI 
       [(const_int 0)
        (unspec:VI 
@@ -289,7 +332,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "vrsub<mode>_vmerge_to_vrsub_mask_3"
-  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,?&vr,?&vr")
     (unspec:VI 
       [(const_int 0)
        (unspec:VI 
@@ -320,7 +363,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_3"
-  [(set (match_operand:VI 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr,?&vr")
     (unspec:VI 
       [(const_int 0)
        (unspec:VI 
@@ -349,7 +392,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_4"
-  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,?&vr")
     (unspec:V64BITI 
       [(const_int 0)
        (unspec:V64BITI 
@@ -380,7 +423,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "v<optab><mode>_vmerge_to_v<optab>_mask_5"
-  [(set (match_operand:V64BITI 0 "register_operand" "=vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr,?&vr")
     (unspec:V64BITI 
       [(const_int 0)
        (unspec:V64BITI 
@@ -411,7 +454,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "v<optab><mode>_vmerge_to_v<optab>_mask"
-  [(set (match_operand:VI 0 "register_operand" "=vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr,vr,?&vr,?&vr")
     (unspec:VI 
       [(const_int 0)
        (unspec:VI 
@@ -453,7 +496,7 @@
 ;; -------------------------------------------------------------------------
 
 (define_insn "vf<optab><mode>_vmerge_to_vf<optab>_mask"
-  [(set (match_operand:VF 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr,?&vr")
     (unspec:VF 
       [(const_int 0)
        (unspec:VF 
@@ -483,7 +526,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "vf<optab><mode>_vmerge_to_v<optab>_mask_2"
-  [(set (match_operand:VF 0 "register_operand" "=vr,vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr,?&vr")
     (unspec:VF 
       [(const_int 0)
        (unspec:VF 
@@ -510,4 +553,50 @@
    vf<rinsn>.vf\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vf<rinsn>.vf\t%0,%3,%4,%1.t"
   [(set_attr "type" "<rvv_type>")
+   (set_attr "mode" "<MODE>")])
+   
+;; -------------------------------------------------------------------------
+;; ---- [INT] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vsext.vf2
+;; - vzext.vf2
+;; - vsext.vf4
+;; - vzext.vf4
+;; - vsext.vf8
+;; - vzext.vf8
+;; -------------------------------------------------------------------------
+
+(define_insn "v<sz>ext<mode>_vf2_vmerge_to_v<sz>ext<mode>_vf2_mask"
+  [(set (match_operand:VEXTI 0 "register_operand" "=vr,?&vr")
+    (unspec:VEXTI 
+      [(const_int 0)
+       (unspec:VEXTI 
+        [(unspec:<VM> 
+          [(not:<VM> 
+            (match_operand:<VM> 1 "register_operand" "vm,vm"))
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)
+         (unspec:VEXTI 
+          [(unspec:VEXTI 
+            [(const_int 0)
+             (any_extend:VEXTI 
+              (match_operand:<VN> 3 "register_operand" "vr,vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_dup 4)
+           (match_dup 5)
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)
+         (match_operand:VEXTI 2 "register_operand" "0,vr")] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   v<sz>ext.vf2\t%0,%3,%1.t
+   vmv<lmul>r.v\t%0,%2\;v<sz>ext.vf2\t%0,%3,%1.t"
+  [(set_attr "type" "vwcvt")
    (set_attr "mode" "<MODE>")])

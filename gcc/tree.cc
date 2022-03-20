@@ -10236,6 +10236,34 @@ uniform_vector_p (const_tree vec)
   return NULL_TREE;
 }
 
+/* Check if vector VEC is a SPLAT_VECTOR not only means that all 
+   the elments of VEC are same but also checks whether the definition of
+   VEC is a uniform vector VEC. Return NULL_TREE if it is not a SPLAT_VECTOR. */
+tree 
+splat_vector_p (const_tree vec)
+{
+  if (!VECTOR_TYPE_P (TREE_TYPE (vec)))
+    return NULL_TREE;
+    
+  if (TREE_CODE (vec) == VECTOR_CST)
+    return uniform_vector_p (vec);
+  
+  if (TREE_CODE (vec) == SSA_NAME)
+    {
+      gassign *def_stmt = dyn_cast<gassign *> (SSA_NAME_DEF_STMT (vec));
+      if (def_stmt)
+        {
+          tree rhs = gimple_assign_rhs1 (def_stmt);
+          if (gimple_assign_rhs_code (def_stmt) == VEC_DUPLICATE_EXPR)
+            return rhs;
+          if (gimple_assign_rhs_code (def_stmt) == CONSTRUCTOR)
+            return uniform_vector_p (rhs);
+        }
+    }
+  
+  return NULL_TREE;
+}
+
 /* If the argument is INTEGER_CST, return it.  If the argument is vector
    with all elements the same INTEGER_CST, return that INTEGER_CST.  Otherwise
    return NULL_TREE.
