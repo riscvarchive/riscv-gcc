@@ -127,8 +127,3 @@
   "Signed immediate 5-bit value"
   (and (match_code "const_int")
        (match_test "IN_RANGE (INTVAL (op), -15, 16)")))
-
-(define_constraint "W32"
-  "immediate 32-bit value"
-  (and (match_code "const_int")
-       (match_test "IN_RANGE (INTVAL (op), -0x80000000, 0x7FFFFFFF)")))
