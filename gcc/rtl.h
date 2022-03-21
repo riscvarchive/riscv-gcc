@@ -202,7 +202,7 @@ union rtunion
 {
   int rt_int;
   unsigned int rt_uint;
-  poly_uint16_pod rt_subreg;
+  poly_uint_pod_for_mode rt_subreg;
   const char *rt_str;
   rtx rt_rtx;
   rtvec rt_rtvec;
@@ -2118,19 +2118,19 @@ costs_add_n_insns (struct full_rtx_costs *c, int n)
    outer_mode == the mode of the SUBREG itself.  */
 class subreg_shape {
 public:
-  subreg_shape (machine_mode, poly_uint16, machine_mode);
+  subreg_shape (machine_mode, poly_uint_for_mode, machine_mode);
   bool operator == (const subreg_shape &) const;
   bool operator != (const subreg_shape &) const;
   unsigned HOST_WIDE_INT unique_id () const;
 
   machine_mode inner_mode;
-  poly_uint16 offset;
+  poly_uint_for_mode offset;
   machine_mode outer_mode;
 };
 
 inline
 subreg_shape::subreg_shape (machine_mode inner_mode_in,
-			    poly_uint16 offset_in,
+			    poly_uint_for_mode offset_in,
 			    machine_mode outer_mode_in)
   : inner_mode (inner_mode_in), offset (offset_in), outer_mode (outer_mode_in)
 {}
@@ -2151,15 +2151,16 @@ subreg_shape::operator != (const subreg_shape &other) const
 
 /* Return an integer that uniquely identifies this shape.  Structures
    like rtx_def assume that a mode can fit in an 8-bit bitfield and no
-   current mode is anywhere near being 65536 bytes in size, so the
-   id comfortably fits in an int.  */
+   current mode is anywhere near being 2^32 bytes in size, so the
+   id comfortably fits in an HOST_WIDE_INT. when NUM_POLY_INT_COEFFS 
+   >= 2, the coeffs will less then unsigned short. */
 
 inline unsigned HOST_WIDE_INT
 subreg_shape::unique_id () const
 {
   { STATIC_ASSERT (MAX_MACHINE_MODE <= 256); }
   { STATIC_ASSERT (NUM_POLY_INT_COEFFS <= 3); }
-  { STATIC_ASSERT (sizeof (offset.coeffs[0]) <= 2); }
+  { STATIC_ASSERT (sizeof (offset.coeffs[0]) <= 4); }
   int res = (int) inner_mode + ((int) outer_mode << 8);
   for (int i = 0; i < NUM_POLY_INT_COEFFS; ++i)
     res += (HOST_WIDE_INT) offset.coeffs[i] << ((1 + i) * 16);

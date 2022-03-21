@@ -4882,6 +4882,12 @@ extern tree vector_cst_elt (const_tree, unsigned int);
 
 extern tree uniform_vector_p (const_tree);
 
+/* Given a vector VEC, return its first element if all elements are
+   the same.  Or return first element of its definition if it is
+   a uniform vector. Otherwise return NULL_TREE.  */
+
+extern tree splat_vector_p (const_tree);
+
 /* If the argument is INTEGER_CST, return it.  If the argument is vector
    with all elements the same INTEGER_CST, return that INTEGER_CST.  Otherwise
    return NULL_TREE.  */

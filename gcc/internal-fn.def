@@ -34,6 +34,8 @@ along with GCC; see the file COPYING3.  If not see
 				   UNSIGNED_OPTAB, TYPE)
      DEF_INTERNAL_FLT_FN (NAME, FLAGS, OPTAB, TYPE)
      DEF_INTERNAL_INT_FN (NAME, FLAGS, OPTAB, TYPE)
+     DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (NAME, FLAGS, SELECTOR1, SELECTOR2, SIGNED_OPTAB,
+				   UNSIGNED_OPTAB, TYPE)
 
    where NAME is the name of the function, FLAGS is a set of
    ECF_* flags and FNSPEC is a string describing functions fnspec.
@@ -46,16 +48,18 @@ along with GCC; see the file COPYING3.  If not see
    outputs.  The possible types of optab are:
 
    - mask_load: currently just maskload
-   - load_lanes: currently just vec_load_lanes
-   - mask_load_lanes: currently just vec_mask_load_lanes
-   - gather_load: used for {mask_,}gather_load
+   - load_lanes: used for {len,}vec_load_lanes
+   - mask_load_lanes: used for {len,}vec_mask_load_lanes
+   - gather_load: used for {mask_,len,}gather_load
    - len_load: currently just len_load
+   - len_maskload: currently just len_maskload
 
    - mask_store: currently just maskstore
-   - store_lanes: currently just vec_store_lanes
-   - mask_store_lanes: currently just vec_mask_store_lanes
-   - scatter_store: used for {mask_,}scatter_store
+   - store_lanes: used for {len,}vec_store_lanes
+   - mask_store_lanes: used for {len,}vec_mask_store_lanes
+   - scatter_store: used for {mask_,len,}scatter_store
    - len_store: currently just len_store
+   - len_maskstore: currently just len_maskstore
 
    - unary: a normal unary optab, such as vec_reverse_<mode>
    - binary: a normal binary optab, such as vec_interleave_lo_<mode>
@@ -81,6 +85,12 @@ along with GCC; see the file COPYING3.  If not see
    DEF_INTERNAL_INT_FN is like DEF_INTERNAL_OPTAB_FN, but in addition
    says that the function extends the C-level BUILT_IN_<NAME>{,L,LL,IMAX}
    group of functions to any integral mode (including vector modes).
+
+   DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN defines an internal function that
+   maps to one of two optabs, depending on the signedness of an input.
+   SIGNED_OPTAB and UNSIGNED_OPTAB are the optabs for signed and
+   unsigned inputs respectively, both without the trailing "_optab".
+   SELECTOR says which type in the tree_pair determines the signedness.
 
    Each entry must have a corresponding expander of the form:
 
@@ -120,36 +130,70 @@ along with GCC; see the file COPYING3.  If not see
   DEF_INTERNAL_OPTAB_FN (NAME, FLAGS, OPTAB, TYPE)
 #endif
 
+#ifndef DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN
+#define DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN(NAME, FLAGS, SELECTOR1, SELECTOR2, SIGNED_OPTAB, \
+				     UNSIGNED_OPTAB, TYPE) \
+  DEF_INTERNAL_FN (NAME, FLAGS | ECF_LEAF, NULL)
+#endif
+
 DEF_INTERNAL_OPTAB_FN (MASK_LOAD, ECF_PURE, maskload, mask_load)
+DEF_INTERNAL_OPTAB_FN (LEN_MASK_LOAD, ECF_PURE, len_maskload, len_mask_load)
 DEF_INTERNAL_OPTAB_FN (LOAD_LANES, ECF_CONST, vec_load_lanes, load_lanes)
 DEF_INTERNAL_OPTAB_FN (MASK_LOAD_LANES, ECF_PURE,
 		       vec_mask_load_lanes, mask_load_lanes)
+DEF_INTERNAL_OPTAB_FN (LEN_LOAD_LANES, ECF_CONST, len_vec_load_lanes, load_lanes)
+DEF_INTERNAL_OPTAB_FN (LEN_MASK_LOAD_LANES, ECF_PURE,
+		       len_vec_mask_load_lanes, mask_load_lanes)
 
 DEF_INTERNAL_OPTAB_FN (GATHER_LOAD, ECF_PURE, gather_load, gather_load)
 DEF_INTERNAL_OPTAB_FN (MASK_GATHER_LOAD, ECF_PURE,
 		       mask_gather_load, gather_load)
+DEF_INTERNAL_OPTAB_FN (LEN_GATHER_LOAD, ECF_PURE,
+		       len_gather_load, gather_load)
+DEF_INTERNAL_OPTAB_FN (LEN_MASK_GATHER_LOAD, ECF_PURE,
+		       len_mask_gather_load, gather_load)
 
 DEF_INTERNAL_OPTAB_FN (LEN_LOAD, ECF_PURE, len_load, len_load)
 
 DEF_INTERNAL_OPTAB_FN (SCATTER_STORE, 0, scatter_store, scatter_store)
 DEF_INTERNAL_OPTAB_FN (MASK_SCATTER_STORE, 0,
 		       mask_scatter_store, scatter_store)
+DEF_INTERNAL_OPTAB_FN (LEN_SCATTER_STORE, 0,
+		       len_scatter_store, scatter_store)
+DEF_INTERNAL_OPTAB_FN (LEN_MASK_SCATTER_STORE, 0,
+		       len_mask_scatter_store, scatter_store)
 
 DEF_INTERNAL_OPTAB_FN (MASK_STORE, 0, maskstore, mask_store)
+DEF_INTERNAL_OPTAB_FN (LEN_MASK_STORE, 0, len_maskstore, len_mask_store)
 DEF_INTERNAL_OPTAB_FN (STORE_LANES, ECF_CONST, vec_store_lanes, store_lanes)
 DEF_INTERNAL_OPTAB_FN (MASK_STORE_LANES, 0,
 		       vec_mask_store_lanes, mask_store_lanes)
+DEF_INTERNAL_OPTAB_FN (LEN_STORE_LANES, ECF_CONST, len_vec_store_lanes, store_lanes)
+DEF_INTERNAL_OPTAB_FN (LEN_MASK_STORE_LANES, 0,
+		       len_vec_mask_store_lanes, mask_store_lanes)
 
 DEF_INTERNAL_OPTAB_FN (VCOND, 0, vcond, vec_cond)
 DEF_INTERNAL_OPTAB_FN (VCONDU, 0, vcondu, vec_cond)
 DEF_INTERNAL_OPTAB_FN (VCONDEQ, 0, vcondeq, vec_cond)
 DEF_INTERNAL_OPTAB_FN (VCOND_MASK, 0, vcond_mask, vec_cond_mask)
+DEF_INTERNAL_OPTAB_FN (VCOND_MASK_VS, 0, vcond_mask_vs, vec_cond_mask)
+DEF_INTERNAL_OPTAB_FN (LEN_VCOND, 0, len_vcond, vec_cond)
+DEF_INTERNAL_OPTAB_FN (LEN_VCONDU, 0, len_vcondu, vec_cond)
+DEF_INTERNAL_OPTAB_FN (LEN_VCOND_MASK, 0, len_vcond_mask, vec_cond_mask)
+DEF_INTERNAL_OPTAB_FN (LEN_VCOND_MASK_VS, 0, len_vcond_mask_vs, vec_cond_mask)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CMP, ECF_CONST, len_vec_cmp, vec_cmp)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CMPU, ECF_CONST, len_vec_cmpu, vec_cmp)
+DEF_INTERNAL_OPTAB_FN (VEC_CMP_VS, ECF_CONST, vec_cmp_vs, vec_cmp_vs)
+DEF_INTERNAL_OPTAB_FN (VEC_CMPU_VS, ECF_CONST, vec_cmpu_vs, vec_cmp_vs)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CMP_VS, ECF_CONST, len_vec_cmp_vs, vec_cmp_vs)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CMPU_VS, ECF_CONST, len_vec_cmpu_vs, vec_cmp_vs)
 
 DEF_INTERNAL_OPTAB_FN (VEC_SET, 0, vec_set, vec_set)
 
 DEF_INTERNAL_OPTAB_FN (LEN_STORE, 0, len_store, len_store)
 
 DEF_INTERNAL_OPTAB_FN (WHILE_ULT, ECF_CONST | ECF_NOTHROW, while_ult, while)
+DEF_INTERNAL_OPTAB_FN (WHILE_LEN, ECF_CONST | ECF_NOTHROW, while_len, while)
 DEF_INTERNAL_OPTAB_FN (CHECK_RAW_PTRS, ECF_CONST | ECF_NOTHROW,
 		       check_raw_ptrs, check_ptrs)
 DEF_INTERNAL_OPTAB_FN (CHECK_WAR_PTRS, ECF_CONST | ECF_NOTHROW,
@@ -208,6 +252,162 @@ DEF_INTERNAL_OPTAB_FN (COND_FNMS, ECF_CONST, cond_fnms, cond_ternary)
 
 DEF_INTERNAL_OPTAB_FN (COND_NEG, ECF_CONST, cond_neg, cond_unary)
 
+DEF_INTERNAL_OPTAB_FN (LEN_ADD, ECF_CONST, len_add, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_SUB, ECF_CONST, len_sub, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_MUL, ECF_CONST, len_smul, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_DIV, ECF_CONST, first,
+			      len_sdiv, len_udiv, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_MOD, ECF_CONST, first,
+			      len_smod, len_umod, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_RDIV, ECF_CONST, len_sdiv, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_MIN, ECF_CONST, first,
+			      len_smin, len_umin, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_MAX, ECF_CONST, first,
+			      len_smax, len_umax, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_AND, ECF_CONST | ECF_NOTHROW,
+		       len_and, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_IOR, ECF_CONST | ECF_NOTHROW,
+		       len_ior, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_XOR, ECF_CONST | ECF_NOTHROW,
+		       len_xor, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_SHL, ECF_CONST | ECF_NOTHROW,
+		       len_ashl, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_SHR, ECF_CONST | ECF_NOTHROW, first,
+			      len_ashr, len_lshr, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_VSHL, ECF_CONST | ECF_NOTHROW,
+		       len_vashl, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_VSHR, ECF_CONST | ECF_NOTHROW, first,
+			      len_vashr, len_vlshr, len_binary)
+
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VADDV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vsaddv, vec_convert_vuaddv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VADDW, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vsaddw, vec_convert_vuaddw, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_ADDV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_saddv, vec_convert_uaddv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_ADDW, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_saddw, vec_convert_uaddw, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VADDV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vsaddv, len_vec_convert_vuaddv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VADDW, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vsaddw, len_vec_convert_vuaddw, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_ADDV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_saddv, len_vec_convert_uaddv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_ADDW, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_saddw, len_vec_convert_uaddw, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VSUBV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vssubv, vec_convert_vusubv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VSUBW, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vssubw, vec_convert_vusubw, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_SUBV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_ssubv, vec_convert_usubv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_SUBW, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_ssubw, vec_convert_usubw, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VSUBV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vssubv, len_vec_convert_vusubv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VSUBW, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vssubw, len_vec_convert_vusubw, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_SUBV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_ssubv, len_vec_convert_usubv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_SUBW, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_ssubw, len_vec_convert_usubw, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VMULV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vsmulv, vec_convert_vumulv, vec_convert_binary)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_VUSMULV, ECF_CONST | ECF_NOTHROW, vec_convert_vusmulv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_MULV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_smulv, vec_convert_umulv, vec_convert_binary)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_USMULV, ECF_CONST | ECF_NOTHROW, vec_convert_usmulv, vec_convert_binary)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_SUMULV, ECF_CONST | ECF_NOTHROW, vec_convert_sumulv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VMULV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vsmulv, len_vec_convert_vumulv, vec_convert_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_VUSMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_vusmulv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_MULV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_smulv, len_vec_convert_umulv, vec_convert_binary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VFMAV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vsfmav, vec_convert_vufmav, vec_convert_ternary)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_VUSFMAV, ECF_CONST | ECF_NOTHROW, vec_convert_vusfmav, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VFMSV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vsfmsv, vec_convert_vufmsv, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VFNMAV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vsfnmav, vec_convert_vufnmav, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VFNMSV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_vsfnmsv, vec_convert_vufnmsv, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VFMAV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vsfmav, len_vec_convert_vufmav, vec_convert_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_VUSFMAV, ECF_CONST | ECF_NOTHROW, len_vec_convert_vusfmav, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VFMSV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vsfmsv, len_vec_convert_vufmsv, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VFNMAV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vsfnmav, len_vec_convert_vufnmav, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VFNMSV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_vsfnmsv, len_vec_convert_vufnmsv, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_FMAV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_sfmav, vec_convert_ufmav, vec_convert_ternary)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_USFMAV, ECF_CONST | ECF_NOTHROW, vec_convert_usfmav, vec_convert_ternary)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_SUFMAV, ECF_CONST | ECF_NOTHROW, vec_convert_sufmav, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_FMSV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_sfmsv, vec_convert_ufmsv, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_FNMAV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_sfnmav, vec_convert_ufnmav, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_FNMSV, ECF_CONST | ECF_NOTHROW, first, second,
+			      vec_convert_sfnmsv, vec_convert_ufnmsv, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_FMAV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_sfmav, len_vec_convert_ufmav, vec_convert_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_USFMAV, ECF_CONST | ECF_NOTHROW, len_vec_convert_usfmav, vec_convert_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_SUFMAV, ECF_CONST | ECF_NOTHROW, len_vec_convert_sufmav, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_FMSV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_sfmsv, len_vec_convert_ufmsv, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_FNMAV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_sfnmav, len_vec_convert_ufnmav, vec_convert_ternary)
+DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_FNMSV, ECF_CONST | ECF_NOTHROW, first, second,
+			      len_vec_convert_sfnmsv, len_vec_convert_ufnmsv, vec_convert_ternary)
+
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_USMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_usmulv, vec_convert_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_SUMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_sumulv, vec_convert_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_EXTEND, ECF_CONST | ECF_NOTHROW, len_extend, len_convert)
+DEF_INTERNAL_OPTAB_FN (LEN_ZERO_EXTEND, ECF_CONST | ECF_NOTHROW, len_zero_extend, len_convert)
+DEF_INTERNAL_OPTAB_FN (LEN_FLOAT, ECF_CONST | ECF_NOTHROW, len_float, len_convert)
+DEF_INTERNAL_OPTAB_FN (LEN_FLOATUNS, ECF_CONST | ECF_NOTHROW, len_floatuns, len_convert)
+DEF_INTERNAL_OPTAB_FN (LEN_FIX_TRUNC, ECF_CONST | ECF_NOTHROW, len_fix_trunc, len_convert)
+DEF_INTERNAL_OPTAB_FN (LEN_FIXUNS_TRUNC, ECF_CONST | ECF_NOTHROW, len_fixuns_trunc, len_convert)
+DEF_INTERNAL_OPTAB_FN (LEN_TRUNC, ECF_CONST | ECF_NOTHROW, len_trunc, len_convert)
+
+DEF_INTERNAL_OPTAB_FN (LEN_FMA, ECF_CONST, len_fma, len_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_FMS, ECF_CONST, len_fms, len_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_FNMA, ECF_CONST, len_fnma, len_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_FNMS, ECF_CONST, len_fnms, len_ternary)
+
+DEF_INTERNAL_OPTAB_FN (LEN_NEG, ECF_CONST, len_neg, len_unary)
+DEF_INTERNAL_OPTAB_FN (LEN_NOT, ECF_CONST, len_not, len_unary)
+
+DEF_INTERNAL_OPTAB_FN (LEN_ADD_VS, ECF_CONST, len_add_vs, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_SUB_VS, ECF_CONST, len_sub_vs, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_SUB_SV, ECF_CONST, len_sub_sv, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_MUL_VS, ECF_CONST, len_smul_vs, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_DIV_VS, ECF_CONST, first,
+			      len_sdiv_vs, len_udiv_vs, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_DIV_SV, ECF_CONST, first,
+			      len_sdiv_sv, len_udiv_sv, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_MOD_VS, ECF_CONST, first,
+			      len_smod_vs, len_umod_vs, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_RDIV_VS, ECF_CONST, len_sdiv_vs, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_RDIV_SV, ECF_CONST, len_sdiv_sv, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_MIN_VS, ECF_CONST, first,
+			      len_smin_vs, len_umin_vs, len_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_MAX_VS, ECF_CONST, first,
+			      len_smax_vs, len_umax_vs, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_AND_VS, ECF_CONST | ECF_NOTHROW,
+		       len_and_vs, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_IOR_VS, ECF_CONST | ECF_NOTHROW,
+		       len_ior_vs, len_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_XOR_VS, ECF_CONST | ECF_NOTHROW,
+		       len_xor_vs, len_binary)
+
+DEF_INTERNAL_OPTAB_FN (LEN_FMA_VS, ECF_CONST, len_fma_vs, len_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_FMS_VS, ECF_CONST, len_fms_vs, len_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_FNMA_VS, ECF_CONST, len_fnma_vs, len_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_FNMS_VS, ECF_CONST, len_fnms_vs, len_ternary)
+
 DEF_INTERNAL_OPTAB_FN (RSQRT, ECF_CONST, rsqrt, unary)
 
 DEF_INTERNAL_OPTAB_FN (REDUC_PLUS, ECF_CONST | ECF_NOTHROW,
@@ -226,6 +426,34 @@ DEF_INTERNAL_OPTAB_FN (REDUC_IOR, ECF_CONST | ECF_NOTHROW,
 		       reduc_ior_scal, unary)
 DEF_INTERNAL_OPTAB_FN (REDUC_XOR, ECF_CONST | ECF_NOTHROW,
 		       reduc_xor_scal, unary)
+
+DEF_INTERNAL_OPTAB_FN (ADD_VS, ECF_CONST, add_vs, binary)
+DEF_INTERNAL_OPTAB_FN (SUB_VS, ECF_CONST, sub_vs, binary)
+DEF_INTERNAL_OPTAB_FN (SUB_SV, ECF_CONST, sub_sv, binary)
+DEF_INTERNAL_OPTAB_FN (MUL_VS, ECF_CONST, smul_vs, binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (DIV_VS, ECF_CONST, first,
+			      sdiv_vs, udiv_vs, binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (DIV_SV, ECF_CONST, first,
+			      sdiv_sv, udiv_sv, binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (MOD_VS, ECF_CONST, first,
+			      smod_vs, umod_vs, binary)
+DEF_INTERNAL_OPTAB_FN (RDIV_VS, ECF_CONST, sdiv_vs, binary)
+DEF_INTERNAL_OPTAB_FN (RDIV_SV, ECF_CONST, sdiv_sv, binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (MIN_VS, ECF_CONST, first,
+			      smin_vs, umin_vs, binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (MAX_VS, ECF_CONST, first,
+			      smax_vs, umax_vs, binary)
+DEF_INTERNAL_OPTAB_FN (AND_VS, ECF_CONST | ECF_NOTHROW,
+		       and_vs, binary)
+DEF_INTERNAL_OPTAB_FN (IOR_VS, ECF_CONST | ECF_NOTHROW,
+		       ior_vs, binary)
+DEF_INTERNAL_OPTAB_FN (XOR_VS, ECF_CONST | ECF_NOTHROW,
+		       xor_vs, binary)
+
+DEF_INTERNAL_OPTAB_FN (FMA_VS, ECF_CONST, fma_vs, ternary)
+DEF_INTERNAL_OPTAB_FN (FMS_VS, ECF_CONST, fms_vs, ternary)
+DEF_INTERNAL_OPTAB_FN (FNMA_VS, ECF_CONST, fnma_vs, ternary)
+DEF_INTERNAL_OPTAB_FN (FNMS_VS, ECF_CONST, fnms_vs, ternary)
 
 /* Extract the last active element from a vector.  */
 DEF_INTERNAL_OPTAB_FN (EXTRACT_LAST, ECF_CONST | ECF_NOTHROW,
@@ -437,5 +665,6 @@ DEF_INTERNAL_FN (SPACESHIP, ECF_CONST | ECF_LEAF | ECF_NOTHROW, NULL)
 #undef DEF_INTERNAL_FLT_FN
 #undef DEF_INTERNAL_FLT_FLOATN_FN
 #undef DEF_INTERNAL_SIGNED_OPTAB_FN
+#undef DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN
 #undef DEF_INTERNAL_OPTAB_FN
 #undef DEF_INTERNAL_FN

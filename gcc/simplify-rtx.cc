@@ -1501,7 +1501,7 @@ simplify_context::simplify_unary_operation_1 (rtx_code code, machine_mode mode,
 
 	      /* We can only widen multiplies if the result is mathematiclly
 		 equivalent.  I.e. if overflow was impossible.  */
-	      if (bits <= GET_MODE_UNIT_PRECISION (GET_MODE (op)))
+	      if (bits <= (HOST_WIDE_INT)GET_MODE_UNIT_PRECISION (GET_MODE (op)))
 		return simplify_gen_binary
 			 (MULT, mode,
 			  simplify_gen_unary (SIGN_EXTEND, mode, lhs, lmode),
@@ -1709,7 +1709,7 @@ simplify_context::simplify_unary_operation_1 (rtx_code code, machine_mode mode,
 
 	      /* We can only widen multiplies if the result is mathematiclly
 		 equivalent.  I.e. if overflow was impossible.  */
-	      if (bits <= GET_MODE_UNIT_PRECISION (GET_MODE (op)))
+	      if (bits <= (HOST_WIDE_INT)GET_MODE_UNIT_PRECISION (GET_MODE (op)))
 		return simplify_gen_binary
 			 (MULT, mode,
 			  simplify_gen_unary (ZERO_EXTEND, mode, lhs, lmode),
@@ -4280,7 +4280,7 @@ simplify_ashift:
 	     nested VEC_SELECT expressions.  When input operand is a memory
 	     operand, this operation can be simplified to a simple scalar
 	     load from an offseted memory address.  */
-	  int n_elts;
+	  HOST_WIDE_INT n_elts;
 	  if (GET_CODE (trueop0) == VEC_SELECT
 	      && (GET_MODE_NUNITS (GET_MODE (XEXP (trueop0, 0)))
 		  .is_constant (&n_elts)))
@@ -4307,7 +4307,7 @@ simplify_ashift:
 		  rtx op01 = XEXP (op0, 1);
 
 		  machine_mode mode00, mode01;
-		  int n_elts00, n_elts01;
+		  HOST_WIDE_INT n_elts00, n_elts01;
 
 		  mode00 = GET_MODE (op00);
 		  mode01 = GET_MODE (op01);
@@ -4439,7 +4439,7 @@ simplify_ashift:
 	    }
 
 	  /* If we select one half of a vec_concat, return that.  */
-	  int l0, l1;
+	  HOST_WIDE_INT l0, l1;
 	  if (GET_CODE (trueop0) == VEC_CONCAT
 	      && (GET_MODE_NUNITS (GET_MODE (XEXP (trueop0, 0)))
 		  .is_constant (&l0))
@@ -6551,7 +6551,7 @@ simplify_context::simplify_ternary_operation (rtx_code code, machine_mode mode,
 	  && GET_CODE (XEXP (op0, 1)) == CONST_VECTOR)
 	{
 	  rtx cv = XEXP (op0, 1);
-	  int nunits;
+	  HOST_WIDE_INT nunits;
 	  bool ok = true;
 	  if (!CONST_VECTOR_NUNITS (cv).is_constant (&nunits))
 	    ok = false;
@@ -8278,7 +8278,7 @@ test_vector_subregs_modes (rtx x, poly_uint64 elt_bias = 0,
 				GET_MODE_NUNITS (outer_mode)))
 	       && (!FLOAT_MODE_P (outer_mode)
 		   || (FLOAT_MODE_FORMAT (outer_mode)->ieee_bits
-		       == GET_MODE_UNIT_PRECISION (outer_mode)))
+		       == (HOST_WIDE_INT)GET_MODE_UNIT_PRECISION (outer_mode)))
 	       && (GET_MODE_SIZE (inner_mode).is_constant ()
 		   || !CONST_VECTOR_STEPPED_P (x)))
 	{

@@ -39,7 +39,8 @@ along with GCC; see the file COPYING3.  If not see
    HONOR_NANS
    uniform_vector_p
    expand_vec_cmp_expr_p
-   bitmask_inv_cst_vector_p)
+   bitmask_inv_cst_vector_p
+   splat_vector_p)
 
 /* Operator lists.  */
 (define_operator_list tcc_comparison
@@ -7043,6 +7044,67 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   (if (single_use (@3))
    (IFN_FMA @0 @1 @2))))
 
+(if (canonicalize_math_after_vectorization_p ())
+ (for fmas (IFN_LEN_FMA)
+  (simplify
+   (fmas:c (IFN_LEN_NEG @0 @3) @1 @2 @3)
+   (IFN_LEN_FNMA @0 @1 @2 @3))
+  (simplify
+   (fmas:c @0 @1 (IFN_LEN_NEG @2 @3) @3)
+   (IFN_LEN_FMS @0 @1 @2 @3))
+  (simplify
+   (fmas:c (IFN_LEN_NEG @0 @3) @1 (IFN_LEN_NEG @2 @3) @3)
+   (IFN_LEN_FNMS @0 @1 @2 @3))
+  (simplify
+   (IFN_LEN_NEG (fmas@3 @0 @1 @2 @4) @4)
+   (if (single_use (@3))
+    (IFN_LEN_FNMS @0 @1 @2 @4))))
+
+ (simplify
+  (IFN_LEN_FMS:c (IFN_LEN_NEG @0 @3) @1 @2 @3)
+  (IFN_LEN_FNMS @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_SUB (IFN_LEN_NEG (IFN_LEN_MUL @0 @1 @3) @3) @2 @3)
+  (IFN_LEN_FNMS @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_FMS:c @0 @1 (IFN_LEN_NEG @2 @3) @3)
+  (IFN_LEN_FMA @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_FMS:c (IFN_LEN_NEG @0 @3) @1 (IFN_LEN_NEG @2 @3) @3)
+  (IFN_LEN_FNMA @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_NEG (IFN_LEN_FMS@3 @0 @1 @2 @4) @4)
+   (if (single_use (@3))
+    (IFN_LEN_FNMA @0 @1 @2 @4)))
+
+ (simplify
+  (IFN_LEN_FNMA:c (IFN_LEN_NEG @0 @3) @1 @2 @3)
+  (IFN_LEN_FMA @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_FNMA:c @0 @1 (IFN_LEN_NEG @2 @3) @3)
+  (IFN_LEN_FNMS @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_FNMA:c (IFN_LEN_NEG @0 @3) @1 (IFN_LEN_NEG @2 @3) @3)
+  (IFN_LEN_FMS @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_NEG (IFN_LEN_FNMA@3 @0 @1 @2 @4) @4)
+  (if (single_use (@3))
+   (IFN_LEN_FMS @0 @1 @2 @4)))
+
+ (simplify
+  (IFN_LEN_FNMS:c (IFN_LEN_NEG @0 @3) @1 @2 @3)
+  (IFN_LEN_FMS @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_FNMS:c @0 @1 (IFN_LEN_NEG @2 @3) @3)
+  (IFN_LEN_FNMA @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_FNMS:c (IFN_LEN_NEG @0 @3) @1 (IFN_LEN_NEG @2 @3) @3)
+  (IFN_LEN_FMA @0 @1 @2 @3))
+ (simplify
+  (IFN_LEN_NEG (IFN_LEN_FNMS@3 @0 @1 @2 @4) @4)
+  (if (single_use (@3))
+   (IFN_LEN_FMA @0 @1 @2 @4))))
+
 /* CLZ simplifications.  */
 (for clz (CLZ)
  (for op (eq ne)
@@ -7700,3 +7762,1428 @@ and,
 	  == TYPE_PRECISION (TREE_TYPE (@3))
        && single_use (@4)
        && single_use (@5))))
+
+#if GIMPLE
+/* This is the match and simplify used for RISC-V 'V' Extension. */
+
+(simplify
+ (IFN_LEN_ADD (IFN_LEN_NEG @0 @1) @2 @1)
+ (IFN_LEN_SUB @2 @0 @1))
+
+/* No length operation. */
+(simplify
+  (plus @0 @1)
+    (with
+      {
+        tree op0 = NULL_TREE;
+        tree op1 = NULL_TREE;
+        bool simplify_p = false;
+        bool vs_p = false;
+        bool w_p = false;
+        if (VECTOR_TYPE_P (type))
+          {
+            if (TREE_CODE (@0) == VECTOR_CST && TREE_CODE (@1) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@1);
+                if (def && is_gimple_assign (def)
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def)))
+                  {
+                    op0 = gimple_assign_rhs1 (def);
+                    op1 = uniform_vector_p (@0);
+                  }
+              }
+            if (TREE_CODE (@1) == VECTOR_CST && TREE_CODE (@0) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@0);
+                if (def && is_gimple_assign (def)
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def)))
+                  {
+                    op0 = gimple_assign_rhs1 (def);
+                    op1 = uniform_vector_p (@1);
+                  }
+              }
+            if (op1 && TREE_CODE (op1) == INTEGER_CST)
+              {
+                signop unsigned_p = TYPE_UNSIGNED (TREE_TYPE (op0)) ? UNSIGNED : SIGNED;
+                unsigned int precision = GET_MODE_PRECISION (
+                      GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))));
+                unsigned int precision2 = GET_MODE_PRECISION (SCALAR_INT_TYPE_MODE (TREE_TYPE (op1)));
+                wide_int val = wi::to_wide (op1, precision2);
+                wide_int min = wi::min_value (precision, unsigned_p);
+                wide_int max = wi::max_value (precision, unsigned_p);
+                if (val.get_val ()[0] >= min.get_val ()[0]
+                  && (HOST_WIDE_INT) val.get_val ()[0] <= (HOST_WIDE_INT) max.get_val ()[0])
+                  {
+                    simplify_p = true;
+                    vs_p = true;
+                    if (precision == 8)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intQI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intQI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 16)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intHI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intHI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 32)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intSI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intSI_type_node, val.get_val ()[0]);
+                      }
+                    else
+                      simplify_p = false;
+                  }
+              }
+            if (!simplify_p)
+              {
+                gimple *def0 = NULL;
+                gimple *def1 = NULL;
+                bool convert0_expr_code_p = false;
+                bool convert1_expr_code_p = false;
+                unsigned code0 = 0;
+                unsigned code1 = 0;
+                bool assign0_p = false;
+                bool assign1_p = false;
+                if (TREE_CODE (@0) == SSA_NAME)
+                  def0 = SSA_NAME_DEF_STMT (@0);
+                if (TREE_CODE (@1) == SSA_NAME)
+                  def1 = SSA_NAME_DEF_STMT (@1);
+                if (def0)
+                  assign0_p = is_gimple_assign (def0);
+                if (def1)
+                  assign1_p = is_gimple_assign (def1);
+                tree e = NULL_TREE;
+                gimple *def_stmt = NULL;
+                if (assign0_p)
+                  {
+                    convert0_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def0));
+                    code0 = gimple_assign_rhs_code (def0);
+                  }
+                if (assign1_p)
+                  {
+                    convert1_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def1));
+                    code1 = gimple_assign_rhs_code (def1);
+                  }
+                if (assign1_p && code1 == CONSTRUCTOR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_assign_rhs1 (def0);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @0;
+                      }
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (!e && assign0_p && code0 == CONSTRUCTOR)
+                  {
+                    def_stmt = def0;
+                    if (convert1_expr_code_p)
+                      op0 = gimple_assign_rhs1 (def1);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @1;
+                      }
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (op0 && e && TREE_CODE (e) == SSA_NAME
+                  && SSA_NAME_DEF_STMT (e)
+                  && is_gimple_assign (SSA_NAME_DEF_STMT (e))
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (SSA_NAME_DEF_STMT (e))))
+                  {
+                    if ((w_p && TYPE_MODE (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      != GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))))
+                      || (!w_p && (TYPE_UNSIGNED (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      == TYPE_UNSIGNED (TREE_TYPE (op0)))))
+                      {
+                        simplify_p = true;
+                        op1 = gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e));
+                        vs_p = true;
+                      }
+                  }
+                if (!simplify_p && convert0_expr_code_p && convert1_expr_code_p)
+                  {
+                    op0 = gimple_assign_rhs1 (def0);
+                    op1 = gimple_assign_rhs1 (def1);
+                    if (TYPE_UNSIGNED (TREE_TYPE (op0))
+                      == TYPE_UNSIGNED (TREE_TYPE (op1))
+                      && TYPE_MODE (TREE_TYPE (op0))
+                      == TYPE_MODE (TREE_TYPE (op1)))
+                      simplify_p = true;
+                  }
+                if (!simplify_p)
+                  {
+                    if (convert0_expr_code_p)
+                      {
+                        op0 = @1;
+                        op1 = gimple_assign_rhs1 (def0);
+                      }
+                    if (convert1_expr_code_p)
+                      {
+                        op0 = @0;
+                        op1 = gimple_assign_rhs1 (def1);
+                      }
+                    if (op0 && op1)
+                      {
+                        simplify_p = true;
+                        w_p = true;
+                      }
+                  }
+              }
+          }
+      }
+      (if (simplify_p)
+        (switch
+          (if (vs_p && !w_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_VEC_CONVERT_ADDV { op0; } { op1; }))
+          (if (vs_p && w_p)
+            (IFN_VEC_CONVERT_ADDW { op0; } { op1; }))
+          (if (!vs_p && !w_p)
+            (IFN_VEC_CONVERT_VADDV { op0; } { op1; }))
+          (if (!vs_p && w_p)
+            (IFN_VEC_CONVERT_VADDW { op0; } { op1; }))))))
+
+(simplify
+  (minus @0 @1)
+    (with
+      {
+        tree op0 = NULL_TREE;
+        tree op1 = NULL_TREE;
+        bool simplify_p = false;
+        bool vs_p = false;
+        bool w_p = false;
+        if (VECTOR_TYPE_P (type))
+          {
+            if (TREE_CODE (@1) == VECTOR_CST && TREE_CODE (@0) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@0);
+                if (def && is_gimple_assign (def)
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def)))
+                  {
+                    op0 = gimple_assign_rhs1 (def);
+                    op1 = uniform_vector_p (@1);
+                  }
+              }
+            if (op1 && TREE_CODE (op1) == INTEGER_CST)
+              {
+                signop unsigned_p = TYPE_UNSIGNED (TREE_TYPE (op0)) ? UNSIGNED : SIGNED;
+                unsigned int precision = GET_MODE_PRECISION (
+                      GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))));
+                unsigned int precision2 = GET_MODE_PRECISION (SCALAR_INT_TYPE_MODE (TREE_TYPE (op1)));
+                wide_int val = wi::to_wide (op1, precision2);
+                wide_int min = wi::min_value (precision, unsigned_p);
+                wide_int max = wi::max_value (precision, unsigned_p);
+                if (val.get_val ()[0] >= min.get_val ()[0]
+                  && (HOST_WIDE_INT) val.get_val ()[0] <= (HOST_WIDE_INT) max.get_val ()[0])
+                  {
+                    simplify_p = true;
+                    vs_p = true;
+                    if (precision == 8)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intQI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intQI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 16)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intHI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intHI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 32)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intSI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intSI_type_node, val.get_val ()[0]);
+                      }
+                    else
+                      simplify_p = false;
+                  }
+              }
+            if (!simplify_p)
+              {
+                gimple *def0 = NULL;
+                gimple *def1 = NULL;
+                bool convert0_expr_code_p = false;
+                bool convert1_expr_code_p = false;
+                unsigned code0 = 0;
+                unsigned code1 = 0;
+                bool assign0_p = false;
+                bool assign1_p = false;
+                if (TREE_CODE (@0) == SSA_NAME)
+                  def0 = SSA_NAME_DEF_STMT (@0);
+                if (TREE_CODE (@1) == SSA_NAME)
+                  def1 = SSA_NAME_DEF_STMT (@1);
+                if (def0)
+                  assign0_p = is_gimple_assign (def0);
+                if (def1)
+                  assign1_p = is_gimple_assign (def1);
+                tree e = NULL_TREE;
+                gimple *def_stmt = NULL;
+                if (assign0_p)
+                  {
+                    convert0_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def0));
+                    code0 = gimple_assign_rhs_code (def0);
+                  }
+                if (assign1_p)
+                  {
+                    convert1_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def1));
+                    code1 = gimple_assign_rhs_code (def1);
+                  }
+                if (assign1_p && code1 == CONSTRUCTOR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_assign_rhs1 (def0);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @0;
+                      }
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (op0 && e && TREE_CODE (e) == SSA_NAME
+                  && SSA_NAME_DEF_STMT (e)
+                  && is_gimple_assign (SSA_NAME_DEF_STMT (e))
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (SSA_NAME_DEF_STMT (e))))
+                  {
+                    if ((w_p && TYPE_MODE (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      != GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))))
+                      || (!w_p && (TYPE_UNSIGNED (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      == TYPE_UNSIGNED (TREE_TYPE (op0)))))
+                      {
+                        simplify_p = true;
+                        op1 = gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e));
+                        vs_p = true;
+                      }
+                  }
+                if (!simplify_p && convert0_expr_code_p && convert1_expr_code_p)
+                  {
+                    op0 = gimple_assign_rhs1 (def0);
+                    op1 = gimple_assign_rhs1 (def1);
+                    if (TYPE_UNSIGNED (TREE_TYPE (op0))
+                      == TYPE_UNSIGNED (TREE_TYPE (op1))
+                      && TYPE_MODE (TREE_TYPE (op0))
+                      == TYPE_MODE (TREE_TYPE (op1)))
+                      simplify_p = true;
+                  }
+                if (!simplify_p)
+                  {
+                    if (convert1_expr_code_p)
+                      {
+                        op0 = @0;
+                        op1 = gimple_assign_rhs1 (def1);
+                      }
+                    if (op0 && op1)
+                      {
+                        simplify_p = true;
+                        w_p = true;
+                      }
+                  }
+              }
+          }
+      }
+      (if (simplify_p)
+        (switch
+          (if (vs_p && !w_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_VEC_CONVERT_SUBV { op0; } { op1; }))
+          (if (vs_p && w_p)
+            (IFN_VEC_CONVERT_SUBW { op0; } { op1; }))
+          (if (!vs_p && !w_p)
+            (IFN_VEC_CONVERT_VSUBV { op0; } { op1; }))
+          (if (!vs_p && w_p)
+            (IFN_VEC_CONVERT_VSUBW { op0; } { op1; }))))))
+
+(simplify
+  (mult @0 @1)
+    (with
+      {
+        tree op0 = NULL_TREE;
+        tree op1 = NULL_TREE;
+        bool simplify_p = false;
+        bool vs_p = false;
+        bool us_p = false;
+        bool su_p = false;
+        if (VECTOR_TYPE_P (type))
+          {
+            if (TREE_CODE (@0) == VECTOR_CST && TREE_CODE (@1) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@1);
+                if (def && is_gimple_assign (def)
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def)))
+                  {
+                    op0 = gimple_assign_rhs1 (def);
+                    op1 = uniform_vector_p (@0);
+                  }
+              }
+            if (TREE_CODE (@1) == VECTOR_CST && TREE_CODE (@0) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@0);
+                if (def && is_gimple_assign (def)
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def)))
+                  {
+                    op0 = gimple_assign_rhs1 (def);
+                    op1 = uniform_vector_p (@1);
+                  }
+              }
+            if (op1 && TREE_CODE (op1) == INTEGER_CST)
+              {
+                signop unsigned_p = TYPE_UNSIGNED (TREE_TYPE (op0)) ? UNSIGNED : SIGNED;
+                unsigned int precision = GET_MODE_PRECISION (
+                      GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))));
+                unsigned int precision2 = GET_MODE_PRECISION (SCALAR_INT_TYPE_MODE (TREE_TYPE (op1)));
+                wide_int val = wi::to_wide (op1, precision2);
+                wide_int min = wi::min_value (precision, unsigned_p);
+                wide_int max = wi::max_value (precision, unsigned_p);
+                if (val.get_val ()[0] >= min.get_val ()[0]
+                  && (HOST_WIDE_INT) val.get_val ()[0] <= (HOST_WIDE_INT) max.get_val ()[0])
+                  {
+                    simplify_p = true;
+                    vs_p = true;
+                    if (precision == 8)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intQI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intQI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 16)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intHI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intHI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 32)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intSI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intSI_type_node, val.get_val ()[0]);
+                      }
+                    else
+                      simplify_p = false;
+                  }
+              }
+            if (!simplify_p)
+              {
+                gimple *def0 = NULL;
+                gimple *def1 = NULL;
+                bool convert0_expr_code_p = false;
+                bool convert1_expr_code_p = false;
+                unsigned code0 = 0;
+                unsigned code1 = 0;
+                bool assign0_p = false;
+                bool assign1_p = false;
+                if (TREE_CODE (@0) == SSA_NAME)
+                  def0 = SSA_NAME_DEF_STMT (@0);
+                if (TREE_CODE (@1) == SSA_NAME)
+                  def1 = SSA_NAME_DEF_STMT (@1);
+                if (def0)
+                  assign0_p = is_gimple_assign (def0);
+                if (def1)
+                  assign1_p = is_gimple_assign (def1);
+                tree e = NULL_TREE;
+                gimple *def_stmt = NULL;
+                if (assign0_p)
+                  {
+                    convert0_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def0));
+                    code0 = gimple_assign_rhs_code (def0);
+                  }
+                if (assign1_p)
+                  {
+                    convert1_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def1));
+                    code1 = gimple_assign_rhs_code (def1);
+                  }
+                if (assign1_p && code1 == CONSTRUCTOR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_assign_rhs1 (def0);
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (!e && assign0_p && code0 == CONSTRUCTOR)
+                  {
+                    def_stmt = def0;
+                    if (convert1_expr_code_p)
+                      op0 = gimple_assign_rhs1 (def1);
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (op0 && e && TREE_CODE (e) == SSA_NAME
+                  && SSA_NAME_DEF_STMT (e)
+                  && is_gimple_assign (SSA_NAME_DEF_STMT (e))
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (SSA_NAME_DEF_STMT (e))))
+                  {
+                    simplify_p = true;
+                    op1 = gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e));
+                    vs_p = true;
+                    if (TYPE_UNSIGNED (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      == TYPE_UNSIGNED (TREE_TYPE (op0)))
+                      {
+                        us_p = false;
+                        su_p = false;
+                      }
+                    else if (TYPE_UNSIGNED (TREE_TYPE (op0)) == 0
+                      && TYPE_UNSIGNED (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e)))) == 1)
+                      {
+                        std::swap (op0, op1);
+                        us_p = true;
+                        su_p = false;
+                      }
+                    else
+                      {
+                        std::swap (op0, op1);
+                        us_p = false;
+                        su_p = true;
+                      }
+                  }
+                if (!simplify_p && convert0_expr_code_p && convert1_expr_code_p)
+                  {
+                    op0 = gimple_assign_rhs1 (def0);
+                    op1 = gimple_assign_rhs1 (def1);
+
+                    if (TYPE_UNSIGNED (TREE_TYPE (op0))
+                      == TYPE_UNSIGNED (TREE_TYPE (op1))
+                      && TYPE_MODE (TREE_TYPE (op0))
+                      == TYPE_MODE (TREE_TYPE (op1)))
+                      simplify_p = true;
+
+                    if (!simplify_p && TYPE_MODE (TREE_TYPE (op0))
+                      == TYPE_MODE (TREE_TYPE (op1)))
+                      {
+                        simplify_p = true;
+                        us_p = true;
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)) == 0
+                          && TYPE_UNSIGNED (TREE_TYPE (op0)) == 1)
+                          std::swap (op0, op1);
+                      }
+                  }
+              }
+          }
+      }
+      (if (simplify_p)
+        (switch
+          (if (vs_p && !us_p && !su_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_VEC_CONVERT_MULV { op0; } { op1; }))
+          (if (vs_p && us_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_VEC_CONVERT_USMULV { op0; } { op1; }))
+          (if (vs_p && su_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_VEC_CONVERT_SUMULV { op0; } { op1; }))
+          (if (!vs_p && !us_p)
+            (IFN_VEC_CONVERT_VMULV { op0; } { op1; }))
+          (if (!vs_p && us_p)
+            (IFN_VEC_CONVERT_VUSMULV { op0; } { op1; }))))))
+
+/* With length operation. */
+(simplify
+  (IFN_LEN_ADD @0 @1 @2)
+    (with
+      {
+        tree op0 = NULL_TREE;
+        tree op1 = NULL_TREE;
+        bool simplify_p = false;
+        bool vs_p = false;
+        bool w_p = false;
+
+        if (VECTOR_TYPE_P (type))
+          {
+            if (TREE_CODE (@0) == VECTOR_CST && TREE_CODE (@1) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@1);
+                if (def && is_gimple_call (def)
+                  && gimple_call_internal_p (def)
+                  && length_convert_fn_p (gimple_call_internal_fn (def)))
+                  {
+                    op0 = gimple_call_arg (def, 0);
+                    op1 = uniform_vector_p (@0);
+                  }
+              }
+            if (TREE_CODE (@1) == VECTOR_CST && TREE_CODE (@0) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@0);
+                if (def && is_gimple_call (def)
+                  && gimple_call_internal_p (def)
+                  && length_convert_fn_p (gimple_call_internal_fn (def)))
+                  {
+                    op0 = gimple_call_arg (def, 0);
+                    op1 = uniform_vector_p (@1);
+                  }
+              }
+            if (op1 && TREE_CODE (op1) == INTEGER_CST)
+              {
+                signop unsigned_p = TYPE_UNSIGNED (TREE_TYPE (op0)) ? UNSIGNED : SIGNED;
+                unsigned int precision = GET_MODE_PRECISION (
+                      GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))));
+                unsigned int precision2 = GET_MODE_PRECISION (SCALAR_INT_TYPE_MODE (TREE_TYPE (op1)));
+                wide_int val = wi::to_wide (op1, precision2);
+                wide_int min = wi::min_value (precision, unsigned_p);
+                wide_int max = wi::max_value (precision, unsigned_p);
+                if (val.get_val ()[0] >= min.get_val ()[0]
+                  && (HOST_WIDE_INT) val.get_val ()[0] <= (HOST_WIDE_INT) max.get_val ()[0])
+                  {
+                    simplify_p = true;
+                    vs_p = true;
+                    if (precision == 8)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intQI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intQI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 16)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intHI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intHI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 32)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intSI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intSI_type_node, val.get_val ()[0]);
+                      }
+                    else
+                      simplify_p = false;
+                  }
+              }
+            if (!simplify_p)
+              {
+                gimple *def0 = NULL;
+                gimple *def1 = NULL;
+                bool convert0_expr_code_p = false;
+                bool convert1_expr_code_p = false;
+                unsigned code0 = 0;
+                unsigned code1 = 0;
+                bool assign0_p = false;
+                bool assign1_p = false;
+                bool call0_p = false;
+                bool call1_p = false;
+                if (TREE_CODE (@0) == SSA_NAME)
+                  def0 = SSA_NAME_DEF_STMT (@0);
+                if (TREE_CODE (@1) == SSA_NAME)
+                  def1 = SSA_NAME_DEF_STMT (@1);
+                if (def0)
+                  {
+                    assign0_p = is_gimple_assign (def0);
+                    call0_p = is_gimple_call (def0);
+                  }
+                if (def1)
+                  {
+                    assign1_p = is_gimple_assign (def1);
+                    call1_p = is_gimple_call (def1);
+                  }
+                tree e = NULL_TREE;
+                gimple *def_stmt = NULL;
+                if (assign0_p)
+                  code0 = gimple_assign_rhs_code (def0);
+                if (assign1_p)
+                  code1 = gimple_assign_rhs_code (def1);
+                if (call0_p && gimple_call_internal_p (def0)
+                  && length_convert_fn_p (gimple_call_internal_fn (def0))
+                  && gimple_call_arg (def0, 1) == @2)
+                  convert0_expr_code_p = true;
+                if (call1_p && gimple_call_internal_p (def1)
+                  && length_convert_fn_p (gimple_call_internal_fn (def1))
+                  && gimple_call_arg (def1, 1) == @2)
+                  convert1_expr_code_p = true;
+                if (assign0_p)
+                  {
+                    convert0_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def0));
+                    code0 = gimple_assign_rhs_code (def0);
+                  }
+                if (assign1_p)
+                  {
+                    convert1_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def1));
+                    code1 = gimple_assign_rhs_code (def1);
+                  }
+                if (assign1_p && code1 == CONSTRUCTOR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_call_arg (def0, 0);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @0;
+                      }
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (!e && assign0_p && code0 == CONSTRUCTOR)
+                  {
+                    def_stmt = def0;
+                    if (convert1_expr_code_p)
+                      op0 = gimple_call_arg (def1, 0);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @1;
+                      }
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (!e && assign1_p && code1 == VEC_DUPLICATE_EXPR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_call_arg (def0, 0);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @0;
+                      }
+                    e = gimple_assign_rhs1 (def_stmt);
+                  }
+                if (!e && assign0_p && code0 == VEC_DUPLICATE_EXPR)
+                  {
+                    def_stmt = def0;
+                    if (convert1_expr_code_p)
+                      op0 = gimple_call_arg (def1, 0);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @1;
+                      }
+                    e = gimple_assign_rhs1 (def_stmt);
+                  }
+                if (e && TREE_CODE (e) == SSA_NAME
+                  && SSA_NAME_DEF_STMT (e)
+                  && is_gimple_assign (SSA_NAME_DEF_STMT (e))
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (SSA_NAME_DEF_STMT (e))))
+                  {
+                    if ((w_p && TYPE_MODE (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      != GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))))
+                      || (!w_p && (TYPE_UNSIGNED (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      == TYPE_UNSIGNED (TREE_TYPE (op0)))))
+                      {
+                        simplify_p = true;
+                        op1 = gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e));
+                        vs_p = true;
+                      }
+                  }
+                if (!simplify_p && convert0_expr_code_p && convert1_expr_code_p)
+                  {
+                    op0 = gimple_call_arg (def0, 0);
+                    op1 = gimple_call_arg (def1, 0);
+                    if (TYPE_UNSIGNED (TREE_TYPE (op0))
+                      == TYPE_UNSIGNED (TREE_TYPE (op1))
+                      && TYPE_MODE (TREE_TYPE (op0))
+                      == TYPE_MODE (TREE_TYPE (op1)))
+                      simplify_p = true;
+                  }
+                if (!simplify_p)
+                  {
+                    if (convert0_expr_code_p)
+                      {
+                        op0 = @1;
+                        op1 = gimple_call_arg (def0, 0);
+                      }
+                    if (convert1_expr_code_p)
+                      {
+                        op0 = @0;
+                        op1 = gimple_call_arg (def1, 0);
+                      }
+                    if (op0 && op1)
+                      {
+                        simplify_p = true;
+                        w_p = true;
+                      }
+                  }
+              }
+          }
+      }
+      (if (simplify_p)
+        (switch
+          (if (vs_p && !w_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_LEN_VEC_CONVERT_ADDV { op0; } { op1; } @2))
+          (if (vs_p && w_p)
+            (IFN_LEN_VEC_CONVERT_ADDW { op0; } { op1; } @2))
+          (if (!vs_p && !w_p)
+            (IFN_LEN_VEC_CONVERT_VADDV { op0; } { op1; } @2))
+          (if (!vs_p && w_p)
+            (IFN_LEN_VEC_CONVERT_VADDW { op0; } { op1; } @2))))))
+
+(simplify
+  (IFN_LEN_MUL @0 @1 @2)
+    (with
+      {
+        tree op0 = NULL_TREE;
+        tree op1 = NULL_TREE;
+        bool simplify_p = false;
+        bool vs_p = false;
+        bool us_p = false;
+        bool su_p = false;
+
+        if (VECTOR_TYPE_P (type))
+          {
+            if (TREE_CODE (@0) == VECTOR_CST && TREE_CODE (@1) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@1);
+                if (def && is_gimple_call (def)
+                  && gimple_call_internal_p (def)
+                  && length_convert_fn_p (gimple_call_internal_fn (def)))
+                  {
+                    op0 = gimple_call_arg (def, 0);
+                    op1 = uniform_vector_p (@0);
+                  }
+              }
+            if (TREE_CODE (@1) == VECTOR_CST && TREE_CODE (@0) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@0);
+                if (def && is_gimple_call (def)
+                  && gimple_call_internal_p (def)
+                  && length_convert_fn_p (gimple_call_internal_fn (def)))
+                  {
+                    op0 = gimple_call_arg (def, 0);
+                    op1 = uniform_vector_p (@1);
+                  }
+              }
+            if (op1 && TREE_CODE (op1) == INTEGER_CST)
+              {
+                signop unsigned_p = TYPE_UNSIGNED (TREE_TYPE (op0)) ? UNSIGNED : SIGNED;
+                unsigned int precision = GET_MODE_PRECISION (
+                      GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))));
+                unsigned int precision2 = GET_MODE_PRECISION (SCALAR_INT_TYPE_MODE (TREE_TYPE (op1)));
+                wide_int val = wi::to_wide (op1, precision2);
+                wide_int min = wi::min_value (precision, unsigned_p);
+                wide_int max = wi::max_value (precision, unsigned_p);
+                if (val.get_val ()[0] >= min.get_val ()[0]
+                  && (HOST_WIDE_INT) val.get_val ()[0] <= (HOST_WIDE_INT) max.get_val ()[0])
+                  {
+                    simplify_p = true;
+                    vs_p = true;
+                    if (precision == 8)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intQI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intQI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 16)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intHI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intHI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 32)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intSI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intSI_type_node, val.get_val ()[0]);
+                      }
+                    else
+                      simplify_p = false;
+                  }
+              }
+            if (!simplify_p)
+              {
+                gimple *def0 = NULL;
+                gimple *def1 = NULL;
+                bool convert0_expr_code_p = false;
+                bool convert1_expr_code_p = false;
+                unsigned code0 = 0;
+                unsigned code1 = 0;
+                bool assign0_p = false;
+                bool assign1_p = false;
+                bool call0_p = false;
+                bool call1_p = false;
+                if (TREE_CODE (@0) == SSA_NAME)
+                  def0 = SSA_NAME_DEF_STMT (@0);
+                if (TREE_CODE (@1) == SSA_NAME)
+                  def1 = SSA_NAME_DEF_STMT (@1);
+                if (def0)
+                  {
+                    assign0_p = is_gimple_assign (def0);
+                    call0_p = is_gimple_call (def0);
+                  }
+                if (def1)
+                  {
+                    assign1_p = is_gimple_assign (def1);
+                    call1_p = is_gimple_call (def1);
+                  }
+                tree e = NULL_TREE;
+                gimple *def_stmt = NULL;
+                if (assign0_p)
+                  code0 = gimple_assign_rhs_code (def0);
+                if (assign1_p)
+                  code1 = gimple_assign_rhs_code (def1);
+                if (call0_p && gimple_call_internal_p (def0)
+                  && length_convert_fn_p (gimple_call_internal_fn (def0))
+                  && gimple_call_arg (def0, 1) == @2)
+                  convert0_expr_code_p = true;
+                if (call1_p && gimple_call_internal_p (def1)
+                  && length_convert_fn_p (gimple_call_internal_fn (def1))
+                  && gimple_call_arg (def1, 1) == @2)
+                  convert1_expr_code_p = true;
+                if (assign0_p)
+                  {
+                    convert0_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def0));
+                    code0 = gimple_assign_rhs_code (def0);
+                  }
+                if (assign1_p)
+                  {
+                    convert1_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def1));
+                    code1 = gimple_assign_rhs_code (def1);
+                  }
+                if (assign1_p && code1 == CONSTRUCTOR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_call_arg (def0, 0);
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (!e && assign0_p && code0 == CONSTRUCTOR)
+                  {
+                    def_stmt = def0;
+                    if (convert1_expr_code_p)
+                      op0 = gimple_call_arg (def1, 0);
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (!e && assign1_p && code1 == VEC_DUPLICATE_EXPR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_call_arg (def0, 0);
+                    e = gimple_assign_rhs1 (def_stmt);
+                  }
+                if (!e && assign0_p && code0 == VEC_DUPLICATE_EXPR)
+                  {
+                    def_stmt = def0;
+                    if (convert1_expr_code_p)
+                      op0 = gimple_call_arg (def1, 0);
+                    e = gimple_assign_rhs1 (def_stmt);
+                  }
+                if (e && op0 && TREE_CODE (e) == SSA_NAME
+                  && SSA_NAME_DEF_STMT (e)
+                  && is_gimple_assign (SSA_NAME_DEF_STMT (e))
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (SSA_NAME_DEF_STMT (e))))
+                  {
+                    simplify_p = true;
+                    op1 = gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e));
+                    vs_p = true;
+                    if (TYPE_UNSIGNED (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      == TYPE_UNSIGNED (TREE_TYPE (op0)))
+                      {
+                        us_p = false;
+                        su_p = false;
+                      }
+                    else if (TYPE_UNSIGNED (TREE_TYPE (op0)) == 0
+                      && TYPE_UNSIGNED (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e)))) == 1)
+                      {
+                        std::swap (op0, op1);
+                        us_p = true;
+                        su_p = false;
+                      }
+                    else
+                      {
+                        std::swap (op0, op1);
+                        us_p = false;
+                        su_p = true;
+                      }
+                  }
+                if (!simplify_p && convert0_expr_code_p && convert1_expr_code_p)
+                  {
+                    op0 = gimple_call_arg (def0, 0);
+                    op1 = gimple_call_arg (def1, 0);
+                    if (TYPE_MODE (TREE_TYPE (op0))
+                      == TYPE_MODE (TREE_TYPE (op1)))
+                      {
+                        simplify_p = true;
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0))
+                          != TYPE_UNSIGNED (TREE_TYPE (op1)))
+                          {
+                            us_p = true;
+                            if (TYPE_UNSIGNED (TREE_TYPE (op0)) == 0
+                              && TYPE_UNSIGNED (TREE_TYPE (op1)) == 1)
+                              std::swap (op0, op1);
+                          }
+                      }
+                  }
+              }
+          }
+      }
+      (if (simplify_p)
+        (switch
+          (if (vs_p && !us_p && !su_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_LEN_VEC_CONVERT_MULV { op0; } { op1; } @2))
+          (if (vs_p && us_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_LEN_VEC_CONVERT_USMULV { op0; } { op1; } @2))
+          (if (vs_p && su_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_LEN_VEC_CONVERT_SUMULV { op0; } { op1; } @2))
+          (if (!vs_p && !us_p)
+            (IFN_LEN_VEC_CONVERT_VMULV { op0; } { op1; } @2))
+          (if (!vs_p && us_p)
+            (IFN_LEN_VEC_CONVERT_VUSMULV { op0; } { op1; } @2))))))
+
+(simplify
+  (IFN_LEN_SUB @0 @1 @2)
+    (with
+      {
+        tree op0 = NULL_TREE;
+        tree op1 = NULL_TREE;
+        bool simplify_p = false;
+        bool vs_p = false;
+        bool w_p = false;
+
+        if (VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (@0)))
+            && VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (@1))))
+          {
+            if (TREE_CODE (@1) == VECTOR_CST && TREE_CODE (@0) == SSA_NAME)
+              {
+                gimple *def = SSA_NAME_DEF_STMT (@0);
+                if (def && is_gimple_call (def)
+                  && gimple_call_internal_p (def)
+                  && length_convert_fn_p (gimple_call_internal_fn (def)))
+                  {
+                    op0 = gimple_call_arg (def, 0);
+                    op1 = uniform_vector_p (@1);
+                  }
+              }
+            if (op1 && TREE_CODE (op1) == INTEGER_CST)
+              {
+                signop unsigned_p = TYPE_UNSIGNED (TREE_TYPE (op0)) ? UNSIGNED : SIGNED;
+                unsigned int precision = GET_MODE_PRECISION (
+                      GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))));
+                unsigned int precision2 = GET_MODE_PRECISION (SCALAR_INT_TYPE_MODE (TREE_TYPE (op1)));
+                wide_int val = wi::to_wide (op1, precision2);
+                wide_int min = wi::min_value (precision, unsigned_p);
+                wide_int max = wi::max_value (precision, unsigned_p);
+                if (val.get_val ()[0] >= min.get_val ()[0]
+                  && (HOST_WIDE_INT) val.get_val ()[0] <= (HOST_WIDE_INT) max.get_val ()[0])
+                  {
+                    simplify_p = true;
+                    vs_p = true;
+                    if (precision == 8)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intQI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intQI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 16)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intHI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intHI_type_node, val.get_val ()[0]);
+                      }
+                    else if (precision == 32)
+                      {
+                        if (TYPE_UNSIGNED (TREE_TYPE (op0)))
+                          op1 = build_int_cst (unsigned_intSI_type_node, val.get_val ()[0]);
+                        else
+                          op1 = build_int_cst (intSI_type_node, val.get_val ()[0]);
+                      }
+                    else
+                      simplify_p = false;
+                  }
+              }
+            if (!simplify_p)
+              {
+                gimple *def0 = NULL;
+                gimple *def1 = NULL;
+                bool convert0_expr_code_p = false;
+                bool convert1_expr_code_p = false;
+                unsigned code0 = 0;
+                unsigned code1 = 0;
+                bool assign0_p = false;
+                bool assign1_p = false;
+                bool call0_p = false;
+                bool call1_p = false;
+                if (TREE_CODE (@0) == SSA_NAME)
+                  def0 = SSA_NAME_DEF_STMT (@0);
+                if (TREE_CODE (@1) == SSA_NAME)
+                  def1 = SSA_NAME_DEF_STMT (@1);
+                if (def0)
+                  {
+                    assign0_p = is_gimple_assign (def0);
+                    call0_p = is_gimple_call (def0);
+                  }
+                if (def1)
+                  {
+                    assign1_p = is_gimple_assign (def1);
+                    call1_p = is_gimple_call (def1);
+                  }
+                tree e = NULL_TREE;
+                gimple *def_stmt = NULL;
+                if (assign0_p)
+                  code0 = gimple_assign_rhs_code (def0);
+                if (assign1_p)
+                  code1 = gimple_assign_rhs_code (def1);
+                if (call0_p && gimple_call_internal_p (def0)
+                  && length_convert_fn_p (gimple_call_internal_fn (def0))
+                  && gimple_call_arg (def0, 1) == @2)
+                  convert0_expr_code_p = true;
+                if (call1_p && gimple_call_internal_p (def1)
+                  && length_convert_fn_p (gimple_call_internal_fn (def1))
+                  && gimple_call_arg (def1, 1) == @2)
+                  convert1_expr_code_p = true;
+                if (assign1_p)
+                  {
+                    convert1_expr_code_p = CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (def1));
+                    code1 = gimple_assign_rhs_code (def1);
+                  }
+                if (assign1_p && code1 == CONSTRUCTOR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_call_arg (def0, 0);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @0;
+                      }
+                    e = uniform_vector_p (gimple_assign_rhs1 (def_stmt));
+                  }
+                if (!e && assign1_p && code1 == VEC_DUPLICATE_EXPR)
+                  {
+                    def_stmt = def1;
+                    if (convert0_expr_code_p)
+                      op0 = gimple_call_arg (def0, 0);
+                    else
+                      {
+                        w_p = true;
+                        op0 = @0;
+                      }
+                    e = gimple_assign_rhs1 (def_stmt);
+                  }
+                if (e && TREE_CODE (e) == SSA_NAME
+                  && SSA_NAME_DEF_STMT (e)
+                  && is_gimple_assign (SSA_NAME_DEF_STMT (e))
+                  && CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (SSA_NAME_DEF_STMT (e))))
+                  {
+                    if ((w_p && TYPE_MODE (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      != GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0))))
+                      || (!w_p && (TYPE_UNSIGNED (TREE_TYPE (gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e))))
+                      == TYPE_UNSIGNED (TREE_TYPE (op0)))))
+                      {
+                        simplify_p = true;
+                        op1 = gimple_assign_rhs1 (SSA_NAME_DEF_STMT (e));
+                        vs_p = true;
+                      }
+                  }
+                if (!simplify_p && convert0_expr_code_p && convert1_expr_code_p)
+                  {
+                    op0 = gimple_call_arg (def0, 0);
+                    op1 = gimple_call_arg (def1, 0);
+                    if (TYPE_UNSIGNED (TREE_TYPE (op0))
+                      == TYPE_UNSIGNED (TREE_TYPE (op1))
+                      && TYPE_MODE (TREE_TYPE (op0))
+                      == TYPE_MODE (TREE_TYPE (op1)))
+                      simplify_p = true;
+                  }
+                if (!simplify_p)
+                  {
+                    if (convert1_expr_code_p)
+                      {
+                        op0 = @0;
+                        op1 = gimple_call_arg (def1, 0);
+                      }
+                    if (op0 && op1)
+                      {
+                        simplify_p = true;
+                        w_p = true;
+                      }
+                  }
+              }
+          }
+      }
+      (if (simplify_p)
+        (switch
+          (if (vs_p && !w_p && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op0)))
+            == GET_MODE_INNER (TYPE_MODE (TREE_TYPE (op1))))
+            (IFN_LEN_VEC_CONVERT_SUBV { op0; } { op1; } @2))
+          (if (vs_p && w_p)
+            (IFN_LEN_VEC_CONVERT_SUBW { op0; } { op1; } @2))
+          (if (!vs_p && !w_p)
+            (IFN_LEN_VEC_CONVERT_VSUBV { op0; } { op1; } @2))
+          (if (!vs_p && w_p)
+            (IFN_LEN_VEC_CONVERT_VSUBW { op0; } { op1; } @2))))))
+
+(simplify
+  (plus (view_convert? (IFN_VEC_CONVERT_VMULV @0 @1)) (view_convert? @2))
+    (IFN_VEC_CONVERT_VFMAV @0 @1 @2))
+(simplify
+  (plus (view_convert? @2) (view_convert? (IFN_VEC_CONVERT_VMULV @0 @1)))
+    (IFN_VEC_CONVERT_VFMAV @0 @1 @2))
+(simplify
+  (plus (view_convert? (IFN_VEC_CONVERT_VUSMULV @0 @1)) (view_convert? @2))
+    (IFN_VEC_CONVERT_VUSFMAV @0 @1 @2))
+(simplify
+  (plus (view_convert? @2) (view_convert? (IFN_VEC_CONVERT_VUSMULV @0 @1)))
+    (IFN_VEC_CONVERT_VUSFMAV @0 @1 @2))
+(simplify
+  (IFN_LEN_ADD (view_convert? (IFN_LEN_VEC_CONVERT_VMULV @0 @1 @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_VFMAV @0 @1 @2 @3))
+(simplify
+  (IFN_LEN_ADD (view_convert? @2) (view_convert? (IFN_LEN_VEC_CONVERT_VMULV @0 @1 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_VFMAV @0 @1 @2 @3))
+(simplify
+  (IFN_LEN_ADD (view_convert? (IFN_LEN_VEC_CONVERT_VUSMULV @0 @1 @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_VUSFMAV @0 @1 @2 @3))
+(simplify
+  (IFN_LEN_ADD (view_convert? @2) (view_convert? (IFN_LEN_VEC_CONVERT_VUSMULV @0 @1 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_VUSFMAV @0 @1 @2 @3))
+(simplify
+  (plus (view_convert? (IFN_VEC_CONVERT_MULV @0 @1)) (view_convert? @2))
+    (IFN_VEC_CONVERT_FMAV @0 @1 @2))
+(simplify
+  (plus (view_convert? @2) (view_convert? (IFN_VEC_CONVERT_MULV @0 @1)))
+    (IFN_VEC_CONVERT_FMAV @0 @1 @2))
+(simplify
+  (plus (view_convert? (IFN_VEC_CONVERT_USMULV @0 @1)) (view_convert? @2))
+    (IFN_VEC_CONVERT_USFMAV @0 @1 @2))
+(simplify
+  (plus (view_convert? @2) (view_convert? (IFN_VEC_CONVERT_USMULV @0 @1)))
+    (IFN_VEC_CONVERT_USFMAV @0 @1 @2))
+(simplify
+  (plus (view_convert? (IFN_VEC_CONVERT_SUMULV @0 @1)) (view_convert? @2))
+    (IFN_VEC_CONVERT_SUFMAV @0 @1 @2))
+(simplify
+  (plus (view_convert? @2) (view_convert? (IFN_VEC_CONVERT_SUMULV @0 @1)))
+    (IFN_VEC_CONVERT_SUFMAV @0 @1 @2))
+(simplify
+  (IFN_LEN_ADD (view_convert? (IFN_LEN_VEC_CONVERT_MULV @0 @1 @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_FMAV @0 @1 @2 @3))
+(simplify
+  (IFN_LEN_ADD (view_convert? @2) (view_convert? (IFN_LEN_VEC_CONVERT_MULV @0 @1 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_FMAV @0 @1 @2 @3))
+(simplify
+  (IFN_LEN_ADD (view_convert? (IFN_LEN_VEC_CONVERT_USMULV @0 @1 @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_USFMAV @0 @1 @2 @3))
+(simplify
+  (IFN_LEN_ADD (view_convert? @2) (view_convert? (IFN_LEN_VEC_CONVERT_USMULV @0 @1 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_USFMAV @0 @1 @2 @3))
+(simplify
+  (IFN_LEN_ADD (view_convert? (IFN_LEN_VEC_CONVERT_SUMULV @0 @1 @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_SUFMAV @0 @1 @2 @3))
+(simplify
+  (IFN_LEN_ADD (view_convert? @2) (view_convert? (IFN_LEN_VEC_CONVERT_SUMULV @0 @1 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_SUFMAV @0 @1 @2 @3))
+(simplify
+  (minus (view_convert? (IFN_VEC_CONVERT_VMULV @0 @1)) (view_convert? @2))
+    (IFN_VEC_CONVERT_VFMSV @0 @1 @2))
+(simplify
+  (IFN_LEN_SUB (view_convert? (IFN_LEN_VEC_CONVERT_VMULV @0 @1 @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_VFMSV @0 @1 @2 @3))
+(simplify
+  (minus (view_convert? (IFN_VEC_CONVERT_MULV @0 @1)) (view_convert? @2))
+    (IFN_VEC_CONVERT_FMSV @0 @1 @2))
+(simplify
+  (IFN_LEN_SUB (view_convert? (IFN_LEN_VEC_CONVERT_MULV @0 @1 @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_FMSV @0 @1 @2 @3))
+(simplify
+  (minus (view_convert? @2) (view_convert? (IFN_VEC_CONVERT_VMULV @0 @1)))
+    (IFN_VEC_CONVERT_VFNMAV @0 @1 @2))
+(simplify
+  (IFN_LEN_SUB (view_convert? @2) (view_convert? (IFN_LEN_VEC_CONVERT_VMULV @0 @1 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_VFNMAV @0 @1 @2 @3))
+(simplify
+  (minus (view_convert? @2) (view_convert? (IFN_VEC_CONVERT_MULV @0 @1)))
+    (IFN_VEC_CONVERT_FNMAV @0 @1 @2))
+(simplify
+  (IFN_LEN_SUB (view_convert? @2) (view_convert? (IFN_LEN_VEC_CONVERT_MULV @0 @1 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_FNMAV @0 @1 @2 @3))
+(simplify
+  (minus (view_convert? (negate (view_convert? (IFN_VEC_CONVERT_VMULV @0 @1)))) (view_convert? @2))
+    (IFN_VEC_CONVERT_VFNMSV @0 @1 @2))
+(simplify
+  (IFN_LEN_SUB (view_convert? (IFN_LEN_NEG (view_convert? (IFN_LEN_VEC_CONVERT_VMULV @0 @1 @3)) @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_VFNMSV @0 @1 @2 @3))
+(simplify
+  (minus (view_convert? (negate (view_convert? (IFN_VEC_CONVERT_MULV @0 @1)))) (view_convert? @2))
+    (IFN_VEC_CONVERT_FNMSV @0 @1 @2))
+(simplify
+  (IFN_LEN_SUB (view_convert? (IFN_LEN_NEG (view_convert? (IFN_LEN_VEC_CONVERT_MULV @0 @1 @3)) @3)) (view_convert? @2) @3)
+    (IFN_LEN_VEC_CONVERT_FNMSV @0 @1 @2 @3))
+(simplify
+  (negate (view_convert? (IFN_VEC_CONVERT_VFMAV @0 @1 @2)))
+    (IFN_VEC_CONVERT_VFNMSV @0 @1 @2))
+(simplify
+  (IFN_LEN_NEG (view_convert? (IFN_LEN_VEC_CONVERT_VFMAV @0 @1 @2 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_VFNMSV @0 @1 @2 @3))
+(simplify
+  (negate (view_convert? (IFN_VEC_CONVERT_FMAV @0 @1 @2)))
+    (IFN_VEC_CONVERT_FNMSV @0 @1 @2))
+(simplify
+  (IFN_LEN_NEG (view_convert? (IFN_LEN_VEC_CONVERT_FMAV @0 @1 @2 @3)) @3)
+    (IFN_LEN_VEC_CONVERT_FNMSV @0 @1 @2 @3))
+
+/* Simplify:
+     a = vec_duplicate a1 or CONSTRUCTOR a1
+     r = b op a
+     --> r = b op_vs a.  */
+
+/* Binary operation. */
+
+/* normal operation. */
+(for binary_op (plus minus mult trunc_div trunc_mod rdiv
+                min max bit_and bit_ior bit_xor)
+     binary_op_vs (IFN_ADD_VS IFN_SUB_VS IFN_MUL_VS
+                   IFN_DIV_VS IFN_MOD_VS IFN_RDIV_VS
+                   IFN_MIN_VS IFN_MAX_VS IFN_AND_VS
+                   IFN_IOR_VS IFN_XOR_VS)
+ (simplify
+  (binary_op @0 splat_vector_p@1)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
+      (binary_op_vs @0 { splat_vector_p (@1); }))))
+
+(for binary_op (plus minus mult trunc_div rdiv
+                min max bit_and bit_ior bit_xor)
+     binary_op_sv (IFN_ADD_VS IFN_SUB_SV IFN_MUL_VS
+                   IFN_DIV_SV IFN_RDIV_SV
+                   IFN_MIN_VS IFN_MAX_VS IFN_AND_VS
+                   IFN_IOR_VS IFN_XOR_VS)
+ (simplify
+  (binary_op splat_vector_p@1 @0)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_sv), type))
+      (binary_op_sv @0 { splat_vector_p (@1); }))))
+
+/* len_* operation. */
+(for binary_op (IFN_LEN_ADD IFN_LEN_SUB IFN_LEN_MUL 
+                IFN_LEN_DIV IFN_LEN_MOD IFN_LEN_RDIV 
+                IFN_LEN_MIN IFN_LEN_MAX IFN_LEN_AND
+                IFN_LEN_IOR IFN_LEN_XOR)
+     binary_op_vs (IFN_LEN_ADD_VS IFN_LEN_SUB_VS IFN_LEN_MUL_VS
+                   IFN_LEN_DIV_VS IFN_LEN_MOD_VS IFN_LEN_RDIV_VS
+                   IFN_LEN_MIN_VS IFN_LEN_MAX_VS IFN_LEN_AND_VS
+                   IFN_LEN_IOR_VS IFN_LEN_XOR_VS)
+ (simplify
+  (binary_op @0 splat_vector_p@1 @2)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_vs), type))
+      (binary_op_vs @0 { splat_vector_p (@1); } @2))))
+
+(for binary_op (IFN_LEN_ADD IFN_LEN_SUB IFN_LEN_MUL 
+                IFN_LEN_DIV IFN_LEN_RDIV 
+                IFN_LEN_MIN IFN_LEN_MAX IFN_LEN_AND
+                IFN_LEN_IOR IFN_LEN_XOR)
+     binary_op_sv (IFN_LEN_ADD_VS IFN_LEN_SUB_SV IFN_LEN_MUL_VS
+                   IFN_LEN_DIV_SV IFN_LEN_RDIV_SV
+                   IFN_LEN_MIN_VS IFN_LEN_MAX_VS IFN_LEN_AND_VS
+                   IFN_LEN_IOR_VS IFN_LEN_XOR_VS)
+ (simplify
+  (binary_op splat_vector_p@1 @0 @2)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (binary_op_sv), type))
+      (binary_op_sv @0 { splat_vector_p (@1); } @2))))
+      
+/* Ternary operation. */
+
+/* normal operation. */
+(for ternary_op (IFN_FMA IFN_FMS IFN_FNMA IFN_FNMS)
+     ternary_op_vs (IFN_FMA_VS IFN_FMS_VS IFN_FNMA_VS IFN_FNMS_VS)
+ (simplify
+  (ternary_op @0 splat_vector_p@1 @2)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
+      (ternary_op_vs @0 { splat_vector_p (@1); } @2)))
+ (simplify
+  (ternary_op splat_vector_p@1 @0 @2)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
+      (ternary_op_vs @0 { splat_vector_p (@1); } @2))))
+(simplify
+  (plus (IFN_MUL_VS @0 @1) @2)
+   (if (vectorized_internal_fn_supported_p (IFN_FMA_VS, type))
+     (IFN_FMA_VS @0 @1 @2)))
+(simplify
+  (plus @2 (IFN_MUL_VS @0 @1))
+   (if (vectorized_internal_fn_supported_p (IFN_FMA_VS, type))
+     (IFN_FMA_VS @0 @1 @2)))
+(simplify
+  (minus (IFN_MUL_VS @0 @1) @2)
+   (if (vectorized_internal_fn_supported_p (IFN_FMS_VS, type))
+     (IFN_FMS_VS @0 @1 @2)))
+(simplify
+  (minus @2 (IFN_MUL_VS @0 @1))
+   (if (vectorized_internal_fn_supported_p (IFN_FNMA_VS, type))
+     (IFN_FNMA_VS @0 @1 @2)))
+(simplify
+  (IFN_FMA_VS (negate @0) @1 @2)
+   (if (vectorized_internal_fn_supported_p (IFN_FNMA_VS, type))
+     (IFN_FNMA_VS @0 @1 @2)))
+(simplify
+  (IFN_FMA_VS @0 (negate @1) @2)
+   (if (vectorized_internal_fn_supported_p (IFN_FNMA_VS, type))
+     (IFN_FNMA_VS @0 @1 @2)))
+(simplify
+  (negate (IFN_FMA_VS @0 @1 @2))
+   (if (vectorized_internal_fn_supported_p (IFN_FNMS_VS, type))
+     (IFN_FNMS_VS @0 @1 @2)))
+(simplify
+  (IFN_FMS_VS (negate @0) @1 @2)
+   (if (vectorized_internal_fn_supported_p (IFN_FNMS_VS, type))
+     (IFN_FNMS_VS @0 @1 @2)))
+(simplify
+  (minus (negate (IFN_MUL_VS @0 @1)) @2)
+   (if (vectorized_internal_fn_supported_p (IFN_FNMS_VS, type))
+     (IFN_FNMS_VS @0 @1 @2)))
+
+/* len_* operation. */
+(for ternary_op (IFN_LEN_FMA IFN_LEN_FMS IFN_LEN_FNMA IFN_LEN_FNMS)
+     ternary_op_vs (IFN_LEN_FMA_VS IFN_LEN_FMS_VS IFN_LEN_FNMA_VS IFN_LEN_FNMS_VS)
+ (simplify
+  (ternary_op @0 splat_vector_p@1 @2 @3)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
+      (ternary_op_vs @0 { splat_vector_p (@1); } @2 @3)))
+ (simplify
+  (ternary_op splat_vector_p@1 @0 @2 @3)
+    (if (VECTOR_TYPE_P (type) && vectorized_internal_fn_supported_p (as_internal_fn (ternary_op_vs), type))
+      (ternary_op_vs @0 { splat_vector_p (@1); } @2 @3))))
+(simplify
+  (IFN_LEN_ADD (IFN_LEN_MUL_VS @0 @1 @2) @3 @2)
+   (if (vectorized_internal_fn_supported_p (IFN_LEN_FMA_VS, type))
+     (IFN_LEN_FMA_VS @0 @1 @3 @2)))
+(simplify
+  (IFN_LEN_ADD @3 (IFN_LEN_MUL_VS @0 @1 @2) @2)
+   (if (vectorized_internal_fn_supported_p (IFN_LEN_FMA_VS, type))
+     (IFN_LEN_FMA_VS @0 @1 @3 @2)))
+(simplify
+  (IFN_LEN_SUB (IFN_LEN_MUL_VS @0 @1 @2) @3 @2)
+   (if (vectorized_internal_fn_supported_p (IFN_LEN_FMS_VS, type))
+     (IFN_LEN_FMS_VS @0 @1 @3 @2)))
+(simplify
+  (IFN_LEN_SUB @3 (IFN_LEN_MUL_VS @0 @1 @2) @2)
+   (if (vectorized_internal_fn_supported_p (IFN_LEN_FNMA_VS, type))
+     (IFN_LEN_FNMA_VS @0 @1 @3 @2)))
+(simplify
+  (IFN_LEN_FMA_VS (IFN_LEN_NEG @0 @2) @1 @3 @2)
+    (if (vectorized_internal_fn_supported_p (IFN_LEN_FNMA_VS, type))
+      (IFN_LEN_FNMA_VS @0 @1 @3 @2)))
+(simplify
+  (IFN_LEN_FMA_VS @0 (negate @1) @3 @2)
+    (if (vectorized_internal_fn_supported_p (IFN_LEN_FNMA_VS, type))
+      (IFN_LEN_FNMA_VS @0 @1 @3 @2)))
+(simplify
+  (IFN_LEN_NEG (IFN_LEN_FMA_VS @0 @1 @2 @3) @3)
+   (if (vectorized_internal_fn_supported_p (IFN_LEN_FNMS_VS, type))
+     (IFN_LEN_FNMS_VS @0 @1 @2 @3)))
+(simplify
+  (IFN_LEN_FMS_VS (IFN_LEN_NEG @0 @1) @2 @3 @1)
+   (if (vectorized_internal_fn_supported_p (IFN_LEN_FNMS_VS, type))
+     (IFN_LEN_FNMS_VS @0 @2 @3 @1)))
+(simplify
+  (IFN_LEN_SUB (IFN_LEN_NEG (IFN_LEN_MUL_VS @0 @1 @2) @2) @3 @2)
+   (if (vectorized_internal_fn_supported_p (IFN_LEN_FNMS_VS, type))
+     (IFN_LEN_FNMS_VS @0 @1 @3 @2)))
+#endif

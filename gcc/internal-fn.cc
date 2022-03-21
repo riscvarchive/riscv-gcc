@@ -107,15 +107,19 @@ init_internal_fns ()
    direct_internal_fn.  */
 #define not_direct { -2, -2, false }
 #define mask_load_direct { -1, 2, false }
+#define len_mask_load_direct { -1, 2, false }
 #define load_lanes_direct { -1, -1, false }
 #define mask_load_lanes_direct { -1, -1, false }
 #define gather_load_direct { 3, 1, false }
 #define len_load_direct { -1, -1, false }
 #define mask_store_direct { 3, 2, false }
+#define len_mask_store_direct { 3, 2, false }
 #define store_lanes_direct { 0, 0, false }
 #define mask_store_lanes_direct { 0, 0, false }
 #define vec_cond_mask_direct { 1, 0, false }
 #define vec_cond_direct { 2, 0, false }
+#define vec_cmp_direct { 2, 0, false }
+#define vec_cmp_vs_direct { 0, -1, false }
 #define scatter_store_direct { 3, 1, false }
 #define len_store_direct { 3, 3, false }
 #define vec_set_direct { 3, 3, false }
@@ -125,16 +129,24 @@ init_internal_fns ()
 #define cond_unary_direct { 1, 1, true }
 #define cond_binary_direct { 1, 1, true }
 #define cond_ternary_direct { 1, 1, true }
+#define len_unary_direct { 0, 0, true }
+#define len_binary_direct { 0, 0, true }
+#define len_ternary_direct { 0, 0, true }
 #define while_direct { 0, 2, false }
 #define fold_extract_direct { 2, 2, false }
 #define fold_left_direct { 1, 1, false }
 #define mask_fold_left_direct { 1, 1, false }
 #define check_ptrs_direct { 0, 0, false }
+#define vec_convert_binary_direct { 1, -1, false }
+#define vec_convert_ternary_direct { 1, -1, false }
+#define len_convert_direct { 0, -1, false }
 
 const direct_internal_fn_info direct_internal_fn_array[IFN_LAST + 1] = {
 #define DEF_INTERNAL_FN(CODE, FLAGS, FNSPEC) not_direct,
 #define DEF_INTERNAL_OPTAB_FN(CODE, FLAGS, OPTAB, TYPE) TYPE##_direct,
 #define DEF_INTERNAL_SIGNED_OPTAB_FN(CODE, FLAGS, SELECTOR, SIGNED_OPTAB, \
+				     UNSIGNED_OPTAB, TYPE) TYPE##_direct,
+#define DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN(CODE, FLAGS, SELECTOR1, SELECTOR2, SIGNED_OPTAB, \
 				     UNSIGNED_OPTAB, TYPE) TYPE##_direct,
 #include "internal-fn.def"
   not_direct
@@ -161,7 +173,8 @@ get_multi_vector_move (tree array_type, convert_optab optab)
 static void
 expand_load_lanes_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 {
-  class expand_operand ops[2];
+  int i = 0;
+  class expand_operand ops[3];
   tree type, lhs, rhs;
   rtx target, mem;
 
@@ -175,9 +188,16 @@ expand_load_lanes_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   gcc_assert (MEM_P (mem));
   PUT_MODE (mem, TYPE_MODE (type));
 
-  create_output_operand (&ops[0], target, TYPE_MODE (type));
-  create_fixed_operand (&ops[1], mem);
-  expand_insn (get_multi_vector_move (type, optab), 2, ops);
+  create_output_operand (&ops[i++], target, TYPE_MODE (type));
+  create_fixed_operand (&ops[i++], mem);
+  if (optab == len_vec_load_lanes_optab)
+    {
+      tree len = gimple_call_arg (stmt, 1);
+      rtx len_rtx = expand_normal (len);
+      create_convert_operand_from (&ops[i++], len_rtx, TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
+    }
+  expand_insn (get_multi_vector_move (type, optab), i, ops);
   if (!rtx_equal_p (target, ops[0].value))
     emit_move_insn (target, ops[0].value);
 }
@@ -187,7 +207,8 @@ expand_load_lanes_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 static void
 expand_store_lanes_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 {
-  class expand_operand ops[2];
+  int i = 0;
+  class expand_operand ops[3];
   tree type, lhs, rhs;
   rtx target, reg;
 
@@ -201,9 +222,16 @@ expand_store_lanes_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   gcc_assert (MEM_P (target));
   PUT_MODE (target, TYPE_MODE (type));
 
-  create_fixed_operand (&ops[0], target);
-  create_input_operand (&ops[1], reg, TYPE_MODE (type));
-  expand_insn (get_multi_vector_move (type, optab), 2, ops);
+  create_fixed_operand (&ops[i++], target);
+  create_input_operand (&ops[i++], reg, TYPE_MODE (type));
+  if (optab == len_vec_store_lanes_optab)
+    {
+      tree len = gimple_call_arg (stmt, 1);
+      rtx len_rtx = expand_normal (len);
+      create_convert_operand_from (&ops[i++], len_rtx, TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
+    }
+  expand_insn (get_multi_vector_move (type, optab), i, ops);
 }
 
 static void
@@ -2697,8 +2725,8 @@ static void
 expand_partial_load_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 {
   class expand_operand ops[4];
-  tree type, lhs, rhs, maskt, biast;
-  rtx mem, target, mask, bias;
+  tree type, lhs, rhs, maskt, biast, lent;
+  rtx mem, target, mask, bias, len;
   insn_code icode;
 
   maskt = gimple_call_arg (stmt, 2);
@@ -2708,7 +2736,8 @@ expand_partial_load_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   type = TREE_TYPE (lhs);
   rhs = expand_call_mem_ref (type, stmt, 0);
 
-  if (optab == vec_mask_load_lanes_optab)
+  if (optab == vec_mask_load_lanes_optab
+    || optab == len_vec_mask_load_lanes_optab)
     icode = get_multi_vector_move (type, optab);
   else if (optab == len_load_optab)
     icode = direct_optab_handler (optab, TYPE_MODE (type));
@@ -2731,6 +2760,16 @@ expand_partial_load_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
       create_input_operand (&ops[3], bias, QImode);
       expand_insn (icode, 4, ops);
     }
+  else if (optab == len_maskload_optab
+    || optab == len_vec_mask_load_lanes_optab)
+    {
+      create_input_operand (&ops[2], mask, TYPE_MODE (TREE_TYPE (maskt)));
+      lent = gimple_call_arg (stmt, 3);
+      len = expand_normal (lent);
+      create_convert_operand_from (&ops[3], len, TYPE_MODE (TREE_TYPE (lent)),
+			       TYPE_UNSIGNED (TREE_TYPE (lent)));
+      expand_insn (icode, 4, ops);
+    }
   else
     {
       create_input_operand (&ops[2], mask, TYPE_MODE (TREE_TYPE (maskt)));
@@ -2744,6 +2783,7 @@ expand_partial_load_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 #define expand_mask_load_optab_fn expand_partial_load_optab_fn
 #define expand_mask_load_lanes_optab_fn expand_mask_load_optab_fn
 #define expand_len_load_optab_fn expand_partial_load_optab_fn
+#define expand_len_mask_load_optab_fn expand_partial_load_optab_fn
 
 /* Expand MASK_STORE{,_LANES} or LEN_STORE call STMT using optab OPTAB.  */
 
@@ -2751,8 +2791,8 @@ static void
 expand_partial_store_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 {
   class expand_operand ops[4];
-  tree type, lhs, rhs, maskt, biast;
-  rtx mem, reg, mask, bias;
+  tree type, lhs, rhs, maskt, biast, lent;
+  rtx mem, reg, mask, bias, len;
   insn_code icode;
 
   maskt = gimple_call_arg (stmt, 2);
@@ -2760,7 +2800,8 @@ expand_partial_store_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   type = TREE_TYPE (rhs);
   lhs = expand_call_mem_ref (type, stmt, 0);
 
-  if (optab == vec_mask_store_lanes_optab)
+  if (optab == vec_mask_store_lanes_optab
+    || optab == len_vec_mask_store_lanes_optab)
     icode = get_multi_vector_move (type, optab);
   else if (optab == len_store_optab)
     icode = direct_optab_handler (optab, TYPE_MODE (type));
@@ -2783,6 +2824,16 @@ expand_partial_store_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
       create_input_operand (&ops[3], bias, QImode);
       expand_insn (icode, 4, ops);
     }
+  else if (optab == len_maskstore_optab
+    || optab == len_vec_mask_store_lanes_optab)
+    {
+      create_input_operand (&ops[2], mask, TYPE_MODE (TREE_TYPE (maskt)));
+      lent = gimple_call_arg (stmt, 4);
+      len = expand_normal (lent);
+      create_convert_operand_from (&ops[3], len, TYPE_MODE (TREE_TYPE (lent)),
+				   TYPE_UNSIGNED (TREE_TYPE (lent)));
+      expand_insn (icode, 4, ops);
+    }
   else
     {
       create_input_operand (&ops[2], mask, TYPE_MODE (TREE_TYPE (maskt)));
@@ -2793,6 +2844,7 @@ expand_partial_store_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 #define expand_mask_store_optab_fn expand_partial_store_optab_fn
 #define expand_mask_store_lanes_optab_fn expand_mask_store_optab_fn
 #define expand_len_store_optab_fn expand_partial_store_optab_fn
+#define expand_len_mask_store_optab_fn expand_partial_store_optab_fn
 
 /* Expand VCOND, VCONDU and VCONDEQ optab internal functions.
    The expansion of STMT happens based on OPTAB table associated.  */
@@ -2800,14 +2852,17 @@ expand_partial_store_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 static void
 expand_vec_cond_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 {
-  class expand_operand ops[6];
+  class expand_operand ops[7];
+  int i = 0;
   insn_code icode;
   tree lhs = gimple_call_lhs (stmt);
   tree op0a = gimple_call_arg (stmt, 0);
   tree op0b = gimple_call_arg (stmt, 1);
   tree op1 = gimple_call_arg (stmt, 2);
   tree op2 = gimple_call_arg (stmt, 3);
-  enum tree_code tcode = (tree_code) int_cst_value (gimple_call_arg (stmt, 4));
+  int offset = (optab == len_vcond_optab
+        || optab == len_vcondu_optab) ? 5 : 4;
+  enum tree_code tcode = (tree_code) int_cst_value (gimple_call_arg (stmt, offset));
 
   tree vec_cond_type = TREE_TYPE (lhs);
   tree op_mode = TREE_TYPE (op0a);
@@ -2823,13 +2878,21 @@ expand_vec_cond_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   rtx rtx_op2 = expand_normal (op2);
 
   rtx target = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
-  create_output_operand (&ops[0], target, mode);
-  create_input_operand (&ops[1], rtx_op1, mode);
-  create_input_operand (&ops[2], rtx_op2, mode);
-  create_fixed_operand (&ops[3], comparison);
-  create_fixed_operand (&ops[4], XEXP (comparison, 0));
-  create_fixed_operand (&ops[5], XEXP (comparison, 1));
-  expand_insn (icode, 6, ops);
+  create_output_operand (&ops[i++], target, mode);
+  create_input_operand (&ops[i++], rtx_op1, mode);
+  create_input_operand (&ops[i++], rtx_op2, mode);
+  create_fixed_operand (&ops[i++], comparison);
+  create_fixed_operand (&ops[i++], XEXP (comparison, 0));
+  create_fixed_operand (&ops[i++], XEXP (comparison, 1));
+
+  if (optab == len_vcond_optab
+    || optab == len_vcondu_optab)
+    {
+      tree len = gimple_call_arg (stmt, 4);
+      create_convert_operand_from (&ops[i++], expand_normal (len), TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
+    }
+  expand_insn (icode, i, ops);
   if (!rtx_equal_p (ops[0].value, target))
     emit_move_insn (target, ops[0].value);
 }
@@ -2840,8 +2903,8 @@ expand_vec_cond_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 static void
 expand_vec_cond_mask_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 {
-  class expand_operand ops[4];
-
+  class expand_operand ops[5];
+  int i = 0;
   tree lhs = gimple_call_lhs (stmt);
   tree op0 = gimple_call_arg (stmt, 0);
   tree op1 = gimple_call_arg (stmt, 1);
@@ -2860,14 +2923,73 @@ expand_vec_cond_mask_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   rtx_op2 = expand_normal (op2);
 
   mask = force_reg (mask_mode, mask);
-  rtx_op1 = force_reg (mode, rtx_op1);
+  rtx_op1 = force_reg (TYPE_MODE (TREE_TYPE (op1)), rtx_op1);
 
   rtx target = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
-  create_output_operand (&ops[0], target, mode);
-  create_input_operand (&ops[1], rtx_op1, mode);
-  create_input_operand (&ops[2], rtx_op2, mode);
-  create_input_operand (&ops[3], mask, mask_mode);
-  expand_insn (icode, 4, ops);
+  create_output_operand (&ops[i++], target, TYPE_MODE (TREE_TYPE (lhs)));
+  create_input_operand (&ops[i++], rtx_op1, TYPE_MODE (TREE_TYPE (op1)));
+  create_input_operand (&ops[i++], rtx_op2, TYPE_MODE (TREE_TYPE (op2)));
+  create_input_operand (&ops[i++], mask, mask_mode);
+
+  if (optab == len_vcond_mask_optab
+    || optab == len_vcond_mask_vs_optab)
+    {
+      tree len = gimple_call_arg (stmt, 3);
+      create_convert_operand_from (&ops[i++], expand_normal (len), TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
+    }
+  expand_insn (icode, i, ops);
+  if (!rtx_equal_p (ops[0].value, target))
+    emit_move_insn (target, ops[0].value);
+}
+
+#define expand_vec_cmp_vs_optab_fn expand_vec_cmp_optab_fn
+
+/* Expand LEN_VEC_CMP and LEN_VEC_CMPU optab internal functions.
+   The expansion of STMT happens based on OPTAB table associated.  */
+
+static void
+expand_vec_cmp_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
+{
+  class expand_operand ops[5];
+  insn_code icode;
+  int i = 0;
+  tree lhs = gimple_call_lhs (stmt);
+  tree op1 = gimple_call_arg (stmt, 0);
+  tree op2 = gimple_call_arg (stmt, 1);
+  int offset = 2;
+  if (optab == len_vec_cmp_optab
+    || optab == len_vec_cmpu_optab
+    || optab == len_vec_cmp_vs_optab
+    || optab == len_vec_cmpu_vs_optab)
+    offset = 3;
+  enum tree_code tcode = (tree_code) int_cst_value (gimple_call_arg (stmt, offset));
+
+  tree vec_cmp_type = TREE_TYPE (lhs);
+  tree op_mode = TREE_TYPE (op1);
+  bool unsignedp = TYPE_UNSIGNED (op_mode);
+  machine_mode mode = TYPE_MODE (vec_cmp_type);
+  machine_mode cmp_op_mode = TYPE_MODE (op_mode);
+
+  icode = convert_optab_handler (optab, cmp_op_mode, mode);
+  rtx comparison = vector_compare_rtx (mode, tcode, op1, op2,
+				       unsignedp, icode, 2);
+
+  rtx target = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
+  create_output_operand (&ops[i++], target, mode);
+  create_fixed_operand (&ops[i++], comparison);
+  create_fixed_operand (&ops[i++], XEXP (comparison, 0));
+  create_fixed_operand (&ops[i++], XEXP (comparison, 1));
+  if (optab == len_vec_cmp_optab
+    || optab == len_vec_cmpu_optab
+    || optab == len_vec_cmp_vs_optab
+    || optab == len_vec_cmpu_vs_optab)
+    {
+      tree len = gimple_call_arg (stmt, 2);
+      create_convert_operand_from (&ops[i++], expand_normal (len), TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
+    }
+  expand_insn (icode, i, ops);
   if (!rtx_equal_p (ops[0].value, target))
     emit_move_insn (target, ops[0].value);
 }
@@ -2909,6 +3031,157 @@ expand_vec_set_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 	}
     }
   gcc_unreachable ();
+}
+
+/* Expand {LEN_,} vec_convert_binary optab internal function.
+   The expansion of STMT happens based on OPTAB table associated.  */
+
+static void
+expand_vec_convert_binary_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
+{
+  int i = 0;
+  class expand_operand ops[4];
+
+  tree lhs = gimple_call_lhs (stmt);
+  tree op0 = gimple_call_arg (stmt, 0);
+  tree op1 = gimple_call_arg (stmt, 1);
+  tree dest_type = TREE_TYPE (lhs);
+  tree src_type = TREE_TYPE (op1);
+
+  machine_mode dest_mode = TYPE_MODE (dest_type);
+  machine_mode src_mode = TYPE_MODE (src_type);
+  enum insn_code icode = convert_optab_handler (optab, src_mode, dest_mode);
+  rtx rtx_op0, rtx_op1;
+
+  gcc_assert (icode != CODE_FOR_nothing);
+
+  rtx_op0 = expand_normal (op0);
+  rtx_op1 = expand_normal (op1);
+
+  rtx target = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
+  create_output_operand (&ops[i++], target, dest_mode);
+  create_input_operand (&ops[i++], rtx_op0, TYPE_MODE (TREE_TYPE (op0)));
+  create_input_operand (&ops[i++], rtx_op1, TYPE_MODE (TREE_TYPE (op1)));
+
+  if (optab == len_vec_convert_vsaddv_optab || optab == len_vec_convert_vuaddv_optab
+    || optab == len_vec_convert_vsaddw_optab || optab == len_vec_convert_vuaddw_optab
+    || optab == len_vec_convert_saddv_optab || optab == len_vec_convert_uaddv_optab
+    || optab == len_vec_convert_saddw_optab || optab == len_vec_convert_uaddw_optab
+    || optab == len_vec_convert_vssubv_optab || optab == len_vec_convert_vusubv_optab
+    || optab == len_vec_convert_vssubw_optab || optab == len_vec_convert_vusubw_optab
+    || optab == len_vec_convert_ssubv_optab || optab == len_vec_convert_usubv_optab
+    || optab == len_vec_convert_ssubw_optab || optab == len_vec_convert_usubw_optab
+    || optab == len_vec_convert_vsmulv_optab || optab == len_vec_convert_vumulv_optab
+    || optab == len_vec_convert_vusmulv_optab
+    || optab == len_vec_convert_smulv_optab || optab == len_vec_convert_umulv_optab
+    || optab == len_vec_convert_usmulv_optab
+    || optab == len_vec_convert_sumulv_optab)
+    {
+      tree len = gimple_call_arg (stmt, 2);
+      rtx len_rtx = expand_normal (len);
+      create_convert_operand_from (&ops[i++], len_rtx, TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
+    }
+  expand_insn (icode, i, ops);
+  if (!rtx_equal_p (ops[0].value, target))
+    emit_move_insn (target, ops[0].value);
+}
+
+/* Expand {LEN_,} vec_convert_ternary optab internal function.
+   The expansion of STMT happens based on OPTAB table associated.  */
+
+static void
+expand_vec_convert_ternary_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
+{
+  int i = 0;
+  class expand_operand ops[5];
+
+  tree lhs = gimple_call_lhs (stmt);
+  tree op0 = gimple_call_arg (stmt, 0);
+  tree op1 = gimple_call_arg (stmt, 1);
+  tree op2 = gimple_call_arg (stmt, 2);
+  tree dest_type = TREE_TYPE (lhs);
+  tree src_type = TREE_TYPE (op1);
+
+  machine_mode dest_mode = TYPE_MODE (dest_type);
+  machine_mode src_mode = TYPE_MODE (src_type);
+  enum insn_code icode = convert_optab_handler (optab, src_mode, dest_mode);
+  rtx rtx_op0, rtx_op1, rtx_op2;
+
+  gcc_assert (icode != CODE_FOR_nothing);
+
+  rtx_op0 = expand_normal (op0);
+  rtx_op1 = expand_normal (op1);
+  rtx_op2 = expand_normal (op2);
+
+  rtx target = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
+  create_output_operand (&ops[i++], target, dest_mode);
+  create_input_operand (&ops[i++], rtx_op0, TYPE_MODE (TREE_TYPE (op0)));
+  create_input_operand (&ops[i++], rtx_op1, TYPE_MODE (TREE_TYPE (op1)));
+  create_input_operand (&ops[i++], rtx_op2, TYPE_MODE (TREE_TYPE (op2)));
+
+  if (optab == len_vec_convert_vsfmav_optab
+    || optab == len_vec_convert_vufmav_optab
+    || optab == len_vec_convert_vusfmav_optab
+    || optab == len_vec_convert_sfmav_optab
+    || optab == len_vec_convert_ufmav_optab
+    || optab == len_vec_convert_usfmav_optab
+    || optab == len_vec_convert_sufmav_optab
+    || optab == len_vec_convert_vsfmsv_optab
+    || optab == len_vec_convert_vufmsv_optab
+    || optab == len_vec_convert_sfmsv_optab
+    || optab == len_vec_convert_ufmsv_optab
+    || optab == len_vec_convert_vsfnmav_optab
+    || optab == len_vec_convert_vufnmav_optab
+    || optab == len_vec_convert_sfnmav_optab
+    || optab == len_vec_convert_ufnmav_optab
+    || optab == len_vec_convert_vsfnmsv_optab
+    || optab == len_vec_convert_vufnmsv_optab
+    || optab == len_vec_convert_sfnmsv_optab
+    || optab == len_vec_convert_ufnmsv_optab)
+    {
+      tree len = gimple_call_arg (stmt, 3);
+      rtx len_rtx = expand_normal (len);
+      create_convert_operand_from (&ops[i++], len_rtx, TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
+    }
+  expand_insn (icode, i, ops);
+  if (!rtx_equal_p (ops[0].value, target))
+    emit_move_insn (target, ops[0].value);
+}
+
+/* Expand len_convert optab internal function.
+   The expansion of STMT happens based on OPTAB table associated.  */
+
+static void
+expand_len_convert_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
+{
+  class expand_operand ops[3];
+
+  tree lhs = gimple_call_lhs (stmt);
+  tree rhs = gimple_call_arg (stmt, 0);
+  tree len = gimple_call_arg (stmt, 1);
+  tree lhs_type = TREE_TYPE (lhs);
+  tree rhs_type = TREE_TYPE (rhs);
+
+  machine_mode lhs_mode = TYPE_MODE (lhs_type);
+  machine_mode rhs_mode = TYPE_MODE (rhs_type);
+  enum insn_code icode = convert_optab_handler (optab, rhs_mode, lhs_mode);
+  rtx rtx_rhs, rtx_len;
+
+  gcc_assert (icode != CODE_FOR_nothing);
+
+  rtx_rhs = expand_normal (rhs);
+  rtx_len = expand_normal (len);
+
+  rtx target = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
+  create_output_operand (&ops[0], target, lhs_mode);
+  create_input_operand (&ops[1], rtx_rhs, rhs_mode);
+  create_convert_operand_from (&ops[2], rtx_len, TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
+  expand_insn (icode, 3, ops);
+  if (!rtx_equal_p (ops[0].value, target))
+    emit_move_insn (target, ops[0].value);
 }
 
 static void
@@ -3322,7 +3595,7 @@ expand_scatter_store_optab_fn (internal_fn, gcall *stmt, direct_optab optab)
   HOST_WIDE_INT scale_int = tree_to_shwi (scale);
   rtx rhs_rtx = expand_normal (rhs);
 
-  class expand_operand ops[6];
+  class expand_operand ops[7];
   int i = 0;
   create_address_operand (&ops[i++], base_rtx);
   create_input_operand (&ops[i++], offset_rtx, TYPE_MODE (TREE_TYPE (offset)));
@@ -3333,7 +3606,19 @@ expand_scatter_store_optab_fn (internal_fn, gcall *stmt, direct_optab optab)
     {
       tree mask = gimple_call_arg (stmt, mask_index);
       rtx mask_rtx = expand_normal (mask);
-      create_input_operand (&ops[i++], mask_rtx, TYPE_MODE (TREE_TYPE (mask)));
+      if (optab == len_scatter_store_optab)
+        create_convert_operand_from (&ops[i++], mask_rtx, TYPE_MODE (TREE_TYPE (mask)),
+				   TYPE_UNSIGNED (TREE_TYPE (mask)));
+      else
+        create_input_operand (&ops[i++], mask_rtx, TYPE_MODE (TREE_TYPE (mask)));
+    }
+
+  if (optab == len_mask_scatter_store_optab)
+    {
+      tree len = gimple_call_arg (stmt, mask_index + 1);
+      rtx len_rtx = expand_normal (len);
+      create_convert_operand_from (&ops[i++], len_rtx, TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
     }
 
   insn_code icode = convert_optab_handler (optab, TYPE_MODE (TREE_TYPE (rhs)),
@@ -3341,7 +3626,7 @@ expand_scatter_store_optab_fn (internal_fn, gcall *stmt, direct_optab optab)
   expand_insn (icode, i, ops);
 }
 
-/* Expand {MASK_,}GATHER_LOAD call CALL using optab OPTAB.  */
+/* Expand {MASK_,LEN_}GATHER_LOAD call CALL using optab OPTAB.  */
 
 static void
 expand_gather_load_optab_fn (internal_fn, gcall *stmt, direct_optab optab)
@@ -3357,17 +3642,29 @@ expand_gather_load_optab_fn (internal_fn, gcall *stmt, direct_optab optab)
   HOST_WIDE_INT scale_int = tree_to_shwi (scale);
 
   int i = 0;
-  class expand_operand ops[6];
+  class expand_operand ops[7];
   create_output_operand (&ops[i++], lhs_rtx, TYPE_MODE (TREE_TYPE (lhs)));
   create_address_operand (&ops[i++], base_rtx);
   create_input_operand (&ops[i++], offset_rtx, TYPE_MODE (TREE_TYPE (offset)));
   create_integer_operand (&ops[i++], TYPE_UNSIGNED (TREE_TYPE (offset)));
   create_integer_operand (&ops[i++], scale_int);
-  if (optab == mask_gather_load_optab)
+  if (optab == mask_gather_load_optab || optab == len_gather_load_optab
+    || optab == len_mask_gather_load_optab)
     {
       tree mask = gimple_call_arg (stmt, 4);
       rtx mask_rtx = expand_normal (mask);
-      create_input_operand (&ops[i++], mask_rtx, TYPE_MODE (TREE_TYPE (mask)));
+      if (optab == len_gather_load_optab)
+        create_convert_operand_from (&ops[i++], mask_rtx, TYPE_MODE (TREE_TYPE (mask)),
+				   TYPE_UNSIGNED (TREE_TYPE (mask)));
+      else
+        create_input_operand (&ops[i++], mask_rtx, TYPE_MODE (TREE_TYPE (mask)));
+    }
+  if (optab == len_mask_gather_load_optab)
+    {
+      tree len = gimple_call_arg (stmt, 5);
+      rtx len_rtx = expand_normal (len);
+      create_convert_operand_from (&ops[i++], len_rtx, TYPE_MODE (TREE_TYPE (len)),
+				   TYPE_UNSIGNED (TREE_TYPE (len)));
     }
   insn_code icode = convert_optab_handler (optab, TYPE_MODE (TREE_TYPE (lhs)),
 					   TYPE_MODE (TREE_TYPE (offset)));
@@ -3633,15 +3930,15 @@ expand_direct_optab_fn (internal_fn fn, gcall *stmt, direct_optab optab,
 static void
 expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 {
-  expand_operand ops[3];
-  tree rhs_type[2];
+  expand_operand ops[5];
+  tree rhs_type[4];
 
   tree lhs = gimple_call_lhs (stmt);
   tree lhs_type = TREE_TYPE (lhs);
   rtx lhs_rtx = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
   create_output_operand (&ops[0], lhs_rtx, TYPE_MODE (lhs_type));
 
-  for (unsigned int i = 0; i < 2; ++i)
+  for (unsigned int i = 0; i < gimple_call_num_args (stmt); ++i)
     {
       tree rhs = gimple_call_arg (stmt, i);
       rhs_type[i] = TREE_TYPE (rhs);
@@ -3652,7 +3949,7 @@ expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   insn_code icode = convert_optab_handler (optab, TYPE_MODE (rhs_type[0]),
 					   TYPE_MODE (lhs_type));
 
-  expand_insn (icode, 3, ops);
+  expand_insn (icode, gimple_call_num_args (stmt) + 1, ops);
   if (!rtx_equal_p (lhs_rtx, ops[0].value))
     emit_move_insn (lhs_rtx, ops[0].value);
 }
@@ -3676,6 +3973,15 @@ expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 
 #define expand_cond_ternary_optab_fn(FN, STMT, OPTAB) \
   expand_direct_optab_fn (FN, STMT, OPTAB, 5)
+
+#define expand_len_unary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 2)
+
+#define expand_len_binary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 3)
+
+#define expand_len_ternary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 4)
 
 #define expand_fold_extract_optab_fn(FN, STMT, OPTAB) \
   expand_direct_optab_fn (FN, STMT, OPTAB, 3)
@@ -3766,16 +4072,23 @@ multi_vector_optab_supported_p (convert_optab optab, tree_pair types,
 #define direct_cond_unary_optab_supported_p direct_optab_supported_p
 #define direct_cond_binary_optab_supported_p direct_optab_supported_p
 #define direct_cond_ternary_optab_supported_p direct_optab_supported_p
+#define direct_len_unary_optab_supported_p direct_optab_supported_p
+#define direct_len_binary_optab_supported_p direct_optab_supported_p
+#define direct_len_ternary_optab_supported_p direct_optab_supported_p
 #define direct_mask_load_optab_supported_p convert_optab_supported_p
+#define direct_len_mask_load_optab_supported_p convert_optab_supported_p
 #define direct_load_lanes_optab_supported_p multi_vector_optab_supported_p
 #define direct_mask_load_lanes_optab_supported_p multi_vector_optab_supported_p
 #define direct_gather_load_optab_supported_p convert_optab_supported_p
 #define direct_len_load_optab_supported_p direct_optab_supported_p
 #define direct_mask_store_optab_supported_p convert_optab_supported_p
+#define direct_len_mask_store_optab_supported_p convert_optab_supported_p
 #define direct_store_lanes_optab_supported_p multi_vector_optab_supported_p
 #define direct_mask_store_lanes_optab_supported_p multi_vector_optab_supported_p
 #define direct_vec_cond_mask_optab_supported_p convert_optab_supported_p
 #define direct_vec_cond_optab_supported_p convert_optab_supported_p
+#define direct_vec_cmp_optab_supported_p convert_optab_supported_p
+#define direct_vec_cmp_vs_optab_supported_p convert_optab_supported_p
 #define direct_scatter_store_optab_supported_p convert_optab_supported_p
 #define direct_len_store_optab_supported_p direct_optab_supported_p
 #define direct_while_optab_supported_p convert_optab_supported_p
@@ -3784,6 +4097,9 @@ multi_vector_optab_supported_p (convert_optab optab, tree_pair types,
 #define direct_mask_fold_left_optab_supported_p direct_optab_supported_p
 #define direct_check_ptrs_optab_supported_p direct_optab_supported_p
 #define direct_vec_set_optab_supported_p direct_optab_supported_p
+#define direct_vec_convert_binary_optab_supported_p convert_optab_supported_p
+#define direct_vec_convert_ternary_optab_supported_p convert_optab_supported_p
+#define direct_len_convert_optab_supported_p convert_optab_supported_p
 
 /* Return the optab used by internal function FN.  */
 
@@ -3799,6 +4115,11 @@ direct_internal_fn_optab (internal_fn fn, tree_pair types)
 #define DEF_INTERNAL_SIGNED_OPTAB_FN(CODE, FLAGS, SELECTOR, SIGNED_OPTAB, \
 				     UNSIGNED_OPTAB, TYPE)		\
     case IFN_##CODE: return (TYPE_UNSIGNED (types.SELECTOR)		\
+			     ? UNSIGNED_OPTAB ## _optab			\
+			     : SIGNED_OPTAB ## _optab);
+#define DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN(CODE, FLAGS, SELECTOR1, SELECTOR2, SIGNED_OPTAB, \
+				     UNSIGNED_OPTAB, TYPE)		\
+    case IFN_##CODE: return (TYPE_UNSIGNED (types.SELECTOR1)		\
 			     ? UNSIGNED_OPTAB ## _optab			\
 			     : SIGNED_OPTAB ## _optab);
 #include "internal-fn.def"
@@ -3854,6 +4175,15 @@ direct_internal_fn_supported_p (internal_fn fn, tree_pair types,
 			     : SIGNED_OPTAB ## _optab);			\
 	return direct_##TYPE##_optab_supported_p (which_optab, types,	\
 						  opt_type);		\
+      }
+#define DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN(CODE, FLAGS, SELECTOR1, SELECTOR2, SIGNED_OPTAB, \
+				     UNSIGNED_OPTAB, TYPE)		\
+    case IFN_##CODE:							\
+      {									\
+	optab which_optab = (TYPE_UNSIGNED (types.SELECTOR1)		\
+			     ? UNSIGNED_OPTAB ## _optab			\
+			     : SIGNED_OPTAB ## _optab);			\
+	return convert_optab_handler (which_optab, TYPE_MODE (types.SELECTOR1),	TYPE_MODE (types.SELECTOR2));		\
       }
 #include "internal-fn.def"
 
@@ -3925,6 +4255,10 @@ commutative_ternary_fn_p (internal_fn fn)
     case IFN_FMS:
     case IFN_FNMA:
     case IFN_FNMS:
+    case IFN_LEN_FMA:
+    case IFN_LEN_FMS:
+    case IFN_LEN_FNMA:
+    case IFN_LEN_FNMS:
       return true;
 
     default:
@@ -4006,6 +4340,15 @@ set_edom_supported_p (void)
     optab which_optab = direct_internal_fn_optab (fn, types);		\
     expand_##TYPE##_optab_fn (fn, stmt, which_optab);			\
   }
+#define DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN(CODE, FLAGS, SELECTOR1, SELECTOR2, SIGNED_OPTAB, \
+				     UNSIGNED_OPTAB, TYPE)		\
+  static void								\
+  expand_##CODE (internal_fn fn, gcall *stmt)				\
+  {									\
+    tree_pair types = direct_internal_fn_types (fn, stmt);		\
+    optab which_optab = direct_internal_fn_optab (fn, types);		\
+    expand_##TYPE##_optab_fn (fn, stmt, which_optab);			\
+  }
 #include "internal-fn.def"
 
 /* Routines to expand each internal function, indexed by function number.
@@ -4065,6 +4408,121 @@ get_conditional_internal_fn (tree_code code)
     }
 }
 
+/* Invoke T(CODE, IFN) for each length control function IFN that maps to a
+   tree code CODE.  */
+#define FOR_EACH_CODE_MAPPING_WTIH_LENGTH(T) \
+  T (PLUS_EXPR, IFN_LEN_ADD) \
+  T (MINUS_EXPR, IFN_LEN_SUB) \
+  T (MULT_EXPR, IFN_LEN_MUL) \
+  T (TRUNC_DIV_EXPR, IFN_LEN_DIV) \
+  T (TRUNC_MOD_EXPR, IFN_LEN_MOD) \
+  T (RDIV_EXPR, IFN_LEN_RDIV) \
+  T (MIN_EXPR, IFN_LEN_MIN) \
+  T (MAX_EXPR, IFN_LEN_MAX) \
+  T (BIT_AND_EXPR, IFN_LEN_AND) \
+  T (BIT_IOR_EXPR, IFN_LEN_IOR) \
+  T (BIT_XOR_EXPR, IFN_LEN_XOR) \
+  T (LSHIFT_EXPR, IFN_LEN_SHL) \
+  T (RSHIFT_EXPR, IFN_LEN_SHR) \
+  T (NEGATE_EXPR, IFN_LEN_NEG) \
+  T (BIT_NOT_EXPR, IFN_LEN_NOT)
+
+/* Return a function that only performs CODE when a certain condition is met
+   and that uses a given fallback value otherwise.  For example, if CODE is
+   a binary operation associated with conditional function FN:
+
+     LHS = FN (LEN, A, B, ELSE)
+
+   is equivalent to the C expression:
+
+     LHS = LEN ? A CODE B : ELSE;
+
+   operating elementwise if the operands are vectors.
+
+   Return IFN_LAST if no such function exists.  */
+
+internal_fn
+get_with_length_internal_fn (tree_code code)
+{
+  switch (code)
+    {
+#define CASE(CODE, IFN) case CODE: return IFN;
+      FOR_EACH_CODE_MAPPING_WTIH_LENGTH(CASE)
+#undef CASE
+    default:
+      return IFN_LAST;
+    }
+}
+
+internal_fn
+get_with_length_shift_internal_fn (tree_code code, bool v)
+{
+  switch (code)
+    {
+    case LSHIFT_EXPR: return v ? IFN_LEN_VSHL : IFN_LEN_SHL;
+    case RSHIFT_EXPR: return v ? IFN_LEN_VSHR : IFN_LEN_SHR;
+    default:
+      return IFN_LAST;
+    }
+}
+
+internal_fn
+get_length_conversion_internal_fn (tree_code code, tree vectype_out, tree vectype_in)
+{
+  machine_mode m1,m2;
+  bool unsigned_p = TYPE_UNSIGNED (vectype_in);
+  internal_fn len_fn = IFN_LAST;
+
+  gcc_assert (VECTOR_TYPE_P (vectype_out) && VECTOR_TYPE_P (vectype_in));
+
+  m1 = TYPE_MODE (vectype_out);
+  m2 = TYPE_MODE (vectype_in);
+
+  if (!VECTOR_MODE_P (m1) || !VECTOR_MODE_P (m2))
+    return IFN_LAST;
+
+  /* First check if we can done conversion directly.  */
+  if (code == FIX_TRUNC_EXPR)
+    {
+      if (unsigned_p)
+        len_fn = convert_optab_handler (len_fixuns_trunc_optab, m2, m1)
+		!= CODE_FOR_nothing ? IFN_LEN_FIXUNS_TRUNC : IFN_LAST;
+      else
+        len_fn = convert_optab_handler (len_fix_trunc_optab, m2, m1)
+		!= CODE_FOR_nothing ? IFN_LEN_FIX_TRUNC : IFN_LAST;
+      return len_fn;
+    }
+
+  if (code == FLOAT_EXPR)
+    {
+      if (unsigned_p)
+        len_fn = convert_optab_handler (len_floatuns_optab, m2, m1)
+		!= CODE_FOR_nothing ? IFN_LEN_FLOATUNS : IFN_LAST;
+      else
+        len_fn = convert_optab_handler (len_float_optab, m2, m1)
+		!= CODE_FOR_nothing ? IFN_LEN_FLOAT : IFN_LAST;
+      return len_fn;
+    }
+
+  if (GET_MODE_UNIT_PRECISION (m1) > GET_MODE_UNIT_PRECISION (m2))
+    {
+      if (unsigned_p)
+        len_fn = convert_optab_handler (len_zero_extend_optab, m2, m1)
+		!= CODE_FOR_nothing ? IFN_LEN_ZERO_EXTEND : IFN_LAST;
+      else
+        len_fn = convert_optab_handler (len_extend_optab, m2, m1)
+		!= CODE_FOR_nothing ? IFN_LEN_EXTEND : IFN_LAST;
+    }
+
+  if (GET_MODE_UNIT_PRECISION (m1) < GET_MODE_UNIT_PRECISION (m2))
+    {
+      len_fn = convert_optab_handler (len_trunc_optab, m2, m1)
+		!= CODE_FOR_nothing ? IFN_LEN_TRUNC : IFN_LAST;
+    }
+
+  return len_fn;
+}
+
 /* If IFN implements the conditional form of a tree code, return that
    tree code, otherwise return ERROR_MARK.  */
 
@@ -4075,6 +4533,22 @@ conditional_internal_fn_code (internal_fn ifn)
     {
 #define CASE(CODE, IFN) case IFN: return CODE;
       FOR_EACH_CODE_MAPPING(CASE)
+#undef CASE
+    default:
+      return ERROR_MARK;
+    }
+}
+
+/* If IFN implements the with length form of a tree code, return that
+   tree code, otherwise return ERROR_MARK.  */
+
+tree_code
+with_length_internal_fn_code (internal_fn ifn)
+{
+  switch (ifn)
+    {
+#define CASE(CODE, IFN) case IFN: return CODE;
+      FOR_EACH_CODE_MAPPING_WTIH_LENGTH(CASE)
 #undef CASE
     default:
       return ERROR_MARK;
@@ -4134,6 +4608,20 @@ get_unconditional_internal_fn (internal_fn ifn)
     }
 }
 
+/* Return true if the fn is lenght conversion. */
+
+bool
+length_convert_fn_p (internal_fn ifn)
+{
+  return (ifn == IFN_LEN_EXTEND
+      || ifn == IFN_LEN_ZERO_EXTEND
+      || ifn == IFN_LEN_FLOAT
+      || ifn == IFN_LEN_FLOATUNS
+      || ifn == IFN_LEN_FIX_TRUNC
+      || ifn == IFN_LEN_FIXUNS_TRUNC
+      || ifn == IFN_LEN_TRUNC);
+}
+
 /* Return true if STMT can be interpreted as a conditional tree code
    operation of the form:
 
@@ -4186,6 +4674,18 @@ can_interpret_as_conditional_op_p (gimple *stmt, tree *cond_out,
 	      }
 	    return true;
 	  }
+
+	code = with_length_internal_fn_code (ifn);
+	if (code != ERROR_MARK)
+	  {
+	    *cond_out = NULL_TREE;
+	    *code_out = code;
+	    ops[0] = gimple_call_arg (call, 0);
+	    ops[1] = gimple_call_arg (call, 1);
+	    ops[2] = gimple_call_arg (call, 2);
+	    *else_out = NULL_TREE;
+	    return true;
+	  }
       }
   return false;
 }
@@ -4198,11 +4698,14 @@ internal_load_fn_p (internal_fn fn)
   switch (fn)
     {
     case IFN_MASK_LOAD:
+    case IFN_LEN_MASK_LOAD:
     case IFN_LOAD_LANES:
     case IFN_MASK_LOAD_LANES:
     case IFN_GATHER_LOAD:
     case IFN_MASK_GATHER_LOAD:
     case IFN_LEN_LOAD:
+    case IFN_LEN_GATHER_LOAD:
+    case IFN_LEN_MASK_GATHER_LOAD:
       return true;
 
     default:
@@ -4218,11 +4721,14 @@ internal_store_fn_p (internal_fn fn)
   switch (fn)
     {
     case IFN_MASK_STORE:
+    case IFN_LEN_MASK_STORE:
     case IFN_STORE_LANES:
     case IFN_MASK_STORE_LANES:
     case IFN_SCATTER_STORE:
     case IFN_MASK_SCATTER_STORE:
     case IFN_LEN_STORE:
+    case IFN_LEN_SCATTER_STORE:
+    case IFN_LEN_MASK_SCATTER_STORE:
       return true;
 
     default:
@@ -4264,6 +4770,10 @@ internal_fn_mask_index (internal_fn fn)
 
     case IFN_MASK_GATHER_LOAD:
     case IFN_MASK_SCATTER_STORE:
+    case IFN_LEN_GATHER_LOAD:
+    case IFN_LEN_SCATTER_STORE:
+    case IFN_LEN_MASK_GATHER_LOAD:
+    case IFN_LEN_MASK_SCATTER_STORE:
       return 4;
 
     default:
@@ -4284,7 +4794,9 @@ internal_fn_stored_value_index (internal_fn fn)
     case IFN_MASK_STORE_LANES:
     case IFN_SCATTER_STORE:
     case IFN_MASK_SCATTER_STORE:
+    case IFN_LEN_MASK_SCATTER_STORE:
     case IFN_LEN_STORE:
+    case IFN_LEN_SCATTER_STORE:
       return 3;
 
     default:

@@ -1,0 +1,959 @@
+/* RVV support
+   Copyright (C) 2018-2021 Free Software Foundation, Inc.
+   Contributed by Juzhe Zhong (juzhe.zhong@rivai.ai), RiVAI Technologies Ltd.
+
+   This file is part of GCC.
+
+   GCC is free software; you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3, or (at your option)
+   any later version.
+
+   GCC is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with GCC; see the file COPYING3.  If not see
+   <http://www.gnu.org/licenses/>.  */
+
+#define IN_TARGET_CODE 1
+
+#include "config.h"
+#include "system.h"
+#include "coretypes.h"
+#include "tm.h"
+#include "tree.h"
+#include "rtl.h"
+#include "tm_p.h"
+#include "memmodel.h"
+#include "insn-codes.h"
+#include "optabs.h"
+#include "recog.h"
+#include "cgraph.h"
+#include "diagnostic.h"
+#include "expr.h"
+#include "basic-block.h"
+#include "function.h"
+#include "fold-const.h"
+#include "varasm.h"
+#include "gimple.h"
+#include "gimple-iterator.h"
+#include "gimplify.h"
+#include "explow.h"
+#include "emit-rtl.h"
+#include "tree-vector-builder.h"
+#include "stor-layout.h"
+#include "regs.h"
+#include "alias.h"
+#include "gimple-fold.h"
+#include "langhooks.h"
+#include "stringpool.h"
+#include "attribs.h"
+#include "tree-pass.h"
+#include "tree-vrp.h"
+#include "tree-ssanames.h"
+#include "tree-ssa-operands.h"
+#include "tree-phinodes.h"
+#include "targhooks.h"
+#include "langhooks-def.h"
+#include "riscv-vector-builtins.h"
+#include "riscv-vector-builtins-functions.h"
+namespace riscv_vector
+{
+
+/* define help variables */
+static uint64_t pred_all = PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu;
+static uint64_t pred_tail = PRED_void | PRED_ta | PRED_tu;
+static uint64_t pred_mask = PRED_void | PRED_m | PRED_ma | PRED_mu;
+static uint64_t pred_mask2 = PRED_void | PRED_m;
+static uint64_t pred_reduce = PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_m_ta | PRED_m_tu;
+
+static uint64_t pat_mask_tail = PAT_mask | PAT_tail;
+static uint64_t pat_mask_tail_dest = PAT_mask | PAT_tail | PAT_dest;
+static uint64_t pat_mask_tail_void_dest = PAT_mask | PAT_tail | PAT_void_dest;
+static uint64_t pat_tail_void_dest = PAT_tail | PAT_void_dest;
+static uint64_t pat_void_dest_ignore_mp = PAT_mask | PAT_tail | PAT_void_dest | PAT_ignore_mask_policy;
+static uint64_t pat_mask_ignore_tp = PAT_mask | PAT_ignore_tail_policy;
+static uint64_t pat_mask_ignore_policy = PAT_mask | PAT_ignore_policy;
+
+/* share global variables */
+
+const unsigned int NAME_MAXLEN = 64;
+const unsigned int MAX_TUPLE_SIZE = 8;
+
+/* General type nodes: */
+#define DEFINE_SCALAR_TYPE_NODE(BITS)                                         \
+  tree int##BITS##_type_node;                                                 \
+  tree unsigned_int##BITS##_type_node;                                        \
+  tree int##BITS##_ptr_type_node;                                             \
+  tree unsigned_int##BITS##_ptr_type_node;                                    \
+  tree const_int##BITS##_ptr_type_node;                                       \
+  tree const_unsigned_int##BITS##_ptr_type_node;
+
+DEFINE_SCALAR_TYPE_NODE (8)
+DEFINE_SCALAR_TYPE_NODE (16)
+DEFINE_SCALAR_TYPE_NODE (32)
+DEFINE_SCALAR_TYPE_NODE (64)
+
+/* Type node for fp16.  */
+tree fp16_type_node;
+tree fp16_ptr_type_node;
+tree const_fp16_ptr_type_node;
+
+tree const_float_ptr_type_node;
+tree const_double_ptr_type_node;
+
+/* local share variables */
+
+static const unsigned int RISCV_TARGET_ANY = 0;
+static const unsigned int RISCV_TARGET_VECTOR = 1;
+static const unsigned int RISCV_TARGET_FP16 = 1 << 3;
+static const unsigned int RISCV_TARGET_HARD_FLOAT = 1 << 4;
+static const unsigned int RISCV_TARGET_DOUBLE_FLOAT = 1 << 5;
+static const unsigned int RISCV_TARGET_64BIT = 0; /* We don't use this static variable. */
+
+/* The same lmul doesn't mean use the same mask,
+   this is used as save codes.
+   for example: i32m8 use vbool4_t i8m8 use vbool1_t. */
+static CONSTEXPR const vector_lmul_info vector_lmuls[] =
+{
+  { LMUL_1F8, "mf8", "64" }, { LMUL_1F4, "mf4", "32" },
+  { LMUL_1F2, "mf2", "16" }, { LMUL_1, "m1", "8" },
+  { LMUL_2, "m2", "4" },     { LMUL_4, "m4", "2" },
+  { LMUL_8, "m8", "1" },
+};
+
+static CONSTEXPR const vector_type_info vector_type_infos[] =
+{
+#define DEF_RVV_TYPE(ELEM_TYPE, NODE) { VECTOR_TYPE_##ELEM_TYPE, #ELEM_TYPE },
+#include "riscv-vector-builtins.def"
+#undef DEF_RVV_TYPE
+};
+
+static GTY(()) tree abi_vector_types[NUM_VECTOR_TYPES + 1][NUM_LMUL + 1];
+
+/* Same, but with the riscv_vector.h "v..._t" name.  */
+tree riscv_vector_types[MAX_TUPLE_SIZE][NUM_VECTOR_TYPES + 1][NUM_LMUL + 1];
+
+
+/* All registered function decls, hashed on the function_instance
+   that they implement.  This is used for looking up implementations of
+   overloaded functions.  */
+hash_table<registered_function_hasher> *function_table;
+
+/* The scalar type associated with each vector type.  */
+static GTY(()) tree scalar_types[NUM_VECTOR_TYPES];
+
+static riscv_vector::function_builder** all_vector_functions;
+
+/* The list of all registered function decls, indexed by code.  */
+vec<registered_function *, va_gc> *registered_functions;
+
+static unsigned int NUM_INSN_FUNC;
+
+static void init_def_variables ();
+/* Force TYPE to be a sizeless type.  */
+static void
+make_type_sizeless (tree type)
+{
+  TYPE_ATTRIBUTES (type) = tree_cons (get_identifier ("RVV sizeless type"),
+				      NULL_TREE, TYPE_ATTRIBUTES (type));
+}
+
+/* Return true if TYPE is a sizeless type.  */
+static bool
+sizeless_type_p (const_tree type)
+{
+  if (type == error_mark_node)
+    return NULL_TREE;
+  return lookup_attribute ("RVV sizeless type", TYPE_ATTRIBUTES (type));
+}
+
+machine_mode
+vector_builtin_mode (scalar_mode inner_mode, unsigned int lmul)
+{
+  switch (inner_mode)
+    {
+    case E_BImode:
+      return lmul == LMUL_1     ? VNx16BImode
+	     : lmul == LMUL_2   ? VNx32BImode
+	     : lmul == LMUL_4   ? VNx64BImode
+	     : lmul == LMUL_8   ? VNx128BImode
+	     : lmul == LMUL_1F2 ? VNx8BImode
+	     : lmul == LMUL_1F4 ? VNx4BImode
+	     : VNx2BImode;
+
+    case E_QImode:
+      return lmul == LMUL_1     ? VNx16QImode
+	     : lmul == LMUL_2   ? VNx32QImode
+	     : lmul == LMUL_4   ? VNx64QImode
+	     : lmul == LMUL_8   ? VNx128QImode
+	     : lmul == LMUL_1F2 ? VNx8QImode
+	     : lmul == LMUL_1F4 ? VNx4QImode
+	     : VNx2QImode;
+
+    case E_HImode:
+      if (lmul == LMUL_1F8)
+	gcc_unreachable ();
+
+      return lmul == LMUL_1     ? VNx8HImode
+	     : lmul == LMUL_2   ? VNx16HImode
+	     : lmul == LMUL_4   ? VNx32HImode
+	     : lmul == LMUL_8   ? VNx64HImode
+	     : lmul == LMUL_1F2 ? VNx4HImode
+	     : VNx2HImode;
+
+    case E_SImode:
+      if (lmul == LMUL_1F8 || lmul == LMUL_1F4)
+	gcc_unreachable ();
+
+      return lmul == LMUL_1   ? VNx4SImode
+	     : lmul == LMUL_2 ? VNx8SImode
+	     : lmul == LMUL_4 ? VNx16SImode
+	     : lmul == LMUL_8 ? VNx32SImode
+	     : VNx2SImode;
+
+    case E_DImode:
+      if (lmul == LMUL_1F8 || lmul == LMUL_1F4 || lmul == LMUL_1F2)
+	gcc_unreachable ();
+
+      return lmul == LMUL_1   ? VNx2DImode
+	     : lmul == LMUL_2 ? VNx4DImode
+	     : lmul == LMUL_4 ? VNx8DImode
+	     : VNx16DImode;
+
+    case E_HFmode:
+      if (lmul == LMUL_1F8)
+	gcc_unreachable ();
+
+      return lmul == LMUL_1     ? VNx8HFmode
+	     : lmul == LMUL_2   ? VNx16HFmode
+	     : lmul == LMUL_4   ? VNx32HFmode
+	     : lmul == LMUL_8   ? VNx64HFmode
+	     : lmul == LMUL_1F2 ? VNx4HFmode
+	     : VNx2HFmode;
+
+    case E_SFmode:
+      if (lmul == LMUL_1F8 || lmul == LMUL_1F4)
+	gcc_unreachable ();
+
+      return lmul == LMUL_1   ? VNx4SFmode
+	     : lmul == LMUL_2 ? VNx8SFmode
+	     : lmul == LMUL_4 ? VNx16SFmode
+	     : lmul == LMUL_8 ? VNx32SFmode
+	     : VNx2SFmode;
+
+    case E_DFmode:
+      if (lmul == LMUL_1F8 || lmul == LMUL_1F4 || lmul == LMUL_1F2)
+	gcc_unreachable ();
+
+      return lmul == LMUL_1   ? VNx2DFmode
+	     : lmul == LMUL_2 ? VNx4DFmode
+	     : lmul == LMUL_4 ? VNx8DFmode
+	     : VNx16DFmode;
+
+    default:
+      gcc_unreachable ();
+    }
+
+  gcc_unreachable ();
+}
+
+/* Implement TARGET_VERIFY_TYPE_CONTEXT for RVV types.  */
+bool
+verify_type_context (location_t loc, type_context_kind context,
+                     const_tree type, bool silent_p)
+{
+  if (!sizeless_type_p (type))
+    return true;
+
+  switch (context)
+    {
+    case TCTX_SIZEOF:
+    case TCTX_STATIC_STORAGE:
+      if (!silent_p)
+        error_at (loc, "RVV type %qT does not have a fixed size", type);
+
+      return false;
+
+    case TCTX_ALIGNOF:
+      if (!silent_p)
+        error_at (loc, "RVV type %qT does not have a defined alignment", type);
+
+      return false;
+
+    case TCTX_THREAD_STORAGE:
+      if (!silent_p)
+        error_at (loc,
+                  "variables of type %qT cannot have thread-local"
+                  " storage duration",
+                  type);
+
+      return false;
+
+    case TCTX_POINTER_ARITH:
+      if (!silent_p)
+        error_at (loc, "arithmetic on pointer to RVV type %qT", type);
+
+      return false;
+
+    case TCTX_FIELD:
+      if (silent_p)
+        ;
+      else if (lang_GNU_CXX ())
+        error_at (loc, "member variables cannot have RVV type %qT", type);
+      else
+        error_at (loc, "fields cannot have RVV type %qT", type);
+
+      return false;
+
+    case TCTX_ARRAY_ELEMENT:
+      if (!silent_p)
+        error_at (loc, "array elements cannot have RVV type %qT", type);
+
+      return false;
+
+    case TCTX_ALLOCATION:
+      if (!silent_p)
+        error_at (loc, "cannot allocate objects with RVV type %qT", type);
+
+      return false;
+
+    case TCTX_DEALLOCATION:
+      if (!silent_p)
+        error_at (loc, "cannot delete objects with RVV type %qT", type);
+
+      return false;
+
+    case TCTX_EXCEPTIONS:
+      if (!silent_p)
+        error_at (loc, "cannot throw or catch RVV type %qT", type);
+
+      return false;
+
+    case TCTX_CAPTURE_BY_COPY:
+      if (!silent_p)
+        error_at (loc, "capture by copy of RVV type %qT", type);
+
+      return false;
+    }
+
+  gcc_unreachable ();
+}
+
+static unsigned int
+vector_legal_lmul (scalar_mode inner_mode)
+{
+  switch (inner_mode)
+    {
+    case E_BImode:
+      return LMUL_1F8;
+
+    case E_QImode:
+      return LMUL_1F8;
+
+    case E_HImode:
+      return LMUL_1F4;
+
+    case E_SImode:
+      return LMUL_1F2;
+
+    case E_DImode:
+      return LMUL_1;
+
+    case E_HFmode:
+      return LMUL_1F4;
+
+    case E_SFmode:
+      return LMUL_1F2;
+
+    case E_DFmode:
+      return LMUL_1;
+
+    default:
+      gcc_unreachable ();
+    }
+
+  gcc_unreachable ();
+}
+
+/* Record that TYPE is an ABI-defined VECTOR type that contains SEW and LMUL
+   information for RVV vector.  MANGLED_NAME, if nonnull, is the ABI-defined
+   mangling of the type.
+ */
+static void
+add_vector_type_attribute (tree type, unsigned int sew, unsigned int lmul,
+			   unsigned int is_bool, const char *mangled_name)
+{
+  tree mangled_name_tree
+    = (mangled_name ? get_identifier (mangled_name) : NULL_TREE);
+
+  tree value = tree_cons (NULL_TREE, mangled_name_tree, NULL_TREE);
+  value = tree_cons (NULL_TREE, size_int (sew), value);
+  value = tree_cons (NULL_TREE, size_int (lmul), value);
+  value = tree_cons (NULL_TREE, size_int (is_bool), value);
+  TYPE_ATTRIBUTES (type) = tree_cons (get_identifier ("RVV type"), value,
+				      TYPE_ATTRIBUTES (type));
+}
+
+/* If TYPE is an ABI-defined RVV type, return its attribute descriptor,
+   otherwise return null.  */
+static tree
+lookup_rvv_type_attribute (const_tree type)
+{
+  if (type == error_mark_node)
+    return NULL_TREE;
+  return lookup_attribute ("RVV type", TYPE_ATTRIBUTES (type));
+}
+
+/* If TYPE is a built-in type defined by the RVV ABI, return the mangled name,
+   otherwise return NULL.  */
+const char *
+mangle_builtin_type (const_tree type)
+{
+  /* ??? The C++ frontend normally strips qualifiers and attributes before
+     calling this hook, adding separate mangling for attributes that affect
+     type identity.  Fortunately the type copy will have the same TYPE_NAME
+     as the original, so we can get the attributes from there.  */
+  if (TYPE_NAME (type) && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL)
+    type = TREE_TYPE (TYPE_NAME (type));
+  if (tree attr = lookup_rvv_type_attribute (type))
+    if (tree id = TREE_VALUE (chain_index (3, TREE_VALUE (attr))))
+      return IDENTIFIER_POINTER (id);
+  return NULL;
+}
+
+/* These codes copied from ARM. */
+static void
+register_general_builtin_types (void)
+{
+  int8_type_node = intQI_type_node;
+  unsigned_int8_type_node = unsigned_intQI_type_node;
+  int16_type_node = intHI_type_node;
+  unsigned_int16_type_node = unsigned_intHI_type_node;
+
+  if (TARGET_64BIT)
+    {
+      int32_type_node = intSI_type_node;
+      unsigned_int32_type_node = unsigned_intSI_type_node;
+    }
+  else
+    {
+      /* int32_t/uint32_t defined as `long`/`unsigned long` in RV32,
+	  but intSI_type_node/unsigned_intSI_type_node is
+	  `int` and `unsigned int`, so use long_integer_type_node and
+	  long_unsigned_type_node here for type consistent.  */
+      int32_type_node = long_integer_type_node;
+      unsigned_int32_type_node = long_unsigned_type_node;
+    }
+
+  int64_type_node = intDI_type_node;
+  unsigned_int64_type_node = unsigned_intDI_type_node;
+
+  /* Pointer type */
+#define DEFINE_SCALAR_PTR_TYPE_NODE(NBITS)                                    \
+  int##NBITS##_ptr_type_node = build_pointer_type (int##NBITS##_type_node);   \
+  unsigned_int##NBITS##_ptr_type_node                                         \
+      = build_pointer_type (unsigned_int##NBITS##_type_node);                 \
+  const_int##NBITS##_ptr_type_node = build_pointer_type (                     \
+      build_type_variant (int##NBITS##_type_node, 1, 0));                     \
+  const_unsigned_int##NBITS##_ptr_type_node = build_pointer_type (            \
+      build_type_variant (unsigned_int##NBITS##_type_node, 1, 0));
+
+  DEFINE_SCALAR_PTR_TYPE_NODE (8)
+  DEFINE_SCALAR_PTR_TYPE_NODE (16)
+  DEFINE_SCALAR_PTR_TYPE_NODE (32)
+  DEFINE_SCALAR_PTR_TYPE_NODE (64)
+
+  fp16_type_node = make_node (REAL_TYPE);
+  TYPE_PRECISION (fp16_type_node) = 16;
+  layout_type (fp16_type_node);
+  (*lang_hooks.types.register_builtin_type) (fp16_type_node, "__fp16");
+
+  fp16_ptr_type_node = build_pointer_type (fp16_type_node);
+  const_fp16_ptr_type_node
+    = build_pointer_type (build_type_variant (fp16_type_node, 1, 0));
+  const_float_ptr_type_node
+    = build_pointer_type (build_type_variant (float_type_node, 1, 0));
+  const_double_ptr_type_node
+    = build_pointer_type (build_type_variant (double_type_node, 1, 0));
+}
+
+/* Register the built-in VECTOR ABI types, such as __rvv_int8mf8_t.  */
+static void
+register_builtin_types ()
+{
+#define DEF_RVV_TYPE(ELEM_TYPE, NODE)                                         \
+  scalar_types[VECTOR_TYPE_##ELEM_TYPE] = NODE;
+#include "riscv-vector-builtins.def"
+
+  for (unsigned int i = 0; i < NUM_VECTOR_TYPES; i++)
+    {
+      tree eltype = scalar_types[i];
+      scalar_mode elmode =
+          (eltype == boolean_type_node) ? BImode : SCALAR_TYPE_MODE (eltype);
+
+      for (unsigned int lmul = vector_legal_lmul (elmode); lmul < NUM_LMUL;
+           lmul++)
+        {
+          char abi_name[NAME_MAXLEN] = {0};
+          char mangled_name[NAME_MAXLEN] = {0};
+          bool is_bool;
+          tree vectype;
+          unsigned int sew = GET_MODE_BITSIZE (elmode);
+          machine_mode mode = vector_builtin_mode (elmode, lmul);
+
+          if (eltype == boolean_type_node)
+            {
+              /* mask type in RVV.  */
+              vectype = build_truth_vector_type_for_mode (
+                  BYTES_PER_RISCV_VECTOR, mode);
+
+              /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
+                 omp-low.c. We don't know why we need this protection, it seems
+                 to make the buildup of GCC more reliable. */
+              if (TYPE_MODE (vectype) != mode)
+                continue;
+
+              gcc_assert (VECTOR_MODE_P (TYPE_MODE (vectype)) &&
+                          TYPE_MODE (vectype) == mode &&
+                          TYPE_MODE (vectype) == TYPE_MODE_RAW (vectype) &&
+                          TYPE_ALIGN (vectype) == 8 &&
+                          known_eq (tree_to_poly_uint64 (TYPE_SIZE (vectype)),
+                                    BITS_PER_RISCV_VECTOR));
+              is_bool = true;
+            }
+          else
+            {
+              /* data type in RVV.  */
+              vectype = build_vector_type_for_mode (eltype, mode);
+
+              /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
+                 omp-low.c. We don't know why we need this protection, it seems
+                 to make the buildup of GCC more reliable. */
+              if (TYPE_MODE (vectype) != mode)
+                continue;
+
+              gcc_assert (VECTOR_MODE_P (TYPE_MODE (vectype)) &&
+                          TYPE_MODE (vectype) == mode &&
+                          TYPE_MODE_RAW (vectype) == mode &&
+                          TYPE_ALIGN (vectype) <= 128 &&
+                          known_eq (tree_to_poly_uint64 (TYPE_SIZE (vectype)),
+                                    GET_MODE_BITSIZE (mode)));
+              is_bool = false;
+            }
+          /* These codes copied from ARM. */
+          /* abi_name and api_name follows vector type implementation in LLVM.
+             Take sew = 8, lmul = 1/8 for example,
+             abi_name = __rvv_int8mf8_t,
+             api_name = vint8mf8_t.
+             The mangle name follows the rule of aarch64
+             that is "u" + length of (abi_name) + abi_name.
+             So that mangle_name = u15__rvv_int8mf8_t.  */
+          snprintf (abi_name, NAME_MAXLEN, "__rvv_%s%s_t",
+                    vector_type_infos[i].elem_name,
+                    is_bool ? vector_lmuls[lmul].boolnum
+                            : vector_lmuls[lmul].suffix);
+          snprintf (mangled_name, NAME_MAXLEN, "u%d__rvv_%s%s_t",
+                    (int)strlen (abi_name), vector_type_infos[i].elem_name,
+                    is_bool ? vector_lmuls[lmul].boolnum
+                            : vector_lmuls[lmul].suffix);
+          vectype = build_distinct_type_copy (vectype);
+          gcc_assert (vectype == TYPE_MAIN_VARIANT (vectype));
+          SET_TYPE_STRUCTURAL_EQUALITY (vectype);
+          TYPE_ARTIFICIAL (vectype) = 1;
+          TYPE_INDIVISIBLE_P (vectype) = 1;
+          add_vector_type_attribute (vectype, sew, lmul, is_bool, mangled_name);
+          make_type_sizeless (vectype);
+          abi_vector_types[i][lmul] = vectype;
+          lang_hooks.types.register_builtin_type (vectype, abi_name);
+        }
+    }
+}
+
+/* Initialize all compiler built-ins related to RVV that should be
+   defined at start-up.  */
+void
+init_builtins ()
+{
+  register_general_builtin_types ();
+
+  if (!TARGET_VECTOR)
+    return;
+
+  register_builtin_types ();
+
+  if (in_lto_p)
+    handle_pragma_vector ();
+}
+
+/* These codes copied from ARM. */
+/* Register vector type TYPE under its risv_vector.h name.  */
+static void
+register_vector_type (unsigned int type, unsigned int lmul)
+{
+  tree vectype = abi_vector_types[type][lmul];
+  char rvv_name[NAME_MAXLEN] = {0};
+  snprintf (rvv_name, NAME_MAXLEN, "v%s%s_t", vector_type_infos[type].elem_name,
+            strcmp (vector_type_infos[type].elem_name, "bool") == 0
+                ? vector_lmuls[lmul].boolnum
+                : vector_lmuls[lmul].suffix);
+  tree id = get_identifier (rvv_name);
+  tree decl = build_decl (input_location, TYPE_DECL, id, vectype);
+  decl = lang_hooks.decls.pushdecl (decl);
+
+  /* Record the new RVV type if pushdecl succeeded without error.  Use
+     the ABI type otherwise, so that the type we record at least has the
+     right form, even if it doesn't have the right name.  This should give
+     better error recovery behavior than installing error_mark_node or
+     installing an incorrect type.  */
+  if (decl && TREE_CODE (decl) == TYPE_DECL &&
+      TREE_TYPE (decl) != error_mark_node &&
+      TYPE_MAIN_VARIANT (TREE_TYPE (decl)) == vectype)
+    vectype = TREE_TYPE (decl);
+
+  riscv_vector_types[0][type][lmul] = vectype;
+}
+
+static machine_mode
+get_tuple_mode (machine_mode mode, size_t nelt)
+{
+#define GET_TUPLE8_MODE(MODE)                                                 \
+  case VNx##MODE##mode:                                                       \
+    if (nelt == 2)                                                            \
+      return VNx2x##MODE##mode;                                               \
+    else if (nelt == 3)                                                       \
+      return VNx3x##MODE##mode;                                               \
+    else if (nelt == 4)                                                       \
+      return VNx4x##MODE##mode;                                               \
+    else if (nelt == 5)                                                       \
+      return VNx5x##MODE##mode;                                               \
+    else if (nelt == 6)                                                       \
+      return VNx6x##MODE##mode;                                               \
+    else if (nelt == 7)                                                       \
+      return VNx7x##MODE##mode;                                               \
+    else if (nelt == 8)                                                       \
+      return VNx8x##MODE##mode;                                               \
+    else                                                                      \
+      gcc_unreachable ();
+#define GET_TUPLE4_MODE(MODE)                                                 \
+  case VNx##MODE##mode:                                                       \
+    if (nelt == 2)                                                            \
+      return VNx2x##MODE##mode;                                               \
+    else if (nelt == 3)                                                       \
+      return VNx3x##MODE##mode;                                               \
+    else if (nelt == 4)                                                       \
+      return VNx4x##MODE##mode;                                               \
+    else                                                                      \
+      gcc_unreachable ();
+#define GET_TUPLE2_MODE(MODE)                                                 \
+  case VNx##MODE##mode:                                                       \
+    if (nelt == 2)                                                            \
+      return VNx2x##MODE##mode;                                               \
+    else                                                                      \
+      gcc_unreachable ();
+
+  switch (mode)
+    {
+      GET_TUPLE8_MODE (2QI)
+      GET_TUPLE8_MODE (4QI)
+      GET_TUPLE8_MODE (8QI)
+      GET_TUPLE8_MODE (16QI)
+      GET_TUPLE4_MODE (32QI)
+      GET_TUPLE2_MODE (64QI)
+      GET_TUPLE8_MODE (2HI)
+      GET_TUPLE8_MODE (4HI)
+      GET_TUPLE8_MODE (8HI)
+      GET_TUPLE4_MODE (16HI)
+      GET_TUPLE2_MODE (32HI)
+      GET_TUPLE8_MODE (2SI)
+      GET_TUPLE8_MODE (4SI)
+      GET_TUPLE4_MODE (8SI)
+      GET_TUPLE2_MODE (16SI)
+      GET_TUPLE8_MODE (2DI)
+      GET_TUPLE4_MODE (4DI)
+      GET_TUPLE2_MODE (8DI)
+      GET_TUPLE8_MODE (2HF)
+      GET_TUPLE8_MODE (4HF)
+      GET_TUPLE8_MODE (8HF)
+      GET_TUPLE4_MODE (16HF)
+      GET_TUPLE2_MODE (32HF)
+      GET_TUPLE8_MODE (2SF)
+      GET_TUPLE8_MODE (4SF)
+      GET_TUPLE4_MODE (8SF)
+      GET_TUPLE2_MODE (16SF)
+      GET_TUPLE8_MODE (2DF)
+      GET_TUPLE4_MODE (4DF)
+      GET_TUPLE2_MODE (8DF)
+
+    default:
+      break;
+    }
+
+  gcc_unreachable ();
+}
+
+/* These codes copied from ARM. */
+/* Register the tuple type that contains NUM_VECTORS vectors of lmul LMUL.  */
+static void
+register_tuple_type (unsigned int num_vectors, unsigned int type,
+		     unsigned int lmul)
+{
+  tree tuple_type = lang_hooks.types.make_type (RECORD_TYPE);
+
+  /* Work out the structure name.  */
+  char buffer[sizeof ("vfloat16mf8x8_t")];
+  snprintf (buffer, sizeof (buffer), "v%s%sx%d_t",
+	    vector_type_infos[type].elem_name, vector_lmuls[lmul].suffix,
+	    num_vectors);
+  char mangled_name[NAME_MAXLEN] = { 0 };
+  snprintf (mangled_name, NAME_MAXLEN, "u%d__rvv_%s%s_t", (int)strlen (buffer),
+	    vector_type_infos[lmul].elem_name, vector_lmuls[lmul].suffix);
+  tree vector_type = riscv_vector_types[0][type][lmul];
+  tree array_type = build_array_type_nelts (vector_type, num_vectors);
+  machine_mode tuple_mode
+    = get_tuple_mode (TYPE_MODE (vector_type), num_vectors);
+  SET_TYPE_MODE (array_type, tuple_mode);
+  gcc_assert (VECTOR_MODE_P (TYPE_MODE (array_type))
+	      && TYPE_MODE_RAW (array_type) == TYPE_MODE (array_type)
+	      && TYPE_ALIGN (array_type) <= 128);
+  unsigned int sew
+    = GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type)));
+
+  tree field = build_decl (input_location, FIELD_DECL,
+			   get_identifier ("val"), array_type);
+  DECL_FIELD_CONTEXT (field) = tuple_type;
+  TYPE_FIELDS (tuple_type) = field;
+  add_vector_type_attribute (tuple_type, sew, lmul, false, mangled_name);
+  make_type_sizeless (tuple_type);
+  layout_type (tuple_type);
+  gcc_assert (VECTOR_MODE_P (TYPE_MODE (tuple_type))
+	      && TYPE_MODE_RAW (tuple_type) == TYPE_MODE (tuple_type)
+	      && TYPE_ALIGN (tuple_type) <= 128);
+
+  tree decl = build_decl (input_location, TYPE_DECL, get_identifier (buffer),
+			  tuple_type);
+  TYPE_NAME (tuple_type) = decl;
+  TYPE_STUB_DECL (tuple_type) = decl;
+  lang_hooks.decls.pushdecl (decl);
+  /* ??? Undo the effect of set_underlying_type for C.  The C frontend
+     doesn't recognize DECL as a built-in because (as intended) the decl has
+     a real location instead of BUILTINS_LOCATION.  The frontend therefore
+     treats the decl like a normal C "typedef struct foo foo;", expecting
+     the type for tag "struct foo" to have a dummy unnamed TYPE_DECL instead
+     of the named one we attached above.  It then sets DECL_ORIGINAL_TYPE
+     on the supposedly unnamed decl, creating a circularity that upsets
+     dwarf2out.
+
+     We don't want to follow the normal C model and create "struct foo"
+     tags for tuple types since (a) the types are supposed to be opaque
+     and (b) they couldn't be defined as a real struct anyway.  Treating
+     the TYPE_DECLs as "typedef struct foo foo;" without creating
+     "struct foo" would lead to confusing error messages.  */
+  DECL_ORIGINAL_TYPE (decl) = NULL_TREE;
+
+  riscv_vector_types[num_vectors - 1][type][lmul] = tuple_type;
+}
+
+/* Implement #pragma riscv intrinsic vector.  */
+void
+handle_pragma_vector ()
+{
+  if (function_table)
+    {
+      error ("duplicate definition of %qs", "vector");
+      return;
+    }
+
+  /* Define the vector and tuple types.  */
+  for (unsigned int type_i = 0; type_i < NUM_VECTOR_TYPES; ++type_i)
+    {
+      tree eltype = scalar_types[type_i];
+      scalar_mode elmode =
+          (eltype == boolean_type_node) ? BImode : SCALAR_TYPE_MODE (eltype);
+
+      for (unsigned int lmul = vector_legal_lmul (elmode); lmul < NUM_LMUL;
+           lmul++)
+        {
+          register_vector_type (type_i, lmul);
+
+          if (type_i != VECTOR_TYPE_bool)
+            {
+              for (unsigned int count = 2; count <= MAX_TUPLE_SIZE; ++count)
+                {
+                  if (lmul == LMUL_1F8 || lmul == LMUL_1F4 ||
+                      lmul == LMUL_1F2 || lmul == LMUL_1 ||
+                      (lmul == LMUL_2 && count <= 4) ||
+                      (lmul == LMUL_4 && count <= 2))
+                    register_tuple_type (count, type_i, lmul);
+                  else
+                    continue;
+                }
+            }
+        }
+    }
+
+  init_def_variables ();
+
+  /* Define the functions.  */
+  function_table = new hash_table<registered_function_hasher> (1023);
+
+  for (unsigned int i = 0; i < NUM_INSN_FUNC; ++i)
+    all_vector_functions[i]->register_function ();
+}
+
+/* Return the function decl with RVV function subcode CODE, or error_mark_node
+   if no such function exists.  */
+tree
+builtin_decl (unsigned int code, bool)
+{
+  if (code >= vec_safe_length (registered_functions))
+    return error_mark_node;
+
+  return (*registered_functions)[code]->decl;
+}
+
+/* Perform any semantic checks needed for a call to the RVV function
+   with subcode CODE, such as testing for integer constant expressions.
+   The call occurs at location LOCATION and has NARGS arguments,
+   given by ARGS.  FNDECL is the original function decl, before
+   overload resolution.
+
+   Return true if the call is valid, otherwise report a suitable error.  */
+bool
+check_builtin_call (location_t location, vec<location_t>, unsigned int code,
+                    tree fndecl, unsigned int nargs, tree *args)
+{
+  const registered_function &rfn = *(*registered_functions)[code];
+  function_builder *builder = rfn.instance.builder ();
+
+  if (!builder->check_required_extensions (
+          location, rfn.decl, rfn.instance.get_arg_pattern ().arg_extensions))
+    return false;
+
+  return rfn.instance.check (location, fndecl, TREE_TYPE (rfn.decl), nargs,
+                             args);
+}
+
+/* Return true if TYPE is a built-in RVV type defined by the ABI or RVV.  */
+bool
+builtin_type_p (const_tree type)
+{
+  return lookup_rvv_type_attribute (type);
+}
+
+/* Attempt to fold STMT, given that it's a call to the RVV function
+   with subcode CODE.  Return the new statement on success and null
+   on failure.  Insert any other new statements at GSI.  */
+gimple *
+gimple_fold_builtin (unsigned int code, gimple_stmt_iterator *gsi, gcall *stmt)
+{
+  registered_function &rfn = *(*registered_functions)[code];
+  function_builder *builder = rfn.instance.builder ();
+  return builder->fold (rfn.instance, gsi, stmt);
+}
+
+/* Expand a call to the RVV function with subcode CODE.  EXP is the call
+   expression and TARGET is the preferred location for the result.
+   Return the value of the lhs.  */
+rtx
+expand_builtin (unsigned int code, tree exp, rtx target)
+{
+  registered_function &rfn = *(*registered_functions)[code];
+  function_builder *builder = rfn.instance.builder ();
+
+  if (!builder->check_required_extensions (
+          EXPR_LOCATION (exp), rfn.decl,
+          rfn.instance.get_arg_pattern ().arg_extensions))
+    return target;
+
+  return builder->expand (rfn.instance, exp, target);
+}
+
+riscv_vector::vector_arg_all_modes &
+get_vector_arg_all_patterns (unsigned int len,
+                             riscv_vector::vector_arg_attr_info attr, ...)
+{
+  riscv_vector::vector_arg_all_modes &patterns =
+      *ggc_alloc<riscv_vector::vector_arg_all_modes> ();
+  patterns.arg_len = len;
+  patterns.arg_list = (riscv_vector::vector_mode_attr_list **)xmalloc (
+      len * sizeof (riscv_vector::vector_mode_attr_list *));
+  patterns.target_op_list = (int *)xmalloc (len * sizeof (int));
+  patterns.dt_list =
+      (data_type_index *)xmalloc (len * sizeof (data_type_index));
+
+  unsigned int arg_idx = 0;
+  va_list arg_ptr;
+  riscv_vector::vector_arg_attr_info next_attr = attr;
+
+  va_start (arg_ptr, attr);
+
+  while (arg_idx < len)
+    {
+      patterns.dt_list[arg_idx] = next_attr.dt;
+      patterns.arg_list[arg_idx] = next_attr.mode_attr_list;
+      patterns.target_op_list[arg_idx] = next_attr.target_op;
+      next_attr = va_arg (arg_ptr, riscv_vector::vector_arg_attr_info);
+      arg_idx++;
+    }
+
+  va_end (arg_ptr);
+
+  return patterns;
+}
+
+static vector_mode_attr_list vector_mode_attr_list_list[vector_arg_mode_category_num];
+
+static void
+init_def_variables ()
+{
+
+/* define vector arg mode category */
+#define VVAR(NAME) vector_mode_attr_list_list[vector_mode_attr_##NAME]
+#define VITER(NAME, SIGN) riscv_vector::vector_arg_attr_info{-1, DT_##SIGN, &VVAR(NAME)}
+#define VATTR(OP, NAME, SIGN) riscv_vector::vector_arg_attr_info{OP, DT_##SIGN, &VVAR(NAME)}
+#define DEF_RISCV_ARG_MODE_ATTR_VARIABLE(VARIABLE_NAME, ELEM_CNT) \
+  VVAR(VARIABLE_NAME) = {ELEM_CNT, \
+    (riscv_vector::vector_mode_attr*)xmalloc(ELEM_CNT * sizeof(vector_mode_attr))};
+#include "riscv-vector-builtins-iterators.def"
+#undef DEF_RISCV_ARG_MODE_ATTR_VARIABLE
+
+/* define every vector arg mode in category  */
+#define DEF_RISCV_ARG_MODE_ATTR(VARIABLE_NAME, INDEX, MODE, ATTR_MODE,        \
+				CONDITION)                                    \
+  VVAR (VARIABLE_NAME).attr_list[INDEX]                                       \
+      = { MODE##mode, ATTR_MODE##mode, RISCV_##CONDITION };
+#include "riscv-vector-builtins-iterators.def"
+#undef DEF_RISCV_ARG_MODE_ATTR
+
+  /* count the number of intrinsic functions */
+  NUM_INSN_FUNC = 0;
+#define DEF_RVV_FUNCTION(BASE_NAME, CLASS_NAME, ARG_PATTERN, INTRNSIC_PATTER, PREDS, OP_TYPES) \
+  NUM_INSN_FUNC++;
+#include "riscv-vector-builtins-functions.def"
+#undef DEF_RVV_FUNCTION
+
+  all_vector_functions = (riscv_vector::function_builder **)xmalloc (
+			   sizeof (riscv_vector::function_builder *) * NUM_INSN_FUNC);
+
+  unsigned int func_idx = 0;
+#define VITER(NAME, SIGN)                                                     \
+  riscv_vector::vector_arg_attr_info { -1, DT_##SIGN, &VVAR (NAME) }
+#define VATTR(OP, NAME, SIGN)                                                 \
+  riscv_vector::vector_arg_attr_info { OP, DT_##SIGN, &VVAR (NAME) }
+#define DEF_RVV_FUNCTION(BASE_NAME, CLASS_NAME, ARG_PATTERN, INTRNSIC_PATTER, PREDS, OP_TYPES) \
+  all_vector_functions[func_idx++] = new riscv_vector::CLASS_NAME (           \
+      #BASE_NAME, get_vector_arg_all_patterns ARG_PATTERN, INTRNSIC_PATTER, PREDS, OP_TYPES,   \
+      (REQUIRED_EXTENSIONS));
+#include "riscv-vector-builtins-functions.def"
+#undef DEF_RVV_FUNCTION
+}
+
+} //end namespace riscv_vector
+
+using namespace riscv_vector;
+
+#include "gt-riscv-vector-builtins.h"

@@ -140,6 +140,77 @@ get_vcond_eq_icode (machine_mode vmode, machine_mode cmode)
   return convert_optab_handler (vcondeq_optab, vmode, cmode);
 }
 
+/* Return insn code for a comparison operator with VMODE
+   resultin MASK_MODE, unsigned if UNS is true.  */
+
+static inline enum insn_code
+get_len_vec_cmp_icode (machine_mode vmode, machine_mode mask_mode, bool uns)
+{
+  optab tab = uns ? len_vec_cmpu_optab : len_vec_cmp_optab;
+  return convert_optab_handler (tab, vmode, mask_mode);
+}
+
+/* Return insn code for a conditional operator with a comparison in
+   mode CMODE, unsigned if UNS is true, resulting in a value of mode VMODE.  */
+
+inline enum insn_code
+get_len_vcond_icode (machine_mode vmode, machine_mode cmode, bool uns)
+{
+  enum insn_code icode = CODE_FOR_nothing;
+  if (uns)
+    icode = convert_optab_handler (len_vcondu_optab, vmode, cmode);
+  else
+    icode = convert_optab_handler (len_vcond_optab, vmode, cmode);
+  return icode;
+}
+
+/* Return insn code for a conditional operator with a mask mode
+   MMODE resulting in a value of mode VMODE.  */
+
+static inline enum insn_code
+get_len_vcond_mask_icode (machine_mode vmode, machine_mode mmode)
+{
+  return convert_optab_handler (len_vcond_mask_optab, vmode, mmode);
+}
+
+/* Return insn code for a comparison operator with VMODE
+   resultin MASK_MODE, unsigned if UNS is true.  */
+
+static inline enum insn_code
+get_vec_cmp_vs_icode (machine_mode vmode, machine_mode mask_mode, bool uns)
+{
+  optab tab = uns ? vec_cmpu_vs_optab : vec_cmp_vs_optab;
+  return convert_optab_handler (tab, vmode, mask_mode);
+}
+
+/* Return insn code for a conditional operator with a mask mode
+   MMODE resulting in a value of mode VMODE.  */
+
+static inline enum insn_code
+get_vcond_mask_vs_icode (machine_mode vmode, machine_mode mmode)
+{
+  return convert_optab_handler (vcond_mask_vs_optab, vmode, mmode);
+}
+
+/* Return insn code for a comparison operator with VMODE
+   resultin MASK_MODE, unsigned if UNS is true.  */
+
+static inline enum insn_code
+get_len_vec_cmp_vs_icode (machine_mode vmode, machine_mode mask_mode, bool uns)
+{
+  optab tab = uns ? len_vec_cmpu_vs_optab : len_vec_cmp_vs_optab;
+  return convert_optab_handler (tab, vmode, mask_mode);
+}
+
+/* Return insn code for a conditional operator with a mask mode
+   MMODE resulting in a value of mode VMODE.  */
+
+static inline enum insn_code
+get_len_vcond_mask_vs_icode (machine_mode vmode, machine_mode mmode)
+{
+  return convert_optab_handler (len_vcond_mask_vs_optab, vmode, mmode);
+}
+
 /* Enumerates the possible extraction_insn operations.  */
 enum extraction_pattern { EP_insv, EP_extv, EP_extzv };
 
@@ -188,7 +259,9 @@ enum insn_code find_widening_optab_handler_and_mode (optab, machine_mode,
 						     machine_mode *);
 int can_mult_highpart_p (machine_mode, bool);
 bool can_vec_mask_load_store_p (machine_mode, machine_mode, bool);
+bool can_vec_len_load_store_p (machine_mode, bool);
 opt_machine_mode get_len_load_store_mode (machine_mode, bool);
+opt_machine_mode get_len_gather_scatter_mode (machine_mode, machine_mode, bool);
 bool can_compare_and_swap_p (machine_mode, bool);
 bool can_atomic_exchange_p (machine_mode, bool);
 bool can_atomic_load_p (machine_mode);

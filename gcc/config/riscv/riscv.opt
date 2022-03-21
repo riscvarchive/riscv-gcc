@@ -70,6 +70,67 @@ Enum(abi_type) String(lp64f) Value(ABI_LP64F)
 EnumValue
 Enum(abi_type) String(lp64d) Value(ABI_LP64D)
 
+Enum
+Name(riscv_vector_bits) Type(enum riscv_vector_bits_enum)
+The possible RVV vector lengths:
+
+EnumValue
+Enum(riscv_vector_bits) String(scalable) Value(RVV_SCALABLE)
+
+EnumValue
+Enum(riscv_vector_bits) String(128) Value(RVV_128)
+
+EnumValue
+Enum(riscv_vector_bits) String(256) Value(RVV_256)
+
+EnumValue
+Enum(riscv_vector_bits) String(512) Value(RVV_512)
+
+EnumValue
+Enum(riscv_vector_bits) String(1024) Value(RVV_1024)
+
+EnumValue
+Enum(riscv_vector_bits) String(2048) Value(RVV_2048)
+
+EnumValue
+Enum(riscv_vector_bits) String(4096) Value(RVV_4096)
+
+EnumValue
+Enum(riscv_vector_bits) String(8192) Value(RVV_8192)
+
+EnumValue
+Enum(riscv_vector_bits) String(16384) Value(RVV_16384)
+
+EnumValue
+Enum(riscv_vector_bits) String(32768) Value(RVV_32768)
+
+EnumValue
+Enum(riscv_vector_bits) String(65536) Value(RVV_65536)
+
+mriscv-vector-bits=
+Target RejectNegative Joined Enum(riscv_vector_bits) Var(riscv_vector_bits) Init(RVV_SCALABLE)
+-mriscv-vector-bits=<number>	Set the number of bits in an RVV vector register.
+
+Enum
+Name(riscv_vector_lmul) Type(enum riscv_vector_lmul_enum)
+The possible vectorization factor:
+
+EnumValue
+Enum(riscv_vector_lmul) String(1) Value(RVV_LMUL1)
+
+EnumValue
+Enum(riscv_vector_lmul) String(2) Value(RVV_LMUL2)
+
+EnumValue
+Enum(riscv_vector_lmul) String(4) Value(RVV_LMUL4)
+
+EnumValue
+Enum(riscv_vector_lmul) String(8) Value(RVV_LMUL8)
+
+mriscv-vector-lmul=
+Target RejectNegative Joined Enum(riscv_vector_lmul) Var(riscv_vector_lmul) Init(RVV_LMUL1)
+-mriscv-vector-lmul=<lmul>	Set the vf using lmul in auto-vectorization.
+
 mfdiv
 Target Mask(FDIV)
 Use hardware floating-point divide and square root instructions.
@@ -148,6 +209,8 @@ Mask(RVE)
 
 Mask(VECTOR)
 
+Mask(ZFH)
+
 mriscv-attribute
 Target Var(riscv_emit_attribute_p) Init(-1)
 Emit RISC-V ELF attribute.
@@ -204,6 +267,12 @@ TargetVariable
 int riscv_zk_subext
 
 TargetVariable
+int riscv_v_subext
+
+TargetVariable
+int riscv_zfh_subext
+
+TargetVariable
 int riscv_vector_eew_flags
 
 TargetVariable
@@ -225,3 +294,7 @@ Enum(isa_spec_class) String(20191213) Value(ISA_SPEC_CLASS_20191213)
 misa-spec=
 Target RejectNegative Joined Enum(isa_spec_class) Var(riscv_isa_spec) Init(TARGET_DEFAULT_ISA_SPEC)
 Set the version of RISC-V ISA spec.
+
+mrvv
+Target Var(TARGET_RVV)
+Use RVV instructions to do auto-vectorization.
