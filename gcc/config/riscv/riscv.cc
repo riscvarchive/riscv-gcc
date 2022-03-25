@@ -6488,9 +6488,10 @@ riscv_vector_mode_supported_p (machine_mode mode)
 static opt_machine_mode
 riscv_array_mode (machine_mode mode, unsigned HOST_WIDE_INT nelems)
 {
-  machine_mode vmode = VOIDmode;
-  if (riscv_vector_array_mode (mode, nelems).exists (&vmode) &&
-      VECTOR_MODE_P (vmode))
+  machine_mode vmode;
+  if (TARGET_VECTOR && TARGET_RVV
+    && riscv_vector_tuple_mode (mode, nelems).exists (&vmode)
+    && VECTOR_MODE_P (vmode))
     return vmode;
 
   return opt_machine_mode ();

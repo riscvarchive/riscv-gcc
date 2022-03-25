@@ -907,20 +907,6 @@
 (define_mode_attr von [
   (VNx2DI "vnx2qi") (VNx4DI "vnx4qi") (VNx8DI "vnx8qi") (VNx16DI "vnx16qi")])
 
-;; Map a vector float to vector int in fix truncation
-(define_mode_attr TRUNC_SINGLE [(VNx8HF "VNx8QI") (VNx4HF "VNx4QI") (VNx2HF "VNx2QI")
-				(VNx4SF "VNx4HI") (VNx2SF "VNx2HI")
-				(VNx2DF "VNx2SI") (VNx4SI "VNx4HF") (VNx2SI "VNx2HF") (VNx2DI "VNx2SF")])
-(define_mode_attr TRUNC_DOUBLE [
-				(VNx4SF "VNx4QI") (VNx2SF "VNx2QI")
-				(VNx2DF "VNx2HI")])
-(define_mode_attr trunc_single [(VNx8HF "vnx8qi") (VNx4HF "vnx4qi") (VNx2HF "vnx2qi")
-				(VNx4SF "vnx4hi") (VNx2SF "vnx2hi")
-				(VNx2DF "vnx2si") (VNx4SI "vnx4hf") (VNx2SI "vnx2hf") (VNx2DI "vnx2sf")])
-(define_mode_attr trunc_double [
-				(VNx4SF "vnx4qi") (VNx2SF "vnx2qi")
-				(VNx2DF "vnx2hi")])
-
 ;; Map a vector int or float mode to quad-widening vector mode.
 (define_mode_attr VQW [
   (VNx2QI "VNx2SI") (VNx4QI "VNx4SI") (VNx8QI "VNx8SI") (VNx16QI "VNx16SI")
@@ -1781,14 +1767,22 @@
   (VNx16SI "VNx8DI")
   (VNx32SI "VNx16DI")])
 
-;; The number of bits in a vector container.
-(define_mode_attr container_bits [(VNx16QI "8")
-				  (VNx8HI "16") (VNx8QI "16") (VNx8HF "16")
-				  (VNx4SI "32") (VNx4HI "32") (VNx4QI "32")
-				  (VNx4SF "32") (VNx4HF "32")
-				  (VNx2DI "64") (VNx2SI "64") (VNx2HI "64")
-				  (VNx2QI "64") (VNx2DF "64") (VNx2SF "64")
-				  (VNx2HF "64")])
+(define_mode_attr vcond_mask_vs_predicate [
+  (VNx2QI "reg_or_simm5_operand") (VNx4QI "reg_or_simm5_operand") (VNx8QI "reg_or_simm5_operand") 
+  (VNx16QI "reg_or_simm5_operand") (VNx32QI "reg_or_simm5_operand") (VNx64QI "reg_or_simm5_operand") 
+  (VNx128QI "reg_or_simm5_operand")
+  (VNx2HI "reg_or_simm5_operand") (VNx4HI "reg_or_simm5_operand") (VNx8HI "reg_or_simm5_operand") 
+  (VNx16HI "reg_or_simm5_operand") (VNx32HI "reg_or_simm5_operand") (VNx64HI "reg_or_simm5_operand")
+  (VNx2SI "reg_or_simm5_operand") (VNx4SI "reg_or_simm5_operand") (VNx8SI "reg_or_simm5_operand") 
+  (VNx16SI "reg_or_simm5_operand") (VNx32SI "reg_or_simm5_operand")
+  (VNx2DI "reg_or_simm5_operand") (VNx4DI "reg_or_simm5_operand") (VNx8DI "reg_or_simm5_operand") 
+  (VNx16DI "reg_or_simm5_operand")
+  (VNx2HF "register_operand") (VNx4HF "register_operand") (VNx8HF "register_operand")
+  (VNx16HF "register_operand") (VNx32HF "register_operand") (VNx64HF "register_operand")
+  (VNx2SF "register_operand") (VNx4SF "register_operand") (VNx8SF "register_operand")
+  (VNx16SF "register_operand") (VNx32SF "register_operand")
+  (VNx2DF "register_operand") (VNx4DF "register_operand") (VNx8DF "register_operand")
+  (VNx16DF "register_operand")])
 
 ;; all indexed load/store.
 (define_int_iterator INDEXED_LOAD [UNSPEC_UNORDER_INDEXED_LOAD UNSPEC_ORDER_INDEXED_LOAD])

@@ -42,7 +42,7 @@
 
 TEST_ALL (TEST_LOOP)
         
-/* { dg-final { scan-assembler-times "\tvmsne\.vi" 121 {target riscv32-*-*} } } */
+/* { dg-final { scan-assembler-times "\tvmsne\.vi" 242 {target riscv32-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvmsle\.vx" 24 {target riscv32-*-*} } } */
 
 
@@ -51,7 +51,7 @@ TEST_ALL (TEST_LOOP)
 /* { dg-final { scan-assembler-times "\tvmsleu\.vv" 20 {target riscv32-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvmfle\.vf" 33 {target riscv32-*-*} } } */
 /* { dg-final { scan-tree-dump-times "\.WHILE_LEN" 121 "optimized" {target riscv32-*-*} } } */
-/* { dg-final { scan-assembler-times "\tvmsne\.vi" 121 {target riscv64-*-*} } } */
+/* { dg-final { scan-assembler-times "\tvmsne\.vi" 242 {target riscv64-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvmsle\.vx" 44 {target riscv64-*-*} } } */
 
 /* { dg-final { scan-assembler-times "\tvmsleu\.vx" 44 {target riscv64-*-*} } } */

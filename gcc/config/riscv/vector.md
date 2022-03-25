@@ -271,7 +271,7 @@
   rtx ele;
   if (const_vec_duplicate_p (operands[1], &ele))
     {
-      gcc_assert (CONST_INT_P (ele));
+      gcc_assert (CONST_SCALAR_INT_P (ele));
       rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
       switch (INTVAL (ele))
   {
@@ -618,7 +618,7 @@
   "TARGET_VECTOR"
   {
     char buf[64];
-    gcc_assert (CONSTANT_P (operands[2]));
+    gcc_assert (CONST_INT_P (operands[2]));
     const char *insn = satisfies_constraint_K (operands[1]) ? "vsetivli\t%0,%1"
         : "vsetvli\t%0,%1";
     unsigned int vsew = riscv_parse_vsew_field (INTVAL (operands[2]));
@@ -653,7 +653,7 @@
   "TARGET_VECTOR"
   {
     char buf[64];
-    gcc_assert (CONSTANT_P (operands[2]));
+    gcc_assert (CONST_INT_P (operands[2]));
     const char *insn = satisfies_constraint_K (operands[1]) ? "vsetivli\t%0,%1"
         : "vsetvli\t%0,%1";
     unsigned int vsew = riscv_parse_vsew_field (INTVAL (operands[2]));
@@ -3642,7 +3642,7 @@
    vwmul<u>.vv\t%0,%3,%4
    vwmul<u>.vv\t%0,%3,%4"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening Signed/Unsigned Integer multiply.
 (define_insn "@vwmul<u><vw>_vx"
@@ -3672,7 +3672,7 @@
    vwmul<u>.vx\t%0,%3,%4
    vwmul<u>.vx\t%0,%3,zero"
   [(set_attr "type" "vwarith")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Widening Signed-Unsigned Integer multiply.
 (define_insn "@vwmulsu<vw>_vv"
@@ -3697,7 +3697,7 @@
    vwmulsu.vv\t%0,%3,%4
    vwmulsu.vv\t%0,%3,%4"
   [(set_attr "type" "vwmul")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening Signed-Unsigned Integer multiply.
 (define_insn "@vwmulsu<vw>_vx"
@@ -3727,7 +3727,7 @@
    vwmulsu.vx\t%0,%3,%4
    vwmulsu.vx\t%0,%3,zero"
   [(set_attr "type" "vwmul")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Single-Width Integer Multiply-Add Instructions.
 (define_insn "@v<imac><mode>_vv"
@@ -3824,7 +3824,7 @@
    vwmacc<u>.vv\t%0,%3,%4,%1.t
    vwmacc<u>.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening signed-integer multiply-add, overwrite addend.
 ;; Vector-Scalar Widening unsigned-integer multiply-add, overwrite addend.
@@ -3853,7 +3853,7 @@
    vwmacc<u>.vx\t%0,%3,%4
    vwmacc<u>.vx\t%0,zero,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Widening signed-unsigned-integer multiply-add, overwrite addend.
 (define_insn "@vwmaccsu<vw>_vv"
@@ -3878,7 +3878,7 @@
    vwmaccsu.vv\t%0,%3,%4,%1.t
    vwmaccsu.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening signed-unsigned-integer multiply-add, overwrite addend.
 (define_insn "@vwmaccsu<vw>_vx"
@@ -3906,7 +3906,7 @@
    vwmaccsu.vx\t%0,%3,%4
    vwmaccsu.vx\t%0,zero,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Widening unsigned-signed-integer multiply-add, overwrite addend.
 (define_insn "@vwmaccus<vw>_vx"
@@ -3934,7 +3934,7 @@
    vwmaccus.vx\t%0,%3,%4
    vwmaccus.vx\t%0,zero,%4"
   [(set_attr "type" "vwmadd")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector integer and float merge.
 (define_insn "@vmerge<mode>_vvm"
@@ -5388,7 +5388,7 @@
    vfwcvt.f.x<u>.v\t%0,%3
    vfwcvt.f.x<u>.v\t%0,%3"
   [(set_attr "type" "vfwcvt")
-   (set_attr "mode" "<VWI:MODE>")])
+   (set_attr "mode" "<MODE>")])
 
 ;; Convert single-width float to double-width float
 (define_insn "@vfwcvt<vw>_f_f_v"

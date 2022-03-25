@@ -280,52 +280,52 @@ DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_VSHR, ECF_CONST | ECF_NOTHROW, first,
 			      len_vashr, len_vlshr, len_binary)
 
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VADDV, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_vsaddv, vec_convert_vuaddv, vec_convert_binary)
+			      vec_convert_vsaddv, vec_convert_vuaddv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VADDW, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_vsaddw, vec_convert_vuaddw, vec_convert_binary)
+			      vec_convert_vsaddw, vec_convert_vuaddw, vec_convert_binary_w)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_ADDV, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_saddv, vec_convert_uaddv, vec_convert_binary)
+			      vec_convert_saddv, vec_convert_uaddv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_ADDW, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_saddw, vec_convert_uaddw, vec_convert_binary)
+			      vec_convert_saddw, vec_convert_uaddw, vec_convert_binary_w)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VADDV, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_vsaddv, len_vec_convert_vuaddv, vec_convert_binary)
+			      len_vec_convert_vsaddv, len_vec_convert_vuaddv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VADDW, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_vsaddw, len_vec_convert_vuaddw, vec_convert_binary)
+			      len_vec_convert_vsaddw, len_vec_convert_vuaddw, vec_convert_binary_w)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_ADDV, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_saddv, len_vec_convert_uaddv, vec_convert_binary)
+			      len_vec_convert_saddv, len_vec_convert_uaddv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_ADDW, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_saddw, len_vec_convert_uaddw, vec_convert_binary)
+			      len_vec_convert_saddw, len_vec_convert_uaddw, vec_convert_binary_w)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VSUBV, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_vssubv, vec_convert_vusubv, vec_convert_binary)
+			      vec_convert_vssubv, vec_convert_vusubv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VSUBW, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_vssubw, vec_convert_vusubw, vec_convert_binary)
+			      vec_convert_vssubw, vec_convert_vusubw, vec_convert_binary_w)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_SUBV, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_ssubv, vec_convert_usubv, vec_convert_binary)
+			      vec_convert_ssubv, vec_convert_usubv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_SUBW, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_ssubw, vec_convert_usubw, vec_convert_binary)
+			      vec_convert_ssubw, vec_convert_usubw, vec_convert_binary_w)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VSUBV, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_vssubv, len_vec_convert_vusubv, vec_convert_binary)
+			      len_vec_convert_vssubv, len_vec_convert_vusubv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VSUBW, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_vssubw, len_vec_convert_vusubw, vec_convert_binary)
+			      len_vec_convert_vssubw, len_vec_convert_vusubw, vec_convert_binary_w)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_SUBV, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_ssubv, len_vec_convert_usubv, vec_convert_binary)
+			      len_vec_convert_ssubv, len_vec_convert_usubv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_SUBW, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_ssubw, len_vec_convert_usubw, vec_convert_binary)
+			      len_vec_convert_ssubw, len_vec_convert_usubw, vec_convert_binary_w)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VMULV, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_vsmulv, vec_convert_vumulv, vec_convert_binary)
-DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_VUSMULV, ECF_CONST | ECF_NOTHROW, vec_convert_vusmulv, vec_convert_binary)
+			      vec_convert_vsmulv, vec_convert_vumulv, vec_convert_binary_v)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_VSUMULV, ECF_CONST | ECF_NOTHROW, vec_convert_vsumulv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_MULV, ECF_CONST | ECF_NOTHROW, first, second,
-			      vec_convert_smulv, vec_convert_umulv, vec_convert_binary)
-DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_USMULV, ECF_CONST | ECF_NOTHROW, vec_convert_usmulv, vec_convert_binary)
-DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_SUMULV, ECF_CONST | ECF_NOTHROW, vec_convert_sumulv, vec_convert_binary)
+			      vec_convert_smulv, vec_convert_umulv, vec_convert_binary_v)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_USMULV, ECF_CONST | ECF_NOTHROW, vec_convert_usmulv, vec_convert_binary_v)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_SUMULV, ECF_CONST | ECF_NOTHROW, vec_convert_sumulv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VMULV, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_vsmulv, len_vec_convert_vumulv, vec_convert_binary)
-DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_VUSMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_vusmulv, vec_convert_binary)
+			      len_vec_convert_vsmulv, len_vec_convert_vumulv, vec_convert_binary_v)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_VSUMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_vsumulv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_MULV, ECF_CONST | ECF_NOTHROW, first, second,
-			      len_vec_convert_smulv, len_vec_convert_umulv, vec_convert_binary)
+			      len_vec_convert_smulv, len_vec_convert_umulv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VFMAV, ECF_CONST | ECF_NOTHROW, first, second,
 			      vec_convert_vsfmav, vec_convert_vufmav, vec_convert_ternary)
-DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_VUSFMAV, ECF_CONST | ECF_NOTHROW, vec_convert_vusfmav, vec_convert_ternary)
+DEF_INTERNAL_OPTAB_FN (VEC_CONVERT_VSUFMAV, ECF_CONST | ECF_NOTHROW, vec_convert_vsufmav, vec_convert_ternary)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VFMSV, ECF_CONST | ECF_NOTHROW, first, second,
 			      vec_convert_vsfmsv, vec_convert_vufmsv, vec_convert_ternary)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VFNMAV, ECF_CONST | ECF_NOTHROW, first, second,
@@ -334,7 +334,7 @@ DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VFNMSV, ECF_CONST | ECF_NOTHRO
 			      vec_convert_vsfnmsv, vec_convert_vufnmsv, vec_convert_ternary)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VFMAV, ECF_CONST | ECF_NOTHROW, first, second,
 			      len_vec_convert_vsfmav, len_vec_convert_vufmav, vec_convert_ternary)
-DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_VUSFMAV, ECF_CONST | ECF_NOTHROW, len_vec_convert_vusfmav, vec_convert_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_VSUFMAV, ECF_CONST | ECF_NOTHROW, len_vec_convert_vsufmav, vec_convert_ternary)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VFMSV, ECF_CONST | ECF_NOTHROW, first, second,
 			      len_vec_convert_vsfmsv, len_vec_convert_vufmsv, vec_convert_ternary)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_VFNMAV, ECF_CONST | ECF_NOTHROW, first, second,
@@ -362,8 +362,8 @@ DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_FNMAV, ECF_CONST | ECF_NOT
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (LEN_VEC_CONVERT_FNMSV, ECF_CONST | ECF_NOTHROW, first, second,
 			      len_vec_convert_sfnmsv, len_vec_convert_ufnmsv, vec_convert_ternary)
 
-DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_USMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_usmulv, vec_convert_binary)
-DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_SUMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_sumulv, vec_convert_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_USMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_usmulv, vec_convert_binary_v)
+DEF_INTERNAL_OPTAB_FN (LEN_VEC_CONVERT_SUMULV, ECF_CONST | ECF_NOTHROW, len_vec_convert_sumulv, vec_convert_binary_v)
 DEF_INTERNAL_OPTAB_FN (LEN_EXTEND, ECF_CONST | ECF_NOTHROW, len_extend, len_convert)
 DEF_INTERNAL_OPTAB_FN (LEN_ZERO_EXTEND, ECF_CONST | ECF_NOTHROW, len_zero_extend, len_convert)
 DEF_INTERNAL_OPTAB_FN (LEN_FLOAT, ECF_CONST | ECF_NOTHROW, len_float, len_convert)

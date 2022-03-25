@@ -283,890 +283,95 @@ lmul2mask_t (machine_mode mode, lmul_value_index lmul)
 inline const char *
 mode2data_type_suffix (machine_mode mode, bool u, bool ie)
 {
-  switch (mode)
+  static char buffer[NAME_MAXLEN] = {0};
+  unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  unsigned int vlmul = riscv_classify_vlmul_field (mode);
+  int nf = riscv_classify_nf (mode);
+  const char *lmul = vlmul == VLMUL_FIELD_000 ? "m1" : vlmul == VLMUL_FIELD_001 ? "m2"
+          : vlmul == VLMUL_FIELD_010 ? "m4" : vlmul == VLMUL_FIELD_011 ? "m8"
+          : vlmul == VLMUL_FIELD_101 ? "mf8" : vlmul == VLMUL_FIELD_110 ? "mf4" : "mf2";
+  const char *prefix = FLOAT_MODE_P (mode) ? "f" : (ie && nf == 1) ? "e" : u ? "u" : "i";
+  
+  if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
     {
-    case VNx2QImode:
-      return ie ? "e8mf8" : u ? "u8mf8" : "i8mf8";
-
-    case VNx2x2QImode:
-      return u ? "u8mf8x2" : "i8mf8x2";
-
-    case VNx3x2QImode:
-      return u ? "u8mf8x3" : "i8mf8x3";
-
-    case VNx4x2QImode:
-      return u ? "u8mf8x4" : "i8mf8x4";
-
-    case VNx5x2QImode:
-      return u ? "u8mf8x5" : "i8mf8x5";
-
-    case VNx6x2QImode:
-      return u ? "u8mf8x6" : "i8mf8x6";
-
-    case VNx7x2QImode:
-      return u ? "u8mf8x7" : "i8mf8x7";
-
-    case VNx8x2QImode:
-      return u ? "u8mf8x8" : "i8mf8x8";
-
-    case VNx4QImode:
-      return ie ? "e8mf4" : u ? "u8mf4" : "i8mf4";
-
-    case VNx2x4QImode:
-      return u ? "u8mf4x2" : "i8mf4x2";
-
-    case VNx3x4QImode:
-      return u ? "u8mf4x3" : "i8mf4x3";
-
-    case VNx4x4QImode:
-      return u ? "u8mf4x4" : "i8mf4x4";
-
-    case VNx5x4QImode:
-      return u ? "u8mf4x5" : "i8mf4x5";
-
-    case VNx6x4QImode:
-      return u ? "u8mf4x6" : "i8mf4x6";
-
-    case VNx7x4QImode:
-      return u ? "u8mf4x7" : "i8mf4x7";
-
-    case VNx8x4QImode:
-      return u ? "u8mf4x8" : "i8mf4x8";
-
-    case VNx8QImode:
-      return ie ? "e8mf2" : u ? "u8mf2" : "i8mf2";
-
-    case VNx2x8QImode:
-      return u ? "u8mf2x2" : "i8mf2x2";
-
-    case VNx3x8QImode:
-      return u ? "u8mf2x3" : "i8mf2x3";
-
-    case VNx4x8QImode:
-      return u ? "u8mf2x4" : "i8mf2x4";
-
-    case VNx5x8QImode:
-      return u ? "u8mf2x5" : "i8mf2x5";
-
-    case VNx6x8QImode:
-      return u ? "u8mf2x6" : "i8mf2x6";
-
-    case VNx7x8QImode:
-      return u ? "u8mf2x7" : "i8mf2x7";
-
-    case VNx8x8QImode:
-      return u ? "u8mf2x8" : "i8mf2x8";
-
-    case VNx16QImode:
-      return ie ? "e8m1" : u ? "u8m1" : "i8m1";
-
-    case VNx2x16QImode:
-      return u ? "u8m1x2" : "i8m1x2";
-
-    case VNx3x16QImode:
-      return u ? "u8m1x3" : "i8m1x3";
-
-    case VNx4x16QImode:
-      return u ? "u8m1x4" : "i8m1x4";
-
-    case VNx5x16QImode:
-      return u ? "u8m1x5" : "i8m1x5";
-
-    case VNx6x16QImode:
-      return u ? "u8m1x6" : "i8m1x6";
-
-    case VNx7x16QImode:
-      return u ? "u8m1x7" : "i8m1x7";
-
-    case VNx8x16QImode:
-      return u ? "u8m1x8" : "i8m1x8";
-
-    case VNx32QImode:
-      return ie ? "e8m2" : u ? "u8m2" : "i8m2";
-
-    case VNx2x32QImode:
-      return u ? "u8m2x2" : "i8m2x2";
-
-    case VNx3x32QImode:
-      return u ? "u8m2x3" : "i8m2x3";
-
-    case VNx4x32QImode:
-      return u ? "u8m2x4" : "i8m2x4";
-
-    case VNx64QImode:
-      return ie ? "e8m4" : u ? "u8m4" : "i8m4";
-
-    case VNx2x64QImode:
-      return u ? "u8m4x2" : "i8m4x2";
-
-    case VNx128QImode:
-      return ie ? "e8m8" : u ? "u8m8" : "i8m8";
-
-    case VNx2HImode:
-      return ie ? "e16mf4" : u ? "u16mf4" : "i16mf4";
-
-    case VNx2x2HImode:
-      return u ? "u16mf4x2" : "i16mf4x2";
-
-    case VNx3x2HImode:
-      return u ? "u16mf4x3" : "i16mf4x3";
-
-    case VNx4x2HImode:
-      return u ? "u16mf4x4" : "i16mf4x4";
-
-    case VNx5x2HImode:
-      return u ? "u16mf4x5" : "i16mf4x5";
-
-    case VNx6x2HImode:
-      return u ? "u16mf4x6" : "i16mf4x6";
-
-    case VNx7x2HImode:
-      return u ? "u16mf4x7" : "i16mf4x7";
-
-    case VNx8x2HImode:
-      return u ? "u16mf4x8" : "i16mf4x8";
-
-    case VNx4HImode:
-      return ie ? "e16mf2" : u ? "u16mf2" : "i16mf2";
-
-    case VNx2x4HImode:
-      return u ? "u16mf2x2" : "i16mf2x2";
-
-    case VNx3x4HImode:
-      return u ? "u16mf2x3" : "i16mf2x3";
-
-    case VNx4x4HImode:
-      return u ? "u16mf2x4" : "i16mf2x4";
-
-    case VNx5x4HImode:
-      return u ? "u16mf2x5" : "i16mf2x5";
-
-    case VNx6x4HImode:
-      return u ? "u16mf2x6" : "i16mf2x6";
-
-    case VNx7x4HImode:
-      return u ? "u16mf2x7" : "i16mf2x7";
-
-    case VNx8x4HImode:
-      return u ? "u16mf2x8" : "i16mf2x8";
-
-    case VNx8HImode:
-      return ie ? "e16m1" : u ? "u16m1" : "i16m1";
-
-    case VNx2x8HImode:
-      return u ? "u16m1x2" : "i16m1x2";
-
-    case VNx3x8HImode:
-      return u ? "u16m1x3" : "i16m1x3";
-
-    case VNx4x8HImode:
-      return u ? "u16m1x4" : "i16m1x4";
-
-    case VNx5x8HImode:
-      return u ? "u16m1x5" : "i16m1x5";
-
-    case VNx6x8HImode:
-      return u ? "u16m1x6" : "i16m1x6";
-
-    case VNx7x8HImode:
-      return u ? "u16m1x7" : "i16m1x7";
-
-    case VNx8x8HImode:
-      return u ? "u16m1x8" : "i16m1x8";
-
-    case VNx16HImode:
-      return ie ? "e16m2" : u ? "u16m2" : "i16m2";
-
-    case VNx2x16HImode:
-      return u ? "u16m2x2" : "i16m2x2";
-
-    case VNx3x16HImode:
-      return u ? "u16m2x3" : "i16m2x3";
-
-    case VNx4x16HImode:
-      return u ? "u16m2x4" : "i16m2x4";
-
-    case VNx32HImode:
-      return ie ? "e16m4" : u ? "u16m4" : "i16m4";
-
-    case VNx2x32HImode:
-      return u ? "u16m4x2" : "i16m4x2";
-
-    case VNx64HImode:
-      return ie ? "e16m8" : u ? "u16m8" : "i16m8";
-
-    case VNx2SImode:
-      return ie ? "e32mf2" : u ? "u32mf2" : "i32mf2";
-
-    case VNx2x2SImode:
-      return u ? "u32mf2x2" : "i32mf2x2";
-
-    case VNx3x2SImode:
-      return u ? "u32mf2x3" : "i32mf2x3";
-
-    case VNx4x2SImode:
-      return u ? "u32mf2x4" : "i32mf2x4";
-
-    case VNx5x2SImode:
-      return u ? "u32mf2x5" : "i32mf2x5";
-
-    case VNx6x2SImode:
-      return u ? "u32mf2x6" : "i32mf2x6";
-
-    case VNx7x2SImode:
-      return u ? "u32mf2x7" : "i32mf2x7";
-
-    case VNx8x2SImode:
-      return u ? "u32mf2x8" : "i32mf2x8";
-
-    case VNx4SImode:
-      return ie ? "e32m1" : u ? "u32m1" : "i32m1";
-
-    case VNx2x4SImode:
-      return u ? "u32m1x2" : "i32m1x2";
-
-    case VNx3x4SImode:
-      return u ? "u32m1x3" : "i32m1x3";
-
-    case VNx4x4SImode:
-      return u ? "u32m1x4" : "i32m1x4";
-
-    case VNx5x4SImode:
-      return u ? "u32m1x5" : "i32m1x5";
-
-    case VNx6x4SImode:
-      return u ? "u32m1x6" : "i32m1x6";
-
-    case VNx7x4SImode:
-      return u ? "u32m1x7" : "i32m1x7";
-
-    case VNx8x4SImode:
-      return u ? "u32m1x8" : "i32m1x8";
-
-    case VNx8SImode:
-      return ie ? "e32m2" : u ? "u32m2" : "i32m2";
-
-    case VNx2x8SImode:
-      return u ? "u32m2x2" : "i32m2x2";
-
-    case VNx3x8SImode:
-      return u ? "u32m2x3" : "i32m2x3";
-
-    case VNx4x8SImode:
-      return u ? "u32m2x4" : "i32m2x4";
-
-    case VNx16SImode:
-      return ie ? "e32m4" : u ? "u32m4" : "i32m4";
-
-    case VNx2x16SImode:
-      return u ? "u32m4x2" : "i32m4x2";
-
-    case VNx32SImode:
-      return ie ? "e32m8" : u ? "u32m8" : "i32m8";
-
-    case VNx2DImode:
-      return ie ? "e64m1" : u ? "u64m1" : "i64m1";
-
-    case VNx2x2DImode:
-      return u ? "u64m1x2" : "i64m1x2";
-
-    case VNx3x2DImode:
-      return u ? "u64m1x3" : "i64m1x3";
-
-    case VNx4x2DImode:
-      return u ? "u64m1x4" : "i64m1x4";
-
-    case VNx5x2DImode:
-      return u ? "u64m1x5" : "i64m1x5";
-
-    case VNx6x2DImode:
-      return u ? "u64m1x6" : "i64m1x6";
-
-    case VNx7x2DImode:
-      return u ? "u64m1x7" : "i64m1x7";
-
-    case VNx8x2DImode:
-      return u ? "u64m1x8" : "i64m1x8";
-
-    case VNx4DImode:
-      return ie ? "e64m2" : u ? "u64m2" : "i64m2";
-
-    case VNx2x4DImode:
-      return u ? "u64m2x2" : "i64m2x2";
-
-    case VNx3x4DImode:
-      return u ? "u64m2x3" : "i64m2x3";
-
-    case VNx4x4DImode:
-      return u ? "u64m2x4" : "i64m2x4";
-
-    case VNx8DImode:
-      return ie ? "e64m4" : u ? "u64m4" : "i64m4";
-
-    case VNx2x8DImode:
-      return u ? "u64m4x2" : "i64m4x2";
-
-    case VNx16DImode:
-      return ie ? "e64m8" : u ? "u64m8" : "i64m8";
-
-    case VNx2HFmode:
-      return "f16mf4";
-
-    case VNx2x2HFmode:
-      return "f16mf4x2";
-
-    case VNx3x2HFmode:
-      return "f16mf4x3";
-
-    case VNx4x2HFmode:
-      return "f16mf4x4";
-
-    case VNx5x2HFmode:
-      return "f16mf4x5";
-
-    case VNx6x2HFmode:
-      return "f16mf4x6";
-
-    case VNx7x2HFmode:
-      return "f16mf4x7";
-
-    case VNx8x2HFmode:
-      return "f16mf4x8";
-
-    case VNx4HFmode:
-      return "f16mf2";
-
-    case VNx2x4HFmode:
-      return "f16mf2x2";
-
-    case VNx3x4HFmode:
-      return "f16mf2x3";
-
-    case VNx4x4HFmode:
-      return "f16mf2x4";
-
-    case VNx5x4HFmode:
-      return "f16mf2x5";
-
-    case VNx6x4HFmode:
-      return "f16mf2x6";
-
-    case VNx7x4HFmode:
-      return "f16mf2x7";
-
-    case VNx8x4HFmode:
-      return "f16mf2x8";
-
-    case VNx8HFmode:
-      return "f16m1";
-
-    case VNx2x8HFmode:
-      return "f16m1x2";
-
-    case VNx3x8HFmode:
-      return "f16m1x3";
-
-    case VNx4x8HFmode:
-      return "f16m1x4";
-
-    case VNx5x8HFmode:
-      return "f16m1x5";
-
-    case VNx6x8HFmode:
-      return "f16m1x6";
-
-    case VNx7x8HFmode:
-      return "f16m1x7";
-
-    case VNx8x8HFmode:
-      return "f16m1x8";
-
-    case VNx16HFmode:
-      return "f16m2";
-
-    case VNx2x16HFmode:
-      return "f16m2x2";
-
-    case VNx3x16HFmode:
-      return "f16m2x3";
-
-    case VNx4x16HFmode:
-      return "f16m2x4";
-
-    case VNx32HFmode:
-      return "f16m4";
-
-    case VNx2x32HFmode:
-      return "f16m4x2";
-
-    case VNx64HFmode:
-      return "f16m8";
-
-    case VNx2SFmode:
-      return "f32mf2";
-
-    case VNx2x2SFmode:
-      return "f32mf2x2";
-
-    case VNx3x2SFmode:
-      return "f32mf2x3";
-
-    case VNx4x2SFmode:
-      return "f32mf2x4";
-
-    case VNx5x2SFmode:
-      return "f32mf2x5";
-
-    case VNx6x2SFmode:
-      return "f32mf2x6";
-
-    case VNx7x2SFmode:
-      return "f32mf2x7";
-
-    case VNx8x2SFmode:
-      return "f32mf2x8";
-
-    case VNx4SFmode:
-      return "f32m1";
-
-    case VNx2x4SFmode:
-      return "f32m1x2";
-
-    case VNx3x4SFmode:
-      return "f32m1x3";
-
-    case VNx4x4SFmode:
-      return "f32m1x4";
-
-    case VNx5x4SFmode:
-      return "f32m1x5";
-
-    case VNx6x4SFmode:
-      return "f32m1x6";
-
-    case VNx7x4SFmode:
-      return "f32m1x7";
-
-    case VNx8x4SFmode:
-      return "f32m1x8";
-
-    case VNx8SFmode:
-      return "f32m2";
-
-    case VNx2x8SFmode:
-      return "f32m2x2";
-
-    case VNx3x8SFmode:
-      return "f32m2x3";
-
-    case VNx4x8SFmode:
-      return "f32m2x4";
-
-    case VNx16SFmode:
-      return "f32m4";
-
-    case VNx2x16SFmode:
-      return "f32m4x2";
-
-    case VNx32SFmode:
-      return "f32m8";
-
-    case VNx2DFmode:
-      return "f64m1";
-
-    case VNx2x2DFmode:
-      return "f64m1x2";
-
-    case VNx3x2DFmode:
-      return "f64m1x3";
-
-    case VNx4x2DFmode:
-      return "f64m1x4";
-
-    case VNx5x2DFmode:
-      return "f64m1x5";
-
-    case VNx6x2DFmode:
-      return "f64m1x6";
-
-    case VNx7x2DFmode:
-      return "f64m1x7";
-
-    case VNx8x2DFmode:
-      return "f64m1x8";
-
-    case VNx4DFmode:
-      return "f64m2";
-
-    case VNx2x4DFmode:
-      return "f64m2x2";
-
-    case VNx3x4DFmode:
-      return "f64m2x3";
-
-    case VNx4x4DFmode:
-      return "f64m2x4";
-
-    case VNx8DFmode:
-      return "f64m4";
-
-    case VNx2x8DFmode:
-      return "f64m4x2";
-
-    case VNx16DFmode:
-      return "f64m8";
-
-    case VNx2BImode:
-      return "b64";
-
-    case VNx4BImode:
-      return "b32";
-
-    case VNx8BImode:
-      return "b16";
-
-    case VNx16BImode:
-      return "b8";
-
-    case VNx32BImode:
-      return "b4";
-
-    case VNx64BImode:
-      return "b2";
-
-    case VNx128BImode:
-      return "b1";
-
-    case QImode:
-      return u ? "u8" : "i8";
-
-    case HImode:
-      return u ? "u16" : "i16";
-
-    case SImode:
-      return u ? "u32" : "i32";
-
-    case DImode:
-      return u ? "u64" : "i64";
-
-    case HFmode:
-      return "f16";
-
-    case SFmode:
-      return "f32";
-
-    case DFmode:
-      return "f64";
-
-    default:
-      break;
+      switch (mode)
+        {
+        case VNx2BImode:
+          return "b64";
+        case VNx4BImode:
+          return "b32";
+        case VNx8BImode:
+          return "b16";
+        case VNx16BImode:
+          return "b8";
+        case VNx32BImode:
+          return "b4";
+        case VNx64BImode:
+          return "b2";
+        case VNx128BImode:
+          return "b1";
+        default:
+          gcc_unreachable ();
+        }
     }
-
-  gcc_unreachable ();
-}
-
-inline const char *
-mode2data_type_lower_suffix (machine_mode mode, bool u)
-{
-  switch (mode)
+  else if (!VECTOR_MODE_P (mode))
     {
-    case VNx2DImode:
-      return u ? "u32m1" : "i32m1";
-    case VNx4DImode:
-      return u ? "u32m2" : "i32m2";
-    case VNx8DImode:
-      return u ? "u32m4" : "i32m4";
-    case VNx16DImode:
-      return u ? "u32m8" : "i32m8";
-    default:
-      break;
+      if (FLOAT_MODE_P (mode))
+        snprintf (buffer, sizeof (buffer), "f%d", sew);
+      else if (u)
+        snprintf (buffer, sizeof (buffer), "u%d", sew);
+      else
+        snprintf (buffer, sizeof (buffer), "i%d", sew);
     }
-
-  gcc_unreachable ();
+  else if (nf == 1)
+    snprintf (buffer, sizeof (buffer), "%s%d%s", prefix, sew, lmul);
+  else
+    snprintf (buffer, sizeof (buffer), "%s%d%sx%d", prefix, sew, lmul, nf);
+  
+  return buffer;
 }
 
 inline lmul_value_index
 mode2lmul (machine_mode mode)
 {
-  switch (mode)
+  int nf = riscv_classify_nf (mode);
+  unsigned int factor = GET_MODE_SIZE (mode).coeffs[0] / nf;
+  if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
     {
-    case VNx2QImode:
-    case VNx2x2QImode:
-    case VNx3x2QImode:
-    case VNx4x2QImode:
-    case VNx5x2QImode:
-    case VNx6x2QImode:
-    case VNx7x2QImode:
-    case VNx8x2QImode:
-      return LMUL_1F8;
-
-    case VNx4QImode:
-    case VNx2x4QImode:
-    case VNx3x4QImode:
-    case VNx4x4QImode:
-    case VNx5x4QImode:
-    case VNx6x4QImode:
-    case VNx7x4QImode:
-    case VNx8x4QImode:
-      return LMUL_1F4;
-
-    case VNx8QImode:
-    case VNx2x8QImode:
-    case VNx3x8QImode:
-    case VNx4x8QImode:
-    case VNx5x8QImode:
-    case VNx6x8QImode:
-    case VNx7x8QImode:
-    case VNx8x8QImode:
-      return LMUL_1F2;
-
-    case VNx16QImode:
-    case VNx2x16QImode:
-    case VNx3x16QImode:
-    case VNx4x16QImode:
-    case VNx5x16QImode:
-    case VNx6x16QImode:
-    case VNx7x16QImode:
-    case VNx8x16QImode:
-      return LMUL_1;
-
-    case VNx32QImode:
-    case VNx2x32QImode:
-    case VNx3x32QImode:
-    case VNx4x32QImode:
-      return LMUL_2;
-
-    case VNx64QImode:
-    case VNx2x64QImode:
-      return LMUL_4;
-
-    case VNx128QImode:
-      return LMUL_8;
-
-    case VNx2HImode:
-    case VNx2x2HImode:
-    case VNx3x2HImode:
-    case VNx4x2HImode:
-    case VNx5x2HImode:
-    case VNx6x2HImode:
-    case VNx7x2HImode:
-    case VNx8x2HImode:
-      return LMUL_1F4;
-
-    case VNx4HImode:
-    case VNx2x4HImode:
-    case VNx3x4HImode:
-    case VNx4x4HImode:
-    case VNx5x4HImode:
-    case VNx6x4HImode:
-    case VNx7x4HImode:
-    case VNx8x4HImode:
-      return LMUL_1F2;
-
-    case VNx8HImode:
-    case VNx2x8HImode:
-    case VNx3x8HImode:
-    case VNx4x8HImode:
-    case VNx5x8HImode:
-    case VNx6x8HImode:
-    case VNx7x8HImode:
-    case VNx8x8HImode:
-      return LMUL_1;
-
-    case VNx16HImode:
-    case VNx2x16HImode:
-    case VNx3x16HImode:
-    case VNx4x16HImode:
-      return LMUL_2;
-
-    case VNx32HImode:
-    case VNx2x32HImode:
-      return LMUL_4;
-
-    case VNx64HImode:
-      return LMUL_8;
-
-    case VNx2SImode:
-    case VNx2x2SImode:
-    case VNx3x2SImode:
-    case VNx4x2SImode:
-    case VNx5x2SImode:
-    case VNx6x2SImode:
-    case VNx7x2SImode:
-    case VNx8x2SImode:
-      return LMUL_1F2;
-
-    case VNx4SImode:
-    case VNx2x4SImode:
-    case VNx3x4SImode:
-    case VNx4x4SImode:
-    case VNx5x4SImode:
-    case VNx6x4SImode:
-    case VNx7x4SImode:
-    case VNx8x4SImode:
-      return LMUL_1;
-
-    case VNx8SImode:
-    case VNx2x8SImode:
-    case VNx3x8SImode:
-    case VNx4x8SImode:
-      return LMUL_2;
-
-    case VNx16SImode:
-    case VNx2x16SImode:
-      return LMUL_4;
-
-    case VNx32SImode:
-      return LMUL_8;
-
-    case VNx2DImode:
-    case VNx2x2DImode:
-    case VNx3x2DImode:
-    case VNx4x2DImode:
-    case VNx5x2DImode:
-    case VNx6x2DImode:
-    case VNx7x2DImode:
-    case VNx8x2DImode:
-      return LMUL_1;
-
-    case VNx4DImode:
-    case VNx2x4DImode:
-    case VNx3x4DImode:
-    case VNx4x4DImode:
-      return LMUL_2;
-
-    case VNx8DImode:
-    case VNx2x8DImode:
-      return LMUL_4;
-
-    case VNx16DImode:
-      return LMUL_8;
-
-    case VNx2HFmode:
-    case VNx2x2HFmode:
-    case VNx3x2HFmode:
-    case VNx4x2HFmode:
-    case VNx5x2HFmode:
-    case VNx6x2HFmode:
-    case VNx7x2HFmode:
-    case VNx8x2HFmode:
-      return LMUL_1F4;
-
-    case VNx4HFmode:
-    case VNx2x4HFmode:
-    case VNx3x4HFmode:
-    case VNx4x4HFmode:
-    case VNx5x4HFmode:
-    case VNx6x4HFmode:
-    case VNx7x4HFmode:
-    case VNx8x4HFmode:
-      return LMUL_1F2;
-
-    case VNx8HFmode:
-    case VNx2x8HFmode:
-    case VNx3x8HFmode:
-    case VNx4x8HFmode:
-    case VNx5x8HFmode:
-    case VNx6x8HFmode:
-    case VNx7x8HFmode:
-    case VNx8x8HFmode:
-      return LMUL_1;
-
-    case VNx16HFmode:
-    case VNx2x16HFmode:
-    case VNx3x16HFmode:
-    case VNx4x16HFmode:
-      return LMUL_2;
-
-    case VNx32HFmode:
-    case VNx2x32HFmode:
-      return LMUL_4;
-
-    case VNx64HFmode:
-      return LMUL_8;
-
-    case VNx2SFmode:
-    case VNx2x2SFmode:
-    case VNx3x2SFmode:
-    case VNx4x2SFmode:
-    case VNx5x2SFmode:
-    case VNx6x2SFmode:
-    case VNx7x2SFmode:
-    case VNx8x2SFmode:
-      return LMUL_1F2;
-
-    case VNx4SFmode:
-    case VNx2x4SFmode:
-    case VNx3x4SFmode:
-    case VNx4x4SFmode:
-    case VNx5x4SFmode:
-    case VNx6x4SFmode:
-    case VNx7x4SFmode:
-    case VNx8x4SFmode:
-      return LMUL_1;
-
-    case VNx8SFmode:
-    case VNx2x8SFmode:
-    case VNx3x8SFmode:
-    case VNx4x8SFmode:
-      return LMUL_2;
-
-    case VNx16SFmode:
-    case VNx2x16SFmode:
-      return LMUL_4;
-
-    case VNx32SFmode:
-      return LMUL_8;
-
-    case VNx2DFmode:
-    case VNx2x2DFmode:
-    case VNx3x2DFmode:
-    case VNx4x2DFmode:
-    case VNx5x2DFmode:
-    case VNx6x2DFmode:
-    case VNx7x2DFmode:
-    case VNx8x2DFmode:
-      return LMUL_1;
-
-    case VNx4DFmode:
-    case VNx2x4DFmode:
-    case VNx3x4DFmode:
-    case VNx4x4DFmode:
-      return LMUL_2;
-
-    case VNx8DFmode:
-    case VNx2x8DFmode:
-      return LMUL_4;
-
-    case VNx16DFmode:
-      return LMUL_8;
-
-    case VNx2BImode:
-      return LMUL_1F8;
-
-    case VNx4BImode:
-      return LMUL_1F4;
-
-    case VNx8BImode:
-      return LMUL_1F2;
-
-    case VNx16BImode:
-      return LMUL_1;
-
-    case VNx32BImode:
-      return LMUL_2;
-
-    case VNx64BImode:
-      return LMUL_4;
-
-    case VNx128BImode:
-      return LMUL_8;
-
-    default:
-      break;
+      switch (mode)
+        {
+        case VNx2BImode:
+          return LMUL_1F8;
+        case VNx4BImode:
+          return LMUL_1F4;
+        case VNx8BImode:
+          return LMUL_1F2;
+        case VNx16BImode:
+          return LMUL_1;
+        case VNx32BImode:
+          return LMUL_2;
+        case VNx64BImode:
+          return LMUL_4;
+        case VNx128BImode:
+          return LMUL_8;
+        default:
+          gcc_unreachable ();
+        }
     }
-
-  gcc_unreachable ();
+    
+  if (factor < UNITS_PER_V_REG.coeffs[0])
+    {
+      int lmul = UNITS_PER_V_REG.coeffs[0] / factor;
+      return lmul == 8 ? LMUL_1F8 : lmul == 4 ? LMUL_1F4 : LMUL_1F2;
+    }
+  else
+    {
+      int lmul = factor / UNITS_PER_V_REG.coeffs[0];
+      return lmul == 8   ? LMUL_8
+             : lmul == 4 ? LMUL_4
+             : lmul == 2 ? LMUL_2
+                         : LMUL_1;
+    }
 }
 
 inline tree
@@ -1375,22 +580,24 @@ get_dt_t (machine_mode mode, bool u, bool ptr = false, bool c = false,
   gcc_unreachable ();
 }
 
-inline tree
-get_lower_dt_t (machine_mode mode, bool u)
+/* Helper functions to get datatype of arg. */
+
+inline bool
+is_dt_ptr (const data_type_index dt)
 {
-  unsigned int lmul = mode2lmul (mode);
-  machine_mode innermode = GET_MODE_INNER (mode);
-  tree vectype;
-  switch (innermode)
-    {
-    case E_DImode:
-      vectype = u ? riscv_vector_types[0][VECTOR_TYPE_uint32][lmul]
-                  : riscv_vector_types[0][VECTOR_TYPE_int32][lmul];
-      break;
-    default:
-      gcc_unreachable ();
-    }
-  return vectype;
+  return dt == DT_ptr || dt == DT_uptr || dt == DT_c_ptr || dt == DT_c_uptr;
+}
+
+inline bool
+is_dt_unsigned (const data_type_index dt)
+{
+  return dt == DT_unsigned || dt == DT_uptr || dt == DT_c_uptr;
+}
+
+inline bool
+is_dt_const (const data_type_index dt)
+{
+  return dt == DT_c_ptr || dt == DT_c_uptr;
 }
 
 /* Return the overloaded or full function name for INSTANCE; OVERLOADED_P
@@ -1906,21 +1113,13 @@ function_builder::get_policy (predication_index pred) const
       return (pat & PAT_void_dest || pat & PAT_dest) ? tu_policy : ta_policy;
     case PRED_m:
       if (pat & PAT_ignore_policy)
-        {
-          return any_policy;
-        }
+        return any_policy;
       else if (pat & PAT_ignore_mask_policy)
-        {
-          return tu_policy;
-        }
+        return tu_policy;
       else if (pat & PAT_ignore_tail_policy)
-        {
-          return mu_policy;
-        }
+        return mu_policy;
       else
-        {
-          return tumu_policy;
-        }
+        return tumu_policy;
     case PRED_ta:
     case PRED_m_ta:
       return ta_policy;
@@ -2570,7 +1769,7 @@ loadstore::get_name (char *name, const function_instance &instance) const
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
   strcat (name, instance.get_base_name ());
   unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
-  char buf[8];
+  char buf[NAME_MAXLEN / 4];
 
   if (strcmp (instance.get_base_name (), "vlm") &&
       strcmp (instance.get_base_name (), "vsm"))
@@ -2605,15 +1804,9 @@ loadstore::get_argument_types (const function_instance &instance,
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     {
-      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
-                        (instance.get_data_type_list ()[i] == DT_uptr) ||
-                        (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_uptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
+      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
       argument_types.quick_push (get_dt_t (
           instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
     }
@@ -2657,15 +1850,9 @@ indexedloadstore::get_argument_types (const function_instance &instance,
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     {
-      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
-                        (instance.get_data_type_list ()[i] == DT_uptr) ||
-                        (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_uptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
+      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
       argument_types.quick_push (get_dt_t (
           instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
     }
@@ -2688,10 +1875,8 @@ segment::get_name (char *name, const function_instance &instance) const
          strcmp (instance.get_base_name (), "vssseg") == 0)
           ? instance.get_arg_pattern ().arg_list[2]
           : instance.get_arg_pattern ().arg_list[1];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned ||
-                    instance.get_data_type_list ()[0] == DT_uptr ||
-                    instance.get_data_type_list ()[0] == DT_c_uptr;
-
+  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[0]);
+  
   if (strcmp (instance.get_base_name (), "vlsegff") == 0 ||
       strcmp (instance.get_base_name (), "vlseg2ff") == 0 ||
       strcmp (instance.get_base_name (), "vlseg3ff") == 0 ||
@@ -3118,6 +2303,7 @@ vleff::get_name (char *name, const function_instance &instance) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+
   strcat (name, "vle");
   unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
   char buf[8];
@@ -3157,15 +2343,9 @@ vleff::get_argument_types (const function_instance &instance,
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     {
-      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
-                        (instance.get_data_type_list ()[i] == DT_uptr) ||
-                        (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_uptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
+      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
       argument_types.quick_push (get_dt_t (
           instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
     }
@@ -3198,6 +2378,7 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
   function_instance *fn_instance = new function_instance ();
+
   snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "readvl_%s",
             mode2data_type_suffix (mode, unsigned_p, false));
   hashval_t hashval = fn_instance->hash ();
@@ -3252,15 +2433,9 @@ vlseg::get_argument_types (const function_instance &instance,
 {
   for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
     {
-      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
-                        (instance.get_data_type_list ()[i] == DT_uptr) ||
-                        (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_uptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
+      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
       argument_types.quick_push (get_dt_t (
           instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
     }
@@ -3314,6 +2489,7 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_uptr;
   function_instance *fn_instance = new function_instance ();
+
   snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "readvl_%s",
             mode2data_type_suffix (mode, unsigned_p, false));
   hashval_t hashval = fn_instance->hash ();
@@ -3356,15 +2532,9 @@ vsseg::get_argument_types (const function_instance &instance,
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     {
-      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
-                        (instance.get_data_type_list ()[i] == DT_uptr) ||
-                        (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_uptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
+      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
 
       if (i == 2)
         {
@@ -3451,15 +2621,9 @@ vlxseg::get_argument_types (const function_instance &instance,
 {
   for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
     {
-      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
-                        (instance.get_data_type_list ()[i] == DT_uptr) ||
-                        (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_uptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
+      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
       argument_types.quick_push (get_dt_t (
           instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
     }
@@ -3490,15 +2654,9 @@ vsxseg::get_argument_types (const function_instance &instance,
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     {
-      bool unsigned_p = (instance.get_data_type_list ()[i] == DT_unsigned) ||
-                        (instance.get_data_type_list ()[i] == DT_uptr) ||
-                        (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool ptr_p = (instance.get_data_type_list ()[i] == DT_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                   (instance.get_data_type_list ()[i] == DT_uptr) ||
-                   (instance.get_data_type_list ()[i] == DT_c_uptr);
-      bool c_p = (instance.get_data_type_list ()[i] == DT_c_ptr) ||
-                 (instance.get_data_type_list ()[i] == DT_c_uptr);
+      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
+      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
 
       if (i == 3)
         {
@@ -5526,6 +4684,7 @@ fold_non_tuple_segment_load (
     }
   else
     gcc_unreachable ();
+  
 
   if (instance.get_pred () == PRED_void)
     snprintf (
@@ -5649,7 +4808,7 @@ fold_non_tuple_segment_store (const function_instance &instance,
   vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
 
   function_instance *fn_instance = new function_instance ();
-  char buff[16];
+  char buff[NAME_MAXLEN / 4];
 
   if (strstr (instance.get_base_name (), "vsseg") != NULL)
     snprintf (buff, sizeof (buff), "vsseg%de%d", nf,
@@ -5686,7 +4845,7 @@ fold_non_tuple_segment_store (const function_instance &instance,
       function_table->find_with_hash (*fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *repl = gimple_build_call_vec (decl, vargs);
-
+  
   delete fn_instance;
   return repl;
 }

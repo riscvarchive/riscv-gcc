@@ -278,7 +278,7 @@
 	  (parallel [(match_operand 2 "reg_or_uimm5_operand")])))]
   "TARGET_VECTOR"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
 
   if (satisfies_constraint_J (operands[2]))
@@ -303,7 +303,7 @@
 	  (parallel [(match_operand:SI 2 "reg_or_uimm5_operand")])))]
   "TARGET_VECTOR"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
 
   if (satisfies_constraint_J (operands[2]))
@@ -407,7 +407,7 @@
   "TARGET_VECTOR"
 {
   gcc_assert (REG_P (XEXP (operands[1], 0)));
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vle (<MODE>mode, operands[0], const0_rtx, const0_rtx,
         XEXP (operands[1], 0), operands[2], riscv_vector_gen_policy ()));
@@ -435,7 +435,7 @@
   "TARGET_VECTOR"
 {
   gcc_assert (REG_P (XEXP (operands[1], 0)));
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
 
   emit_insn (gen_vle (<MODE>mode, operands[0], operands[2], const0_rtx,
@@ -497,7 +497,7 @@
    (match_operand 2 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vlseg (<MODE>mode,
       operands[0], const0_rtx, const0_rtx, XEXP (operands[1], 0),
@@ -526,7 +526,7 @@
    (match_operand 3 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   emit_insn (gen_vlseg (<MODE>mode,
       operands[0], operands[2], operands[0],
@@ -932,7 +932,7 @@
   "TARGET_VECTOR"
 {
   gcc_assert (REG_P (XEXP (operands[0], 0)));
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vse (<MODE>mode, const0_rtx, XEXP (operands[0], 0), operands[1], operands[2],
              riscv_vector_gen_policy ()));
@@ -959,7 +959,7 @@
   "TARGET_VECTOR"
 {
   gcc_assert (REG_P (XEXP (operands[0], 0)));
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   emit_insn (gen_vse (<MODE>mode, operands[2], XEXP (operands[0], 0),
         operands[1], operands[3], riscv_vector_gen_policy ()));
@@ -1017,7 +1017,7 @@
    (match_operand 2 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vsseg (<MODE>mode, const0_rtx,
       XEXP (operands[0], 0), operands[1],
@@ -1044,7 +1044,7 @@
    (match_operand 3 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   emit_insn (gen_vsseg (<MODE>mode,
       operands[2], XEXP (operands[0], 0),
@@ -1490,7 +1490,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_v<insn>_v (<MODE>mode, operands[0],
       const0_rtx, const0_rtx, operands[1], operands[2],
@@ -1544,7 +1544,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfneg_v (<MODE>mode, operands[0], const0_rtx, const0_rtx,
       operands[1], operands[2],
@@ -1578,7 +1578,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
 
   emit_insn (gen_vmnot_m (<MODE>mode,
@@ -1684,7 +1684,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vext_vf2 (SIGN_EXTEND, <VN>mode,
         operands[0], const0_rtx, const0_rtx,
@@ -1700,7 +1700,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vext_vf2 (ZERO_EXTEND, <VN>mode,
         operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -1716,7 +1716,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vext_vf4 (SIGN_EXTEND, <VQN>mode,
         operands[0], const0_rtx, const0_rtx,
@@ -1733,7 +1733,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vext_vf4 (ZERO_EXTEND, <VQN>mode,
         operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -1749,7 +1749,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vext_vf8 (SIGN_EXTEND, <VON>mode,
         operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -1765,7 +1765,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vext_vf8 (ZERO_EXTEND, <VON>mode,
         operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -1816,7 +1816,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfwcvt_f_f_v (<VN>mode,
       operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -1832,7 +1832,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_f_f_v (<VQN>mode,
@@ -1956,7 +1956,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfwcvt_f_x_v (<VNDIFF>mode, FLOAT,
       operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -1972,7 +1972,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfwcvt_f_x_v (<VNDIFF>mode, UNSIGNED_FLOAT,
       operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -1988,7 +1988,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_f_x_v (<VQNDIFF>mode, FLOAT,
@@ -2008,7 +2008,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_f_x_v (<VQNDIFF>mode, UNSIGNED_FLOAT,
@@ -2028,7 +2028,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg1 = gen_reg_rtx (<VQN>mode);
   rtx middle_reg2 = gen_reg_rtx (<VN>mode);
@@ -2052,7 +2052,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg1 = gen_reg_rtx (<VQN>mode);
   rtx middle_reg2 = gen_reg_rtx (<VN>mode);
@@ -2108,12 +2108,11 @@
 {
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VQNDIFF>mode, FIX,
-      middle_reg, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
-      riscv_vector_gen_policy ()));
-  emit_insn (gen_vwcvt_x_x_v (SIGN_EXTEND, <VN>mode,
-      operands[0], const0_rtx, const0_rtx,
-      middle_reg, gen_rtx_REG (Pmode, X0_REGNUM),
-      riscv_vector_gen_policy ()));
+      middle_reg, const0_rtx, const0_rtx, operands[1], 
+      gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vext_vf2 (SIGN_EXTEND, <VN>mode,
+      operands[0], const0_rtx, const0_rtx, middle_reg, 
+      gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   DONE;
 })
 
@@ -2125,12 +2124,11 @@
 {
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VQNDIFF>mode, UNSIGNED_FIX,
-      middle_reg, const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
-      riscv_vector_gen_policy ()));
-  emit_insn (gen_vwcvt_x_x_v (ZERO_EXTEND, <VN>mode,
-      operands[0], const0_rtx, const0_rtx,
-      middle_reg, gen_rtx_REG (Pmode, X0_REGNUM),
-      riscv_vector_gen_policy ()));
+      middle_reg, const0_rtx, const0_rtx, operands[1], 
+      gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vext_vf2 (ZERO_EXTEND, <VN>mode,
+      operands[0], const0_rtx, const0_rtx, middle_reg, 
+      gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   DONE;
 })
 
@@ -2142,7 +2140,7 @@
    (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VNDIFF>mode, FIX,
       operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -2158,7 +2156,7 @@
    (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VNDIFF>mode, UNSIGNED_FIX,
       operands[0], const0_rtx, const0_rtx, operands[1], operands[2],
@@ -2174,15 +2172,16 @@
    (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VQNDIFF>mode, FIX,
       middle_reg, const0_rtx, const0_rtx, operands[1], operands[2],
       riscv_vector_gen_policy ()));
-  emit_insn (gen_vwcvt_x_x_v (SIGN_EXTEND, <VN>mode,
+  emit_insn (gen_vext_vf2 (SIGN_EXTEND, <VN>mode,
       operands[0], const0_rtx, const0_rtx,
-      middle_reg, operands[2], riscv_vector_gen_policy ()));
+      middle_reg, operands[2],
+      riscv_vector_gen_policy ()));
   DONE;
 })
 
@@ -2194,14 +2193,15 @@
    (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VQNDIFF>mode, UNSIGNED_FIX,
       middle_reg, const0_rtx, const0_rtx, operands[1], operands[2],
       riscv_vector_gen_policy ()));
-  emit_insn (gen_vwcvt_x_x_v (ZERO_EXTEND, <VN>mode,
-      operands[0], const0_rtx, const0_rtx, middle_reg, operands[2],
+  emit_insn (gen_vext_vf2 (ZERO_EXTEND, <VN>mode,
+      operands[0], const0_rtx, const0_rtx,
+      middle_reg, operands[2],
       riscv_vector_gen_policy ()));
   DONE;
 })
@@ -2265,7 +2265,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vncvt_x_x_w (<VN>mode, operands[0], const0_rtx, const0_rtx,
              operands[1], operands[2], riscv_vector_gen_policy ()));
@@ -2280,7 +2280,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vncvt_x_x_w (<VN>mode, middle_reg, const0_rtx, const0_rtx,
@@ -2298,7 +2298,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg1 = gen_reg_rtx (<VN>mode);
   rtx middle_reg2 = gen_reg_rtx (<VQN>mode);
@@ -2354,7 +2354,7 @@
       (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfncvt_f_f_w (<VN>mode, operands[0], const0_rtx, const0_rtx,
              operands[1], operands[2],
@@ -2370,7 +2370,7 @@
       (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfncvt_f_f_w (<VN>mode,
@@ -2487,7 +2487,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfncvt_rtz_x_f_w (<MODE>mode, FIX, operands[0], const0_rtx, const0_rtx,
              operands[1], operands[2], riscv_vector_gen_policy ()));
@@ -2502,7 +2502,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfncvt_rtz_x_f_w (<MODE>mode, UNSIGNED_FIX, operands[0],
              const0_rtx, const0_rtx,
@@ -2519,7 +2519,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VW>mode);
   emit_insn (gen_vfncvt_rtz_x_f_w (<VW>mode, FIX, middle_reg, const0_rtx, const0_rtx,
@@ -2537,7 +2537,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VW>mode);
   emit_insn (gen_vfncvt_rtz_x_f_w (<VW>mode, UNSIGNED_FIX, middle_reg, const0_rtx, const0_rtx,
@@ -2555,7 +2555,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg1 = gen_reg_rtx (<VQW>mode);
   rtx middle_reg2 = gen_reg_rtx (<VW>mode);
@@ -2576,7 +2576,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg1 = gen_reg_rtx (<VQW>mode);
   rtx middle_reg2 = gen_reg_rtx (<VW>mode);
@@ -2655,7 +2655,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfncvt_f_x_w (<MODE>mode, FLOAT, operands[0], const0_rtx, const0_rtx,
              operands[1], operands[2], riscv_vector_gen_policy ()));
@@ -2670,7 +2670,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfncvt_f_x_w (<MODE>mode, UNSIGNED_FLOAT, operands[0], const0_rtx, const0_rtx,
              operands[1], operands[2], riscv_vector_gen_policy ()));
@@ -2685,7 +2685,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VW>mode);
   emit_insn (gen_vfncvt_f_x_w (<VW>mode, FLOAT, middle_reg, const0_rtx, const0_rtx,
@@ -2703,7 +2703,7 @@
      (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   rtx middle_reg = gen_reg_rtx (<VW>mode);
   emit_insn (gen_vfncvt_f_x_w (<VW>mode, UNSIGNED_FLOAT, middle_reg, const0_rtx, const0_rtx,
@@ -2808,7 +2808,7 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   if (register_operand (operands[2], <MODE>mode))
     emit_insn (gen_v<optab><mode>_vv (operands[0],
@@ -2894,7 +2894,7 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   if (register_operand (operands[2], <MODE>mode))
     emit_insn (gen_vadd_vv (<MODE>mode, operands[0],
@@ -2961,7 +2961,7 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   emit_insn (gen_vsub_vv (<MODE>mode, operands[0], const0_rtx, const0_rtx,
       operands[1], operands[2], operands[3],
@@ -2991,7 +2991,7 @@
 	  (match_operand:<VSUB> 2 "reg_or_uimm5_operand")))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]))
+  if (!CONST_SCALAR_INT_P (operands[2]))
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_v<optab><mode>_vx (operands[0],
         const0_rtx, const0_rtx, operands[1],
@@ -3052,9 +3052,9 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   emit_insn (gen_v<optab><mode>_vx (operands[0],
         const0_rtx, const0_rtx, operands[1],
@@ -3072,7 +3072,7 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   emit_insn (gen_v<optab><mode>_vv (operands[0],
         const0_rtx, const0_rtx, operands[1],
@@ -3191,7 +3191,7 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   if (register_operand (operands[2], <MODE>mode))
     emit_insn (gen_vf<optab><mode>_vv (operands[0],
@@ -3358,7 +3358,7 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
 
   emit_insn (gen_vm<optab><mode>_mm (operands[0],
@@ -3570,7 +3570,7 @@
 	          (match_operand:VI 2 "register_operand" "vr")
 	          (match_operand:VI 3 "register_operand" "vr"))
 	        (match_operand:VI 4 "register_operand" "vr"))
-        (match_operand:VI 5 "vector_arith_operand" "vr")] UNSPEC_SELECT)
+        (match_operand:VI 5 "register_operand" "vr")] UNSPEC_SELECT)
       (match_operand 6 "p_reg_or_const_csr_operand")
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
@@ -4572,7 +4572,7 @@
   "TARGET_VECTOR && TARGET_RVV"
 {
   rtx x;
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
 
   if (const_vec_duplicate_p (operands[1], &x))
@@ -4602,7 +4602,7 @@
 
 (define_expand "@vcond_mask_vs<mode><vm>"
   [(match_operand:V 0 "register_operand")
-   (match_operand:<VSUB> 1 "reg_or_simm5_operand")
+   (match_operand:<VSUB> 1 "<vcond_mask_vs_predicate>")
    (match_operand:V 2 "register_operand")
    (match_operand:<VM> 3 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
@@ -4626,13 +4626,13 @@
 
 (define_expand "@len_vcond_mask_vs<mode><vm>"
   [(match_operand:V 0 "register_operand")
-   (match_operand:<VSUB> 1 "reg_or_simm5_operand")
+   (match_operand:<VSUB> 1 "<vcond_mask_vs_predicate>")
    (match_operand:V 2 "register_operand")
    (match_operand:<VM> 3 "register_operand")
    (match_operand 4 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
 
   if (FLOAT_MODE_P (<MODE>mode))
@@ -4684,7 +4684,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSI:MODE>mode, <V2UNITS:VM>mode, operands, true);
   DONE;
@@ -4716,7 +4716,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSI:MODE>mode, <V4UNITS:VM>mode, operands, true);
   DONE;
@@ -4748,7 +4748,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSI:MODE>mode, <V8UNITS:VM>mode, operands, true);
   DONE;
@@ -4780,7 +4780,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSI:MODE>mode, <V16UNITS:VM>mode, operands, true);
   DONE;
@@ -4812,7 +4812,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSI:MODE>mode, <V32UNITS:VM>mode, operands, true);
   DONE;
@@ -4844,7 +4844,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSI:MODE>mode, <V64UNITS:VM>mode, operands, true);
   DONE;
@@ -4876,7 +4876,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<MODE>mode, <MODE>mode, <VM>mode, operands, true);
   DONE;
@@ -4910,7 +4910,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSI:MODE>mode, <V2UNITS:VM>mode, operands, true);
   DONE;
@@ -4942,7 +4942,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSI:MODE>mode, <V4UNITS:VM>mode, operands, true);
   DONE;
@@ -4974,7 +4974,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSI:MODE>mode, <V8UNITS:VM>mode, operands, true);
   DONE;
@@ -5006,7 +5006,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSI:MODE>mode, <V16UNITS:VM>mode, operands, true);
   DONE;
@@ -5038,7 +5038,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSI:MODE>mode, <V32UNITS:VM>mode, operands, true);
   DONE;
@@ -5070,7 +5070,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSI:MODE>mode, <V64UNITS:VM>mode, operands, true);
   DONE;
@@ -5102,7 +5102,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<MODE>mode, <MODE>mode, <VM>mode, operands, true);
   DONE;
@@ -5136,7 +5136,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V2UNITS:MODE>mode, <V2UNITSF:MODE>mode, <V2UNITS:VM>mode, operands, true);
   DONE;
@@ -5168,7 +5168,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V4UNITS:MODE>mode, <V4UNITSF:MODE>mode, <V4UNITS:VM>mode, operands, true);
   DONE;
@@ -5200,7 +5200,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V8UNITS:MODE>mode, <V8UNITSF:MODE>mode, <V8UNITS:VM>mode, operands, true);
   DONE;
@@ -5232,7 +5232,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V16UNITS:MODE>mode, <V16UNITSF:MODE>mode, <V16UNITS:VM>mode, operands, true);
   DONE;
@@ -5264,7 +5264,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V32UNITS:MODE>mode, <V32UNITSF:MODE>mode, <V32UNITS:VM>mode, operands, true);
   DONE;
@@ -5296,7 +5296,7 @@
      (match_operand 6 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[6]) && GET_MODE (operands[6]) != Pmode)
     operands[6] = gen_lowpart (Pmode, operands[6]);
   riscv_expand_vcond (<V64UNITS:MODE>mode, <V64UNITSF:MODE>mode, <V64UNITS:VM>mode, operands, true);
   DONE;
@@ -5338,7 +5338,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
 
   riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
@@ -5370,7 +5370,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
 
   riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
@@ -5402,7 +5402,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
 
   riscv_expand_vec_cmp_float (operands[0], GET_CODE (operands[1]),
@@ -5436,7 +5436,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
 
   riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
@@ -5470,7 +5470,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
 
   riscv_expand_vec_cmp_int (operands[0], GET_CODE (operands[1]),
@@ -5504,7 +5504,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
 
   riscv_expand_vec_cmp_float (operands[0], GET_CODE (operands[1]),
@@ -5564,7 +5564,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfcvt<vmap>_rtz_x<u>_f_v (operands[0], const0_rtx, const0_rtx, operands[1],
         operands[2], riscv_vector_gen_policy ()));
@@ -5598,7 +5598,7 @@
        (match_operand 2 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
   emit_insn (gen_vfcvt<mode>_f_x<u>_v (operands[0], const0_rtx, const0_rtx,
         operands[1], operands[2], riscv_vector_gen_policy ()));
@@ -5692,7 +5692,7 @@
   DONE;
 })
 
-(define_expand "vec_convert_<su><optab>v<vsub><vw>"
+(define_expand "vec_convert_<su><optab>v<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (plus_minus_mult:<VW>
       (any_extend:<VW>
@@ -5709,113 +5709,53 @@
   DONE;
 })
 
-(define_expand "vec_convert_vusmulv<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (mult:<VW>
-      (zero_extend:<VW>
-        (match_operand:VWI 1 "register_operand"))
-      (sign_extend:<VW>
-        (match_operand:VWI 2 "register_operand"))))]
+(define_expand "vec_convert_vsumulv<mode><vw>"
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:VWI 2 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
   emit_insn (gen_vwmulsu<vw>_vv (operands[0],
-      const0_rtx, const0_rtx, operands[2],
-      operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "vec_convert_sumulv<mode><vw>"
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:<VSUB> 2 "register_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  emit_insn (gen_vwmulsu<vw>_vx (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
       riscv_vector_gen_policy ()));
   DONE;
 })
 
 (define_expand "vec_convert_usmulv<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (mult:<VW>
-      (zero_extend:<VW>
-        (vec_duplicate:VWI
-          (match_operand:<VSUB> 1 "register_operand")))
-      (sign_extend:<VW>
-        (match_operand:VWI 2 "register_operand"))))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  emit_insn (gen_vwmulsu<vw>_vx (operands[0],
-      const0_rtx, const0_rtx, operands[2],
-      operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
-      riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_usmulv<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(mult:<VW>
-        (zero_extend:<VW>
-          (vec_duplicate:VWI
-            (match_operand:<VSUB> 1 "register_operand")))
-        (sign_extend:<VW>
-          (match_operand:VWI 2 "register_operand")))
-        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  emit_insn (gen_vwmulsu<vw>_vx (operands[0],
-      const0_rtx, const0_rtx, operands[2],
-      operands[1], operands[3], riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "vec_convert_sumulv<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (mult:<VW>
-      (sign_extend:<VW>
-        (vec_duplicate:VWI
-          (match_operand:<VSUB> 1 "register_operand")))
-      (zero_extend:<VW>
-        (match_operand:VWI 2 "register_operand"))))]
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:<VSUB> 2 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
   rtx reg = gen_reg_rtx (<MODE>mode);
   rtx wide1 = gen_reg_rtx (<VW>mode);
   rtx wide2 = gen_reg_rtx (<VW>mode);
-  emit_insn (gen_vmv<mode>_v_x (reg, const0_rtx, operands[1],
+  emit_insn (gen_vmv<mode>_v_x (reg, const0_rtx, operands[2],
                                 gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   emit_insn (gen_vwcvt_x_x_v (SIGN_EXTEND, <MODE>mode,
       wide1, const0_rtx, const0_rtx, reg, gen_rtx_REG (Pmode, X0_REGNUM),
       riscv_vector_gen_policy ()));
   emit_insn (gen_vwcvt_x_x_v (ZERO_EXTEND, <MODE>mode,
-      wide2, const0_rtx, const0_rtx, operands[2],
+      wide2, const0_rtx, const0_rtx, operands[1],
       gen_rtx_REG (Pmode, X0_REGNUM),
       riscv_vector_gen_policy ()));
   emit_insn (gen_vmul_vv (<VW>mode, operands[0], const0_rtx, const0_rtx,
       wide1, wide2, gen_rtx_REG (Pmode, X0_REGNUM),
       riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_sumulv<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(mult:<VW>
-        (sign_extend:<VW>
-          (vec_duplicate:VWI
-            (match_operand:<VSUB> 1 "register_operand")))
-        (zero_extend:<VW>
-          (match_operand:VWI 2 "register_operand")))
-        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  rtx reg = gen_reg_rtx (<MODE>mode);
-  rtx wide1 = gen_reg_rtx (<VW>mode);
-  rtx wide2 = gen_reg_rtx (<VW>mode);
-  emit_insn (gen_vmv<mode>_v_x (reg, const0_rtx, operands[1], operands[3], riscv_vector_gen_policy ()));
-  emit_insn (gen_vwcvt_x_x_v (SIGN_EXTEND, <MODE>mode,
-      wide1, const0_rtx, const0_rtx, reg, operands[3],
-      riscv_vector_gen_policy ()));
-  emit_insn (gen_vwcvt_x_x_v (ZERO_EXTEND, <MODE>mode,
-      wide2, const0_rtx, const0_rtx, operands[2], operands[3],
-      riscv_vector_gen_policy ()));
-  emit_insn (gen_vmul_vv (<VW>mode, operands[0], const0_rtx, const0_rtx,
-      wide1, wide2, operands[3], riscv_vector_gen_policy ()));
   DONE;
 })
 
@@ -5835,7 +5775,7 @@
   DONE;
 })
 
-(define_expand "vec_convert_s<optab>v<vsub><vw>"
+(define_expand "vec_convert_s<optab>v<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (plus_minus_mult:<VW>
       (float_extend:<VW>
@@ -5848,106 +5788,6 @@
   emit_insn (gen_vfw<optab><vw>_vf (operands[0],
       const0_rtx, const0_rtx, operands[1],
       operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
-      riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_v<su><optab>v<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus_minus_mult:<VW>
-        (any_extend:<VW>
-          (match_operand:VWI 1 "register_operand"))
-        (any_extend:<VW>
-          (match_operand:VWI 2 "register_operand")))
-       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  emit_insn (gen_vw<optab><u><vw>_vv (operands[0],
-      const0_rtx, const0_rtx, operands[1],
-      operands[2], operands[3], riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_<su><optab>v<vsub><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus_minus_mult:<VW>
-        (any_extend:<VW>
-          (match_operand:VWI 1 "register_operand"))
-        (any_extend:<VW>
-          (vec_duplicate:VWI
-            (match_operand:<VSUB> 2 "register_operand"))))
-       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  emit_insn (gen_vw<optab><u><vw>_vx (operands[0],
-      const0_rtx, const0_rtx, operands[1],
-      operands[2], operands[3],
-      riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_vusmulv<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(mult:<VW>
-        (zero_extend:<VW>
-          (match_operand:VWI 1 "register_operand"))
-        (sign_extend:<VW>
-          (match_operand:VWI 2 "register_operand")))
-       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  emit_insn (gen_vwmulsu<vw>_vv (operands[0],
-      const0_rtx, const0_rtx, operands[2],
-      operands[1], operands[3], riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_vs<optab>v<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus_minus_mult:<VW>
-        (float_extend:<VW>
-          (match_operand:VWF 1 "register_operand"))
-        (float_extend:<VW>
-          (match_operand:VWF 2 "register_operand")))
-       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  emit_insn (gen_vfw<optab><vw>_vv (operands[0],
-      const0_rtx, const0_rtx, operands[1],
-      operands[2], operands[3],
-      riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_s<optab>v<vsub><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus_minus_mult:<VW>
-        (float_extend:<VW>
-          (match_operand:VWF 1 "register_operand"))
-        (float_extend:<VW>
-          (vec_duplicate:VWF
-            (match_operand:<VSUB> 2 "register_operand"))))
-       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  emit_insn (gen_vfw<optab><vw>_vf (operands[0],
-      const0_rtx, const0_rtx, operands[1],
-      operands[2], operands[3],
       riscv_vector_gen_policy ()));
   DONE;
 })
@@ -5978,44 +5818,6 @@
   emit_insn (gen_vfw<optab><vw>_wv (operands[0],
       const0_rtx, const0_rtx, operands[1],
       operands[2], gen_rtx_REG (Pmode, X0_REGNUM),
-      riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_v<su><optab>w<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus_minus:<VW>
-        (match_operand:<VW> 1 "register_operand")
-        (any_extend:<VW>
-          (match_operand:VWI 2 "register_operand")))
-       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  emit_insn (gen_vw<optab><u><vw>_wv (operands[0],
-      const0_rtx, const0_rtx, operands[1],
-      operands[2], operands[3],
-      riscv_vector_gen_policy ()));
-  DONE;
-})
-
-(define_expand "len_vec_convert_vs<optab>w<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus_minus:<VW>
-        (match_operand:<VW> 1 "register_operand")
-        (float_extend:<VW>
-          (match_operand:VWF 2 "register_operand")))
-       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
-{
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
-    operands[3] = gen_lowpart (Pmode, operands[3]);
-  emit_insn (gen_vfw<optab><vw>_wv (operands[0],
-      const0_rtx, const0_rtx, operands[1],
-      operands[2], operands[3],
       riscv_vector_gen_policy ()));
   DONE;
 })
@@ -6052,6 +5854,185 @@
   DONE;
 })
 
+(define_expand "len_vec_convert_v<su><optab>v<mode><vw>"
+  [(set (match_operand:<VW> 0 "register_operand")
+    (unspec:<VW>
+      [(plus_minus_mult:<VW>
+        (any_extend:<VW>
+          (match_operand:VWI 1 "register_operand"))
+        (any_extend:<VW>
+          (match_operand:VWI 2 "register_operand")))
+       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vw<optab><u><vw>_vv (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_convert_<su><optab>v<mode><vw>"
+  [(set (match_operand:<VW> 0 "register_operand")
+    (unspec:<VW>
+      [(plus_minus_mult:<VW>
+        (any_extend:<VW>
+          (match_operand:VWI 1 "register_operand"))
+        (any_extend:<VW>
+          (vec_duplicate:VWI
+            (match_operand:<VSUB> 2 "register_operand"))))
+       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vw<optab><u><vw>_vx (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_convert_vsumulv<mode><vw>"
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:VWI 2 "register_operand")
+   (match_operand 3 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vwmulsu<vw>_vv (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_convert_sumulv<mode><vw>"
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:<VSUB> 2 "register_operand")
+   (match_operand 3 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vwmulsu<vw>_vx (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_convert_usmulv<mode><vw>"
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:<VSUB> 2 "register_operand")
+   (match_operand 3 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  rtx reg = gen_reg_rtx (<MODE>mode);
+  rtx wide1 = gen_reg_rtx (<VW>mode);
+  rtx wide2 = gen_reg_rtx (<VW>mode);
+  emit_insn (gen_vmv<mode>_v_x (reg, const0_rtx, operands[2],
+                                operands[3], riscv_vector_gen_policy ()));
+  emit_insn (gen_vwcvt_x_x_v (SIGN_EXTEND, <MODE>mode,
+      wide1, const0_rtx, const0_rtx, reg, operands[3],
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vwcvt_x_x_v (ZERO_EXTEND, <MODE>mode,
+      wide2, const0_rtx, const0_rtx, operands[1],
+      operands[3],
+      riscv_vector_gen_policy ()));
+  emit_insn (gen_vmul_vv (<VW>mode, operands[0], const0_rtx, const0_rtx,
+      wide1, wide2, operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_convert_vs<optab>v<mode><vw>"
+  [(set (match_operand:<VW> 0 "register_operand")
+    (unspec:<VW>
+      [(plus_minus_mult:<VW>
+        (float_extend:<VW>
+          (match_operand:VWF 1 "register_operand"))
+        (float_extend:<VW>
+          (match_operand:VWF 2 "register_operand")))
+       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vfw<optab><vw>_vv (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_convert_s<optab>v<mode><vw>"
+  [(set (match_operand:<VW> 0 "register_operand")
+    (unspec:<VW>
+      [(plus_minus_mult:<VW>
+        (float_extend:<VW>
+          (match_operand:VWF 1 "register_operand"))
+        (float_extend:<VW>
+          (vec_duplicate:VWF
+            (match_operand:<VSUB> 2 "register_operand"))))
+       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vfw<optab><vw>_vf (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_convert_v<su><optab>w<mode><vw>"
+  [(set (match_operand:<VW> 0 "register_operand")
+    (unspec:<VW>
+      [(plus_minus:<VW>
+        (match_operand:<VW> 1 "register_operand")
+        (any_extend:<VW>
+          (match_operand:VWI 2 "register_operand")))
+       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vw<optab><u><vw>_wv (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_convert_vs<optab>w<mode><vw>"
+  [(set (match_operand:<VW> 0 "register_operand")
+    (unspec:<VW>
+      [(plus_minus:<VW>
+        (match_operand:<VW> 1 "register_operand")
+        (float_extend:<VW>
+          (match_operand:VWF 2 "register_operand")))
+       (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  "TARGET_VECTOR && TARGET_RVV"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vfw<optab><vw>_wv (operands[0],
+      const0_rtx, const0_rtx, operands[1],
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
+  DONE;
+})
+
 (define_expand "len_vec_convert_<su><optab>w<vsub><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (unspec:<VW>
@@ -6063,11 +6044,12 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   emit_insn (gen_vw<optab><u><vw>_wx (operands[0],
       const0_rtx, const0_rtx, operands[1],
-      operands[2], operands[3], riscv_vector_gen_policy ()));
+      operands[2], operands[3],
+      riscv_vector_gen_policy ()));
   DONE;
 })
 
@@ -6082,7 +6064,7 @@
        (match_operand 3 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
     operands[3] = gen_lowpart (Pmode, operands[3]);
   emit_insn (gen_vfw<optab><vw>_wf (operands[0],
       const0_rtx, const0_rtx, operands[1],
@@ -6145,18 +6127,14 @@
   DONE;
 })
 
-(define_expand "vec_convert_vusfmav<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (plus:<VW>
-      (mult:<VW>
-        (zero_extend:<VW>
-          (match_operand:VWI 1 "register_operand"))
-        (sign_extend:<VW>
-          (match_operand:VWI 2 "register_operand")))
-      (match_operand:<VW> 3 "register_operand")))]
+(define_expand "vec_convert_vsufmav<mode><vw>"
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:VWI 2 "register_operand")
+   (match_operand:<VW> 3 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  emit_insn (gen_vwmaccsu<vw>_vv (operands[3], const0_rtx, operands[3], operands[2], operands[1],
+  emit_insn (gen_vwmaccsu<vw>_vv (operands[3], const0_rtx, operands[3], operands[1], operands[2],
              gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   riscv_emit_move (operands[0], operands[3]);
   DONE;
@@ -6175,7 +6153,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vwmacc<u><vw>_vv (operands[3], const0_rtx, operands[3], operands[1], operands[2],
              operands[4], riscv_vector_gen_policy ()));
@@ -6196,7 +6174,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vfwmacc<vw>_vv (operands[3], const0_rtx, operands[3], operands[1], operands[2],
              operands[4], riscv_vector_gen_policy ()));
@@ -6204,28 +6182,23 @@
   DONE;
 })
 
-(define_expand "len_vec_convert_vusfmav<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus:<VW>
-        (mult:<VW>
-          (zero_extend:<VW>
-            (match_operand:VWI 1 "register_operand"))
-          (sign_extend:<VW>
-            (match_operand:VWI 2 "register_operand")))
-        (match_operand:<VW> 3 "register_operand"))
-       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+(define_expand "len_vec_convert_vsufmav<mode><vw>"
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:VWI 2 "register_operand")
+   (match_operand:<VW> 3 "register_operand")
+   (match_operand 4 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
-  emit_insn (gen_vwmaccsu<vw>_vv (operands[3], const0_rtx, operands[3], operands[2], operands[1],
+  emit_insn (gen_vwmaccsu<vw>_vv (operands[3], const0_rtx, operands[3], operands[1], operands[2],
              operands[4], riscv_vector_gen_policy ()));
   riscv_emit_move (operands[0], operands[3]);
   DONE;
 })
 
-(define_expand "vec_convert_<su>fmav<vsub><vw>"
+(define_expand "vec_convert_<su>fmav<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (plus:<VW>
       (mult:<VW>
@@ -6244,7 +6217,7 @@
   DONE;
 })
 
-(define_expand "vec_convert_sfmav<vsub><vw>"
+(define_expand "vec_convert_sfmav<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (plus:<VW>
       (mult:<VW>
@@ -6263,44 +6236,34 @@
 })
 
 (define_expand "vec_convert_usfmav<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (plus:<VW>
-      (mult:<VW>
-        (zero_extend:<VW>
-          (vec_duplicate:VWI
-            (match_operand:<VSUB> 1 "register_operand")))
-        (sign_extend:<VW>
-          (match_operand:VWI 2 "register_operand")))
-      (match_operand:<VW> 3 "register_operand")))]
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:<VSUB> 2 "register_operand")
+   (match_operand:<VW> 3 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  emit_insn (gen_vwmaccus<vw>_vx (
-             operands[3], const0_rtx, operands[3], operands[1], operands[2],
+  emit_insn (gen_vwmaccsu<vw>_vx (
+             operands[3], const0_rtx, operands[3], operands[2], operands[1],
              gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   riscv_emit_move (operands[0], operands[3]);
   DONE;
 })
 
 (define_expand "vec_convert_sufmav<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (plus:<VW>
-      (mult:<VW>
-        (sign_extend:<VW>
-          (vec_duplicate:VWI
-            (match_operand:<VSUB> 1 "register_operand")))
-        (zero_extend:<VW>
-          (match_operand:VWI 2 "register_operand")))
-      (match_operand:<VW> 3 "register_operand")))]
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:<VSUB> 2 "register_operand")
+   (match_operand:<VW> 3 "register_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  emit_insn (gen_vwmaccsu<vw>_vx (
-             operands[3], const0_rtx, operands[3], operands[1], operands[2],
+  emit_insn (gen_vwmaccus<vw>_vx (
+             operands[3], const0_rtx, operands[3], operands[2], operands[1],
              gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   riscv_emit_move (operands[0], operands[3]);
   DONE;
 })
 
-(define_expand "len_vec_convert_<su>fmav<vsub><vw>"
+(define_expand "len_vec_convert_<su>fmav<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (unspec:<VW>
       [(plus:<VW>
@@ -6314,7 +6277,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vwmacc<u><vw>_vx (
              operands[3], const0_rtx, operands[3], operands[2], operands[1],
@@ -6323,7 +6286,7 @@
   DONE;
 })
 
-(define_expand "len_vec_convert_sfmav<vsub><vw>"
+(define_expand "len_vec_convert_sfmav<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (unspec:<VW>
       [(plus:<VW>
@@ -6337,7 +6300,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vfwmacc<vw>_vf (operands[3], const0_rtx, operands[3], operands[2], operands[1],
              operands[4], riscv_vector_gen_policy ()));
@@ -6346,46 +6309,34 @@
 })
 
 (define_expand "len_vec_convert_usfmav<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus:<VW>
-        (mult:<VW>
-          (zero_extend:<VW>
-            (vec_duplicate:VWI
-              (match_operand:<VSUB> 1 "register_operand")))
-          (sign_extend:<VW>
-            (match_operand:VWI 2 "register_operand")))
-        (match_operand:<VW> 3 "register_operand"))
-       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:<VSUB> 2 "register_operand")
+   (match_operand:<VW> 3 "register_operand")
+   (match_operand 4 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
-  emit_insn (gen_vwmaccus<vw>_vx (
-             operands[3], const0_rtx, operands[3], operands[1], operands[2],
+  emit_insn (gen_vwmaccsu<vw>_vx (
+             operands[3], const0_rtx, operands[3], operands[2], operands[1],
              operands[4], riscv_vector_gen_policy ()));
   riscv_emit_move (operands[0], operands[3]);
   DONE;
 })
 
 (define_expand "len_vec_convert_sufmav<mode><vw>"
-  [(set (match_operand:<VW> 0 "register_operand")
-    (unspec:<VW>
-      [(plus:<VW>
-        (mult:<VW>
-          (sign_extend:<VW>
-            (vec_duplicate:VWI
-              (match_operand:<VSUB> 1 "register_operand")))
-          (zero_extend:<VW>
-            (match_operand:VWI 2 "register_operand")))
-        (match_operand:<VW> 3 "register_operand"))
-       (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
+  [(match_operand:<VW> 0 "register_operand")
+   (match_operand:VWI 1 "register_operand")
+   (match_operand:<VSUB> 2 "register_operand")
+   (match_operand:<VW> 3 "register_operand")
+   (match_operand 4 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
-  emit_insn (gen_vwmaccsu<vw>_vx (
-             operands[3], const0_rtx, operands[3], operands[1], operands[2],
+  emit_insn (gen_vwmaccus<vw>_vx (
+             operands[3], const0_rtx, operands[3], operands[2], operands[1],
              operands[4], riscv_vector_gen_policy ()));
   riscv_emit_move (operands[0], operands[3]);
   DONE;
@@ -6421,7 +6372,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vfwmsac<vw>_vv (operands[3], const0_rtx, operands[3], operands[1], operands[2],
              operands[4], riscv_vector_gen_policy ()));
@@ -6429,7 +6380,7 @@
   DONE;
 })
 
-(define_expand "vec_convert_sfmsv<vsub><vw>"
+(define_expand "vec_convert_sfmsv<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (minus:<VW>
       (mult:<VW>
@@ -6447,7 +6398,7 @@
   DONE;
 })
 
-(define_expand "len_vec_convert_sfmsv<vsub><vw>"
+(define_expand "len_vec_convert_sfmsv<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (unspec:<VW>
       [(minus:<VW>
@@ -6461,7 +6412,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vfwmsac<vw>_vf (operands[3], const0_rtx, operands[3], operands[2], operands[1],
              operands[4], riscv_vector_gen_policy ()));
@@ -6499,7 +6450,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vfwnmsac<vw>_vv (operands[3], const0_rtx, operands[3], operands[1], operands[2],
              operands[4], riscv_vector_gen_policy ()));
@@ -6507,7 +6458,7 @@
   DONE;
 })
 
-(define_expand "vec_convert_sfnmav<vsub><vw>"
+(define_expand "vec_convert_sfnmav<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (minus:<VW>
       (match_operand:<VW> 3 "register_operand")
@@ -6525,7 +6476,7 @@
   DONE;
 })
 
-(define_expand "len_vec_convert_sfnmav<vsub><vw>"
+(define_expand "len_vec_convert_sfnmav<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (unspec:<VW>
       [(minus:<VW>
@@ -6539,7 +6490,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vfwnmsac<vw>_vf (operands[3], const0_rtx, operands[3], operands[2], operands[1],
              operands[4], riscv_vector_gen_policy ()));
@@ -6579,7 +6530,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vfwnmacc<vw>_vv (operands[3], const0_rtx, operands[3], operands[1], operands[2],
              operands[4], riscv_vector_gen_policy ()));
@@ -6587,7 +6538,7 @@
   DONE;
 })
 
-(define_expand "vec_convert_sfnmsv<vsub><vw>"
+(define_expand "vec_convert_sfnmsv<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (minus:<VW>
       (neg:<VW>
@@ -6606,7 +6557,7 @@
   DONE;
 })
 
-(define_expand "len_vec_convert_sfnmsv<vsub><vw>"
+(define_expand "len_vec_convert_sfnmsv<mode><vw>"
   [(set (match_operand:<VW> 0 "register_operand")
     (unspec:<VW>
       [(minus:<VW>
@@ -6621,7 +6572,7 @@
        (match_operand 4 "p_reg_or_const_csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
 {
-  if (!CONSTANT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
+  if (!CONST_SCALAR_INT_P (operands[4]) && GET_MODE (operands[4]) != Pmode)
     operands[4] = gen_lowpart (Pmode, operands[4]);
   emit_insn (gen_vfwnmacc<vw>_vf (operands[3], const0_rtx, operands[3], operands[2], operands[1],
              operands[4], riscv_vector_gen_policy ()));
@@ -6893,7 +6844,7 @@
        (match_operand 3 "csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   {
-    if (!CONSTANT_P (operands[3]))
+    if (!CONST_SCALAR_INT_P (operands[3]))
       operands[3] = gen_lowpart (Pmode, operands[3]);
     emit_insn (gen_v<optab><mode>_vx (operands[0],
         const0_rtx, const0_rtx, operands[1],
@@ -6912,7 +6863,7 @@
        (match_operand 3 "csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   {
-    if (!CONSTANT_P (operands[3]))
+    if (!CONST_SCALAR_INT_P (operands[3]))
       operands[3] = gen_lowpart (Pmode, operands[3]);
     emit_insn (gen_v_vx (UNSPEC_VADD, <MODE>mode,
           operands[0], const0_rtx, const0_rtx,
@@ -6931,7 +6882,7 @@
        (match_operand 3 "csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   {
-    if (!CONSTANT_P (operands[3]))
+    if (!CONST_SCALAR_INT_P (operands[3]))
       operands[3] = gen_lowpart (Pmode, operands[3]);
     emit_insn (gen_v_vx (UNSPEC_VSUB, <MODE>mode,
           operands[0], const0_rtx, const0_rtx,
@@ -6950,7 +6901,7 @@
        (match_operand 3 "csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   {
-    if (!CONSTANT_P (operands[3]))
+    if (!CONST_SCALAR_INT_P (operands[3]))
       operands[3] = gen_lowpart (Pmode, operands[3]);
     emit_insn (gen_v_vx (UNSPEC_VRSUB, <MODE>mode,
           operands[0], const0_rtx, const0_rtx, operands[1],
@@ -6969,7 +6920,7 @@
        (match_operand 3 "csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   {
-    if (!CONSTANT_P (operands[3]))
+    if (!CONST_SCALAR_INT_P (operands[3]))
       operands[3] = gen_lowpart (Pmode, operands[3]);
     emit_insn (gen_vf<optab><mode>_vf (operands[0], const0_rtx, const0_rtx,
         operands[1], operands[2], operands[3],
@@ -6987,7 +6938,7 @@
        (match_operand 3 "csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   {
-    if (!CONSTANT_P (operands[3]))
+    if (!CONST_SCALAR_INT_P (operands[3]))
       operands[3] = gen_lowpart (Pmode, operands[3]);
     emit_insn (gen_vf<optab><mode>_vf (operands[0], const0_rtx, const0_rtx,
         operands[1], operands[2], operands[3],
@@ -7005,7 +6956,7 @@
        (match_operand 3 "csr_operand")] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   {
-    if (!CONSTANT_P (operands[3]))
+    if (!CONST_SCALAR_INT_P (operands[3]))
       operands[3] = gen_lowpart (Pmode, operands[3]);
     emit_insn (gen_vfr<optab><mode>_vf (operands[0], const0_rtx, const0_rtx,
         operands[1], operands[2], operands[3],

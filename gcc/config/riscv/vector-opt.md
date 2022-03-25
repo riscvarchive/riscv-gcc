@@ -149,39 +149,62 @@
 ;; - vle64.v
 ;; -------------------------------------------------------------------------
 
-(define_insn_and_rewrite "vload<mode>_vmerge_to_vle<mode>_mask"
+(define_insn_and_rewrite "vle<mode>_vmerge_to_vle<mode>_mask"
   [(set (match_operand:V 0 "register_operand" "=vr")
     (unspec:V 
       [(const_int 0)
        (unspec:V 
         [(match_operand:<VM> 1 "register_operand" "vm")
-         (match_operand:V 3 "register_operand" "vr")
+         (match_operand:V 2 "register_operand" "vr")
          (unspec:V 
           [(unspec:V 
-            [(match_operand:<VM> 2 "register_operand" "vm")
+            [(match_dup 1)
              (unspec:V 
-              [(match_operand 4 "pmode_register_operand" "r")
+              [(match_operand 3 "pmode_register_operand" "r")
                (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_LOAD)
              (const_int 0)] UNSPEC_SELECT)
-           (match_operand 6 "p_reg_or_const_csr_operand")
-           (match_operand 7 "const_int_operand")
+           (match_operand 5 "p_reg_or_const_csr_operand")
+           (match_operand 6 "const_int_operand")
            (reg:SI VL_REGNUM)
            (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
-      (match_dup 6)
-      (match_operand 5 "const_int_operand")
+      (match_dup 5)
+      (match_operand 4 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "#"
   "&& 1"
   {
-    emit_insn (gen_vle (<MODE>mode, operands[0], operands[1], operands[3],
-        operands[4], operands[6], operands[7]));
+    emit_insn (gen_vle (<MODE>mode, operands[0], operands[1], operands[2],
+        operands[3], operands[5], operands[6]));
     DONE;
   }
   [(set_attr "type" "vle")
    (set_attr "mode" "<MODE>")])
-        
+
+(define_insn_and_rewrite "vload<mode>_vmerge_to_vle<mode>_mask"
+  [(set (match_operand:VFULL 0 "register_operand" "=vr")
+    (unspec:VFULL 
+      [(const_int 0)
+       (unspec:VFULL 
+         [(match_operand:<VM> 1 "register_operand" "vm")
+          (match_operand:VFULL 2 "register_operand" "vr")
+          (match_operand:VFULL 3 "memory_operand" "m")] UNSPEC_MERGE)
+       (match_operand 4 "p_reg_or_const_csr_operand")
+       (match_operand 5 "const_int_operand")
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vle (<MODE>mode, operands[0], operands[1], operands[2],
+        XEXP (operands[3], 0), operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vle")
+   (set_attr "mode" "<MODE>")])
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT] Canonicalization of Instructions
 ;; -------------------------------------------------------------------------
@@ -556,7 +579,7 @@
    (set_attr "mode" "<MODE>")])
    
 ;; -------------------------------------------------------------------------
-;; ---- [INT] Canonicalization of Instructions
+;; ---- [INT,FP] Canonicalization of Instructions
 ;; -------------------------------------------------------------------------
 ;; Includes:
 ;; - vsext.vf2
@@ -565,38 +588,445 @@
 ;; - vzext.vf4
 ;; - vsext.vf8
 ;; - vzext.vf8
+;; - vfwcvt.f.f.v
 ;; -------------------------------------------------------------------------
 
-(define_insn "v<sz>ext<mode>_vf2_vmerge_to_v<sz>ext<mode>_vf2_mask"
-  [(set (match_operand:VEXTI 0 "register_operand" "=vr,?&vr")
-    (unspec:VEXTI 
+(define_insn_and_rewrite "v<sz>ext<vw>_vf2_vmerge_to_v<sz>ext<vw>_vf2_mask"
+  [(set (match_operand:<VW> 0 "register_operand" "=&vr")
+    (unspec:<VW> 
       [(const_int 0)
-       (unspec:VEXTI 
-        [(unspec:<VM> 
-          [(not:<VM> 
-            (match_operand:<VM> 1 "register_operand" "vm,vm"))
+       (unspec:<VW> 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:<VW> 2 "register_operand" "vr")
+         (unspec:<VW> 
+          [(unspec:<VW> 
+            [(const_int 0)
+             (any_extend:<VW> 
+              (match_operand:VWI 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
            (match_operand 4 "p_reg_or_const_csr_operand")
            (match_operand 5 "const_int_operand")
            (reg:SI VL_REGNUM)
-           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)
-         (unspec:VEXTI 
-          [(unspec:VEXTI 
-            [(const_int 0)
-             (any_extend:VEXTI 
-              (match_operand:<VN> 3 "register_operand" "vr,vr"))
-             (const_int 0)] UNSPEC_SELECT)
-           (match_dup 4)
-           (match_dup 5)
-           (reg:SI VL_REGNUM)
-           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)
-         (match_operand:VEXTI 2 "register_operand" "0,vr")] UNSPEC_MERGE)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
        (match_dup 4)
        (match_dup 5)
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
-  "@
-   v<sz>ext.vf2\t%0,%3,%1.t
-   vmv<lmul>r.v\t%0,%2\;v<sz>ext.vf2\t%0,%3,%1.t"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_v<sz>ext<vw>_vf2 (operands[0], operands[1], operands[2], operands[3],
+            operands[4], operands[5]));
+    DONE;
+  }
   [(set_attr "type" "vwcvt")
+   (set_attr "mode" "<VW>")])
+
+(define_insn_and_rewrite "v<sz>ext<vqw>_vf4_vmerge_to_v<sz>ext<vqw>_vf4_mask"
+  [(set (match_operand:<VQW> 0 "register_operand" "=&vr")
+    (unspec:<VQW> 
+      [(const_int 0)
+       (unspec:<VQW> 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:<VQW> 2 "register_operand" "vr")
+         (unspec:<VQW> 
+          [(unspec:<VQW> 
+            [(const_int 0)
+             (any_extend:<VQW> 
+              (match_operand:VQWI 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_v<sz>ext<vqw>_vf4 (operands[0], operands[1], operands[2], operands[3],
+            operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vwcvt")
+   (set_attr "mode" "<VQW>")])
+
+(define_insn_and_rewrite "v<sz>ext<vow>_vf8_vmerge_to_v<sz>ext<vow>_vf8_mask"
+  [(set (match_operand:<VOW> 0 "register_operand" "=&vr")
+    (unspec:<VOW> 
+      [(const_int 0)
+       (unspec:<VOW> 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:<VOW> 2 "register_operand" "vr")
+         (unspec:<VOW> 
+          [(unspec:<VOW> 
+            [(const_int 0)
+             (any_extend:<VOW> 
+              (match_operand:VOWI 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_v<sz>ext<vow>_vf8 (operands[0], operands[1], operands[2], operands[3],
+            operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vwcvt")
+   (set_attr "mode" "<VOW>")])
+
+(define_insn_and_rewrite "vfwcvt<vw>_f_f_v_vmerge_to_vfwcvt<vw>_f_f_v_mask"
+  [(set (match_operand:<VW> 0 "register_operand" "=&vr")
+    (unspec:<VW> 
+      [(const_int 0)
+       (unspec:<VW> 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:<VW> 2 "register_operand" "vr")
+         (unspec:<VW> 
+          [(unspec:<VW> 
+            [(const_int 0)
+             (float_extend:<VW> 
+              (match_operand:VWF 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vfwcvt<vw>_f_f_v (operands[0], operands[1], operands[2], operands[3],
+            operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vwcvt")
+   (set_attr "mode" "<VW>")])
+
+;; -------------------------------------------------------------------------
+;; ---- [INT,FP] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vncvt.x.x.w
+;; - vfncvt.f.f.w
+;; -------------------------------------------------------------------------
+
+(define_insn_and_rewrite "vncvt<mode>_x_x_w_vmerge_to_vncvt<mode>_x_x_w_mask"
+  [(set (match_operand:VWI 0 "register_operand" "=vr")
+    (unspec:VWI 
+      [(const_int 0)
+       (unspec:VWI 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:VWI 2 "register_operand" "vr")
+         (unspec:VWI 
+          [(unspec:VWI 
+            [(const_int 0)
+             (truncate:VWI 
+              (match_operand:<VW> 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+          (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand 5 "const_int_operand")
+          (reg:SI VL_REGNUM)
+          (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vncvt_x_x_w (<MODE>mode, operands[0], operands[1], operands[2],
+        operands[3], operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vncvt")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn_and_rewrite "vfncvt<mode>_f_f_w_vmerge_to_vfncvt<mode>_f_f_w_mask"
+  [(set (match_operand:VWF 0 "register_operand" "=vr")
+    (unspec:VWF 
+      [(const_int 0)
+       (unspec:VWF 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:VWF 2 "register_operand" "vr")
+         (unspec:VWF 
+          [(unspec:VWF 
+            [(const_int 0)
+             (float_truncate:VWF 
+              (match_operand:<VW> 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+          (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand 5 "const_int_operand")
+          (reg:SI VL_REGNUM)
+          (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vfncvt_f_f_w (<MODE>mode, operands[0], operands[1], operands[2],
+        operands[3], operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vncvt")
+   (set_attr "mode" "<MODE>")])
+
+;; -------------------------------------------------------------------------
+;; ---- [FP<-INT] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfcvt.f.xu.v
+;; - vfcvt.f.x.v
+;; -------------------------------------------------------------------------
+
+(define_insn_and_rewrite "vfcvt<mode>_f_x<u>_v_vmerge_to_vfcvt<mode>_f_x<u>_v_mask"
+  [(set (match_operand:VF 0 "register_operand" "=vr")
+    (unspec:VF 
+      [(const_int 0)
+       (unspec:VF 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:VF 2 "register_operand" "vr")
+         (unspec:VF 
+          [(unspec:VF 
+            [(const_int 0)
+             (any_float:VF 
+              (match_operand:<VMAP> 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vfcvt<mode>_f_x<u>_v (operands[0], operands[1], operands[2],
+        operands[3], operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vfcvt")
+   (set_attr "mode" "<MODE>")])
+
+;; -------------------------------------------------------------------------
+;; ---- [INT<-FP] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfcvt.rtz.xu.f.v
+;; - vfcvt.rtz.x.f.v
+;; -------------------------------------------------------------------------
+
+(define_insn_and_rewrite "vfcvt<vmap>_rtz_x<u>_f_v_vmerge_to_vfcvt<vmap>_rtz_x<u>_f_v_mask"
+  [(set (match_operand:<VMAP> 0 "register_operand" "=vr")
+    (unspec:<VMAP> 
+      [(const_int 0)
+       (unspec:<VMAP> 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:<VMAP> 2 "register_operand" "vr")
+         (unspec:<VMAP> 
+          [(unspec:<VMAP> 
+            [(const_int 0)
+             (any_fix:<VMAP> 
+              (match_operand:VF 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vfcvt<vmap>_rtz_x<u>_f_v (operands[0], operands[1], operands[2],
+        operands[3], operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vfcvt")
+   (set_attr "mode" "<MODE>")])
+
+;; -------------------------------------------------------------------------
+;; ---- [FP<-INT] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfwcvt.f.xu.v
+;; - vfwcvt.f.x.v
+;; -------------------------------------------------------------------------
+
+(define_insn_and_rewrite "vfwcvt<vwfmap>_f_x<u>_v_vmerge_to_vfwcvt<vwfmap>_f_x<u>_v_mask"
+  [(set (match_operand:<VWFMAP> 0 "register_operand" "=&vr")
+    (unspec:<VWFMAP> 
+      [(const_int 0)
+       (unspec:<VWFMAP> 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:<VWFMAP> 2 "register_operand" "vr")
+         (unspec:<VWFMAP> 
+          [(unspec:<VWFMAP> 
+            [(const_int 0)
+             (any_float:<VWFMAP> 
+              (match_operand:VWI 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vfwcvt<vwfmap>_f_x<u>_v (operands[0], operands[1], operands[2],
+        operands[3], operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vfwcvt")
+   (set_attr "mode" "<MODE>")])
+
+;; -------------------------------------------------------------------------
+;; ---- [INT<-FP] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfwcvt.rtz.xu.f.v
+;; - vfwcvt.rtz.x.f.v
+;; -------------------------------------------------------------------------
+
+(define_insn_and_rewrite "vfwcvt<vwmap>_rtz_x<u>_f_v_vmerge_to_vfwcvt<vwmap>_rtz_x<u>_f_v_mask"
+  [(set (match_operand:<VWMAP> 0 "register_operand" "=&vr")
+    (unspec:<VWMAP> 
+      [(const_int 0)
+       (unspec:<VWMAP> 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:<VWMAP> 2 "register_operand" "vr")
+         (unspec:<VWMAP> 
+          [(unspec:<VWMAP> 
+            [(const_int 0)
+             (any_fix:<VWMAP> 
+              (match_operand:VWF 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vfwcvt<vwmap>_rtz_x<u>_f_v (operands[0], operands[1], operands[2],
+        operands[3], operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vfwcvt")
+   (set_attr "mode" "<MODE>")])
+
+;; -------------------------------------------------------------------------
+;; ---- [FP<-INT] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfncvt.f.xu.v
+;; - vfncvt.f.x.v
+;; -------------------------------------------------------------------------
+
+(define_insn_and_rewrite "vfncvt<mode>_f_x<u>_w_vmerge_to_vfncvt<mode>_f_x<u>_w_mask"
+  [(set (match_operand:VWF 0 "register_operand" "=&vr")
+    (unspec:VWF 
+      [(const_int 0)
+       (unspec:VWF 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:VWF 2 "register_operand" "vr")
+         (unspec:VWF 
+          [(unspec:VWF 
+            [(const_int 0)
+             (any_float:VWF 
+              (match_operand:<VWMAP> 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vfncvt<mode>_f_x<u>_w (operands[0], operands[1], operands[2],
+        operands[3], operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vfncvt")
+   (set_attr "mode" "<MODE>")])
+        
+;; -------------------------------------------------------------------------
+;; ---- [INT<-FP] Canonicalization of Instructions
+;; -------------------------------------------------------------------------
+;; Includes:
+;; - vfncvt.rtz.xu.f.w
+;; - vfncvt.rtz.x.f.w
+;; -------------------------------------------------------------------------
+
+(define_insn_and_rewrite "vfncvt<mode>_rtz_x<u>_f_w_vmerge_to_vfncvt<mode>_rtz_x<u>_f_w_mask"
+  [(set (match_operand:VWI 0 "register_operand" "=&vr")
+    (unspec:VWI 
+      [(const_int 0)
+       (unspec:VWI 
+        [(match_operand:<VM> 1 "register_operand" "vm")
+         (match_operand:VWI 2 "register_operand" "vr")
+         (unspec:VWI 
+          [(unspec:VWI 
+            [(const_int 0)
+             (any_fix:VWI 
+              (match_operand:<VWFMAP> 3 "register_operand" "vr"))
+             (const_int 0)] UNSPEC_SELECT)
+           (match_operand 4 "p_reg_or_const_csr_operand")
+           (match_operand 5 "const_int_operand")
+           (reg:SI VL_REGNUM)
+           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV)] UNSPEC_MERGE)
+       (match_dup 4)
+       (match_dup 5)
+       (reg:SI VL_REGNUM)
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vfncvt<mode>_rtz_x<u>_f_w (operands[0], operands[1], operands[2],
+        operands[3], operands[4], operands[5]));
+    DONE;
+  }
+  [(set_attr "type" "vfncvt")
    (set_attr "mode" "<MODE>")])

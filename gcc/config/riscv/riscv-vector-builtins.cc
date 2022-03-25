@@ -60,6 +60,7 @@
 #include "langhooks-def.h"
 #include "riscv-vector-builtins.h"
 #include "riscv-vector-builtins-functions.h"
+#include "riscv-vector.h"
 namespace riscv_vector
 {
 
@@ -617,84 +618,6 @@ register_vector_type (unsigned int type, unsigned int lmul)
   riscv_vector_types[0][type][lmul] = vectype;
 }
 
-static machine_mode
-get_tuple_mode (machine_mode mode, size_t nelt)
-{
-#define GET_TUPLE8_MODE(MODE)                                                 \
-  case VNx##MODE##mode:                                                       \
-    if (nelt == 2)                                                            \
-      return VNx2x##MODE##mode;                                               \
-    else if (nelt == 3)                                                       \
-      return VNx3x##MODE##mode;                                               \
-    else if (nelt == 4)                                                       \
-      return VNx4x##MODE##mode;                                               \
-    else if (nelt == 5)                                                       \
-      return VNx5x##MODE##mode;                                               \
-    else if (nelt == 6)                                                       \
-      return VNx6x##MODE##mode;                                               \
-    else if (nelt == 7)                                                       \
-      return VNx7x##MODE##mode;                                               \
-    else if (nelt == 8)                                                       \
-      return VNx8x##MODE##mode;                                               \
-    else                                                                      \
-      gcc_unreachable ();
-#define GET_TUPLE4_MODE(MODE)                                                 \
-  case VNx##MODE##mode:                                                       \
-    if (nelt == 2)                                                            \
-      return VNx2x##MODE##mode;                                               \
-    else if (nelt == 3)                                                       \
-      return VNx3x##MODE##mode;                                               \
-    else if (nelt == 4)                                                       \
-      return VNx4x##MODE##mode;                                               \
-    else                                                                      \
-      gcc_unreachable ();
-#define GET_TUPLE2_MODE(MODE)                                                 \
-  case VNx##MODE##mode:                                                       \
-    if (nelt == 2)                                                            \
-      return VNx2x##MODE##mode;                                               \
-    else                                                                      \
-      gcc_unreachable ();
-
-  switch (mode)
-    {
-      GET_TUPLE8_MODE (2QI)
-      GET_TUPLE8_MODE (4QI)
-      GET_TUPLE8_MODE (8QI)
-      GET_TUPLE8_MODE (16QI)
-      GET_TUPLE4_MODE (32QI)
-      GET_TUPLE2_MODE (64QI)
-      GET_TUPLE8_MODE (2HI)
-      GET_TUPLE8_MODE (4HI)
-      GET_TUPLE8_MODE (8HI)
-      GET_TUPLE4_MODE (16HI)
-      GET_TUPLE2_MODE (32HI)
-      GET_TUPLE8_MODE (2SI)
-      GET_TUPLE8_MODE (4SI)
-      GET_TUPLE4_MODE (8SI)
-      GET_TUPLE2_MODE (16SI)
-      GET_TUPLE8_MODE (2DI)
-      GET_TUPLE4_MODE (4DI)
-      GET_TUPLE2_MODE (8DI)
-      GET_TUPLE8_MODE (2HF)
-      GET_TUPLE8_MODE (4HF)
-      GET_TUPLE8_MODE (8HF)
-      GET_TUPLE4_MODE (16HF)
-      GET_TUPLE2_MODE (32HF)
-      GET_TUPLE8_MODE (2SF)
-      GET_TUPLE8_MODE (4SF)
-      GET_TUPLE4_MODE (8SF)
-      GET_TUPLE2_MODE (16SF)
-      GET_TUPLE8_MODE (2DF)
-      GET_TUPLE4_MODE (4DF)
-      GET_TUPLE2_MODE (8DF)
-
-    default:
-      break;
-    }
-
-  gcc_unreachable ();
-}
-
 /* These codes copied from ARM. */
 /* Register the tuple type that contains NUM_VECTORS vectors of lmul LMUL.  */
 static void
@@ -713,8 +636,9 @@ register_tuple_type (unsigned int num_vectors, unsigned int type,
 	    vector_type_infos[lmul].elem_name, vector_lmuls[lmul].suffix);
   tree vector_type = riscv_vector_types[0][type][lmul];
   tree array_type = build_array_type_nelts (vector_type, num_vectors);
-  machine_mode tuple_mode
-    = get_tuple_mode (TYPE_MODE (vector_type), num_vectors);
+  machine_mode tuple_mode;
+  gcc_assert (riscv_vector_tuple_mode (TYPE_MODE (vector_type), num_vectors).exists (&tuple_mode));
+  gcc_assert (VECTOR_MODE_P (tuple_mode));
   SET_TYPE_MODE (array_type, tuple_mode);
   gcc_assert (VECTOR_MODE_P (TYPE_MODE (array_type))
 	      && TYPE_MODE_RAW (array_type) == TYPE_MODE (array_type)

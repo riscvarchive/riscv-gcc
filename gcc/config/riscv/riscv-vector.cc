@@ -770,7 +770,7 @@ riscv_vlmul_regsize (machine_mode mode)
 /* Return the RVV vector mode that has NUNITS elements of mode INNER_MODE.  */
 
 opt_machine_mode
-riscv_tuple_mode (machine_mode mode, unsigned int nvecs)
+riscv_vector_tuple_mode (machine_mode mode, unsigned HOST_WIDE_INT nvecs)
 {
   switch (mode)
     {
@@ -3475,86 +3475,6 @@ riscv_vector_expand_vectorize_vec_perm_const (machine_mode vmode, rtx target, rt
   gcc_assert (last == get_last_insn ());
 
   return ret;
-}
-
-opt_machine_mode
-riscv_vector_array_mode (machine_mode mode, unsigned HOST_WIDE_INT nelems)
-{
-  if (!TARGET_VECTOR || !TARGET_RVV)
-    return opt_machine_mode ();
-    
-  #define RVV_ARRAY_MODE8(MODE) \
-    case VNx##MODE##mode: \
-    if (nelems == 2) \
-      return VNx2x##MODE##mode; \
-    else if (nelems == 3) \
-      return VNx3x##MODE##mode; \
-    else if (nelems == 4) \
-      return VNx4x##MODE##mode; \
-    else if (nelems == 5) \
-      return VNx5x##MODE##mode; \
-    else if (nelems == 6) \
-      return VNx6x##MODE##mode; \
-    else if (nelems == 7) \
-      return VNx7x##MODE##mode; \
-    else if (nelems == 8) \
-      return VNx8x##MODE##mode; \
-    else \
-      break;
-  #define RVV_ARRAY_MODE4(MODE) \
-    case VNx##MODE##mode: \
-    if (nelems == 2) \
-      return VNx2x##MODE##mode; \
-    else if (nelems == 3) \
-      return VNx3x##MODE##mode; \
-    else if (nelems == 4) \
-      return VNx4x##MODE##mode; \
-    else \
-      break;
-  #define RVV_ARRAY_MODE2(MODE) \
-    case VNx##MODE##mode: \
-    if (nelems == 2) \
-      return VNx2x##MODE##mode; \
-    else \
-      break;
-
-    switch (mode)
-    {
-    RVV_ARRAY_MODE8 (8QI)
-    RVV_ARRAY_MODE8 (4HI)
-    RVV_ARRAY_MODE8 (2SI)
-    RVV_ARRAY_MODE8 (4HF)
-    RVV_ARRAY_MODE8 (2SF)
-    RVV_ARRAY_MODE8 (4QI)
-    RVV_ARRAY_MODE8 (2HI)
-    RVV_ARRAY_MODE8 (2HF)
-    RVV_ARRAY_MODE8 (2QI)
-    RVV_ARRAY_MODE8 (16QI)
-    RVV_ARRAY_MODE8 (8HI)
-    RVV_ARRAY_MODE8 (4SI)
-    RVV_ARRAY_MODE8 (2DI)
-    RVV_ARRAY_MODE8 (8HF)
-    RVV_ARRAY_MODE8 (4SF)
-    RVV_ARRAY_MODE8 (2DF)
-    RVV_ARRAY_MODE4 (32QI)
-    RVV_ARRAY_MODE4 (16HI)
-    RVV_ARRAY_MODE4 (8SI)
-    RVV_ARRAY_MODE4 (4DI)
-    RVV_ARRAY_MODE4 (16HF)
-    RVV_ARRAY_MODE4 (8SF)
-    RVV_ARRAY_MODE4 (4DF)
-    RVV_ARRAY_MODE2 (64QI)
-    RVV_ARRAY_MODE2 (32HI)
-    RVV_ARRAY_MODE2 (16SI)
-    RVV_ARRAY_MODE2 (8DI)
-    RVV_ARRAY_MODE2 (32HF)
-    RVV_ARRAY_MODE2 (16SF)
-    RVV_ARRAY_MODE2 (8DF)
-    default:
-      break;
-    }
-
-  return opt_machine_mode ();
 }
 
 machine_mode

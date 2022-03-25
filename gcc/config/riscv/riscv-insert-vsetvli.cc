@@ -221,10 +221,11 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 static bool
 update_vlvtyp_p (rtx_insn *insn)
 {
-  if (insn && INSN_P (insn))
+  if (insn)
     {
-      if (recog_memoized (insn) >= 0 && (get_attr_type (insn) == TYPE_VLEFF ||
-                                         get_attr_type (insn) == TYPE_VLSEGFF))
+      if (INSN_P (insn) && recog_memoized (insn) >= 0 &&
+          (get_attr_type (insn) == TYPE_VLEFF ||
+           get_attr_type (insn) == TYPE_VLSEGFF))
         {
           extract_insn_cached (insn);
           if (INTVAL (recog_data.operand[recog_data.n_operands - 1]) ==
@@ -232,25 +233,10 @@ update_vlvtyp_p (rtx_insn *insn)
             return false;
           return true;
         }
-      if (GET_CODE (PATTERN (insn)) == SET &&
-          (REGNO (SET_DEST (PATTERN (insn))) == VTYPE_REGNUM ||
-           REGNO (SET_DEST (PATTERN (insn))) == VL_REGNUM))
+      if (CALL_P (insn))
         return true;
-
-      if (GET_CODE (PATTERN (insn)) == PARALLEL)
-        {
-          /* For noinline calling function, we don't know whether
-             it updates the vl and vtype, for the safety, we consider
-             it's unknown. */
-          if (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)) == CALL)
-            return true;
-
-          if (GET_CODE (XVECEXP (PATTERN (insn), 0, 0)) == SET &&
-              GET_CODE (SET_SRC (XVECEXP (PATTERN (insn), 0, 0))) == CALL)
-            return true;
-        }
-
-      if (GET_CODE (PATTERN (insn)) == ASM_INPUT)
+      if ((PATTERN (insn)) && (GET_CODE (PATTERN (insn)) == ASM_INPUT ||
+                               asm_noperands (PATTERN (insn)) >= 0))
         return true;
     }
   return false;
@@ -384,7 +370,7 @@ public:
   bool
   avl_const_p () const
   {
-    return get_avl () && CONST_INT_P (get_avl ());
+    return get_avl () && CONST_SCALAR_INT_P (get_avl ());
   }
   
   bool
@@ -480,7 +466,7 @@ public:
         enum lmul_value_index lmul = info.get_lmul ();
         machine_mode mode =
             riscv_vector::vector_builtin_mode (as_a<scalar_mode> (inner), lmul);
-        if (CONST_INT_P (info.get_avl ()))
+        if (CONST_SCALAR_INT_P (info.get_avl ()))
           {
             if (GET_MODE_NUNITS (mode).is_constant () &&
                 INTVAL (info.get_avl ()) ==
@@ -492,7 +478,7 @@ public:
           {
             if (info.get_avl_source ())
               {
-                if (CONST_INT_P (info.get_avl_source ()) &&
+                if (CONST_SCALAR_INT_P (info.get_avl_source ()) &&
                     GET_MODE_NUNITS (mode).is_constant () &&
                     INTVAL (info.get_avl_source ()) ==
                         GET_MODE_NUNITS (mode).to_constant ())
@@ -778,7 +764,7 @@ public:
     // So it's compatible when we could make sure that both VL be the same
     // situation.
     if (!strict && info.scalar_move_p && info.get_avl () &&
-        CONST_INT_P (info.get_avl ()) &&
+        CONST_SCALAR_INT_P (info.get_avl ()) &&
         ((has_nonzero_avl () && info.has_nonzero_avl ()) ||
          (has_zero_avl () && info.has_zero_avl ())) &&
         sew_equal_p (info) && policy_equal_p (info))
@@ -986,7 +972,7 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
 
   rtx vl = recog_data.operand[1];
   rtx vtype = recog_data.operand[2];
-  gcc_assert (CONSTANT_P (vtype) && "Invalid vtype in vsetvli instruction.");
+  gcc_assert (CONST_INT_P (vtype) && "Invalid vtype in vsetvli instruction.");
   new_info.set_avl (vl);
   new_info.set_avl_source (get_avl_source (vl, insn));
   new_info.set_vtype (INTVAL (vtype));

@@ -5978,11 +5978,11 @@ vectorizable_shift (vec_info *vinfo,
           gimple_call_set_lhs (new_stmt, new_temp);
         }
       else
-	{
-	  new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1);
-      new_temp = make_ssa_name (vec_dest, new_stmt);
-      gimple_assign_set_lhs (new_stmt, new_temp);
-	}
+        {
+          new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1);
+          new_temp = make_ssa_name (vec_dest, new_stmt);
+          gimple_assign_set_lhs (new_stmt, new_temp);
+        }
 
       vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
       if (slp_node)

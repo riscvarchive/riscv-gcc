@@ -221,7 +221,7 @@ extern internal_fn get_length_conversion_internal_fn (tree_code, tree, tree);
 extern tree_code conditional_internal_fn_code (internal_fn);
 extern tree_code with_length_internal_fn_code (internal_fn);
 extern internal_fn get_unconditional_internal_fn (internal_fn);
-extern bool length_convert_fn_p (internal_fn);
+extern tree length_convert_fn_p (const_tree);
 extern bool can_interpret_as_conditional_op_p (gimple *, tree *,
 					       tree_code *, tree (&)[3],
 					       tree *);
