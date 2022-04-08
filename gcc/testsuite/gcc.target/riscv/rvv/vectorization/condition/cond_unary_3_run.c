@@ -4,7 +4,7 @@
 
 #include "cond_unary_3.c"
 
-#define N 99
+#define N 80
 
 #define TEST_LOOP(TYPE, OP)					\
   {								\

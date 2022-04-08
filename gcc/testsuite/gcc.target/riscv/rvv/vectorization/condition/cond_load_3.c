@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-additional-options "-mriscv-vector-bits=128 -O3" } */
+/* { dg-additional-options "-mriscv-vector-bits=128 -O2 -ftree-vectorize" } */
 /* { dg-skip-if "test vectorization using rvv" { *-*-* } { "*" } { "-march=rv*gc*v*zfh*" } } */
 
 #include <stdint.h>

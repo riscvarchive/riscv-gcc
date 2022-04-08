@@ -2742,11 +2742,11 @@ vwadd_vwsub::expand (const function_instance &instance, tree exp,
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  rtx_code code1 = strcmp (instance.get_base_name (), "vwadd") == 0 ||
+  enum rtx_code code1 = strcmp (instance.get_base_name (), "vwadd") == 0 ||
                            strcmp (instance.get_base_name (), "vwaddu") == 0
                        ? PLUS
                        : MINUS;
-  rtx_code code2 = strcmp (instance.get_base_name (), "vwaddu") == 0 ||
+  enum rtx_code code2 = strcmp (instance.get_base_name (), "vwaddu") == 0 ||
                            strcmp (instance.get_base_name (), "vwsubu") == 0
                        ? ZERO_EXTEND
                        : SIGN_EXTEND;
@@ -2767,7 +2767,7 @@ vwcvt::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  rtx_code code = strcmp (instance.get_base_name (), "vwcvt") == 0
+  enum rtx_code code = strcmp (instance.get_base_name (), "vwcvt") == 0
                       ? SIGN_EXTEND
                       : ZERO_EXTEND;
 
@@ -2781,7 +2781,7 @@ vext::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  rtx_code code = strcmp (instance.get_base_name (), "vsext") == 0
+  enum rtx_code code = strcmp (instance.get_base_name (), "vsext") == 0
                       ? SIGN_EXTEND
                       : ZERO_EXTEND;
   if (instance.get_operation () == OP_vf2)
@@ -2881,7 +2881,7 @@ vlogic::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code = strcmp (instance.get_base_name (), "vand") == 0  ? AND
+  enum rtx_code code = strcmp (instance.get_base_name (), "vand") == 0  ? AND
                   : strcmp (instance.get_base_name (), "vor") == 0 ? IOR
                                                                    : XOR;
   int vxcode = code == AND   ? UNSPEC_VAND
@@ -2926,7 +2926,7 @@ vshift::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code = strcmp (instance.get_base_name (), "vsll") == 0   ? ASHIFT
+  enum rtx_code code = strcmp (instance.get_base_name (), "vsll") == 0   ? ASHIFT
                   : strcmp (instance.get_base_name (), "vsrl") == 0 ? LSHIFTRT
                                                                     : ASHIFTRT;
   if (instance.get_operation () == OP_vv)
@@ -2957,7 +2957,7 @@ vnshift::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  rtx_code code =
+  enum rtx_code code =
       strcmp (instance.get_base_name (), "vnsrl") == 0 ? LSHIFTRT : ASHIFTRT;
   if (instance.get_operation () == OP_wv)
     icode = code_for_vn_wv (code, mode);
@@ -2991,7 +2991,7 @@ vcmp::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  rtx_code code = strcmp (instance.get_base_name (), "vmseq") == 0    ? EQ
+  enum rtx_code code = strcmp (instance.get_base_name (), "vmseq") == 0    ? EQ
                   : strcmp (instance.get_base_name (), "vmsne") == 0  ? NE
                   : strcmp (instance.get_base_name (), "vmslt") == 0  ? LT
                   : strcmp (instance.get_base_name (), "vmsltu") == 0 ? LTU
@@ -3015,7 +3015,7 @@ vmin_vmax::expand (const function_instance &instance, tree exp,
 {
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code = strcmp (instance.get_base_name (), "vmin") == 0    ? SMIN
+  enum rtx_code code = strcmp (instance.get_base_name (), "vmin") == 0    ? SMIN
                   : strcmp (instance.get_base_name (), "vminu") == 0 ? UMIN
                   : strcmp (instance.get_base_name (), "vmax") == 0  ? SMAX
                                                                      : UMAX;
@@ -3078,7 +3078,7 @@ vdiv::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code = strcmp (instance.get_base_name (), "vdiv") == 0    ? DIV
+  enum rtx_code code = strcmp (instance.get_base_name (), "vdiv") == 0    ? DIV
                   : strcmp (instance.get_base_name (), "vdivu") == 0 ? UDIV
                   : strcmp (instance.get_base_name (), "vrem") == 0  ? MOD
                                                                      : UMOD;
@@ -3099,7 +3099,7 @@ vwmul::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  rtx_code code = strcmp (instance.get_base_name (), "vwmul") == 0
+  enum rtx_code code = strcmp (instance.get_base_name (), "vwmul") == 0
                       ? SIGN_EXTEND
                       : ZERO_EXTEND;
   if (instance.get_operation () == OP_vv)
@@ -3146,7 +3146,7 @@ vwmacc::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  rtx_code code = strcmp (instance.get_base_name (), "vwmacc") == 0
+  enum rtx_code code = strcmp (instance.get_base_name (), "vwmacc") == 0
                       ? SIGN_EXTEND
                       : ZERO_EXTEND;
   if (instance.get_operation () == OP_vv)
@@ -3267,7 +3267,7 @@ vwredsum::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  rtx_code code = strcmp (instance.get_base_name (), "vwredsum") == 0
+  enum rtx_code code = strcmp (instance.get_base_name (), "vwredsum") == 0
                       ? SIGN_EXTEND
                       : ZERO_EXTEND;
   icode = code_for_vwredsum_vs (code, mode);
@@ -3336,7 +3336,7 @@ rtx
 vmlogic::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code = strcmp (instance.get_base_name (), "vmand") == 0  ? AND
+  enum rtx_code code = strcmp (instance.get_base_name (), "vmand") == 0  ? AND
                   : strcmp (instance.get_base_name (), "vmor") == 0 ? IOR
                                                                     : XOR;
   insn_code icode = code_for_vm_mm (code, mode);
@@ -3348,7 +3348,7 @@ rtx
 vmnlogic::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code = strcmp (instance.get_base_name (), "vmnand") == 0  ? AND
+  enum rtx_code code = strcmp (instance.get_base_name (), "vmnand") == 0  ? AND
                   : strcmp (instance.get_base_name (), "vmnor") == 0 ? IOR
                                                                      : XOR;
   insn_code icode = code_for_vmn_mm (code, mode);
@@ -3360,7 +3360,7 @@ rtx
 vmlogicn::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code = strcmp (instance.get_base_name (), "vmandn") == 0 ? AND : IOR;
+  enum rtx_code code = strcmp (instance.get_base_name (), "vmandn") == 0 ? AND : IOR;
   insn_code icode = code_for_vmnot_mm (code, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
@@ -3842,7 +3842,7 @@ vfoptab::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code = strcmp (instance.get_base_name (), "vfadd") == 0   ? PLUS
+  enum rtx_code code = strcmp (instance.get_base_name (), "vfadd") == 0   ? PLUS
                   : strcmp (instance.get_base_name (), "vfsub") == 0 ? MINUS
                   : strcmp (instance.get_base_name (), "vfmul") == 0 ? MULT
                   : strcmp (instance.get_base_name (), "vfdiv") == 0 ? DIV
@@ -3869,7 +3869,7 @@ vfrsub_div::expand (const function_instance &instance, tree exp,
 {
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  rtx_code code =
+  enum rtx_code code =
       strcmp (instance.get_base_name (), "vfrsub") == 0 ? MINUS : DIV;
   icode = code_for_vfr_vf (code, mode);
   return expand_builtin_insn (icode, exp, target, instance);
@@ -3904,7 +3904,7 @@ vfwadd_vwsub::expand (const function_instance &instance, tree exp,
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  rtx_code code =
+  enum rtx_code code =
       strcmp (instance.get_base_name (), "vfwadd") == 0 ? PLUS : MINUS;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vfw_vv (code, mode);
@@ -4138,7 +4138,7 @@ vfcmp::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  rtx_code code = strcmp (instance.get_base_name (), "vmfeq") == 0    ? EQ
+  enum rtx_code code = strcmp (instance.get_base_name (), "vmfeq") == 0    ? EQ
                   : strcmp (instance.get_base_name (), "vmfne") == 0  ? NE
                   : strcmp (instance.get_base_name (), "vmflt") == 0  ? LT
                   : strcmp (instance.get_base_name (), "vmfltu") == 0 ? LTU

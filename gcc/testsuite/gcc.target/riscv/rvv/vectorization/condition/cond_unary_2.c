@@ -13,7 +13,7 @@
 		      TYPE *__restrict b,			\
 		      TYPE *__restrict pred, int n)		\
   {								\
-    for (int i = 0; i < n; ++i)					\
+    for (int i = 0; i < 80; ++i)					\
       {								\
 	TYPE bi = b[i];						\
 	r[i] = pred[i] ? OP (a[i]) : bi;			\
@@ -38,3 +38,6 @@
   TEST_FLOAT_TYPE (T, double, )
 
 TEST_ALL (DEF_LOOP)
+
+/* { dg-final { scan-assembler-not {vneg\.v\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1]),\s*(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n} } } */
+/* { dg-final { scan-assembler-not {vfneg\.v\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1]),\s*(?:v[0-9]|v[1-2][0-9]|v3[0-1])\n} } } */

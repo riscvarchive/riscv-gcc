@@ -74,7 +74,7 @@ along with GCC; see the file COPYING3.  If not see
 bool vector_insn_cost_table::get_cost(rtx x, machine_mode mode, int *cost,
                                       bool speed) const {
   rtx op0, op1, op2;
-  rtx_code code = GET_CODE(x);
+  enum rtx_code code = GET_CODE(x);
   scalar_int_mode int_mode;
 
   /* By default, assume that everything has equivalent cost to the

@@ -322,8 +322,8 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn_and_split "mov<mode>"
-  [(set (match_operand:VT 0 "nonimmediate_operand" "=vr,vr, m,vr")
-        (match_operand:VT 1 "vector_move_operand"  " vr, m,vr,vc"))
+  [(set (match_operand:VTI 0 "nonimmediate_operand" "=vr,vr, m,vr")
+        (match_operand:VTI 1 "vector_move_operand"  " vr, m,vr,vc"))
    (clobber (match_scratch:<VSUB> 2 "=X,&r,&r,&r"))
    (clobber (match_scratch:<VSUB> 3 "=X,&r,&r,X"))
    (clobber (match_scratch:SI 4 "=X,&r,&r,X"))
@@ -335,11 +335,10 @@
   [(const_int 0)]
 {
   int i;
-  if (!(REG_P (operands[0]) && REG_P (operands[1]))
-    && !(REG_P (operands[0]) && CONST_VECTOR_P (operands[1])))
+  if (MEM_P (operands[0]) || MEM_P (operands[1]))
     {
       PUT_MODE (operands[2], Pmode);
-      
+
       if (!GET_MODE_SIZE (<VTSUB>mode).is_constant ())
         {
           emit_insn (gen_rtx_SET (operands[2], gen_int_mode (
@@ -424,11 +423,134 @@
         {
           rtx src = simplify_gen_subreg (<VTSUB>mode, operands[1],
                   <MODE>mode, i * GET_MODE_SIZE (<VTSUB>mode));
-          emit_insn (gen_rtx_SET (operands[3], gen_rtx_PLUS (Pmode, operands[3], offset)));
+	  if (i != 0)
+            emit_insn (gen_rtx_SET (operands[3], gen_rtx_PLUS (Pmode, operands[3], offset)));
+	  rtx dst = gen_rtx_MEM (<VTSUB>mode, operands[3]);
+	  
           if (known_lt (GET_MODE_SIZE (<VTSUB>mode), BYTES_PER_RISCV_VECTOR))
 	    emit_insn (gen_mov_internal (<VTSUB>mode, gen_rtx_MEM (<VTSUB>mode, operands[3]), src, operands[4]));
 	  else
-	    emit_move_insn (gen_rtx_MEM (<VTSUB>mode, operands[3]), src);
+	    emit_move_insn (dst, src);
+        }
+    }
+  else
+    gcc_unreachable ();
+  DONE;
+}
+[(set_attr "type" "vcopy,vle,vse,vmove")
+ (set_attr "mode" "<MODE>")])
+ 
+(define_insn_and_split "mov<mode>"
+  [(set (match_operand:VTF 0 "nonimmediate_operand" "=vr,vr, m,vr")
+        (match_operand:VTF 1 "vector_move_operand"  " vr, m,vr,vc"))
+   (clobber (match_scratch:SI 2 "=X,&r,&r,&r"))
+   (clobber (match_scratch:SI 3 "=X,&r,&r,X"))
+   (clobber (match_scratch:SI 4 "=X,&r,&r,X"))
+   (clobber (match_scratch:<VSUB> 5 "=X,X,X,f"))
+   (use (reg:SI VL_REGNUM))
+   (use (reg:SI VTYPE_REGNUM))]
+  "TARGET_VECTOR"
+  "#"
+  "&& reload_completed"
+  [(const_int 0)]
+{
+  int i;
+  if (MEM_P (operands[0]) || MEM_P (operands[1]))
+    {
+      PUT_MODE (operands[2], Pmode);
+      
+      if (!GET_MODE_SIZE (<VTSUB>mode).is_constant ())
+        {
+          emit_insn (gen_rtx_SET (operands[2], gen_int_mode (
+	             poly_int64 (BYTES_PER_RISCV_VECTOR.coeffs[0],
+	             BYTES_PER_RISCV_VECTOR.coeffs[1]), Pmode)));
+
+          if (known_lt (GET_MODE_SIZE (<VTSUB>mode), BYTES_PER_RISCV_VECTOR))
+            {
+	      unsigned int factor = BYTES_PER_RISCV_VECTOR.coeffs[0] / GET_MODE_SIZE (<VTSUB>mode).coeffs[0];
+	      emit_insn (gen_rtx_SET (operands[2], gen_rtx_LSHIFTRT (Pmode, operands[2], GEN_INT (exact_log2 (factor)))));
+	    }
+          if (known_gt (GET_MODE_SIZE (<VTSUB>mode), BYTES_PER_RISCV_VECTOR))
+            {
+	      unsigned int factor = GET_MODE_SIZE (<VTSUB>mode).coeffs[0] / BYTES_PER_RISCV_VECTOR.coeffs[0];
+	      emit_insn (gen_rtx_SET (operands[2], gen_rtx_ASHIFTRT (Pmode, operands[2], GEN_INT (exact_log2 (factor)))));
+	    }
+        }
+    }
+
+  if (REG_P (operands[0]) && REG_P (operands[1]))
+    {
+      for (i = 0; i < riscv_classify_nf (<MODE>mode); ++i)
+        {
+          poly_int64 offset = i * GET_MODE_SIZE (<VTSUB>mode);
+          rtx dst_subreg = simplify_gen_subreg (<VTSUB>mode, operands[0],
+                  <MODE>mode, offset);
+          rtx src_subreg = simplify_gen_subreg (<VTSUB>mode, operands[1],
+                  <MODE>mode, offset);
+          emit_insn (gen_rtx_SET (dst_subreg, src_subreg));
+        }
+    }
+  else if (REG_P (operands[0]) && MEM_P (operands[1]))
+    {
+      PUT_MODE (operands[3], Pmode);
+      emit_move_insn (operands[3], XEXP (operands[1], 0));
+      rtx offset = GET_MODE_SIZE (<MODE>mode).is_constant () 
+        ? GEN_INT (GET_MODE_SIZE (<VTSUB>mode).to_constant ()) 
+	: operands[2];
+
+      for (i = 0; i < riscv_classify_nf (<MODE>mode); ++i)
+	{
+	  rtx dst = simplify_gen_subreg (<VTSUB>mode, operands[0],
+				         <MODE>mode, i * GET_MODE_SIZE (<VTSUB>mode));
+	  if (i != 0)
+	    emit_insn (gen_rtx_SET (operands[3], gen_rtx_PLUS (Pmode, operands[3], offset)));
+	  rtx src = gen_rtx_MEM (<VTSUB>mode, operands[3]);
+	  
+	  if (known_lt (GET_MODE_SIZE (<VTSUB>mode), BYTES_PER_RISCV_VECTOR))
+	    emit_insn (gen_mov_internal (<VTSUB>mode, dst, src, operands[4]));
+	  else
+	    emit_move_insn (dst, src);
+	}
+    }
+  else if (REG_P (operands[0]) && GET_CODE (operands[1]) == CONST_VECTOR)
+    {
+      rtx val;
+      if (!const_vec_duplicate_p (operands[1], &val))
+        gcc_unreachable ();
+
+      if (!satisfies_constraint_Ws5 (val))
+        emit_move_insn (operands[5], val);
+
+      for (i = 0; i < riscv_classify_nf (<MODE>mode); ++i)
+        {
+          poly_int64 offset = i * GET_MODE_SIZE (<VTSUB>mode);
+          rtx dst_subreg = simplify_gen_subreg (<VTSUB>mode, operands[0],
+                  <MODE>mode, offset);
+          if (satisfies_constraint_Ws5 (val))
+            emit_insn (gen_vec_duplicate<vtsub> (dst_subreg, val));
+          else
+            emit_insn (gen_vec_duplicate<vtsub> (dst_subreg, operands[5]));
+        }
+    }
+  else if (MEM_P (operands[0]) && REG_P (operands[1]))
+    {
+      PUT_MODE (operands[3], Pmode);
+      emit_move_insn (operands[3], XEXP (operands[0], 0));
+      rtx offset = GET_MODE_SIZE (<MODE>mode).is_constant () 
+        ? GEN_INT (GET_MODE_SIZE (<VTSUB>mode).to_constant ()) 
+	: operands[2];
+      for (i = 0; i < riscv_classify_nf (<MODE>mode); ++i)
+        {
+          rtx src = simplify_gen_subreg (<VTSUB>mode, operands[1],
+                  <MODE>mode, i * GET_MODE_SIZE (<VTSUB>mode));
+	  if (i != 0)
+            emit_insn (gen_rtx_SET (operands[3], gen_rtx_PLUS (Pmode, operands[3], offset)));
+	  rtx dst = gen_rtx_MEM (<VTSUB>mode, operands[3]);
+	  
+          if (known_lt (GET_MODE_SIZE (<VTSUB>mode), BYTES_PER_RISCV_VECTOR))
+	    emit_insn (gen_mov_internal (<VTSUB>mode, gen_rtx_MEM (<VTSUB>mode, operands[3]), src, operands[4]));
+	  else
+	    emit_move_insn (dst, src);
         }
     }
   else

@@ -87,6 +87,12 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   negate)
 (define_operator_list COND_UNARY
   IFN_COND_NEG)
+  
+/* Unary operations and their associated IFN_LEN_COND_* function.  */
+(define_operator_list LEN_UNCOND_UNARY
+  IFN_LEN_NEG)
+(define_operator_list LEN_COND_UNARY
+  IFN_LEN_COND_NEG)
 
 /* Binary operations and their associated IFN_COND_* function.  */
 (define_operator_list UNCOND_BINARY
@@ -103,6 +109,22 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
   IFN_COND_FMIN IFN_COND_FMAX
   IFN_COND_AND IFN_COND_IOR IFN_COND_XOR
   IFN_COND_SHL IFN_COND_SHR)
+
+/* Binary operations and their associated IFN_LEN_COND_* function.  */
+(define_operator_list LEN_UNCOND_BINARY
+  IFN_LEN_ADD IFN_LEN_SUB
+  IFN_LEN_MUL IFN_LEN_DIV IFN_LEN_MOD IFN_LEN_RDIV
+  IFN_LEN_MIN IFN_LEN_MAX
+  IFN_LEN_AND IFN_LEN_IOR IFN_LEN_XOR
+  IFN_LEN_SHL IFN_LEN_SHR
+  IFN_LEN_VSHL IFN_LEN_VSHR)
+(define_operator_list LEN_COND_BINARY
+  IFN_LEN_COND_ADD IFN_LEN_COND_SUB
+  IFN_LEN_COND_MUL IFN_LEN_COND_DIV IFN_LEN_COND_MOD IFN_LEN_COND_RDIV
+  IFN_LEN_COND_MIN IFN_LEN_COND_MAX
+  IFN_LEN_COND_AND IFN_LEN_COND_IOR IFN_LEN_COND_XOR
+  IFN_LEN_COND_SHL IFN_LEN_COND_SHR
+  IFN_LEN_COND_VSHL IFN_LEN_COND_VSHR)
 
 /* Same for ternary operations.  */
 (define_operator_list UNCOND_TERNARY
@@ -7060,7 +7082,7 @@ DEFINE_INT_AND_FLOAT_ROUND_FN (RINT)
    (IFN_LEN_NEG (fmas@3 @0 @1 @2 @4) @4)
    (if (single_use (@3))
     (IFN_LEN_FNMS @0 @1 @2 @4))))
-
+  
  (simplify
   (IFN_LEN_FMS:c (IFN_LEN_NEG @0 @3) @1 @2 @3)
   (IFN_LEN_FNMS @0 @1 @2 @3))
@@ -7423,6 +7445,21 @@ and,
         && is_truth_type_for (op_type, TREE_TYPE (@0)))
      (cond_op (bit_not @0) @2 @1)))))
 
+(for uncond_op (LEN_UNCOND_UNARY)
+     cond_op (LEN_COND_UNARY)
+ (simplify
+  (IFN_LEN_VCOND @0 (view_convert? (uncond_op@3 @1 @4)) @2 @4)
+   (with { tree op_type = TREE_TYPE (@3); }
+    (if (vectorized_internal_fn_supported_p (as_internal_fn (cond_op), op_type)
+        && is_truth_type_for (op_type, TREE_TYPE (@0)))
+     (cond_op @0 @1 @2 @4))))
+ (simplify
+  (IFN_LEN_VCOND @0 @1 (view_convert? (uncond_op@3 @2 @4)) @4)
+   (with { tree op_type = TREE_TYPE (@3); }
+    (if (vectorized_internal_fn_supported_p (as_internal_fn (cond_op), op_type)
+        && is_truth_type_for (op_type, TREE_TYPE (@0)))
+     (cond_op (IFN_LEN_NOT @0 @4) @2 @1 @4)))))
+
 /* Simplify:
 
      a = a1 op a2
@@ -7457,6 +7494,23 @@ and,
 	&& is_truth_type_for (op_type, TREE_TYPE (@0))
 	&& single_use (@4))
     (view_convert (cond_op (bit_not @0) @2 @3 (view_convert:op_type @1)))))))
+
+(for uncond_op (LEN_UNCOND_BINARY)
+     cond_op (LEN_COND_BINARY)
+ (simplify
+  (IFN_LEN_VCOND @0 (view_convert? (uncond_op@4 @1 @2 @5)) @3 @5)
+  (with { tree op_type = TREE_TYPE (@4); }
+   (if (vectorized_internal_fn_supported_p (as_internal_fn (cond_op), op_type)
+	&& is_truth_type_for (op_type, TREE_TYPE (@0))
+	&& single_use (@4))
+    (cond_op @0 @1 @2 (view_convert:op_type @3) @5))))
+ (simplify
+  (IFN_LEN_VCOND @0 @1 (view_convert? (uncond_op@4 @2 @3 @5)) @5)
+  (with { tree op_type = TREE_TYPE (@4); }
+   (if (vectorized_internal_fn_supported_p (as_internal_fn (cond_op), op_type)
+	&& is_truth_type_for (op_type, TREE_TYPE (@0))
+	&& single_use (@4))
+    (cond_op (IFN_LEN_NOT @0 @5) @2 @3 (view_convert:op_type @1) @5)))))
 
 /* Same for ternary operations.  */
 (for uncond_op (UNCOND_TERNARY)

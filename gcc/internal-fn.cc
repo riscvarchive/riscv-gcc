@@ -132,6 +132,9 @@ init_internal_fns ()
 #define len_unary_direct { 0, 0, true }
 #define len_binary_direct { 0, 0, true }
 #define len_ternary_direct { 0, 0, true }
+#define len_cond_unary_direct { 1, 1, true }
+#define len_cond_binary_direct { 1, 1, true }
+#define len_cond_ternary_direct { 1, 1, true }
 #define while_direct { 0, 2, false }
 #define fold_extract_direct { 2, 2, false }
 #define fold_left_direct { 1, 1, false }
@@ -2862,7 +2865,9 @@ expand_vec_cond_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   tree op1 = gimple_call_arg (stmt, 2);
   tree op2 = gimple_call_arg (stmt, 3);
   int offset = (optab == len_vcond_optab
-        || optab == len_vcondu_optab) ? 5 : 4;
+        || optab == len_vcondu_optab
+        || optab == len_vcond_vs_optab
+        || optab == len_vcondu_vs_optab) ? 5 : 4;
   enum tree_code tcode = (tree_code) int_cst_value (gimple_call_arg (stmt, offset));
 
   tree vec_cond_type = TREE_TYPE (lhs);
@@ -2887,7 +2892,9 @@ expand_vec_cond_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   create_fixed_operand (&ops[i++], XEXP (comparison, 1));
 
   if (optab == len_vcond_optab
-    || optab == len_vcondu_optab)
+    || optab == len_vcondu_optab
+    || optab == len_vcond_vs_optab
+    || optab == len_vcondu_vs_optab)
     {
       tree len = gimple_call_arg (stmt, 4);
       create_convert_operand_from (&ops[i++], expand_normal (len), TYPE_MODE (TREE_TYPE (len)),
@@ -4025,6 +4032,15 @@ expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 #define expand_len_ternary_optab_fn(FN, STMT, OPTAB) \
   expand_direct_optab_fn (FN, STMT, OPTAB, 4)
 
+#define expand_len_cond_unary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 4)
+  
+#define expand_len_cond_binary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 5)
+
+#define expand_len_cond_ternary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 6)
+
 #define expand_fold_extract_optab_fn(FN, STMT, OPTAB) \
   expand_direct_optab_fn (FN, STMT, OPTAB, 3)
 
@@ -4117,6 +4133,9 @@ multi_vector_optab_supported_p (convert_optab optab, tree_pair types,
 #define direct_len_unary_optab_supported_p direct_optab_supported_p
 #define direct_len_binary_optab_supported_p direct_optab_supported_p
 #define direct_len_ternary_optab_supported_p direct_optab_supported_p
+#define direct_len_cond_unary_optab_supported_p direct_optab_supported_p
+#define direct_len_cond_binary_optab_supported_p direct_optab_supported_p
+#define direct_len_cond_ternary_optab_supported_p direct_optab_supported_p
 #define direct_mask_load_optab_supported_p convert_optab_supported_p
 #define direct_len_mask_load_optab_supported_p convert_optab_supported_p
 #define direct_load_lanes_optab_supported_p multi_vector_optab_supported_p
@@ -4510,10 +4529,12 @@ get_with_length_shift_internal_fn (tree_code code, bool v)
 }
 
 internal_fn
-get_length_conversion_internal_fn (tree_code code, tree vectype_out, tree vectype_in)
+get_length_conversion_internal_fn (tree_code code, tree vectype_out,
+                                   tree vectype_in)
 {
-  machine_mode m1,m2;
-  bool unsigned_p = TYPE_UNSIGNED (vectype_in);
+  machine_mode m1, m2;
+  bool unsigned_p = code == FIX_TRUNC_EXPR ? TYPE_UNSIGNED (vectype_out)
+                                           : TYPE_UNSIGNED (vectype_in);
   internal_fn len_fn = IFN_LAST;
 
   gcc_assert (VECTOR_TYPE_P (vectype_out) && VECTOR_TYPE_P (vectype_in));
@@ -4528,39 +4549,53 @@ get_length_conversion_internal_fn (tree_code code, tree vectype_out, tree vectyp
   if (code == FIX_TRUNC_EXPR)
     {
       if (unsigned_p)
-        len_fn = convert_optab_handler (len_fixuns_trunc_optab, m2, m1)
-		!= CODE_FOR_nothing ? IFN_LEN_FIXUNS_TRUNC : IFN_LAST;
+        len_fn = convert_optab_handler (len_fixuns_trunc_optab, m2, m1) !=
+                         CODE_FOR_nothing
+                     ? IFN_LEN_FIXUNS_TRUNC
+                     : IFN_LAST;
       else
-        len_fn = convert_optab_handler (len_fix_trunc_optab, m2, m1)
-		!= CODE_FOR_nothing ? IFN_LEN_FIX_TRUNC : IFN_LAST;
+        len_fn = convert_optab_handler (len_fix_trunc_optab, m2, m1) !=
+                         CODE_FOR_nothing
+                     ? IFN_LEN_FIX_TRUNC
+                     : IFN_LAST;
       return len_fn;
     }
 
   if (code == FLOAT_EXPR)
     {
       if (unsigned_p)
-        len_fn = convert_optab_handler (len_floatuns_optab, m2, m1)
-		!= CODE_FOR_nothing ? IFN_LEN_FLOATUNS : IFN_LAST;
+        len_fn = convert_optab_handler (len_floatuns_optab, m2, m1) !=
+                         CODE_FOR_nothing
+                     ? IFN_LEN_FLOATUNS
+                     : IFN_LAST;
       else
-        len_fn = convert_optab_handler (len_float_optab, m2, m1)
-		!= CODE_FOR_nothing ? IFN_LEN_FLOAT : IFN_LAST;
+        len_fn =
+            convert_optab_handler (len_float_optab, m2, m1) != CODE_FOR_nothing
+                ? IFN_LEN_FLOAT
+                : IFN_LAST;
       return len_fn;
     }
 
   if (GET_MODE_UNIT_PRECISION (m1) > GET_MODE_UNIT_PRECISION (m2))
     {
       if (unsigned_p)
-        len_fn = convert_optab_handler (len_zero_extend_optab, m2, m1)
-		!= CODE_FOR_nothing ? IFN_LEN_ZERO_EXTEND : IFN_LAST;
+        len_fn = convert_optab_handler (len_zero_extend_optab, m2, m1) !=
+                         CODE_FOR_nothing
+                     ? IFN_LEN_ZERO_EXTEND
+                     : IFN_LAST;
       else
-        len_fn = convert_optab_handler (len_extend_optab, m2, m1)
-		!= CODE_FOR_nothing ? IFN_LEN_EXTEND : IFN_LAST;
+        len_fn =
+            convert_optab_handler (len_extend_optab, m2, m1) != CODE_FOR_nothing
+                ? IFN_LEN_EXTEND
+                : IFN_LAST;
     }
 
   if (GET_MODE_UNIT_PRECISION (m1) < GET_MODE_UNIT_PRECISION (m2))
     {
-      len_fn = convert_optab_handler (len_trunc_optab, m2, m1)
-		!= CODE_FOR_nothing ? IFN_LEN_TRUNC : IFN_LAST;
+      len_fn =
+          convert_optab_handler (len_trunc_optab, m2, m1) != CODE_FOR_nothing
+              ? IFN_LEN_TRUNC
+              : IFN_LAST;
     }
 
   return len_fn;

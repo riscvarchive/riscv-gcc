@@ -10936,13 +10936,12 @@ vectorizable_condition (vec_info *vinfo,
 	}
       else
         {
-          internal_fn cond_fn = unsigned_p ? IFN_LEN_VCONDU : IFN_LEN_VCOND;
           if (len &&
               get_len_vcond_mask_icode (TYPE_MODE (TREE_TYPE (vec_cond_lhs)),
                                         TYPE_MODE (TREE_TYPE (vec_compare))))
             {
               new_temp = make_ssa_name (vec_dest);
-              gcall *call = gimple_build_call_internal (cond_fn, 4, vec_compare,
+              gcall *call = gimple_build_call_internal (IFN_LEN_VCOND, 4, vec_compare,
                                                         vec_then_clause,
                                                         vec_else_clause, len);
               gimple_call_set_lhs (call, new_temp);
