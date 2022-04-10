@@ -29,7 +29,7 @@ const unsigned int NAME_MAXLEN = 64;
 const unsigned int MAX_TUPLE_SIZE = 8;
 extern hash_table<registered_function_hasher> *function_table;
 extern GTY (()) tree
-    riscv_vector_types[MAX_TUPLE_SIZE][NUM_VECTOR_TYPES + 1][NUM_LMUL + 1];
+    riscv_vector_types[MAX_TUPLE_SIZE][NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
 extern GTY (()) vec<registered_function *, va_gc> *registered_functions;
 
 /* General type nodes: */
@@ -230,7 +230,7 @@ generate_builtin_insn (enum insn_code icode, unsigned int n_ops,
 }
 
 inline tree
-lmul2mask_t (machine_mode mode, lmul_value_index lmul)
+lmul2mask_t (machine_mode mode, unsigned int lmul)
 {
   unsigned int ratio;
   unsigned int index;
@@ -238,31 +238,31 @@ lmul2mask_t (machine_mode mode, lmul_value_index lmul)
 
   switch (lmul)
     {
-    case LMUL_1F8:
+    case 0:
       ratio = 8 * sew;
       break;
 
-    case LMUL_1F4:
+    case 1:
       ratio = 4 * sew;
       break;
 
-    case LMUL_1F2:
+    case 2:
       ratio = 2 * sew;
       break;
 
-    case LMUL_1:
+    case 3:
       ratio = sew / 1;
       break;
 
-    case LMUL_2:
+    case 4:
       ratio = sew / 2;
       break;
 
-    case LMUL_4:
+    case 5:
       ratio = sew / 4;
       break;
 
-    case LMUL_8:
+    case 6:
       ratio = sew / 8;
       break;
 
@@ -331,7 +331,7 @@ mode2data_type_suffix (machine_mode mode, bool u, bool ie)
   return buffer;
 }
 
-inline lmul_value_index
+inline unsigned int
 mode2lmul (machine_mode mode)
 {
   int nf = riscv_classify_nf (mode);
@@ -341,19 +341,19 @@ mode2lmul (machine_mode mode)
       switch (mode)
         {
         case VNx2BImode:
-          return LMUL_1F8;
+          return 0;
         case VNx4BImode:
-          return LMUL_1F4;
+          return 1;
         case VNx8BImode:
-          return LMUL_1F2;
+          return 2;
         case VNx16BImode:
-          return LMUL_1;
+          return 3;
         case VNx32BImode:
-          return LMUL_2;
+          return 4;
         case VNx64BImode:
-          return LMUL_4;
+          return 5;
         case VNx128BImode:
-          return LMUL_8;
+          return 6;
         default:
           gcc_unreachable ();
         }
@@ -362,15 +362,15 @@ mode2lmul (machine_mode mode)
   if (factor < UNITS_PER_V_REG.coeffs[0])
     {
       int lmul = UNITS_PER_V_REG.coeffs[0] / factor;
-      return lmul == 8 ? LMUL_1F8 : lmul == 4 ? LMUL_1F4 : LMUL_1F2;
+      return lmul == 8 ? 0 : lmul == 4 ? 1 : 2;
     }
   else
     {
       int lmul = factor / UNITS_PER_V_REG.coeffs[0];
-      return lmul == 8   ? LMUL_8
-             : lmul == 4 ? LMUL_4
-             : lmul == 2 ? LMUL_2
-                         : LMUL_1;
+      return lmul == 8   ? 6
+             : lmul == 4 ? 5
+             : lmul == 2 ? 4
+                         : 3;
     }
 }
 
@@ -1014,7 +1014,7 @@ function_builder::get_dest_arguments_length () const
 tree
 function_builder::get_mask_type (const tree &return_type,
                                  const tree &first_type, const vec<tree> &,
-                                 lmul_value_index lmul) const
+                                 unsigned int lmul) const
 {
   const tree type =
       VECTOR_MODE_P (TYPE_MODE (return_type)) ? return_type : first_type;
@@ -1027,7 +1027,7 @@ function_builder::get_mask_type (const tree &return_type,
 
 tree
 function_builder::get_dest_type (const tree &return_type, const vec<tree> &,
-                                 lmul_value_index) const
+                                 unsigned int) const
 {
   return return_type;
 }
@@ -1318,7 +1318,7 @@ function_builder::check_required_extensions (location_t location, tree fndecl,
 void
 function_builder::apply_predication (tree &return_type, tree &first_type,
                                      vec<tree> &argument_types,
-                                     lmul_value_index lmul,
+                                     unsigned int lmul,
                                      predication_index pred) const
 {
   /* check if mask parameter need. */
@@ -2096,7 +2096,7 @@ reduceop::get_argument_types (const function_instance &instance,
 tree
 reduceop::get_mask_type (const tree &, const tree &,
                          const vec<tree> &argument_types,
-                         lmul_value_index) const
+                         unsigned int) const
 {
   return lmul2mask_t (GET_MODE_INNER (TYPE_MODE (argument_types[0])),
                       mode2lmul (TYPE_MODE (argument_types[0])));

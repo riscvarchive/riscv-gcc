@@ -63,18 +63,6 @@
 namespace riscv_vector
 {
 
-enum lmul_value_index
-{
-  LMUL_1F8 = 0,
-  LMUL_1F4,
-  LMUL_1F2,
-  LMUL_1,
-  LMUL_2,
-  LMUL_4,
-  LMUL_8,
-  NUM_LMUL
-};
-
 enum data_type_index
 {
   DT_signed,
@@ -107,9 +95,9 @@ enum vector_type_index
 #undef DEF_RVV_TYPE
 };
 
-struct vector_lmul_info
+struct vector_vlmul_info
 {
-  lmul_value_index type;
+  enum vlmul_field_enum vlmul;
   const char *suffix;
   const char *boolnum;
 };
@@ -332,37 +320,52 @@ enum operation_index
 
 class function_builder;
 
-class GTY((user)) function_instance
+class GTY ((user)) function_instance
 {
 public:
-  function_instance (function_builder *_builder, const char *_base_name,
-                     vector_arg_modes &_target_arg_pattern,
-                     predication_index _target_pred,
-                     operation_index _target_operation);
+  function_instance (function_builder *, const char *, vector_arg_modes &,
+                     predication_index, operation_index);
 
   function_instance ();
 
   ~function_instance ();
 
-  bool operator== (const function_instance &) const;
-  bool operator!= (const function_instance &) const;
+  bool
+  operator== (const function_instance &) const;
+  bool
+  operator!= (const function_instance &) const;
 
-  hashval_t hash () const;
-  bool check(location_t, tree, tree, unsigned int, tree *) const;
-  unsigned int call_properties () const;
-  bool reads_global_state_p () const;
-  bool modifies_global_state_p () const;
-  bool could_trap_p () const;
+  hashval_t
+  hash () const;
+  bool
+  check (location_t, tree, tree, unsigned int, tree *) const;
+  unsigned int
+  call_properties () const;
+  bool
+  reads_global_state_p () const;
+  bool
+  modifies_global_state_p () const;
+  bool
+  could_trap_p () const;
 
-  const char * get_base_name () const;
-  vector_arg_modes get_arg_pattern () const;
-  predication_index get_pred () const;
-  unsigned int get_vma_vta () const;
-  operation_index get_operation () const;
-  data_type_index * get_data_type_list () const;
-  function_builder * builder () const;
-  char * get_func_name () const;
-  void clear_func_name () const;
+  const char *
+  get_base_name () const;
+  vector_arg_modes
+  get_arg_pattern () const;
+  predication_index
+  get_pred () const;
+  unsigned int
+  get_vma_vta () const;
+  operation_index
+  get_operation () const;
+  data_type_index *
+  get_data_type_list () const;
+  function_builder *
+  builder () const;
+  char *
+  get_func_name () const;
+  void
+  clear_func_name () const;
 
 private:
   function_builder *m_builder;
@@ -393,15 +396,13 @@ public:
 class function_builder
 {
 public:
-  function_builder (const char *_base_name,
-                    vector_arg_all_modes &_target_arg_patterns,
-                    uint64_t _target_pattern,
-                    uint64_t _target_preds, uint64_t _target_op_types,
-                    const unsigned int _extensions);
+  function_builder (const char *, vector_arg_all_modes &, uint64_t, uint64_t,
+                    uint64_t, const unsigned int);
 
   ~function_builder ();
 
-  void register_function ();
+  void
+  register_function ();
 
   /* Try to fold the given gimple call.  Return the new gimple statement
      on success, otherwise return null.  */
@@ -410,20 +411,22 @@ public:
 
   /* Expand the given call into rtl.  Return the result of the function,
      or an arbitrary value if the function doesn't return a result.  */
-  virtual rtx expand (const function_instance &, tree, rtx) const = 0;
+  virtual rtx
+  expand (const function_instance &, tree, rtx) const = 0;
 
-  rtx expand_builtin_insn (enum insn_code icode, tree exp, rtx target, const function_instance &instance) const;
+  rtx
+  expand_builtin_insn (enum insn_code, tree, rtx,
+                       const function_instance &) const;
 
   virtual tree
   get_return_type (const function_instance &) const;
 
   virtual tree
-  get_dest_type (const tree &return_type, const vec<tree> &argument_types,
-                 lmul_value_index lmul) const;
+  get_dest_type (const tree &, const vec<tree> &, unsigned int) const;
 
   virtual tree
-  get_mask_type (const tree &return_type, const tree &first_type,
-                 const vec<tree> &argument_types, lmul_value_index lmul) const;
+  get_mask_type (const tree &, const tree &, const vec<tree> &,
+                 unsigned int) const;
 
   virtual void
   get_argument_types (const function_instance &, vec<tree> &) const;
@@ -434,25 +437,30 @@ public:
   virtual void
   get_name (char *, const function_instance &) const;
 
-  uint64_t get_pattern () const;
+  uint64_t
+  get_pattern () const;
   /* check if need add mask operand for corresponding rtl */
-  bool need_mask_operand_p () const;
+  bool
+  need_mask_operand_p () const;
   /* check if need add dest operand for corresponding rtl */
-  bool need_dest_operand_p () const;
+  bool
+  need_dest_operand_p () const;
   /* check if has mask arg for corresponding function decl */
-  bool has_mask_arg_p (predication_index pred) const;
+  bool has_mask_arg_p (predication_index) const;
   /* check if has dest arg for corresponding function decl */
-  virtual bool has_dest_arg_p (predication_index pred) const;
-  unsigned int get_policy (predication_index pred) const;
+  virtual bool has_dest_arg_p (predication_index) const;
+  unsigned int get_policy (predication_index) const;
   /* get parameter position of mask arg */
-  virtual size_t get_position_of_mask_arg (predication_index pred) const;
+  virtual size_t get_position_of_mask_arg (predication_index) const;
   /* get parameter position of dest arg */
-  virtual size_t get_position_of_dest_arg (predication_index pred) const;
+  virtual size_t get_position_of_dest_arg (predication_index) const;
 
   void
-  apply_predication (tree &, tree &, vec<tree> &, lmul_value_index, predication_index) const;
+  apply_predication (tree &, tree &, vec<tree> &, unsigned int,
+                     predication_index) const;
 
-  virtual unsigned int call_properties (const function_instance &) const;
+  virtual unsigned int
+  call_properties (const function_instance &) const;
 
   vector_arg_modes &
   get_arg_modes_by_iter_idx (unsigned int) const;
@@ -461,16 +469,21 @@ public:
   get_data_type_list () const;
 
   bool check_required_extensions (location_t, tree, uint64_t);
-  void append_name (const char *);
-  char *finish_name ();
+  void
+  append_name (const char *);
+  char *
+  finish_name ();
 
 private:
-  void add_unique_function (const function_instance &, tree, vec<tree> &);
-  void build_one (const function_instance &);
-  tree get_attributes (const function_instance &);
+  void
+  add_unique_function (const function_instance &, tree, vec<tree> &);
+  void
+  build_one (const function_instance &);
+  tree
+  get_attributes (const function_instance &);
 
-  registered_function &add_function (const function_instance &, const char *,
-                                     tree, tree, bool);
+  registered_function &
+  add_function (const function_instance &, const char *, tree, tree, bool);
 
   /* The base name, as a string.  */
   const char *m_base_name;
@@ -494,7 +507,8 @@ struct registered_function_hasher : nofree_ptr_hash<registered_function>
   typedef function_instance compare_type;
 
   static hashval_t hash (value_type);
-  static bool equal (value_type, const compare_type &);
+  static bool
+  equal (value_type, const compare_type &);
 };
 
 enum indexed_mode
@@ -504,23 +518,22 @@ enum indexed_mode
 };
 
 /* A function_base for config functions.  */
-class config : public function_builder {
+class config : public function_builder
+{
 public:
-// use the same construction function as the function_builder
+  // use the same construction function as the function_builder
   using function_builder::function_builder;
   // use the same construction function as the function_builder
   unsigned int
   call_properties (const function_instance &) const OVERRIDE;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
   tree
   get_return_type (const function_instance &) const OVERRIDE;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for readvl functions.  */
@@ -534,17 +547,16 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   tree
   get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for Miscellaneous functions.  */
@@ -555,18 +567,16 @@ public:
   using function_builder::function_builder;
 
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for loadstore functions.  */
@@ -576,11 +586,10 @@ public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for indexed loadstore functions.  */
@@ -590,11 +599,10 @@ public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *name, const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for segment functions.  */
@@ -604,7 +612,7 @@ public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 };
 
 /* A function_base for single-width unary functions.  */
@@ -614,14 +622,13 @@ public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for single-width binary functions.  */
@@ -632,14 +639,13 @@ public:
   using function_builder::function_builder;
 
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for single-width ternary functions.  */
@@ -649,14 +655,13 @@ public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for single-width binary functions.  */
@@ -666,18 +671,17 @@ public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   tree
-  get_mask_type (const tree &return_type, const tree &first_type,
-                 const vec<tree> &argument_types, lmul_value_index lmul) const OVERRIDE;
+  get_mask_type (const tree &, const tree &, const vec<tree> &,
+                 unsigned int) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for vle functions.  */
@@ -691,11 +695,10 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vse functions.  */
@@ -709,8 +712,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vlse functions.  */
@@ -724,15 +726,13 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsse functions.  */
@@ -746,12 +746,10 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vlm functions.  */
@@ -765,14 +763,13 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsm functions.  */
@@ -786,12 +783,10 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vlxei functions.  */
@@ -805,11 +800,10 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsxei functions.  */
@@ -822,8 +816,7 @@ public:
   unsigned int
   call_properties (const function_instance &) const OVERRIDE;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vleff functions.  */
@@ -837,22 +830,20 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vlseg functions.  */
@@ -866,15 +857,13 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vlsegff functions.  */
@@ -888,16 +877,14 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsseg functions.  */
@@ -911,12 +898,10 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vlsseg functions.  */
@@ -926,12 +911,10 @@ public:
   // use the same construction function as the vlseg
   using vlseg::vlseg;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vssseg functions.  */
@@ -941,12 +924,10 @@ public:
   // use the same construction function as the vlseg
   using vsseg::vsseg;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vlxseg functions.  */
@@ -960,15 +941,13 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   tree
-  get_return_type (const function_instance &instance) const OVERRIDE;
+  get_return_type (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsxseg functions.  */
@@ -982,12 +961,10 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vadd functions.  */
@@ -998,8 +975,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsub functions.  */
@@ -1010,8 +986,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vrsub functions.  */
@@ -1022,8 +997,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vneg functions.  */
@@ -1033,8 +1007,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vwadd and vwsub functions.  */
@@ -1044,8 +1017,7 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vwcvt functions.  */
@@ -1055,8 +1027,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsext/vzext functions.  */
@@ -1066,8 +1037,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vadc functions.  */
@@ -1078,8 +1048,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsbc functions.  */
@@ -1090,8 +1059,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmadc functions.  */
@@ -1101,11 +1069,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmsbc functions.  */
@@ -1115,11 +1082,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vlogic functions.  */
@@ -1130,8 +1096,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vnot functions.  */
@@ -1141,8 +1106,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vshift functions.  */
@@ -1152,12 +1116,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vnshift functions.  */
@@ -1167,12 +1129,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vncvt functions.  */
@@ -1182,8 +1142,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vcmp functions.  */
@@ -1193,11 +1152,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmin/vmax functions.  */
@@ -1208,8 +1166,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmul functions.  */
@@ -1220,8 +1177,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmulh functions.  */
@@ -1232,8 +1188,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmulhsu functions.  */
@@ -1244,8 +1199,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vdiv functions.  */
@@ -1256,8 +1210,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vwmul functions.  */
@@ -1267,8 +1220,7 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vwmulsusu functions.  */
@@ -1278,8 +1230,7 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vimac functions.  */
@@ -1290,8 +1241,7 @@ public:
   using ternop::ternop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vwmacc functions.  */
@@ -1301,8 +1251,7 @@ public:
   // use the same construction function as the ternop
   using ternop::ternop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vwmaccsu functions.  */
@@ -1312,8 +1261,7 @@ public:
   // use the same construction function as the ternop
   using ternop::ternop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vwmaccus functions.  */
@@ -1323,8 +1271,7 @@ public:
   // use the same construction function as the ternop
   using ternop::ternop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmerge functions.  */
@@ -1334,14 +1281,12 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
-  size_t get_position_of_dest_arg (predication_index pred) const OVERRIDE;
+  size_t get_position_of_dest_arg (predication_index) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmv functions.  */
@@ -1351,12 +1296,10 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vred functions.  */
@@ -1366,8 +1309,7 @@ public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vwredsum functions.  */
@@ -1377,8 +1319,7 @@ public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfred functions.  */
@@ -1392,8 +1333,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwredosum functions.  */
@@ -1407,8 +1347,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwredusum functions.  */
@@ -1422,8 +1361,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmlogic functions.  */
@@ -1433,8 +1371,7 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmnlogic functions.  */
@@ -1444,8 +1381,7 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmlogicn functions.  */
@@ -1455,8 +1391,7 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmmv functions.  */
@@ -1466,7 +1401,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmnot functions.  */
@@ -1476,7 +1411,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmclr functions.  */
@@ -1486,7 +1421,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmset functions.  */
@@ -1496,7 +1431,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vcpop functions.  */
@@ -1509,8 +1444,7 @@ public:
   get_return_type (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfirst functions.  */
@@ -1523,8 +1457,7 @@ public:
   get_return_type (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmsetbit functions.  */
@@ -1534,8 +1467,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for viota functions.  */
@@ -1545,8 +1477,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vid functions.  */
@@ -1556,8 +1487,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmv_x_s functions.  */
@@ -1567,11 +1497,10 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vmv_s_x functions.  */
@@ -1582,7 +1511,7 @@ public:
   using unop::unop;
 
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfmv_f_s functions.  */
@@ -1592,11 +1521,10 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfmv_s_f functions.  */
@@ -1606,7 +1534,7 @@ public:
   // use the same construction function as the unop
   using unop::unop;
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vslide functions.  */
@@ -1616,12 +1544,10 @@ public:
   // use the same construction function as the ternop
   using binop::binop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vslide1 functions.  */
@@ -1632,8 +1558,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vslide1 functions.  */
@@ -1643,8 +1568,7 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vrgather functions.  */
@@ -1654,12 +1578,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vrgather functions.  */
@@ -1669,8 +1591,7 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 class vcompress : public binop
@@ -1679,10 +1600,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
 
-  size_t get_position_of_dest_arg (predication_index pred) const OVERRIDE;
+  size_t get_position_of_dest_arg (predication_index) const OVERRIDE;
 
   rtx
-  expand (const function_instance &, tree exp, rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsadd functions.  */
@@ -1693,8 +1614,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsaddu functions.  */
@@ -1705,8 +1625,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vaadd functions.  */
@@ -1717,8 +1636,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vaaddu functions.  */
@@ -1729,8 +1647,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vssub functions.  */
@@ -1741,8 +1658,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vssubu functions.  */
@@ -1753,8 +1669,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vasub functions.  */
@@ -1765,8 +1680,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vasubu functions.  */
@@ -1777,8 +1691,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsshift functions.  */
@@ -1788,12 +1701,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vsmul functions.  */
@@ -1804,8 +1715,7 @@ public:
   using binop::binop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vnclip functions.  */
@@ -1815,12 +1725,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vnclipu functions.  */
@@ -1830,12 +1738,10 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfadd,vfsub,vfmul,vfdiv... functions.  */
@@ -1849,8 +1755,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfrsub and vfrdiv functions.  */
@@ -1864,8 +1769,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfneg functions.  */
@@ -1879,8 +1783,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwadd and vfwsub functions.  */
@@ -1894,8 +1797,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwmul functions.  */
@@ -1909,8 +1811,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfmac functions.  */
@@ -1924,8 +1825,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwmacc functions.  */
@@ -1939,8 +1839,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwnmacc functions.  */
@@ -1954,8 +1853,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwmsac functions.  */
@@ -1969,8 +1867,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwnmsac functions.  */
@@ -1984,8 +1881,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfsqrt functions.  */
@@ -1999,8 +1895,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfsqrt7 and vfrec7 functions.  */
@@ -2014,8 +1909,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfsgnj, vfsgnjn and vfsgnjx functions.  */
@@ -2029,8 +1923,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfabs functions.  */
@@ -2044,8 +1937,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfcmp functions.  */
@@ -2055,14 +1947,13 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   void
-  get_name (char *name, const function_instance &instance) const OVERRIDE;
+  get_name (char *, const function_instance &) const OVERRIDE;
 
   unsigned int
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfclass functions.  */
@@ -2073,8 +1964,7 @@ public:
   using unop::unop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfmerge functions.  */
@@ -2085,14 +1975,12 @@ public:
   using binop::binop;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
-  size_t get_position_of_dest_arg (predication_index pred) const OVERRIDE;
+  size_t get_position_of_dest_arg (predication_index) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfmv functions.  */
@@ -2103,8 +1991,7 @@ public:
   using unop::unop;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfcvt_x_f_v functions.  */
@@ -2118,8 +2005,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfcvt_xu_f_v functions.  */
@@ -2133,8 +2019,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfcvt_rtz_x_f_v functions.  */
@@ -2148,8 +2033,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfcvt_rtz_xu_f_v functions.  */
@@ -2163,8 +2047,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfcvt_f_x_v functions.  */
@@ -2178,8 +2061,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfcvt_f_xu_v functions.  */
@@ -2193,8 +2075,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwcvt_x_f_v functions.  */
@@ -2208,8 +2089,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwcvt_xu_f_v functions.  */
@@ -2223,8 +2103,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwcvt_rtz_x_f_v functions.  */
@@ -2238,8 +2117,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwcvt_rtz_xu_f_v functions.  */
@@ -2253,8 +2131,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwcvt_f_x_v functions.  */
@@ -2268,8 +2145,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwcvt_f_xu_v functions.  */
@@ -2283,8 +2159,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfwcvt_f_f_v functions.  */
@@ -2298,8 +2173,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfncvt_x_f_w functions.  */
@@ -2313,8 +2187,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfncvt_xu_f_w functions.  */
@@ -2328,8 +2201,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfncvt_rtz_x_f_w functions.  */
@@ -2343,8 +2215,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfncvt_rtz_xu_f_w functions.  */
@@ -2358,8 +2229,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfncvt_f_x_w functions.  */
@@ -2373,8 +2243,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfncvt_f_xu_w functions.  */
@@ -2388,8 +2257,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfncvt_f_f_w functions.  */
@@ -2403,8 +2271,7 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
 /* A function_base for vfncvt_rod_f_f_w functions.  */
@@ -2418,16 +2285,13 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   rtx
-  expand (const function_instance &instance, tree exp,
-          rtx target) const OVERRIDE;
+  expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
-
 
 /* Non-tuple type segement load/store */
 
 /* A function_base for vlseg_template functions.  */
-template <unsigned int NF>
-class vlseg_template : public segment
+template <unsigned int NF> class vlseg_template : public segment
 {
 public:
   // use the same construction function as the function_builder
@@ -2437,16 +2301,15 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   bool has_dest_arg_p (predication_index) const OVERRIDE;
 
-  size_t get_position_of_mask_arg (predication_index pred) const OVERRIDE;
+  size_t get_position_of_mask_arg (predication_index) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
   expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2461,8 +2324,7 @@ using vlseg7 = vlseg_template<7>;
 using vlseg8 = vlseg_template<8>;
 
 /* A function_base for vlsegff_template functions.  */
-template <unsigned int NF>
-class vlsegff_template : public segment
+template <unsigned int NF> class vlsegff_template : public segment
 {
 public:
   // use the same construction function as the function_builder
@@ -2472,16 +2334,15 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   bool has_dest_arg_p (predication_index) const OVERRIDE;
 
-  size_t get_position_of_mask_arg (predication_index pred) const OVERRIDE;
+  size_t get_position_of_mask_arg (predication_index) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
   expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2495,10 +2356,8 @@ using vlseg6ff = vlsegff_template<6>;
 using vlseg7ff = vlsegff_template<7>;
 using vlseg8ff = vlsegff_template<8>;
 
-
 /* A function_base for vsseg_template functions.  */
-template <unsigned int NF>
-class vsseg_template : public segment
+template <unsigned int NF> class vsseg_template : public segment
 {
 public:
   // use the same construction function as the function_builder
@@ -2508,12 +2367,11 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
   expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2528,23 +2386,21 @@ using vsseg7 = vsseg_template<7>;
 using vsseg8 = vsseg_template<8>;
 
 /* A function_base for vlsseg_template functions.  */
-template <unsigned int NF>
-class vlsseg_template : public segment
+template <unsigned int NF> class vlsseg_template : public segment
 {
 public:
   // use the same construction function as the function_builder
   using segment::segment;
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   bool has_dest_arg_p (predication_index) const OVERRIDE;
 
-  size_t get_position_of_mask_arg (predication_index pred) const OVERRIDE;
+  size_t get_position_of_mask_arg (predication_index) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
   expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2559,8 +2415,7 @@ using vlsseg7 = vlsseg_template<7>;
 using vlsseg8 = vlsseg_template<8>;
 
 /* A function_base for vssseg_template functions.  */
-template <unsigned int NF>
-class vssseg_template : public segment
+template <unsigned int NF> class vssseg_template : public segment
 {
 public:
   // use the same construction function as the function_builder
@@ -2570,12 +2425,11 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
   expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2601,16 +2455,15 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   bool has_dest_arg_p (predication_index) const OVERRIDE;
 
-  size_t get_position_of_mask_arg (predication_index pred) const OVERRIDE;
+  size_t get_position_of_mask_arg (predication_index) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
   expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2643,12 +2496,11 @@ public:
   call_properties (const function_instance &) const OVERRIDE;
 
   void
-  get_argument_types (const function_instance &instance,
-                      vec<tree> &argument_types) const OVERRIDE;
+  get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
   gimple *
-  fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-        gcall *call_in) const OVERRIDE;
+  fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   rtx
   expand (const function_instance &, tree, rtx) const OVERRIDE;

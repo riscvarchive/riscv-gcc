@@ -171,30 +171,8 @@ riscv_pragma_intrinsic (cpp_reader *)
     error ("unknown %<#pragma riscv intrinsic%> option %qs", name);
 }
 
-/* FIXME: Only support C intrinsics so far, support C++
-   overloaded functions soon later. */
-#if 0
-/* Implement TARGET_RESOLVE_OVERLOADED_BUILTIN.  */
-static tree
-riscv_resolve_overloaded_builtin (unsigned int uncast_location,
-				  tree fndecl, void *uncast_arglist)
-{
-  return NULL_TREE;
-}
-
-
-/* Hook to validate the current #pragma riscv intrinsic target and set the state, and
-   update the macros based on what was changed. */
-
-static bool
-riscv_pragma_target_parse (tree args, tree pop_target)
-{
-  //FIXME:
-  return true;
-}
-#endif
-
 /* Implement TARGET_CHECK_BUILTIN_CALL.  */
+
 static bool
 riscv_check_builtin_call (location_t loc, vec<location_t> arg_loc,
 			  tree fndecl, tree orig_fndecl,
@@ -216,16 +194,11 @@ riscv_check_builtin_call (location_t loc, vec<location_t> arg_loc,
   gcc_unreachable ();
 }
 
-
 /* Implement REGISTER_TARGET_PRAGMAS.  */
 
 void
 riscv_register_pragmas (void)
 {
-  /* Update pragma hook to allow parsing #pragma riscv intrinsic target.  */
-  //targetm.target_option.pragma_parse = riscv_pragma_target_parse;
-
-  //targetm.resolve_overloaded_builtin = riscv_resolve_overloaded_builtin;
   targetm.check_builtin_call = riscv_check_builtin_call;
 
   c_register_pragma ("riscv", "intrinsic", riscv_pragma_intrinsic);

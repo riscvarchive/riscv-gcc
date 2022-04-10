@@ -115,15 +115,15 @@ static const unsigned int RISCV_TARGET_HARD_FLOAT = 1 << 4;
 static const unsigned int RISCV_TARGET_DOUBLE_FLOAT = 1 << 5;
 static const unsigned int RISCV_TARGET_64BIT = 0; /* We don't use this static variable. */
 
-/* The same lmul doesn't mean use the same mask,
+/* The same vlmul doesn't mean use the same mask,
    this is used as save codes.
    for example: i32m8 use vbool4_t i8m8 use vbool1_t. */
-static CONSTEXPR const vector_lmul_info vector_lmuls[] =
+static CONSTEXPR const vector_vlmul_info vector_vlmuls[] =
 {
-  { LMUL_1F8, "mf8", "64" }, { LMUL_1F4, "mf4", "32" },
-  { LMUL_1F2, "mf2", "16" }, { LMUL_1, "m1", "8" },
-  { LMUL_2, "m2", "4" },     { LMUL_4, "m4", "2" },
-  { LMUL_8, "m8", "1" },
+  { VLMUL_FIELD_101, "mf8", "64" }, { VLMUL_FIELD_110, "mf4", "32" },
+  { VLMUL_FIELD_111, "mf2", "16" }, { VLMUL_FIELD_000, "m1", "8" },
+  { VLMUL_FIELD_001, "m2", "4" }, { VLMUL_FIELD_010, "m4", "2" },
+  { VLMUL_FIELD_011, "m8", "1" },
 };
 
 static CONSTEXPR const vector_type_info vector_type_infos[] =
@@ -133,10 +133,10 @@ static CONSTEXPR const vector_type_info vector_type_infos[] =
 #undef DEF_RVV_TYPE
 };
 
-static GTY(()) tree abi_vector_types[NUM_VECTOR_TYPES + 1][NUM_LMUL + 1];
+static GTY(()) tree abi_vector_types[NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
 
 /* Same, but with the riscv_vector.h "v..._t" name.  */
-tree riscv_vector_types[MAX_TUPLE_SIZE][NUM_VECTOR_TYPES + 1][NUM_LMUL + 1];
+tree riscv_vector_types[MAX_TUPLE_SIZE][NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
 
 
 /* All registered function decls, hashed on the function_instance
@@ -173,87 +173,89 @@ sizeless_type_p (const_tree type)
 }
 
 machine_mode
-vector_builtin_mode (scalar_mode inner_mode, unsigned int lmul)
+vector_builtin_mode (scalar_mode inner_mode, enum vlmul_field_enum vlmul)
 {
   switch (inner_mode)
     {
     case E_BImode:
-      return lmul == LMUL_1     ? VNx16BImode
-	     : lmul == LMUL_2   ? VNx32BImode
-	     : lmul == LMUL_4   ? VNx64BImode
-	     : lmul == LMUL_8   ? VNx128BImode
-	     : lmul == LMUL_1F2 ? VNx8BImode
-	     : lmul == LMUL_1F4 ? VNx4BImode
-	     : VNx2BImode;
+      return vlmul == VLMUL_FIELD_000   ? VNx16BImode
+             : vlmul == VLMUL_FIELD_001 ? VNx32BImode
+             : vlmul == VLMUL_FIELD_010 ? VNx64BImode
+             : vlmul == VLMUL_FIELD_011 ? VNx128BImode
+             : vlmul == VLMUL_FIELD_111 ? VNx8BImode
+             : vlmul == VLMUL_FIELD_110 ? VNx4BImode
+                                       : VNx2BImode;
 
     case E_QImode:
-      return lmul == LMUL_1     ? VNx16QImode
-	     : lmul == LMUL_2   ? VNx32QImode
-	     : lmul == LMUL_4   ? VNx64QImode
-	     : lmul == LMUL_8   ? VNx128QImode
-	     : lmul == LMUL_1F2 ? VNx8QImode
-	     : lmul == LMUL_1F4 ? VNx4QImode
-	     : VNx2QImode;
+      return vlmul == VLMUL_FIELD_000   ? VNx16QImode
+             : vlmul == VLMUL_FIELD_001 ? VNx32QImode
+             : vlmul == VLMUL_FIELD_010 ? VNx64QImode
+             : vlmul == VLMUL_FIELD_011 ? VNx128QImode
+             : vlmul == VLMUL_FIELD_111 ? VNx8QImode
+             : vlmul == VLMUL_FIELD_110 ? VNx4QImode
+                                       : VNx2QImode;
 
     case E_HImode:
-      if (lmul == LMUL_1F8)
-	gcc_unreachable ();
+      if (vlmul == VLMUL_FIELD_101)
+        gcc_unreachable ();
 
-      return lmul == LMUL_1     ? VNx8HImode
-	     : lmul == LMUL_2   ? VNx16HImode
-	     : lmul == LMUL_4   ? VNx32HImode
-	     : lmul == LMUL_8   ? VNx64HImode
-	     : lmul == LMUL_1F2 ? VNx4HImode
-	     : VNx2HImode;
+      return vlmul == VLMUL_FIELD_000   ? VNx8HImode
+             : vlmul == VLMUL_FIELD_001 ? VNx16HImode
+             : vlmul == VLMUL_FIELD_010 ? VNx32HImode
+             : vlmul == VLMUL_FIELD_011 ? VNx64HImode
+             : vlmul == VLMUL_FIELD_111 ? VNx4HImode
+                                       : VNx2HImode;
 
     case E_SImode:
-      if (lmul == LMUL_1F8 || lmul == LMUL_1F4)
-	gcc_unreachable ();
+      if (vlmul == VLMUL_FIELD_101 || vlmul == VLMUL_FIELD_110)
+        gcc_unreachable ();
 
-      return lmul == LMUL_1   ? VNx4SImode
-	     : lmul == LMUL_2 ? VNx8SImode
-	     : lmul == LMUL_4 ? VNx16SImode
-	     : lmul == LMUL_8 ? VNx32SImode
-	     : VNx2SImode;
+      return vlmul == VLMUL_FIELD_000   ? VNx4SImode
+             : vlmul == VLMUL_FIELD_001 ? VNx8SImode
+             : vlmul == VLMUL_FIELD_010 ? VNx16SImode
+             : vlmul == VLMUL_FIELD_011 ? VNx32SImode
+                                       : VNx2SImode;
 
     case E_DImode:
-      if (lmul == LMUL_1F8 || lmul == LMUL_1F4 || lmul == LMUL_1F2)
-	gcc_unreachable ();
+      if (vlmul == VLMUL_FIELD_101 || vlmul == VLMUL_FIELD_110 ||
+          vlmul == VLMUL_FIELD_111)
+        gcc_unreachable ();
 
-      return lmul == LMUL_1   ? VNx2DImode
-	     : lmul == LMUL_2 ? VNx4DImode
-	     : lmul == LMUL_4 ? VNx8DImode
-	     : VNx16DImode;
+      return vlmul == VLMUL_FIELD_000   ? VNx2DImode
+             : vlmul == VLMUL_FIELD_001 ? VNx4DImode
+             : vlmul == VLMUL_FIELD_010 ? VNx8DImode
+                                       : VNx16DImode;
 
     case E_HFmode:
-      if (lmul == LMUL_1F8)
-	gcc_unreachable ();
+      if (vlmul == VLMUL_FIELD_101)
+        gcc_unreachable ();
 
-      return lmul == LMUL_1     ? VNx8HFmode
-	     : lmul == LMUL_2   ? VNx16HFmode
-	     : lmul == LMUL_4   ? VNx32HFmode
-	     : lmul == LMUL_8   ? VNx64HFmode
-	     : lmul == LMUL_1F2 ? VNx4HFmode
-	     : VNx2HFmode;
+      return vlmul == VLMUL_FIELD_000   ? VNx8HFmode
+             : vlmul == VLMUL_FIELD_001 ? VNx16HFmode
+             : vlmul == VLMUL_FIELD_010 ? VNx32HFmode
+             : vlmul == VLMUL_FIELD_011 ? VNx64HFmode
+             : vlmul == VLMUL_FIELD_111 ? VNx4HFmode
+                                       : VNx2HFmode;
 
     case E_SFmode:
-      if (lmul == LMUL_1F8 || lmul == LMUL_1F4)
-	gcc_unreachable ();
+      if (vlmul == VLMUL_FIELD_101 || vlmul == VLMUL_FIELD_110)
+        gcc_unreachable ();
 
-      return lmul == LMUL_1   ? VNx4SFmode
-	     : lmul == LMUL_2 ? VNx8SFmode
-	     : lmul == LMUL_4 ? VNx16SFmode
-	     : lmul == LMUL_8 ? VNx32SFmode
-	     : VNx2SFmode;
+      return vlmul == VLMUL_FIELD_000   ? VNx4SFmode
+             : vlmul == VLMUL_FIELD_001 ? VNx8SFmode
+             : vlmul == VLMUL_FIELD_010 ? VNx16SFmode
+             : vlmul == VLMUL_FIELD_011 ? VNx32SFmode
+                                       : VNx2SFmode;
 
     case E_DFmode:
-      if (lmul == LMUL_1F8 || lmul == LMUL_1F4 || lmul == LMUL_1F2)
-	gcc_unreachable ();
+      if (vlmul == VLMUL_FIELD_101 || vlmul == VLMUL_FIELD_110 ||
+          vlmul == VLMUL_FIELD_111)
+        gcc_unreachable ();
 
-      return lmul == LMUL_1   ? VNx2DFmode
-	     : lmul == LMUL_2 ? VNx4DFmode
-	     : lmul == LMUL_4 ? VNx8DFmode
-	     : VNx16DFmode;
+      return vlmul == VLMUL_FIELD_000   ? VNx2DFmode
+             : vlmul == VLMUL_FIELD_001 ? VNx4DFmode
+             : vlmul == VLMUL_FIELD_010 ? VNx8DFmode
+                                       : VNx16DFmode;
 
     default:
       gcc_unreachable ();
@@ -344,40 +346,31 @@ verify_type_context (location_t loc, type_context_kind context,
   gcc_unreachable ();
 }
 
-static unsigned int
-vector_legal_lmul (scalar_mode inner_mode)
+static bool
+vector_legal_vlmul (scalar_mode inner_mode, enum vlmul_field_enum vlmul)
 {
+  if (vlmul == VLMUL_FIELD_100)
+    return false;
+
   switch (inner_mode)
     {
-    case E_BImode:
-      return LMUL_1F8;
-
-    case E_QImode:
-      return LMUL_1F8;
-
     case E_HImode:
-      return LMUL_1F4;
+    case E_HFmode:
+      return vlmul != VLMUL_FIELD_101;
 
     case E_SImode:
-      return LMUL_1F2;
+    case E_SFmode:
+      return vlmul != VLMUL_FIELD_101 && vlmul != VLMUL_FIELD_110;
 
     case E_DImode:
-      return LMUL_1;
-
-    case E_HFmode:
-      return LMUL_1F4;
-
-    case E_SFmode:
-      return LMUL_1F2;
-
     case E_DFmode:
-      return LMUL_1;
+      return vlmul <= VLMUL_FIELD_011;
 
     default:
-      gcc_unreachable ();
+      break;
     }
 
-  gcc_unreachable ();
+  return true;
 }
 
 /* Record that TYPE is an ABI-defined VECTOR type that contains SEW and LMUL
@@ -385,15 +378,16 @@ vector_legal_lmul (scalar_mode inner_mode)
    mangling of the type.
  */
 static void
-add_vector_type_attribute (tree type, unsigned int sew, unsigned int lmul,
+add_vector_type_attribute (tree type, unsigned int nf, unsigned int sew, unsigned int vlmul,
 			   unsigned int is_bool, const char *mangled_name)
 {
   tree mangled_name_tree
     = (mangled_name ? get_identifier (mangled_name) : NULL_TREE);
 
   tree value = tree_cons (NULL_TREE, mangled_name_tree, NULL_TREE);
+  value = tree_cons (NULL_TREE, size_int (nf), value);
   value = tree_cons (NULL_TREE, size_int (sew), value);
-  value = tree_cons (NULL_TREE, size_int (lmul), value);
+  value = tree_cons (NULL_TREE, size_int (vlmul), value);
   value = tree_cons (NULL_TREE, size_int (is_bool), value);
   TYPE_ATTRIBUTES (type) = tree_cons (get_identifier ("RVV type"), value,
 				      TYPE_ATTRIBUTES (type));
@@ -486,25 +480,28 @@ register_general_builtin_types (void)
 static void
 register_builtin_types ()
 {
-#define DEF_RVV_TYPE(ELEM_TYPE, NODE)                                         \
+#define DEF_RVV_TYPE(ELEM_TYPE, NODE)                                          \
   scalar_types[VECTOR_TYPE_##ELEM_TYPE] = NODE;
 #include "riscv-vector-builtins.def"
 
-  for (unsigned int i = 0; i < NUM_VECTOR_TYPES; i++)
+  for (unsigned int i = 0; i < NUM_VECTOR_TYPES; ++i)
     {
       tree eltype = scalar_types[i];
       scalar_mode elmode =
           (eltype == boolean_type_node) ? BImode : SCALAR_TYPE_MODE (eltype);
 
-      for (unsigned int lmul = vector_legal_lmul (elmode); lmul < NUM_LMUL;
-           lmul++)
+      for (unsigned int j = 0; j < ARRAY_SIZE (vector_vlmuls); ++j)
         {
+          if (!vector_legal_vlmul (elmode, vector_vlmuls[j].vlmul))
+            continue;
+
           char abi_name[NAME_MAXLEN] = {0};
           char mangled_name[NAME_MAXLEN] = {0};
           bool is_bool;
           tree vectype;
           unsigned int sew = GET_MODE_BITSIZE (elmode);
-          machine_mode mode = vector_builtin_mode (elmode, lmul);
+          machine_mode mode =
+              vector_builtin_mode (elmode, vector_vlmuls[j].vlmul);
 
           if (eltype == boolean_type_node)
             {
@@ -547,7 +544,7 @@ register_builtin_types ()
             }
           /* These codes copied from ARM. */
           /* abi_name and api_name follows vector type implementation in LLVM.
-             Take sew = 8, lmul = 1/8 for example,
+             Take sew = 8, vlmul = 1/8 for example,
              abi_name = __rvv_int8mf8_t,
              api_name = vint8mf8_t.
              The mangle name follows the rule of aarch64
@@ -555,20 +552,21 @@ register_builtin_types ()
              So that mangle_name = u15__rvv_int8mf8_t.  */
           snprintf (abi_name, NAME_MAXLEN, "__rvv_%s%s_t",
                     vector_type_infos[i].elem_name,
-                    is_bool ? vector_lmuls[lmul].boolnum
-                            : vector_lmuls[lmul].suffix);
+                    is_bool ? vector_vlmuls[j].boolnum
+                            : vector_vlmuls[j].suffix);
           snprintf (mangled_name, NAME_MAXLEN, "u%d__rvv_%s%s_t",
                     (int)strlen (abi_name), vector_type_infos[i].elem_name,
-                    is_bool ? vector_lmuls[lmul].boolnum
-                            : vector_lmuls[lmul].suffix);
+                    is_bool ? vector_vlmuls[j].boolnum
+                            : vector_vlmuls[j].suffix);
           vectype = build_distinct_type_copy (vectype);
           gcc_assert (vectype == TYPE_MAIN_VARIANT (vectype));
           SET_TYPE_STRUCTURAL_EQUALITY (vectype);
           TYPE_ARTIFICIAL (vectype) = 1;
           TYPE_INDIVISIBLE_P (vectype) = 1;
-          add_vector_type_attribute (vectype, sew, lmul, is_bool, mangled_name);
+          add_vector_type_attribute (vectype, 1, sew, vector_vlmuls[j].vlmul, is_bool,
+                                     mangled_name);
           make_type_sizeless (vectype);
-          abi_vector_types[i][lmul] = vectype;
+          abi_vector_types[i][j] = vectype;
           lang_hooks.types.register_builtin_type (vectype, abi_name);
         }
     }
@@ -599,8 +597,8 @@ register_vector_type (unsigned int type, unsigned int lmul)
   char rvv_name[NAME_MAXLEN] = {0};
   snprintf (rvv_name, NAME_MAXLEN, "v%s%s_t", vector_type_infos[type].elem_name,
             strcmp (vector_type_infos[type].elem_name, "bool") == 0
-                ? vector_lmuls[lmul].boolnum
-                : vector_lmuls[lmul].suffix);
+                ? vector_vlmuls[lmul].boolnum
+                : vector_vlmuls[lmul].suffix);
   tree id = get_identifier (rvv_name);
   tree decl = build_decl (input_location, TYPE_DECL, id, vectype);
   decl = lang_hooks.decls.pushdecl (decl);
@@ -629,11 +627,11 @@ register_tuple_type (unsigned int num_vectors, unsigned int type,
   /* Work out the structure name.  */
   char buffer[sizeof ("vfloat16mf8x8_t")];
   snprintf (buffer, sizeof (buffer), "v%s%sx%d_t",
-	    vector_type_infos[type].elem_name, vector_lmuls[lmul].suffix,
+	    vector_type_infos[type].elem_name, vector_vlmuls[lmul].suffix,
 	    num_vectors);
   char mangled_name[NAME_MAXLEN] = { 0 };
   snprintf (mangled_name, NAME_MAXLEN, "u%d__rvv_%s%s_t", (int)strlen (buffer),
-	    vector_type_infos[lmul].elem_name, vector_lmuls[lmul].suffix);
+	    vector_type_infos[lmul].elem_name, vector_vlmuls[lmul].suffix);
   tree vector_type = riscv_vector_types[0][type][lmul];
   tree array_type = build_array_type_nelts (vector_type, num_vectors);
   machine_mode tuple_mode;
@@ -650,7 +648,7 @@ register_tuple_type (unsigned int num_vectors, unsigned int type,
 			   get_identifier ("val"), array_type);
   DECL_FIELD_CONTEXT (field) = tuple_type;
   TYPE_FIELDS (tuple_type) = field;
-  add_vector_type_attribute (tuple_type, sew, lmul, false, mangled_name);
+  add_vector_type_attribute (tuple_type, num_vectors, sew, lmul, false, mangled_name);
   make_type_sizeless (tuple_type);
   layout_type (tuple_type);
   gcc_assert (VECTOR_MODE_P (TYPE_MODE (tuple_type))
@@ -692,26 +690,29 @@ handle_pragma_vector ()
     }
 
   /* Define the vector and tuple types.  */
-  for (unsigned int type_i = 0; type_i < NUM_VECTOR_TYPES; ++type_i)
+  for (unsigned int i = 0; i < NUM_VECTOR_TYPES; ++i)
     {
-      tree eltype = scalar_types[type_i];
+      tree eltype = scalar_types[i];
       scalar_mode elmode =
           (eltype == boolean_type_node) ? BImode : SCALAR_TYPE_MODE (eltype);
 
-      for (unsigned int lmul = vector_legal_lmul (elmode); lmul < NUM_LMUL;
-           lmul++)
+      for (unsigned int j = 0; j < ARRAY_SIZE (vector_vlmuls); ++j)
         {
-          register_vector_type (type_i, lmul);
+          if (!vector_legal_vlmul (elmode, vector_vlmuls[j].vlmul))
+            continue;
+            
+          register_vector_type (i, j);
 
-          if (type_i != VECTOR_TYPE_bool)
+          if (i != VECTOR_TYPE_bool)
             {
               for (unsigned int count = 2; count <= MAX_TUPLE_SIZE; ++count)
                 {
-                  if (lmul == LMUL_1F8 || lmul == LMUL_1F4 ||
-                      lmul == LMUL_1F2 || lmul == LMUL_1 ||
-                      (lmul == LMUL_2 && count <= 4) ||
-                      (lmul == LMUL_4 && count <= 2))
-                    register_tuple_type (count, type_i, lmul);
+                  enum vlmul_field_enum vlmul = vector_vlmuls[j].vlmul;
+                  if (vlmul == VLMUL_FIELD_101 || vlmul == VLMUL_FIELD_110 ||
+                      vlmul == VLMUL_FIELD_111 || vlmul == VLMUL_FIELD_000 ||
+                      (vlmul == VLMUL_FIELD_001 && count <= 4) ||
+                      (vlmul == VLMUL_FIELD_010 && count <= 2))
+                    register_tuple_type (count, i, j);
                   else
                     continue;
                 }

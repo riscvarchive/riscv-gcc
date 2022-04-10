@@ -102,7 +102,8 @@ enum vlmul_field_enum
   VLMUL_FIELD_100, /* RESERVED */
   VLMUL_FIELD_101, /* LMUL = 1/8 */
   VLMUL_FIELD_110, /* LMUL = 1/4 */
-  VLMUL_FIELD_111  /* LMUL = 1/2 */
+  VLMUL_FIELD_111, /* LMUL = 1/2 */
+  MAX_VLMUL_FIELD
 };
 
 enum vsew_field_enum

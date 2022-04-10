@@ -221,9 +221,9 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 static bool
 update_vlvtyp_p (rtx_insn *insn)
 {
-  if (insn)
+  if (insn && NONDEBUG_INSN_P (insn))
     {
-      if (INSN_P (insn) && recog_memoized (insn) >= 0 &&
+      if (recog_memoized (insn) >= 0 &&
           (get_attr_type (insn) == TYPE_VLEFF ||
            get_attr_type (insn) == TYPE_VLSEGFF))
         {
@@ -235,8 +235,8 @@ update_vlvtyp_p (rtx_insn *insn)
         }
       if (CALL_P (insn))
         return true;
-      if ((PATTERN (insn)) && (GET_CODE (PATTERN (insn)) == ASM_INPUT ||
-                               asm_noperands (PATTERN (insn)) >= 0))
+      if (PATTERN (insn) && (GET_CODE (PATTERN (insn)) == ASM_INPUT ||
+                             asm_noperands (PATTERN (insn)) >= 0))
         return true;
     }
   return false;
@@ -416,17 +416,11 @@ public:
   {
     return vsew;
   }
-
-  enum lmul_value_index
-  get_lmul () const
+  
+  enum vlmul_field_enum
+  get_vlmul () const
   {
-    return vlmul == 0   ? riscv_vector::LMUL_1
-           : vlmul == 1 ? riscv_vector::LMUL_2
-           : vlmul == 2 ? riscv_vector::LMUL_4
-           : vlmul == 3 ? riscv_vector::LMUL_8
-           : vlmul == 5 ? riscv_vector::LMUL_1F8
-           : vlmul == 6 ? riscv_vector::LMUL_1F4
-                        : riscv_vector::LMUL_1F2;
+    return (enum vlmul_field_enum) vlmul;
   }
 
   vector_policy
@@ -463,9 +457,8 @@ public:
       {
         unsigned int vsew = info.get_vsew ();
         machine_mode inner = sew_to_int_mode (vsew);
-        enum lmul_value_index lmul = info.get_lmul ();
-        machine_mode mode =
-            riscv_vector::vector_builtin_mode (as_a<scalar_mode> (inner), lmul);
+        machine_mode mode = riscv_vector::vector_builtin_mode (
+            as_a<scalar_mode> (inner), info.get_vlmul ());
         if (CONST_SCALAR_INT_P (info.get_avl ()))
           {
             if (GET_MODE_NUNITS (mode).is_constant () &&
@@ -1664,42 +1657,6 @@ make_pass_insert_vsetvli (gcc::context *ctxt)
   return new pass_insert_vsetvli (ctxt);
 }
 
-/* Insert vsetvli Pass after reload. This pass handles the vsetvli that can not
-   be handled by insert_vsetvli which is insert before combine pass. Because we
-   have some cases that GCC will generate some register spilling after reload
-   when the registers are used up. This kind of register spilling needs to
-   insert vsetvli to gurantee the result. */
-const pass_data pass_data_insert_vsetvli2 = {
-    RTL_PASS,          /* type */
-    "insert_vsetvli2", /* name */
-    OPTGROUP_NONE,     /* optinfo_flags */
-    TV_NONE,           /* tv_id */
-    0,                 /* properties_required */
-    0,                 /* properties_provided */
-    0,                 /* properties_destroyed */
-    0,                 /* todo_flags_start */
-    0,                 /* todo_flags_finish */
-};
-
-class pass_insert_vsetvli2 : public rtl_opt_pass
-{
-public:
-  pass_insert_vsetvli2 (gcc::context *ctxt)
-      : rtl_opt_pass (pass_data_insert_vsetvli2, ctxt)
-  {
-  }
-
-  /* opt_pass methods: */
-  virtual bool
-  gate (function *)
-  {
-    return TARGET_VECTOR;
-  }
-  virtual unsigned int
-  execute (function *);
-
-}; // class pass_insert_vsetvli2
-
 static bool
 recog_need_insert_vsetvli_after_reload_p (rtx_insn *insn, rtx *clobber)
 {
@@ -1720,13 +1677,13 @@ recog_need_insert_vsetvli_after_reload_p (rtx_insn *insn, rtx *clobber)
   return true;
 }
 
-unsigned int
-pass_insert_vsetvli2::execute (function *fn)
+void
+riscv_vector_insert_vsetvli_after_reload (function *fn)
 {
   basic_block bb;
 
   if (n_basic_blocks_for_fn (fn) <= 0)
-    return 0;
+    return;
 
   if (dump_file)
     fprintf (dump_file, "Start of Insert vsetvli instructions\n\n");
@@ -1831,12 +1788,4 @@ pass_insert_vsetvli2::execute (function *fn)
       delete crtl->ssa;
       crtl->ssa = nullptr;
     }
-
-  return 0;
-}
-
-rtl_opt_pass *
-make_pass_insert_vsetvli2 (gcc::context *ctxt)
-{
-  return new pass_insert_vsetvli2 (ctxt);
 }

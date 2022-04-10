@@ -6162,6 +6162,10 @@ riscv_reorg (void)
   /* Do nothing unless we have -msave-restore */
   if (TARGET_SAVE_RESTORE)
     riscv_remove_unneeded_save_restore_calls ();
+  
+  /* Insert vsetvli for vector spilling after reload. */
+  if (TARGET_VECTOR && reload_completed)
+    riscv_vector_insert_vsetvli_after_reload (cfun);
 }
 
 /* Return nonzero if register FROM_REGNO can be renamed to register
