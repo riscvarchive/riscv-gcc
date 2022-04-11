@@ -68,7 +68,7 @@ static const unsigned int CP_WRITE_CSR = 1U << 6;
 static bool reported_missing_extension_p;
 
 static const char *
-get_pred_func_suffix (predication_index pred)
+get_pred_str (predication_index pred)
 {
   switch (pred)
     {
@@ -115,7 +115,7 @@ get_pred_func_suffix (predication_index pred)
 }
 
 static const char *
-get_operation_suffix (operation_index op)
+get_operation_str (operation_index op)
 {
   switch (op)
     {
@@ -193,7 +193,7 @@ get_operation_suffix (operation_index op)
 }
 
 /* Return true if the function has no return value.  */
-inline bool
+static bool
 function_returns_void_p (tree fndecl)
 {
   return TREE_TYPE (TREE_TYPE (fndecl)) == void_type_node;
@@ -202,7 +202,7 @@ function_returns_void_p (tree fndecl)
 /* Take argument ARGNO from EXP's argument list and convert it into
    an expand operand.  Store the operand in *OP.  */
 
-inline void
+static void
 add_input_operand (struct expand_operand *op, tree exp, unsigned argno)
 {
   tree arg = CALL_EXPR_ARG (exp, argno);
@@ -216,7 +216,7 @@ add_input_operand (struct expand_operand *op, tree exp, unsigned argno)
 
    Return the target rtx if HAS_TARGET_P, otherwise return const0_rtx.  */
 
-inline rtx
+static rtx
 generate_builtin_insn (enum insn_code icode, unsigned int n_ops,
                        struct expand_operand *ops, bool has_target_p)
 {
@@ -229,7 +229,7 @@ generate_builtin_insn (enum insn_code icode, unsigned int n_ops,
   return has_target_p ? ops[0].value : const0_rtx;
 }
 
-inline tree
+static tree
 lmul2mask_t (machine_mode mode, unsigned int lmul)
 {
   unsigned int ratio;
@@ -280,8 +280,8 @@ lmul2mask_t (machine_mode mode, unsigned int lmul)
   return riscv_vector_types[0][VECTOR_TYPE_bool][index];
 }
 
-inline const char *
-mode2data_type_suffix (machine_mode mode, bool u, bool ie)
+static const char *
+mode2data_type_str (machine_mode mode, bool u, bool ie)
 {
   static char buffer[NAME_MAXLEN] = {0};
   unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
@@ -331,7 +331,7 @@ mode2data_type_suffix (machine_mode mode, bool u, bool ie)
   return buffer;
 }
 
-inline unsigned int
+static unsigned int
 mode2lmul (machine_mode mode)
 {
   int nf = riscv_classify_nf (mode);
@@ -374,7 +374,7 @@ mode2lmul (machine_mode mode)
     }
 }
 
-inline tree
+static tree
 get_tuple_t (machine_mode mode, bool u, unsigned int nelt)
 {
   if (VECTOR_MODE_P (mode))
@@ -427,7 +427,7 @@ get_tuple_t (machine_mode mode, bool u, unsigned int nelt)
   gcc_unreachable ();
 }
 
-inline tree
+static tree
 get_dt_t (machine_mode mode, bool u, bool ptr = false, bool c = false,
           unsigned int nelt = 1)
 {
@@ -582,66 +582,26 @@ get_dt_t (machine_mode mode, bool u, bool ptr = false, bool c = false,
 
 /* Helper functions to get datatype of arg. */
 
-inline bool
+static bool
 is_dt_ptr (const data_type_index dt)
 {
   return dt == DT_ptr || dt == DT_uptr || dt == DT_c_ptr || dt == DT_c_uptr;
 }
 
-inline bool
+static bool
 is_dt_unsigned (const data_type_index dt)
 {
   return dt == DT_unsigned || dt == DT_uptr || dt == DT_c_uptr;
 }
 
-inline bool
+static bool
 is_dt_const (const data_type_index dt)
 {
   return dt == DT_c_ptr || dt == DT_c_uptr;
 }
 
-/* Return the overloaded or full function name for INSTANCE; OVERLOADED_P
-   selects which.  Allocate the string on m_string_obstack; the caller
-   must use obstack_free to free it after use.  */
-
-inline void
-joint_function_name (char *function_name, const function_instance &instance,
-                     machine_mode mode, bool unsigned_p, bool ie_p,
-                     bool insert_prefix_p = false,
-                     machine_mode prefix_mode = VOIDmode,
-                     bool prefix_unsigned_p = false, bool prefix_ie_p = false)
-{
-  strcat (function_name, instance.get_base_name ());
-  strcat (function_name, "_");
-
-  const char *operation_suffix =
-      get_operation_suffix (instance.get_operation ());
-
-  if (strlen (operation_suffix) > 0)
-    {
-      strcat (function_name, operation_suffix);
-      strcat (function_name, "_");
-    }
-
-  if (insert_prefix_p)
-    {
-      strcat (function_name, mode2data_type_suffix (
-                                 prefix_mode, prefix_unsigned_p, prefix_ie_p));
-      strcat (function_name, "_");
-    }
-
-  strcat (function_name, mode2data_type_suffix (mode, unsigned_p, ie_p));
-  const char *pred_suffix = get_pred_func_suffix (instance.get_pred ());
-
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (function_name, "_");
-      strcat (function_name, pred_suffix);
-    }
-}
-
 /* Return the single field in tuple type TYPE.  */
-inline tree
+static tree
 tuple_type_field (tree type)
 {
   for (tree field = TYPE_FIELDS (type); field; field = DECL_CHAIN (field))
@@ -652,7 +612,7 @@ tuple_type_field (tree type)
 }
 
 /* Return a hash code for a function_instance.  */
-inline hashval_t
+static hashval_t
 get_string_hash (char *input_string)
 {
   if (input_string == NULL || strlen (input_string) == 0)
@@ -925,7 +885,9 @@ function_builder::function_builder (const char *_base_name,
           m_iter_arg_idx_list[m_iter_arg_cnt++] = i;
         }
     }
-
+  
+  m_direct_overloads = lang_GNU_CXX ();
+  
   gcc_assert (m_iter_arg_cnt > 0);
   gcc_assert (m_iter_idx_cnt > 0);
 }
@@ -1278,7 +1240,6 @@ function_builder::add_unique_function (const function_instance &instance,
     error ("duplicate function name: %s", name);
 
   *rfn_slot = &rfn;
-
   obstack_free (&m_string_obstack, name);
 }
 
@@ -1592,8 +1553,11 @@ config::call_properties (const function_instance &) const
 void
 config::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, true);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, true));
 }
 tree
 config::get_return_type (const function_instance &) const
@@ -1645,8 +1609,11 @@ readvl::call_properties (const function_instance &) const
 void
 readvl::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
 }
 
 tree
@@ -1697,22 +1664,27 @@ readvl::expand (const function_instance &, tree exp, rtx target) const
 void
 misc::get_name (char *name, const function_instance &instance) const
 {
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+
   if (strcmp (instance.get_base_name (), "vundefined") == 0)
-    joint_function_name (
-        name, instance, instance.get_arg_pattern ().arg_list[0],
-        instance.get_data_type_list ()[0] == DT_unsigned, false);
-  else if (strcmp (instance.get_base_name (), "vset") == 0)
-    joint_function_name (
-        name, instance, instance.get_arg_pattern ().arg_list[0],
-        instance.get_data_type_list ()[0] == DT_unsigned, false, true,
-        instance.get_arg_pattern ().arg_list[3],
-        instance.get_data_type_list ()[3] == DT_unsigned, false);
+    strcat (name, mode2data_type_str (mode, unsigned_p, false));
   else
-    joint_function_name (
-        name, instance, instance.get_arg_pattern ().arg_list[0],
-        instance.get_data_type_list ()[0] == DT_unsigned, false, true,
-        instance.get_arg_pattern ().arg_list[1],
-        instance.get_data_type_list ()[1] == DT_unsigned, false);
+    {
+      unsigned int offset =
+          strcmp (instance.get_base_name (), "vset") == 0 ? 3 : 1;
+      machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[offset];
+      bool prefix_unsigned_p =
+          instance.get_data_type_list ()[offset] == DT_unsigned;
+
+      strcat (name, get_operation_str (instance.get_operation ()));
+      strcat (name, "_");
+      strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
+      strcat (name, "_");
+      strcat (name, mode2data_type_str (mode, unsigned_p, false));
+    }
 }
 
 tree
@@ -1779,8 +1751,7 @@ loadstore::get_name (char *name, const function_instance &instance) const
     }
 
   strcat (name, "_");
-  const char *operation_suffix =
-      get_operation_suffix (instance.get_operation ());
+  const char *operation_suffix = get_operation_str (instance.get_operation ());
 
   if (strlen (operation_suffix) > 0)
     {
@@ -1788,8 +1759,8 @@ loadstore::get_name (char *name, const function_instance &instance) const
       strcat (name, "_");
     }
 
-  strcat (name, mode2data_type_suffix (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_func_suffix (instance.get_pred ());
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
 
   if (strlen (pred_suffix) > 0)
     {
@@ -1825,8 +1796,7 @@ indexedloadstore::get_name (char *name, const function_instance &instance) const
   snprintf (buf, sizeof (buf), "%d", sew);
   strcat (name, buf);
   strcat (name, "_");
-  const char *operation_suffix =
-      get_operation_suffix (instance.get_operation ());
+  const char *operation_suffix = get_operation_str (instance.get_operation ());
 
   if (strlen (operation_suffix) > 0)
     {
@@ -1834,8 +1804,8 @@ indexedloadstore::get_name (char *name, const function_instance &instance) const
       strcat (name, "_");
     }
 
-  strcat (name, mode2data_type_suffix (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_func_suffix (instance.get_pred ());
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
 
   if (strlen (pred_suffix) > 0)
     {
@@ -1876,7 +1846,7 @@ segment::get_name (char *name, const function_instance &instance) const
           ? instance.get_arg_pattern ().arg_list[2]
           : instance.get_arg_pattern ().arg_list[1];
   bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[0]);
-  
+
   if (strcmp (instance.get_base_name (), "vlsegff") == 0 ||
       strcmp (instance.get_base_name (), "vlseg2ff") == 0 ||
       strcmp (instance.get_base_name (), "vlseg3ff") == 0 ||
@@ -1951,8 +1921,7 @@ segment::get_name (char *name, const function_instance &instance) const
 
   strcat (name, buf);
   strcat (name, "_");
-  const char *operation_suffix =
-      get_operation_suffix (instance.get_operation ());
+  const char *operation_suffix = get_operation_str (instance.get_operation ());
 
   if (strlen (operation_suffix) > 0)
     {
@@ -1960,8 +1929,8 @@ segment::get_name (char *name, const function_instance &instance) const
       strcat (name, "_");
     }
 
-  strcat (name, mode2data_type_suffix (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_func_suffix (instance.get_pred ());
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
 
   if (strlen (pred_suffix) > 0)
     {
@@ -1974,8 +1943,23 @@ segment::get_name (char *name, const function_instance &instance) const
 void
 unop::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  const char *operation_suffix = get_operation_str (instance.get_operation ());
+  if (strlen (operation_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, operation_suffix);
+    }
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
 }
 
 tree
@@ -1999,8 +1983,23 @@ unop::get_argument_types (const function_instance &instance,
 void
 binop::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  const char *operation_suffix = get_operation_str (instance.get_operation ());
+  if (strlen (operation_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, operation_suffix);
+    }
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
 }
 
 tree
@@ -2036,8 +2035,23 @@ binop::get_argument_types (const function_instance &instance,
 void
 ternop::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  const char *operation_suffix = get_operation_str (instance.get_operation ());
+  if (strlen (operation_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, operation_suffix);
+    }
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
 }
 
 tree
@@ -2066,14 +2080,27 @@ ternop::get_argument_types (const function_instance &instance,
     }
 }
 
-/* A function_base for single-width binary functions.  */
+/* A function_base for reduction functions.  */
 void
 reduceop::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false,
-                       true, instance.get_arg_pattern ().arg_list[1],
-                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
+  bool prefix_unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
+  strcat (name, get_operation_str (instance.get_operation ()));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
 }
 
 tree
@@ -2095,8 +2122,7 @@ reduceop::get_argument_types (const function_instance &instance,
 
 tree
 reduceop::get_mask_type (const tree &, const tree &,
-                         const vec<tree> &argument_types,
-                         unsigned int) const
+                         const vec<tree> &argument_types, unsigned int) const
 {
   return lmul2mask_t (GET_MODE_INNER (TYPE_MODE (argument_types[0])),
                       mode2lmul (TYPE_MODE (argument_types[0])));
@@ -2311,8 +2337,7 @@ vleff::get_name (char *name, const function_instance &instance) const
   strcat (name, buf);
   strcat (name, "ff");
   strcat (name, "_");
-  const char *operation_suffix =
-      get_operation_suffix (instance.get_operation ());
+  const char *operation_suffix = get_operation_str (instance.get_operation ());
 
   if (strlen (operation_suffix) > 0)
     {
@@ -2320,8 +2345,8 @@ vleff::get_name (char *name, const function_instance &instance) const
       strcat (name, "_");
     }
 
-  strcat (name, mode2data_type_suffix (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_func_suffix (instance.get_pred ());
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
 
   if (strlen (pred_suffix) > 0)
     {
@@ -2380,7 +2405,7 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   function_instance *fn_instance = new function_instance ();
 
   snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "readvl_%s",
-            mode2data_type_suffix (mode, unsigned_p, false));
+            mode2data_type_str (mode, unsigned_p, false));
   hashval_t hashval = fn_instance->hash ();
   registered_function *rfn_slot =
       function_table->find_with_hash (*fn_instance, hashval);
@@ -2491,7 +2516,7 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   function_instance *fn_instance = new function_instance ();
 
   snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "readvl_%s",
-            mode2data_type_suffix (mode, unsigned_p, false));
+            mode2data_type_str (mode, unsigned_p, false));
   hashval_t hashval = fn_instance->hash ();
   registered_function *rfn_slot =
       function_table->find_with_hash (*fn_instance, hashval);
@@ -2742,14 +2767,16 @@ vwadd_vwsub::expand (const function_instance &instance, tree exp,
 {
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  enum rtx_code code1 = strcmp (instance.get_base_name (), "vwadd") == 0 ||
-                           strcmp (instance.get_base_name (), "vwaddu") == 0
-                       ? PLUS
-                       : MINUS;
-  enum rtx_code code2 = strcmp (instance.get_base_name (), "vwaddu") == 0 ||
-                           strcmp (instance.get_base_name (), "vwsubu") == 0
-                       ? ZERO_EXTEND
-                       : SIGN_EXTEND;
+  enum rtx_code code1 =
+      strcmp (instance.get_base_name (), "vwadd") == 0 ||
+              strcmp (instance.get_base_name (), "vwaddu") == 0
+          ? PLUS
+          : MINUS;
+  enum rtx_code code2 =
+      strcmp (instance.get_base_name (), "vwaddu") == 0 ||
+              strcmp (instance.get_base_name (), "vwsubu") == 0
+          ? ZERO_EXTEND
+          : SIGN_EXTEND;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vw_vv (code1, code2, mode);
   else if (instance.get_operation () == OP_vx)
@@ -2768,8 +2795,8 @@ vwcvt::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum rtx_code code = strcmp (instance.get_base_name (), "vwcvt") == 0
-                      ? SIGN_EXTEND
-                      : ZERO_EXTEND;
+                           ? SIGN_EXTEND
+                           : ZERO_EXTEND;
 
   icode = code_for_vwcvt_x_x_v (code, mode);
   return expand_builtin_insn (icode, exp, target, instance);
@@ -2782,8 +2809,8 @@ vext::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum rtx_code code = strcmp (instance.get_base_name (), "vsext") == 0
-                      ? SIGN_EXTEND
-                      : ZERO_EXTEND;
+                           ? SIGN_EXTEND
+                           : ZERO_EXTEND;
   if (instance.get_operation () == OP_vf2)
     icode = code_for_vext_vf2 (code, mode);
   else if (instance.get_operation () == OP_vf4)
@@ -2823,10 +2850,23 @@ vsbc::expand (const function_instance &instance, tree exp, rtx target) const
 void
 vmadc::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false,
-                       true, instance.get_arg_pattern ().arg_list[1],
-                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
+  bool prefix_unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
+  strcat (name, get_operation_str (instance.get_operation ()));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
 }
 
 rtx
@@ -2851,10 +2891,23 @@ vmadc::expand (const function_instance &instance, tree exp, rtx target) const
 void
 vmsbc::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false,
-                       true, instance.get_arg_pattern ().arg_list[1],
-                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
+  bool prefix_unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
+  strcat (name, get_operation_str (instance.get_operation ()));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
 }
 
 rtx
@@ -2882,8 +2935,8 @@ vlogic::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum rtx_code code = strcmp (instance.get_base_name (), "vand") == 0  ? AND
-                  : strcmp (instance.get_base_name (), "vor") == 0 ? IOR
-                                                                   : XOR;
+                       : strcmp (instance.get_base_name (), "vor") == 0 ? IOR
+                                                                        : XOR;
   int vxcode = code == AND   ? UNSPEC_VAND
                : code == IOR ? UNSPEC_VIOX
                              : UNSPEC_VXOR;
@@ -2926,9 +2979,10 @@ vshift::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vsll") == 0   ? ASHIFT
-                  : strcmp (instance.get_base_name (), "vsrl") == 0 ? LSHIFTRT
-                                                                    : ASHIFTRT;
+  enum rtx_code code = strcmp (instance.get_base_name (), "vsll") == 0 ? ASHIFT
+                       : strcmp (instance.get_base_name (), "vsrl") == 0
+                           ? LSHIFTRT
+                           : ASHIFTRT;
   if (instance.get_operation () == OP_vv)
     icode = code_for_v_vv (code, mode);
   else
@@ -2980,10 +3034,23 @@ vncvt::expand (const function_instance &instance, tree exp, rtx target) const
 void
 vcmp::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false,
-                       true, instance.get_arg_pattern ().arg_list[1],
-                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
+  bool prefix_unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
+  strcat (name, get_operation_str (instance.get_operation ()));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
 }
 
 rtx
@@ -2992,15 +3059,15 @@ vcmp::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum rtx_code code = strcmp (instance.get_base_name (), "vmseq") == 0    ? EQ
-                  : strcmp (instance.get_base_name (), "vmsne") == 0  ? NE
-                  : strcmp (instance.get_base_name (), "vmslt") == 0  ? LT
-                  : strcmp (instance.get_base_name (), "vmsltu") == 0 ? LTU
-                  : strcmp (instance.get_base_name (), "vmsgt") == 0  ? GT
-                  : strcmp (instance.get_base_name (), "vmsgtu") == 0 ? GTU
-                  : strcmp (instance.get_base_name (), "vmsle") == 0  ? LE
-                  : strcmp (instance.get_base_name (), "vmsleu") == 0 ? LEU
-                  : strcmp (instance.get_base_name (), "vmsge") == 0  ? GE
-                                                                      : GEU;
+                       : strcmp (instance.get_base_name (), "vmsne") == 0  ? NE
+                       : strcmp (instance.get_base_name (), "vmslt") == 0  ? LT
+                       : strcmp (instance.get_base_name (), "vmsltu") == 0 ? LTU
+                       : strcmp (instance.get_base_name (), "vmsgt") == 0  ? GT
+                       : strcmp (instance.get_base_name (), "vmsgtu") == 0 ? GTU
+                       : strcmp (instance.get_base_name (), "vmsle") == 0  ? LE
+                       : strcmp (instance.get_base_name (), "vmsleu") == 0 ? LEU
+                       : strcmp (instance.get_base_name (), "vmsge") == 0  ? GE
+                                                                          : GEU;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vms_vv (code, mode);
   else
@@ -3016,9 +3083,9 @@ vmin_vmax::expand (const function_instance &instance, tree exp,
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum rtx_code code = strcmp (instance.get_base_name (), "vmin") == 0    ? SMIN
-                  : strcmp (instance.get_base_name (), "vminu") == 0 ? UMIN
-                  : strcmp (instance.get_base_name (), "vmax") == 0  ? SMAX
-                                                                     : UMAX;
+                       : strcmp (instance.get_base_name (), "vminu") == 0 ? UMIN
+                       : strcmp (instance.get_base_name (), "vmax") == 0  ? SMAX
+                                                                         : UMAX;
   int unspec_code = code == SMIN   ? UNSPEC_VMIN
                     : code == UMIN ? UNSPEC_VMINU
                     : code == SMAX ? UNSPEC_VMAX
@@ -3079,9 +3146,9 @@ vdiv::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum rtx_code code = strcmp (instance.get_base_name (), "vdiv") == 0    ? DIV
-                  : strcmp (instance.get_base_name (), "vdivu") == 0 ? UDIV
-                  : strcmp (instance.get_base_name (), "vrem") == 0  ? MOD
-                                                                     : UMOD;
+                       : strcmp (instance.get_base_name (), "vdivu") == 0 ? UDIV
+                       : strcmp (instance.get_base_name (), "vrem") == 0  ? MOD
+                                                                         : UMOD;
   int unspec_code = code == DIV    ? UNSPEC_VDIV
                     : code == UDIV ? UNSPEC_VDIVU
                     : code == MOD  ? UNSPEC_VREM
@@ -3100,8 +3167,8 @@ vwmul::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum rtx_code code = strcmp (instance.get_base_name (), "vwmul") == 0
-                      ? SIGN_EXTEND
-                      : ZERO_EXTEND;
+                           ? SIGN_EXTEND
+                           : ZERO_EXTEND;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vwmul_vv (code, mode);
   else
@@ -3147,8 +3214,8 @@ vwmacc::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
   enum rtx_code code = strcmp (instance.get_base_name (), "vwmacc") == 0
-                      ? SIGN_EXTEND
-                      : ZERO_EXTEND;
+                           ? SIGN_EXTEND
+                           : ZERO_EXTEND;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vwmacc_vv (code, mode);
   else
@@ -3268,8 +3335,8 @@ vwredsum::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum rtx_code code = strcmp (instance.get_base_name (), "vwredsum") == 0
-                      ? SIGN_EXTEND
-                      : ZERO_EXTEND;
+                           ? SIGN_EXTEND
+                           : ZERO_EXTEND;
   icode = code_for_vwredsum_vs (code, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
@@ -3337,8 +3404,8 @@ vmlogic::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum rtx_code code = strcmp (instance.get_base_name (), "vmand") == 0  ? AND
-                  : strcmp (instance.get_base_name (), "vmor") == 0 ? IOR
-                                                                    : XOR;
+                       : strcmp (instance.get_base_name (), "vmor") == 0 ? IOR
+                                                                         : XOR;
   insn_code icode = code_for_vm_mm (code, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
@@ -3349,8 +3416,8 @@ vmnlogic::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum rtx_code code = strcmp (instance.get_base_name (), "vmnand") == 0  ? AND
-                  : strcmp (instance.get_base_name (), "vmnor") == 0 ? IOR
-                                                                     : XOR;
+                       : strcmp (instance.get_base_name (), "vmnor") == 0 ? IOR
+                                                                          : XOR;
   insn_code icode = code_for_vmn_mm (code, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
@@ -3360,7 +3427,8 @@ rtx
 vmlogicn::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vmandn") == 0 ? AND : IOR;
+  enum rtx_code code =
+      strcmp (instance.get_base_name (), "vmandn") == 0 ? AND : IOR;
   insn_code icode = code_for_vmnot_mm (code, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
@@ -3468,10 +3536,17 @@ vid::expand (const function_instance &instance, tree exp, rtx target) const
 void
 vmv_x_s::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false,
-                       true, instance.get_arg_pattern ().arg_list[1],
-                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
+  bool prefix_unsigned_p =
+      instance.get_data_type_list ()[1] == DT_unsigned;
+  strcat (name,
+          mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
 }
 
 rtx
@@ -3496,10 +3571,17 @@ vmv_s_x::expand (const function_instance &instance, tree exp, rtx target) const
 void
 vfmv_f_s::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       instance.get_data_type_list ()[0] == DT_unsigned, false,
-                       true, instance.get_arg_pattern ().arg_list[1],
-                       instance.get_data_type_list ()[1] == DT_unsigned, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
+  bool prefix_unsigned_p =
+      instance.get_data_type_list ()[1] == DT_unsigned;
+  strcat (name,
+          mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, unsigned_p, false));
 }
 
 rtx
@@ -3842,13 +3924,14 @@ vfoptab::expand (const function_instance &instance, tree exp, rtx target) const
 {
   insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vfadd") == 0   ? PLUS
-                  : strcmp (instance.get_base_name (), "vfsub") == 0 ? MINUS
-                  : strcmp (instance.get_base_name (), "vfmul") == 0 ? MULT
-                  : strcmp (instance.get_base_name (), "vfdiv") == 0 ? DIV
-                  : strcmp (instance.get_base_name (), "vfmax") == 0 ? SMAX
-                  : strcmp (instance.get_base_name (), "vfmin") == 0 ? SMIN
-                                                                     : UNKNOWN;
+  enum rtx_code code =
+      strcmp (instance.get_base_name (), "vfadd") == 0   ? PLUS
+      : strcmp (instance.get_base_name (), "vfsub") == 0 ? MINUS
+      : strcmp (instance.get_base_name (), "vfmul") == 0 ? MULT
+      : strcmp (instance.get_base_name (), "vfdiv") == 0 ? DIV
+      : strcmp (instance.get_base_name (), "vfmax") == 0 ? SMAX
+      : strcmp (instance.get_base_name (), "vfmin") == 0 ? SMIN
+                                                         : UNKNOWN;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vf_vv (code, mode);
   else
@@ -4122,9 +4205,21 @@ vfabs::expand (const function_instance &instance, tree exp, rtx target) const
 void
 vfcmp::get_name (char *name, const function_instance &instance) const
 {
-  joint_function_name (name, instance, instance.get_arg_pattern ().arg_list[0],
-                       false, false, true,
-                       instance.get_arg_pattern ().arg_list[1], false, false);
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  strcat (name, instance.get_base_name ());
+  strcat (name, "_");
+  strcat (name, get_operation_str (instance.get_operation ()));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (instance.get_arg_pattern ().arg_list[1],
+                                    false, false));
+  strcat (name, "_");
+  strcat (name, mode2data_type_str (mode, false, false));
+  const char *pred_suffix = get_pred_str (instance.get_pred ());
+  if (strlen (pred_suffix) > 0)
+    {
+      strcat (name, "_");
+      strcat (name, pred_suffix);
+    }
 }
 
 unsigned int
@@ -4139,15 +4234,15 @@ vfcmp::expand (const function_instance &instance, tree exp, rtx target) const
   insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum rtx_code code = strcmp (instance.get_base_name (), "vmfeq") == 0    ? EQ
-                  : strcmp (instance.get_base_name (), "vmfne") == 0  ? NE
-                  : strcmp (instance.get_base_name (), "vmflt") == 0  ? LT
-                  : strcmp (instance.get_base_name (), "vmfltu") == 0 ? LTU
-                  : strcmp (instance.get_base_name (), "vmfgt") == 0  ? GT
-                  : strcmp (instance.get_base_name (), "vmfgtu") == 0 ? GTU
-                  : strcmp (instance.get_base_name (), "vmfle") == 0  ? LE
-                  : strcmp (instance.get_base_name (), "vmfleu") == 0 ? LEU
-                  : strcmp (instance.get_base_name (), "vmfge") == 0  ? GE
-                                                                      : GEU;
+                       : strcmp (instance.get_base_name (), "vmfne") == 0  ? NE
+                       : strcmp (instance.get_base_name (), "vmflt") == 0  ? LT
+                       : strcmp (instance.get_base_name (), "vmfltu") == 0 ? LTU
+                       : strcmp (instance.get_base_name (), "vmfgt") == 0  ? GT
+                       : strcmp (instance.get_base_name (), "vmfgtu") == 0 ? GTU
+                       : strcmp (instance.get_base_name (), "vmfle") == 0  ? LE
+                       : strcmp (instance.get_base_name (), "vmfleu") == 0 ? LEU
+                       : strcmp (instance.get_base_name (), "vmfge") == 0  ? GE
+                                                                          : GEU;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vmf_vv (code, mode);
   else
@@ -4578,32 +4673,38 @@ push_argment_for_segment_load (const function_instance &instance,
   unsigned int offset = indexed_p ? 1 : 0;
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
   for (unsigned int i = 0; i < nf; i++)
-    argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p, true, false));
-  
+    argument_types.quick_push (get_dt_t (
+        instance.get_arg_pattern ().arg_list[offset], unsigned_p, true, false));
+
   if (instance.get_pred () == PRED_m)
     {
       for (unsigned int i = 0; i < nf; i++)
-        argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p, false, false));
+        argument_types.quick_push (
+            get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p,
+                      false, false));
     }
-  argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset + 1], unsigned_p, true, true));
+  argument_types.quick_push (
+      get_dt_t (instance.get_arg_pattern ().arg_list[offset + 1], unsigned_p,
+                true, true));
   if (indexed_p)
-    argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset + 2], true, false, false));
+    argument_types.quick_push (get_dt_t (
+        instance.get_arg_pattern ().arg_list[offset + 2], true, false, false));
 }
 
 static gimple *
-fold_non_tuple_segment_load (
-    const function_instance &instance, gimple_stmt_iterator *gsi_in,
-    gcall *call_in, unsigned int nf, bool ff)
+fold_non_tuple_segment_load (const function_instance &instance,
+                             gimple_stmt_iterator *gsi_in, gcall *call_in,
+                             unsigned int nf, bool ff)
 {
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[0], unsigned_p, false, false);
+  tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[0],
+                               unsigned_p, false, false);
   tree tuple_type = get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nf);
   tree tuple = create_tmp_var (tuple_type, "tuple");
   auto_vec<tree, 16> vargs;
 
-  if (instance.get_pred () != PRED_void
-    && instance.get_pred () != PRED_tama
-    && instance.get_pred () != PRED_ta)
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama &&
+      instance.get_pred () != PRED_ta)
     {
       for (unsigned int i = 0; i < nf; i++)
         {
@@ -4611,13 +4712,16 @@ fold_non_tuple_segment_load (
           if (instance.get_pred () != PRED_m)
             {
               rhs_vector = create_tmp_var (vector_type);
-              tree indirect = fold_build2 (MEM_REF, vector_type, gimple_call_arg (call_in, i),
-                    build_int_cst (build_pointer_type (vector_type), 0));
-              gsi_insert_before (gsi_in, gimple_build_assign (rhs_vector, indirect), GSI_SAME_STMT);
+              tree indirect = fold_build2 (
+                  MEM_REF, vector_type, gimple_call_arg (call_in, i),
+                  build_int_cst (build_pointer_type (vector_type), 0));
+              gsi_insert_before (gsi_in,
+                                 gimple_build_assign (rhs_vector, indirect),
+                                 GSI_SAME_STMT);
             }
           else
             rhs_vector = gimple_call_arg (call_in, i + nf + 1);
-          
+
           tree field = tuple_type_field (TREE_TYPE (tuple));
           tree lhs_array = build3 (COMPONENT_REF, TREE_TYPE (field), tuple,
                                    field, NULL_TREE);
@@ -4628,16 +4732,14 @@ fold_non_tuple_segment_load (
           gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
         }
     }
-  
+
   if (instance.get_pred () == PRED_tama)
     {
       /* push a mask. */
       vargs.quick_push (gimple_call_arg (call_in, nf));
     }
-  if (instance.get_pred () == PRED_m
-    || instance.get_pred () == PRED_tamu
-    || instance.get_pred () == PRED_tuma
-    || instance.get_pred () == PRED_tumu)
+  if (instance.get_pred () == PRED_m || instance.get_pred () == PRED_tamu ||
+      instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu)
     {
       /* push a mask. */
       vargs.quick_push (gimple_call_arg (call_in, nf));
@@ -4649,75 +4751,79 @@ fold_non_tuple_segment_load (
       /* push a tuple. */
       vargs.quick_push (tuple);
     }
-    
+
   if (strstr (instance.get_base_name (), "vlseg") != NULL && !ff)
-    vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
+    vargs.quick_push (
+        gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
   else
     {
-      vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 3));
-      vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
+      vargs.quick_push (
+          gimple_call_arg (call_in, gimple_call_num_args (call_in) - 3));
+      vargs.quick_push (
+          gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
     }
   /* push the vl. */
-  vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
-  
+  vargs.quick_push (
+      gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
+
   function_instance *fn_instance = new function_instance ();
   char buff[16];
-  
+
   if (strstr (instance.get_base_name (), "vlseg") != NULL)
     {
       if (ff)
-        snprintf (buff, sizeof (buff), "vlseg%de%dff", nf, GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+        snprintf (buff, sizeof (buff), "vlseg%de%dff", nf,
+                  GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
       else
-        snprintf (buff, sizeof (buff), "vlseg%de%d", nf, GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+        snprintf (buff, sizeof (buff), "vlseg%de%d", nf,
+                  GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
     }
   else if (strstr (instance.get_base_name (), "vlsseg") != NULL)
-    snprintf (buff, sizeof (buff), "vlsseg%de%d", nf, GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+    snprintf (buff, sizeof (buff), "vlsseg%de%d", nf,
+              GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
   else if (strstr (instance.get_base_name (), "vluxseg") != NULL)
     {
-      machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[instance.get_arg_pattern ().arg_len - 1];
-      snprintf (buff, sizeof (buff), "vluxseg%dei%d", nf, GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+      machine_mode indexed_mode =
+          instance.get_arg_pattern ()
+              .arg_list[instance.get_arg_pattern ().arg_len - 1];
+      snprintf (buff, sizeof (buff), "vluxseg%dei%d", nf,
+                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
     }
   else if (strstr (instance.get_base_name (), "vloxseg") != NULL)
     {
-      machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[instance.get_arg_pattern ().arg_len - 1];
-      snprintf (buff, sizeof (buff), "vloxseg%dei%d", nf, GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+      machine_mode indexed_mode =
+          instance.get_arg_pattern ()
+              .arg_list[instance.get_arg_pattern ().arg_len - 1];
+      snprintf (buff, sizeof (buff), "vloxseg%dei%d", nf,
+                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
     }
   else
     gcc_unreachable ();
-  
 
   if (instance.get_pred () == PRED_void)
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
   else if (instance.get_pred () == PRED_ta)
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_ta", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_ta", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
   else if (instance.get_pred () == PRED_tu)
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tu", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tu", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
   else if (instance.get_pred () == PRED_tama)
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tama", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tama", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
   else if (instance.get_pred () == PRED_tamu)
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tamu", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tamu", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
   else if (instance.get_pred () == PRED_tuma)
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tuma", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tuma", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
   else if (instance.get_pred () == PRED_tumu)
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tumu", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tumu", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
   else
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_m", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_m", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
 
   hashval_t hashval = fn_instance->hash ();
   registered_function *rfn_slot =
@@ -4751,22 +4857,27 @@ fold_non_tuple_segment_load (
 
 static void
 push_argment_for_segment_store (const function_instance &instance,
-                               vec<tree> &argument_types, unsigned int nf,
-                               bool indexed_p)
+                                vec<tree> &argument_types, unsigned int nf,
+                                bool indexed_p)
 {
   unsigned int offset = indexed_p ? 3 : 1;
   bool unsigned_p = instance.get_data_type_list ()[offset] == DT_unsigned;
-  
+
   if (indexed_p)
     {
-      argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[1], unsigned_p, true, false));
-      argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[2], true, false, false));
+      argument_types.quick_push (get_dt_t (
+          instance.get_arg_pattern ().arg_list[1], unsigned_p, true, false));
+      argument_types.quick_push (get_dt_t (
+          instance.get_arg_pattern ().arg_list[2], true, false, false));
     }
   else
-    argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[0], unsigned_p, true, false));
-  
+    argument_types.quick_push (get_dt_t (
+        instance.get_arg_pattern ().arg_list[0], unsigned_p, true, false));
+
   for (unsigned int i = 0; i < nf; i++)
-    argument_types.quick_push (get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p, false, false));
+    argument_types.quick_push (
+        get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p,
+                  false, false));
 }
 
 static gimple *
@@ -4774,9 +4885,13 @@ fold_non_tuple_segment_store (const function_instance &instance,
                               gimple_stmt_iterator *gsi_in, gcall *call_in,
                               unsigned int nf)
 {
-  bool unsigned_p = instance.get_data_type_list ()[instance.get_arg_pattern ().arg_len - 1] == DT_unsigned;
-  tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[instance.get_arg_pattern ().arg_len - 1],
-                               unsigned_p, false, false);
+  bool unsigned_p =
+      instance.get_data_type_list ()[instance.get_arg_pattern ().arg_len - 1] ==
+      DT_unsigned;
+  tree vector_type =
+      get_dt_t (instance.get_arg_pattern ()
+                    .arg_list[instance.get_arg_pattern ().arg_len - 1],
+                unsigned_p, false, false);
   tree tuple_type = get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nf);
   tree tuple = create_tmp_var (tuple_type, "tuple");
   auto_vec<tree, 16> vargs;
@@ -4805,7 +4920,8 @@ fold_non_tuple_segment_store (const function_instance &instance,
 
   vargs.quick_push (tuple);
   /* push the vl. */
-  vargs.quick_push (gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
+  vargs.quick_push (
+      gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
 
   function_instance *fn_instance = new function_instance ();
   char buff[NAME_MAXLEN / 4];
@@ -4832,20 +4948,18 @@ fold_non_tuple_segment_store (const function_instance &instance,
     gcc_unreachable ();
 
   if (instance.get_pred () == PRED_void)
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
   else
-    snprintf (
-        fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_m", buff,
-        mode2data_type_suffix (TYPE_MODE (tuple_type), unsigned_p, false));
+    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_m", buff,
+              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
 
   hashval_t hashval = fn_instance->hash ();
   registered_function *rfn_slot =
       function_table->find_with_hash (*fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *repl = gimple_build_call_vec (decl, vargs);
-  
+
   delete fn_instance;
   return repl;
 }

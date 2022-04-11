@@ -415,7 +415,7 @@ mangle_builtin_type (const_tree type)
   if (TYPE_NAME (type) && TREE_CODE (TYPE_NAME (type)) == TYPE_DECL)
     type = TREE_TYPE (TYPE_NAME (type));
   if (tree attr = lookup_rvv_type_attribute (type))
-    if (tree id = TREE_VALUE (chain_index (3, TREE_VALUE (attr))))
+    if (tree id = TREE_VALUE (chain_index (4, TREE_VALUE (attr))))
       return IDENTIFIER_POINTER (id);
   return NULL;
 }

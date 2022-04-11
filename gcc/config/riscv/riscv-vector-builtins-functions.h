@@ -497,6 +497,10 @@ private:
   unsigned int m_iter_arg_cnt;
   unsigned int *m_iter_arg_idx_list;
 
+  /* True if we should create a separate decl for each instance of an
+     overloaded function, instead of using function_builder.  */
+  bool m_direct_overloads;
+
   /* Used for building up function names.  */
   obstack m_string_obstack;
 };

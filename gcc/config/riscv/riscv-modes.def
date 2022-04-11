@@ -27,16 +27,16 @@ ADJUST_FLOAT_FORMAT (HF, &ieee_half_format);
 
 /* Vector modes.  */
 
-/* Encode the ratio of SEW/LMUL into the mask types. There are the following mask types.
+/* Encode the ratio of SEW/LMUL into the mask types. There are the following mask types.  */
 
-   | Type     | SEW/LMUL |
-   | VNx2BI   | 64       |
-   | VNx4BI   | 32       |
-   | VNx8BI   | 16       |
-   | VNx16BI  | 8        |
-   | VNx32BI  | 4        |
-   | VNx64BI  | 2        |
-   | VNx128BI | 1        |  */
+/* | Type      | Mode     | SEW/LMUL |
+   | vbool64_t | VNx2BI   | 64       |
+   | vbool32_t | VNx4BI   | 32       |
+   | vbool16_t | VNx8BI   | 16       |
+   | vbool8_t  | VNx16BI  | 8        |
+   | vbool4_t  | VNx32BI  | 4        |
+   | vbool2_t  | VNx64BI  | 2        |
+   | vbool1_t  | VNx128BI | 1        |  */
 
 VECTOR_BOOL_MODE (VNx2BI, 2, 16);
 VECTOR_BOOL_MODE (VNx4BI, 4, 16);
@@ -74,6 +74,37 @@ ADJUST_BYTESIZE (VNx128BI, riscv_vector_chunks * 8);
    for 8-bit, 16-bit, 32-bit and 64-bit elements respectively.  It isn't
    strictly necessary to set the alignment here, since the default would
    be clamped to BIGGEST_ALIGNMENT anyhow, but it seems clearer.  */
+
+/* | Type                    | Mode     | SEW/LMUL |
+   | vint8m1_t/vuint8m1_t    | VNx16QI  | 8        |
+   | vint8m2_t/vuint8m2_t    | VNx32QI  | 4        |
+   | vint8m4_t/vuint8m4_t    | VNx64QI  | 2        |
+   | vint8m8_t/vuint8m8_t    | VNx128QI | 1        |
+   | vint16m1_t/vint16m1_t   | VNx8HI   | 16       |
+   | vint16m2_t/vint16m2_t   | VNx16HI  | 8        |
+   | vint16m4_t/vint16m4_t   | VNx32HI  | 4        |
+   | vint16m8_t/vint16m8_t   | VNx64HI  | 2        |
+   | vint32m1_t/vint32m1_t   | VNx4SI   | 32       |
+   | vint32m2_t/vint32m2_t   | VNx8SI   | 16       |
+   | vint32m4_t/vint32m4_t   | VNx16SI  | 8        |
+   | vint32m8_t/vint32m8_t   | VNx32SI  | 4        |
+   | vint64m1_t/vint64m1_t   | VNx2DI   | 64       |
+   | vint64m2_t/vint64m2_t   | VNx4DI   | 32       |
+   | vint64m4_t/vint64m4_t   | VNx8DI   | 16       |
+   | vint64m8_t/vint64m8_t   | VNx16DI  | 8        |
+   | vfloat16m1_t            | VNx8HF   | 16       |
+   | vfloat16m2_t            | VNx16HF  | 8        |
+   | vfloat16m4_t            | VNx32HF  | 4        |
+   | vfloat16m8_t            | VNx64HF  | 2        |
+   | vfloat32m1_t            | VNx4SF   | 32       |
+   | vfloat32m2_t            | VNx8SF   | 16       |
+   | vfloat32m4_t            | VNx16SF  | 8        |
+   | vfloat32m8_t            | VNx32SF  | 4        |
+   | vfloat64m1_t            | VNx2DF   | 64       |
+   | vfloat64m2_t            | VNx4DF   | 32       |
+   | vfloat64m4_t            | VNx8DF   | 16       |
+   | vfloat64m8_t            | VNx16DF  | 8        |  */
+
 #define RVV_MODES(NVECS, VB, VH, VS, VD) \
   VECTOR_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS, 0); \
   VECTOR_MODES_WITH_PREFIX (VNx, FLOAT, 16 * NVECS, 0); \
@@ -113,6 +144,18 @@ RVV_MODES (8, VNx128, VNx64, VNx32, VNx16)
    Passing 1 as the final argument ensures that the modes come after all
    other modes in the GET_MODE_WIDER chain, so that we never pick them
    in preference to a full vector mode.  */
+
+/* | Type                     | Mode    | SEW/LMUL |
+   | vint8mf2_t/vuint8mf2_t   | VNx8QI  | 16       |
+   | vint8mf4_t/vuint8mf4_t   | VNx4QI  | 32       |
+   | vint8mf8_t/vuint8mf8_t   | VNx2QI  | 64       |
+   | vint16mf2_t/vuint16mf2_t | VNx4HI  | 32       |
+   | vint16mf4_t/vuint16mf4_t | VNx2HI  | 64       |
+   | vint32mf2_t/vuint32mf2_t | VNx2SI  | 64       |
+   | vfloat16mf2_t            | VNx4HF  | 32       |
+   | vfloat16mf4_t            | VNx2HF  | 64       |
+   | vfloat32mf2_t            | VNx2SF  | 64       |  */
+   
 VECTOR_MODES_WITH_PREFIX (VNx, INT, 2, 1);
 VECTOR_MODES_WITH_PREFIX (VNx, INT, 4, 1);
 VECTOR_MODES_WITH_PREFIX (VNx, INT, 8, 1);
@@ -143,6 +186,87 @@ ADJUST_ALIGNMENT (VNx4HF, 2);
 ADJUST_ALIGNMENT (VNx2SI, 4);
 ADJUST_ALIGNMENT (VNx2SF, 4);
 
+/* Tuple mode of Full vector.  */
+
+/* | Type                        | Mode       | NF | SEW/LMUL |
+   | vint8m1x2_t/vuint8m1x2_t    | VNx2x16QI  | 2  | 8        |
+   | vint8m1x3_t/vuint8m1x3_t    | VNx3x16QI  | 3  | 8        |
+   | vint8m1x4_t/vuint8m1x4_t    | VNx4x16QI  | 4  | 8        |
+   | vint8m1x5_t/vuint8m1x5_t    | VNx5x16QI  | 5  | 8        |
+   | vint8m1x6_t/vuint8m1x6_t    | VNx6x16QI  | 6  | 8        |
+   | vint8m1x7_t/vuint8m1x7_t    | VNx7x16QI  | 7  | 8        |
+   | vint8m1x8_t/vuint8m1x8_t    | VNx8x16QI  | 8  | 8        |
+   | vint8m2x2_t/vuint8m2x2_t    | VNx2x32QI  | 2  | 4        |
+   | vint8m2x3_t/vuint8m2x3_t    | VNx3x32QI  | 3  | 4        |
+   | vint8m2x4_t/vuint8m2x4_t    | VNx4x32QI  | 4  | 4        |
+   | vint8m4x2_t/vuint8m4x2_t    | VNx2x64QI  | 2  | 2        |
+   | vint16m1x2_t/vint16m1x2_t   | VNx2x8HI   | 2  | 16       |
+   | vint16m1x3_t/vint16m1x3_t   | VNx3x8HI   | 3  | 16       |
+   | vint16m1x4_t/vint16m1x4_t   | VNx4x8HI   | 4  | 16       |
+   | vint16m1x5_t/vint16m1x5_t   | VNx5x8HI   | 5  | 16       |
+   | vint16m1x6_t/vint16m1x6_t   | VNx6x8HI   | 6  | 16       |
+   | vint16m1x7_t/vint16m1x7_t   | VNx7x8HI   | 7  | 16       |
+   | vint16m1x8_t/vint16m1x8_t   | VNx8x8HI   | 8  | 16       |
+   | vint16m2x2_t/vint16m2x2_t   | VNx2x16HI  | 2  | 8        |
+   | vint16m2x3_t/vint16m2x3_t   | VNx3x16HI  | 3  | 8        |
+   | vint16m2x4_t/vint16m2x4_t   | VNx4x16HI  | 4  | 8        |
+   | vint16m4x2_t/vint16m4x2_t   | VNx2x32HI  | 2  | 4        |
+   | vint32m1x2_t/vint32m1x2_t   | VNx2x4SI   | 2  | 32       |
+   | vint32m1x3_t/vint32m1x3_t   | VNx3x4SI   | 3  | 32       |
+   | vint32m1x4_t/vint32m1x4_t   | VNx4x4SI   | 4  | 32       |
+   | vint32m1x5_t/vint32m1x5_t   | VNx5x4SI   | 5  | 32       |
+   | vint32m1x6_t/vint32m1x6_t   | VNx6x4SI   | 6  | 32       |
+   | vint32m1x7_t/vint32m1x7_t   | VNx7x4SI   | 7  | 32       |
+   | vint32m1x8_t/vint32m1x8_t   | VNx8x4SI   | 8  | 32       |
+   | vint32m2x2_t/vint32m2x2_t   | VNx2x8SI   | 2  | 16       |
+   | vint32m2x3_t/vint32m2x3_t   | VNx3x8SI   | 3  | 16       |
+   | vint32m2x4_t/vint32m2x4_t   | VNx4x8SI   | 4  | 16       |
+   | vint32m4x2_t/vint32m4x2_t   | VNx2x16SI  | 2  | 8        |
+   | vint64m1x2_t/vint64m1x2_t   | VNx2x2DI   | 2  | 64       |
+   | vint64m1x3_t/vint64m1x3_t   | VNx3x2DI   | 3  | 64       |
+   | vint64m1x4_t/vint64m1x4_t   | VNx4x2DI   | 4  | 64       |
+   | vint64m1x5_t/vint64m1x5_t   | VNx5x2DI   | 5  | 64       |
+   | vint64m1x6_t/vint64m1x6_t   | VNx6x2DI   | 6  | 64       |
+   | vint64m1x7_t/vint64m1x7_t   | VNx7x2DI   | 7  | 64       |
+   | vint64m1x8_t/vint64m1x8_t   | VNx8x2DI   | 8  | 64       |
+   | vint64m2x2_t/vint64m2x2_t   | VNx2x4DI   | 2  | 32       |
+   | vint64m2x3_t/vint64m2x3_t   | VNx3x4DI   | 3  | 32       |
+   | vint64m2x4_t/vint64m2x4_t   | VNx4x4DI   | 4  | 32       |
+   | vint64m4x2_t/vint64m4x2_t   | VNx2x8DI   | 2  | 16       |
+   | vfloat16m1x2_t              | VNx2x8HF   | 2  | 16       |
+   | vfloat16m1x3_t              | VNx3x8HF   | 3  | 16       |
+   | vfloat16m1x4_t              | VNx4x8HF   | 4  | 16       |
+   | vfloat16m1x5_t              | VNx5x8HF   | 5  | 16       |
+   | vfloat16m1x6_t              | VNx6x8HF   | 6  | 16       |
+   | vfloat16m1x7_t              | VNx7x8HF   | 7  | 16       |
+   | vfloat16m1x8_t              | VNx8x8HF   | 8  | 16       |
+   | vfloat16m2x2_t              | VNx2x16HF  | 2  | 8        |
+   | vfloat16m2x3_t              | VNx3x16HF  | 3  | 8        |
+   | vfloat16m2x4_t              | VNx4x16HF  | 4  | 8        |
+   | vfloat16m4x2_t              | VNx2x32HF  | 2  | 4        |
+   | vfloat32m1x2_t              | VNx2x4SF   | 2  | 32       |
+   | vfloat32m1x3_t              | VNx3x4SF   | 3  | 32       |
+   | vfloat32m1x4_t              | VNx4x4SF   | 4  | 32       |
+   | vfloat32m1x5_t              | VNx5x4SF   | 5  | 32       |
+   | vfloat32m1x6_t              | VNx6x4SF   | 6  | 32       |
+   | vfloat32m1x7_t              | VNx7x4SF   | 7  | 32       |
+   | vfloat32m1x8_t              | VNx8x4SF   | 8  | 32       |
+   | vfloat32m2x2_t              | VNx2x8SF   | 2  | 16       |
+   | vfloat32m2x3_t              | VNx3x8SF   | 3  | 16       |
+   | vfloat32m2x4_t              | VNx4x8SF   | 4  | 16       |
+   | vfloat32m4x2_t              | VNx2x16SF  | 2  | 8        |
+   | vfloat64m1x2_t              | VNx2x2DF   | 2  | 64       |
+   | vfloat64m1x3_t              | VNx3x2DF   | 3  | 64       |
+   | vfloat64m1x4_t              | VNx4x2DF   | 4  | 64       |
+   | vfloat64m1x5_t              | VNx5x2DF   | 5  | 64       |
+   | vfloat64m1x6_t              | VNx6x2DF   | 6  | 64       |
+   | vfloat64m1x7_t              | VNx7x2DF   | 7  | 64       |
+   | vfloat64m1x8_t              | VNx8x2DF   | 8  | 64       |
+   | vfloat64m2x2_t              | VNx2x4DF   | 2  | 32       |
+   | vfloat64m2x3_t              | VNx3x4DF   | 3  | 32       |
+   | vfloat64m2x4_t              | VNx4x4DF   | 4  | 32       |
+   | vfloat64m4x2_t              | VNx2x8DF   | 2  | 16       |  */
+      
 #define RVV_TUPLE_MODES(NVECS, NSUBPARTS, VB, VH, VS, VD) \
   VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 16 * NVECS * NSUBPARTS, NSUBPARTS, 1); \
   VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, FLOAT, 16 * NVECS * NSUBPARTS, NSUBPARTS, 1); \
@@ -163,7 +287,6 @@ ADJUST_ALIGNMENT (VNx2SF, 4);
   ADJUST_ALIGNMENT (VS##SF, 4); \
   ADJUST_ALIGNMENT (VD##DF, 8);
 
-/* Modes for vector tuple.  */
 RVV_TUPLE_MODES (1, 2, VNx2x16, VNx2x8, VNx2x4, VNx2x2)
 RVV_TUPLE_MODES (1, 3, VNx3x16, VNx3x8, VNx3x4, VNx3x2)
 RVV_TUPLE_MODES (1, 4, VNx4x16, VNx4x8, VNx4x4, VNx4x2)
@@ -178,17 +301,73 @@ RVV_TUPLE_MODES (2, 4, VNx4x32, VNx4x16, VNx4x8, VNx4x4)
 
 RVV_TUPLE_MODES (4, 2, VNx2x64, VNx2x32, VNx2x16, VNx2x8)
 
-/* Tuple mode of partial vector:
-
-   VNx2x8QI VNx3x8QI VNx4x8QI VNx5x8QI VNx6x8QI VNx7x8QI VNx8x8QI
-   VNx2x4QI VNx3x4QI VNx4x4QI VNx5x4QI VNx6x4QI VNx7x4QI VNx8x4QI
-   VNx2x2QI VNx3x2QI VNx4x2QI VNx5x2QI VNx6x2QI VNx7x2QI VNx8x2QI
-   VNx2x4HI VNx3x4HI VNx4x4HI VNx5x4HI VNx6x4HI VNx7x4HI VNx8x4HI
-   VNx2x2HI VNx3x2HI VNx4x2HI VNx5x2HI VNx6x2HI VNx7x2HI VNx8x2HI
-   VNx2x2SI VNx3x2SI VNx4x2SI VNx5x2SI VNx6x2SI VNx7x2SI VNx8x2SI
-   VNx2x4HF VNx3x4HF VNx4x4HF VNx5x4HF VNx6x4HF VNx7x4HF VNx8x4HF
-   VNx2x2HF VNx3x2HF VNx4x2HF VNx5x2HF VNx6x2HF VNx7x2HF VNx8x2HF
-   VNx2x2SF VNx3x2SF VNx4x2SF VNx5x2SF VNx6x2SF VNx7x2SF VNx8x2SF */
+/* Tuple mode of Partial vector.  */
+   
+/* | Type                         | Mode      | NF | SEW/LMUL |
+   | vint8mf2x2_t/vuint8mf2x2_t   | VNx2x8QI  | 2  | 16       |
+   | vint8mf2x3_t/vuint8mf2x3_t   | VNx3x8QI  | 3  | 16       |
+   | vint8mf2x4_t/vuint8mf2x4_t   | VNx4x8QI  | 4  | 16       |
+   | vint8mf2x5_t/vuint8mf2x5_t   | VNx5x8QI  | 5  | 16       |
+   | vint8mf2x6_t/vuint8mf2x6_t   | VNx6x8QI  | 6  | 16       |
+   | vint8mf2x7_t/vuint8mf2x7_t   | VNx7x8QI  | 7  | 16       |
+   | vint8mf2x8_t/vuint8mf2x8_t   | VNx8x8QI  | 8  | 16       |
+   | vint8mf4x2_t/vuint8mf4x2_t   | VNx2x4QI  | 2  | 32       |
+   | vint8mf4x3_t/vuint8mf4x3_t   | VNx3x4QI  | 3  | 32       |
+   | vint8mf4x4_t/vuint8mf4x4_t   | VNx4x4QI  | 4  | 32       |
+   | vint8mf4x5_t/vuint8mf4x5_t   | VNx5x4QI  | 5  | 32       |
+   | vint8mf4x6_t/vuint8mf4x6_t   | VNx6x4QI  | 6  | 32       |
+   | vint8mf4x7_t/vuint8mf4x7_t   | VNx7x4QI  | 7  | 32       |
+   | vint8mf4x8_t/vuint8mf4x8_t   | VNx8x4QI  | 8  | 32       |
+   | vint8mf8x2_t/vuint8mf8x2_t   | VNx2x2QI  | 2  | 64       |
+   | vint8mf8x3_t/vuint8mf8x3_t   | VNx3x2QI  | 3  | 64       |
+   | vint8mf8x4_t/vuint8mf8x4_t   | VNx4x2QI  | 4  | 64       |
+   | vint8mf8x5_t/vuint8mf8x5_t   | VNx5x2QI  | 5  | 64       |
+   | vint8mf8x6_t/vuint8mf8x6_t   | VNx6x2QI  | 6  | 64       |
+   | vint8mf8x7_t/vuint8mf8x7_t   | VNx7x2QI  | 7  | 64       |
+   | vint8mf8x8_t/vuint8mf8x8_t   | VNx8x2QI  | 8  | 64       |
+   | vint16mf2x2_t/vuint16mf2x2_t | VNx2x4HI  | 2  | 32       |
+   | vint16mf2x3_t/vuint16mf2x3_t | VNx3x4HI  | 3  | 32       |
+   | vint16mf2x4_t/vuint16mf2x4_t | VNx4x4HI  | 4  | 32       |
+   | vint16mf2x5_t/vuint16mf2x5_t | VNx5x4HI  | 5  | 32       |
+   | vint16mf2x6_t/vuint16mf2x6_t | VNx6x4HI  | 6  | 32       |
+   | vint16mf2x7_t/vuint16mf2x7_t | VNx7x4HI  | 7  | 32       |
+   | vint16mf2x8_t/vuint16mf2x8_t | VNx8x4HI  | 8  | 32       |
+   | vint16mf4x2_t/vuint16mf4x2_t | VNx2x2HI  | 2  | 64       |
+   | vint16mf4x3_t/vuint16mf4x3_t | VNx3x2HI  | 3  | 64       |
+   | vint16mf4x4_t/vuint16mf4x4_t | VNx4x2HI  | 4  | 64       |
+   | vint16mf4x5_t/vuint16mf4x5_t | VNx5x2HI  | 5  | 64       |
+   | vint16mf4x6_t/vuint16mf4x6_t | VNx6x2HI  | 6  | 64       |
+   | vint16mf4x7_t/vuint16mf4x7_t | VNx7x2HI  | 7  | 64       |
+   | vint16mf4x8_t/vuint16mf4x8_t | VNx8x2HI  | 8  | 64       |
+   | vint32mf2x2_t/vuint32mf2x2_t | VNx2x2SI  | 2  | 64       |
+   | vint32mf2x3_t/vuint32mf2x3_t | VNx3x2SI  | 3  | 64       |
+   | vint32mf2x4_t/vuint32mf2x4_t | VNx4x2SI  | 4  | 64       |
+   | vint32mf2x5_t/vuint32mf2x5_t | VNx5x2SI  | 5  | 64       |
+   | vint32mf2x6_t/vuint32mf2x6_t | VNx6x2SI  | 6  | 64       |
+   | vint32mf2x7_t/vuint32mf2x7_t | VNx7x2SI  | 7  | 64       |
+   | vint32mf2x8_t/vuint32mf2x8_t | VNx8x2SI  | 8  | 64       |
+   | vfloat16mf2x2_t              | VNx2x4HF  | 2  | 32       |
+   | vfloat16mf2x3_t              | VNx3x4HF  | 3  | 32       |
+   | vfloat16mf2x4_t              | VNx4x4HF  | 4  | 32       |
+   | vfloat16mf2x5_t              | VNx5x4HF  | 5  | 32       |
+   | vfloat16mf2x6_t              | VNx6x4HF  | 6  | 32       |
+   | vfloat16mf2x7_t              | VNx7x4HF  | 7  | 32       |
+   | vfloat16mf2x8_t              | VNx8x4HF  | 8  | 32       |
+   | vfloat16mf4x2_t              | VNx2x2HF  | 2  | 64       |
+   | vfloat16mf4x3_t              | VNx3x2HF  | 3  | 64       |
+   | vfloat16mf4x4_t              | VNx4x2HF  | 4  | 64       |
+   | vfloat16mf4x5_t              | VNx5x2HF  | 5  | 64       |
+   | vfloat16mf4x6_t              | VNx6x2HF  | 6  | 64       |
+   | vfloat16mf4x7_t              | VNx7x2HF  | 7  | 64       |
+   | vfloat16mf4x8_t              | VNx8x2HF  | 8  | 64       |
+   | vfloat32mf2x2_t              | VNx2x2SF  | 2  | 64       |
+   | vfloat32mf2x3_t              | VNx3x2SF  | 3  | 64       |  
+   | vfloat32mf2x4_t              | VNx4x2SF  | 4  | 64       |
+   | vfloat32mf2x5_t              | VNx5x2SF  | 5  | 64       |
+   | vfloat32mf2x6_t              | VNx6x2SF  | 6  | 64       |  
+   | vfloat32mf2x7_t              | VNx7x2SF  | 7  | 64       |
+   | vfloat32mf2x8_t              | VNx8x2SF  | 8  | 64       |  */
+   
 #define RVV_TUPLE_PARTIAL_MODES(NSUBPARTS) \
    VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 2 * NSUBPARTS, NSUBPARTS, 2); \
    VECTOR_TUPLE_MODES_WITH_PREFIX (VNx, INT, 4 * NSUBPARTS, NSUBPARTS, 2); \
