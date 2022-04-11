@@ -1,5 +1,5 @@
-/* RVV support
-   Copyright (C) 2018-2020 Free Software Foundation, Inc.
+/* Intrinsic definitions for RISC-V 'V' Extension for GNU compiler.
+   Copyright (C) 2022-2022 Free Software Foundation, Inc.
    Contributed by Juzhe Zhong (juzhe.zhong@rivai.ai), RiVAI Technologies Ltd.
 
    This file is part of GCC.

@@ -1,5 +1,5 @@
-/* Builtins of vector function for RISC-V built-in functions. -*- C -*-
-   Copyright (C) 2021-2021 Free Software Foundation, Inc.
+/* Intrinsic implementation for RISC-V 'V' Extension for GNU compiler.
+   Copyright (C) 2022-2022 Free Software Foundation, Inc.
    Contributed by Juzhe Zhong (juzhe.zhong@rivai.ai), RiVAI Technologies Ltd.
 
 This file is part of GCC.
