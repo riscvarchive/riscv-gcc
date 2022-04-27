@@ -48,6 +48,8 @@
 (define_code_iterator all_minus [minus ss_minus us_minus])
 (define_code_iterator saturation_plus [ss_plus us_plus])
 (define_code_iterator saturation_minus [ss_minus us_minus])
+(define_code_iterator ssat_op [ss_plus ss_minus])
+(define_code_iterator usat_op [us_plus us_minus])
 (define_code_iterator plus_minus [plus minus])
 
 ;; smax[8|16] and umax[8|16]
@@ -58,12 +60,22 @@
 (define_code_attr shift [(ashift "ashl") (ashiftrt "ashr") (lshiftrt "lshr")])
 
 ;; smalxd[s|a] smald[s|a]
-(define_code_attr add_sub [(plus "a") (minus "s")])
+(define_code_attr add_sub [(plus "a")
+  (ss_plus "a")
+  (us_plus "a")
+  (ss_minus "s")
+  (us_minus "s")
+  (minus "s")])
+
 ;; (un)signed unpacking patterns
 (define_code_attr zs [(sign_extend "s") (zero_extend "z")])
 
 (define_code_attr opcode [(plus "add")
    (minus "sub")
+   (ss_plus "add")
+   (us_plus "add")
+   (ss_minus "sub")
+   (us_minus "sub")
    (smax "smax")
    (umax "umax")
    (smin "smin")
@@ -1774,21 +1786,7 @@
   "kmaxds\t%0, %2, %3"
   [(set_attr "type" "simd")])
 
-;; KMAR64
-(define_insn "kmar64"
-  [(set (match_operand:DI 0 "register_operand"       "=r")
-	(ss_plus:DI
-	  (match_operand:DI 1 "register_operand"     " 0")
-	  (mult:DI
-	    (sign_extend:DI
-	      (match_operand:SI 2 "register_operand" " r"))
-	    (sign_extend:DI
-	      (match_operand:SI 3 "register_operand" " r")))))]
-  "TARGET_ZPSF && !TARGET_64BIT"
-  "kmar64\t%0, %2, %3"
-  [(set_attr "type"   "dsp64")
-   (set_attr "mode"   "DI")])
-
+;; RV64P KMAR64
 (define_insn "vkmar64"
   [(set (match_operand:DI 0 "register_operand"             "=r")
 	(ss_plus:DI (match_operand:DI 1 "register_operand"    " 0")
@@ -2544,21 +2542,7 @@
   "kmsxda\t%0, %2, %3"
   [(set_attr "type" "simd")])
 
-;; KMSR64
-(define_insn "kmsr64"
-  [(set (match_operand:DI 0 "register_operand"       "=r")
-	(ss_minus:DI
-	  (match_operand:DI 1 "register_operand"     " 0")
-	  (mult:DI
-	    (sign_extend:DI
-	      (match_operand:SI 2 "register_operand" " r"))
-	    (sign_extend:DI
-	      (match_operand:SI 3 "register_operand" " r")))))]
-  "TARGET_ZPN && !TARGET_64BIT"
-  "kmsr64\t%0, %2, %3"
-  [(set_attr "type"   "dsp64")
-   (set_attr "mode"   "DI")])
-
+;; RV64P KMSR64
 (define_insn "vkmsr64"
   [(set (match_operand:DI 0 "register_operand"             "=r")
 	(ss_minus:DI
@@ -4121,21 +4105,52 @@
   "smaldrs\t%0, %2, %3"
   [(set_attr "type" "dsp64")])
 
-;; SMAR64, UMAR64
-(define_insn "<su>mar64_1"
+;; RV32P KMAR64, KMSR64
+(define_insn "ssm<opcode>sidi4"
   [(set (match_operand:DI 0 "register_operand"       "=r")
-	(plus:DI
-	  (match_operand:DI 1 "register_operand"     " 0")
+	(ssat_op:DI
 	  (mult:DI
-	    (any_extend:DI
-	      (match_operand:SI 2 "register_operand" " r"))
-	    (any_extend:DI
-	      (match_operand:SI 3 "register_operand" " r")))))]
+	    (sign_extend:DI
+	      (match_operand:SI 1 "register_operand" " r"))
+	    (sign_extend:DI
+	      (match_operand:SI 2 "register_operand"  " r")))
+	  (match_operand:DI 3 "register_operand"      " 0")))]
   "TARGET_ZPSF && !TARGET_64BIT"
-  "<su>mar64\t%0, %2, %3"
+  "km<add_sub>r64\t%0, %1, %2"
   [(set_attr "type"   "dsp64")
    (set_attr "mode"   "DI")])
 
+;; RV32P UKMSR64, UKMAR64
+(define_insn "usm<opcode>sidi4"
+  [(set (match_operand:DI 0 "register_operand"       "=r")
+	(usat_op:DI
+	  (mult:DI
+	    (zero_extend:DI
+	      (match_operand:SI 1 "register_operand" " r"))
+	    (zero_extend:DI
+	      (match_operand:SI 2 "register_operand"  " r")))
+	  (match_operand:DI 3 "register_operand"      " 0")))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "ukm<add_sub>r64\t%0, %1, %2"
+  [(set_attr "type"   "dsp64")
+   (set_attr "mode"   "DI")])
+
+;; RV32P KMSR64, KMAR64
+(define_insn "<u>m<opcode>sidi4"
+  [(set (match_operand:DI 0 "register_operand"       "=r")
+	(plus_minus:DI
+	  (mult:DI
+	    (any_extend:DI
+	      (match_operand:SI 1 "register_operand" " r"))
+	    (any_extend:DI
+	      (match_operand:SI 2 "register_operand"  " r")))
+	  (match_operand:DI 3 "register_operand"      " 0")))]
+  "TARGET_ZPSF && !TARGET_64BIT"
+  "<su>m<add_sub>r64\t%0, %1, %2"
+  [(set_attr "type"   "dsp64")
+   (set_attr "mode"   "DI")])
+
+;; SMAR64, UMAR64
 (define_insn "v<su>mar64_1"
   [(set (match_operand:DI 0 "register_operand"             "=r")
 	(plus:DI (match_operand:DI 1 "register_operand"    " 0")
@@ -5161,20 +5176,6 @@
   [(set_attr "type" "dsp64")])
 
 ;; SMSR64, UMSR64
-(define_insn "<su>msr64"
-  [(set (match_operand:DI 0 "register_operand"       "=r")
-	(minus:DI
-	  (match_operand:DI 1 "register_operand"     " 0")
-	  (mult:DI
-	    (any_extend:DI
-	      (match_operand:SI 2 "register_operand" " r"))
-	    (any_extend:DI
-	      (match_operand:SI 3 "register_operand" " r")))))]
-  "TARGET_ZPSF && !TARGET_64BIT"
-  "<su>msr64\t%0, %2, %3"
-  [(set_attr "type" "dsp64")
-   (set_attr "mode" "DI")])
-
 (define_insn "v<su>msr64"
   [(set (match_operand:DI 0 "register_operand"             "=r")
 	(minus:DI
@@ -6011,22 +6012,7 @@
   [(set_attr "type" "simd")
    (set_attr "mode" "SI")])
 
-;; ukmar64
-(define_insn "ukmar64_1"
-  [(set (match_operand:DI 0 "register_operand"       "=r")
-	(us_plus:DI
-	  (match_operand:DI 1 "register_operand"     " 0")
-	  (mult:DI
-	    (zero_extend:DI
-	      (match_operand:SI 2 "register_operand" " r"))
-	    (zero_extend:DI
-	      (match_operand:SI 3 "register_operand" " r")))))]
-  "TARGET_ZPSF && !TARGET_64BIT"
-  "ukmar64\t%0, %2, %3"
-  [(set_attr "type" "dsp64")
-   (set_attr "mode" "DI")])
-
-;; RV64P
+;; RV64P ukmar64
 (define_insn "vukmar64"
   [(set (match_operand:DI 0 "register_operand"             "=r")
 	(us_plus:DI (match_operand:DI 1 "register_operand"    " 0")
@@ -6050,22 +6036,7 @@
   [(set_attr "type" "dsp64")
    (set_attr "mode" "DI")])
 
-;; ukmsr64
-(define_insn "ukmsr64"
-  [(set (match_operand:DI 0 "register_operand"       "=r")
-	(us_minus:DI
-	  (match_operand:DI 1 "register_operand"     " 0")
-	  (mult:DI
-	    (zero_extend:DI
-	      (match_operand:SI 2 "register_operand" " r"))
-	    (zero_extend:DI
-	      (match_operand:SI 3 "register_operand" " r")))))]
-  "TARGET_ZPSF && !TARGET_64BIT"
-  "ukmsr64\t%0, %2, %3"
-  [(set_attr "type" "dsp64")
-   (set_attr "mode" "DI")])
-
-;; RV64P
+;; RV64P ukmsr64
 (define_insn "vukmsr64"
   [(set (match_operand:DI 0 "register_operand"             "=r")
 	(us_minus:DI
