@@ -117,45 +117,6 @@
   [(set_attr "type"   "simd")
    (set_attr "mode" "<MODE>")])
 
-;; sub/adddi spn
-(define_insn "*subdi3_rvp"
-  [(set (match_operand:DI 0 "register_operand"               "=r")
-	(minus:DI (match_operand:DI 1 "register_operand" " r")
-		 (match_operand:DI 2 "arith_operand"   " r")))]
-  "TARGET_ZPSF && !TARGET_64BIT"
-{
-  HOST_WIDE_INT tmp;
-  if (CONST_INT_P (operands[2]))
-    {
-      tmp = INTVAL (operands[2]);
-      operands[2] = gen_reg_rtx (DImode);
-      riscv_move_integer (operands[2], operands[2], tmp,
-              DImode, FALSE);
-    }
-  return "sub64 %0, %1, %2";
-}
-  [(set_attr "type" "dsp64")
-   (set_attr "mode" "DI")])
-
-(define_insn "*adddi3_rvp"
-  [(set (match_operand:DI 0 "register_operand"               "=r")
-	(plus:DI (match_operand:DI 1 "register_operand" " r")
-		 (match_operand:DI 2 "arith_operand"   " r")))]
-  "TARGET_ZPSF && !TARGET_64BIT"
-{
-  HOST_WIDE_INT tmp;
-  if (CONST_INT_P (operands[2]))
-    {
-      tmp = INTVAL (operands[2]);
-      operands[2] = gen_reg_rtx (DImode);
-      riscv_move_integer (operands[2], operands[2], tmp,
-              DImode, FALSE);
-    }
-  return "add64 %0, %1, %2";
-}
-  [(set_attr "type" "dsp64")
-   (set_attr "mode" "DI")])
-
 ;; k|(uk)|? add
 (define_insn "<uk>add<mode>3"
   [(set (match_operand:VECI 0 "register_operand"                "=r")
@@ -165,6 +126,16 @@
   "<uk>add<bits>\t%0, %1, %2"
   [(set_attr "type" "simd")
    (set_attr "mode" "<MODE>")])
+
+;; add64/sub64
+(define_insn "*add64_rvp"
+  [(set (match_operand:DI          0 "register_operand" "=r")
+	(plus:DI (match_operand:DI 1 "register_operand" " r")
+		 (match_operand:DI 2 "register_operand" " r")))]
+  "!TARGET_64BIT && TARGET_ZPSF"
+  "add64\t%0,%1,%2"
+  [(set_attr "type" "arith")
+   (set_attr "mode" "DI")])
 
 ;; rv64
 (define_insn "rvp_<uk>adddi3"
@@ -197,34 +168,17 @@
    (set_attr "mode" "DI")])
 
 ;; uk|k add|sub w|h
-(define_int_attr karth_insn
-  [(UNSPEC_KADDW  "kaddw")
-   (UNSPEC_UKADDW "ukaddw")
-   (UNSPEC_KSUBW  "ksubw")
-   (UNSPEC_UKSUBW "uksubw")
-   (UNSPEC_KADDH  "kaddh")
-   (UNSPEC_UKADDH "ukaddh")
-   (UNSPEC_KSUBH  "ksubh")
-   (UNSPEC_UKSUBH "uksubh")])
+(define_code_iterator sat_op [ss_plus us_plus ss_minus us_minus])
+(define_code_attr us [(ss_plus "s") (us_plus "u") (ss_minus "s") (us_minus "u")])
 
-(define_int_iterator UNSPEC_KARTH [
-   UNSPEC_KADDW
-   UNSPEC_UKADDW
-   UNSPEC_KSUBW
-   UNSPEC_UKSUBW
-   UNSPEC_KADDH
-   UNSPEC_UKADDH
-   UNSPEC_KSUBH
-   UNSPEC_UKSUBH])
-
-(define_insn "<karth_insn>"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-	(unspec:SI [(match_operand:SI 1 "register_operand" "r")
-		    (match_operand:SI 2 "register_operand" "r")] UNSPEC_KARTH))]
+(define_insn "<us>s<opcode><HISI:mode>3"
+  [(set (match_operand:HISI 0 "register_operand"               "=r")
+	(sat_op:HISI (match_operand:HISI 1 "register_operand"  " r")
+		     (match_operand:HISI 2 "register_operand"  " r")))]
   "TARGET_ZPN"
-  "<karth_insn>\t%0, %1, %2"
+  "<uk><opcode><HISI:size>\t%0, %1, %2"
   [(set_attr "type" "dsp")
-   (set_attr "mode" "SI")])
+   (set_attr "mode" "<MODE>")])
 
 ;; ave
 (define_insn "ave"
@@ -3062,39 +3016,39 @@
    (set_attr "mode"   "DI")])
 
 ;; MAX, MIN
-(define_insn "smaxsi3"
-  [(set (match_operand:SI 0 "register_operand"          "=r")
-	(smax:SI (match_operand:SI 1 "register_operand" " r")
-		 (match_operand:SI 2 "register_operand" " r")))]
+(define_insn "smax<mode>3"
+  [(set (match_operand:X 0 "register_operand"          "=r")
+	(smax:X (match_operand:X 1 "register_operand"  " r")
+		 (match_operand:X 2 "register_operand" " r")))]
   "TARGET_ZBPBO"
   "max\t%0, %1, %2"
   [(set_attr "type" "dsp")
-   (set_attr "mode" "SI")])
+   (set_attr "mode" "<MODE>")])
 
-(define_insn "sminsi3"
-  [(set (match_operand:SI 0 "register_operand"          "=r")
-	(smin:SI (match_operand:SI 1 "register_operand" " r")
-		 (match_operand:SI 2 "register_operand" " r")))]
+(define_insn "smin<mode>3"
+  [(set (match_operand:X 0 "register_operand"          "=r")
+	(smin:X (match_operand:X 1 "register_operand"  " r")
+		 (match_operand:X 2 "register_operand" " r")))]
   "TARGET_ZBPBO"
   "min\t%0, %1, %2"
   [(set_attr "type" "dsp")
-   (set_attr "mode" "SI")])
+   (set_attr "mode" "<MODE>")])
 
 ;; PBSAD, PBSADA
 (define_insn "pbsad<mode>"
-  [(set (match_operand:GPR 0 "register_operand" "=r")
-	(unspec:GPR [(match_operand:GPR 1 "register_operand" "r")
-		     (match_operand:GPR 2 "register_operand" "r")] UNSPEC_PBSAD))]
+  [(set (match_operand:X 0 "register_operand"              "=r")
+	(unspec:X [(match_operand:X 1 "register_operand"   " r")
+		     (match_operand:X 2 "register_operand" " r")] UNSPEC_PBSAD))]
   "TARGET_ZPN"
   "pbsad\t%0, %1, %2"
   [(set_attr "type" "dsp")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "pbsada<mode>"
-  [(set (match_operand:GPR 0 "register_operand" "=r")
-	(unspec:GPR [(match_operand:GPR 1 "register_operand" "0")
-		     (match_operand:GPR 2 "register_operand" "r")
-		     (match_operand:GPR 3 "register_operand" "r")] UNSPEC_PBSADA))]
+  [(set (match_operand:X 0 "register_operand"              "=r")
+	(unspec:X [(match_operand:X 1 "register_operand"   " 0")
+		     (match_operand:X 2 "register_operand" " r")
+		     (match_operand:X 3 "register_operand" " r")] UNSPEC_PBSADA))]
   "TARGET_ZPN"
   "pbsada\t%0, %2, %3"
   [(set_attr "type" "dsp")

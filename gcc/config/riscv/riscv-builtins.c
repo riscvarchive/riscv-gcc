@@ -124,7 +124,6 @@ AVAIL (zpsf, TARGET_ZPSF)
 AVAIL (zpsf32, TARGET_ZPSF && !TARGET_64BIT)
 AVAIL (zpsf64, TARGET_ZPSF && TARGET_64BIT)
 
-AVAIL (zbpbo, TARGET_ZBPBO)
 AVAIL (zbpbo32, TARGET_ZBPBO && !TARGET_64BIT)
 AVAIL (zbpbo64, TARGET_ZBPBO && TARGET_64BIT)
 
@@ -177,6 +176,8 @@ tree int_xlen_node;
 
 /* Argument types.  */
 #define RISCV_ATYPE_VOID void_type_node
+#define RISCV_ATYPE_UHI unsigned_intHI_type_node
+#define RISCV_ATYPE_HI intHI_type_node
 #define RISCV_ATYPE_USI unsigned_intSI_type_node
 #define RISCV_ATYPE_SI intSI_type_node
 #define RISCV_ATYPE_DI intDI_type_node

@@ -359,9 +359,9 @@
 ;; Iterator for floating-point modes that can be loaded into X registers.
 (define_mode_iterator SOFTF [SF (DF "TARGET_64BIT")])
 
-;; This attribute gives the length suffix for a sign- or zero-extension
-;; instruction.
-(define_mode_attr size [(QI "b") (HI "h")])
+;; This attribute gives the length suffix for a sign-, zero-extension
+;; ,ksub- or kadd- instruction in RVP.
+(define_mode_attr size [(QI "b") (HI "h") (SI "w")])
 
 ;; Mode attributes for loads.
 (define_mode_attr load [(QI "lb") (HI "lh") (SI "lw") (DI "ld") (SF "flw") (DF "fld")])
@@ -516,11 +516,18 @@
    (set_attr "mode" "SI")])
 
 (define_expand "adddi3"
-  [(set (match_operand:DI          0 "register_operand")
-	(plus:DI (match_operand:DI 1 "register_operand")
-		 (match_operand:DI 2 "arith_operand"   )))])
+  [(set (match_operand:DI          0 "register_operand" "=r,r")
+	(plus:DI (match_operand:DI 1 "register_operand" " r,r")
+		 (match_operand:DI 2 "arith_operand"    " r,I")))]
+  "TARGET_64BIT || TARGET_ZPSF"
+  {
+    if (!TARGET_64BIT)
+      operands[2] = force_reg (DImode, operands[2]);
+  }
+  [(set_attr "type" "arith")
+   (set_attr "mode" "DI")])
 
-(define_insn "*adddi3_riscv"
+(define_insn "*adddi_rv64"
   [(set (match_operand:DI          0 "register_operand" "=r,r")
 	(plus:DI (match_operand:DI 1 "register_operand" " r,r")
 		 (match_operand:DI 2 "arith_operand"    " r,I")))]
@@ -571,8 +578,8 @@
   [(set (match_operand:DI 0            "register_operand" "= r")
 	(minus:DI (match_operand:DI 1  "reg_or_0_operand" " rJ")
 		   (match_operand:DI 2 "register_operand" "  r")))]
-  "TARGET_64BIT"
-  "sub\t%0,%z1,%2"
+  "TARGET_64BIT || TARGET_ZPSF"
+  { return TARGET_64BIT ? "sub\t%0,%z1,%2" : "sub64\t%0,%z1,%2"; }
   [(set_attr "type" "arith")
    (set_attr "mode" "DI")])
 
