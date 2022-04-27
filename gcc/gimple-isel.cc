@@ -153,8 +153,9 @@ gimple_gen_inverse_mask (gimple_seq *stmts, location_t loc, tree op0)
         }
     }
 
-  enum tree_code new_code =
-      invert_tree_comparison (tcode, HONOR_NANS (TREE_TYPE (op0a)));
+  enum tree_code new_code = use_swap_comparison_p
+        ? invert_tree_comparison (tcode, HONOR_NANS (TREE_TYPE (op0a)))
+        : ERROR_MARK;
   if (new_code == ERROR_MARK)
     use_swap_comparison_p = false;
 
@@ -330,11 +331,12 @@ gimple_expand_vec_cond_expr (struct function *fun, gimple_stmt_iterator *gsi,
               tcode = (enum tree_code)int_cst_value (gimple_call_arg (def_stmt, 2));    
 	    }
 
-
 	  tree op0_type = TREE_TYPE (op0);
-	  tree op0a_type = TREE_TYPE (op0a);
+          if (!op0a)
+            tcode = ERROR_MARK;
+
 	  if (TREE_CODE_CLASS (tcode) == tcc_comparison)
-	    can_compute_op0 = expand_vec_cmp_expr_p (op0a_type, op0_type,
+	    can_compute_op0 = expand_vec_cmp_expr_p (TREE_TYPE (op0a), op0_type,
 						     tcode);
 
 	  /* Try to fold x CMP y ? -1 : 0 to x CMP y.  */

@@ -26,6 +26,14 @@
 
 namespace riscv_vector
 {
+  
+/* global share variables */
+
+static const unsigned int RISCV_TARGET_ANY = 0;
+static const unsigned int RISCV_TARGET_VECTOR = 1;
+static const unsigned int RISCV_TARGET_FP16 = 1 << 3;
+static const unsigned int RISCV_TARGET_HARD_FLOAT = 1 << 4;
+static const unsigned int RISCV_TARGET_DOUBLE_FLOAT = 1 << 5;
 
 enum vector_arg_mode_category {
 #define VVAR(NAME) vector_mode_attr_##NAME

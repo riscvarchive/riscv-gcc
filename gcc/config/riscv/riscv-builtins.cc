@@ -274,29 +274,29 @@ riscv_expand_builtin_direct (enum insn_code icode, rtx target, tree exp,
 
 rtx
 riscv_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
-		      machine_mode mode ATTRIBUTE_UNUSED,
-		      int ignore ATTRIBUTE_UNUSED)
+                      machine_mode mode ATTRIBUTE_UNUSED,
+                      int ignore ATTRIBUTE_UNUSED)
 {
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
   unsigned int fcode = DECL_MD_FUNCTION_CODE (fndecl);
   unsigned int subcode = fcode >> RISCV_BUILTIN_SHIFT;
   switch (fcode & RISCV_BUILTIN_CLASS)
-     {
-    case RISCV_BUILTIN_VECTOR:
-      return riscv_vector::expand_builtin(subcode, exp, target);
-    case RISCV_BUILTIN_GENERAL:
     {
-      const struct riscv_builtin_description *d = &riscv_builtins[subcode];
+    case RISCV_BUILTIN_VECTOR:
+      return riscv_vector::expand_builtin (subcode, exp, target);
+    case RISCV_BUILTIN_GENERAL:
+      {
+        const struct riscv_builtin_description *d = &riscv_builtins[subcode];
 
-      switch (d->builtin_type)
-	{
-	case RISCV_BUILTIN_DIRECT:
-	  return riscv_expand_builtin_direct (d->icode, target, exp, true);
+        switch (d->builtin_type)
+          {
+          case RISCV_BUILTIN_DIRECT:
+            return riscv_expand_builtin_direct (d->icode, target, exp, true);
 
-  case RISCV_BUILTIN_DIRECT_NO_TARGET:
-    return riscv_expand_builtin_direct (d->icode, target, exp, false);
-	}
-    }
+          case RISCV_BUILTIN_DIRECT_NO_TARGET:
+            return riscv_expand_builtin_direct (d->icode, target, exp, false);
+          }
+      }
     }
 
   gcc_unreachable ();

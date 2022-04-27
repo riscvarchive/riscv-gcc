@@ -4554,7 +4554,8 @@ riscv_compute_frame_info (void)
   frame->arg_pointer_offset = offset - crtl->args.pretend_args_size;
   frame->total_size = offset;
 
-  frame->constant_offset = riscv_stack_align (frame->total_size.coeffs[0] - frame->total_size.coeffs[1]);
+  frame->constant_offset = riscv_stack_align (frame->total_size.coeffs[0]) -
+                           riscv_stack_align (frame->total_size.coeffs[1]);
 
   /* Next points the incoming stack pointer and any incoming arguments. */
 
@@ -4636,13 +4637,32 @@ typedef void (*riscv_save_restore_fn) (rtx, rtx);
    stack pointer.  */
 
 static void
-riscv_save_restore_reg (machine_mode mode, int regno,
-                        poly_int64 offset, riscv_save_restore_fn fn)
+riscv_save_restore_reg (machine_mode mode, int regno, poly_int64 offset,
+                        riscv_save_restore_fn fn)
 {
   rtx mem;
 
-  mem = gen_frame_mem (mode, plus_constant (Pmode, stack_pointer_rtx, offset));
+  rtx sp_offset;
+  if (SMALL_OPERAND (offset.to_constant ()))
+    sp_offset = plus_constant (Pmode, stack_pointer_rtx, offset);
+  else
+    {
+      /* save the current stack pointer. */
+      riscv_emit_move (RISCV_PROLOGUE_TEMP3 (Pmode),
+                       stack_pointer_rtx);
+      riscv_emit_move (RISCV_PROLOGUE_TEMP4 (Pmode),
+                       GEN_INT (offset.to_constant ()));
+      rtx insn = gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
+                                RISCV_PROLOGUE_TEMP4 (Pmode));
+      emit_insn (insn);
+      sp_offset = stack_pointer_rtx;
+    }
+
+  mem = gen_frame_mem (mode, sp_offset);
   fn (gen_rtx_REG (mode, regno), mem);
+  /* recover the stack pointer. */
+  if (!SMALL_OPERAND (offset.to_constant ()))
+    fn (stack_pointer_rtx, RISCV_PROLOGUE_TEMP3 (Pmode));
 }
 
 /* Call FN for each register that is saved by the current function.
@@ -4651,12 +4671,12 @@ riscv_save_restore_reg (machine_mode mode, int regno,
 
 static void
 riscv_for_each_saved_reg (poly_int64 sp_offset, riscv_save_restore_fn fn,
-                          bool epilogue, bool maybe_eh_return)
+			  bool epilogue, bool maybe_eh_return)
 {
-  poly_int64 offset;
+  HOST_WIDE_INT offset;
 
   /* Save the link register and s-registers. */
-  offset = cfun->machine->frame.gp_sp_offset - sp_offset;
+  offset = (cfun->machine->frame.gp_sp_offset - sp_offset).to_constant ();
   for (unsigned int regno = GP_REG_FIRST; regno <= GP_REG_LAST; regno++)
     if (BITSET_P (cfun->machine->frame.mask, regno - GP_REG_FIRST))
       {
@@ -4687,14 +4707,14 @@ riscv_for_each_saved_reg (poly_int64 sp_offset, riscv_save_restore_fn fn,
 
   /* This loop must iterate over the same space as its companion in
      riscv_compute_frame_info.  */
-  offset = cfun->machine->frame.fp_sp_offset - sp_offset;
+  offset = (cfun->machine->frame.fp_sp_offset - sp_offset).to_constant ();
   for (unsigned int regno = FP_REG_FIRST; regno <= FP_REG_LAST; regno++)
     if (BITSET_P (cfun->machine->frame.fmask, regno - FP_REG_FIRST))
       {
 	machine_mode mode = TARGET_DOUBLE_FLOAT ? DFmode : SFmode;
 
 	riscv_save_restore_reg (mode, regno, offset, fn);
-	offset -= GET_MODE_SIZE (mode);
+	offset -= GET_MODE_SIZE (mode).to_constant ();
       }
 }
 
@@ -4738,7 +4758,7 @@ riscv_first_stack_step (struct riscv_frame_info *frame)
 {
   HOST_WIDE_INT frame_total_size;
   if (!frame->total_size.is_constant())
-    frame_total_size = frame->constant_offset;
+    return frame->constant_offset;
   else
     frame_total_size = frame->total_size.to_constant();
 
@@ -4823,33 +4843,6 @@ riscv_emit_stack_tie (void)
     emit_insn (gen_stack_tiedi (stack_pointer_rtx, hard_frame_pointer_rtx));
 }
 
-static void
-riscv_adjust_vector_frame (rtx target, poly_int64 offset)
-{
-  rtx clobber = RISCV_PROLOGUE_TEMP (Pmode);
-  rtx space = RISCV_PROLOGUE_TEMP2 (Pmode);
-  rtx insn, dwarf, adjust_frame_rtx;
-
-  riscv_vector_expand_poly_move (Pmode, space, clobber, gen_int_mode (offset, Pmode));
-
-  insn = gen_add3_insn (target,
-                        target,
-                        space);
-
-  insn = emit_insn (insn);
-
-  RTX_FRAME_RELATED_P (insn) = 1;
-
-  adjust_frame_rtx =
-    gen_rtx_SET (target,
-                 plus_constant (Pmode, target, offset));
-
-  dwarf = alloc_reg_note (REG_FRAME_RELATED_EXPR,
-                          copy_rtx (adjust_frame_rtx), NULL_RTX);
-
-  REG_NOTES (insn) = dwarf;
-}
-
 /* Expand the "prologue" pattern.  */
 
 void
@@ -4888,10 +4881,20 @@ riscv_expand_prologue (void)
       if (size.is_constant ())
         step1 = MIN (size.to_constant(), step1);
 
-      insn = gen_add3_insn (stack_pointer_rtx,
-			    stack_pointer_rtx,
-			    GEN_INT (-step1));
-      RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
+      if (SMALL_OPERAND (-step1))
+        {
+          insn = gen_add3_insn (stack_pointer_rtx,
+			        stack_pointer_rtx,
+			        GEN_INT (-step1));
+	  RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
+        }
+      else
+        {
+          riscv_emit_move (RISCV_PROLOGUE_TEMP3 (Pmode), GEN_INT (-step1));
+          insn = gen_add3_insn (stack_pointer_rtx,
+                                stack_pointer_rtx,
+                                RISCV_PROLOGUE_TEMP3 (Pmode));
+        }
       size -= step1;
       riscv_for_each_saved_reg (size, riscv_save_reg, false, false);
     }
@@ -4903,7 +4906,7 @@ riscv_expand_prologue (void)
     {
       poly_int64 offset = frame->hard_frame_pointer_offset - size;
       insn = gen_add3_insn (hard_frame_pointer_rtx, stack_pointer_rtx,
-                            GEN_INT (offset.to_constant ()));
+			    GEN_INT (offset.to_constant ()));
       RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
 
       riscv_emit_stack_tie ();
@@ -4912,36 +4915,38 @@ riscv_expand_prologue (void)
   /* Allocate the rest of the frame.  */
   if (known_gt (size, 0))
     {
-      /* Allocate stack for vector if it has scalable vectors.  */
+      /* Two step adjustment, first for vector values.  */
       if (!size.is_constant ())
-        {
-          HOST_WIDE_INT factor = size.coeffs[1];
-          poly_int64 poly_offset (factor, factor);
-          riscv_adjust_vector_frame (stack_pointer_rtx, -poly_offset);
-          size -= poly_offset;
-        }
+	{
+	  poly_int64 adj_offset = size;
+	  adj_offset.coeffs[0] = size.coeffs[1];
+	  riscv_vector_adjust_frame (stack_pointer_rtx, -adj_offset);
+	  size -= adj_offset;
+	}
 
-      if (size.to_constant () == 0)
-        return;
+      /* Second step for reset frame.  */
+      HOST_WIDE_INT size_value = size.to_constant ();
+      if (size_value == 0)
+	return;
 
-      if (SMALL_OPERAND (-size.to_constant ()))
-        {
-          insn = gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
-                                GEN_INT (-size.to_constant ()));
-          RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
-        }
+      if (SMALL_OPERAND (-size_value))
+	{
+	  insn = gen_add3_insn (stack_pointer_rtx, stack_pointer_rtx,
+				GEN_INT (-size_value));
+	  RTX_FRAME_RELATED_P (emit_insn (insn)) = 1;
+	}
       else
-        {
-          riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), GEN_INT (-size.to_constant ()));
-          RTX_FRAME_RELATED_P (emit_insn (gen_add3_insn (stack_pointer_rtx,
-                                    stack_pointer_rtx,
-                                    RISCV_PROLOGUE_TEMP (Pmode)))) = 1;
+	{
+	  riscv_emit_move (RISCV_PROLOGUE_TEMP (Pmode), GEN_INT (-size_value));
+	  emit_insn (gen_add3_insn (stack_pointer_rtx,
+				    stack_pointer_rtx,
+				    RISCV_PROLOGUE_TEMP (Pmode)));
 
-          /* Describe the effect of the previous instructions.  */
-          insn = plus_constant (Pmode, stack_pointer_rtx, -size.to_constant ());
-          insn = gen_rtx_SET (stack_pointer_rtx, insn);
-          riscv_set_frame_expr (insn);
-        }
+	  /* Describe the effect of the previous instructions.  */
+	  insn = plus_constant (Pmode, stack_pointer_rtx, -size_value);
+	  insn = gen_rtx_SET (stack_pointer_rtx, insn);
+	  riscv_set_frame_expr (insn);
+	}
     }
 }
 
@@ -5072,7 +5077,7 @@ riscv_expand_epilogue (int style)
         {
           HOST_WIDE_INT factor = step1.coeffs[1];
           poly_int64 poly_offset (factor, factor);
-          riscv_adjust_vector_frame (stack_pointer_rtx, poly_offset);
+          riscv_vector_adjust_frame (stack_pointer_rtx, poly_offset);
           step1 -= poly_offset;
         }
       else if (!SMALL_OPERAND (step1.to_constant ()))
@@ -5393,7 +5398,8 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
       if (!riscv_vector_mode_p (mode))
         return false;
 
-      /* 3.3.2. LMUL = 2,4,8, register numbers should be multiple of 2,4,8. */
+      /* 3.3.2. LMUL = 2,4,8, register numbers should be multiple of 2,4,8.
+         but for mask vector register, register numbers can be any number. */
       int regsize = riscv_vlmul_regsize(mode);
 
       if (regsize != 1)
@@ -6643,8 +6649,8 @@ static opt_machine_mode
 riscv_get_mask_mode (machine_mode mode)
 {
   machine_mode mask_mode = VOIDmode;
-  if (riscv_vector_get_mask_mode (mode).exists (&mask_mode) &&
-      VECTOR_MODE_P (mask_mode))
+  if (TARGET_VECTOR && TARGET_RVV &&
+      riscv_vector_get_mask_mode (mode).exists (&mask_mode))
     return mask_mode;
 
   return default_get_mask_mode (mode);

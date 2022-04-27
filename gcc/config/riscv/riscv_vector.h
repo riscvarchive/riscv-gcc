@@ -1,4 +1,4 @@
-/* Header of intrinsics for RISC-V built-in functions.  -*- C -*-
+/* Header of intrinsics for RISC-V 'V' Extension for GNU compiler.
    Copyright (C) 2021-2021 Free Software Foundation, Inc.
    Contributed by Juzhe Zhong (juzhe.zhong@rivai.ai).
    Based on MIPS target for GNU compiler.

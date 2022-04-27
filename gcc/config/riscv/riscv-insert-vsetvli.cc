@@ -168,7 +168,7 @@ use_vtype_p (rtx_insn *insn)
 static bool
 use_vlmax_p (rtx_insn *insn)
 {
-  rtx src = SET_SRC (PATTERN (insn));
+  rtx src = NULL_RTX;
   unsigned int length = 0;
   if (rvv_insn_p (insn, &src))
     length = XVECLEN (src, 0);
@@ -423,13 +423,13 @@ public:
     return (enum vlmul_field_enum) vlmul;
   }
 
-  vector_policy
+  enum vector_policy
   get_vma () const
   {
     return vma ? vector_policy::agnostic : vector_policy::undisturbed;
   }
 
-  vector_policy
+  enum vector_policy
   get_vta () const
   {
     return vta ? vector_policy::agnostic : vector_policy::undisturbed;
@@ -935,7 +935,7 @@ struct bb_vinfo
 };
 
 static std::map<unsigned int, bb_vinfo> bb_vinfo_map;
-static std::queue<basic_block> bb_queue;
+static std::deque<basic_block> bb_queue;
 
 static void
 emit_vsetvl_insn (rtx op0, rtx op1, rtx op2, rtx_insn *insn)
@@ -954,12 +954,17 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
   vinfo new_info;
   extract_insn_cached (insn);
 
-  if (recog_data.n_operands == 1)
+  if (rtx_equal_p (recog_data.operand[0], gen_rtx_REG (Pmode, X0_REGNUM))
+    && rtx_equal_p (recog_data.operand[1], gen_rtx_REG (Pmode, X0_REGNUM))
+    && curr_info.valid_p () && !curr_info.unknown_p ())
     {
-      if (!curr_info.valid_p () || curr_info.unknown_p ())
-        return new_info;
       new_info.set_avl (curr_info.get_avl ());
-      new_info.set_vtype (INTVAL (recog_data.operand[0]));
+      new_info.set_avl_source (curr_info.get_avl_source ());
+      new_info.set_vtype (INTVAL (recog_data.operand[2]));
+      /* if this X0, X0 vsetvli is redundant,
+         remove it. */
+      if (curr_info.compatible_vtype_p (new_info, true))
+        remove_insn (insn);
       return new_info;
     }
 
@@ -987,9 +992,9 @@ analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
     }
   extract_insn_cached (insn);
   vector_policy vma =
-      get_vma (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
+      riscv_vector::get_vma (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
   vector_policy vta =
-      get_vta (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
+      riscv_vector::get_vta (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
   if (vma == vector_policy::any)
     {
       /* For N/A vma we remain the last vma if it valid. */
@@ -1076,8 +1081,12 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
   machine_mode mode = riscv_translate_attr_mode (insn);
   bool st_p = store_insn_p (insn);
   bool scalar_move_p = scalar_move_insn_p (insn);
-  
-  unsigned int vta = get_vta (vma_vta) == vector_policy::agnostic ? 1 : 0;
+
+  unsigned int vta =
+      riscv_vector::get_vta (vma_vta) == vector_policy::agnostic ||
+              riscv_vector::get_vta (vma_vta) == vector_policy::any
+          ? 1
+          : 0;
   unsigned int vma = get_vma (vma_vta) == vector_policy::agnostic ? 1 : 0;
   info.set_vtype (riscv_classify_vlmul_field (mode),
                   riscv_classify_vsew_field (mode),
@@ -1185,7 +1194,7 @@ need_vsetvli_phi (vinfo &new_info, rtx_insn *rtl)
                       get_attr_type (def_rtl) == TYPE_VSETVL)
                     {
                       basic_block def_bb = BLOCK_FOR_INSN (def_rtl);
-                      bb_vinfo &info = bb_vinfo_map[def_bb->index];
+                      bb_vinfo info = bb_vinfo_map.at(def_bb->index);
                       // If the exit from the predecessor has the VTYPE
                       // we are looking for we might be able to avoid a
                       // VSETVLI.
@@ -1328,7 +1337,10 @@ vl_vtype_changes_p (basic_block bb)
     // If this is something that updates VL/VTYPE that we don't know about, set
     // the state to unknown.
     if (update_vlvtyp_p (insn))
-      info.change = vinfo::get_unknown ();
+      {
+        curr_info = vinfo::get_unknown ();
+        info.change = vinfo::get_unknown ();
+      }
   }
 
   // Initial exit state is whatever change we found in the block.
@@ -1355,7 +1367,7 @@ compute_incoming_vlvtype (const basic_block bb)
       FOR_EACH_EDGE (e, ei, bb->preds)
       {
         basic_block ancestor = e->src;
-        in_info = in_info.intersect (bb_vinfo_map[ancestor->index].exit);
+        in_info = in_info.intersect (bb_vinfo_map.at(ancestor->index).exit);
       }
     }
 
@@ -1382,7 +1394,7 @@ compute_incoming_vlvtype (const basic_block bb)
   {
     basic_block succ = e->dest;
     if (!bb_vinfo_map[succ->index].inqueue)
-      bb_queue.push (succ);
+      bb_queue.push_back (succ);
   }
 }
 
@@ -1530,7 +1542,7 @@ emit_vsetvlis (const basic_block bb)
     // expected info, insert a vsetvli to correct.
     if (insn == BB_END (bb))
       {
-        const vinfo &exit_info = bb_vinfo_map[bb->index].exit;
+        const vinfo exit_info = bb_vinfo_map.at(bb->index).exit;
         if (curr_info.valid_p () && exit_info.valid_p () &&
             !exit_info.unknown_p () && curr_info != exit_info)
           {
@@ -1606,8 +1618,8 @@ pass_insert_vsetvli::execute (function *fn)
 
   // Phase 1 - determine how VL/VTYPE are affected by the each block.
   FOR_ALL_BB_FN (bb, fn)
-  vector_p |= vl_vtype_changes_p (bb);
-
+    vector_p |= vl_vtype_changes_p (bb);
+  
   if (vector_p)
     {
       if (dump_file)
@@ -1617,13 +1629,13 @@ pass_insert_vsetvli::execute (function *fn)
       // revisited during Phase 2 processing.
       FOR_ALL_BB_FN (bb, fn)
       {
-        bb_queue.push (bb);
+        bb_queue.push_back (bb);
         bb_vinfo_map[bb->index].inqueue = true;
       }
       while (!bb_queue.empty ())
         {
           bb = bb_queue.front ();
-          bb_queue.pop ();
+          bb_queue.pop_front ();
           compute_incoming_vlvtype (bb);
         }
 
@@ -1637,6 +1649,7 @@ pass_insert_vsetvli::execute (function *fn)
     }
 
   bb_vinfo_map.clear ();
+  bb_queue.clear ();
 
   if (optimize >= 2)
     {
@@ -1715,19 +1728,24 @@ riscv_vector_insert_vsetvli_after_reload (function *fn)
           vinfo new_info;
           new_info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
           new_info.set_vtype (vtype);
-
+          changed_p = true;
+          
           if (!curr_info.valid_p () || curr_info.unknown_p () ||
               !curr_info.load_store_compatible_p (
                   riscv_parse_vsew_field (vtype), new_info))
             {
-              changed_p = true;
               curr_info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
+              curr_info.set_avl_source (NULL_RTX);
               curr_info.set_vtype (vtype);
               emit_vsetvl_insn (clobber, gen_rtx_REG (Pmode, X0_REGNUM),
                                 GEN_INT (vtype), insn);
+              if (dump_file)
+                {
+                  fprintf (dump_file, "insert vsetvl1 for insn %d\n", INSN_UID (insn));
+                  print_rtl_single(dump_file, clobber);
+                }
+                
             }
-          else
-            changed_p = false;
 
           rtx pat;
           extract_insn_cached (insn);
@@ -1760,11 +1778,18 @@ riscv_vector_insert_vsetvli_after_reload (function *fn)
         {
           vinfo new_info = compute_info_for_instr (insn, curr_info);
           if (changed_p && need_vsetvli (insn, new_info, curr_info))
-            emit_vsetvl_insn (gen_rtx_REG (Pmode, X0_REGNUM),
-                              new_info.get_avl (),
-                              GEN_INT (new_info.encode_vtype ()), insn);
+            {
+              curr_info = new_info;
+              emit_vsetvl_insn (gen_rtx_REG (Pmode, X0_REGNUM),
+                                new_info.get_avl (),
+                                GEN_INT (new_info.encode_vtype ()), insn);
+              if (dump_file)
+                {
+                  fprintf (dump_file, "insert vsetvl2 for insn %d\n", INSN_UID (insn));
+                  print_rtl_single(dump_file, insn);
+                }
+            }
           changed_p = false;
-          curr_info = new_info;
           replace_op (insn, const0_rtx, REPLACE_VL);
           continue;
         }

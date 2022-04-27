@@ -200,6 +200,5 @@ void
 riscv_register_pragmas (void)
 {
   targetm.check_builtin_call = riscv_check_builtin_call;
-
   c_register_pragma ("riscv", "intrinsic", riscv_pragma_intrinsic);
 }

@@ -543,7 +543,7 @@
    (match_operand 4 "vector_gather_scatter_scale_operand_<V2UNITS:sew>")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_GATHER_LOAD);
   DONE;
 })
 
@@ -555,7 +555,7 @@
    (match_operand 4 "vector_gather_scatter_scale_operand_<V4UNITS:sew>")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_GATHER_LOAD);
   DONE;
 })
 
@@ -567,7 +567,7 @@
    (match_operand 4 "vector_gather_scatter_scale_operand_<V8UNITS:sew>")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_GATHER_LOAD);
   DONE;
 })
 
@@ -579,7 +579,7 @@
    (match_operand 4 "vector_gather_scatter_scale_operand_<V16UNITS:sew>")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_GATHER_LOAD);
   DONE;
 })
 
@@ -591,7 +591,7 @@
    (match_operand 4 "vector_gather_scatter_scale_operand_<V32UNITS:sew>")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_GATHER_LOAD);
   DONE;
 })
 
@@ -603,7 +603,7 @@
    (match_operand 4 "vector_gather_scatter_scale_operand_<V64UNITS:sew>")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_GATHER_LOAD);
   DONE;
 })
 
@@ -615,7 +615,7 @@
    (match_operand 4 "vector_gather_scatter_scale_operand_<V128UNITSI:sew>")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_GATHER_LOAD);
   DONE;
 })
 
@@ -628,7 +628,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_GATHER_LOAD);
   DONE;
 })
 
@@ -641,7 +641,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_GATHER_LOAD);
   DONE;
 })
 
@@ -654,7 +654,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_GATHER_LOAD);
   DONE;
 })
 
@@ -667,7 +667,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_GATHER_LOAD);
   DONE;
 })
 
@@ -680,7 +680,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_GATHER_LOAD);
   DONE;
 })
 
@@ -693,7 +693,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_GATHER_LOAD);
   DONE;
 })
 
@@ -706,7 +706,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_GATHER_LOAD);
   DONE;
 })
 
@@ -719,7 +719,7 @@
    (match_operand:<V2UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -732,7 +732,7 @@
    (match_operand:<V4UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -745,7 +745,7 @@
    (match_operand:<V8UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -758,7 +758,7 @@
    (match_operand:<V16UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -771,7 +771,7 @@
    (match_operand:<V32UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -784,7 +784,7 @@
    (match_operand:<V64UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -797,7 +797,7 @@
    (match_operand:<V128UNITSI:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -811,7 +811,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -825,7 +825,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -839,7 +839,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -853,7 +853,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -867,7 +867,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -881,7 +881,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -895,7 +895,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_GATHER_LOAD);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_GATHER_LOAD);
   DONE;
 })
 
@@ -1060,7 +1060,7 @@
    (match_operand:V2UNITS 4 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_SCATTER_STORE);
   DONE;
 })
 
@@ -1072,7 +1072,7 @@
    (match_operand:V4UNITS 4 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_SCATTER_STORE);
   DONE;
 })
 
@@ -1084,7 +1084,7 @@
    (match_operand:V8UNITS 4 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_SCATTER_STORE);
   DONE;
 })
 
@@ -1096,7 +1096,7 @@
    (match_operand:V16UNITS 4 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_SCATTER_STORE);
   DONE;
 })
 
@@ -1108,7 +1108,7 @@
    (match_operand:V32UNITS 4 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_SCATTER_STORE);
   DONE;
 })
 
@@ -1120,7 +1120,7 @@
    (match_operand:V64UNITS 4 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_SCATTER_STORE);
   DONE;
 })
 
@@ -1132,7 +1132,7 @@
    (match_operand:V128UNITSI 4 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_SCATTER_STORE);
   DONE;
 })
 
@@ -1145,7 +1145,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_SCATTER_STORE);
   DONE;
 })
 
@@ -1158,7 +1158,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_SCATTER_STORE);
   DONE;
 })
 
@@ -1171,7 +1171,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_SCATTER_STORE);
   DONE;
 })
 
@@ -1184,7 +1184,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_SCATTER_STORE);
   DONE;
 })
 
@@ -1197,7 +1197,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_SCATTER_STORE);
   DONE;
 })
 
@@ -1210,7 +1210,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_SCATTER_STORE);
   DONE;
 })
 
@@ -1223,7 +1223,7 @@
    (match_operand 5 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_SCATTER_STORE);
   DONE;
 })
 
@@ -1236,7 +1236,7 @@
    (match_operand:<V2UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1249,7 +1249,7 @@
    (match_operand:<V4UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1262,7 +1262,7 @@
    (match_operand:<V8UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1275,7 +1275,7 @@
    (match_operand:<V16UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1288,7 +1288,7 @@
    (match_operand:<V32UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1301,7 +1301,7 @@
    (match_operand:<V64UNITS:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1314,7 +1314,7 @@
    (match_operand:<V128UNITSI:VM> 5 "register_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1328,7 +1328,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1342,7 +1342,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1356,7 +1356,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1370,7 +1370,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1384,7 +1384,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1398,7 +1398,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1412,7 +1412,7 @@
    (match_operand 6 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
-  riscv_vector_expand_gather_scatter (operands, ENUM_LEN_MASK_SCATTER_STORE);
+  riscv_vector_expand_gather_scatter (operands, RVV_LEN_MASK_SCATTER_STORE);
   DONE;
 })
 
@@ -1779,7 +1779,8 @@
 (define_expand "extend<vn><mode>2"
   [(match_operand:VEXTF 0 "register_operand")
 	 (match_operand:<VN> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   emit_insn (gen_vfwcvt_f_f_v (<VN>mode, operands[0], const0_rtx, const0_rtx,
       operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
@@ -1790,7 +1791,8 @@
 (define_expand "extend<vqn><mode>2"
   [(match_operand:VQEXTF 0 "register_operand")
 	 (match_operand:<VQN> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQN>mode))"
 {
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_f_f_v (<VQN>mode, middle_reg, const0_rtx, const0_rtx,
@@ -1806,7 +1808,8 @@
   [(match_operand:VEXTF 0 "register_operand")
    (match_operand:<VN> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -1820,7 +1823,8 @@
   [(match_operand:VQEXTF 0 "register_operand")
    (match_operand:<VQN> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQN>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -1867,7 +1871,8 @@
 (define_expand "float<vqndiff><mode>2"
   [(match_operand:VEXTF 0 "register_operand")
 	 (match_operand:<VQNDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_f_x_v (<VQNDIFF>mode, FLOAT,
@@ -1882,7 +1887,8 @@
 (define_expand "floatuns<vqndiff><mode>2"
   [(match_operand:VEXTF 0 "register_operand")
 	 (match_operand:<VQNDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_f_x_v (<VQNDIFF>mode, UNSIGNED_FLOAT,
@@ -1897,7 +1903,9 @@
 (define_expand "float<vondiff><mode>2"
   [(match_operand:VQEXTF 0 "register_operand")
 	 (match_operand:<VONDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQN>mode)) &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   rtx middle_reg1 = gen_reg_rtx (<VQN>mode);
   rtx middle_reg2 = gen_reg_rtx (<VN>mode);
@@ -1916,7 +1924,9 @@
 (define_expand "floatuns<vondiff><mode>2"
   [(match_operand:VQEXTF 0 "register_operand")
 	 (match_operand:<VONDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQN>mode)) &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   rtx middle_reg1 = gen_reg_rtx (<VQN>mode);
   rtx middle_reg2 = gen_reg_rtx (<VN>mode);
@@ -1964,7 +1974,8 @@
   [(match_operand:VEXTF 0 "register_operand")
    (match_operand:<VQNDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -1982,7 +1993,8 @@
   [(match_operand:VEXTF 0 "register_operand")
    (match_operand:<VQNDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2000,7 +2012,9 @@
   [(match_operand:VQEXTF 0 "register_operand")
    (match_operand:<VONDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQN>mode)) &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2022,7 +2036,9 @@
   [(match_operand:VQEXTF 0 "register_operand")
    (match_operand:<VONDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQN>mode)) &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2051,7 +2067,8 @@
 (define_expand "fix_trunc<vndiff><mode>2"
   [(match_operand:VEXTI2 0 "register_operand")
 	 (match_operand:<VNDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VNDIFF>mode))"
 {
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VNDIFF>mode, FIX,
       operands[0], const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
@@ -2062,7 +2079,8 @@
 (define_expand "fixuns_trunc<vndiff><mode>2"
   [(match_operand:VEXTI2 0 "register_operand")
 	 (match_operand:<VNDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VNDIFF>mode))"
 {
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VNDIFF>mode, UNSIGNED_FIX,
       operands[0], const0_rtx, const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
@@ -2073,7 +2091,8 @@
 (define_expand "fix_trunc<vqndiff><mode>2"
   [(match_operand:VOEXTI 0 "register_operand")
 	 (match_operand:<VQNDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQNDIFF>mode))"
 {
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VQNDIFF>mode, FIX,
@@ -2088,7 +2107,8 @@
 (define_expand "fixuns_trunc<vqndiff><mode>2"
   [(match_operand:VOEXTI 0 "register_operand")
 	 (match_operand:<VQNDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQNDIFF>mode))"
 {
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfwcvt_rtz_x_f_v (<VQNDIFF>mode, UNSIGNED_FIX,
@@ -2104,7 +2124,8 @@
   [(match_operand:VEXTI2 0 "register_operand")
    (match_operand:<VNDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VNDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2118,7 +2139,8 @@
   [(match_operand:VEXTI2 0 "register_operand")
    (match_operand:<VNDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VNDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2132,7 +2154,8 @@
   [(match_operand:VOEXTI 0 "register_operand")
    (match_operand:<VQNDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQNDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2151,7 +2174,8 @@
   [(match_operand:VOEXTI 0 "register_operand")
    (match_operand:<VQNDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQNDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2272,7 +2296,8 @@
 (define_expand "trunc<mode><vn>2"
   [(match_operand:<VN> 0 "register_operand")
 	 (match_operand:VEXTF 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV && 
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   emit_insn (gen_vfncvt_f_f_w (<VN>mode, operands[0], const0_rtx, const0_rtx,
              operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
@@ -2283,7 +2308,8 @@
 (define_expand "trunc<mode><vqn>2"
   [(match_operand:<VQN> 0 "register_operand")
 	 (match_operand:VQEXTF 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQN>mode))"
 {
   rtx middle_reg = gen_reg_rtx (<VN>mode);
   emit_insn (gen_vfncvt_f_f_w (<VN>mode,
@@ -2299,7 +2325,8 @@
   [(match_operand:<VN> 0 "register_operand")
    (match_operand:VEXTF 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VN>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2313,7 +2340,8 @@
   [(match_operand:<VQN> 0 "register_operand")
    (match_operand:VQEXTF 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQN>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2338,7 +2366,8 @@
 (define_expand "fix_trunc<vwdiff><mode>2"
   [(match_operand:VTRUNCI 0 "register_operand")
 	 (match_operand:<VWDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VWDIFF>mode))"
 {
   emit_insn (gen_vfncvt_rtz_x_f_w (<MODE>mode, FIX, operands[0],
              const0_rtx, const0_rtx,
@@ -2350,7 +2379,8 @@
 (define_expand "fixuns_trunc<vwdiff><mode>2"
   [(match_operand:VTRUNCI 0 "register_operand")
 	 (match_operand:<VWDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VWDIFF>mode))"
 {
   emit_insn (gen_vfncvt_rtz_x_f_w (<MODE>mode, UNSIGNED_FIX, operands[0],
              const0_rtx, const0_rtx,
@@ -2362,7 +2392,8 @@
 (define_expand "fix_trunc<vqwdiff><mode>2"
   [(match_operand:VQTRUNCI 0 "register_operand")
 	 (match_operand:<VQWDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQWDIFF>mode))"
 {
   rtx middle_reg = gen_reg_rtx (<VW>mode);
   emit_insn (gen_vfncvt_rtz_x_f_w (<VW>mode, FIX, middle_reg, const0_rtx, const0_rtx,
@@ -2376,7 +2407,8 @@
 (define_expand "fixuns_trunc<vqwdiff><mode>2"
   [(match_operand:VQTRUNCI 0 "register_operand")
 	 (match_operand:<VQWDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQWDIFF>mode))"
 {
   rtx middle_reg = gen_reg_rtx (<VW>mode);
   emit_insn (gen_vfncvt_rtz_x_f_w (<VW>mode, UNSIGNED_FIX, middle_reg, const0_rtx, const0_rtx,
@@ -2389,7 +2421,8 @@
 (define_expand "fix_trunc<vowdiff><mode>2"
   [(match_operand:VOTRUNCI 0 "register_operand")
 	 (match_operand:<VOWDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VOWDIFF>mode))"
 {
   rtx middle_reg1 = gen_reg_rtx (<VQW>mode);
   rtx middle_reg2 = gen_reg_rtx (<VW>mode);
@@ -2405,7 +2438,8 @@
 (define_expand "fixuns_trunc<vowdiff><mode>2"
   [(match_operand:VOTRUNCI 0 "register_operand")
 	 (match_operand:<VOWDIFF> 1 "register_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VOWDIFF>mode))"
 {
   rtx middle_reg1 = gen_reg_rtx (<VQW>mode);
   rtx middle_reg2 = gen_reg_rtx (<VW>mode);
@@ -2422,7 +2456,8 @@
   [(match_operand:VTRUNCI 0 "register_operand")
    (match_operand:<VWDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VWDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2435,7 +2470,8 @@
   [(match_operand:VTRUNCI 0 "register_operand")
    (match_operand:<VWDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VWDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2450,7 +2486,8 @@
   [(match_operand:VQTRUNCI 0 "register_operand")
    (match_operand:<VQWDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV && 
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQWDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2466,7 +2503,8 @@
   [(match_operand:VQTRUNCI 0 "register_operand")
    (match_operand:<VQWDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VQWDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2482,7 +2520,8 @@
   [(match_operand:VOTRUNCI 0 "register_operand")
    (match_operand:<VOWDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VOWDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -2501,7 +2540,8 @@
   [(match_operand:VOTRUNCI 0 "register_operand")
    (match_operand:<VOWDIFF> 1 "register_operand")
    (match_operand 2 "p_reg_or_const_csr_operand")]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR && TARGET_RVV &&
+   riscv_vector_check_supported_mode_p (GET_MODE_INNER (<VOWDIFF>mode))"
 {
   if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
     operands[2] = gen_lowpart (Pmode, operands[2]);
@@ -3473,14 +3513,14 @@
   })
 
 (define_insn "*len_fma<mode>"
-  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VI
       [(plus:VI
           (mult:VI
-            (match_operand:VI 1 "register_operand" "%0, vr, vr")
-            (match_operand:VI 2 "register_operand" "vr,vr,vr"))
-          (match_operand:VI 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+            (match_operand:VI 1 "register_operand" "%0, vr, vr, 0, vr, vr")
+            (match_operand:VI 2 "register_operand" "vr,vr,vr,vr,vr,vr"))
+          (match_operand:VI 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3488,25 +3528,31 @@
   "@
    vmadd.vv\t%0,%2,%3
    vmacc.vv\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vmacc.vv\t%0,%2,%1
+   vmadd.vv\t%0,%2,%3
+   vmacc.vv\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vmacc.vv\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fnma<mode>"
-  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VI
       [(plus:VI
         (mult:VI
           (neg:VI
-            (match_operand:VI 1 "register_operand" "%0, vr, vr"))
-          (match_operand:VI 2 "register_operand" "vr,vr,vr"))
-        (match_operand:VI 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+            (match_operand:VI 1 "register_operand" "%0, vr, vr, 0, vr, vr"))
+          (match_operand:VI 2 "register_operand" "vr,vr,vr,vr,vr,vr"))
+        (match_operand:VI 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
+   vnmsub.vv\t%0,%2,%3
+   vnmsac.vv\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vnmsac.vv\t%0,%2,%1
    vnmsub.vv\t%0,%2,%3
    vnmsac.vv\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vnmsac.vv\t%0,%2,%1"
@@ -3559,61 +3605,65 @@
 })
 
 (define_insn "*cond_fma<mode>_2"
-  [(set (match_operand:VI 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
           (plus:VI
             (mult:VI
-              (match_operand:VI 2 "register_operand" "0, vr")
-              (match_operand:VI 3 "register_operand" "vr, vr"))
-            (match_operand:VI 4 "register_operand" "vr, vr"))
+              (match_operand:VI 2 "register_operand" "%0, vr, 0, vr")
+              (match_operand:VI 3 "register_operand" "vr, vr, vr, vr"))
+            (match_operand:VI 4 "register_operand" "vr, vr, vr, vr"))
           (match_dup 2)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vmadd.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vmadd.vv\t%0,%3,%4,%1.t
+   vmadd.vv\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vmadd.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*cond_fma<mode>_4"
-  [(set (match_operand:VI 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (plus:VI
 	        (mult:VI
-	          (match_operand:VI 2 "register_operand" "vr, vr")
-	          (match_operand:VI 3 "register_operand" "vr, vr"))
-	        (match_operand:VI 4 "register_operand" "0, vr"))
+	          (match_operand:VI 2 "register_operand" "vr, vr, vr, vr")
+	          (match_operand:VI 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VI 4 "register_operand" "0, vr, 0, vr"))
         (match_dup 4)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vmacc.vv\t%0,%2,%3,%1.t
+   vmv<lmul>r.v\t%0,%4\;vmacc.vv\t%0,%2,%3,%1.t
+   vmacc.vv\t%0,%2,%3,%1.t
    vmv<lmul>r.v\t%0,%4\;vmacc.vv\t%0,%2,%3,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn_and_rewrite "*cond_fma<mode>_any"
-  [(set (match_operand:VI 0 "register_operand" "=&vr")
+  [(set (match_operand:VI 0 "register_operand" "=&vr,&vr")
 	  (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "register_operand" "vm")
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
         (plus:VI
 	        (mult:VI
-	          (match_operand:VI 2 "register_operand" "vr")
-	          (match_operand:VI 3 "register_operand" "vr"))
-	        (match_operand:VI 4 "register_operand" "vr"))
-        (match_operand:VI 5 "register_operand" "vr")] UNSPEC_SELECT)
-      (match_operand 6 "p_reg_or_const_csr_operand")
+	          (match_operand:VI 2 "register_operand" "vr,vr")
+	          (match_operand:VI 3 "register_operand" "vr,vr"))
+	        (match_operand:VI 4 "register_operand" "vr,vr"))
+        (match_operand:VI 5 "register_operand" "vr,vr")] UNSPEC_SELECT)
+      (match_operand 6 "p_reg_or_const_csr_operand" "r,K")
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3679,64 +3729,68 @@
 })
 
 (define_insn "*cond_fnma<mode>_2"
-  [(set (match_operand:VI 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (plus:VI
 	        (mult:VI
             (neg:VI
-              (match_operand:VI 2 "register_operand" "0, vr"))
-	          (match_operand:VI 3 "register_operand" "vr, vr"))
-	        (match_operand:VI 4 "register_operand" "vr, vr"))
+              (match_operand:VI 2 "register_operand" "%0, vr, 0, vr"))
+	          (match_operand:VI 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VI 4 "register_operand" "vr, vr, vr, vr"))
         (match_dup 2)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vnmsub.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vnmsub.vv\t%0,%3,%4,%1.t
+   vnmsub.vv\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vnmsub.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*cond_fnma<mode>_4"
-  [(set (match_operand:VI 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (plus:VI
 	        (mult:VI
 	          (neg:VI
-              (match_operand:VI 2 "register_operand" "vr, vr"))
-	          (match_operand:VI 3 "register_operand" "vr, vr"))
-	        (match_operand:VI 4 "register_operand" "0, vr"))
+              (match_operand:VI 2 "register_operand" "vr, vr, vr, vr"))
+	          (match_operand:VI 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VI 4 "register_operand" "0, vr, 0, vr"))
         (match_dup 4)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vnmsac.vv\t%0,%2,%3,%1.t
+   vmv<lmul>r.v\t%0,%4\;vnmsac.vv\t%0,%2,%3,%1.t
+   vnmsac.vv\t%0,%2,%3,%1.t
    vmv<lmul>r.v\t%0,%4\;vnmsac.vv\t%0,%2,%3,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn_and_rewrite "*cond_fnma<mode>_any"
-  [(set (match_operand:VI 0 "register_operand" "=&vr")
+  [(set (match_operand:VI 0 "register_operand" "=&vr,&vr")
 	  (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "register_operand" "vm")
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
         (plus:VI
 	        (mult:VI
             (neg:VI
-	            (match_operand:VI 2 "register_operand" "vr"))
-	          (match_operand:VI 3 "register_operand" "vr"))
-	        (match_operand:VI 4 "register_operand" "vr"))
-        (match_operand:VI 5 "register_operand" "vr")] UNSPEC_SELECT)
-      (match_operand 6 "p_reg_or_const_csr_operand")
+	            (match_operand:VI 2 "register_operand" "vr,vr"))
+	          (match_operand:VI 3 "register_operand" "vr,vr"))
+	        (match_operand:VI 4 "register_operand" "vr,vr"))
+        (match_operand:VI 5 "register_operand" "vr,vr")] UNSPEC_SELECT)
+      (match_operand 6 "p_reg_or_const_csr_operand" "r,K")
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3909,14 +3963,14 @@
   })
 
 (define_insn "*len_fma<mode>"
-  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VF
       [(plus:VF
           (mult:VF
-            (match_operand:VF 1 "register_operand" "%0, vr, vr")
-            (match_operand:VF 2 "register_operand" "vr,vr,vr"))
-          (match_operand:VF 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+            (match_operand:VF 1 "register_operand" "%0, vr, vr, 0, vr, vr")
+            (match_operand:VF 2 "register_operand" "vr,vr,vr,vr,vr,vr"))
+          (match_operand:VF 3 "register_operand" "vr, 0, vr,vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3924,19 +3978,22 @@
   "@
    vfmadd.vv\t%0,%2,%3
    vfmacc.vv\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfmacc.vv\t%0,%2,%1
+   vfmadd.vv\t%0,%2,%3
+   vfmacc.vv\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vfmacc.vv\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fms<mode>"
-  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VF
       [(minus:VF
         (mult:VF
-          (match_operand:VF 1 "register_operand" "%0, vr, vr")
-          (match_operand:VF 2 "register_operand" "vr,vr,vr"))
-        (match_operand:VF 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand:VF 1 "register_operand" "%0, vr, vr, 0, vr, vr")
+          (match_operand:VF 2 "register_operand" "vr,vr,vr,vr,vr,vr"))
+        (match_operand:VF 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3944,20 +4001,23 @@
   "@
    vfmsub.vv\t%0,%2,%3
    vfmsac.vv\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfmsac.vv\t%0,%2,%1
+   vfmsub.vv\t%0,%2,%3
+   vfmsac.vv\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vfmsac.vv\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fnma<mode>"
-  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VF
       [(plus:VF
           (mult:VF
             (neg:VF
-              (match_operand:VF 1 "register_operand" "%0, vr, vr"))
-            (match_operand:VF 2 "register_operand" "vr,vr,vr"))
-          (match_operand:VF 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+              (match_operand:VF 1 "register_operand" "%0, vr, vr, 0, vr, vr"))
+            (match_operand:VF 2 "register_operand" "vr,vr,vr,vr,vr,vr"))
+          (match_operand:VF 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3965,25 +4025,31 @@
   "@
    vfnmsub.vv\t%0,%2,%3
    vfnmsac.vv\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfnmsac.vv\t%0,%2,%1
+   vfnmsub.vv\t%0,%2,%3
+   vfnmsac.vv\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vfnmsac.vv\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fnms<mode>"
-  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VF
       [(minus:VF
         (mult:VF
           (neg:VF
-            (match_operand:VF 1 "register_operand" "%0, vr, vr"))
-          (match_operand:VF 2 "register_operand" "vr,vr,vr"))
-        (match_operand:VF 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+            (match_operand:VF 1 "register_operand" "%0, vr, vr, 0, vr, vr"))
+          (match_operand:VF 2 "register_operand" "vr,vr,vr,vr,vr,vr"))
+        (match_operand:VF 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
+   vfnmadd.vv\t%0,%2,%3
+   vfnmacc.vv\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfnmacc.vv\t%0,%2,%1
    vfnmadd.vv\t%0,%2,%3
    vfnmacc.vv\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vfnmacc.vv\t%0,%2,%1"
@@ -4014,61 +4080,65 @@
 })
 
 (define_insn "*cond_fma<mode>_2"
-  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (plus:VF
 	        (mult:VF
-	          (match_operand:VF 2 "register_operand" "0, vr")
-	          (match_operand:VF 3 "register_operand" "vr, vr"))
-	        (match_operand:VF 4 "register_operand" "vr, vr"))
+	          (match_operand:VF 2 "register_operand" "%0, vr, 0, vr")
+	          (match_operand:VF 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VF 4 "register_operand" "vr, vr, vr, vr"))
         (match_dup 2)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vfmadd.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vfmadd.vv\t%0,%3,%4,%1.t
+   vfmadd.vv\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vfmadd.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*cond_fma<mode>_4"
-  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (plus:VF
 	        (mult:VF
-	          (match_operand:VF 2 "register_operand" "vr, vr")
-	          (match_operand:VF 3 "register_operand" "vr, vr"))
-	        (match_operand:VF 4 "register_operand" "0, vr"))
+	          (match_operand:VF 2 "register_operand" "vr, vr, vr, vr")
+	          (match_operand:VF 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VF 4 "register_operand" "0, vr, 0, vr"))
         (match_dup 4)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vfmacc.vv\t%0,%2,%3,%1.t
+   vmv<lmul>r.v\t%0,%4\;vfmacc.vv\t%0,%2,%3,%1.t
+   vfmacc.vv\t%0,%2,%3,%1.t
    vmv<lmul>r.v\t%0,%4\;vfmacc.vv\t%0,%2,%3,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn_and_rewrite "*cond_fma<mode>_any"
-  [(set (match_operand:VF 0 "register_operand" "=&vr")
+  [(set (match_operand:VF 0 "register_operand" "=&vr,&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm")
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
         (plus:VF
 	        (mult:VF
-	          (match_operand:VF 2 "register_operand" "vr")
-	          (match_operand:VF 3 "register_operand" "vr"))
-	        (match_operand:VF 4 "register_operand" "vr"))
-        (match_operand:VF 5 "register_operand" "vr")] UNSPEC_SELECT)
-      (match_operand 6 "p_reg_or_const_csr_operand")
+	          (match_operand:VF 2 "register_operand" "vr,vr")
+	          (match_operand:VF 3 "register_operand" "vr,vr"))
+	        (match_operand:VF 4 "register_operand" "vr,vr"))
+        (match_operand:VF 5 "register_operand" "vr,vr")] UNSPEC_SELECT)
+      (match_operand 6 "p_reg_or_const_csr_operand" "r,K")
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -4132,61 +4202,65 @@
 })
 
 (define_insn "*cond_fms<mode>_2"
-  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (minus:VF
 	        (mult:VF
-	          (match_operand:VF 2 "register_operand" "0, vr")
-	          (match_operand:VF 3 "register_operand" "vr, vr"))
-	        (match_operand:VF 4 "register_operand" "vr, vr"))
+	          (match_operand:VF 2 "register_operand" "%0, vr, 0, vr")
+	          (match_operand:VF 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VF 4 "register_operand" "vr, vr, vr, vr"))
         (match_dup 2)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vfmsub.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vfmsub.vv\t%0,%3,%4,%1.t
+   vfmsub.vv\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vfmsub.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*cond_fms<mode>_4"
-  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (minus:VF
 	        (mult:VF
-	          (match_operand:VF 2 "register_operand" "vr, vr")
-	          (match_operand:VF 3 "register_operand" "vr, vr"))
-	        (match_operand:VF 4 "register_operand" "0, vr"))
+	          (match_operand:VF 2 "register_operand" "vr, vr, vr, vr")
+	          (match_operand:VF 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VF 4 "register_operand" "0, vr, 0, vr"))
         (match_dup 4)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vfmsac.vv\t%0,%2,%3,%1.t
+   vmv<lmul>r.v\t%0,%4\;vfmsac.vv\t%0,%2,%3,%1.t
+   vfmsac.vv\t%0,%2,%3,%1.t
    vmv<lmul>r.v\t%0,%4\;vfmsac.vv\t%0,%2,%3,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn_and_rewrite "*cond_fms<mode>_any"
-  [(set (match_operand:VF 0 "register_operand" "=&vr")
+  [(set (match_operand:VF 0 "register_operand" "=&vr,&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm")
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
         (minus:VF
 	        (mult:VF
-	          (match_operand:VF 2 "register_operand" "vr")
-	          (match_operand:VF 3 "register_operand" "vr"))
-	        (match_operand:VF 4 "register_operand" "vr"))
-        (match_operand:VF 5 "register_operand" "vr")] UNSPEC_SELECT)
-      (match_operand 6 "p_reg_or_const_csr_operand")
+	          (match_operand:VF 2 "register_operand" "vr,vr")
+	          (match_operand:VF 3 "register_operand" "vr,vr"))
+	        (match_operand:VF 4 "register_operand" "vr,vr"))
+        (match_operand:VF 5 "register_operand" "vr,vr")] UNSPEC_SELECT)
+      (match_operand 6 "p_reg_or_const_csr_operand" "r,K")
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -4229,64 +4303,68 @@
 })
 
 (define_insn "*cond_fnma<mode>_2"
-  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (plus:VF
 	        (mult:VF
             (neg:VF
-              (match_operand:VF 2 "register_operand" "0, vr"))
-	          (match_operand:VF 3 "register_operand" "vr, vr"))
-	        (match_operand:VF 4 "register_operand" "vr, vr"))
+              (match_operand:VF 2 "register_operand" "%0, vr, 0, vr"))
+	          (match_operand:VF 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VF 4 "register_operand" "vr, vr, vr, vr"))
         (match_dup 2)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vfnmsub.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vfnmsub.vv\t%0,%3,%4,%1.t
+   vfnmsub.vv\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vfnmsub.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*cond_fnma<mode>_4"
-  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (plus:VF
 	        (mult:VF
 	          (neg:VF
-              (match_operand:VF 2 "register_operand" "vr, vr"))
-	          (match_operand:VF 3 "register_operand" "vr, vr"))
-	        (match_operand:VF 4 "register_operand" "0, vr"))
+              (match_operand:VF 2 "register_operand" "vr, vr, vr, vr"))
+	          (match_operand:VF 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VF 4 "register_operand" "0, vr, 0, vr"))
         (match_dup 4)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vfnmsac.vv\t%0,%2,%3,%1.t
+   vmv<lmul>r.v\t%0,%4\;vfnmsac.vv\t%0,%2,%3,%1.t
+   vfnmsac.vv\t%0,%2,%3,%1.t
    vmv<lmul>r.v\t%0,%4\;vfnmsac.vv\t%0,%2,%3,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn_and_rewrite "*cond_fnma<mode>_any"
-  [(set (match_operand:VF 0 "register_operand" "=&vr")
+  [(set (match_operand:VF 0 "register_operand" "=&vr,&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm")
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
           (plus:VF
             (mult:VF
               (neg:VF
-                (match_operand:VF 2 "register_operand" "vr"))
-              (match_operand:VF 3 "register_operand" "vr"))
-            (match_operand:VF 4 "register_operand" "vr"))
-          (match_operand:VF 5 "register_operand" "vr")] UNSPEC_SELECT)
-      (match_operand 6 "p_reg_or_const_csr_operand")
+                (match_operand:VF 2 "register_operand" "vr,vr"))
+              (match_operand:VF 3 "register_operand" "vr,vr"))
+            (match_operand:VF 4 "register_operand" "vr,vr"))
+          (match_operand:VF 5 "register_operand" "vr,vr")] UNSPEC_SELECT)
+      (match_operand 6 "p_reg_or_const_csr_operand" "r,K")
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -4352,64 +4430,68 @@
 })
 
 (define_insn "*cond_fnms<mode>_2"
-  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (minus:VF
           (mult:VF
             (neg:VF
-              (match_operand:VF 2 "register_operand" "0, vr"))
-            (match_operand:VF 3 "register_operand" "vr, vr"))
-          (match_operand:VF 4 "register_operand" "vr, vr"))
+              (match_operand:VF 2 "register_operand" "%0, vr, 0, vr"))
+            (match_operand:VF 3 "register_operand" "vr, vr, vr, vr"))
+          (match_operand:VF 4 "register_operand" "vr, vr, vr, vr"))
         (match_dup 2)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vfnmadd.vv\t%0,%3,%4,%1.t
+   vmv<lmul>r.v\t%0,%2\;vfnmadd.vv\t%0,%3,%4,%1.t
+   vfnmadd.vv\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vfnmadd.vv\t%0,%3,%4,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*cond_fnms<mode>_4"
-  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, ?&vr, vr, ?&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm, vm")
+        [(match_operand:<VM> 1 "register_operand" "vm, vm, vm, vm")
         (minus:VF
 	        (mult:VF
 	          (neg:VF
-              (match_operand:VF 2 "register_operand" "vr, vr"))
-	          (match_operand:VF 3 "register_operand" "vr, vr"))
-	        (match_operand:VF 4 "register_operand" "0, vr"))
+              (match_operand:VF 2 "register_operand" "vr, vr, vr, vr"))
+	          (match_operand:VF 3 "register_operand" "vr, vr, vr, vr"))
+	        (match_operand:VF 4 "register_operand" "0, vr, 0, vr"))
         (match_dup 4)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand" "r,r,K,K")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
    vfnmacc.vv\t%0,%2,%3,%1.t
+   vmv<lmul>r.v\t%0,%4\;vfnmacc.vv\t%0,%2,%3,%1.t
+   vfnmacc.vv\t%0,%2,%3,%1.t
    vmv<lmul>r.v\t%0,%4\;vfnmacc.vv\t%0,%2,%3,%1.t"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn_and_rewrite "*cond_fnms<mode>_any"
-  [(set (match_operand:VF 0 "register_operand" "=&vr")
+  [(set (match_operand:VF 0 "register_operand" "=&vr,&vr")
 	  (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "register_operand" "vm")
+        [(match_operand:<VM> 1 "register_operand" "vm,vm")
         (minus:VF
 	        (mult:VF
             (neg:VF
-	            (match_operand:VF 2 "register_operand" "vr"))
-	          (match_operand:VF 3 "register_operand" "vr"))
-	        (match_operand:VF 4 "register_operand" "vr"))
-        (match_operand:VF 5 "register_operand" "vr")] UNSPEC_SELECT)
-      (match_operand 6 "p_reg_or_const_csr_operand")
+	            (match_operand:VF 2 "register_operand" "vr,vr"))
+	          (match_operand:VF 3 "register_operand" "vr,vr"))
+	        (match_operand:VF 4 "register_operand" "vr,vr"))
+        (match_operand:VF 5 "register_operand" "vr,vr")] UNSPEC_SELECT)
+      (match_operand 6 "p_reg_or_const_csr_operand" "r,K")
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7852,20 +7934,23 @@
   })
 
 (define_insn "*len_fma_vs<mode>"
-  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VI
       [(plus:VI
           (mult:VI
-            (match_operand:VI 1 "register_operand" "%0, vr, vr")
+            (match_operand:VI 1 "register_operand" "%0, vr, vr, 0, vr, vr")
             (vec_duplicate:VI
-              (match_operand:<VSUB> 2 "register_operand" "r,r,r")))
-          (match_operand:VI 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+              (match_operand:<VSUB> 2 "register_operand" "r,r,r,r,r,r")))
+          (match_operand:VI 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
+   vmadd.vx\t%0,%2,%3
+   vmacc.vx\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vmacc.vx\t%0,%2,%1
    vmadd.vx\t%0,%2,%3
    vmacc.vx\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vmacc.vx\t%0,%2,%1"
@@ -7873,16 +7958,16 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fma_vs<mode>_rv32"
-  [(set (match_operand:V64BITI 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:V64BITI
       [(plus:V64BITI
           (mult:V64BITI
-            (match_operand:V64BITI 1 "register_operand" "%0, vr, vr")
+            (match_operand:V64BITI 1 "register_operand" "%0, vr, vr, 0, vr, vr")
             (vec_duplicate:V64BITI
               (sign_extend:DI
-                (match_operand:SI 2 "register_operand" "r,r,r"))))
-          (match_operand:V64BITI 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+                (match_operand:SI 2 "register_operand" "r,r,r,r,r,r"))))
+          (match_operand:V64BITI 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7890,26 +7975,32 @@
   "@
    vmadd.vx\t%0,%2,%3
    vmacc.vx\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vmacc.vx\t%0,%2,%1
+   vmadd.vx\t%0,%2,%3
+   vmacc.vx\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vmacc.vx\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fnma_vs<mode>"
-  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VI 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VI
       [(plus:VI
         (mult:VI
           (neg:VI
-            (match_operand:VI 1 "register_operand" "%0, vr, vr"))
+            (match_operand:VI 1 "register_operand" "%0, vr, vr, 0, vr, vr"))
           (vec_duplicate:VI
-            (match_operand:<VSUB> 2 "register_operand" "r,r,r")))
-        (match_operand:VI 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+            (match_operand:<VSUB> 2 "register_operand" "r,r,r,r,r,r")))
+        (match_operand:VI 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
+   vnmsub.vx\t%0,%2,%3
+   vnmsac.vx\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vnmsac.vx\t%0,%2,%1
    vnmsub.vx\t%0,%2,%3
    vnmsac.vx\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vnmsac.vx\t%0,%2,%1"
@@ -7917,17 +8008,17 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fnma_vs<mode>_rv32"
-  [(set (match_operand:V64BITI 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:V64BITI 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:V64BITI
       [(plus:V64BITI
         (mult:V64BITI
           (neg:V64BITI
-            (match_operand:V64BITI 1 "register_operand" "%0, vr, vr"))
+            (match_operand:V64BITI 1 "register_operand" "%0, vr, vr, 0, vr, vr"))
           (vec_duplicate:V64BITI
             (sign_extend:DI
-              (match_operand:SI 2 "register_operand" "r,r,r"))))
-        (match_operand:V64BITI 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+              (match_operand:SI 2 "register_operand" "r,r,r,r,r,r"))))
+        (match_operand:V64BITI 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7935,20 +8026,23 @@
   "@
    vnmsub.vx\t%0,%2,%3
    vnmsac.vx\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vnmsac.vx\t%0,%2,%1
+   vnmsub.vx\t%0,%2,%3
+   vnmsac.vx\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vnmsac.vx\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fma_vs<mode>"
-  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VF
       [(plus:VF
           (mult:VF
-            (match_operand:VF 1 "register_operand" "%0, vr, vr")
+            (match_operand:VF 1 "register_operand" "%0, vr, vr, 0, vr, vr")
             (vec_duplicate:VF
-              (match_operand:<VSUB> 2 "register_operand" "f, f, f")))
-          (match_operand:VF 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+              (match_operand:<VSUB> 2 "register_operand" "f, f, f, f, f, f")))
+          (match_operand:VF 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7956,20 +8050,23 @@
   "@
    vfmadd.vf\t%0,%2,%3
    vfmacc.vf\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfmacc.vf\t%0,%2,%1
+   vfmadd.vf\t%0,%2,%3
+   vfmacc.vf\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vfmacc.vf\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fms_vs<mode>"
-  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VF
       [(minus:VF
         (mult:VF
-          (match_operand:VF 1 "register_operand" "%0, vr, vr")
+          (match_operand:VF 1 "register_operand" "%0, vr, vr, 0, vr, vr")
           (vec_duplicate:VF
-            (match_operand:<VSUB> 2 "register_operand" "f, f, f")))
-        (match_operand:VF 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+            (match_operand:<VSUB> 2 "register_operand" "f, f, f, f, f, f")))
+        (match_operand:VF 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7977,21 +8074,24 @@
   "@
    vfmsub.vf\t%0,%2,%3
    vfmsac.vf\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfmsac.vf\t%0,%2,%1
+   vfmsub.vf\t%0,%2,%3
+   vfmsac.vf\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vfmsac.vf\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fnma_vs<mode>"
-  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VF
       [(plus:VF
           (mult:VF
             (neg:VF
-              (match_operand:VF 1 "register_operand" "%0, vr, vr"))
+              (match_operand:VF 1 "register_operand" "%0, vr, vr, 0, vr, vr"))
             (vec_duplicate:VF
-              (match_operand:<VSUB> 2 "register_operand" "f, f, f")))
-          (match_operand:VF 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+              (match_operand:<VSUB> 2 "register_operand" "f, f, f, f, f, f")))
+          (match_operand:VF 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7999,26 +8099,32 @@
   "@
    vfnmsub.vf\t%0,%2,%3
    vfnmsac.vf\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfnmsac.vf\t%0,%2,%1
+   vfnmsub.vf\t%0,%2,%3
+   vfnmsac.vf\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vfnmsac.vf\t%0,%2,%1"
   [(set_attr "type" "vmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*len_fnms_vs<mode>"
-  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr")
+  [(set (match_operand:VF 0 "register_operand" "=vr, vr, ?&vr, vr, vr, ?&vr")
     (unspec:VF
       [(minus:VF
         (mult:VF
           (neg:VF
-            (match_operand:VF 1 "register_operand" "%0, vr, vr"))
+            (match_operand:VF 1 "register_operand" "%0, vr, vr, 0, vr, vr"))
           (vec_duplicate:VF
-            (match_operand:<VSUB> 2 "register_operand" "f, f, f")))
-        (match_operand:VF 3 "register_operand" "vr, 0, vr"))
-        (match_operand 4 "p_reg_or_const_csr_operand")
+            (match_operand:<VSUB> 2 "register_operand" "f, f, f, f, f, f")))
+        (match_operand:VF 3 "register_operand" "vr, 0, vr, vr, 0, vr"))
+        (match_operand 4 "p_reg_or_const_csr_operand" "r,r,r,K,K,K")
         (match_operand 5 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR && TARGET_RVV"
   "@
+   vfnmadd.vf\t%0,%2,%3
+   vfnmacc.vf\t%0,%2,%1
+   vmv<lmul>r.v\t%0,%3\;vfnmacc.vf\t%0,%2,%1
    vfnmadd.vf\t%0,%2,%3
    vfnmacc.vf\t%0,%2,%1
    vmv<lmul>r.v\t%0,%3\;vfnmacc.vf\t%0,%2,%1"

@@ -64,57 +64,6 @@
 namespace riscv_vector
 {
 
-/* define help variables */
-static uint64_t pred_all = PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu;
-static uint64_t pred_tail = PRED_void | PRED_ta | PRED_tu;
-static uint64_t pred_mask = PRED_void | PRED_m | PRED_ma | PRED_mu;
-static uint64_t pred_mask2 = PRED_void | PRED_m;
-static uint64_t pred_reduce = PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_m_ta | PRED_m_tu;
-
-static uint64_t pat_mask_tail = PAT_mask | PAT_tail;
-static uint64_t pat_mask_tail_dest = PAT_mask | PAT_tail | PAT_dest;
-static uint64_t pat_mask_tail_void_dest = PAT_mask | PAT_tail | PAT_void_dest;
-static uint64_t pat_tail_void_dest = PAT_tail | PAT_void_dest;
-static uint64_t pat_void_dest_ignore_mp = PAT_mask | PAT_tail | PAT_void_dest | PAT_ignore_mask_policy;
-static uint64_t pat_mask_ignore_tp = PAT_mask | PAT_ignore_tail_policy;
-static uint64_t pat_mask_ignore_policy = PAT_mask | PAT_ignore_policy;
-
-/* share global variables */
-
-const unsigned int NAME_MAXLEN = 64;
-const unsigned int MAX_TUPLE_SIZE = 8;
-
-/* General type nodes: */
-#define DEFINE_SCALAR_TYPE_NODE(BITS)                                         \
-  tree int##BITS##_type_node;                                                 \
-  tree unsigned_int##BITS##_type_node;                                        \
-  tree int##BITS##_ptr_type_node;                                             \
-  tree unsigned_int##BITS##_ptr_type_node;                                    \
-  tree const_int##BITS##_ptr_type_node;                                       \
-  tree const_unsigned_int##BITS##_ptr_type_node;
-
-DEFINE_SCALAR_TYPE_NODE (8)
-DEFINE_SCALAR_TYPE_NODE (16)
-DEFINE_SCALAR_TYPE_NODE (32)
-DEFINE_SCALAR_TYPE_NODE (64)
-
-/* Type node for fp16.  */
-tree fp16_type_node;
-tree fp16_ptr_type_node;
-tree const_fp16_ptr_type_node;
-
-tree const_float_ptr_type_node;
-tree const_double_ptr_type_node;
-
-/* local share variables */
-
-static const unsigned int RISCV_TARGET_ANY = 0;
-static const unsigned int RISCV_TARGET_VECTOR = 1;
-static const unsigned int RISCV_TARGET_FP16 = 1 << 3;
-static const unsigned int RISCV_TARGET_HARD_FLOAT = 1 << 4;
-static const unsigned int RISCV_TARGET_DOUBLE_FLOAT = 1 << 5;
-static const unsigned int RISCV_TARGET_64BIT = 0; /* We don't use this static variable. */
-
 /* The same vlmul doesn't mean use the same mask,
    this is used as save codes.
    for example: i32m8 use vbool4_t i8m8 use vbool1_t. */
@@ -136,16 +85,20 @@ static CONSTEXPR const vector_type_info vector_type_infos[] =
 static GTY(()) tree abi_vector_types[NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
 
 /* Same, but with the riscv_vector.h "v..._t" name.  */
-tree riscv_vector_types[MAX_TUPLE_SIZE][NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
-
+GTY(()) tree vector_types[MAX_TUPLE_NUM][NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
+/* Same, but with the riscv_vector.h "v..._t *" name.  */
+GTY(()) tree vector_pointer_types[NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
+/* The scalar type associated with each vector type.  */
+GTY(()) tree scalar_types[NUM_VECTOR_TYPES];
+/* The scalar pointer type associated with each vector type.  */
+GTY(()) tree scalar_pointer_types[NUM_VECTOR_TYPES];
+/* The const scalar pointer type associated with each vector type.  */
+GTY(()) tree const_scalar_pointer_types[NUM_VECTOR_TYPES];
 
 /* All registered function decls, hashed on the function_instance
    that they implement.  This is used for looking up implementations of
    overloaded functions.  */
 hash_table<registered_function_hasher> *function_table;
-
-/* The scalar type associated with each vector type.  */
-static GTY(()) tree scalar_types[NUM_VECTOR_TYPES];
 
 static riscv_vector::function_builder** all_vector_functions;
 
@@ -424,66 +377,70 @@ mangle_builtin_type (const_tree type)
 static void
 register_general_builtin_types (void)
 {
-  int8_type_node = intQI_type_node;
-  unsigned_int8_type_node = unsigned_intQI_type_node;
-  int16_type_node = intHI_type_node;
-  unsigned_int16_type_node = unsigned_intHI_type_node;
+  scalar_types[VECTOR_TYPE_bool] = boolean_type_node;
+  scalar_types[VECTOR_TYPE_int8] = intQI_type_node;
+  scalar_types[VECTOR_TYPE_uint8] = unsigned_intQI_type_node;
+  scalar_types[VECTOR_TYPE_int16] = intHI_type_node;
+  scalar_types[VECTOR_TYPE_uint16] = unsigned_intHI_type_node;
 
   if (TARGET_64BIT)
     {
-      int32_type_node = intSI_type_node;
-      unsigned_int32_type_node = unsigned_intSI_type_node;
+      scalar_types[VECTOR_TYPE_int32] = intSI_type_node;
+      scalar_types[VECTOR_TYPE_uint32] = unsigned_intSI_type_node;
     }
   else
     {
       /* int32_t/uint32_t defined as `long`/`unsigned long` in RV32,
-	  but intSI_type_node/unsigned_intSI_type_node is
-	  `int` and `unsigned int`, so use long_integer_type_node and
-	  long_unsigned_type_node here for type consistent.  */
-      int32_type_node = long_integer_type_node;
-      unsigned_int32_type_node = long_unsigned_type_node;
+          but intSI_type_node/unsigned_intSI_type_node is
+          `int` and `unsigned int`, so use long_integer_type_node and
+          long_unsigned_type_node here for type consistent.  */
+      scalar_types[VECTOR_TYPE_int32] = long_integer_type_node;
+      scalar_types[VECTOR_TYPE_uint32] = long_unsigned_type_node;
     }
 
-  int64_type_node = intDI_type_node;
-  unsigned_int64_type_node = unsigned_intDI_type_node;
+  scalar_types[VECTOR_TYPE_int64] = intDI_type_node;
+  scalar_types[VECTOR_TYPE_uint64] = unsigned_intDI_type_node;
+  scalar_types[VECTOR_TYPE_float32] = float_type_node;
+  scalar_types[VECTOR_TYPE_float64] = double_type_node;
 
   /* Pointer type */
-#define DEFINE_SCALAR_PTR_TYPE_NODE(NBITS)                                    \
-  int##NBITS##_ptr_type_node = build_pointer_type (int##NBITS##_type_node);   \
-  unsigned_int##NBITS##_ptr_type_node                                         \
-      = build_pointer_type (unsigned_int##NBITS##_type_node);                 \
-  const_int##NBITS##_ptr_type_node = build_pointer_type (                     \
-      build_type_variant (int##NBITS##_type_node, 1, 0));                     \
-  const_unsigned_int##NBITS##_ptr_type_node = build_pointer_type (            \
-      build_type_variant (unsigned_int##NBITS##_type_node, 1, 0));
+#define DEFINE_SCALAR_PTR_TYPE_NODE(NBITS)                                     \
+  scalar_pointer_types[VECTOR_TYPE_int##NBITS] =                               \
+      build_pointer_type (scalar_types[VECTOR_TYPE_int##NBITS]);               \
+  scalar_pointer_types[VECTOR_TYPE_uint##NBITS] =                              \
+      build_pointer_type (scalar_types[VECTOR_TYPE_uint##NBITS]);              \
+  const_scalar_pointer_types[VECTOR_TYPE_int##NBITS] = build_pointer_type (    \
+      build_type_variant (scalar_types[VECTOR_TYPE_int##NBITS], 1, 0));        \
+  const_scalar_pointer_types[VECTOR_TYPE_uint##NBITS] = build_pointer_type (   \
+      build_type_variant (scalar_types[VECTOR_TYPE_uint##NBITS], 1, 0));
 
   DEFINE_SCALAR_PTR_TYPE_NODE (8)
   DEFINE_SCALAR_PTR_TYPE_NODE (16)
   DEFINE_SCALAR_PTR_TYPE_NODE (32)
   DEFINE_SCALAR_PTR_TYPE_NODE (64)
 
-  fp16_type_node = make_node (REAL_TYPE);
-  TYPE_PRECISION (fp16_type_node) = 16;
-  layout_type (fp16_type_node);
-  (*lang_hooks.types.register_builtin_type) (fp16_type_node, "__fp16");
+  scalar_types[VECTOR_TYPE_float16] = make_node (REAL_TYPE);
+  TYPE_PRECISION (scalar_types[VECTOR_TYPE_float16]) = 16;
+  layout_type (scalar_types[VECTOR_TYPE_float16]);
+  (*lang_hooks.types.register_builtin_type) (scalar_types[VECTOR_TYPE_float16],
+                                             "__fp16");
 
-  fp16_ptr_type_node = build_pointer_type (fp16_type_node);
-  const_fp16_ptr_type_node
-    = build_pointer_type (build_type_variant (fp16_type_node, 1, 0));
-  const_float_ptr_type_node
-    = build_pointer_type (build_type_variant (float_type_node, 1, 0));
-  const_double_ptr_type_node
-    = build_pointer_type (build_type_variant (double_type_node, 1, 0));
+  scalar_pointer_types[VECTOR_TYPE_float16] =
+      build_pointer_type (scalar_types[VECTOR_TYPE_float16]);
+  scalar_pointer_types[VECTOR_TYPE_float32] = float_ptr_type_node;
+  scalar_pointer_types[VECTOR_TYPE_float64] = double_ptr_type_node;
+  const_scalar_pointer_types[VECTOR_TYPE_float16] = build_pointer_type (
+      build_type_variant (scalar_types[VECTOR_TYPE_float16], 1, 0));
+  const_scalar_pointer_types[VECTOR_TYPE_float32] = build_pointer_type (
+      build_type_variant (scalar_types[VECTOR_TYPE_float32], 1, 0));
+  const_scalar_pointer_types[VECTOR_TYPE_float64] = build_pointer_type (
+      build_type_variant (scalar_types[VECTOR_TYPE_float64], 1, 0));
 }
 
 /* Register the built-in VECTOR ABI types, such as __rvv_int8mf8_t.  */
 static void
 register_builtin_types ()
 {
-#define DEF_RVV_TYPE(ELEM_TYPE, NODE)                                          \
-  scalar_types[VECTOR_TYPE_##ELEM_TYPE] = NODE;
-#include "riscv-vector-builtins.def"
-
   for (unsigned int i = 0; i < NUM_VECTOR_TYPES; ++i)
     {
       tree eltype = scalar_types[i];
@@ -502,19 +459,18 @@ register_builtin_types ()
           unsigned int sew = GET_MODE_BITSIZE (elmode);
           machine_mode mode =
               vector_builtin_mode (elmode, vector_vlmuls[j].vlmul);
+          
+          /* mask type in RVV.  */
+          vectype = build_vector_type_for_mode (eltype, mode);
 
+          /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
+             omp-low.c. We don't know why we need this protection, it seems
+             to make the buildup of GCC more reliable. */
+          if (TYPE_MODE (vectype) != mode)
+            continue;
+                
           if (eltype == boolean_type_node)
             {
-              /* mask type in RVV.  */
-              vectype = build_truth_vector_type_for_mode (
-                  BYTES_PER_RISCV_VECTOR, mode);
-
-              /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
-                 omp-low.c. We don't know why we need this protection, it seems
-                 to make the buildup of GCC more reliable. */
-              if (TYPE_MODE (vectype) != mode)
-                continue;
-
               gcc_assert (VECTOR_MODE_P (TYPE_MODE (vectype)) &&
                           TYPE_MODE (vectype) == mode &&
                           TYPE_MODE (vectype) == TYPE_MODE_RAW (vectype) &&
@@ -525,15 +481,6 @@ register_builtin_types ()
             }
           else
             {
-              /* data type in RVV.  */
-              vectype = build_vector_type_for_mode (eltype, mode);
-
-              /* NOTE: Reference to 'omp_clause_aligned_alignment' function in
-                 omp-low.c. We don't know why we need this protection, it seems
-                 to make the buildup of GCC more reliable. */
-              if (TYPE_MODE (vectype) != mode)
-                continue;
-
               gcc_assert (VECTOR_MODE_P (TYPE_MODE (vectype)) &&
                           TYPE_MODE (vectype) == mode &&
                           TYPE_MODE_RAW (vectype) == mode &&
@@ -577,11 +524,10 @@ register_builtin_types ()
 void
 init_builtins ()
 {
-  register_general_builtin_types ();
-
   if (!TARGET_VECTOR)
     return;
-
+    
+  register_general_builtin_types ();
   register_builtin_types ();
 
   if (in_lto_p)
@@ -613,7 +559,8 @@ register_vector_type (unsigned int type, unsigned int lmul)
       TYPE_MAIN_VARIANT (TREE_TYPE (decl)) == vectype)
     vectype = TREE_TYPE (decl);
 
-  riscv_vector_types[0][type][lmul] = vectype;
+  vector_types[0][type][lmul] = vectype;
+  vector_pointer_types[type][lmul] = build_pointer_type (vectype);
 }
 
 /* These codes copied from ARM. */
@@ -632,7 +579,7 @@ register_tuple_type (unsigned int num_vectors, unsigned int type,
   char mangled_name[NAME_MAXLEN] = { 0 };
   snprintf (mangled_name, NAME_MAXLEN, "u%d__rvv_%s%s_t", (int)strlen (buffer),
 	    vector_type_infos[lmul].elem_name, vector_vlmuls[lmul].suffix);
-  tree vector_type = riscv_vector_types[0][type][lmul];
+  tree vector_type = vector_types[0][type][lmul];
   tree array_type = build_array_type_nelts (vector_type, num_vectors);
   machine_mode tuple_mode;
   gcc_assert (riscv_vector_tuple_mode (TYPE_MODE (vector_type), num_vectors).exists (&tuple_mode));
@@ -676,7 +623,7 @@ register_tuple_type (unsigned int num_vectors, unsigned int type,
      "struct foo" would lead to confusing error messages.  */
   DECL_ORIGINAL_TYPE (decl) = NULL_TREE;
 
-  riscv_vector_types[num_vectors - 1][type][lmul] = tuple_type;
+  vector_types[num_vectors - 1][type][lmul] = tuple_type;
 }
 
 /* Implement #pragma riscv intrinsic vector.  */
@@ -705,7 +652,7 @@ handle_pragma_vector ()
 
           if (i != VECTOR_TYPE_bool)
             {
-              for (unsigned int count = 2; count <= MAX_TUPLE_SIZE; ++count)
+              for (unsigned int count = 2; count <= MAX_TUPLE_NUM; ++count)
                 {
                   enum vlmul_field_enum vlmul = vector_vlmuls[j].vlmul;
                   if (vlmul == VLMUL_FIELD_101 || vlmul == VLMUL_FIELD_110 ||
@@ -808,7 +755,7 @@ get_vector_arg_all_patterns (unsigned int len,
       len * sizeof (riscv_vector::vector_mode_attr_list *));
   patterns.target_op_list = (int *)xmalloc (len * sizeof (int));
   patterns.dt_list =
-      (data_type_index *)xmalloc (len * sizeof (data_type_index));
+      (enum data_type_index *)xmalloc (len * sizeof (enum data_type_index));
 
   unsigned int arg_idx = 0;
   va_list arg_ptr;
@@ -835,6 +782,20 @@ static vector_mode_attr_list vector_mode_attr_list_list[vector_arg_mode_category
 static void
 init_def_variables ()
 {
+
+/* define local help variables */
+uint64_t pred_all = PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tama | PRED_tamu | PRED_tuma | PRED_tumu;
+uint64_t pred_tail = PRED_void | PRED_ta | PRED_tu;
+uint64_t pred_mask = PRED_void | PRED_m | PRED_ma | PRED_mu;
+uint64_t pred_mask2 = PRED_void | PRED_m;
+uint64_t pred_reduce = PRED_void | PRED_ta | PRED_tu | PRED_m | PRED_tam | PRED_tum;
+
+uint64_t pat_mask_tail = PAT_mask | PAT_tail;
+uint64_t pat_mask_tail_dest = PAT_mask | PAT_tail | PAT_dest;
+uint64_t pat_tail_void_dest = PAT_tail | PAT_void_dest;
+uint64_t pat_void_dest_ignore_mp = PAT_mask | PAT_tail | PAT_void_dest | PAT_ignore_mask_policy;
+uint64_t pat_mask_ignore_tp = PAT_mask | PAT_ignore_tail_policy;
+uint64_t pat_mask_ignore_policy = PAT_mask | PAT_ignore_policy;
 
 /* define vector arg mode category */
 #define VVAR(NAME) vector_mode_attr_list_list[vector_mode_attr_##NAME]

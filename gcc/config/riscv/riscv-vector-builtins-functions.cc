@@ -21,37 +21,19 @@ along with GCC; see the file COPYING3. If not see
 #define IN_TARGET_CODE 1
 
 #include "riscv-vector-builtins-functions.h"
-#include <algorithm>
 namespace riscv_vector
 {
 
-const unsigned int NAME_MAXLEN = 64;
-const unsigned int MAX_TUPLE_SIZE = 8;
 extern hash_table<registered_function_hasher> *function_table;
 extern GTY (()) tree
-    riscv_vector_types[MAX_TUPLE_SIZE][NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
+    vector_types[MAX_TUPLE_NUM][NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
+extern GTY (()) tree
+    vector_pointer_types[NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
+extern GTY(()) tree scalar_types[NUM_VECTOR_TYPES];
+extern GTY(()) tree scalar_pointer_types[NUM_VECTOR_TYPES];
+extern GTY(()) tree const_scalar_pointer_types[NUM_VECTOR_TYPES];
+
 extern GTY (()) vec<registered_function *, va_gc> *registered_functions;
-
-/* General type nodes: */
-#define DEFINE_SCALAR_TYPE_NODE(BITS)                                          \
-  extern tree int##BITS##_type_node;                                           \
-  extern tree unsigned_int##BITS##_type_node;                                  \
-  extern tree int##BITS##_ptr_type_node;                                       \
-  extern tree unsigned_int##BITS##_ptr_type_node;                              \
-  extern tree const_int##BITS##_ptr_type_node;                                 \
-  extern tree const_unsigned_int##BITS##_ptr_type_node;
-
-DEFINE_SCALAR_TYPE_NODE (8)
-DEFINE_SCALAR_TYPE_NODE (16)
-DEFINE_SCALAR_TYPE_NODE (32)
-DEFINE_SCALAR_TYPE_NODE (64)
-
-/* Type node for fp16.  */
-extern tree fp16_type_node;
-extern tree fp16_ptr_type_node;
-extern tree const_fp16_ptr_type_node;
-extern tree const_float_ptr_type_node;
-extern tree const_double_ptr_type_node;
 
 /* Flags that describe what a function might do, in addition to reading
    its arguments and returning a result.  */
@@ -68,7 +50,7 @@ static const unsigned int CP_WRITE_CSR = 1U << 6;
 static bool reported_missing_extension_p;
 
 static const char *
-get_pred_str (predication_index pred)
+get_pred_str (enum predication_index pred, bool overloaded_p = false)
 {
   switch (pred)
     {
@@ -77,37 +59,37 @@ get_pred_str (predication_index pred)
       return "";
 
     case PRED_m:
-      return "m";
+      return overloaded_p ? "" : "_m";
 
-    case PRED_m_ta:
-      return "m_ta";
+    case PRED_tam:
+      return "_tam";
 
-    case PRED_m_tu:
-      return "m_tu";
+    case PRED_tum:
+      return "_tum";
 
     case PRED_tu:
-      return "tu";
+      return "_tu";
 
     case PRED_ta:
-      return "ta";
+      return "_ta";
 
     case PRED_ma:
-      return "ma";
+      return "_ma";
 
     case PRED_mu:
-      return "mu";
+      return "_mu";
 
     case PRED_tama:
-      return "tama";
+      return "_tama";
 
     case PRED_tamu:
-      return "tamu";
+      return "_tamu";
 
     case PRED_tuma:
-      return "tuma";
+      return "_tuma";
 
     case PRED_tumu:
-      return "tumu";
+      return "_tumu";
 
     default:
       gcc_unreachable ();
@@ -115,81 +97,406 @@ get_pred_str (predication_index pred)
 }
 
 static const char *
-get_operation_str (operation_index op)
+get_operation_str (enum operation_index op)
 {
   switch (op)
     {
     case OP_vv:
-      return "vv";
+      return "_vv";
 
     case OP_vx:
-      return "vx";
+      return "_vx";
 
     case OP_v:
-      return "v";
+      return "_v";
 
     case OP_wv:
-      return "wv";
+      return "_wv";
 
     case OP_wx:
-      return "wx";
+      return "_wx";
 
     case OP_x_x_v:
-      return "x_x_v";
+      return "_x_x_v";
 
     case OP_vf2:
-      return "vf2";
+      return "_vf2";
 
     case OP_vf4:
-      return "vf4";
+      return "_vf4";
 
     case OP_vf8:
-      return "vf8";
+      return "_vf8";
 
     case OP_vvm:
-      return "vvm";
+      return "_vvm";
 
     case OP_vxm:
-      return "vxm";
+      return "_vxm";
 
     case OP_x_x_w:
-      return "x_x_w";
+      return "_x_x_w";
 
     case OP_v_v:
-      return "v_v";
+      return "_v_v";
 
     case OP_v_x:
-      return "v_x";
+      return "_v_x";
 
     case OP_v_f:
-      return "v_f";
+      return "_v_f";
 
     case OP_vs:
-      return "vs";
+      return "_vs";
 
     case OP_vf:
-      return "vf";
+      return "_vf";
 
     case OP_wf:
-      return "wf";
+      return "_wf";
 
     case OP_vfm:
-      return "vfm";
+      return "_vfm";
 
     case OP_vm:
-      return "vm";
+      return "_vm";
 
     case OP_mm:
-      return "mm";
+      return "_mm";
 
     case OP_m:
-      return "m";
+      return "_m";
 
     default:
       break;
     }
 
   return "";
+}
+
+static const char *
+mode2data_type_str (machine_mode mode, bool u, bool ie)
+{
+  switch (mode)
+    {
+  #define MODE2DATA_TYPE_STR_TUPLE8(MODE, NBITS, LMUL) \
+    case VNx##MODE##mode: \
+      return ie ? "_e"#NBITS""#LMUL"" : u ? "_u"#NBITS""#LMUL"" : "_i"#NBITS""#LMUL""; \
+    case VNx2x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x2" : "_i"#NBITS""#LMUL"x2"; \
+    case VNx3x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x3" : "_i"#NBITS""#LMUL"x3"; \
+    case VNx4x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x4" : "_i"#NBITS""#LMUL"x4"; \
+    case VNx5x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x5" : "_i"#NBITS""#LMUL"x5"; \
+    case VNx6x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x6" : "_i"#NBITS""#LMUL"x6"; \
+    case VNx7x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x7" : "_i"#NBITS""#LMUL"x7"; \
+    case VNx8x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x8" : "_i"#NBITS""#LMUL"x8";
+  #define MODE2DATA_TYPE_STR_TUPLE4(MODE, NBITS, LMUL) \
+    case VNx##MODE##mode: \
+      return ie ? "_e"#NBITS""#LMUL"" : u ? "_u"#NBITS""#LMUL"" : "_i"#NBITS""#LMUL""; \
+    case VNx2x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x2" : "_i"#NBITS""#LMUL"x2"; \
+    case VNx3x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x3" : "_i"#NBITS""#LMUL"x3"; \
+    case VNx4x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x4" : "_i"#NBITS""#LMUL"x4";
+  #define MODE2DATA_TYPE_STR_TUPLE2(MODE, NBITS, LMUL) \
+    case VNx##MODE##mode: \
+      return ie ? "_e"#NBITS""#LMUL"" : u ? "_u"#NBITS""#LMUL"" : "_i"#NBITS""#LMUL""; \
+    case VNx2x##MODE##mode: \
+      return u ? "_u"#NBITS""#LMUL"x2" : "_i"#NBITS""#LMUL"x2";
+  #define MODE2DATA_TYPE_STR_TUPLE1(MODE, NBITS, LMUL) \
+    case VNx##MODE##mode: \
+      return ie ? "_e"#NBITS""#LMUL"" : u ? "_u"#NBITS""#LMUL"" : "_i"#NBITS""#LMUL"";
+    MODE2DATA_TYPE_STR_TUPLE8 (2QI, 8, mf8)
+    MODE2DATA_TYPE_STR_TUPLE8 (4QI, 8, mf4)
+    MODE2DATA_TYPE_STR_TUPLE8 (8QI, 8, mf2)
+    MODE2DATA_TYPE_STR_TUPLE8 (16QI, 8, m1)
+    MODE2DATA_TYPE_STR_TUPLE4 (32QI, 8, m2)
+    MODE2DATA_TYPE_STR_TUPLE2 (64QI, 8, m4)
+    MODE2DATA_TYPE_STR_TUPLE1 (128QI, 8, m8)
+    MODE2DATA_TYPE_STR_TUPLE8 (2HI, 16, mf4)
+    MODE2DATA_TYPE_STR_TUPLE8 (4HI, 16, mf2)
+    MODE2DATA_TYPE_STR_TUPLE8 (8HI, 16, m1)
+    MODE2DATA_TYPE_STR_TUPLE4 (16HI, 16, m2)
+    MODE2DATA_TYPE_STR_TUPLE2 (32HI, 16, m4)
+    MODE2DATA_TYPE_STR_TUPLE1 (64HI, 16, m8)
+    MODE2DATA_TYPE_STR_TUPLE8 (2SI, 32, mf2)
+    MODE2DATA_TYPE_STR_TUPLE8 (4SI, 32, m1)
+    MODE2DATA_TYPE_STR_TUPLE4 (8SI, 32, m2)
+    MODE2DATA_TYPE_STR_TUPLE2 (16SI, 32, m4)
+    MODE2DATA_TYPE_STR_TUPLE1 (32SI, 32, m8)
+    MODE2DATA_TYPE_STR_TUPLE8 (2DI, 64, m1)
+    MODE2DATA_TYPE_STR_TUPLE4 (4DI, 64, m2)
+    MODE2DATA_TYPE_STR_TUPLE2 (8DI, 64, m4)
+    MODE2DATA_TYPE_STR_TUPLE1 (16DI, 64, m8)
+  #undef MODE2DATA_TYPE_STR_TUPLE8
+  #undef MODE2DATA_TYPE_STR_TUPLE4
+  #undef MODE2DATA_TYPE_STR_TUPLE2
+  #undef MODE2DATA_TYPE_STR_TUPLE1
+  #define MODE2DATA_TYPE_STR_TUPLE8(MODE, NBITS, LMUL) \
+    case VNx##MODE##mode: \
+      return "_f"#NBITS""#LMUL""; \
+    case VNx2x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x2"; \
+    case VNx3x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x3"; \
+    case VNx4x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x4"; \
+    case VNx5x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x5"; \
+    case VNx6x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x6"; \
+    case VNx7x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x7"; \
+    case VNx8x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x8";
+  #define MODE2DATA_TYPE_STR_TUPLE4(MODE, NBITS, LMUL) \
+    case VNx##MODE##mode: \
+      return "_f"#NBITS""#LMUL""; \
+    case VNx2x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x2"; \
+    case VNx3x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x3"; \
+    case VNx4x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x4";
+  #define MODE2DATA_TYPE_STR_TUPLE2(MODE, NBITS, LMUL) \
+    case VNx##MODE##mode: \
+      return "_f"#NBITS""#LMUL""; \
+    case VNx2x##MODE##mode: \
+      return "_f"#NBITS""#LMUL"x2";
+  #define MODE2DATA_TYPE_STR_TUPLE1(MODE, NBITS, LMUL) \
+    case VNx##MODE##mode: \
+      return "_f"#NBITS""#LMUL""; 
+    MODE2DATA_TYPE_STR_TUPLE8 (2HF, 16, mf4)
+    MODE2DATA_TYPE_STR_TUPLE8 (4HF, 16, mf2)
+    MODE2DATA_TYPE_STR_TUPLE8 (8HF, 16, m1)
+    MODE2DATA_TYPE_STR_TUPLE4 (16HF, 16, m2)
+    MODE2DATA_TYPE_STR_TUPLE2 (32HF, 16, m4)
+    MODE2DATA_TYPE_STR_TUPLE1 (64HF, 16, m8)
+    MODE2DATA_TYPE_STR_TUPLE8 (2SF, 32, mf2)
+    MODE2DATA_TYPE_STR_TUPLE8 (4SF, 32, m1)
+    MODE2DATA_TYPE_STR_TUPLE4 (8SF, 32, m2)
+    MODE2DATA_TYPE_STR_TUPLE2 (16SF, 32, m4)
+    MODE2DATA_TYPE_STR_TUPLE1 (32SF, 32, m8)
+    MODE2DATA_TYPE_STR_TUPLE8 (2DF, 64, m1)
+    MODE2DATA_TYPE_STR_TUPLE4 (4DF, 64, m2)
+    MODE2DATA_TYPE_STR_TUPLE2 (8DF, 64, m4)
+    MODE2DATA_TYPE_STR_TUPLE1 (16DF, 64, m8)
+  #undef MODE2DATA_TYPE_STR_TUPLE8
+  #undef MODE2DATA_TYPE_STR_TUPLE4
+  #undef MODE2DATA_TYPE_STR_TUPLE2
+  #undef MODE2DATA_TYPE_STR_TUPLE1
+  case VNx2BImode: return "_b64";
+  case VNx4BImode: return "_b32";
+  case VNx8BImode: return "_b16";
+  case VNx16BImode: return "_b8"; 
+  case VNx32BImode: return "_b4"; 
+  case VNx64BImode: return "_b2"; 
+  case VNx128BImode: return "_b1";
+  case QImode: return u ? "_u8" : "_i8";
+  case HImode: return u ? "_u16" : "_i16";
+  case SImode: return u ? "_u32" : "_i32";
+  case DImode: return u ? "_u64" : "_i64";
+  case HFmode: return "_f16";
+  case SFmode: return "_f32";
+  case DFmode: return "_f64";
+    default:
+      break;
+    }
+
+  gcc_unreachable ();
+}
+
+static tree
+mode2mask_t (machine_mode mode)
+{
+  int factor = exact_div (GET_MODE_NUNITS (mode), GET_MODE_NUNITS (VNx2BImode))
+                   .to_constant ();
+  factor = exact_log2 (factor);
+  return vector_types[0][VECTOR_TYPE_bool][factor];
+}
+
+static enum vector_type_index
+get_type_idx (machine_mode mode, bool u)
+{
+  #define RVV_INT_TYPE(MODE, TYPE, SEW) \
+    case MODE: \
+      return u ? VECTOR_TYPE_u##TYPE##SEW : VECTOR_TYPE_##TYPE##SEW; \
+      break;
+  #define RVV_FLOAT_TYPE(MODE, TYPE, SEW) \
+    case MODE: \
+      return VECTOR_TYPE_##TYPE##SEW; \
+      break;
+  
+  switch (mode)
+    {
+    case BImode:
+      return VECTOR_TYPE_bool;
+    RVV_INT_TYPE (QImode, int, 8)
+    RVV_INT_TYPE (HImode, int, 16)
+    RVV_INT_TYPE (SImode, int, 32)
+    RVV_INT_TYPE (DImode, int, 64)
+    RVV_FLOAT_TYPE (HFmode, float, 16)
+    RVV_FLOAT_TYPE (SFmode, float, 32)
+    RVV_FLOAT_TYPE (DFmode, float, 64)
+    default:
+      gcc_unreachable ();
+    }
+  
+  return (enum vector_type_index) 0;
+}
+
+static int
+get_lmul_idx (machine_mode mode)
+{
+  machine_mode innermode = GET_MODE_INNER (mode);
+  bool is_bool_p = GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL ? true : false;
+  machine_mode base_mode = is_bool_p ? VNx2QImode : VNx2BImode;
+  int offset = exact_div (GET_MODE_NUNITS (mode), GET_MODE_NUNITS (base_mode))
+                   .to_constant ();
+  if (is_bool_p)
+    return exact_log2 (offset);
+  else
+    {
+      int nf = riscv_classify_nf (mode);
+      offset = exact_log2 (offset / nf);
+      int factor = exact_log2 (GET_MODE_BITSIZE (innermode).to_constant () /
+                               GET_MODE_BITSIZE (QImode));
+      return offset + factor;
+    }
+}
+
+static tree
+get_tuple_t (machine_mode mode, bool u)
+{
+  gcc_assert (VECTOR_MODE_P (mode));
+  machine_mode innermode = GET_MODE_INNER (mode);
+  int nf = riscv_classify_nf (mode);
+  enum vector_type_index base = get_type_idx (innermode, u);
+  int offset = get_lmul_idx (mode);
+  tree type = vector_types[nf - 1][base][offset];
+  gcc_assert (TYPE_MODE (type) == mode);
+  return type;
+}
+
+static tree
+get_dt_t (machine_mode mode, bool u, bool ptr = false, bool c = false)
+{
+  if (riscv_tuple_mode_p (mode))
+    return get_tuple_t (mode, u);
+  
+  if (mode == VOIDmode)
+    return void_type_node;
+    
+  machine_mode innermode = GET_MODE_INNER (mode);
+  enum vector_type_index base = get_type_idx (innermode, u);
+  tree type = NULL_TREE;
+  if (VECTOR_MODE_P (mode))
+    {
+      int offset = get_lmul_idx (mode);      
+      if (ptr)
+        type = vector_pointer_types[base][offset];
+      else
+        type = vector_types[0][base][offset];
+      
+      gcc_assert (type);
+      return type;
+    }
+  
+  if (ptr)
+    {
+      if (c)
+        type = const_scalar_pointer_types[base];
+      else
+        type = scalar_pointer_types[base];
+    }
+  else
+    type = scalar_types[base];
+  
+  gcc_assert (type);
+  return type;
+}
+
+/* Helper functions to get datatype of arg. */
+
+static bool
+is_dt_ptr (enum data_type_index dt)
+{
+  return dt == DT_ptr || dt == DT_uptr || dt == DT_c_ptr || dt == DT_c_uptr;
+}
+
+static bool
+is_dt_unsigned (enum data_type_index dt)
+{
+  return dt == DT_unsigned || dt == DT_uptr || dt == DT_c_uptr;
+}
+
+static bool
+is_dt_const (enum data_type_index dt)
+{
+  return dt == DT_c_ptr || dt == DT_c_uptr;
+}
+
+/* Helper functions for builder implementation. */
+static void
+intrinsic_naming_rule_1 (function_instance &instance, int index)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[index];
+  bool unsigned_p = instance.get_data_type_list ()[index] == DT_unsigned;
+  const char *name = instance.get_base_name ();
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+}
+
+static void
+intrinsic_naming_rule_2 (function_instance &instance, int index1, int index2)
+{
+  machine_mode dst_mode = instance.get_arg_pattern ().arg_list[index1];
+  machine_mode src_mode = instance.get_arg_pattern ().arg_list[index2];
+  bool dst_unsigned_p = instance.get_data_type_list ()[index1] == DT_unsigned;
+  bool src_unsigned_p = instance.get_data_type_list ()[index2] == DT_unsigned;
+  const char *name = instance.get_base_name ();
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *src_suffix = mode2data_type_str (src_mode, src_unsigned_p, false);
+  const char *dst_suffix = mode2data_type_str (dst_mode, dst_unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s%s", name, op, src_suffix, dst_suffix, pred);
+}
+
+static tree
+get_dt_t_with_index (const function_instance &instance, int index)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[index];
+  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[index]);
+  bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[index]);
+  bool c_p = is_dt_const (instance.get_data_type_list ()[index]);
+  return get_dt_t (mode, unsigned_p, ptr_p, c_p);
+}
+
+static bool
+vector_scalar_operation_p (enum operation_index op)
+{
+  return op == OP_vx || op == OP_wx || op == OP_vxm || op == OP_vf ||
+         op == OP_wf || op == OP_vfm;
+}
+
+static bool
+segment_skip_p (const char *base_name, machine_mode mode)
+{
+  unsigned int nf = riscv_classify_nf (mode);
+  std::string str = base_name;
+  str = str.substr (str.length() - 1, str.length() - 1);
+  if (strcmp (std::to_string (nf).c_str (), str.c_str ()) != 0)
+    return true;
+  return false;
 }
 
 /* Return true if the function has no return value.  */
@@ -229,377 +536,6 @@ generate_builtin_insn (enum insn_code icode, unsigned int n_ops,
   return has_target_p ? ops[0].value : const0_rtx;
 }
 
-static tree
-lmul2mask_t (machine_mode mode, unsigned int lmul)
-{
-  unsigned int ratio;
-  unsigned int index;
-  unsigned int sew = GET_MODE_BITSIZE (mode).to_constant ();
-
-  switch (lmul)
-    {
-    case 0:
-      ratio = 8 * sew;
-      break;
-
-    case 1:
-      ratio = 4 * sew;
-      break;
-
-    case 2:
-      ratio = 2 * sew;
-      break;
-
-    case 3:
-      ratio = sew / 1;
-      break;
-
-    case 4:
-      ratio = sew / 2;
-      break;
-
-    case 5:
-      ratio = sew / 4;
-      break;
-
-    case 6:
-      ratio = sew / 8;
-      break;
-
-    default:
-      gcc_unreachable ();
-    }
-
-  index = ratio == 64   ? 0
-          : ratio == 32 ? 1
-          : ratio == 16 ? 2
-          : ratio == 8  ? 3
-          : ratio == 4  ? 4
-          : ratio == 2  ? 5
-                        : 6;
-  return riscv_vector_types[0][VECTOR_TYPE_bool][index];
-}
-
-static const char *
-mode2data_type_str (machine_mode mode, bool u, bool ie)
-{
-  static char buffer[NAME_MAXLEN] = {0};
-  unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
-  unsigned int vlmul = riscv_classify_vlmul_field (mode);
-  int nf = riscv_classify_nf (mode);
-  const char *lmul = vlmul == VLMUL_FIELD_000 ? "m1" : vlmul == VLMUL_FIELD_001 ? "m2"
-          : vlmul == VLMUL_FIELD_010 ? "m4" : vlmul == VLMUL_FIELD_011 ? "m8"
-          : vlmul == VLMUL_FIELD_101 ? "mf8" : vlmul == VLMUL_FIELD_110 ? "mf4" : "mf2";
-  const char *prefix = FLOAT_MODE_P (mode) ? "f" : (ie && nf == 1) ? "e" : u ? "u" : "i";
-  
-  if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
-    {
-      switch (mode)
-        {
-        case VNx2BImode:
-          return "b64";
-        case VNx4BImode:
-          return "b32";
-        case VNx8BImode:
-          return "b16";
-        case VNx16BImode:
-          return "b8";
-        case VNx32BImode:
-          return "b4";
-        case VNx64BImode:
-          return "b2";
-        case VNx128BImode:
-          return "b1";
-        default:
-          gcc_unreachable ();
-        }
-    }
-  else if (!VECTOR_MODE_P (mode))
-    {
-      if (FLOAT_MODE_P (mode))
-        snprintf (buffer, sizeof (buffer), "f%d", sew);
-      else if (u)
-        snprintf (buffer, sizeof (buffer), "u%d", sew);
-      else
-        snprintf (buffer, sizeof (buffer), "i%d", sew);
-    }
-  else if (nf == 1)
-    snprintf (buffer, sizeof (buffer), "%s%d%s", prefix, sew, lmul);
-  else
-    snprintf (buffer, sizeof (buffer), "%s%d%sx%d", prefix, sew, lmul, nf);
-  
-  return buffer;
-}
-
-static unsigned int
-mode2lmul (machine_mode mode)
-{
-  int nf = riscv_classify_nf (mode);
-  unsigned int factor = GET_MODE_SIZE (mode).coeffs[0] / nf;
-  if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
-    {
-      switch (mode)
-        {
-        case VNx2BImode:
-          return 0;
-        case VNx4BImode:
-          return 1;
-        case VNx8BImode:
-          return 2;
-        case VNx16BImode:
-          return 3;
-        case VNx32BImode:
-          return 4;
-        case VNx64BImode:
-          return 5;
-        case VNx128BImode:
-          return 6;
-        default:
-          gcc_unreachable ();
-        }
-    }
-    
-  if (factor < UNITS_PER_V_REG.coeffs[0])
-    {
-      int lmul = UNITS_PER_V_REG.coeffs[0] / factor;
-      return lmul == 8 ? 0 : lmul == 4 ? 1 : 2;
-    }
-  else
-    {
-      int lmul = factor / UNITS_PER_V_REG.coeffs[0];
-      return lmul == 8   ? 6
-             : lmul == 4 ? 5
-             : lmul == 2 ? 4
-                         : 3;
-    }
-}
-
-static tree
-get_tuple_t (machine_mode mode, bool u, unsigned int nelt)
-{
-  if (VECTOR_MODE_P (mode))
-    {
-      unsigned int lmul = mode2lmul (mode);
-      machine_mode innermode = GET_MODE_INNER (mode);
-      tree vectype;
-
-      switch (innermode)
-        {
-        case E_QImode:
-          vectype = u ? riscv_vector_types[nelt - 1][VECTOR_TYPE_uint8][lmul]
-                      : riscv_vector_types[nelt - 1][VECTOR_TYPE_int8][lmul];
-          break;
-
-        case E_HImode:
-          vectype = u ? riscv_vector_types[nelt - 1][VECTOR_TYPE_uint16][lmul]
-                      : riscv_vector_types[nelt - 1][VECTOR_TYPE_int16][lmul];
-          break;
-
-        case E_SImode:
-          vectype = u ? riscv_vector_types[nelt - 1][VECTOR_TYPE_uint32][lmul]
-                      : riscv_vector_types[nelt - 1][VECTOR_TYPE_int32][lmul];
-          break;
-
-        case E_DImode:
-          vectype = u ? riscv_vector_types[nelt - 1][VECTOR_TYPE_uint64][lmul]
-                      : riscv_vector_types[nelt - 1][VECTOR_TYPE_int64][lmul];
-          break;
-
-        case E_HFmode:
-          vectype = riscv_vector_types[nelt - 1][VECTOR_TYPE_float16][lmul];
-          break;
-
-        case E_SFmode:
-          vectype = riscv_vector_types[nelt - 1][VECTOR_TYPE_float32][lmul];
-          break;
-
-        case E_DFmode:
-          vectype = riscv_vector_types[nelt - 1][VECTOR_TYPE_float64][lmul];
-          break;
-
-        default:
-          gcc_unreachable ();
-        }
-
-      return vectype;
-    }
-
-  gcc_unreachable ();
-}
-
-static tree
-get_dt_t (machine_mode mode, bool u, bool ptr = false, bool c = false,
-          unsigned int nelt = 1)
-{
-  if (riscv_tuple_mode_p (mode))
-    {
-      return get_tuple_t (mode, u, nelt);
-    }
-  if (VECTOR_MODE_P (mode))
-    {
-      unsigned int lmul = mode2lmul (mode);
-      machine_mode innermode = GET_MODE_INNER (mode);
-      tree vectype;
-
-      if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
-        return riscv_vector_types[0][VECTOR_TYPE_bool][lmul];
-
-      switch (innermode)
-        {
-        case E_QImode:
-          vectype = u ? riscv_vector_types[0][VECTOR_TYPE_uint8][lmul]
-                      : riscv_vector_types[0][VECTOR_TYPE_int8][lmul];
-          break;
-
-        case E_HImode:
-          vectype = u ? riscv_vector_types[0][VECTOR_TYPE_uint16][lmul]
-                      : riscv_vector_types[0][VECTOR_TYPE_int16][lmul];
-          break;
-
-        case E_SImode:
-          vectype = u ? riscv_vector_types[0][VECTOR_TYPE_uint32][lmul]
-                      : riscv_vector_types[0][VECTOR_TYPE_int32][lmul];
-          break;
-
-        case E_DImode:
-          vectype = u ? riscv_vector_types[0][VECTOR_TYPE_uint64][lmul]
-                      : riscv_vector_types[0][VECTOR_TYPE_int64][lmul];
-          break;
-
-        case E_HFmode:
-          vectype = riscv_vector_types[0][VECTOR_TYPE_float16][lmul];
-          break;
-
-        case E_SFmode:
-          vectype = riscv_vector_types[0][VECTOR_TYPE_float32][lmul];
-          break;
-
-        case E_DFmode:
-          vectype = riscv_vector_types[0][VECTOR_TYPE_float64][lmul];
-          break;
-
-        default:
-          gcc_unreachable ();
-        }
-
-      if (ptr)
-        return build_pointer_type (vectype);
-      else
-        return vectype;
-    }
-
-  switch (mode)
-    {
-    case E_QImode:
-      if (ptr)
-        {
-          if (c)
-            {
-              return u ? const_unsigned_int8_ptr_type_node
-                       : const_int8_ptr_type_node;
-            }
-          else
-            return u ? unsigned_int8_ptr_type_node : int8_ptr_type_node;
-        }
-      else
-        return u ? unsigned_int8_type_node : int8_type_node;
-
-    case E_HImode:
-      if (ptr)
-        {
-          if (c)
-            return u ? const_unsigned_int16_ptr_type_node
-                     : const_int16_ptr_type_node;
-          else
-            return u ? unsigned_int16_ptr_type_node : int16_ptr_type_node;
-        }
-      else
-        return u ? unsigned_int16_type_node : int16_type_node;
-
-    case E_SImode:
-      if (ptr)
-        {
-          if (c)
-            return u ? const_unsigned_int32_ptr_type_node
-                     : const_int32_ptr_type_node;
-          else
-            return u ? unsigned_int32_ptr_type_node : int32_ptr_type_node;
-        }
-      else
-        return u ? unsigned_int32_type_node : int32_type_node;
-
-    case E_DImode:
-      if (ptr)
-        {
-          if (c)
-            return u ? const_unsigned_int64_ptr_type_node
-                     : const_int64_ptr_type_node;
-          else
-            return u ? unsigned_int64_ptr_type_node : int64_ptr_type_node;
-        }
-      else
-        return u ? unsigned_int64_type_node : int64_type_node;
-
-    case E_HFmode:
-      if (ptr)
-        {
-          if (c)
-            return const_fp16_ptr_type_node;
-          else
-            return fp16_ptr_type_node;
-        }
-      else
-        return fp16_type_node;
-
-    case E_SFmode:
-      if (ptr)
-        {
-          if (c)
-            return const_float_ptr_type_node;
-          else
-            return float_ptr_type_node;
-        }
-      else
-        return float_type_node;
-
-    case E_DFmode:
-      if (ptr)
-        {
-          if (c)
-            return const_double_ptr_type_node;
-          else
-            return double_ptr_type_node;
-        }
-      else
-        return double_type_node;
-
-    default:
-      break;
-    }
-
-  gcc_unreachable ();
-}
-
-/* Helper functions to get datatype of arg. */
-
-static bool
-is_dt_ptr (const data_type_index dt)
-{
-  return dt == DT_ptr || dt == DT_uptr || dt == DT_c_ptr || dt == DT_c_uptr;
-}
-
-static bool
-is_dt_unsigned (const data_type_index dt)
-{
-  return dt == DT_unsigned || dt == DT_uptr || dt == DT_c_uptr;
-}
-
-static bool
-is_dt_const (const data_type_index dt)
-{
-  return dt == DT_c_ptr || dt == DT_c_uptr;
-}
-
 /* Return the single field in tuple type TYPE.  */
 static tree
 tuple_type_field (tree type)
@@ -613,9 +549,9 @@ tuple_type_field (tree type)
 
 /* Return a hash code for a function_instance.  */
 static hashval_t
-get_string_hash (char *input_string)
+get_string_hash (const char * input_string)
 {
-  if (input_string == NULL || strlen (input_string) == 0)
+  if (!input_string || strlen (input_string) == 0)
     return 0;
 
   inchash::hash h;
@@ -675,43 +611,31 @@ registered_function_hasher::equal (value_type value, const compare_type &key)
 
 /* function_instance class implemention */
 
-function_instance::function_instance (function_builder *_builder,
-                                      const char *_base_name,
-                                      vector_arg_modes &_target_arg_pattern,
-                                      predication_index _target_pred,
-                                      operation_index _target_operation)
-    : m_builder (_builder), m_base_name (_base_name),
-      m_target_arg_pattern (_target_arg_pattern), m_target_pred (_target_pred),
-      m_target_operation (_target_operation)
+function_instance::function_instance (function_builder *__builder,
+                                      const char *__base_name,
+                                      vector_arg_modes &__arg_pattern,
+                                      enum predication_index __pred,
+                                      enum operation_index __operation)
+    : m_builder (__builder), m_base_name (__base_name),
+      m_target_arg_pattern (__arg_pattern), m_target_pred (__pred),
+      m_target_operation (__operation)
 {
-  m_function_name = (char *)xmalloc (NAME_MAXLEN);
-  m_hashval = (hashval_t *)xmalloc (sizeof (hashval_t));
-  *m_hashval = 0;
-  memset (m_function_name, 0, NAME_MAXLEN);
+  function_name[0] = '\0';
 }
 
-function_instance::function_instance ()
+function_instance::function_instance (const char *__name)
 {
-  m_function_name = (char *)xmalloc (NAME_MAXLEN);
-  m_hashval = (hashval_t *)xmalloc (sizeof (hashval_t));
-  *m_hashval = 0;
-  memset (m_function_name, 0, NAME_MAXLEN);
-  m_need_free = true;
+  memcpy (function_name, __name, NAME_MAXLEN);
 }
 
 function_instance::~function_instance ()
 {
-  if (m_need_free)
-    {
-      free (m_function_name);
-      free (m_hashval);
-    }
 }
 
 inline bool
 function_instance::operator== (const function_instance &other) const
 {
-  return (strcmp (get_func_name (), other.get_func_name ()) == 0);
+  return (strcmp (function_name, other.function_name) == 0);
 }
 
 inline bool
@@ -724,7 +648,7 @@ function_instance::operator!= (const function_instance &other) const
 hashval_t
 function_instance::hash () const
 {
-  return get_string_hash (get_func_name ());
+  return get_string_hash (function_name);
 }
 
 bool
@@ -738,7 +662,7 @@ function_instance::check (location_t, tree, tree, unsigned int, tree *) const
 unsigned int
 function_instance::call_properties () const
 {
-  unsigned int flags = m_builder->call_properties (*this);
+  unsigned int flags = m_builder->call_properties ();
 
   /* -fno-trapping-math means that we can assume any FP exceptions
      are not user-visible.  */
@@ -812,7 +736,7 @@ function_instance::get_arg_pattern () const
   return m_target_arg_pattern;
 }
 
-predication_index
+enum predication_index
 function_instance::get_pred () const
 {
   return m_target_pred;
@@ -824,13 +748,13 @@ function_instance::get_vma_vta () const
   return any_policy;
 }
 
-operation_index
+enum operation_index
 function_instance::get_operation () const
 {
   return m_target_operation;
 }
 
-data_type_index *
+enum data_type_index *
 function_instance::get_data_type_list () const
 {
   return m_builder->get_data_type_list ();
@@ -842,31 +766,18 @@ function_instance::builder () const
   return m_builder;
 }
 
-char *
-function_instance::get_func_name () const
-{
-  return m_function_name;
-}
-
-void
-function_instance::clear_func_name () const
-{
-  memset (m_function_name, 0, NAME_MAXLEN);
-}
-
 /* function_builder class implemention */
 
-function_builder::function_builder (const char *_base_name,
-                                    vector_arg_all_modes &_target_arg_patterns,
-                                    uint64_t _target_pattern,
-                                    uint64_t _target_preds,
-                                    uint64_t _target_op_types,
-                                    const unsigned int _extensions)
-    : m_base_name (_base_name), m_target_arg_patterns (_target_arg_patterns),
-      m_target_pattern (_target_pattern), m_target_preds (_target_preds),
-      m_target_op_types (_target_op_types), m_required_extensions (_extensions)
+function_builder::function_builder (const char *__base_name,
+                                    vector_arg_all_modes &__arg_patterns,
+                                    uint64_t __pattern,
+                                    uint64_t __preds,
+                                    uint64_t __op_types,
+                                    const unsigned int __extensions)
+    : m_base_name (__base_name), m_target_arg_patterns (__arg_patterns),
+      m_target_pattern (__pattern), m_target_preds (__preds),
+      m_target_op_types (__op_types), m_required_extensions (__extensions)
 {
-  gcc_obstack_init (&m_string_obstack);
   m_iter_idx_cnt = 0;
   m_iter_arg_cnt = 0;
   m_iter_arg_idx_list = (unsigned int *)xmalloc (m_target_arg_patterns.arg_len *
@@ -885,17 +796,34 @@ function_builder::function_builder (const char *_base_name,
           m_iter_arg_idx_list[m_iter_arg_cnt++] = i;
         }
     }
-  
+
   m_direct_overloads = lang_GNU_CXX ();
-  
+
   gcc_assert (m_iter_arg_cnt > 0);
   gcc_assert (m_iter_idx_cnt > 0);
+  
+  gcc_obstack_init (&m_string_obstack);
 }
 
 function_builder::~function_builder ()
 {
-  obstack_free (&m_string_obstack, NULL);
   free (m_iter_arg_idx_list);
+  obstack_free (&m_string_obstack, NULL);
+}
+
+/* Add NAME to the end of the function name being built.  */
+void
+function_builder::append_name (const char *name)
+{
+  obstack_grow (&m_string_obstack, name, strlen (name));
+}
+
+/* Zero-terminate and complete the function name being built.  */
+char *
+function_builder::finish_name ()
+{
+  obstack_1grow (&m_string_obstack, 0);
+  return (char *) obstack_finish (&m_string_obstack);
 }
 
 rtx
@@ -907,39 +835,29 @@ function_builder::expand_builtin_insn (enum insn_code icode, tree exp,
   struct expand_operand ops[MAX_RECOG_OPERANDS];
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
-  predication_index pred = instance.get_pred ();
+  enum predication_index pred = instance.get_pred ();
 
   /* Map any target to operand 0.  */
   int opno = 0;
   int offset = 0;
 
   if (!function_returns_void_p (fndecl))
-    {
-      create_output_operand (&ops[opno++], target, mode);
-    }
+    create_output_operand (&ops[opno++], target, mode);
 
   if (need_mask_operand_p ())
     {
       if (has_mask_arg_p (pred))
-        {
-          add_input_operand (&ops[opno++], exp, offset++);
-        }
+        add_input_operand (&ops[opno++], exp, offset++);
       else
-        {
-          create_input_operand (&ops[opno++], const0_rtx, Pmode);
-        }
+        create_input_operand (&ops[opno++], const0_rtx, Pmode);
     }
 
   if (need_dest_operand_p ())
     {
       if (has_dest_arg_p (pred))
-        {
-          add_input_operand (&ops[opno++], exp, offset++);
-        }
+        add_input_operand (&ops[opno++], exp, offset++);
       else
-        {
-          create_input_operand (&ops[opno++], const0_rtx, Pmode);
-        }
+        create_input_operand (&ops[opno++], const0_rtx, Pmode);
     }
 
   for (int argno = offset; argno < call_expr_nargs (exp); argno++)
@@ -974,24 +892,35 @@ function_builder::get_dest_arguments_length () const
 }
 
 tree
-function_builder::get_mask_type (const tree &return_type,
-                                 const tree &first_type, const vec<tree> &,
-                                 unsigned int lmul) const
+function_builder::get_mask_type (tree return_type,
+                                 const function_instance &instance,
+                                 const vec<tree> &) const
 {
-  const tree type =
-      VECTOR_MODE_P (TYPE_MODE (return_type)) ? return_type : first_type;
-
+  tree type = return_type;
+  if (!VECTOR_MODE_P (TYPE_MODE (type)))
+    {
+      /* Fetch the vector mode start from arg[0]. */
+      for (unsigned int i = 0; i < instance.get_arg_pattern ().arg_len; i++)
+        {
+          if (VECTOR_MODE_P (instance.get_arg_pattern ().arg_list[i]))
+            {
+              type =
+                  get_dt_t (instance.get_arg_pattern ().arg_list[i],
+                            instance.get_data_type_list ()[i] == DT_unsigned);
+              break;
+            }
+        }
+    }
+  gcc_assert (VECTOR_MODE_P (TYPE_MODE (type)));
   if (GET_MODE_CLASS (TYPE_MODE (type)) == MODE_VECTOR_BOOL)
     return type;
   else
-    return lmul2mask_t (GET_MODE_INNER (TYPE_MODE (type)), lmul);
-}
-
-tree
-function_builder::get_dest_type (const tree &return_type, const vec<tree> &,
-                                 unsigned int) const
-{
-  return return_type;
+    {
+      machine_mode mask_mode;
+      gcc_assert (
+          riscv_vector_get_mask_mode (TYPE_MODE (type)).exists (&mask_mode));
+      return mode2mask_t (mask_mode);
+    }
 }
 
 void
@@ -1000,9 +929,10 @@ function_builder::get_argument_types (const function_instance &,
 {
 }
 
-void
-function_builder::get_name (char *, const function_instance &) const
+char *
+function_builder::assemble_name (function_instance &)
 {
+  return nullptr;
 }
 
 uint64_t
@@ -1028,18 +958,18 @@ function_builder::need_dest_operand_p () const
 }
 
 bool
-function_builder::has_mask_arg_p (predication_index pred) const
+function_builder::has_mask_arg_p (enum predication_index pred) const
 {
   uint64_t pat = get_pattern ();
 
-  return pred == PRED_m || pred == PRED_m_ta || pred == PRED_m_tu ||
+  return pred == PRED_m || pred == PRED_tam || pred == PRED_tum ||
          pred == PRED_tama || pred == PRED_tamu || pred == PRED_tuma ||
          pred == PRED_tumu || pred == PRED_ma || pred == PRED_mu ||
          (pat & PAT_merge);
 }
 
 bool
-function_builder::has_dest_arg_p (predication_index pred) const
+function_builder::has_dest_arg_p (enum predication_index pred) const
 {
   uint64_t pat = get_pattern ();
 
@@ -1053,7 +983,7 @@ function_builder::has_dest_arg_p (predication_index pred) const
     case PRED_m:
       return !(pat & PAT_ignore_policy);
     case PRED_tu:
-    case PRED_m_tu:
+    case PRED_tum:
     case PRED_mu:
     case PRED_tamu:
     case PRED_tuma:
@@ -1064,8 +994,14 @@ function_builder::has_dest_arg_p (predication_index pred) const
     }
 }
 
+bool
+function_builder::can_be_overloaded_p (const function_instance &) const
+{
+  return false;
+}
+
 unsigned int
-function_builder::get_policy (predication_index pred) const
+function_builder::get_policy (enum predication_index pred) const
 {
   uint64_t pat = get_pattern ();
 
@@ -1083,10 +1019,10 @@ function_builder::get_policy (predication_index pred) const
       else
         return tumu_policy;
     case PRED_ta:
-    case PRED_m_ta:
+    case PRED_tam:
       return ta_policy;
     case PRED_tu:
-    case PRED_m_tu:
+    case PRED_tum:
       return tu_policy;
     case PRED_ma:
       return ma_policy;
@@ -1106,13 +1042,13 @@ function_builder::get_policy (predication_index pred) const
 }
 
 size_t
-function_builder::get_position_of_mask_arg (predication_index) const
+function_builder::get_position_of_mask_arg (enum predication_index) const
 {
   return 0;
 }
 
 size_t
-function_builder::get_position_of_dest_arg (predication_index pred) const
+function_builder::get_position_of_dest_arg (enum predication_index pred) const
 {
   uint64_t pat = get_pattern ();
   if (pred == PRED_tu ||
@@ -1124,35 +1060,20 @@ function_builder::get_position_of_dest_arg (predication_index pred) const
 }
 
 unsigned int
-function_builder::call_properties (const function_instance &) const
+function_builder::call_properties () const
 {
   return 0;
 }
 
-data_type_index *
+enum data_type_index *
 function_builder::get_data_type_list () const
 {
   return m_target_arg_patterns.dt_list;
 }
 
-/* Add NAME to the end of the function name being built.  */
-void
-function_builder::append_name (const char *name)
-{
-  obstack_grow (&m_string_obstack, name, strlen (name));
-}
-
-/* Zero-terminate and complete the function name being built.  */
-char *
-function_builder::finish_name ()
-{
-  obstack_1grow (&m_string_obstack, 0);
-  return (char *)obstack_finish (&m_string_obstack);
-}
-
 /* Return the appropriate function attributes for INSTANCE.  */
 tree
-function_builder::get_attributes (const function_instance &instance)
+function_builder::get_attributes (const function_instance &instance) const
 {
   tree attrs = NULL_TREE;
 
@@ -1177,12 +1098,12 @@ function_builder::get_attributes (const function_instance &instance)
 registered_function &
 function_builder::add_function (const function_instance &instance,
                                 const char *name, tree fntype, tree attrs,
-                                bool placeholder_p)
+                                bool overloaded_p,
+                                bool placeholder_p) const
 {
-  unsigned int code =
-      (vec_safe_length (registered_functions) << RISCV_BUILTIN_SHIFT) +
-      RISCV_BUILTIN_VECTOR;
-
+  unsigned int code = vec_safe_length (registered_functions);
+  code = (code << RISCV_BUILTIN_SHIFT) + RISCV_BUILTIN_VECTOR;
+  
   /* We need to be able to generate placeholders to enusre that we have a
      consistent numbering scheme for function codes between the C and C++
      frontends, so that everything ties up in LTO.
@@ -1204,6 +1125,7 @@ function_builder::add_function (const function_instance &instance,
   registered_function &rfn = *ggc_alloc<registered_function> ();
   rfn.instance = instance;
   rfn.decl = decl;
+  rfn.overloaded_p = overloaded_p;
   rfn.required_extensions = m_required_extensions;
   vec_safe_push (registered_functions, &rfn);
 
@@ -1217,30 +1139,43 @@ function_builder::add_function (const function_instance &instance,
    one-to-one mapping between "short" and "full" names, and if standard
    overload resolution therefore isn't necessary.  */
 void
-function_builder::add_unique_function (const function_instance &instance,
+function_builder::add_unique_function (function_instance &instance,
                                        tree return_type,
                                        vec<tree> &argument_types)
 {
   /* Add the function under its full (unique) name.  */
-  get_name (instance.get_func_name (), instance);
-  append_name (instance.get_func_name ());
-  char *name = finish_name ();
+  char *overloaded_name = this->assemble_name (instance);
+  if (instance.function_name[0] == '\0')
+    return;
+    
   tree fntype = build_function_type_array (
       return_type, argument_types.length (), argument_types.address ());
   tree attrs = get_attributes (instance);
   registered_function &rfn =
-      add_function (instance, name, fntype, attrs, false);
+      add_function (instance, instance.function_name, fntype, attrs, false, false);
 
   /* Enter the function into the hash table.  */
   hashval_t hashval = instance.hash ();
   registered_function **rfn_slot =
       function_table->find_slot_with_hash (instance, hashval, INSERT);
-
+  
   if (*rfn_slot)
-    error ("duplicate function name: %s", name);
+    {
+      error ("duplicate function name: %s", instance.function_name);
+      gcc_unreachable ();
+    }
 
   *rfn_slot = &rfn;
-  obstack_free (&m_string_obstack, name);
+
+  if (overloaded_name)
+    {
+      /* Attribute lists shouldn't be shared.  */
+      tree attrs = get_attributes (instance);
+      bool placeholder_p = !m_direct_overloads;
+        add_function (instance, overloaded_name, fntype, attrs,
+                      false, placeholder_p);
+      obstack_free (&m_string_obstack, overloaded_name);
+    }
 }
 
 /* Check whether all the RISCV_* values in REQUIRED_EXTENSIONS are
@@ -1248,7 +1183,7 @@ function_builder::add_unique_function (const function_instance &instance,
    Report an error against LOCATION if not.  */
 bool
 function_builder::check_required_extensions (location_t location, tree fndecl,
-                                             uint64_t required_extensions)
+                                             uint64_t required_extensions) const
 {
   /* For the instructions doesn't need any extension, we return true.  */
   if (required_extensions == 0)
@@ -1277,52 +1212,44 @@ function_builder::check_required_extensions (location_t location, tree fndecl,
    types in ARGUMENT_TYPES.  RETURN_TYPE is the type returned by the
    function.  */
 void
-function_builder::apply_predication (tree &return_type, tree &first_type,
-                                     vec<tree> &argument_types,
-                                     unsigned int lmul,
-                                     predication_index pred) const
+function_builder::apply_predication (const function_instance &instance,
+                                     tree return_type,
+                                     vec<tree> &argument_types) const
 {
   /* check if mask parameter need. */
-  if (has_mask_arg_p (pred))
+  if (has_mask_arg_p (instance.get_pred ()))
     {
       argument_types.quick_insert (
-          get_position_of_mask_arg (pred),
-          get_mask_type (return_type, first_type, argument_types, lmul));
+          get_position_of_mask_arg (instance.get_pred ()),
+          get_mask_type (return_type, instance, argument_types));
     }
 
   /* check if dest parameter need. */
-  if (has_dest_arg_p (pred))
+  if (has_dest_arg_p (instance.get_pred ()))
     {
       size_t size = get_dest_arguments_length ();
-      tree dest_type = get_dest_type (return_type, argument_types, lmul);
       if (argument_types.is_empty ())
         for (size_t i = 0; i < size; i += 1)
-          argument_types.quick_push (dest_type);
+          argument_types.quick_push (return_type);
       else
         for (size_t i = 0; i < size; i += 1)
-          argument_types.quick_insert (get_position_of_dest_arg (pred) + i,
-                                       dest_type);
+          argument_types.quick_insert (get_position_of_dest_arg (instance.get_pred ()) + i,
+                                       return_type);
     }
 
   /* check if vl parameter need  */
-  if (pred != PRED_none)
+  if (instance.get_pred () != PRED_none)
     argument_types.quick_push (size_type_node);
 }
 
 void
-function_builder::build_one (const function_instance &instance)
+function_builder::build_one (function_instance &instance)
 {
   /* Byte forms of vlxusegei take 21 arguments.  */
   auto_vec<tree, 21> argument_types;
   tree return_type = get_return_type (instance);
   get_argument_types (instance, argument_types);
-  machine_mode mode = VECTOR_MODE_P (instance.get_arg_pattern ().arg_list[0])
-                          ? instance.get_arg_pattern ().arg_list[0]
-                          : instance.get_arg_pattern ().arg_list[1];
-  tree first_type = get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                              instance.get_data_type_list ()[0] == DT_unsigned);
-  apply_predication (return_type, first_type, argument_types, mode2lmul (mode),
-                     instance.get_pred ());
+  apply_predication (instance, return_type, argument_types);
   add_unique_function (instance, return_type, argument_types);
 }
 
@@ -1393,137 +1320,27 @@ function_builder::get_arg_modes_by_iter_idx (unsigned int iter_idx) const
   return arg_modes_info;
 }
 
-static bool
-pattern_can_skip_p (const char *base_name, vector_arg_modes arg_modes,
-                    data_type_index *dt_list)
-{
-  if (arg_modes.arg_len == 0)
-    return true;
-
-  if (strstr (base_name, "vluxseg") != NULL ||
-      strstr (base_name, "vloxseg") != NULL)
-    {
-      unsigned int nf = riscv_classify_nf (arg_modes.arg_list[0]);
-
-      if (strcmp (base_name, "vluxseg2") == 0 ||
-          strcmp (base_name, "vloxseg2") == 0)
-        return nf != 2;
-
-      if (strcmp (base_name, "vluxseg3") == 0 ||
-          strcmp (base_name, "vloxseg3") == 0)
-        return nf != 3;
-
-      if (strcmp (base_name, "vluxseg4") == 0 ||
-          strcmp (base_name, "vloxseg4") == 0)
-        return nf != 4;
-
-      if (strcmp (base_name, "vluxseg5") == 0 ||
-          strcmp (base_name, "vloxseg5") == 0)
-        return nf != 5;
-
-      if (strcmp (base_name, "vluxseg6") == 0 ||
-          strcmp (base_name, "vloxseg6") == 0)
-        return nf != 6;
-
-      if (strcmp (base_name, "vluxseg7") == 0 ||
-          strcmp (base_name, "vloxseg7") == 0)
-        return nf != 7;
-
-      if (strcmp (base_name, "vluxseg8") == 0 ||
-          strcmp (base_name, "vloxseg8") == 0)
-        return nf != 8;
-
-      return false;
-    }
-
-  if (strstr (base_name, "vsuxseg") != NULL ||
-      strstr (base_name, "vsoxseg") != NULL)
-    {
-      if (strcmp (base_name, "vsuxseg") == 0 ||
-          strcmp (base_name, "vsoxseg") == 0)
-        return false;
-
-      unsigned int nf = riscv_classify_nf (arg_modes.arg_list[0]);
-
-      if (strcmp (base_name, "vsuxseg2") == 0 ||
-          strcmp (base_name, "vsoxseg2") == 0)
-        return nf != 2;
-
-      if (strcmp (base_name, "vsuxseg3") == 0 ||
-          strcmp (base_name, "vsoxseg3") == 0)
-        return nf != 3;
-
-      if (strcmp (base_name, "vsuxseg4") == 0 ||
-          strcmp (base_name, "vsoxseg4") == 0)
-        return nf != 4;
-
-      if (strcmp (base_name, "vsuxseg5") == 0 ||
-          strcmp (base_name, "vsoxseg5") == 0)
-        return nf != 5;
-
-      if (strcmp (base_name, "vsuxseg6") == 0 ||
-          strcmp (base_name, "vsoxseg6") == 0)
-        return nf != 6;
-
-      if (strcmp (base_name, "vsuxseg7") == 0 ||
-          strcmp (base_name, "vsoxseg7") == 0)
-        return nf != 7;
-
-      if (strcmp (base_name, "vsuxseg8") == 0 ||
-          strcmp (base_name, "vsoxseg8") == 0)
-        return nf != 8;
-
-      return false;
-    }
-
-  if (strcmp (base_name, "vlmul_ext") && strcmp (base_name, "vlmul_trunc") &&
-      strcmp (base_name, "vget") && strcmp (base_name, "vset") &&
-      strcmp (base_name, "vloxei") && strcmp (base_name, "vluxei") &&
-      strcmp (base_name, "vsuxei") && strcmp (base_name, "vsoxei"))
-    return false;
-
-  machine_mode tmode = arg_modes.arg_list[0];
-  machine_mode smode = strcmp (base_name, "vset") == 0 ? arg_modes.arg_list[3]
-                                                       : arg_modes.arg_list[1];
-
-  if (GET_MODE_INNER (tmode) != GET_MODE_INNER (smode))
-    return true;
-
-  if (tmode == smode)
-    return true;
-
-  if ((strcmp (base_name, "vlmul_ext") == 0) ||
-      (strcmp (base_name, "vset") == 0))
-    return known_lt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode));
-
-  if ((strcmp (base_name, "vlmul_trunc") == 0) ||
-      (strcmp (base_name, "vget") == 0))
-    return known_gt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode));
-
-  if ((strcmp (base_name, "vluxei") == 0 || strcmp (base_name, "vloxei") == 0 ||
-       strcmp (base_name, "vsuxei") == 0 ||
-       strcmp (base_name, "vsoxei") == 0) &&
-      FLOAT_MODE_P (GET_MODE_INNER (arg_modes.arg_list[0])) &&
-      dt_list[0] == DT_unsigned)
-    return true;
-
-  return false;
-}
-
 void
 function_builder::register_function ()
 {
   for (unsigned iter_idx = 0; iter_idx < m_iter_idx_cnt; iter_idx++)
     {
       vector_arg_modes &arg_modes = get_arg_modes_by_iter_idx (iter_idx);
+      
+      bool skip_p = false;
+      if (arg_modes.arg_len == 0)
+        skip_p = true;
+        
+      if (FLOAT_MODE_P (arg_modes.arg_list[0]) && 
+        get_data_type_list ()[0] == DT_unsigned)
+        skip_p = true;
 
-      if (pattern_can_skip_p (m_base_name, arg_modes, get_data_type_list ()))
+      if (skip_p)
         {
           free (arg_modes.arg_list);
           free (&arg_modes);
           continue;
         }
-
       for (unsigned pred = 1; pred < NUM_PREDS; pred <<= 1)
         {
           if ((m_target_preds & pred) == 0)
@@ -1534,47 +1351,49 @@ function_builder::register_function ()
               if ((m_target_op_types & op_type) == 0)
                 continue;
 
-              build_one (function_instance (
+              function_instance instance (
                   this, m_base_name, arg_modes,
-                  predication_index (m_target_preds & pred),
-                  operation_index (m_target_op_types & op_type)));
+                  (enum predication_index) (m_target_preds & pred),
+                  (enum operation_index) (m_target_op_types & op_type));
+              build_one (instance);
             }
         }
     }
 }
 
-/* implementation for config builder */
+/* A function implementation for config builder */
 unsigned int
-config::call_properties (const function_instance &) const
+config::call_properties () const
 {
-  return CP_WRITE_CSR | CP_READ_CSR;
+  return CP_READ_CSR;
 }
 
-void
-config::get_name (char *name, const function_instance &instance) const
+char *
+config::assemble_name (function_instance &instance)
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, true));
+  const char *name = instance.get_base_name ();
+  const char *dt = mode2data_type_str (mode, false, true);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s", name, dt);
+  return nullptr;
 }
+
 tree
 config::get_return_type (const function_instance &) const
 {
   return size_type_node;
 }
 
+/* A function implementation for vsetvl builder */
 void
-config::get_argument_types (const function_instance &instance,
+vsetvl::get_argument_types (const function_instance &,
                             vec<tree> &argument_types) const
 {
-  if (strcmp (instance.get_base_name (), "vsetvl") == 0)
-    argument_types.quick_push (size_type_node);
+  argument_types.quick_push (size_type_node);
 }
 
 rtx
-config::expand (const function_instance &instance, tree exp, rtx target) const
+vsetvl::expand (const function_instance &instance, tree exp, rtx target) const
 {
   struct expand_operand ops[MAX_RECOG_OPERANDS];
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
@@ -1584,13 +1403,8 @@ config::expand (const function_instance &instance, tree exp, rtx target) const
   create_output_operand (&ops[opno++], target, Pmode);
   unsigned int vtype =
       get_vtype_for_mode (instance.get_arg_pattern ().arg_list[0]);
-  insn_code icode = code_for_vsetvl_volatile (Pmode);
-
-  if (strcmp (instance.get_base_name (), "vsetvl") == 0)
-    add_input_operand (&ops[opno++], exp, 0);
-  else
-    create_input_operand (&ops[opno++], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
-
+  enum insn_code icode = code_for_vsetvl (Pmode);
+  add_input_operand (&ops[opno++], exp, 0);
   /* create vtype input operand.  */
   create_input_operand (&ops[opno++], GEN_INT (vtype), Pmode);
   /* Map the arguments to the other operands.  */
@@ -1599,21 +1413,44 @@ config::expand (const function_instance &instance, tree exp, rtx target) const
                                 !function_returns_void_p (fndecl));
 }
 
-/* implementation for readvl functions.  */
+/* A function implementation for vsetvlmax builder */
+rtx
+vsetvlmax::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  struct expand_operand ops[MAX_RECOG_OPERANDS];
+  tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
+
+  /* Map any target to operand 0.  */
+  int opno = 0;
+  create_output_operand (&ops[opno++], target, Pmode);
+  unsigned int vtype =
+      get_vtype_for_mode (instance.get_arg_pattern ().arg_list[0]);
+  enum insn_code icode = code_for_vsetvl (Pmode);
+  create_input_operand (&ops[opno++], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
+  /* create vtype input operand.  */
+  create_input_operand (&ops[opno++], GEN_INT (vtype), Pmode);
+  /* Map the arguments to the other operands.  */
+  gcc_assert (opno == insn_data[icode].n_generator_args);
+  return generate_builtin_insn (icode, opno, ops,
+                                !function_returns_void_p (fndecl));
+}
+
+/* A function implementation for readvl functions.  */
 unsigned int
-readvl::call_properties (const function_instance &) const
+readvl::call_properties () const
 {
   return CP_READ_CSR;
 }
 
-void
-readvl::get_name (char *name, const function_instance &instance) const
+char *
+readvl::assemble_name (function_instance &instance)
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  const char *name = instance.get_base_name ();
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s", name, dt);
+  return nullptr;
 }
 
 tree
@@ -1626,17 +1463,7 @@ void
 readvl::get_argument_types (const function_instance &instance,
                             vec<tree> &argument_types) const
 {
-  if (riscv_tuple_mode_p (instance.get_arg_pattern ().arg_list[0]))
-    argument_types.quick_push (get_tuple_t (
-        instance.get_arg_pattern ().arg_list[1],
-        instance.get_data_type_list ()[0] == DT_unsigned,
-        exact_div (GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[0]),
-                   GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[1]))
-            .to_constant ()));
-  else
-    argument_types.quick_push (
-        get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                  instance.get_data_type_list ()[0] == DT_unsigned));
+  argument_types.quick_push (get_dt_t_with_index (instance, 0));
 }
 
 rtx
@@ -1645,7 +1472,7 @@ readvl::expand (const function_instance &, tree exp, rtx target) const
   struct expand_operand ops[MAX_RECOG_OPERANDS];
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
-  insn_code icode = code_for_readvl (Pmode);
+  enum insn_code icode = code_for_readvl (Pmode);
 
   /* Map any target to operand 0.  */
   int opno = 0;
@@ -1660,113 +1487,215 @@ readvl::expand (const function_instance &, tree exp, rtx target) const
                                 !function_returns_void_p (fndecl));
 }
 
-/* A function_base for Miscellaneous functions.  */
-void
-misc::get_name (char *name, const function_instance &instance) const
+/* A function implementation for Miscellaneous functions.  */
+char *
+misc::assemble_name (function_instance &instance)
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-
-  if (strcmp (instance.get_base_name (), "vundefined") == 0)
-    strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  else
-    {
-      unsigned int offset =
-          strcmp (instance.get_base_name (), "vset") == 0 ? 3 : 1;
-      machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[offset];
-      bool prefix_unsigned_p =
-          instance.get_data_type_list ()[offset] == DT_unsigned;
-
-      strcat (name, get_operation_str (instance.get_operation ()));
-      strcat (name, "_");
-      strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
-      strcat (name, "_");
-      strcat (name, mode2data_type_str (mode, unsigned_p, false));
-    }
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  append_name (mode2data_type_str (mode, unsigned_p, false));
+  return finish_name ();
 }
 
 tree
 misc::get_return_type (const function_instance &instance) const
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  return get_dt_t_with_index (instance, 0);
 }
 
 void
 misc::get_argument_types (const function_instance &instance,
                           vec<tree> &argument_types) const
 {
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if (i == 2)
-        argument_types.quick_push (size_type_node);
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
+  argument_types.quick_push (get_dt_t_with_index (instance, 1));
 }
 
+/* A function implementation for vreinterpret functions.  */
 rtx
-misc::expand (const function_instance &instance, tree exp, rtx target) const
+vreinterpret::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
-
-  if (strcmp (instance.get_base_name (), "vreinterpret") == 0)
-    icode = code_for_vreinterpret (instance.get_arg_pattern ().arg_list[0]);
-  else if (strcmp (instance.get_base_name (), "vlmul_ext") == 0)
-    icode = code_for_vlmul_ext (instance.get_arg_pattern ().arg_list[0]);
-  else if (strcmp (instance.get_base_name (), "vlmul_trunc") == 0)
-    icode = code_for_vlmul_trunc (instance.get_arg_pattern ().arg_list[0]);
-  else if (strcmp (instance.get_base_name (), "vundefined") == 0)
-    {
-      emit_clobber (copy_rtx (target));
-      return target;
-    }
-  else if (strcmp (instance.get_base_name (), "vset") == 0)
-    icode = code_for_vset (instance.get_arg_pattern ().arg_list[0]);
-  else
-    icode = code_for_vget (instance.get_arg_pattern ().arg_list[0]);
-
+  enum insn_code icode = code_for_vreinterpret (instance.get_arg_pattern ().arg_list[0]);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for loadstore functions.  */
+/* A function implementation for vlmul_ext functions.  */
+char *
+vlmul_ext::assemble_name (function_instance &instance)
+{
+  machine_mode tmode = instance.get_arg_pattern ().arg_list[0];
+  machine_mode smode = instance.get_arg_pattern ().arg_list[1];
+  if (GET_MODE_INNER (tmode) != GET_MODE_INNER (smode))
+    return nullptr;
+
+  if (tmode == smode)
+    return nullptr;
+  
+  if (known_lt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode)))
+    return nullptr;
+
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  append_name (mode2data_type_str (tmode, unsigned_p, false));
+  return finish_name ();
+}
+
+rtx
+vlmul_ext::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  enum insn_code icode = code_for_vlmul_ext (instance.get_arg_pattern ().arg_list[0]);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vlmul_trunc functions.  */
+char *
+vlmul_trunc::assemble_name (function_instance &instance)
+{
+  machine_mode tmode = instance.get_arg_pattern ().arg_list[0];
+  machine_mode smode = instance.get_arg_pattern ().arg_list[1];
+  if (GET_MODE_INNER (tmode) != GET_MODE_INNER (smode))
+    return nullptr;
+
+  if (tmode == smode)
+    return nullptr;
+  
+  if (known_gt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode)))
+    return nullptr;
+
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  append_name (mode2data_type_str (tmode, unsigned_p, false));
+  return finish_name ();
+}
+
+rtx
+vlmul_trunc::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  enum insn_code icode = code_for_vlmul_trunc (instance.get_arg_pattern ().arg_list[0]);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vset functions.  */
+char *
+vset::assemble_name (function_instance &instance)
+{
+  machine_mode tmode = instance.get_arg_pattern ().arg_list[0];
+  machine_mode smode = instance.get_arg_pattern ().arg_list[2];
+  if (GET_MODE_INNER (tmode) != GET_MODE_INNER (smode))
+    return nullptr;
+
+  if (tmode == smode)
+    return nullptr;
+  
+  if (known_lt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode)))
+    return nullptr;
+    
+  intrinsic_naming_rule_2 (instance, 0, 2);
+  append_name (instance.get_base_name ());
+  return finish_name ();
+}
+
 void
-loadstore::get_name (char *name, const function_instance &instance) const
+vset::get_argument_types (const function_instance &instance,
+                          vec<tree> &argument_types) const
+{
+  misc::get_argument_types (instance, argument_types);
+  argument_types.quick_push (size_type_node);
+  argument_types.quick_push (get_dt_t_with_index (instance, 2));
+}
+
+rtx
+vset::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  enum insn_code icode = code_for_vset (instance.get_arg_pattern ().arg_list[0]);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vget functions.  */
+char *
+vget::assemble_name (function_instance &instance)
+{
+  machine_mode tmode = instance.get_arg_pattern ().arg_list[0];
+  machine_mode smode = instance.get_arg_pattern ().arg_list[1];
+  if (GET_MODE_INNER (tmode) != GET_MODE_INNER (smode))
+    return nullptr;
+
+  if (tmode == smode)
+    return nullptr;
+  
+  if (known_gt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode)))
+    return nullptr;
+  
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  append_name (mode2data_type_str (tmode, unsigned_p, false));
+  return finish_name ();
+}
+
+void
+vget::get_argument_types (const function_instance &instance,
+                          vec<tree> &argument_types) const
+{
+  misc::get_argument_types (instance, argument_types);
+  argument_types.quick_push (size_type_node);
+}
+
+rtx
+vget::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  enum insn_code icode = code_for_vget (instance.get_arg_pattern ().arg_list[0]);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vundefined functions.  */
+char *
+vundefined::assemble_name (function_instance &instance)
+{
+  const char *name = instance.get_base_name ();
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s", name, dt);
+  return nullptr;
+}
+
+void
+vundefined::get_argument_types (const function_instance &,
+                          vec<tree> &) const
+{
+}
+
+rtx
+vundefined::expand (const function_instance &, tree, rtx target) const
+{
+  emit_clobber (copy_rtx (target));
+  return target;
+}
+
+/* A function implementation for loadstore functions.  */
+char *
+loadstore::assemble_name (function_instance &instance)
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
-  char buf[NAME_MAXLEN / 4];
-
-  if (strcmp (instance.get_base_name (), "vlm") &&
-      strcmp (instance.get_base_name (), "vsm"))
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  char name[8];
+  snprintf (name, 8, "%s%d", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  if (this->can_be_overloaded_p (instance))
     {
-      snprintf (buf, sizeof (buf), "%d", sew);
-      strcat (name, buf);
+      append_name (name);
+      append_name (get_pred_str (instance.get_pred (), true));
+      return finish_name ();
     }
-
-  strcat (name, "_");
-  const char *operation_suffix = get_operation_str (instance.get_operation ());
-
-  if (strlen (operation_suffix) > 0)
-    {
-      strcat (name, operation_suffix);
-      strcat (name, "_");
-    }
-
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  return nullptr;
 }
 
 void
@@ -1774,44 +1703,26 @@ loadstore::get_argument_types (const function_instance &instance,
                                vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
-      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
-      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
-      argument_types.quick_push (get_dt_t (
-          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
-    }
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
 }
 
-/* A function_base for indexed loadstore functions.  */
-void
-indexedloadstore::get_name (char *name, const function_instance &instance) const
+/* A function implementation for indexed loadstore functions.  */
+char *
+indexedloadstore::assemble_name (function_instance &instance)
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  machine_mode data_mode = instance.get_arg_pattern ().arg_list[0];
+  machine_mode index_mode = instance.get_arg_pattern ().arg_list[2];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  unsigned int sew = GET_MODE_BITSIZE (
-      GET_MODE_INNER (instance.get_arg_pattern ().arg_list[2]));
-  char buf[8];
-  snprintf (buf, sizeof (buf), "%d", sew);
-  strcat (name, buf);
-  strcat (name, "_");
-  const char *operation_suffix = get_operation_str (instance.get_operation ());
-
-  if (strlen (operation_suffix) > 0)
-    {
-      strcat (name, operation_suffix);
-      strcat (name, "_");
-    }
-
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (index_mode));
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "%s%d", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (data_mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  append_name (name);
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
 }
 
 void
@@ -1819,295 +1730,119 @@ indexedloadstore::get_argument_types (const function_instance &instance,
                                       vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
-      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
-      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
-      argument_types.quick_push (get_dt_t (
-          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
-    }
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
 }
 
-/* A function_base for segment functions.  */
-void
-segment::get_name (char *name, const function_instance &instance) const
+/* A function implementation for basic_alu functions.  */
+char *
+basic_alu::assemble_name (function_instance &instance)
 {
-  machine_mode mode =
-      (strstr (instance.get_base_name (), "vlseg") != NULL ||
-       strstr (instance.get_base_name (), "vlsseg") != NULL ||
-       strstr (instance.get_base_name (), "vluxseg") != NULL ||
-       strstr (instance.get_base_name (), "vloxseg") != NULL)
-          ? instance.get_arg_pattern ().arg_list[0]
-      : (strstr (instance.get_base_name (), "vsuxseg") != NULL ||
-         strstr (instance.get_base_name (), "vsoxseg") != NULL)
-          ? instance.get_arg_pattern ().arg_list[3]
-      : (strcmp (instance.get_base_name (), "vsseg") == 0 ||
-         strcmp (instance.get_base_name (), "vssseg") == 0)
-          ? instance.get_arg_pattern ().arg_list[2]
-          : instance.get_arg_pattern ().arg_list[1];
-  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[0]);
-
-  if (strcmp (instance.get_base_name (), "vlsegff") == 0 ||
-      strcmp (instance.get_base_name (), "vlseg2ff") == 0 ||
-      strcmp (instance.get_base_name (), "vlseg3ff") == 0 ||
-      strcmp (instance.get_base_name (), "vlseg4ff") == 0 ||
-      strcmp (instance.get_base_name (), "vlseg5ff") == 0 ||
-      strcmp (instance.get_base_name (), "vlseg6ff") == 0 ||
-      strcmp (instance.get_base_name (), "vlseg7ff") == 0 ||
-      strcmp (instance.get_base_name (), "vlseg8ff") == 0)
-    strcat (name, "vlseg");
-  else
-    strcat (name, instance.get_base_name ());
-
-  unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
-  char buf[16];
-
-  if (strcmp (instance.get_base_name (), "vlseg") == 0 ||
-      strcmp (instance.get_base_name (), "vlsseg") == 0)
-    snprintf (buf, sizeof (buf), "%de%d", riscv_classify_nf (mode), sew);
-  else if (strcmp (instance.get_base_name (), "vlsegff") == 0)
-    snprintf (buf, sizeof (buf), "%de%dff", riscv_classify_nf (mode), sew);
-  else if (strcmp (instance.get_base_name (), "vlseg2ff") == 0)
-    snprintf (buf, sizeof (buf), "2e%dff", sew);
-  else if (strcmp (instance.get_base_name (), "vlseg3ff") == 0)
-    snprintf (buf, sizeof (buf), "3e%dff", sew);
-  else if (strcmp (instance.get_base_name (), "vlseg4ff") == 0)
-    snprintf (buf, sizeof (buf), "4e%dff", sew);
-  else if (strcmp (instance.get_base_name (), "vlseg5ff") == 0)
-    snprintf (buf, sizeof (buf), "5e%dff", sew);
-  else if (strcmp (instance.get_base_name (), "vlseg6ff") == 0)
-    snprintf (buf, sizeof (buf), "6e%dff", sew);
-  else if (strcmp (instance.get_base_name (), "vlseg7ff") == 0)
-    snprintf (buf, sizeof (buf), "7e%dff", sew);
-  else if (strcmp (instance.get_base_name (), "vlseg8ff") == 0)
-    snprintf (buf, sizeof (buf), "8e%dff", sew);
-  else if (strstr (instance.get_base_name (), "vluxseg") != NULL ||
-           strstr (instance.get_base_name (), "vloxseg") != NULL)
+  intrinsic_naming_rule_1 (instance, 0);
+  if (this->can_be_overloaded_p (instance))
     {
-      sew = GET_MODE_BITSIZE (GET_MODE_INNER (
-          instance.get_arg_pattern ()
-              .arg_list[instance.get_arg_pattern ().arg_len - 1]));
-
-      if (strcmp (instance.get_base_name (), "vluxseg") == 0 ||
-          strcmp (instance.get_base_name (), "vloxseg") == 0)
-        snprintf (buf, sizeof (buf), "%dei%d", riscv_classify_nf (mode), sew);
-      else
-        {
-          mode = instance.get_arg_pattern ().arg_list[1];
-          snprintf (buf, sizeof (buf), "ei%d", sew);
-        }
+      append_name (instance.get_base_name ());
+      if (instance.get_operation () == OP_v_x ||
+          instance.get_operation () == OP_v_v ||
+          instance.get_operation () == OP_v_f)
+        append_name ("_v");
+      if (instance.get_operation () == OP_x_x_v ||
+          instance.get_operation () == OP_x_x_w)
+        append_name ("_x");
+      append_name (get_pred_str (instance.get_pred (), true));
+      return finish_name ();
     }
-  else if (strstr (instance.get_base_name (), "vsuxseg") != NULL ||
-           strstr (instance.get_base_name (), "vsoxseg") != NULL)
-    {
-      sew = GET_MODE_BITSIZE (
-          GET_MODE_INNER (instance.get_arg_pattern ().arg_list[2]));
-
-      if (strcmp (instance.get_base_name (), "vsuxseg") == 0 ||
-          strcmp (instance.get_base_name (), "vsoxseg") == 0)
-        snprintf (buf, sizeof (buf), "%dei%d", riscv_classify_nf (mode), sew);
-      else
-        {
-          mode = instance.get_arg_pattern ()
-                     .arg_list[instance.get_arg_pattern ().arg_len - 1];
-          snprintf (buf, sizeof (buf), "ei%d", sew);
-        }
-    }
-  else if (strcmp (instance.get_base_name (), "vsseg") == 0 ||
-           strcmp (instance.get_base_name (), "vssseg") == 0)
-    snprintf (buf, sizeof (buf), "%de%d", riscv_classify_nf (mode), sew);
-  else
-    snprintf (buf, sizeof (buf), "e%d", sew);
-
-  strcat (name, buf);
-  strcat (name, "_");
-  const char *operation_suffix = get_operation_str (instance.get_operation ());
-
-  if (strlen (operation_suffix) > 0)
-    {
-      strcat (name, operation_suffix);
-      strcat (name, "_");
-    }
-
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
-}
-
-/* A function_base for single-width unary functions.  */
-void
-unop::get_name (char *name, const function_instance &instance) const
-{
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  const char *operation_suffix = get_operation_str (instance.get_operation ());
-  if (strlen (operation_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, operation_suffix);
-    }
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  return nullptr;
 }
 
 tree
-unop::get_return_type (const function_instance &instance) const
+basic_alu::get_return_type (const function_instance &instance) const
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  return get_dt_t_with_index (instance, 0);
 }
 
+/* A function implementation for unary functions.  */
 void
 unop::get_argument_types (const function_instance &instance,
                           vec<tree> &argument_types) const
 {
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    argument_types.quick_push (
-        get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                  instance.get_data_type_list ()[i] == DT_unsigned));
+  argument_types.quick_push (get_dt_t_with_index (instance, 1));
 }
 
-/* A function_base for single-width binary functions.  */
-void
-binop::get_name (char *name, const function_instance &instance) const
+bool
+unop::can_be_overloaded_p (const function_instance &instance) const
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  const char *operation_suffix = get_operation_str (instance.get_operation ());
-  if (strlen (operation_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, operation_suffix);
-    }
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  if (instance.get_pred () == PRED_none)
+    return false;
+    
+  return true;
 }
 
-tree
-binop::get_return_type (const function_instance &instance) const
-{
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
-}
-
+/* A function implementation for binary functions.  */
 void
 binop::get_argument_types (const function_instance &instance,
                            vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     {
-      if ((instance.get_operation () == OP_vx ||
-           instance.get_operation () == OP_wx ||
-           instance.get_operation () == OP_vxm ||
-           instance.get_operation () == OP_vf ||
-           instance.get_operation () == OP_wf) &&
-          i == 2)
-        argument_types.quick_push (
-            get_dt_t (GET_MODE_INNER (instance.get_arg_pattern ().arg_list[i]),
-                      instance.get_data_type_list ()[i] == DT_unsigned));
+      if (i == 2 && vector_scalar_operation_p (instance.get_operation ()))
+        {
+          machine_mode mode = GET_MODE_INNER (instance.get_arg_pattern ().arg_list[i]);
+          bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+          argument_types.quick_push (get_dt_t (mode, unsigned_p));
+        }
       else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
+        argument_types.quick_push (get_dt_t_with_index (instance, i));
     }
 }
 
-/* A function_base for single-width ternary functions.  */
-void
-ternop::get_name (char *name, const function_instance &instance) const
+bool
+binop::can_be_overloaded_p (const function_instance &) const
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  const char *operation_suffix = get_operation_str (instance.get_operation ());
-  if (strlen (operation_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, operation_suffix);
-    }
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  return true;
 }
 
-tree
-ternop::get_return_type (const function_instance &instance) const
+/* A function implementation for widen binary functions.  */
+char *
+wbinop::assemble_name (function_instance &instance)
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name (instance.get_base_name ());
+  append_name (get_operation_str (instance.get_operation ()));
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
 }
 
+/* A function implementation for ternary functions.  */
 void
 ternop::get_argument_types (const function_instance &instance,
                             vec<tree> &argument_types) const
 {
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
+  if (vector_scalar_operation_p (instance.get_operation ()))
     {
-      if ((instance.get_operation () == OP_vx ||
-           instance.get_operation () == OP_vf) &&
-          i == 1)
-        argument_types.quick_push (
-            get_dt_t (GET_MODE_INNER (instance.get_arg_pattern ().arg_list[i]),
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
+      machine_mode mode = GET_MODE_INNER (instance.get_arg_pattern ().arg_list[1]);
+      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[1]);
+      argument_types.quick_push (get_dt_t (mode, unsigned_p));
     }
+  else
+    argument_types.quick_push (get_dt_t_with_index (instance, 1));
+  for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
 }
 
-/* A function_base for reduction functions.  */
-void
-reduceop::get_name (char *name, const function_instance &instance) const
+bool
+ternop::can_be_overloaded_p (const function_instance &) const
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
-  bool prefix_unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
-  strcat (name, get_operation_str (instance.get_operation ()));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  return true;
 }
 
-tree
-reduceop::get_return_type (const function_instance &instance) const
+/* A function implementation for reduction functions.  */
+char *
+reduceop::assemble_name (function_instance &instance)
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
 }
 
 void
@@ -2115,22 +1850,21 @@ reduceop::get_argument_types (const function_instance &instance,
                               vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    argument_types.quick_push (
-        get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                  instance.get_data_type_list ()[i] == DT_unsigned));
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
 }
 
 tree
-reduceop::get_mask_type (const tree &, const tree &,
-                         const vec<tree> &argument_types, unsigned int) const
+reduceop::get_mask_type (tree, const function_instance &,
+                         const vec<tree> &argument_types) const
 {
-  return lmul2mask_t (GET_MODE_INNER (TYPE_MODE (argument_types[0])),
-                      mode2lmul (TYPE_MODE (argument_types[0])));
+  machine_mode mask_mode;
+  gcc_assert (riscv_vector_get_mask_mode (TYPE_MODE (argument_types[0])).exists (&mask_mode));
+  return mode2mask_t (mask_mode);
 }
 
-/* A function_base for vle functions.  */
+/* A function implementation for vle functions.  */
 unsigned int
-vle::call_properties (const function_instance &) const
+vle::call_properties () const
 {
   return CP_READ_MEMORY;
 }
@@ -2138,36 +1872,49 @@ vle::call_properties (const function_instance &) const
 tree
 vle::get_return_type (const function_instance &instance) const
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  return get_dt_t_with_index (instance, 0);
+}
+
+bool
+vle::can_be_overloaded_p (const function_instance &instance) const
+{
+  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu ||
+         instance.get_pred () == PRED_tamu ||
+         instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu;
 }
 
 rtx
 vle::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vle (mode);
+  enum insn_code icode = code_for_vle (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vse functions.  */
+/* A function implementation for vse functions.  */
 unsigned int
-vse::call_properties (const function_instance &) const
+vse::call_properties () const
 {
   return CP_WRITE_MEMORY;
+}
+
+bool
+vse::can_be_overloaded_p (const function_instance &) const
+{
+  return true;
 }
 
 rtx
 vse::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  insn_code icode = code_for_vse (mode);
+  enum insn_code icode = code_for_vse (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vlse functions.  */
+/* A function implementation for vlse functions.  */
 unsigned int
-vlse::call_properties (const function_instance &) const
+vlse::call_properties () const
 {
   return CP_READ_MEMORY;
 }
@@ -2175,8 +1922,7 @@ vlse::call_properties (const function_instance &) const
 tree
 vlse::get_return_type (const function_instance &instance) const
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  return get_dt_t_with_index (instance, 0);
 }
 
 void
@@ -2187,17 +1933,25 @@ vlse::get_argument_types (const function_instance &instance,
   argument_types.quick_push (ptrdiff_type_node);
 }
 
+bool
+vlse::can_be_overloaded_p (const function_instance &instance) const
+{
+  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu ||
+         instance.get_pred () == PRED_tamu ||
+         instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu;
+}
+
 rtx
 vlse::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vlse (mode);
+  enum insn_code icode = code_for_vlse (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vsse functions.  */
+/* A function implementation for vsse functions.  */
 unsigned int
-vsse::call_properties (const function_instance &) const
+vsse::call_properties () const
 {
   return CP_WRITE_MEMORY;
 }
@@ -2210,17 +1964,35 @@ vsse::get_argument_types (const function_instance &instance,
   argument_types.quick_insert (1, ptrdiff_type_node);
 }
 
+bool
+vsse::can_be_overloaded_p (const function_instance &) const
+{
+  return true;
+}
+
 rtx
 vsse::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  insn_code icode = code_for_vsse (mode);
+  enum insn_code icode = code_for_vsse (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vlm functions.  */
+/* A function implementation for vlm functions.  */
+char *
+vlm::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  const char *name = instance.get_base_name ();
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s", name, op, dt);
+  return nullptr;
+}
+
 unsigned int
-vlm::call_properties (const function_instance &) const
+vlm::call_properties () const
 {
   return CP_READ_MEMORY;
 }
@@ -2228,28 +2000,40 @@ vlm::call_properties (const function_instance &) const
 tree
 vlm::get_return_type (const function_instance &instance) const
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  return get_dt_t_with_index (instance, 0);
 }
 
 void
 vlm::get_argument_types (const function_instance &,
                          vec<tree> &argument_types) const
 {
-  argument_types.quick_push (const_unsigned_int8_ptr_type_node);
+  argument_types.quick_push (const_scalar_pointer_types[VECTOR_TYPE_uint8]);
 }
 
 rtx
 vlm::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vlm (mode);
+  enum insn_code icode = code_for_vlm (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vsm functions.  */
+/* A function implementation for vsm functions.  */
+char *
+vsm::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  const char *name = instance.get_base_name ();
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s", name, op, dt);
+  append_name (name);
+  return finish_name ();
+}
+
 unsigned int
-vsm::call_properties (const function_instance &) const
+vsm::call_properties () const
 {
   return CP_WRITE_MEMORY;
 }
@@ -2258,23 +2042,21 @@ void
 vsm::get_argument_types (const function_instance &instance,
                          vec<tree> &argument_types) const
 {
-  argument_types.quick_push (unsigned_int8_ptr_type_node);
-  argument_types.quick_push (
-      get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                instance.get_data_type_list ()[0] == DT_unsigned));
+  argument_types.quick_push (scalar_pointer_types[VECTOR_TYPE_uint8]);
+  argument_types.quick_push (get_dt_t_with_index (instance, 0));
 }
 
 rtx
 vsm::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  insn_code icode = code_for_vsm (mode);
+  enum insn_code icode = code_for_vsm (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vlxei functions.  */
+/* A function implementation for vlxei functions.  */
 unsigned int
-vlxei::call_properties (const function_instance &) const
+vlxei::call_properties () const
 {
   return CP_READ_MEMORY;
 }
@@ -2282,84 +2064,93 @@ vlxei::call_properties (const function_instance &) const
 tree
 vlxei::get_return_type (const function_instance &instance) const
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  return get_dt_t_with_index (instance, 0);
 }
 
+/* A function implementation for vluxei functions.  */
 rtx
-vlxei::expand (const function_instance &instance, tree exp, rtx target) const
+vluxei::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  unsigned int unspec = strcmp (instance.get_base_name (), "vluxei") == 0
-                            ? UNSPEC_UNORDER_INDEXED_LOAD
-                            : UNSPEC_ORDER_INDEXED_LOAD;
-  insn_code icode = code_for_vlxei (unspec, mode1, mode2);
+  enum insn_code icode = code_for_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vsxei functions.  */
+/* A function implementation for vloxei functions.  */
+rtx
+vloxei::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode = code_for_vlxei (UNSPEC_ORDER_INDEXED_LOAD, mode1, mode2);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vsuxei functions.  */
 unsigned int
-vsxei::call_properties (const function_instance &) const
+vsuxei::call_properties () const
 {
   return CP_WRITE_MEMORY;
 }
 
 rtx
-vsxei::expand (const function_instance &instance, tree exp, rtx target) const
+vsuxei::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  unsigned int unspec = strcmp (instance.get_base_name (), "vsuxei") == 0
-                            ? UNSPEC_UNORDER_INDEXED_STORE
-                            : UNSPEC_ORDER_INDEXED_STORE;
-  insn_code icode = code_for_vsxei (unspec, mode1, mode2);
+  enum insn_code icode = code_for_vsxei (UNSPEC_UNORDER_INDEXED_STORE, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vleff functions.  */
+/* A function implementation for vsoxei functions.  */
 unsigned int
-vleff::call_properties (const function_instance &) const
+vsoxei::call_properties () const
+{
+  return CP_WRITE_MEMORY;
+}
+
+rtx
+vsoxei::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode = code_for_vsxei (UNSPEC_ORDER_INDEXED_STORE, mode1, mode2);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vleff functions.  */
+unsigned int
+vleff::call_properties () const
 {
   return CP_READ_MEMORY | CP_RAISE_LD_EXCEPTIONS;
 }
 
-void
-vleff::get_name (char *name, const function_instance &instance) const
+char *
+vleff::assemble_name (function_instance &instance)
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-
-  strcat (name, "vle");
   unsigned int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
-  char buf[8];
-  snprintf (buf, sizeof (buf), "%d", sew);
-  strcat (name, buf);
-  strcat (name, "ff");
-  strcat (name, "_");
-  const char *operation_suffix = get_operation_str (instance.get_operation ());
-
-  if (strlen (operation_suffix) > 0)
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "vle%dff", sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  if (this->can_be_overloaded_p (instance))
     {
-      strcat (name, operation_suffix);
-      strcat (name, "_");
+      append_name (name);
+      append_name (get_pred_str (instance.get_pred (), true));
+      return finish_name ();
     }
-
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  return nullptr;
 }
 
 tree
 vleff::get_return_type (const function_instance &instance) const
 {
-  return get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                   instance.get_data_type_list ()[0] == DT_unsigned);
+  return get_dt_t_with_index (instance, 0);
 }
 
 void
@@ -2367,15 +2158,16 @@ vleff::get_argument_types (const function_instance &instance,
                            vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
-      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
-      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
-      argument_types.quick_push (get_dt_t (
-          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
-    }
-
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
   argument_types.quick_push (build_pointer_type (size_type_node));
+}
+
+bool 
+vleff::can_be_overloaded_p (const function_instance &instance) const
+{
+  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu ||
+         instance.get_pred () == PRED_tamu ||
+         instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu;
 }
 
 gimple *
@@ -2402,14 +2194,14 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   tree tem = make_ssa_name (size_type_node);
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  function_instance *fn_instance = new function_instance ();
-
-  snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "readvl_%s",
-            mode2data_type_str (mode, unsigned_p, false));
-  hashval_t hashval = fn_instance->hash ();
+  char resolver[NAME_MAXLEN];
+  snprintf (resolver, NAME_MAXLEN, "readvl%s", mode2data_type_str (mode, unsigned_p, false));
+  function_instance fn_instance (resolver);
+  hashval_t hashval = fn_instance.hash ();
   registered_function *rfn_slot =
-      function_table->find_with_hash (*fn_instance, hashval);
+      function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
+  
   gimple *g = gimple_build_call (decl, 1, gimple_call_lhs (call_in));
   gimple_call_set_lhs (g, var);
   tree indirect = fold_build2 (
@@ -2421,7 +2213,6 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   gsi_insert_after (gsi_in, gimple_build_assign (tem, var), GSI_SAME_STMT);
   gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
 
-  delete fn_instance;
   return repl;
 }
 
@@ -2429,27 +2220,43 @@ rtx
 vleff::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vleff (mode);
+  enum insn_code icode = code_for_vleff (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vlseg functions.  */
+/* A function implementation for vlseg functions.  */
 unsigned int
-vlseg::call_properties (const function_instance &) const
+vlseg::call_properties () const
 {
   return CP_READ_MEMORY;
+}
+
+char *
+vlseg::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[0]);
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  int nf = riscv_classify_nf (mode);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "%s%de%d", instance.get_base_name (), nf, sew);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  if (this->can_be_overloaded_p (instance))
+    {
+      append_name (name);
+      append_name (get_pred_str (instance.get_pred (), true));
+      return finish_name ();
+    }
+  return nullptr;
 }
 
 tree
 vlseg::get_return_type (const function_instance &instance) const
 {
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  machine_mode tuple_mode = instance.get_arg_pattern ().arg_list[0];
-  machine_mode vector_mode = instance.get_arg_pattern ().arg_list[1];
-  unsigned int nelt =
-      exact_div (GET_MODE_SIZE (tuple_mode), GET_MODE_SIZE (vector_mode))
-          .to_constant ();
-  return get_tuple_t (vector_mode, unsigned_p, nelt);
+  return get_dt_t_with_index (instance, 0);
 }
 
 void
@@ -2457,28 +2264,52 @@ vlseg::get_argument_types (const function_instance &instance,
                            vec<tree> &argument_types) const
 {
   for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
-      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
-      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
-      argument_types.quick_push (get_dt_t (
-          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
-    }
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
+}
+
+bool 
+vlseg::can_be_overloaded_p (const function_instance &instance) const
+{
+  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu ||
+         instance.get_pred () == PRED_tamu ||
+         instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu;
 }
 
 rtx
 vlseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vlseg (mode);
+  enum insn_code icode = code_for_vlseg (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vlsegff functions.  */
+/* A function implementation for vlsegff functions.  */
 unsigned int
-vlsegff::call_properties (const function_instance &) const
+vlsegff::call_properties () const
 {
   return CP_READ_MEMORY | CP_RAISE_LD_EXCEPTIONS;
+}
+
+char *
+vlsegff::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[0]);
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  int nf = riscv_classify_nf (mode);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "vlseg%de%dff", nf, sew);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  if (can_be_overloaded_p (instance))
+    {
+      append_name (name);
+      append_name (get_pred_str (instance.get_pred (), true));
+      return finish_name ();
+    }
+  return nullptr;
 }
 
 void
@@ -2513,14 +2344,14 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
 
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_uptr;
-  function_instance *fn_instance = new function_instance ();
-
-  snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "readvl_%s",
-            mode2data_type_str (mode, unsigned_p, false));
-  hashval_t hashval = fn_instance->hash ();
+  char resolver[NAME_MAXLEN];
+  snprintf (resolver, NAME_MAXLEN, "readvl%s", mode2data_type_str (mode, unsigned_p, false));
+  function_instance fn_instance (resolver);
+  hashval_t hashval = fn_instance.hash ();
   registered_function *rfn_slot =
-      function_table->find_with_hash (*fn_instance, hashval);
+      function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
+  
   gimple *g = gimple_build_call (decl, 1, gimple_call_lhs (call_in));
   gimple_call_set_lhs (g, var);
   tree indirect = fold_build2 (
@@ -2532,7 +2363,6 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   gsi_insert_after (gsi_in, gimple_build_assign (tem, var), GSI_SAME_STMT);
   gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
 
-  delete fn_instance;
   return repl;
 }
 
@@ -2540,54 +2370,51 @@ rtx
 vlsegff::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vlsegff (mode);
+  enum insn_code icode = code_for_vlsegff (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vsseg functions.  */
+/* A function implementation for vsseg functions.  */
 unsigned int
-vsseg::call_properties (const function_instance &) const
+vsseg::call_properties () const
 {
   return CP_WRITE_MEMORY;
 }
 
+char *
+vsseg::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[2]);
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  int nf = riscv_classify_nf (mode);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "%s%de%d", instance.get_base_name (), nf, sew);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  append_name (name);
+  return finish_name ();
+}
+  
 void
 vsseg::get_argument_types (const function_instance &instance,
                            vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
-      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
-      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
-
-      if (i == 2)
-        {
-          tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                                       unsigned_p, false, false);
-          unsigned int nelt =
-              exact_div (
-                  GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[2]),
-                  GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[0]))
-                  .to_constant ();
-          argument_types.quick_push (
-              get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nelt));
-        }
-      else
-        argument_types.quick_push (get_dt_t (
-            instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
-    }
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
 }
 
 rtx
 vsseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  insn_code icode = code_for_vsseg (mode);
+  enum insn_code icode = code_for_vsseg (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vlsseg functions.  */
+/* A function implementation for vlsseg functions.  */
 void
 vlsseg::get_argument_types (const function_instance &instance,
                             vec<tree> &argument_types) const
@@ -2600,11 +2427,11 @@ rtx
 vlsseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vlsseg (mode);
+  enum insn_code icode = code_for_vlsseg (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vssseg functions.  */
+/* A function implementation for vssseg functions.  */
 void
 vssseg::get_argument_types (const function_instance &instance,
                             vec<tree> &argument_types) const
@@ -2617,27 +2444,40 @@ rtx
 vssseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  insn_code icode = code_for_vssseg (mode);
+  enum insn_code icode = code_for_vssseg (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vlxseg functions.  */
+/* A function implementation for vlxseg functions.  */
 unsigned int
-vlxseg::call_properties (const function_instance &) const
+vlxseg::call_properties () const
 {
   return CP_READ_MEMORY;
+}
+
+char *
+vlxseg::assemble_name (function_instance &instance)
+{
+  machine_mode data_mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[0]);
+  machine_mode index_mode = instance.get_arg_pattern ().arg_list[3];
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (index_mode));
+  int nf = riscv_classify_nf (data_mode);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (data_mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "%s%dei%d", instance.get_base_name (), nf, sew);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  append_name (name);
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
 }
 
 tree
 vlxseg::get_return_type (const function_instance &instance) const
 {
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  machine_mode tuple_mode = instance.get_arg_pattern ().arg_list[0];
-  machine_mode vector_mode = instance.get_arg_pattern ().arg_list[1];
-  unsigned int nelt =
-      exact_div (GET_MODE_SIZE (tuple_mode), GET_MODE_SIZE (vector_mode))
-          .to_constant ();
-  return get_tuple_t (vector_mode, unsigned_p, nelt);
+  return get_dt_t_with_index (instance, 0);
 }
 
 void
@@ -2645,32 +2485,53 @@ vlxseg::get_argument_types (const function_instance &instance,
                             vec<tree> &argument_types) const
 {
   for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
-      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
-      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
-      argument_types.quick_push (get_dt_t (
-          instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
-    }
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
 }
 
+/* A function implementation for vluxseg functions.  */
 rtx
-vlxseg::expand (const function_instance &instance, tree exp, rtx target) const
+vluxseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[3];
-  unsigned int unspec = strcmp (instance.get_base_name (), "vluxseg") == 0
-                            ? UNSPEC_UNORDER_INDEXED_LOAD
-                            : UNSPEC_ORDER_INDEXED_LOAD;
-  insn_code icode = code_for_vlxsegei (unspec, mode1, mode2);
+  enum insn_code icode = code_for_vlxsegei (UNSPEC_UNORDER_INDEXED_LOAD, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vsxseg functions.  */
+/* A function implementation for vloxseg functions.  */
+rtx
+vloxseg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[3];
+  enum insn_code icode = code_for_vlxsegei (UNSPEC_ORDER_INDEXED_LOAD, mode1, mode2);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vsxseg functions.  */
 unsigned int
-vsxseg::call_properties (const function_instance &) const
+vsxseg::call_properties () const
 {
   return CP_WRITE_MEMORY;
+}
+
+char *
+vsxseg::assemble_name (function_instance &instance)
+{
+  machine_mode data_mode = instance.get_arg_pattern ().arg_list[3];
+  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[3]);
+  machine_mode index_mode = instance.get_arg_pattern ().arg_list[2];
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (index_mode));
+  int nf = riscv_classify_nf (data_mode);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (data_mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "%s%dei%d", instance.get_base_name (), nf, sew);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  append_name (name);
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
 }
 
 void
@@ -2678,48 +2539,35 @@ vsxseg::get_argument_types (const function_instance &instance,
                             vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
-      bool ptr_p = is_dt_ptr (instance.get_data_type_list ()[i]);
-      bool c_p = is_dt_const (instance.get_data_type_list ()[i]);
-
-      if (i == 3)
-        {
-          tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                                       unsigned_p, false, false);
-          unsigned int nelt =
-              exact_div (
-                  GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[3]),
-                  GET_MODE_SIZE (instance.get_arg_pattern ().arg_list[0]))
-                  .to_constant ();
-          argument_types.quick_push (
-              get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nelt));
-        }
-      else
-        argument_types.quick_push (get_dt_t (
-            instance.get_arg_pattern ().arg_list[i], unsigned_p, ptr_p, c_p));
-    }
+    argument_types.quick_push (get_dt_t_with_index (instance, i));
 }
 
+/* A function implementation for vsuxseg functions.  */
 rtx
-vsxseg::expand (const function_instance &instance, tree exp, rtx target) const
+vsuxseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  unsigned int unspec = strcmp (instance.get_base_name (), "vsuxseg") == 0
-                            ? UNSPEC_UNORDER_INDEXED_STORE
-                            : UNSPEC_ORDER_INDEXED_STORE;
-  insn_code icode = code_for_vsxsegei (unspec, mode1, mode2);
+  enum insn_code icode = code_for_vsxsegei (UNSPEC_UNORDER_INDEXED_STORE, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vadd functions.  */
+/* A function implementation for vsoxseg functions.  */
+rtx
+vsoxseg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode = code_for_vsxsegei (UNSPEC_ORDER_INDEXED_STORE, mode1, mode2);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vadd functions.  */
 rtx
 vadd::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vadd_vv (mode);
   else
@@ -2730,9 +2578,8 @@ vadd::expand (const function_instance &instance, tree exp, rtx target) const
 rtx
 vsub::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vsub_vv (mode);
   else
@@ -2740,92 +2587,170 @@ vsub::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vrsub functions.  */
+/* A function implementation for vrsub functions.  */
 rtx
 vrsub::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_v_vx (UNSPEC_VRSUB, mode);
+  enum insn_code icode = code_for_v_vx (UNSPEC_VRSUB, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vneg functions.  */
+/* A function implementation for vneg functions.  */
 rtx
 vneg::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vneg_v (mode);
+  enum insn_code icode = code_for_vneg_v (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vwadd and vwsub functions.  */
+/* A function implementation for vwadd functions.  */
 rtx
-vwadd_vwsub::expand (const function_instance &instance, tree exp,
+vwadd::expand (const function_instance &instance, tree exp,
                      rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  enum rtx_code code1 =
-      strcmp (instance.get_base_name (), "vwadd") == 0 ||
-              strcmp (instance.get_base_name (), "vwaddu") == 0
-          ? PLUS
-          : MINUS;
-  enum rtx_code code2 =
-      strcmp (instance.get_base_name (), "vwaddu") == 0 ||
-              strcmp (instance.get_base_name (), "vwsubu") == 0
-          ? ZERO_EXTEND
-          : SIGN_EXTEND;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_vw_vv (code1, code2, mode);
+    icode = code_for_vw_vv (PLUS, SIGN_EXTEND, mode);
   else if (instance.get_operation () == OP_vx)
-    icode = code_for_vw_vx (code1, code2, mode);
+    icode = code_for_vw_vx (PLUS, SIGN_EXTEND, mode);
   else if (instance.get_operation () == OP_wv)
-    icode = code_for_vw_wv (code1, code2, mode);
+    icode = code_for_vw_wv (PLUS, SIGN_EXTEND, mode);
   else
-    icode = code_for_vw_wx (code1, code2, mode);
+    icode = code_for_vw_wx (PLUS, SIGN_EXTEND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vwcvt functions.  */
+/* A function implementation for vwsub functions.  */
+rtx
+vwsub::expand (const function_instance &instance, tree exp,
+                     rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vw_vv (MINUS, SIGN_EXTEND, mode);
+  else if (instance.get_operation () == OP_vx)
+    icode = code_for_vw_vx (MINUS, SIGN_EXTEND, mode);
+  else if (instance.get_operation () == OP_wv)
+    icode = code_for_vw_wv (MINUS, SIGN_EXTEND, mode);
+  else
+    icode = code_for_vw_wx (MINUS, SIGN_EXTEND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vwaddu functions.  */
+rtx
+vwaddu::expand (const function_instance &instance, tree exp,
+                     rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vw_vv (PLUS, ZERO_EXTEND, mode);
+  else if (instance.get_operation () == OP_vx)
+    icode = code_for_vw_vx (PLUS, ZERO_EXTEND, mode);
+  else if (instance.get_operation () == OP_wv)
+    icode = code_for_vw_wv (PLUS, ZERO_EXTEND, mode);
+  else
+    icode = code_for_vw_wx (PLUS, ZERO_EXTEND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vwsubu functions.  */
+rtx
+vwsubu::expand (const function_instance &instance, tree exp,
+                     rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vw_vv (MINUS, ZERO_EXTEND, mode);
+  else if (instance.get_operation () == OP_vx)
+    icode = code_for_vw_vx (MINUS, ZERO_EXTEND, mode);
+  else if (instance.get_operation () == OP_wv)
+    icode = code_for_vw_wv (MINUS, ZERO_EXTEND, mode);
+  else
+    icode = code_for_vw_wx (MINUS, ZERO_EXTEND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vwcvt functions.  */
 rtx
 vwcvt::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum rtx_code code = strcmp (instance.get_base_name (), "vwcvt") == 0
-                           ? SIGN_EXTEND
-                           : ZERO_EXTEND;
-
-  icode = code_for_vwcvt_x_x_v (code, mode);
+  enum insn_code icode = code_for_vwcvt_x_x_v (SIGN_EXTEND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vsext/vzext functions.  */
+/* A function implementation for vwcvtu functions.  */
 rtx
-vext::expand (const function_instance &instance, tree exp, rtx target) const
+vwcvtu::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum rtx_code code = strcmp (instance.get_base_name (), "vsext") == 0
-                           ? SIGN_EXTEND
-                           : ZERO_EXTEND;
-  if (instance.get_operation () == OP_vf2)
-    icode = code_for_vext_vf2 (code, mode);
-  else if (instance.get_operation () == OP_vf4)
-    icode = code_for_vext_vf4 (code, mode);
-  else
-    icode = code_for_vext_vf8 (code, mode);
+  enum insn_code icode = code_for_vwcvt_x_x_v (ZERO_EXTEND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vadc functions.  */
+/* A function implementation for vsext functions.  */
+char *
+vsext::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name (instance.get_base_name ());
+  append_name (get_operation_str (instance.get_operation ()));
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vsext::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vf2)
+    icode = code_for_vext_vf2 (SIGN_EXTEND, mode);
+  else if (instance.get_operation () == OP_vf4)
+    icode = code_for_vext_vf4 (SIGN_EXTEND, mode);
+  else
+    icode = code_for_vext_vf8 (SIGN_EXTEND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vzext functions.  */
+char *
+vzext::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name (instance.get_base_name ());
+  append_name (get_operation_str (instance.get_operation ()));
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vzext::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vf2)
+    icode = code_for_vext_vf2 (ZERO_EXTEND, mode);
+  else if (instance.get_operation () == OP_vf4)
+    icode = code_for_vext_vf4 (ZERO_EXTEND, mode);
+  else
+    icode = code_for_vext_vf8 (ZERO_EXTEND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vadc functions.  */
 rtx
 vadc::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
   if (instance.get_operation () == OP_vvm)
     icode = code_for_vadc_vvm (mode);
   else
@@ -2833,12 +2758,12 @@ vadc::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vsbc functions.  */
+/* A function implementation for vsbc functions.  */
 rtx
 vsbc::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
   if (instance.get_operation () == OP_vvm)
     icode = code_for_vsbc_vvm (mode);
   else
@@ -2846,35 +2771,20 @@ vsbc::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmadc functions.  */
-void
-vmadc::get_name (char *name, const function_instance &instance) const
+/* A function implementation for vmadc functions.  */
+char *
+vmadc::assemble_name (function_instance &instance)
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
-  bool prefix_unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
-  strcat (name, get_operation_str (instance.get_operation ()));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  return finish_name ();
 }
 
 rtx
 vmadc::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-
+  enum insn_code icode;
   if (instance.get_operation () == OP_vvm)
     icode = code_for_vmadc_vvm (mode);
   else if (instance.get_operation () == OP_vv)
@@ -2887,35 +2797,20 @@ vmadc::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmsbc functions.  */
-void
-vmsbc::get_name (char *name, const function_instance &instance) const
+/* A function implementation for vmsbc functions.  */
+char *
+vmsbc::assemble_name (function_instance &instance)
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
-  bool prefix_unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
-  strcat (name, get_operation_str (instance.get_operation ()));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  return finish_name ();
 }
 
 rtx
 vmsbc::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-
+  enum insn_code icode;
   if (instance.get_operation () == OP_vvm)
     icode = code_for_vmsbc_vvm (mode);
   else if (instance.get_operation () == OP_vv)
@@ -2928,181 +2823,343 @@ vmsbc::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vlogic functions.  */
+/* A function implementation for vand functions.  */
 rtx
-vlogic::expand (const function_instance &instance, tree exp, rtx target) const
+vand::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vand") == 0  ? AND
-                       : strcmp (instance.get_base_name (), "vor") == 0 ? IOR
-                                                                        : XOR;
-  int vxcode = code == AND   ? UNSPEC_VAND
-               : code == IOR ? UNSPEC_VIOX
-                             : UNSPEC_VXOR;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (code, mode);
+    icode = code_for_v_vv (AND, mode);
   else
-    icode = code_for_v_vx (vxcode, mode);
+    icode = code_for_v_vx (UNSPEC_VAND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vnot functions.  */
+/* A function implementation for vor functions.  */
+rtx
+vor::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (IOR, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VIOX, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vxor functions.  */
+rtx
+vxor::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (XOR, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VXOR, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vnot functions.  */
 rtx
 vnot::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
 
-  icode = code_for_vnot_v (mode);
+  enum insn_code icode = code_for_vnot_v (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vshift functions.  */
+/* A function implementation for vshift functions.  */
 void
 vshift::get_argument_types (const function_instance &instance,
                             vec<tree> &argument_types) const
 {
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if ((instance.get_operation () == OP_vx) && i == 2)
-        argument_types.quick_push (size_type_node);
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
+  argument_types.quick_push (get_dt_t_with_index (instance, 1));
+  if (instance.get_operation () == OP_vx || instance.get_operation () == OP_wx)
+    argument_types.quick_push (size_type_node);
+  else
+    argument_types.quick_push (get_dt_t_with_index (instance, 2));
 }
 
+/* A function implementation for vsll functions.  */
 rtx
-vshift::expand (const function_instance &instance, tree exp, rtx target) const
+vsll::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vsll") == 0 ? ASHIFT
-                       : strcmp (instance.get_base_name (), "vsrl") == 0
-                           ? LSHIFTRT
-                           : ASHIFTRT;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (code, mode);
+    icode = code_for_v_vv (ASHIFT, mode);
   else
-    icode = code_for_v_vx (code, mode);
+    icode = code_for_v_vx (ASHIFT, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vnshift functions.  */
-void
-vnshift::get_argument_types (const function_instance &instance,
-                             vec<tree> &argument_types) const
-{
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if ((instance.get_operation () == OP_wx) && i == 2)
-        argument_types.quick_push (size_type_node);
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
-}
-
+/* A function implementation for vsrl functions.  */
 rtx
-vnshift::expand (const function_instance &instance, tree exp, rtx target) const
+vsrl::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  enum rtx_code code =
-      strcmp (instance.get_base_name (), "vnsrl") == 0 ? LSHIFTRT : ASHIFTRT;
-  if (instance.get_operation () == OP_wv)
-    icode = code_for_vn_wv (code, mode);
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (LSHIFTRT, mode);
   else
-    icode = code_for_vn_wx (code, mode);
+    icode = code_for_v_vx (LSHIFTRT, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vncvt functions.  */
+/* A function implementation for vsra functions.  */
+rtx
+vsra::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (ASHIFTRT, mode);
+  else
+    icode = code_for_v_vx (ASHIFTRT, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vnsrl functions.  */
+rtx
+vnsrl::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_wv)
+    icode = code_for_vn_wv (LSHIFTRT, mode);
+  else
+    icode = code_for_vn_wx (LSHIFTRT, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vnsra functions.  */
+rtx
+vnsra::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_wv)
+    icode = code_for_vn_wv (ASHIFTRT, mode);
+  else
+    icode = code_for_vn_wx (ASHIFTRT, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vncvt functions.  */
 rtx
 vncvt::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vncvt_x_x_w (mode);
+  enum insn_code icode = code_for_vncvt_x_x_w (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vcmp functions.  */
-void
-vcmp::get_name (char *name, const function_instance &instance) const
+/* A function implementation for vcmp functions.  */
+char *
+vcmp::assemble_name (function_instance &instance)
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
-  bool prefix_unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
-  strcat (name, get_operation_str (instance.get_operation ()));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
 }
 
+/* A function implementation for vmseq functions.  */
 rtx
-vcmp::expand (const function_instance &instance, tree exp, rtx target) const
+vmseq::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum rtx_code code = strcmp (instance.get_base_name (), "vmseq") == 0    ? EQ
-                       : strcmp (instance.get_base_name (), "vmsne") == 0  ? NE
-                       : strcmp (instance.get_base_name (), "vmslt") == 0  ? LT
-                       : strcmp (instance.get_base_name (), "vmsltu") == 0 ? LTU
-                       : strcmp (instance.get_base_name (), "vmsgt") == 0  ? GT
-                       : strcmp (instance.get_base_name (), "vmsgtu") == 0 ? GTU
-                       : strcmp (instance.get_base_name (), "vmsle") == 0  ? LE
-                       : strcmp (instance.get_base_name (), "vmsleu") == 0 ? LEU
-                       : strcmp (instance.get_base_name (), "vmsge") == 0  ? GE
-                                                                          : GEU;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_vms_vv (code, mode);
+    icode = code_for_vms_vv (EQ, mode);
   else
-    icode = code_for_vms_vx (code, mode);
+    icode = code_for_vms_vx (EQ, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmin/vmax functions.  */
+/* A function implementation for vmsne functions.  */
 rtx
-vmin_vmax::expand (const function_instance &instance, tree exp,
+vmsne::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (NE, mode);
+  else
+    icode = code_for_vms_vx (NE, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmslt functions.  */
+rtx
+vmslt::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (LT, mode);
+  else
+    icode = code_for_vms_vx (LT, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmsltu functions.  */
+rtx
+vmsltu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (LTU, mode);
+  else
+    icode = code_for_vms_vx (LTU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmsgt functions.  */
+rtx
+vmsgt::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (GT, mode);
+  else
+    icode = code_for_vms_vx (GT, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmsgtu functions.  */
+rtx
+vmsgtu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (GTU, mode);
+  else
+    icode = code_for_vms_vx (GTU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmsle functions.  */
+rtx
+vmsle::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (LE, mode);
+  else
+    icode = code_for_vms_vx (LE, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmsleu functions.  */
+rtx
+vmsleu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (LEU, mode);
+  else
+    icode = code_for_vms_vx (LEU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmsge functions.  */
+rtx
+vmsge::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (GE, mode);
+  else
+    icode = code_for_vms_vx (GE, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmsgeu functions.  */
+rtx
+vmsgeu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vms_vv (GEU, mode);
+  else
+    icode = code_for_vms_vx (GEU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmin functions.  */
+rtx
+vmin::expand (const function_instance &instance, tree exp,
                    rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vmin") == 0    ? SMIN
-                       : strcmp (instance.get_base_name (), "vminu") == 0 ? UMIN
-                       : strcmp (instance.get_base_name (), "vmax") == 0  ? SMAX
-                                                                         : UMAX;
-  int unspec_code = code == SMIN   ? UNSPEC_VMIN
-                    : code == UMIN ? UNSPEC_VMINU
-                    : code == SMAX ? UNSPEC_VMAX
-                                   : UNSPEC_VMAXU;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (code, mode);
+    icode = code_for_v_vv (SMIN, mode);
   else
-    icode = code_for_v_vx (unspec_code, mode);
+    icode = code_for_v_vx (UNSPEC_VMIN, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmul functions.  */
+/* A function implementation for vminu functions.  */
+rtx
+vminu::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UMIN, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VMINU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmax functions.  */
+rtx
+vmax::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (SMAX, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VMAX, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmaxu functions.  */
+rtx
+vmaxu::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UMAX, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VMAXU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmul functions.  */
 rtx
 vmul::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vmul_vv (mode);
   else
@@ -3110,28 +3167,38 @@ vmul::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmulh functions.  */
+/* A function implementation for vmulh functions.  */
 rtx
 vmulh::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  int unspec_code = strcmp (instance.get_base_name (), "vmulh") == 0
-                        ? UNSPEC_VMULH
-                        : UNSPEC_VMULHU;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_vmulh_vv (unspec_code, mode);
+    icode = code_for_vmulh_vv (UNSPEC_VMULH, mode);
   else
-    icode = code_for_v_vx (unspec_code, mode);
+    icode = code_for_v_vx (UNSPEC_VMULH, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmulhsu functions.  */
+/* A function implementation for vmulhu functions.  */
+rtx
+vmulhu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vmulh_vv (UNSPEC_VMULHU, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VMULHU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmulhsu functions.  */
 rtx
 vmulhsu::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vmulhsu_vv (mode);
   else
@@ -3139,49 +3206,90 @@ vmulhsu::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vdiv functions.  */
+/* A function implementation for vdiv functions.  */
 rtx
 vdiv::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vdiv") == 0    ? DIV
-                       : strcmp (instance.get_base_name (), "vdivu") == 0 ? UDIV
-                       : strcmp (instance.get_base_name (), "vrem") == 0  ? MOD
-                                                                         : UMOD;
-  int unspec_code = code == DIV    ? UNSPEC_VDIV
-                    : code == UDIV ? UNSPEC_VDIVU
-                    : code == MOD  ? UNSPEC_VREM
-                                   : UNSPEC_VREMU;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (code, mode);
+    icode = code_for_v_vv (DIV, mode);
   else
-    icode = code_for_v_vx (unspec_code, mode);
+    icode = code_for_v_vx (UNSPEC_VDIV, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vwmul functions.  */
+/* A function implementation for vdivu functions.  */
+rtx
+vdivu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UDIV, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VDIVU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vrem functions.  */
+rtx
+vrem::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (MOD, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VREM, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vremu functions.  */
+rtx
+vremu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UMOD, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VREMU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+                               
+/* A function implementation for vwmul functions.  */
 rtx
 vwmul::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum rtx_code code = strcmp (instance.get_base_name (), "vwmul") == 0
-                           ? SIGN_EXTEND
-                           : ZERO_EXTEND;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_vwmul_vv (code, mode);
+    icode = code_for_vwmul_vv (SIGN_EXTEND, mode);
   else
-    icode = code_for_vwmul_vx (code, mode);
+    icode = code_for_vwmul_vx (SIGN_EXTEND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vwmulsusu functions.  */
+/* A function implementation for vwmulu functions.  */
+rtx
+vwmulu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vwmul_vv (ZERO_EXTEND, mode);
+  else
+    icode = code_for_vwmul_vx (ZERO_EXTEND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vwmulsusu functions.  */
 rtx
 vwmulsu::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vwmulsu_vv (mode);
   else
@@ -3189,46 +3297,90 @@ vwmulsu::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vimac functions.  */
+/* A function implementation for vmacc functions.  */
 rtx
-vimac::expand (const function_instance &instance, tree exp, rtx target) const
+vmacc::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  unsigned int unspec =
-      strcmp (instance.get_base_name (), "vmacc") == 0    ? UNSPEC_MACC
-      : strcmp (instance.get_base_name (), "vnmsac") == 0 ? UNSPEC_NMSAC
-      : strcmp (instance.get_base_name (), "vmadd") == 0  ? UNSPEC_MADD
-                                                          : UNSPEC_NMSUB;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (unspec, mode);
+    icode = code_for_v_vv (UNSPEC_MACC, mode);
   else
-    icode = code_for_v_vx (unspec, mode);
+    icode = code_for_v_vx (UNSPEC_MACC, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vwmacc functions.  */
+/* A function implementation for vnmsac functions.  */
+rtx
+vnmsac::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_NMSAC, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_NMSAC, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmadd functions.  */
+rtx
+vmadd::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_MADD, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_MADD, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vnmsub functions.  */
+rtx
+vnmsub::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_NMSUB, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_NMSUB, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vwmacc functions.  */
 rtx
 vwmacc::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  enum rtx_code code = strcmp (instance.get_base_name (), "vwmacc") == 0
-                           ? SIGN_EXTEND
-                           : ZERO_EXTEND;
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_vwmacc_vv (code, mode);
+    icode = code_for_vwmacc_vv (SIGN_EXTEND, mode);
   else
-    icode = code_for_vwmacc_vx (code, mode);
+    icode = code_for_vwmacc_vx (SIGN_EXTEND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vwmaccsu functions.  */
+/* A function implementation for vwmaccu functions.  */
+rtx
+vwmaccu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vwmacc_vv (ZERO_EXTEND, mode);
+  else
+    icode = code_for_vwmacc_vx (ZERO_EXTEND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vwmaccsu functions.  */
 rtx
 vwmaccsu::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vwmaccsu_vv (mode);
   else
@@ -3236,36 +3388,18 @@ vwmaccsu::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vwmaccus functions.  */
+/* A function implementation for vwmaccus functions.  */
 rtx
 vwmaccus::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vwmaccus_vx (mode);
+  enum insn_code icode = code_for_vwmaccus_vx (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmerge functions.  */
-void
-vmerge::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
-{
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if (instance.get_operation () == OP_vxm && i == 2)
-        argument_types.quick_push (
-            get_dt_t (GET_MODE_INNER (instance.get_arg_pattern ().arg_list[i]),
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
-}
-
+/* A function implementation for vmerge functions.  */
 size_t
-vmerge::get_position_of_dest_arg (predication_index) const
+vmerge::get_position_of_dest_arg (enum predication_index) const
 {
   return 1;
 }
@@ -3273,35 +3407,43 @@ vmerge::get_position_of_dest_arg (predication_index) const
 rtx
 vmerge::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
   if (instance.get_operation () == OP_vvm)
     icode = code_for_vmerge_vvm (mode);
   else
-    icode = code_for_v_vxm (UNSPEC_VMERGE, mode);
+   icode = code_for_v_vxm (UNSPEC_VMERGE, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmv functions.  */
+/* A function implementation for vmv functions.  */
 void
 vmv::get_argument_types (const function_instance &instance,
                          vec<tree> &argument_types) const
 {
   if (instance.get_operation () == OP_v_x)
-    argument_types.quick_push (
-        get_dt_t (instance.get_arg_pattern ().arg_list[1],
-                  instance.get_data_type_list ()[1] == DT_unsigned));
+    argument_types.quick_push (get_dt_t_with_index (instance, 1));
   else
-    argument_types.quick_push (
-        get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                  instance.get_data_type_list ()[0] == DT_unsigned));
+    argument_types.quick_push (get_dt_t_with_index (instance, 0));
+}
+
+bool
+vmv::can_be_overloaded_p (const function_instance &instance) const
+{
+  if (instance.get_operation () == OP_v_v)
+    return true;
+  
+  if (instance.get_pred () == PRED_tu)
+    return true;
+  
+  return false;
 }
 
 rtx
 vmv::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
   if (instance.get_operation () == OP_v_x)
     icode = code_for_v_v_x (UNSPEC_VMV, mode);
   else
@@ -3309,167 +3451,1414 @@ vmv::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vred functions.  */
+/* A function implementation for vsadd functions.  */
 rtx
-vred::expand (const function_instance &instance, tree exp, rtx target) const
+vsadd::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  unsigned int unspec =
-      strcmp (instance.get_base_name (), "vredsum") == 0    ? UNSPEC_REDUC_SUM
-      : strcmp (instance.get_base_name (), "vredmax") == 0  ? UNSPEC_REDUC_MAX
-      : strcmp (instance.get_base_name (), "vredmaxu") == 0 ? UNSPEC_REDUC_MAXU
-      : strcmp (instance.get_base_name (), "vredmin") == 0  ? UNSPEC_REDUC_MIN
-      : strcmp (instance.get_base_name (), "vredminu") == 0 ? UNSPEC_REDUC_MINU
-      : strcmp (instance.get_base_name (), "vredand") == 0  ? UNSPEC_REDUC_AND
-      : strcmp (instance.get_base_name (), "vredor") == 0   ? UNSPEC_REDUC_OR
-                                                            : UNSPEC_REDUC_XOR;
-  icode = code_for_vred_vs (unspec, mode);
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (SS_PLUS, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSADD, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vwredsum functions.  */
+/* A function implementation for vsaddu functions.  */
+rtx
+vsaddu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (US_PLUS, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSADDU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vaadd functions.  */
+rtx
+vaadd::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_AADD, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VAADD, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vaaddu functions.  */
+rtx
+vaaddu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_AADDU, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VAADDU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vssub functions.  */
+rtx
+vssub::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (SS_MINUS, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSSUB, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vssubu functions.  */
+rtx
+vssubu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (US_MINUS, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSSUBU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vasub functions.  */
+rtx
+vasub::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_ASUB, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VASUB, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vasubu functions.  */
+rtx
+vasubu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_ASUBU, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VASUBU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vssrl functions.  */
+rtx
+vssrl::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_SSRL, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_SSRL, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vssra functions.  */
+rtx
+vssra::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_SSRA, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_SSRA, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vsmul functions.  */
+rtx
+vsmul::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_v_vv (UNSPEC_SMUL, mode);
+  else
+    icode = code_for_v_vx (UNSPEC_VSMUL, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vnclip functions.  */
+rtx
+vnclip::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_wv)
+    icode = code_for_vn_wv (UNSPEC_SIGNED_CLIP, mode);
+  else
+    icode = code_for_vn_wx (UNSPEC_SIGNED_CLIP, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vnclipu functions.  */
+rtx
+vnclipu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_wv)
+    icode = code_for_vn_wv (UNSPEC_UNSIGNED_CLIP, mode);
+  else
+    icode = code_for_vn_wx (UNSPEC_UNSIGNED_CLIP, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for funop functions.  */
+unsigned int
+funop::call_properties () const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+/* A function implementation for fbinop functions.  */
+unsigned int
+fbinop::call_properties () const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+/* A function implementation for fwbinop functions.  */
+unsigned int
+fwbinop::call_properties () const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+/* A function implementation for fternop functions.  */
+unsigned int
+fternop::call_properties () const
+{
+  return CP_RAISE_FP_EXCEPTIONS;
+}
+
+/* A function implementation for vfadd functions.  */
+rtx
+vfadd::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (PLUS, mode);
+  else
+    icode = code_for_vf_vf (PLUS, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfsub functions.  */
+rtx
+vfsub::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (MINUS, mode);
+  else
+    icode = code_for_vf_vf (MINUS, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmul functions.  */
+rtx
+vfmul::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (MULT, mode);
+  else
+    icode = code_for_vf_vf (MULT, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfdiv functions.  */
+rtx
+vfdiv::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (DIV, mode);
+  else
+    icode = code_for_vf_vf (DIV, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+                                                         
+/* A function implementation for vfrsub and vfrdiv functions.  */
+rtx
+vfrsub::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfr_vf (MINUS, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfrdiv functions.  */
+rtx
+vfrdiv::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfr_vf (DIV, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfneg functions.  */
+rtx
+vfneg::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfneg_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwadd functions.  */
+rtx
+vfwadd::expand (const function_instance &instance, tree exp,
+                      rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfw_vv (PLUS, mode);
+  else if (instance.get_operation () == OP_vf)
+    icode = code_for_vfw_vf (PLUS, mode);
+  else if (instance.get_operation () == OP_wv)
+    icode = code_for_vfw_wv (PLUS, mode);
+  else
+    icode = code_for_vfw_wf (PLUS, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwsub functions.  */
+rtx
+vfwsub::expand (const function_instance &instance, tree exp,
+                      rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfw_vv (MINUS, mode);
+  else if (instance.get_operation () == OP_vf)
+    icode = code_for_vfw_vf (MINUS, mode);
+  else if (instance.get_operation () == OP_wv)
+    icode = code_for_vfw_wv (MINUS, mode);
+  else
+    icode = code_for_vfw_wf (MINUS, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwmul functions.  */
+rtx
+vfwmul::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwmul_vv (mode);
+  else
+    icode = code_for_vfwmul_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmacc functions.  */
+rtx
+vfmacc::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (UNSPEC_MACC, mode);
+  else
+    icode = code_for_vf_vf (UNSPEC_MACC, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmsac functions.  */
+rtx
+vfmsac::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (UNSPEC_MSAC, mode);
+  else
+    icode = code_for_vf_vf (UNSPEC_MSAC, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfnmacc functions.  */
+rtx
+vfnmacc::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (UNSPEC_NMACC, mode);
+  else
+    icode = code_for_vf_vf (UNSPEC_NMACC, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfnmsac functions.  */
+rtx
+vfnmsac::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (UNSPEC_NMSAC, mode);
+  else
+    icode = code_for_vf_vf (UNSPEC_NMSAC, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmadd functions.  */
+rtx
+vfmadd::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (UNSPEC_MADD, mode);
+  else
+    icode = code_for_vf_vf (UNSPEC_MADD, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfnmadd functions.  */
+rtx
+vfnmadd::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (UNSPEC_NMADD, mode);
+  else
+    icode = code_for_vf_vf (UNSPEC_NMADD, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmsub functions.  */
+rtx
+vfmsub::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (UNSPEC_MSUB, mode);
+  else
+    icode = code_for_vf_vf (UNSPEC_MSUB, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfnmsub functions.  */
+rtx
+vfnmsub::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (UNSPEC_NMSUB, mode);
+  else
+    icode = code_for_vf_vf (UNSPEC_NMSUB, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwmacc functions.  */
+rtx
+vfwmacc::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwmacc_vv (mode);
+  else
+    icode = code_for_vfwmacc_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwnmacc functions.  */
+rtx
+vfwnmacc::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwnmacc_vv (mode);
+  else
+    icode = code_for_vfwnmacc_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwmsac functions.  */
+rtx
+vfwmsac::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwmsac_vv (mode);
+  else
+    icode = code_for_vfwmsac_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwnmsac functions.  */
+rtx
+vfwnmsac::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfwnmsac_vv (mode);
+  else
+    icode = code_for_vfwnmsac_vf (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfsqrt functions.  */
+rtx
+vfsqrt::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfsqrt_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfrsqrt7 functions.  */
+rtx
+vfrsqrt7::expand (const function_instance &instance, tree exp,
+                      rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vf_v (UNSPEC_RSQRT7, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfrec7 functions.  */
+rtx
+vfrec7::expand (const function_instance &instance, tree exp,
+                      rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vf_v (UNSPEC_REC7, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmax functions.  */
+rtx
+vfmax::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (SMAX, mode);
+  else
+    icode = code_for_vf_vf (SMAX, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmin functions.  */
+rtx
+vfmin::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vf_vv (SMIN, mode);
+  else
+    icode = code_for_vf_vf (SMIN, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfsgnj functions.  */
+rtx
+vfsgnj::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfsgnj_vv (UNSPEC_COPYSIGN, mode);
+  else
+    icode = code_for_vfsgnj_vf (UNSPEC_COPYSIGN, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfsgnjn functions.  */
+rtx
+vfsgnjn::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfsgnj_vv (UNSPEC_NCOPYSIGN, mode);
+  else
+    icode = code_for_vfsgnj_vf (UNSPEC_NCOPYSIGN, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfsgnjx functions.  */
+rtx
+vfsgnjx::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vfsgnj_vv (UNSPEC_XORSIGN, mode);
+  else
+    icode = code_for_vfsgnj_vf (UNSPEC_XORSIGN, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfabs functions.  */
+rtx
+vfabs::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfabs_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfcmp functions.  */
+char *
+vfcmp::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name (instance.get_base_name ());
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+/* A function implementation for vmfeq functions.  */
+rtx
+vmfeq::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vmf_vv (EQ, mode);
+  else
+    icode = code_for_vmf_vf (EQ, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmfne functions.  */
+rtx
+vmfne::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vmf_vv (NE, mode);
+  else
+    icode = code_for_vmf_vf (NE, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmflt functions.  */
+rtx
+vmflt::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vmf_vv (LT, mode);
+  else
+    icode = code_for_vmf_vf (LT, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmfgt functions.  */
+rtx
+vmfgt::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vmf_vv (GT, mode);
+  else
+    icode = code_for_vmf_vf (GT, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmfle functions.  */
+rtx
+vmfle::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vmf_vv (LE, mode);
+  else
+    icode = code_for_vmf_vf (LE, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmfge functions.  */
+rtx
+vmfge::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode;
+  if (instance.get_operation () == OP_vv)
+    icode = code_for_vmf_vv (GE, mode);
+  else
+    icode = code_for_vmf_vf (GE, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfclass functions.  */
+rtx
+vfclass::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfclass_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmerge functions.  */
+size_t
+vfmerge::get_position_of_dest_arg (enum predication_index) const
+{
+  return 1;
+}
+
+rtx
+vfmerge::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfmerge_vfm (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfmv functions.  */
+bool
+vfmv::can_be_overloaded_p (const function_instance &instance) const
+{
+  if (instance.get_pred () == PRED_tu)
+    return true;
+  
+  return false;
+}
+
+rtx
+vfmv::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
+  if (instance.get_operation () == OP_v_f)
+    icode = code_for_vfmv_v_f (mode);
+  else
+    icode = code_for_vmv_v_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfcvt_x_f_v functions.  */
+char *
+vfcvt_f2i::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfcvt_x");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfcvt_f2i::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfcvt_xu_f_v functions.  */
+char *
+vfcvt_f2u::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfcvt_xu");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfcvt_f2u::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfcvt_rtz_x_f_v functions.  */
+char *
+vfcvt_rtz_f2i::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfcvt_rtz_x");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfcvt_rtz_f2i::expand (const function_instance &instance, tree exp,
+                       rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfcvt_rtz_x_f_v (mode, FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfcvt_rtz_xu_f_v functions.  */
+char *
+vfcvt_rtz_f2u::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfcvt_rtz_xu");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfcvt_rtz_f2u::expand (const function_instance &instance, tree exp,
+                       rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfcvt_rtz_x_f_v (mode, UNSIGNED_FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfcvt_f_x_v functions.  */
+char *
+vfcvt_i2f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfcvt_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfcvt_i2f::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode = code_for_vfcvt_f_x_v (mode, FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfcvt_f_xu_v functions.  */
+char *
+vfcvt_u2f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfcvt_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfcvt_u2f::expand (const function_instance &instance, tree exp,
+                   rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode = code_for_vfcvt_f_x_v (mode, UNSIGNED_FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwcvt_x_f_v functions.  */
+char *
+vfwcvt_f2i::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfwcvt_x");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfwcvt_f2i::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwcvt_xu_f_v functions.  */
+char *
+vfwcvt_f2u::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfwcvt_xu");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfwcvt_f2u::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwcvt_rtz_x_f_v functions.  */
+char *
+vfwcvt_rtz_f2i::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfwcvt_rtz_x");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfwcvt_rtz_f2i::expand (const function_instance &instance, tree exp,
+                        rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfwcvt_rtz_x_f_v (mode, FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwcvt_rtz_xu_f_v functions.  */
+char *
+vfwcvt_rtz_f2u::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfwcvt_rtz_xu");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfwcvt_rtz_f2u::expand (const function_instance &instance, tree exp,
+                        rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfwcvt_rtz_x_f_v (mode, UNSIGNED_FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwcvt_f_x_v functions.  */
+char *
+vfwcvt_i2f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfwcvt_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfwcvt_i2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfwcvt_f_x_v (mode, FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwcvt_f_xu_v functions.  */
+char *
+vfwcvt_u2f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfwcvt_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfwcvt_u2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfwcvt_f_x_v (mode, UNSIGNED_FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwcvt_f_f_v functions.  */
+char *
+vfwcvt_f2f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfwcvt_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfwcvt_f2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfwcvt_f_f_v (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfncvt_x_f_w functions.  */
+char *
+vfncvt_f2i::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfncvt_x");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfncvt_f2i::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfncvt_xu_f_w functions.  */
+char *
+vfncvt_f2u::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfncvt_xu");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfncvt_f2u::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfncvt_rtz_x_f_w functions.  */
+char *
+vfncvt_rtz_f2i::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfncvt_rtz_x");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfncvt_rtz_f2i::expand (const function_instance &instance, tree exp,
+                        rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode = code_for_vfncvt_rtz_x_f_w (mode, FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfncvt_rtz_xu_f_w functions.  */
+char *
+vfncvt_rtz_f2u::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfncvt_rtz_xu");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfncvt_rtz_f2u::expand (const function_instance &instance, tree exp,
+                        rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode = code_for_vfncvt_rtz_x_f_w (mode, UNSIGNED_FIX);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfncvt_f_x_w functions.  */
+char *
+vfncvt_i2f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfncvt_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfncvt_i2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode = code_for_vfncvt_f_x_w (mode, FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfncvt_f_xu_w functions.  */
+char *
+vfncvt_u2f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfncvt_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfncvt_u2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  enum insn_code icode = code_for_vfncvt_f_x_w (mode, UNSIGNED_FLOAT);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfncvt_f_f_w functions.  */
+char *
+vfncvt_f2f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfncvt_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfncvt_f2f::expand (const function_instance &instance, tree exp,
+                    rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfncvt_f_f_w (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfncvt_rod_f_f_w functions.  */
+char *
+vfncvt_f2rodf::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  append_name ("vfncvt_rod_f");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+rtx
+vfncvt_f2rodf::expand (const function_instance &instance, tree exp,
+                       rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfncvt_rod_f_f_w (mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vredsum functions.  */
+rtx
+vredsum::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vred_vs (UNSPEC_REDUC_SUM, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vredmax functions.  */
+rtx
+vredmax::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vred_vs (UNSPEC_REDUC_MAX, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vredmaxu functions.  */
+rtx
+vredmaxu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vred_vs (UNSPEC_REDUC_MAXU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vredmin functions.  */
+rtx
+vredmin::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vred_vs (UNSPEC_REDUC_MIN, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vredminu functions.  */
+rtx
+vredminu::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vred_vs (UNSPEC_REDUC_MINU, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vredand functions.  */
+rtx
+vredand::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vred_vs (UNSPEC_REDUC_AND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vredor functions.  */
+rtx
+vredor::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vred_vs (UNSPEC_REDUC_OR, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vredxor functions.  */
+rtx
+vredxor::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vred_vs (UNSPEC_REDUC_XOR, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vwredsum functions.  */
 rtx
 vwredsum::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum rtx_code code = strcmp (instance.get_base_name (), "vwredsum") == 0
-                           ? SIGN_EXTEND
-                           : ZERO_EXTEND;
-  icode = code_for_vwredsum_vs (code, mode);
+  enum insn_code icode = code_for_vwredsum_vs (SIGN_EXTEND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vfred functions.  */
-unsigned int
-vfred::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
+/* A function implementation for vwredsumu functions.  */
 rtx
-vfred::expand (const function_instance &instance, tree exp, rtx target) const
+vwredsumu::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  unsigned int unspec = strcmp (instance.get_base_name (), "vfredosum") == 0
-                            ? UNSPEC_REDUC_ORDERED_SUM
-                        : strcmp (instance.get_base_name (), "vfredusum") == 0
-                            ? UNSPEC_REDUC_UNORDERED_SUM
-                        : strcmp (instance.get_base_name (), "vfredmax") == 0
-                            ? UNSPEC_REDUC_MAX
-                            : UNSPEC_REDUC_MIN;
-  icode = code_for_vfred_vs (unspec, mode);
+  enum insn_code icode = code_for_vwredsum_vs (ZERO_EXTEND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vfwredosum functions.  */
+/* A function implementation for freduceop functions.  */
 unsigned int
-vfwredosum::call_properties (const function_instance &) const
+freduceop::call_properties () const
 {
   return CP_RAISE_FP_EXCEPTIONS;
 }
 
+/* A function implementation for vfredosum functions.  */
+rtx
+vfredosum::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfred_vs (UNSPEC_REDUC_ORDERED_SUM, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfredusum functions.  */
+rtx
+vfredusum::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfred_vs (UNSPEC_REDUC_UNORDERED_SUM, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfredmax functions.  */
+rtx
+vfredmax::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfred_vs (UNSPEC_REDUC_MAX, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfredmin functions.  */
+rtx
+vfredmin::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  enum insn_code icode = code_for_vfred_vs (UNSPEC_REDUC_MIN, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfwredosum functions.  */
 rtx
 vfwredosum::expand (const function_instance &instance, tree exp,
                     rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwredosum_vs (mode);
+  enum insn_code icode = code_for_vfwredosum_vs (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vfwredusum functions.  */
-unsigned int
-vfwredusum::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
+/* A function implementation for vfwredusum functions.  */
 rtx
 vfwredusum::expand (const function_instance &instance, tree exp,
                     rtx target) const
 {
-  insn_code icode;
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwredusum_vs (mode);
+  enum insn_code icode = code_for_vfwredusum_vs (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmlogic functions.  */
+/* A function implementation for vmand functions.  */
 rtx
-vmlogic::expand (const function_instance &instance, tree exp, rtx target) const
+vmand::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vmand") == 0  ? AND
-                       : strcmp (instance.get_base_name (), "vmor") == 0 ? IOR
-                                                                         : XOR;
-  insn_code icode = code_for_vm_mm (code, mode);
+  enum insn_code icode = code_for_vm_mm (AND, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmnlogic functions.  */
+/* A function implementation for vmor functions.  */
 rtx
-vmnlogic::expand (const function_instance &instance, tree exp, rtx target) const
+vmor::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code = strcmp (instance.get_base_name (), "vmnand") == 0  ? AND
-                       : strcmp (instance.get_base_name (), "vmnor") == 0 ? IOR
-                                                                          : XOR;
-  insn_code icode = code_for_vmn_mm (code, mode);
+  enum insn_code icode = code_for_vm_mm (IOR, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmlogicn functions.  */
+/* A function implementation for vmxor functions.  */
 rtx
-vmlogicn::expand (const function_instance &instance, tree exp, rtx target) const
+vmxor::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code =
-      strcmp (instance.get_base_name (), "vmandn") == 0 ? AND : IOR;
-  insn_code icode = code_for_vmnot_mm (code, mode);
+  enum insn_code icode = code_for_vm_mm (XOR, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmmv functions.  */
+/* A function implementation for vmnand functions.  */
+rtx
+vmnand::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vmn_mm (AND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmnor functions.  */
+rtx
+vmnor::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vmn_mm (IOR, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmxnor functions.  */
+rtx
+vmxnor::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vmn_mm (XOR, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+ 
+/* A function implementation for vmlogicn functions.  */
+rtx
+vmandn::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vmnot_mm (AND, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmorn functions.  */
+rtx
+vmorn::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vmnot_mm (IOR, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmmv functions.  */
 rtx
 vmmv::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vmmv_m (mode);
+  enum insn_code icode = code_for_vmmv_m (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmnot functions.  */
+/* A function implementation for vmnot functions.  */
 rtx
 vmnot::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vmnot_m (mode);
+  enum insn_code icode = code_for_vmnot_m (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmclr functions.  */
+/* A function implementation for vmclr functions.  */
+void
+vmclr::get_argument_types (const function_instance &,
+                          vec<tree> &) const
+{
+}
+
+bool
+vmclr::can_be_overloaded_p (const function_instance &) const
+{
+  return false;
+}
+
 rtx
 vmclr::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vmclr_m (mode);
+  enum insn_code icode = code_for_vmclr_m (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmset functions.  */
+/* A function implementation for vmset functions.  */
+void
+vmset::get_argument_types (const function_instance &,
+                          vec<tree> &) const
+{
+}
+
+bool
+vmset::can_be_overloaded_p (const function_instance &) const
+{
+  return false;
+}
+
 rtx
 vmset::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vmset_m (mode);
+  enum insn_code icode = code_for_vmset_m (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vcpop functions.  */
+/* A function implementation for vcpop functions.  */
 tree
 vcpop::get_return_type (const function_instance &) const
 {
@@ -3480,11 +4869,11 @@ rtx
 vcpop::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  insn_code icode = code_for_vcpop_m (mode, Pmode);
+  enum insn_code icode = code_for_vcpop_m (mode, Pmode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vfirst functions.  */
+/* A function implementation for vfirst functions.  */
 tree
 vfirst::get_return_type (const function_instance &) const
 {
@@ -3495,187 +4884,216 @@ rtx
 vfirst::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  insn_code icode = code_for_vfirst_m (mode, Pmode);
+  enum insn_code icode = code_for_vfirst_m (mode, Pmode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmsetbit functions.  */
+/* A function implementation for vmsbf functions.  */
 rtx
-vmsetbit::expand (const function_instance &instance, tree exp, rtx target) const
+vmsbf::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  unsigned int unspec =
-      strcmp (instance.get_base_name (), "vmsbf") == 0   ? UNSPEC_SBF
-      : strcmp (instance.get_base_name (), "vmsif") == 0 ? UNSPEC_SIF
-                                                         : UNSPEC_SOF;
-  insn_code icode = code_for_vm_m (unspec, mode);
+  enum insn_code icode = code_for_vm_m (UNSPEC_SBF, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for viota functions.  */
+/* A function implementation for vmsif functions.  */
+rtx
+vmsif::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vm_m (UNSPEC_SIF, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vmsof functions.  */
+rtx
+vmsof::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vm_m (UNSPEC_SOF, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for viota functions.  */
+bool
+viota::can_be_overloaded_p (const function_instance &instance) const
+{
+  if (instance.get_pred () == PRED_void || instance.get_pred () == PRED_ta ||
+      instance.get_pred () == PRED_tama)
+    return false;
+
+  return true;
+}
+
 rtx
 viota::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_viota_m (mode);
+  enum insn_code icode = code_for_viota_m (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vid functions.  */
+/* A function implementation for vid functions.  */
+void
+vid::get_argument_types (const function_instance &,
+                          vec<tree> &) const
+{
+}
+
+bool
+vid::can_be_overloaded_p (const function_instance &instance) const
+{
+  if (instance.get_pred () == PRED_void || instance.get_pred () == PRED_ta ||
+      instance.get_pred () == PRED_tama)
+    return false;
+
+  return true;
+}
+
 rtx
 vid::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vid_v (mode);
+  enum insn_code icode = code_for_vid_v (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmv_x_s functions.  */
-void
-vmv_x_s::get_name (char *name, const function_instance &instance) const
+/* A function implementation for vmv_x_s functions.  */
+char *
+vmv_x_s::assemble_name (function_instance &instance)
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
-  bool prefix_unsigned_p =
-      instance.get_data_type_list ()[1] == DT_unsigned;
-  strcat (name,
-          mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name ("vmv_x");
+  return finish_name ();
 }
 
 rtx
 vmv_x_s::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  insn_code icode = code_for_vmv_x_s (mode);
+  enum insn_code icode = code_for_vmv_x_s (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vmv_s_x functions.  */
+/* A function implementation for vmv_s_x functions.  */
+char *
+vmv_s_x::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  if (instance.get_pred () == PRED_ta)
+    return nullptr;
+  append_name ("vmv_s");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
 rtx
 vmv_s_x::expand (const function_instance &instance, tree exp, rtx target) const
 {
 
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_v_s_x (UNSPEC_VMVS, mode);
+  enum insn_code icode = code_for_v_s_x (UNSPEC_VMVS, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vfmv_f_s functions.  */
-void
-vfmv_f_s::get_name (char *name, const function_instance &instance) const
+/* A function implementation for vfmv_f_s functions.  */
+char *
+vfmv_f_s::assemble_name (function_instance &instance)
 {
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  machine_mode prefix_mode = instance.get_arg_pattern ().arg_list[1];
-  bool prefix_unsigned_p =
-      instance.get_data_type_list ()[1] == DT_unsigned;
-  strcat (name,
-          mode2data_type_str (prefix_mode, prefix_unsigned_p, false));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, unsigned_p, false));
+  intrinsic_naming_rule_2 (instance, 0, 1);
+  append_name ("vfmv_f");
+  return finish_name ();
 }
 
 rtx
 vfmv_f_s::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  insn_code icode = code_for_vfmv_f_s (mode);
+  enum insn_code icode = code_for_vfmv_f_s (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vfmv_s_f functions.  */
+/* A function implementation for vfmv_s_f functions.  */
+char *
+vfmv_s_f::assemble_name (function_instance &instance)
+{
+  intrinsic_naming_rule_1 (instance, 0);
+  if (instance.get_pred () == PRED_ta)
+    return nullptr;
+  append_name ("vfmv_s");
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
 rtx
 vfmv_s_f::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vfmv_s_f (mode);
+  enum insn_code icode = code_for_vfmv_s_f (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vslide functions.  */
-void
-vslide::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
-{
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if (i == 2)
-        argument_types.quick_push (size_type_node);
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
-}
-
+/* A function implementation for vslideup functions.  */
 rtx
-vslide::expand (const function_instance &instance, tree exp, rtx target) const
+vslideup::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  unsigned int unspec = strcmp (instance.get_base_name (), "vslideup") == 0
-                            ? UNSPEC_SLIDEUP
-                            : UNSPEC_SLIDEDOWN;
-  icode = code_for_vslide_vx (unspec, mode);
+  enum insn_code icode = code_for_vslide_vx (UNSPEC_SLIDEUP, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vslide1 functions.  */
+/* A function implementation for vslidedown functions.  */
 rtx
-vslide1::expand (const function_instance &instance, tree exp, rtx target) const
+vslidedown::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  unsigned int unspec = strcmp (instance.get_base_name (), "vslide1up") == 0
-                            ? UNSPEC_SLIDE1UP
-                            : UNSPEC_SLIDE1DOWN;
-  icode = code_for_vslide1_vx (unspec, mode);
+  enum insn_code icode = code_for_vslide_vx (UNSPEC_SLIDEDOWN, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vslide1 functions.  */
+/* A function implementation for vslide1up functions.  */
 rtx
-vfslide1::expand (const function_instance &instance, tree exp, rtx target) const
+vslide1up::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  unsigned int unspec = strcmp (instance.get_base_name (), "vfslide1up") == 0
-                            ? UNSPEC_SLIDE1UP
-                            : UNSPEC_SLIDE1DOWN;
-  icode = code_for_vfslide1_vf (unspec, mode);
+  enum insn_code icode = code_for_vslide1_vx (UNSPEC_SLIDE1UP, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vrgather functions.  */
-void
-vrgather::get_argument_types (const function_instance &instance,
-                              vec<tree> &argument_types) const
+/* A function implementation for vslide1down functions.  */
+rtx
+vslide1down::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if ((instance.get_operation () == OP_vx) && i == 2)
-        argument_types.quick_push (size_type_node);
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vslide1_vx (UNSPEC_SLIDE1DOWN, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
 }
 
+/* A function implementation for vfslide1up functions.  */
+rtx
+vfslide1up::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfslide1_vf (UNSPEC_SLIDE1UP, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vfslide1down functions.  */
+rtx
+vfslide1down::expand (const function_instance &instance, tree exp, rtx target) const
+{
+  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode = code_for_vfslide1_vf (UNSPEC_SLIDE1DOWN, mode);
+  return expand_builtin_insn (icode, exp, target, instance);
+}
+
+/* A function implementation for vrgather functions.  */
 rtx
 vrgather::expand (const function_instance &instance, tree exp, rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
+  enum insn_code icode;
   if (instance.get_operation () == OP_vv)
     icode = code_for_vrgather_vv (mode);
   else
@@ -3683,19 +5101,19 @@ vrgather::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
-/* A function_base for vrgather functions.  */
+/* A function implementation for vrgather functions.  */
 rtx
 vrgatherei16::expand (const function_instance &instance, tree exp,
                       rtx target) const
 {
-  insn_code icode;
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vrgatherei16_vv (mode);
+  enum insn_code icode = code_for_vrgatherei16_vv (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
+/* A function implementation for vcompress functions.  */
 size_t
-vcompress::get_position_of_dest_arg (predication_index) const
+vcompress::get_position_of_dest_arg (enum predication_index) const
 {
   return 1;
 }
@@ -3705,961 +5123,7 @@ vcompress::expand (const function_instance &instance, tree exp,
                    rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  insn_code icode = code_for_vcompress_vm (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vsadd functions.  */
-rtx
-vsadd::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (SS_PLUS, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VSADD, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vsaddu functions.  */
-rtx
-vsaddu::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (US_PLUS, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VSADDU, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vaadd functions.  */
-rtx
-vaadd::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (UNSPEC_AADD, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VAADD, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vaaddu functions.  */
-rtx
-vaaddu::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (UNSPEC_AADDU, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VAADDU, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vssub functions.  */
-rtx
-vssub::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (SS_MINUS, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VSSUB, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vssubu functions.  */
-rtx
-vssubu::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (US_MINUS, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VSSUBU, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vasub functions.  */
-rtx
-vasub::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (UNSPEC_ASUB, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VASUB, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vasubu functions.  */
-rtx
-vasubu::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (UNSPEC_ASUBU, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VASUBU, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vsshift functions.  */
-void
-vsshift::get_argument_types (const function_instance &instance,
-                             vec<tree> &argument_types) const
-{
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if ((instance.get_operation () == OP_vx) && i == 2)
-        argument_types.quick_push (size_type_node);
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
-}
-
-rtx
-vsshift::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  int unspec = strcmp (instance.get_base_name (), "vssrl") == 0 ? UNSPEC_SSRL
-                                                                : UNSPEC_SSRA;
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (unspec, mode);
-  else
-    icode = code_for_v_vx (unspec, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vsmul functions.  */
-rtx
-vsmul::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (UNSPEC_SMUL, mode);
-  else
-    icode = code_for_v_vx (UNSPEC_VSMUL, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vnclip functions.  */
-void
-vnclip::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
-{
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if ((instance.get_operation () == OP_wx) && i == 2)
-        argument_types.quick_push (size_type_node);
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
-}
-
-rtx
-vnclip::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_wv)
-    icode = code_for_vn_wv (UNSPEC_SIGNED_CLIP, mode);
-  else
-    icode = code_for_vn_wx (UNSPEC_SIGNED_CLIP, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vnclipu functions.  */
-void
-vnclipu::get_argument_types (const function_instance &instance,
-                             vec<tree> &argument_types) const
-{
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if ((instance.get_operation () == OP_wx) && i == 2)
-        argument_types.quick_push (size_type_node);
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
-}
-
-rtx
-vnclipu::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_wv)
-    icode = code_for_vn_wv (UNSPEC_UNSIGNED_CLIP, mode);
-  else
-    icode = code_for_vn_wx (UNSPEC_UNSIGNED_CLIP, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfadd,vfsub,vfmul,vfdiv... functions.  */
-unsigned int
-vfoptab::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfoptab::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code =
-      strcmp (instance.get_base_name (), "vfadd") == 0   ? PLUS
-      : strcmp (instance.get_base_name (), "vfsub") == 0 ? MINUS
-      : strcmp (instance.get_base_name (), "vfmul") == 0 ? MULT
-      : strcmp (instance.get_base_name (), "vfdiv") == 0 ? DIV
-      : strcmp (instance.get_base_name (), "vfmax") == 0 ? SMAX
-      : strcmp (instance.get_base_name (), "vfmin") == 0 ? SMIN
-                                                         : UNKNOWN;
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vf_vv (code, mode);
-  else
-    icode = code_for_vf_vf (code, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfrsub and vfrdiv functions.  */
-unsigned int
-vfrsub_div::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfrsub_div::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  enum rtx_code code =
-      strcmp (instance.get_base_name (), "vfrsub") == 0 ? MINUS : DIV;
-  icode = code_for_vfr_vf (code, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfneg functions.  */
-unsigned int
-vfneg::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfneg::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vfneg_v (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwadd and vfwsub functions.  */
-unsigned int
-vfwadd_vwsub::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwadd_vwsub::expand (const function_instance &instance, tree exp,
-                      rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  enum rtx_code code =
-      strcmp (instance.get_base_name (), "vfwadd") == 0 ? PLUS : MINUS;
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vfw_vv (code, mode);
-  else if (instance.get_operation () == OP_vf)
-    icode = code_for_vfw_vf (code, mode);
-  else if (instance.get_operation () == OP_wv)
-    icode = code_for_vfw_wv (code, mode);
-  else
-    icode = code_for_vfw_wf (code, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwmul functions.  */
-unsigned int
-vfwmul::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwmul::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vfwmul_vv (mode);
-  else
-    icode = code_for_vfwmul_vf (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfmac functions.  */
-unsigned int
-vfmac::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfmac::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  unsigned int unspec =
-      strcmp (instance.get_base_name (), "vfmacc") == 0    ? UNSPEC_MACC
-      : strcmp (instance.get_base_name (), "vfnmacc") == 0 ? UNSPEC_NMACC
-      : strcmp (instance.get_base_name (), "vfmsac") == 0  ? UNSPEC_MSAC
-      : strcmp (instance.get_base_name (), "vfnmsac") == 0 ? UNSPEC_NMSAC
-      : strcmp (instance.get_base_name (), "vfmadd") == 0  ? UNSPEC_MADD
-      : strcmp (instance.get_base_name (), "vfnmadd") == 0 ? UNSPEC_NMADD
-      : strcmp (instance.get_base_name (), "vfmsub") == 0  ? UNSPEC_MSUB
-                                                           : UNSPEC_NMSUB;
-
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vf_vv (unspec, mode);
-  else
-    icode = code_for_vf_vf (unspec, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwmacc functions.  */
-unsigned int
-vfwmacc::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwmacc::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vfwmacc_vv (mode);
-  else
-    icode = code_for_vfwmacc_vf (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwnmacc functions.  */
-unsigned int
-vfwnmacc::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwnmacc::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vfwnmacc_vv (mode);
-  else
-    icode = code_for_vfwnmacc_vf (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwmsac functions.  */
-unsigned int
-vfwmsac::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwmsac::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vfwmsac_vv (mode);
-  else
-    icode = code_for_vfwmsac_vf (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwnmsac functions.  */
-unsigned int
-vfwnmsac::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwnmsac::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[2];
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vfwnmsac_vv (mode);
-  else
-    icode = code_for_vfwnmsac_vf (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfsqrt functions.  */
-unsigned int
-vfsqrt::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfsqrt::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vfsqrt_v (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfsqrt7 and vfrec7 functions.  */
-unsigned int
-vfsqrt7_rec7::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfsqrt7_rec7::expand (const function_instance &instance, tree exp,
-                      rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  int unspec = strcmp (instance.get_base_name (), "vfrsqrt7") == 0
-                   ? UNSPEC_RSQRT7
-                   : UNSPEC_REC7;
-  icode = code_for_vf_v (unspec, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfsgnj, vfsgnjn and vfsgnjx functions.  */
-unsigned int
-vfsgnj_all::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfsgnj_all::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  int unspec =
-      strcmp (instance.get_base_name (), "vfsgnj") == 0    ? UNSPEC_COPYSIGN
-      : strcmp (instance.get_base_name (), "vfsgnjn") == 0 ? UNSPEC_NCOPYSIGN
-      : strcmp (instance.get_base_name (), "vfsgnjx") == 0 ? UNSPEC_XORSIGN
-                                                           : -1;
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vfsgnj_vv (unspec, mode);
-  else
-    icode = code_for_vfsgnj_vf (unspec, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfabs functions.  */
-unsigned int
-vfabs::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfabs::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vfabs_v (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfcmp functions.  */
-void
-vfcmp::get_name (char *name, const function_instance &instance) const
-{
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  strcat (name, instance.get_base_name ());
-  strcat (name, "_");
-  strcat (name, get_operation_str (instance.get_operation ()));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (instance.get_arg_pattern ().arg_list[1],
-                                    false, false));
-  strcat (name, "_");
-  strcat (name, mode2data_type_str (mode, false, false));
-  const char *pred_suffix = get_pred_str (instance.get_pred ());
-  if (strlen (pred_suffix) > 0)
-    {
-      strcat (name, "_");
-      strcat (name, pred_suffix);
-    }
-}
-
-unsigned int
-vfcmp::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfcmp::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum rtx_code code = strcmp (instance.get_base_name (), "vmfeq") == 0    ? EQ
-                       : strcmp (instance.get_base_name (), "vmfne") == 0  ? NE
-                       : strcmp (instance.get_base_name (), "vmflt") == 0  ? LT
-                       : strcmp (instance.get_base_name (), "vmfltu") == 0 ? LTU
-                       : strcmp (instance.get_base_name (), "vmfgt") == 0  ? GT
-                       : strcmp (instance.get_base_name (), "vmfgtu") == 0 ? GTU
-                       : strcmp (instance.get_base_name (), "vmfle") == 0  ? LE
-                       : strcmp (instance.get_base_name (), "vmfleu") == 0 ? LEU
-                       : strcmp (instance.get_base_name (), "vmfge") == 0  ? GE
-                                                                          : GEU;
-  if (instance.get_operation () == OP_vv)
-    icode = code_for_vmf_vv (code, mode);
-  else
-    icode = code_for_vmf_vf (code, mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfclass functions.  */
-rtx
-vfclass::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfclass_v (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfmerge functions.  */
-void
-vfmerge::get_argument_types (const function_instance &instance,
-                             vec<tree> &argument_types) const
-{
-  for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
-    {
-      if (i == 2)
-        argument_types.quick_push (
-            get_dt_t (GET_MODE_INNER (instance.get_arg_pattern ().arg_list[i]),
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-      else
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                      instance.get_data_type_list ()[i] == DT_unsigned));
-    }
-}
-
-size_t
-vfmerge::get_position_of_dest_arg (predication_index) const
-{
-  return 1;
-}
-
-rtx
-vfmerge::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vfmerge_vfm (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfmv functions.  */
-rtx
-vfmv::expand (const function_instance &instance, tree exp, rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  if (instance.get_operation () == OP_v_f)
-    icode = code_for_vfmv_v_f (mode);
-  else
-    icode = code_for_vmv_v_v (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfcvt_x_f_v functions.  */
-unsigned int
-vfcvt_f2i::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfcvt_f2i::expand (const function_instance &instance, tree exp,
-                   rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfcvt_xu_f_v functions.  */
-unsigned int
-vfcvt_f2u::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfcvt_f2u::expand (const function_instance &instance, tree exp,
-                   rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfcvt_rtz_x_f_v functions.  */
-unsigned int
-vfcvt_rtz_f2i::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfcvt_rtz_f2i::expand (const function_instance &instance, tree exp,
-                       rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfcvt_rtz_x_f_v (mode, FIX);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfcvt_rtz_xu_f_v functions.  */
-unsigned int
-vfcvt_rtz_f2u::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfcvt_rtz_f2u::expand (const function_instance &instance, tree exp,
-                       rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfcvt_rtz_x_f_v (mode, UNSIGNED_FIX);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfcvt_f_x_v functions.  */
-unsigned int
-vfcvt_i2f::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfcvt_i2f::expand (const function_instance &instance, tree exp,
-                   rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  icode = code_for_vfcvt_f_x_v (mode, FLOAT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfcvt_f_xu_v functions.  */
-unsigned int
-vfcvt_u2f::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfcvt_u2f::expand (const function_instance &instance, tree exp,
-                   rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  icode = code_for_vfcvt_f_x_v (mode, UNSIGNED_FLOAT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwcvt_x_f_v functions.  */
-unsigned int
-vfwcvt_f2i::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwcvt_f2i::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwcvt_xu_f_v functions.  */
-unsigned int
-vfwcvt_f2u::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwcvt_f2u::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwcvt_rtz_x_f_v functions.  */
-unsigned int
-vfwcvt_rtz_f2i::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwcvt_rtz_f2i::expand (const function_instance &instance, tree exp,
-                        rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwcvt_rtz_x_f_v (mode, FIX);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwcvt_rtz_xu_f_v functions.  */
-unsigned int
-vfwcvt_rtz_f2u::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwcvt_rtz_f2u::expand (const function_instance &instance, tree exp,
-                        rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwcvt_rtz_x_f_v (mode, UNSIGNED_FIX);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwcvt_f_x_v functions.  */
-unsigned int
-vfwcvt_i2f::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwcvt_i2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwcvt_f_x_v (mode, FLOAT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwcvt_f_xu_v functions.  */
-unsigned int
-vfwcvt_u2f::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwcvt_u2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwcvt_f_x_v (mode, UNSIGNED_FLOAT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfwcvt_f_f_v functions.  */
-unsigned int
-vfwcvt_f2f::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfwcvt_f2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  icode = code_for_vfwcvt_f_f_v (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfncvt_x_f_w functions.  */
-unsigned int
-vfncvt_f2i::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfncvt_f2i::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  icode = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfncvt_xu_f_w functions.  */
-unsigned int
-vfncvt_f2u::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfncvt_f2u::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  icode = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfncvt_rtz_x_f_w functions.  */
-unsigned int
-vfncvt_rtz_f2i::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfncvt_rtz_f2i::expand (const function_instance &instance, tree exp,
-                        rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  icode = code_for_vfncvt_rtz_x_f_w (mode, FIX);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfncvt_rtz_xu_f_w functions.  */
-unsigned int
-vfncvt_rtz_f2u::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfncvt_rtz_f2u::expand (const function_instance &instance, tree exp,
-                        rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  icode = code_for_vfncvt_rtz_x_f_w (mode, UNSIGNED_FIX);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfncvt_f_x_w functions.  */
-unsigned int
-vfncvt_i2f::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfncvt_i2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  icode = code_for_vfncvt_f_x_w (mode, FLOAT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfncvt_f_xu_w functions.  */
-unsigned int
-vfncvt_u2f::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfncvt_u2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  icode = code_for_vfncvt_f_x_w (mode, UNSIGNED_FLOAT);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfncvt_f_f_w functions.  */
-unsigned int
-vfncvt_f2f::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfncvt_f2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vfncvt_f_f_w (mode);
-  return expand_builtin_insn (icode, exp, target, instance);
-}
-
-/* A function_base for vfncvt_rod_f_f_w functions.  */
-unsigned int
-vfncvt_f2rodf::call_properties (const function_instance &) const
-{
-  return CP_RAISE_FP_EXCEPTIONS;
-}
-
-rtx
-vfncvt_f2rodf::expand (const function_instance &instance, tree exp,
-                       rtx target) const
-{
-  insn_code icode;
-  machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
-  icode = code_for_vfncvt_rod_f_f_w (mode);
+  enum insn_code icode = code_for_vcompress_vm (mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -4672,34 +5136,35 @@ push_argment_for_segment_load (const function_instance &instance,
 {
   unsigned int offset = indexed_p ? 1 : 0;
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  machine_mode mode0 = instance.get_arg_pattern ().arg_list[offset];
+  machine_mode mode1 = instance.get_arg_pattern ().arg_list[offset + 1];
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[offset + 2];
   for (unsigned int i = 0; i < nf; i++)
-    argument_types.quick_push (get_dt_t (
-        instance.get_arg_pattern ().arg_list[offset], unsigned_p, true, false));
+    argument_types.quick_push (get_dt_t (mode0, unsigned_p, true, false));
 
-  if (instance.get_pred () == PRED_m)
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_ta &&
+      instance.get_pred () != PRED_tama)
     {
       for (unsigned int i = 0; i < nf; i++)
-        argument_types.quick_push (
-            get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p,
-                      false, false));
+        argument_types.quick_push (get_dt_t (mode0, unsigned_p, false, false));
     }
-  argument_types.quick_push (
-      get_dt_t (instance.get_arg_pattern ().arg_list[offset + 1], unsigned_p,
-                true, true));
+  argument_types.quick_push (get_dt_t (mode1, unsigned_p, true, true));
   if (indexed_p)
-    argument_types.quick_push (get_dt_t (
-        instance.get_arg_pattern ().arg_list[offset + 2], true, false, false));
+    argument_types.quick_push (get_dt_t (mode2, true, false, false));
 }
 
 static gimple *
 fold_non_tuple_segment_load (const function_instance &instance,
                              gimple_stmt_iterator *gsi_in, gcall *call_in,
-                             unsigned int nf, bool ff)
+                             unsigned int nf, bool ff, bool indexed_p, bool strided_p)
 {
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
-  tree vector_type = get_dt_t (instance.get_arg_pattern ().arg_list[0],
-                               unsigned_p, false, false);
-  tree tuple_type = get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nf);
+  int offset = indexed_p ? 1 : 0;
+  machine_mode mode = instance.get_arg_pattern ().arg_list[offset];
+  tree vector_type = get_dt_t (mode, unsigned_p, false, false);
+  machine_mode tuple_mode;
+  gcc_assert (riscv_vector_tuple_mode (TYPE_MODE (vector_type), nf).exists (&tuple_mode)); 
+  tree tuple_type = get_tuple_t (tuple_mode, unsigned_p);
   tree tuple = create_tmp_var (tuple_type, "tuple");
   auto_vec<tree, 16> vargs;
 
@@ -4709,19 +5174,10 @@ fold_non_tuple_segment_load (const function_instance &instance,
       for (unsigned int i = 0; i < nf; i++)
         {
           tree rhs_vector;
-          if (instance.get_pred () != PRED_m)
-            {
-              rhs_vector = create_tmp_var (vector_type);
-              tree indirect = fold_build2 (
-                  MEM_REF, vector_type, gimple_call_arg (call_in, i),
-                  build_int_cst (build_pointer_type (vector_type), 0));
-              gsi_insert_before (gsi_in,
-                                 gimple_build_assign (rhs_vector, indirect),
-                                 GSI_SAME_STMT);
-            }
+          if (instance.get_pred () == PRED_tu)
+            rhs_vector = gimple_call_arg (call_in, i + nf);
           else
             rhs_vector = gimple_call_arg (call_in, i + nf + 1);
-
           tree field = tuple_type_field (TREE_TYPE (tuple));
           tree lhs_array = build3 (COMPONENT_REF, TREE_TYPE (field), tuple,
                                    field, NULL_TREE);
@@ -4752,7 +5208,7 @@ fold_non_tuple_segment_load (const function_instance &instance,
       vargs.quick_push (tuple);
     }
 
-  if (strstr (instance.get_base_name (), "vlseg") != NULL && !ff)
+  if (!strided_p && !ff && !indexed_p)
     vargs.quick_push (
         gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
   else
@@ -4766,68 +5222,36 @@ fold_non_tuple_segment_load (const function_instance &instance,
   vargs.quick_push (
       gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
 
-  function_instance *fn_instance = new function_instance ();
-  char buff[16];
-
-  if (strstr (instance.get_base_name (), "vlseg") != NULL)
+  char name[16];
+  
+  if (indexed_p)
+    {
+      machine_mode indexed_mode =
+          instance.get_arg_pattern ()
+              .arg_list[instance.get_arg_pattern ().arg_len - 1];
+      snprintf (name, 16, "%sei%d", instance.get_base_name (),
+                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+    }
+  else
     {
       if (ff)
-        snprintf (buff, sizeof (buff), "vlseg%de%dff", nf,
-                  GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+        snprintf (name, 16, "vlseg%de%dff", nf, GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
       else
-        snprintf (buff, sizeof (buff), "vlseg%de%d", nf,
+        snprintf (name, 16, "%se%d", instance.get_base_name (),
                   GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
     }
-  else if (strstr (instance.get_base_name (), "vlsseg") != NULL)
-    snprintf (buff, sizeof (buff), "vlsseg%de%d", nf,
-              GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
-  else if (strstr (instance.get_base_name (), "vluxseg") != NULL)
-    {
-      machine_mode indexed_mode =
-          instance.get_arg_pattern ()
-              .arg_list[instance.get_arg_pattern ().arg_len - 1];
-      snprintf (buff, sizeof (buff), "vluxseg%dei%d", nf,
-                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
-    }
-  else if (strstr (instance.get_base_name (), "vloxseg") != NULL)
-    {
-      machine_mode indexed_mode =
-          instance.get_arg_pattern ()
-              .arg_list[instance.get_arg_pattern ().arg_len - 1];
-      snprintf (buff, sizeof (buff), "vloxseg%dei%d", nf,
-                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
-    }
-  else
-    gcc_unreachable ();
-
-  if (instance.get_pred () == PRED_void)
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-  else if (instance.get_pred () == PRED_ta)
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_ta", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-  else if (instance.get_pred () == PRED_tu)
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tu", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-  else if (instance.get_pred () == PRED_tama)
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tama", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-  else if (instance.get_pred () == PRED_tamu)
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tamu", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-  else if (instance.get_pred () == PRED_tuma)
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tuma", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-  else if (instance.get_pred () == PRED_tumu)
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_tumu", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-  else
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_m", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-
-  hashval_t hashval = fn_instance->hash ();
+  
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (tuple_mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  
+  char resolver[NAME_MAXLEN];
+  snprintf (resolver, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+              
+  function_instance fn_instance (resolver);
+  hashval_t hashval = fn_instance.hash ();
   registered_function *rfn_slot =
-      function_table->find_with_hash (*fn_instance, hashval);
+      function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *repl = gimple_build_call_vec (decl, vargs);
   gimple_call_set_lhs (repl, tuple);
@@ -4851,7 +5275,6 @@ fold_non_tuple_segment_load (const function_instance &instance,
                         GSI_SAME_STMT);
     }
 
-  delete fn_instance;
   return repl;
 }
 
@@ -4862,28 +5285,27 @@ push_argment_for_segment_store (const function_instance &instance,
 {
   unsigned int offset = indexed_p ? 3 : 1;
   bool unsigned_p = instance.get_data_type_list ()[offset] == DT_unsigned;
-
+  machine_mode mode0 = instance.get_arg_pattern ().arg_list[0];
+  machine_mode mode1 = instance.get_arg_pattern ().arg_list[1];
+  machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
+  machine_mode mode3 = instance.get_arg_pattern ().arg_list[offset];
+  
   if (indexed_p)
     {
-      argument_types.quick_push (get_dt_t (
-          instance.get_arg_pattern ().arg_list[1], unsigned_p, true, false));
-      argument_types.quick_push (get_dt_t (
-          instance.get_arg_pattern ().arg_list[2], true, false, false));
+      argument_types.quick_push (get_dt_t (mode1, unsigned_p, true, false));
+      argument_types.quick_push (get_dt_t (mode2, true, false, false));
     }
   else
-    argument_types.quick_push (get_dt_t (
-        instance.get_arg_pattern ().arg_list[0], unsigned_p, true, false));
+    argument_types.quick_push (get_dt_t (mode0, unsigned_p, true, false));
 
   for (unsigned int i = 0; i < nf; i++)
-    argument_types.quick_push (
-        get_dt_t (instance.get_arg_pattern ().arg_list[offset], unsigned_p,
-                  false, false));
+    argument_types.quick_push (get_dt_t (mode3, unsigned_p, false, false));
 }
 
 static gimple *
 fold_non_tuple_segment_store (const function_instance &instance,
                               gimple_stmt_iterator *gsi_in, gcall *call_in,
-                              unsigned int nf)
+                              unsigned int nf, bool indexed_p, bool unit_stride_p)
 {
   bool unsigned_p =
       instance.get_data_type_list ()[instance.get_arg_pattern ().arg_len - 1] ==
@@ -4892,7 +5314,9 @@ fold_non_tuple_segment_store (const function_instance &instance,
       get_dt_t (instance.get_arg_pattern ()
                     .arg_list[instance.get_arg_pattern ().arg_len - 1],
                 unsigned_p, false, false);
-  tree tuple_type = get_tuple_t (TYPE_MODE (vector_type), unsigned_p, nf);
+  machine_mode tuple_mode;
+  gcc_assert (riscv_vector_tuple_mode (TYPE_MODE (vector_type), nf).exists (&tuple_mode)); 
+  tree tuple_type = get_tuple_t (tuple_mode, unsigned_p);
   tree tuple = create_tmp_var (tuple_type, "tuple");
   auto_vec<tree, 16> vargs;
 
@@ -4900,7 +5324,7 @@ fold_non_tuple_segment_store (const function_instance &instance,
   for (unsigned int i = 0; i < offset; i++)
     vargs.quick_push (gimple_call_arg (call_in, i));
 
-  if (strstr (instance.get_base_name (), "vsseg") == NULL)
+  if (!unit_stride_p)
     {
       vargs.quick_push (gimple_call_arg (call_in, offset));
       offset++;
@@ -4922,54 +5346,65 @@ fold_non_tuple_segment_store (const function_instance &instance,
   /* push the vl. */
   vargs.quick_push (
       gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
-
-  function_instance *fn_instance = new function_instance ();
-  char buff[NAME_MAXLEN / 4];
-
-  if (strstr (instance.get_base_name (), "vsseg") != NULL)
-    snprintf (buff, sizeof (buff), "vsseg%de%d", nf,
-              GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
-  else if (strstr (instance.get_base_name (), "vssseg") != NULL)
-    snprintf (buff, sizeof (buff), "vssseg%de%d", nf,
-              GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
-  else if (strstr (instance.get_base_name (), "vsuxseg") != NULL)
+  
+  char name[16];
+  
+  if (indexed_p)
     {
       machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[2];
-      snprintf (buff, sizeof (buff), "vsuxseg%dei%d", nf,
-                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
-    }
-  else if (strstr (instance.get_base_name (), "vsoxseg") != NULL)
-    {
-      machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[2];
-      snprintf (buff, sizeof (buff), "vsoxseg%dei%d", nf,
+      snprintf (name, 16, "%sei%d", instance.get_base_name (),
                 GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
     }
   else
-    gcc_unreachable ();
-
-  if (instance.get_pred () == PRED_void)
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-  else
-    snprintf (fn_instance->get_func_name (), NAME_MAXLEN, "%s_v_%s_m", buff,
-              mode2data_type_str (TYPE_MODE (tuple_type), unsigned_p, false));
-
-  hashval_t hashval = fn_instance->hash ();
+    snprintf (name, 16, "%se%d", instance.get_base_name (),
+                  GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+    
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (tuple_mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  
+  char resolver[NAME_MAXLEN];
+  snprintf (resolver, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+              
+  function_instance fn_instance (resolver);
+  hashval_t hashval = fn_instance.hash ();
   registered_function *rfn_slot =
-      function_table->find_with_hash (*fn_instance, hashval);
+      function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *repl = gimple_build_call_vec (decl, vargs);
-
-  delete fn_instance;
+  
   return repl;
 }
 
-/* A function_base for vlseg_template functions.  */
+/* A function implementation for vlseg_template functions.  */
 template <unsigned int NF>
 unsigned int
-vlseg_template<NF>::call_properties (const function_instance &) const
+vlseg_template<NF>::call_properties () const
 {
   return CP_READ_MEMORY;
+}
+
+template <unsigned int NF>
+char *
+vlseg_template<NF>::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  char name[16];
+  snprintf (name, 16, "%se%d", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama &&
+      instance.get_pred () != PRED_ta)
+    {
+      append_name (name);
+      append_name (get_pred_str (instance.get_pred (), true));
+      return finish_name ();
+    } 
+  return nullptr;
 }
 
 template <unsigned int NF>
@@ -4982,14 +5417,14 @@ vlseg_template<NF>::get_argument_types (const function_instance &instance,
 
 template <unsigned int NF>
 bool
-vlseg_template<NF>::has_dest_arg_p (predication_index) const
+vlseg_template<NF>::has_dest_arg_p (enum predication_index) const
 {
   return false;
 }
 
 template <unsigned int NF>
 size_t
-vlseg_template<NF>::get_position_of_mask_arg (predication_index) const
+vlseg_template<NF>::get_position_of_mask_arg (enum predication_index) const
 {
   return NF;
 }
@@ -4999,7 +5434,7 @@ gimple *
 vlseg_template<NF>::fold (const function_instance &instance,
                           gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false);
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false, false, false);
 }
 
 template <unsigned int NF>
@@ -5017,12 +5452,35 @@ template class vlseg_template<6>;
 template class vlseg_template<7>;
 template class vlseg_template<8>;
 
-/* A function_base for vlsegff_template functions.  */
+/* A function implementation for vlsegff_template functions.  */
 template <unsigned int NF>
 unsigned int
-vlsegff_template<NF>::call_properties (const function_instance &) const
+vlsegff_template<NF>::call_properties () const
 {
   return CP_READ_MEMORY | CP_RAISE_LD_EXCEPTIONS;
+}
+
+template <unsigned int NF>
+char *
+vlsegff_template<NF>::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  char name[16];
+  snprintf (name, 16, "%se%dff", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama &&
+      instance.get_pred () != PRED_ta)
+    {
+      append_name (name);
+      append_name (get_pred_str (instance.get_pred (), true));
+      return finish_name ();
+    } 
+  return nullptr;
 }
 
 template <unsigned int NF>
@@ -5036,14 +5494,14 @@ vlsegff_template<NF>::get_argument_types (const function_instance &instance,
 
 template <unsigned int NF>
 bool
-vlsegff_template<NF>::has_dest_arg_p (predication_index) const
+vlsegff_template<NF>::has_dest_arg_p (enum predication_index) const
 {
   return false;
 }
 
 template <unsigned int NF>
 size_t
-vlsegff_template<NF>::get_position_of_mask_arg (predication_index) const
+vlsegff_template<NF>::get_position_of_mask_arg (enum predication_index) const
 {
   return NF;
 }
@@ -5053,7 +5511,7 @@ gimple *
 vlsegff_template<NF>::fold (const function_instance &instance,
                             gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, true);
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, true, false, false);
 }
 
 template <unsigned int NF>
@@ -5071,12 +5529,29 @@ template class vlsegff_template<6>;
 template class vlsegff_template<7>;
 template class vlsegff_template<8>;
 
-/* A function_base for vsseg_template functions.  */
+/* A function implementation for vsseg_template functions.  */
 template <unsigned int NF>
 unsigned int
-vsseg_template<NF>::call_properties (const function_instance &) const
+vsseg_template<NF>::call_properties () const
 {
   return CP_WRITE_MEMORY;
+}
+
+template <unsigned int NF>
+char *
+vsseg_template<NF>::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  bool unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  char name[16];
+  snprintf (name, 16, "%se%d", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  append_name (name);
+  return finish_name ();
 }
 
 template <unsigned int NF>
@@ -5092,7 +5567,7 @@ gimple *
 vsseg_template<NF>::fold (const function_instance &instance,
                           gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF);
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, false, true);
 }
 
 template <unsigned int NF>
@@ -5110,7 +5585,37 @@ template class vsseg_template<6>;
 template class vsseg_template<7>;
 template class vsseg_template<8>;
 
-/* A function_base for vlsseg_template functions.  */
+/* A function implementation for vlsseg_template functions.  */
+template <unsigned int NF>
+unsigned int
+vlsseg_template<NF>::call_properties () const
+{
+  return CP_READ_MEMORY;
+}
+
+template <unsigned int NF>
+char *
+vlsseg_template<NF>::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  char name[16];
+  snprintf (name, 16, "%se%d", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama &&
+      instance.get_pred () != PRED_ta)
+    {
+      append_name (name);
+      append_name (get_pred_str (instance.get_pred (), true));
+      return finish_name ();
+    } 
+  return nullptr;
+}
+
 template <unsigned int NF>
 void
 vlsseg_template<NF>::get_argument_types (const function_instance &instance,
@@ -5122,14 +5627,14 @@ vlsseg_template<NF>::get_argument_types (const function_instance &instance,
 
 template <unsigned int NF>
 bool
-vlsseg_template<NF>::has_dest_arg_p (predication_index) const
+vlsseg_template<NF>::has_dest_arg_p (enum predication_index) const
 {
   return false;
 }
 
 template <unsigned int NF>
 size_t
-vlsseg_template<NF>::get_position_of_mask_arg (predication_index) const
+vlsseg_template<NF>::get_position_of_mask_arg (enum predication_index) const
 {
   return NF;
 }
@@ -5139,7 +5644,7 @@ gimple *
 vlsseg_template<NF>::fold (const function_instance &instance,
                            gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false);
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false, false, true);
 }
 
 template <unsigned int NF>
@@ -5157,12 +5662,29 @@ template class vlsseg_template<6>;
 template class vlsseg_template<7>;
 template class vlsseg_template<8>;
 
-/* A function_base for vssseg_template functions.  */
+/* A function implementation for vssseg_template functions.  */
 template <unsigned int NF>
 unsigned int
-vssseg_template<NF>::call_properties (const function_instance &) const
+vssseg_template<NF>::call_properties () const
 {
   return CP_WRITE_MEMORY;
+}
+
+template <unsigned int NF>
+char *
+vssseg_template<NF>::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[1];
+  bool unsigned_p = instance.get_data_type_list ()[1] == DT_unsigned;
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (mode));
+  char name[16];
+  snprintf (name, 16, "%se%d", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  append_name (name);
+  return finish_name ();
 }
 
 template <unsigned int NF>
@@ -5179,7 +5701,7 @@ gimple *
 vssseg_template<NF>::fold (const function_instance &instance,
                            gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF);
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, false, false);
 }
 
 template <unsigned int NF>
@@ -5197,12 +5719,35 @@ template class vssseg_template<6>;
 template class vssseg_template<7>;
 template class vssseg_template<8>;
 
-/* A function_base for vlxseg_template functions.  */
+/* A function implementation for vlxseg_template functions.  */
 template <unsigned int NF, indexed_mode uo>
 unsigned int
-vlxseg_template<NF, uo>::call_properties (const function_instance &) const
+vlxseg_template<NF, uo>::call_properties () const
 {
   return CP_READ_MEMORY;
+}
+
+template <unsigned int NF, indexed_mode uo>
+char *
+vlxseg_template<NF, uo>::assemble_name (function_instance &instance)
+{
+  if (segment_skip_p (instance.get_base_name (),
+                      instance.get_arg_pattern ().arg_list[0]))
+    return nullptr;
+  machine_mode data_mode = instance.get_arg_pattern ().arg_list[1];
+  machine_mode index_mode = instance.get_arg_pattern ().arg_list[3];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (index_mode));
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "%sei%d", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (data_mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+            pred);
+  append_name (name);
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
 }
 
 template <unsigned int NF, indexed_mode uo>
@@ -5215,14 +5760,14 @@ vlxseg_template<NF, uo>::get_argument_types (const function_instance &instance,
 
 template <unsigned int NF, indexed_mode uo>
 bool
-vlxseg_template<NF, uo>::has_dest_arg_p (predication_index) const
+vlxseg_template<NF, uo>::has_dest_arg_p (enum predication_index) const
 {
   return false;
 }
 
 template <unsigned int NF, indexed_mode uo>
 size_t
-vlxseg_template<NF, uo>::get_position_of_mask_arg (predication_index) const
+vlxseg_template<NF, uo>::get_position_of_mask_arg (enum predication_index) const
 {
   return NF;
 }
@@ -5233,7 +5778,7 @@ vlxseg_template<NF, uo>::fold (const function_instance &instance,
                                gimple_stmt_iterator *gsi_in,
                                gcall *call_in) const
 {
-  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false);
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false, true, false);
 }
 
 template <unsigned int NF, indexed_mode uo>
@@ -5258,12 +5803,33 @@ template class vlxseg_template<6, INDEXED_o>;
 template class vlxseg_template<7, INDEXED_o>;
 template class vlxseg_template<8, INDEXED_o>;
 
-/* A function_base for vsxseg_template functions.  */
+/* A function implementation for vsxseg_template functions.  */
 template <unsigned int NF, indexed_mode uo>
 unsigned int
-vsxseg_template<NF, uo>::call_properties (const function_instance &) const
+vsxseg_template<NF, uo>::call_properties () const
 {
   return CP_WRITE_MEMORY;
+}
+
+template <unsigned int NF, indexed_mode uo>
+char *
+vsxseg_template<NF, uo>::assemble_name (function_instance &instance)
+{
+  if (segment_skip_p (instance.get_base_name (),
+                      instance.get_arg_pattern ().arg_list[0]))
+    return nullptr;
+  machine_mode data_mode = instance.get_arg_pattern ().arg_list[3];
+  machine_mode index_mode = instance.get_arg_pattern ().arg_list[2];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  int sew = GET_MODE_BITSIZE (GET_MODE_INNER (index_mode));
+  char name[NAME_MAXLEN];
+  snprintf (name, NAME_MAXLEN, "%sei%d", instance.get_base_name (), sew);
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (data_mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  append_name (name);
+  return finish_name ();
 }
 
 template <unsigned int NF, indexed_mode uo>
@@ -5280,7 +5846,7 @@ vsxseg_template<NF, uo>::fold (const function_instance &instance,
                                gimple_stmt_iterator *gsi_in,
                                gcall *call_in) const
 {
-  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF);
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, true, false);
 }
 
 template <unsigned int NF, indexed_mode uo>

@@ -239,11 +239,17 @@
   return VECTOR_MODE_P (GET_MODE (op));
 })
 
+(define_special_predicate "p_reg"
+  (match_code "reg, subreg")
+{
+  return GET_MODE (op) == Pmode;
+})
+
 (define_special_predicate "p_reg_or_const_csr_operand"
   (match_code "reg, subreg, const_int")
 {
   if (CONST_INT_P (op))
-    return INTVAL (op) < 32;
+    return satisfies_constraint_K (op);
   return GET_MODE (op) == Pmode;
 })
 
