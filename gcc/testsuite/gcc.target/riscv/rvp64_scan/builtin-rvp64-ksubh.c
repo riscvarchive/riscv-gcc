@@ -5,7 +5,7 @@
 #include <rvp_intrinsic.h>
 #include <stdlib.h>
 static __attribute__ ((noinline))
-int hbusk (int ra, int rb)
+int32_t hbusk (int16_t ra, int16_t rb)
 {
   return __rv_ksubh (ra, rb);
 }
