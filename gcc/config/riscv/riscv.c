@@ -4516,6 +4516,14 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
 	!= call_used_or_fixed_reg_p (regno + i))
       return false;
 
+  /* use even/odd pair of registers in rv32 zpsf subset */
+  if (TARGET_ZPSF && !TARGET_64BIT)
+    {
+      if ((GET_MODE_CLASS (mode) == MODE_INT ||
+		GET_MODE_CLASS (mode) == MODE_VECTOR_INT) &&
+		GET_MODE_UNIT_SIZE (mode) == GET_MODE_SIZE (DImode))
+        return !(regno & 1);
+    }
   return true;
 }
 
@@ -5253,6 +5261,27 @@ riscv_new_address_profitable_p (rtx memref, rtx_insn *insn, rtx new_addr)
   return new_cost <= old_cost;
 }
 
+/* return true if vector mode is supported in rvp */
+static bool
+riscv_rvp_support_vector_mode_p (machine_mode mode)
+{
+  if (mode == V2HImode || mode == V4QImode)
+    return true;
+
+  if (TARGET_64BIT
+      && (mode == V8QImode || mode == V4HImode || mode == V2SImode))
+    return true;
+
+  return false;
+}
+
+/* implement TARGET_VECTOR_MODE_SUPPORTED_P. */
+bool
+riscv_vector_mode_supported_p (enum machine_mode mode)
+{
+  return TARGET_ZPN && riscv_rvp_support_vector_mode_p (mode);
+}
+
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.half\t"
@@ -5435,6 +5464,10 @@ riscv_new_address_profitable_p (rtx memref, rtx_insn *insn, rtx new_addr)
 
 #undef TARGET_NEW_ADDRESS_PROFITABLE_P
 #define TARGET_NEW_ADDRESS_PROFITABLE_P riscv_new_address_profitable_p
+
+/* rvp */
+#undef TARGET_VECTOR_MODE_SUPPORTED_P
+#define TARGET_VECTOR_MODE_SUPPORTED_P riscv_vector_mode_supported_p
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

@@ -45,6 +45,60 @@
 
   ;; Stack tie
   UNSPEC_TIE
+
+  ;; rvp
+  UNSPEC_KABS
+  UNSPEC_KADDW
+  UNSPEC_KSUBW
+  UNSPEC_KADDH
+  UNSPEC_KSUBH
+  UNSPEC_UKADDW
+  UNSPEC_UKSUBW
+  UNSPEC_UKADDH
+  UNSPEC_UKSUBH
+  UNSPEC_BITREV
+  UNSPEC_VEC_COMPARE
+  UNSPEC_KDMABB
+  UNSPEC_KDMABT
+  UNSPEC_KDMATT
+  UNSPEC_KHMBB
+  UNSPEC_KHMBT
+  UNSPEC_KHMTT
+  UNSPEC_KDMTT
+  UNSPEC_KDMBT
+  UNSPEC_KDMBB
+  UNSPEC_KHM
+  UNSPEC_KHMX
+  UNSPEC_ROUND
+  UNSPEC_KMMWU
+  UNSPEC_KMMW
+  UNSPEC_KSLRAW
+  UNSPEC_KSLRAWU
+  UNSPEC_PBSAD
+  UNSPEC_PBSADA
+  UNSPEC_RDOV
+  UNSPEC_CLIPS
+  UNSPEC_CLIPS_OV
+  UNSPEC_SMUL8
+  UNSPEC_SMULX8
+  UNSPEC_UMUL8
+  UNSPEC_UMULX8
+  UNSPEC_SMUL16
+  UNSPEC_SMULX16
+  UNSPEC_UMUL16
+  UNSPEC_UMULX16
+  UNSPEC_ROUND64
+  UNSPEC_BSWAP
+  UNSPEC_UCLIP
+  UNSPEC_UCLIP_OV
+  UNSPEC_KDMBB16
+  UNSPEC_KDMBT16
+  UNSPEC_KDMTT16
+  UNSPEC_KHMBB16
+  UNSPEC_KHMBT16
+  UNSPEC_KHMTT16
+  UNSPEC_FSR
+  UNSPEC_FSRW
 ])
 
 (define_c_enum "unspecv" [
@@ -65,6 +119,9 @@
   UNSPECV_BLOCKAGE
   UNSPECV_FENCE
   UNSPECV_FENCE_I
+
+  ;; RVP
+  UNSPEC_CLROV
 ])
 
 (define_constants
@@ -119,7 +176,7 @@
   (const_string "unknown"))
 
 ;; Main data type used by the insn
-(define_attr "mode" "unknown,none,QI,HI,SI,DI,TI,SF,DF,TF"
+(define_attr "mode" "unknown,none,QI,HI,SI,DI,TI,SF,DF,TF,V2HI,V4HI,V8HI,V4QI,V8QI,V2SI,V4SI"
   (const_string "unknown"))
 
 ;; True if the main data type is twice the size of a word.
@@ -162,10 +219,15 @@
 ;; multi	multiword sequence (or user asm statements)
 ;; nop		no operation
 ;; ghost	an instruction that produces no real code
+;; simd   simd instruction for p extension
+;; psimd  partial-simd data processing instructions
+;; dsp    instructions for increasing the DSP processing capabilities
+;; dsp64  as the same as dsp, but RV64P only
 (define_attr "type"
   "unknown,branch,jump,call,load,fpload,store,fpstore,
    mtc,mfc,const,arith,logical,shift,slt,imul,idiv,move,fmove,fadd,fmul,
-   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost"
+   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost,
+   simd,psimd,dsp,dsp64"
   (cond [(eq_attr "got" "load") (const_string "load")
 
 	 ;; If a doubleword move uses these expensive instructions,
@@ -297,9 +359,9 @@
 ;; Iterator for floating-point modes that can be loaded into X registers.
 (define_mode_iterator SOFTF [SF (DF "TARGET_64BIT")])
 
-;; This attribute gives the length suffix for a sign- or zero-extension
-;; instruction.
-(define_mode_attr size [(QI "b") (HI "h")])
+;; This attribute gives the length suffix for a sign-, zero-extension
+;; ,ksub- or kadd- instruction in RVP.
+(define_mode_attr size [(QI "b") (HI "h") (SI "w")])
 
 ;; Mode attributes for loads.
 (define_mode_attr load [(QI "lb") (HI "lh") (SI "lw") (DI "ld") (SF "flw") (DF "fld")])
@@ -453,7 +515,19 @@
   [(set_attr "type" "arith")
    (set_attr "mode" "SI")])
 
-(define_insn "adddi3"
+(define_expand "adddi3"
+  [(set (match_operand:DI          0 "register_operand" "=r,r")
+	(plus:DI (match_operand:DI 1 "register_operand" " r,r")
+		 (match_operand:DI 2 "arith_operand"    " r,I")))]
+  "TARGET_64BIT || TARGET_ZPSF"
+  {
+    if (!TARGET_64BIT)
+      operands[2] = force_reg (DImode, operands[2]);
+  }
+  [(set_attr "type" "arith")
+   (set_attr "mode" "DI")])
+
+(define_insn "*adddi_rv64"
   [(set (match_operand:DI          0 "register_operand" "=r,r")
 	(plus:DI (match_operand:DI 1 "register_operand" " r,r")
 		 (match_operand:DI 2 "arith_operand"    " r,I")))]
@@ -504,8 +578,8 @@
   [(set (match_operand:DI 0            "register_operand" "= r")
 	(minus:DI (match_operand:DI 1  "reg_or_0_operand" " rJ")
 		   (match_operand:DI 2 "register_operand" "  r")))]
-  "TARGET_64BIT"
-  "sub\t%0,%z1,%2"
+  "TARGET_64BIT || TARGET_ZPSF"
+  { return TARGET_64BIT ? "sub\t%0,%z1,%2" : "sub64\t%0,%z1,%2"; }
   [(set_attr "type" "arith")
    (set_attr "mode" "DI")])
 
@@ -709,11 +783,18 @@
 		   (match_operand:SI 2 "register_operand" " r"))))]
   "TARGET_MUL && !TARGET_64BIT"
 {
-  rtx temp = gen_reg_rtx (SImode);
-  emit_insn (gen_mulsi3 (temp, operands[1], operands[2]));
-  emit_insn (gen_<u>mulsi3_highpart (riscv_subword (operands[0], true),
-				     operands[1], operands[2]));
-  emit_insn (gen_movsi (riscv_subword (operands[0], false), temp));
+  if (TARGET_ZPN)
+    {
+      emit_insn (gen_rvp_<u>mulsidi3 (operands[0], operands[1], operands[2]));
+    }
+  else
+    {
+      rtx temp = gen_reg_rtx (SImode);
+      emit_insn (gen_mulsi3 (temp, operands[1], operands[2]));
+      emit_insn (gen_<u>mulsi3_highpart (riscv_subword (operands[0], true),
+                operands[1], operands[2]));
+      emit_insn (gen_movsi (riscv_subword (operands[0], false), temp));
+    }
   DONE;
 })
 
@@ -2499,6 +2580,7 @@
 )
 
 (include "crypto.md")
+(include "rvp.md")
 
 ;; This fixes a failure with gcc.c-torture/execute/pr64242.c at -O2 for a
 ;; 32-bit target when using -mtune=sifive-7-series.  The first sched pass

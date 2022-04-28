@@ -212,3 +212,84 @@
 {
   return riscv_gpr_save_operation_p (op);
 })
+
+(define_predicate "imm2u_operand"
+  (and (match_operand 0 "const_int_operand")
+       (match_test "satisfies_constraint_u02 (op)")))
+
+(define_predicate "imm3u_operand"
+  (and (match_operand 0 "const_int_operand")
+       (match_test "satisfies_constraint_u03 (op)")))
+
+(define_predicate "imm4u_operand"
+  (and (match_operand 0 "const_int_operand")
+       (match_test "satisfies_constraint_u04 (op)")))
+       
+(define_predicate "imm5u_operand"
+  (and (match_operand 0 "const_int_operand")
+       (match_test "satisfies_constraint_u05 (op)")))
+
+(define_predicate "imm6u_operand"
+  (and (match_operand 0 "const_int_operand")
+       (match_test "satisfies_constraint_u06 (op)")))
+
+(define_predicate "rimm3u_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "imm3u_operand")))
+
+(define_predicate "rimm4u_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "imm4u_operand")))
+
+(define_predicate "rimm5u_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "imm5u_operand")))
+
+(define_predicate "rimm6u_operand"
+  (ior (match_operand 0 "register_operand")
+       (match_operand 0 "imm6u_operand")))
+
+(define_predicate "const_insb64_operand"
+  (and (match_code "const_int")
+       (match_test "IN_RANGE (INTVAL (op), 0, 7)")))
+
+(define_predicate "imm_1_2_4_8_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (ior (match_test "satisfies_constraint_C01 (op)")
+		 (match_test "satisfies_constraint_C02 (op)"))
+	    (ior (match_test "satisfies_constraint_C04 (op)")
+		 (match_test "satisfies_constraint_C08 (op)")))))
+
+(define_predicate "pwr_7_operand"
+  (and (match_code "const_int")
+       (match_test "INTVAL (op) != 0
+		    && (unsigned) exact_log2 (INTVAL (op)) <= 7")))
+
+(define_predicate "imm_0_1_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (match_test "satisfies_constraint_C00 (op)")
+	    (match_test "satisfies_constraint_C01 (op)"))))
+
+(define_predicate "imm_1_2_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (match_test "satisfies_constraint_C01 (op)")
+	    (match_test "satisfies_constraint_C02 (op)"))))
+
+(define_predicate "imm_2_3_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (match_test "satisfies_constraint_C02 (op)")
+	    (match_test "satisfies_constraint_C03 (op)"))))
+
+(define_predicate "imm_15_16_operand"
+  (and (match_operand 0 "const_int_operand")
+       (ior (match_test "satisfies_constraint_C15 (op)")
+	    (match_test "satisfies_constraint_C16 (op)"))))
+
+(define_predicate "rev_rimm_operand"
+  (ior (match_operand 0 "const_arith_operand")
+       (match_test "INTVAL (op) == (BITS_PER_WORD - 1)")))
+
+(define_predicate "fsr_shamt_imm"
+  (ior (match_operand 0 "register_operand")
+       (and (match_operand 0 "const_arith_operand")
+            (match_test "IN_RANGE (INTVAL (op), 1, 31)"))))
