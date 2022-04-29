@@ -941,9 +941,18 @@ static void
 emit_vsetvl_insn (rtx op0, rtx op1, rtx op2, rtx_insn *insn)
 {
   if (dump_file)
-    fprintf (dump_file, "replace insn %d\n\n", INSN_UID (insn));
+    {
+      fprintf (dump_file, "insert vsetvli for insn %d\n\n", INSN_UID (insn));
+      print_rtl_single (dump_file, insn);
+    }
 
-  emit_insn_before (gen_vsetvl (Pmode, op0, op1, op2), insn);
+  if (rtx_equal_p (op0, gen_rtx_REG (Pmode, X0_REGNUM)) &&
+      rtx_equal_p (op1, gen_rtx_REG (Pmode, X0_REGNUM)))
+    emit_insn_before (gen_vsetvl_zero_zero (op2), insn);
+  else if (rtx_equal_p (op0, gen_rtx_REG (Pmode, X0_REGNUM)))
+    emit_insn_before (gen_vsetvl_zero (Pmode, op1, op2), insn);
+  else
+    emit_insn_before (gen_vsetvl (Pmode, op0, op1, op2), insn);
 }
 
 // Return a vinfo representing the changes made by this VSETVLI or
@@ -954,20 +963,40 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
   vinfo new_info;
   extract_insn_cached (insn);
 
-  if (rtx_equal_p (recog_data.operand[0], gen_rtx_REG (Pmode, X0_REGNUM))
-    && rtx_equal_p (recog_data.operand[1], gen_rtx_REG (Pmode, X0_REGNUM))
-    && curr_info.valid_p () && !curr_info.unknown_p ())
+  if (recog_data.n_operands == 1)
     {
-      new_info.set_avl (curr_info.get_avl ());
-      new_info.set_avl_source (curr_info.get_avl_source ());
-      new_info.set_vtype (INTVAL (recog_data.operand[2]));
-      /* if this X0, X0 vsetvli is redundant,
-         remove it. */
-      if (curr_info.compatible_vtype_p (new_info, true))
-        remove_insn (insn);
+      gcc_assert (CONST_INT_P (recog_data.operand[0]) &&
+                  "Invalid vtype in vsetvli instruction.");
+      if (curr_info.valid_p () && !curr_info.unknown_p ())
+        {
+          new_info.set_avl (curr_info.get_avl ());
+          new_info.set_avl_source (curr_info.get_avl_source ());
+          new_info.set_vtype (INTVAL (recog_data.operand[0]));
+          /* if this X0, X0 vsetvli is redundant,
+             remove it. */
+          if (curr_info.compatible_vtype_p (new_info, true))
+            remove_insn (insn);
+        }
+      else
+        {
+          new_info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
+          new_info.set_avl_source (NULL_RTX);
+          new_info.set_vtype (INTVAL (recog_data.operand[0]));
+        }
       return new_info;
     }
 
+  if (recog_data.n_operands == 2)
+    {
+      gcc_assert (CONST_INT_P (recog_data.operand[1]) &&
+                  "Invalid vtype in vsetvli instruction.");
+      new_info.set_avl (recog_data.operand[0]);
+      new_info.set_avl_source (get_avl_source (recog_data.operand[0], insn));
+      new_info.set_vtype (INTVAL (recog_data.operand[1]));
+      return new_info;
+    }
+  
+  gcc_assert (recog_data.n_operands == 3);
   rtx vl = recog_data.operand[1];
   rtx vtype = recog_data.operand[2];
   gcc_assert (CONST_INT_P (vtype) && "Invalid vtype in vsetvli instruction.");

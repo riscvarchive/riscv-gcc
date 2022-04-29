@@ -896,6 +896,65 @@
   [(set_attr "type" "vsetvl")
    (set_attr "mode" "none")])
 
+(define_insn "vsetvl_zero_zero"
+  [(set (reg:SI VTYPE_REGNUM)
+    (unspec:SI
+      [(match_operand 0 "const_int_operand")] UNSPEC_VSETVLI))]
+  "TARGET_VECTOR"
+  {
+    char buf[64];
+    gcc_assert (CONST_INT_P (operands[0]));
+    const char *insn = "vsetvli\tzero,zero";
+    unsigned int vsew = riscv_parse_vsew_field (INTVAL (operands[0]));
+    unsigned int vlmul = riscv_parse_vlmul_field (INTVAL (operands[0]));
+    unsigned int vta = riscv_parse_vta_field (INTVAL (operands[0]));
+    unsigned int vma = riscv_parse_vma_field (INTVAL (operands[0]));
+    const char *sew = vsew == 0 ? "e8"  : vsew == 1 ? "e16"
+          : vsew == 2 ? "e32" : "e64";
+    const char *lmul = vlmul == 0 ? "m1" : vlmul == 1 ? "m2"
+          : vlmul == 2 ? "m4" : vlmul == 3 ? "m8"
+          : vlmul == 5 ? "mf8" : vlmul == 6 ? "mf4" : "mf2";
+    const char *ta = vta == 0 ? "tu" : "ta";
+    const char *ma = vma == 0 ? "mu" : "ma";
+    snprintf (buf, sizeof (buf), "%s,%s,%s,%s,%s", insn, sew, lmul, ta, ma);
+    output_asm_insn (buf, operands);
+    return "";
+  }
+  [(set_attr "type" "vsetvl")
+   (set_attr "mode" "none")])
+
+(define_insn "@vsetvl_zero_<mode>"
+  [(parallel
+    [(set (reg:SI VL_REGNUM)
+       (unspec:SI
+        [(match_operand:X 0 "csr_operand" "K,r")] UNSPEC_VSETVLI))
+     (set (reg:SI VTYPE_REGNUM)
+       (unspec:SI
+        [(match_operand 1 "const_int_operand")] UNSPEC_VSETVLI))])]
+  "TARGET_VECTOR"
+  {
+    char buf[64];
+    gcc_assert (CONST_INT_P (operands[1]));
+    const char *insn = satisfies_constraint_K (operands[0]) ? "vsetivli\tzero,%0"
+        : "vsetvli\tzero,%0";
+    unsigned int vsew = riscv_parse_vsew_field (INTVAL (operands[1]));
+    unsigned int vlmul = riscv_parse_vlmul_field (INTVAL (operands[1]));
+    unsigned int vta = riscv_parse_vta_field (INTVAL (operands[1]));
+    unsigned int vma = riscv_parse_vma_field (INTVAL (operands[1]));
+    const char *sew = vsew == 0 ? "e8"  : vsew == 1 ? "e16"
+          : vsew == 2 ? "e32" : "e64";
+    const char *lmul = vlmul == 0 ? "m1" : vlmul == 1 ? "m2"
+          : vlmul == 2 ? "m4" : vlmul == 3 ? "m8"
+          : vlmul == 5 ? "mf8" : vlmul == 6 ? "mf4" : "mf2";
+    const char *ta = vta == 0 ? "tu" : "ta";
+    const char *ma = vma == 0 ? "mu" : "ma";
+    snprintf (buf, sizeof (buf), "%s,%s,%s,%s,%s", insn, sew, lmul, ta, ma);
+    output_asm_insn (buf, operands);
+    return "";
+  }
+  [(set_attr "type" "vsetvl")
+   (set_attr "mode" "none")])
+
 ;; -------------------------------------------------------------------------------
 ;; ---- 7. Vector Loads and Stores
 ;; -------------------------------------------------------------------------------

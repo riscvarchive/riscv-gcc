@@ -69,7 +69,7 @@
   "&& 1"
   {
     emit_insn (gen_vsetvl (Pmode, operands[0], operands[1], operands[2]));
-    emit_insn (gen_vsetvl (Pmode, operands[3], operands[1], operands[2]));
+    riscv_emit_move (operands[3], operands[0]);
     DONE;
   }
   [(set_attr "type" "vsetvl")

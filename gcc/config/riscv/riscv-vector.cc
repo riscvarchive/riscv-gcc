@@ -1588,9 +1588,8 @@ riscv_vector_expand_while_len (rtx *operands)
     default:
       gcc_unreachable ();
     }
-
-  if (!poly_int_rtx_p (operands[3], &offset))
-    offset = poly_int64 (INTVAL (operands[3]), 0);
+  
+  gcc_assert (poly_int_rtx_p (operands[3], &offset));
   if (!riscv_vector_data_mode (inner_mode, offset).exists (&mode))
     {
       rtx clobber = gen_reg_rtx (Pmode);
@@ -2196,16 +2195,16 @@ emit_vec_shl_insert (rtx target, rtx src, rtx elem)
 /* Emit RTL corresponding to:
    vslide1down.vx/vfslide1down.vf. */
 static void
-emit_slide1down (rtx target, rtx elem)
+emit_slide1down (rtx target, rtx source, rtx elem)
 {
   machine_mode mode = GET_MODE (target);
   if (!FLOAT_MODE_P (mode))
     emit_insn (gen_vslide1_vx (
-        UNSPEC_SLIDE1DOWN, mode, target, const0_rtx, const0_rtx, target, elem,
+        UNSPEC_SLIDE1DOWN, mode, target, const0_rtx, const0_rtx, source, elem,
         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   else
     emit_insn (gen_vfslide1_vf (
-        UNSPEC_SLIDE1DOWN, mode, target, const0_rtx, const0_rtx, target,
+        UNSPEC_SLIDE1DOWN, mode, target, const0_rtx, const0_rtx, source,
         force_reg (GET_MODE (elem), elem), gen_rtx_REG (Pmode, X0_REGNUM),
         riscv_vector_gen_policy ()));
 }
@@ -2213,16 +2212,16 @@ emit_slide1down (rtx target, rtx elem)
 /* Emit RTL corresponding to:
    vslide1up.vx/vfslide1up.vf. */
 static void
-emit_slide1up (rtx target, rtx elem)
+emit_slide1up (rtx target, rtx source, rtx elem)
 {
   machine_mode mode = GET_MODE (target);
   if (!FLOAT_MODE_P (mode))
     emit_insn (gen_vslide1_vx (
-        UNSPEC_SLIDE1UP, mode, target, const0_rtx, const0_rtx, target, elem,
+        UNSPEC_SLIDE1UP, mode, target, const0_rtx, const0_rtx, source, elem,
         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   else
     emit_insn (gen_vfslide1_vf (
-        UNSPEC_SLIDE1UP, mode, target, const0_rtx, const0_rtx, target,
+        UNSPEC_SLIDE1UP, mode, target, const0_rtx, const0_rtx, source,
         force_reg (GET_MODE (elem), elem), gen_rtx_REG (Pmode, X0_REGNUM),
         riscv_vector_gen_policy ()));
 }
@@ -2516,7 +2515,7 @@ riscv_vector_expand_vector_init_insert_leading_elems (
   riscv_vector_emit_vec_duplicate (mode, elem_mode, target, builder.elt (0));
   int ndups = builder.count_dups (0, nelts_reqd - 1, 1);
   for (int i = ndups; i < nelts_reqd; i++)
-    emit_slide1down (target, builder.elt (i));
+    emit_slide1down (target, target, builder.elt (i));
 }
 
 static void
@@ -2648,7 +2647,7 @@ riscv_vector_expand_vector_init_handle_leading_const (
     }
 
   for (int i = nelts_reqd - ending_others; i < nelts_reqd; i++)
-    emit_slide1down (target, builder.elt (i));
+    emit_slide1down (target, target, builder.elt (i));
 }
 
 static bool
@@ -2801,7 +2800,7 @@ riscv_vector_expand_vector_handle_dup_and_const (
             }
 
           for (int i = nelts_reqd - ending_others; i < nelts_reqd; i++)
-            emit_slide1down (target, builder.elt (i));
+            emit_slide1down (target, target, builder.elt (i));
         }
     }
   return true;
@@ -2862,8 +2861,7 @@ riscv_vector_expand_strided (rtx ptr, rtx offset, int scale, rtx vector,
       break;
     case RVV_MASK_GATHER_LOAD:
     case RVV_LEN_MASK_GATHER_LOAD:
-      emit_clobber (vector);
-      emit_insn (gen_vlse (vector_mode, vector, mask, vector, ptr, stride, vl,
+      emit_insn (gen_vlse (vector_mode, vector, mask, const0_rtx, ptr, stride, vl,
                            riscv_vector_gen_policy ()));
       break;
     case RVV_SCATTER_STORE:
@@ -2991,9 +2989,8 @@ riscv_vector_expand_gather_scatter (rtx *ops, unsigned int gather_scatter_flag)
       break;
     case RVV_MASK_GATHER_LOAD:
     case RVV_LEN_MASK_GATHER_LOAD:
-      emit_clobber (vector);
       emit_insn (gen_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, vector_mode,
-                            offset_mode, vector, ops[5], vector, base, offset,
+                            offset_mode, vector, ops[5], const0_rtx, base, offset,
                             vl, riscv_vector_gen_policy (RVV_POLICY_MU)));
       break;
     case RVV_SCATTER_STORE:
@@ -3268,47 +3265,48 @@ riscv_vector_vcompress (struct expand_vec_perm_d *d)
     return false;
 
   int vlen = vec_len.to_constant ();
-  if (known_ge(d->perm[vlen - 1], vlen * 2) || vlen < 4)
+  if (known_ge (d->perm[vlen - 1], vlen * 2) || vlen < 4)
     return false;
 
   int first_op1_index = -1;
   for (int i = 0; i < vlen; i++)
-  {
-    if (!d->perm[i].is_constant ())
-      return false;
-    if (d->one_vector_p)
     {
-      if (first_op1_index < 0 && i > 0 && known_le(d->perm[i], d->perm[i - 1]))
-      {
-        first_op1_index = i;
-      }
+      if (!d->perm[i].is_constant ())
+        return false;
+      if (d->one_vector_p)
+        {
+          if (first_op1_index < 0 && i > 0 &&
+              known_le (d->perm[i], d->perm[i - 1]))
+            {
+              first_op1_index = i;
+            }
+        }
+      else if (first_op1_index < 0 && known_ge (d->perm[i], vec_len))
+        {
+          first_op1_index = i;
+        }
     }
-    else if (first_op1_index < 0 && known_ge(d->perm[i], vec_len))
-    {
-      first_op1_index = i;
-    }
-  }
 
   if (first_op1_index < 0)
     return false;
 
   // the index of op1 MUST be series
   for (int i = first_op1_index + 1; i < vlen; i++)
-  {
-    if (known_ne(d->perm[i], d->perm[i - 1] + 1))
-      return false;
-  }
+    {
+      if (known_ne (d->perm[i], d->perm[i - 1] + 1))
+        return false;
+    }
   // the index of op0 MUST be increasing progressively
   bool is_op0_series = true;
   for (int i = 1; i < first_op1_index; i++)
-  {
-    if (known_eq(d->perm[i], d->perm[i - 1] + 1))
-      continue;
-    else
-      is_op0_series = false;
-    if (known_le(d->perm[i], d->perm[i - 1]))
-      return false;
-  }
+    {
+      if (known_eq (d->perm[i], d->perm[i - 1] + 1))
+        continue;
+      else
+        is_op0_series = false;
+      if (known_le (d->perm[i], d->perm[i - 1]))
+        return false;
+    }
 
   machine_mode mask_mode;
   if (!targetm.vectorize.get_mask_mode (vmode).exists (&mask_mode))
@@ -3318,81 +3316,85 @@ riscv_vector_vcompress (struct expand_vec_perm_d *d)
     return true;
 
   if (first_op1_index == vlen - 1 && is_op0_series)
-  {
-    int slide_down_cnt = d->perm[0].to_constant ();
-    rtx select = gen_reg_rtx(GET_MODE_INNER (vmode));
-    emit_insn (gen_vec_extract (vmode, vmode, select, d->op1, GEN_INT(d->perm[vlen - 1].to_constant ())));
-
-    if (slide_down_cnt == 0)
-      emit_slide1up(d->op0, select);
-    else
-      gcc_assert(slide_down_cnt == 1);
-
-    emit_slide1down(d->op0, select);
-    riscv_emit_move (d->target, d->op0);
-    return true;
-  }
-
-  if (first_op1_index == 1)
-  {
-    int slide_up_cnt = d->perm[1].to_constant () % vlen;
-    rtx select = gen_reg_rtx(GET_MODE_INNER (vmode));
-    emit_insn (gen_vec_extract (vmode, vmode, select, d->op0, GEN_INT(d->perm[0].to_constant ())));
-
-    if (slide_up_cnt > 0)
     {
-      gcc_assert(slide_up_cnt == 1);
-      emit_slide1down(d->op1, select);
+      int slide_down_cnt = d->perm[0].to_constant ();
+      rtx select = gen_reg_rtx (GET_MODE_INNER (vmode));
+      emit_insn (gen_vec_extract (vmode, vmode, select, d->op1,
+                                  GEN_INT (d->perm[vlen - 1].to_constant ())));
+      
+      rtx slide_reg = gen_reg_rtx (vmode);
+      
+      if (slide_down_cnt == 0)
+        {
+          emit_slide1up (slide_reg, d->op0, select);
+          emit_slide1down (d->target, slide_reg, select);
+        }
+      else
+        {
+          gcc_assert (slide_down_cnt == 1);
+          emit_slide1down (d->target, d->op0, select);
+        }
+      return true;
     }
 
-    emit_slide1up(d->op1, select);
-    riscv_emit_move (d->target, d->op1);
-    return true;
-  }
+  if (first_op1_index == 1)
+    {
+      int slide_up_cnt = d->perm[1].to_constant () % vlen;
+      rtx select = gen_reg_rtx (GET_MODE_INNER (vmode));
+      emit_insn (gen_vec_extract (vmode, vmode, select, d->op0,
+                                  GEN_INT (d->perm[0].to_constant ())));
+      
+      rtx slide_reg = gen_reg_rtx (vmode);
+      
+      if (slide_up_cnt > 0)
+        {
+          gcc_assert (slide_up_cnt == 1);
+          emit_slide1down (slide_reg, d->op1, select);
+          emit_slide1up (d->target, slide_reg, select);
+        }
+      else
+        emit_slide1up (d->target, d->op1, select);
+
+      return true;
+    }
 
   // whether need to slide up
   int slide_up_cnt = vlen * 2 - d->perm[vlen - 1].to_constant () - 1;
   if (slide_up_cnt > 0)
-  {
-    emit_clobber (d->target);
-    emit_insn (gen_vslide_vx (UNSPEC_SLIDEUP,
-        vmode, d->target, const0_rtx, d->target,
-        d->op1, force_reg(Pmode, GEN_INT (slide_up_cnt)), gen_rtx_REG (Pmode, X0_REGNUM),
-        riscv_vector::gen_tu_policy ()));
-  }
+    emit_insn (gen_vslide_vx (
+        UNSPEC_SLIDEUP, vmode, d->target, const0_rtx, const0_rtx, d->op1,
+        force_reg (Pmode, GEN_INT (slide_up_cnt)),
+        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_tu_policy ()));
 
   /* Build a mask that is true when op0 elements should be used.  */
-  uint8_t* mask_val = (uint8_t*) xmalloc(vlen);
-  memset(mask_val, 0, vlen);
+  uint8_t *mask_val = (uint8_t *)xmalloc (vlen);
+  memset (mask_val, 0, vlen);
   rtx_vector_builder builder (mask_mode, vlen, 1);
-  for (int i = 0; i <first_op1_index; i++)
-  {
-    mask_val[d->perm[i].to_constant()] = 1;
-  }
+  for (int i = 0; i < first_op1_index; i++)
+    {
+      mask_val[d->perm[i].to_constant ()] = 1;
+    }
 
   for (int i = 0; i < vlen; i++)
-  {
-    rtx elem = (mask_val[i] == 1) ? CONST1_RTX (BImode) : CONST0_RTX (BImode);
-    builder.quick_push (elem);
-  }
-  free(mask_val);
+    {
+      rtx elem = (mask_val[i] == 1) ? CONST1_RTX (BImode) : CONST0_RTX (BImode);
+      builder.quick_push (elem);
+    }
+  free (mask_val);
 
   rtx mask = gen_reg_rtx (mask_mode);
-  riscv_emit_move (mask, riscv_vector_gen_mask_mem(builder.build (), mask_mode));
+  riscv_emit_move (mask,
+                   riscv_vector_gen_mask_mem (builder.build (), mask_mode));
 
-  struct expand_operand ops[6];
-  insn_code icode = code_for_vcompress_vm (vmode);
-  gcc_assert (icode != CODE_FOR_nothing);
-  create_output_operand (&ops[0], d->target, vmode);
-  create_input_operand (&ops[1], mask, mask_mode);
   if (slide_up_cnt > 0)
-    create_input_operand (&ops[2], d->target, vmode);
+    emit_insn (gen_vcompress_vm (vmode, d->target, mask, d->target, d->op0,
+                                 gen_rtx_REG (Pmode, X0_REGNUM),
+                                 riscv_vector_gen_policy ()));
   else
-    create_input_operand (&ops[2], d->op1, vmode);
-  create_input_operand (&ops[3], d->op0, vmode);
-  create_input_operand (&ops[4], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
-  create_input_operand (&ops[5], riscv_vector_gen_policy (), Pmode);
-  expand_insn (icode, 6, ops);
+    emit_insn (gen_vcompress_vm (vmode, d->target, mask, d->op1, d->op0,
+                                 gen_rtx_REG (Pmode, X0_REGNUM),
+                                 riscv_vector_gen_policy ()));
+
   return true;
 }
 
