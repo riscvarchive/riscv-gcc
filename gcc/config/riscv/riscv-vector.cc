@@ -3620,21 +3620,27 @@ riscv_vector_preferred_simd_mode (scalar_mode mode, unsigned vf)
           : vf == 2 ? VNx32QImode
           : vf == 4 ? VNx64QImode
           : VNx128QImode;
+      break;
     case E_HImode:
       return vf == 1 ? VNx8HImode
           : vf == 2 ? VNx16HImode
           : vf == 4 ? VNx32HImode
           : VNx64HImode;
+      break;
     case E_SImode:
       return vf == 1 ? VNx4SImode
           : vf == 2 ? VNx8SImode
           : vf == 4 ? VNx16SImode
           : VNx32SImode;
+      break;
     case E_DImode:
+      if (riscv_vector_elen_flags != MASK_VECTOR_ELEN_32 
+        && riscv_vector_elen_flags != MASK_VECTOR_ELEN_FP_32)
       return vf == 1 ? VNx2DImode
           : vf == 2 ? VNx4DImode
           : vf == 4 ? VNx8DImode
           : VNx16DImode;
+      break;
     case E_HFmode:
       if (TARGET_FP16)
         return vf == 1 ? VNx8HFmode
