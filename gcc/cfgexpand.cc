@@ -3290,14 +3290,19 @@ expand_asm_stmt (gasm *stmt)
 
       generating_concat_p = 0;
 
-      if ((TREE_CODE (val) == INDIRECT_REF && allows_mem)
+      gcc_assert (TREE_CODE (val) != INDIRECT_REF);
+      if (((TREE_CODE (val) == MEM_REF
+	    && TREE_CODE (TREE_OPERAND (val, 0)) != ADDR_EXPR)
+	   && allows_mem)
 	  || (DECL_P (val)
 	      && (allows_mem || REG_P (DECL_RTL (val)))
 	      && ! (REG_P (DECL_RTL (val))
 		    && GET_MODE (DECL_RTL (val)) != TYPE_MODE (type)))
 	  || ! allows_reg
 	  || is_inout
-	  || TREE_ADDRESSABLE (type))
+	  || TREE_ADDRESSABLE (type)
+	  || (!tree_fits_poly_int64_p (TYPE_SIZE (type))
+	      && !known_size_p (max_int_size_in_bytes (type))))
 	{
 	  op = expand_expr (val, NULL_RTX, VOIDmode,
 			    !allows_reg ? EXPAND_MEMORY : EXPAND_WRITE);
@@ -5927,7 +5932,10 @@ expand_gimple_basic_block (basic_block bb, bool disable_tail_calls)
 	{
 	  new_bb = expand_gimple_cond (bb, as_a <gcond *> (stmt));
 	  if (new_bb)
-	    return new_bb;
+	    {
+	      currently_expanding_gimple_stmt = NULL;
+	      return new_bb;
+	    }
 	}
       else if (is_gimple_debug (stmt))
 	{
@@ -6049,7 +6057,10 @@ expand_gimple_basic_block (basic_block bb, bool disable_tail_calls)
 		  if (can_fallthru)
 		    bb = new_bb;
 		  else
-		    return new_bb;
+		    {
+		      currently_expanding_gimple_stmt = NULL;
+		      return new_bb;
+		    }
 		}
 	    }
 	  else

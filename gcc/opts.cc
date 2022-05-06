@@ -1302,6 +1302,34 @@ finish_options (struct gcc_options *opts, struct gcc_options *opts_set,
     SET_OPTION_IF_UNSET (opts, opts_set, flag_vect_cost_model,
 			 VECT_COST_MODEL_CHEAP);
 
+  if (flag_gtoggle)
+    {
+      /* Make sure to process -gtoggle only once.  */
+      flag_gtoggle = false;
+      if (debug_info_level == DINFO_LEVEL_NONE)
+	{
+	  debug_info_level = DINFO_LEVEL_NORMAL;
+
+	  if (write_symbols == NO_DEBUG)
+	    write_symbols = PREFERRED_DEBUGGING_TYPE;
+	}
+      else
+	debug_info_level = DINFO_LEVEL_NONE;
+    }
+
+  if (!OPTION_SET_P (debug_nonbind_markers_p))
+    debug_nonbind_markers_p
+      = (optimize
+	 && debug_info_level >= DINFO_LEVEL_NORMAL
+	 && dwarf_debuginfo_p ()
+	 && !(flag_selective_scheduling || flag_selective_scheduling2));
+
+  /* Note -fvar-tracking is enabled automatically with OPT_LEVELS_1_PLUS and
+     so we need to drop it if we are called from optimize attribute.  */
+  if (debug_info_level == DINFO_LEVEL_NONE
+      && !OPTION_SET_P (flag_var_tracking))
+    flag_var_tracking = false;
+
   /* One could use EnabledBy, but it would lead to a circular dependency.  */
   if (!OPTION_SET_P (flag_var_tracking_uninit))
      flag_var_tracking_uninit = flag_var_tracking;
@@ -1328,27 +1356,6 @@ finish_options (struct gcc_options *opts, struct gcc_options *opts_set,
       profile_flag = 0;
     }
 
-  if (flag_gtoggle)
-    {
-      /* Make sure to process -gtoggle only once.  */
-      flag_gtoggle = false;
-      if (debug_info_level == DINFO_LEVEL_NONE)
-	{
-	  debug_info_level = DINFO_LEVEL_NORMAL;
-
-	  if (write_symbols == NO_DEBUG)
-	    write_symbols = PREFERRED_DEBUGGING_TYPE;
-	}
-      else
-	debug_info_level = DINFO_LEVEL_NONE;
-    }
-
-  if (!OPTION_SET_P (debug_nonbind_markers_p))
-    debug_nonbind_markers_p
-      = (optimize
-	 && debug_info_level >= DINFO_LEVEL_NORMAL
-	 && dwarf_debuginfo_p ()
-	 && !(flag_selective_scheduling || flag_selective_scheduling2));
 
   diagnose_options (opts, opts_set, loc);
 }
@@ -2017,6 +2024,7 @@ const struct sanitizer_opts_s sanitizer_opts[] =
   SANITIZER_OPT (vptr, SANITIZE_VPTR, true),
   SANITIZER_OPT (pointer-overflow, SANITIZE_POINTER_OVERFLOW, true),
   SANITIZER_OPT (builtin, SANITIZE_BUILTIN, true),
+  SANITIZER_OPT (shadow-call-stack, SANITIZE_SHADOW_CALL_STACK, false),
   SANITIZER_OPT (all, ~0U, true),
 #undef SANITIZER_OPT
   { NULL, 0U, 0UL, false }
@@ -2143,7 +2151,8 @@ parse_sanitizer_options (const char *p, location_t loc, int scode,
 		  }
 		else
 		  flags |= ~(SANITIZE_THREAD | SANITIZE_LEAK
-			     | SANITIZE_UNREACHABLE | SANITIZE_RETURN);
+			     | SANITIZE_UNREACHABLE | SANITIZE_RETURN
+			     | SANITIZE_SHADOW_CALL_STACK);
 	      }
 	    else if (value)
 	      {
@@ -2548,7 +2557,7 @@ common_handle_option (struct gcc_options *opts,
 	break;
 
       target_option_override_hook ();
-      print_specific_help (CL_TARGET, CL_UNDOCUMENTED, 0, opts, lang_mask);
+      print_specific_help (CL_TARGET, 0, 0, opts, lang_mask);
       opts->x_exit_after_options = true;
       break;
 

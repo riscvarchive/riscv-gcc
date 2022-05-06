@@ -2134,6 +2134,7 @@ gfc_simplify_cshift (gfc_expr *array, gfc_expr *shift, gfc_expr *dim)
 
   resultvec = XCNEWVEC (gfc_expr *, arraysize);
 
+  sstride[0] = 0;
   extent[0] = 1;
   count[0] = 0;
 
@@ -8424,7 +8425,7 @@ gfc_simplify_this_image (gfc_expr *coarray, gfc_expr *dim,
     return NULL;
 
   /* If no coarray argument has been passed or when the first argument
-     is actually a distance argment.  */
+     is actually a distance argument.  */
   if (coarray == NULL || !gfc_is_coarray (coarray))
     {
       gfc_expr *result;

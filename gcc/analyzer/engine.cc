@@ -129,17 +129,24 @@ impl_region_model_context::warn (pending_diagnostic *d)
       return false;
     }
   if (m_eg)
-    {
-      m_eg->get_diagnostic_manager ().add_diagnostic
-	(m_enode_for_diag, m_enode_for_diag->get_supernode (),
-	 m_stmt, m_stmt_finder, d);
-      return true;
-    }
+    return m_eg->get_diagnostic_manager ().add_diagnostic
+      (m_enode_for_diag, m_enode_for_diag->get_supernode (),
+       m_stmt, m_stmt_finder, d);
   else
     {
       delete d;
       return false;
     }
+}
+
+void
+impl_region_model_context::add_note (pending_note *pn)
+{
+  LOG_FUNC (get_logger ());
+  if (m_eg)
+    m_eg->get_diagnostic_manager ().add_note (pn);
+  else
+    delete pn;
 }
 
 void
@@ -500,6 +507,11 @@ public:
     return m_unknown_side_effects;
   }
 
+  const program_state *get_old_program_state () const FINAL OVERRIDE
+  {
+    return m_old_state;
+  }
+
   log_user m_logger;
   exploded_graph &m_eg;
   exploded_node *m_enode_for_diag;
@@ -735,6 +747,51 @@ readability_comparator (const void *p1, const void *p2)
   return 0;
 }
 
+/* Return true is SNODE is the EXIT node of a function, or is one
+   of the final snodes within its function.
+
+   Specifically, handle the final supernodes before the EXIT node,
+   for the case of clobbers that happen immediately before exiting.
+   We need a run of snodes leading to the return_p snode, where all edges are
+   intraprocedural, and every snode has just one successor.
+
+   We use this when suppressing leak reports at the end of "main".  */
+
+static bool
+returning_from_function_p (const supernode *snode)
+{
+  if (!snode)
+    return false;
+
+  unsigned count = 0;
+  const supernode *iter = snode;
+  while (true)
+    {
+      if (iter->return_p ())
+	return true;
+      if (iter->m_succs.length () != 1)
+	return false;
+      const superedge *sedge = iter->m_succs[0];
+      if (sedge->get_kind () != SUPEREDGE_CFG_EDGE)
+	return false;
+      iter = sedge->m_dest;
+
+      /* Impose a limit to ensure we terminate for pathological cases.
+
+	 We only care about the final 3 nodes, due to cases like:
+	   BB:
+	     (clobber causing leak)
+
+	   BB:
+	   <label>:
+	   return _val;
+
+	   EXIT BB.*/
+      if (++count > 3)
+	return false;
+    }
+}
+
 /* Find the best tree for SVAL and call SM's on_leak vfunc with it.
    If on_leak returns a pending_diagnostic, queue it up to be reported,
    so that we potentially complain about a leak of SVAL in the given STATE.  */
@@ -789,8 +846,7 @@ impl_region_model_context::on_state_leak (const state_machine &sm,
   gcc_assert (m_enode_for_diag);
 
   /* Don't complain about leaks when returning from "main".  */
-  if (m_enode_for_diag->get_supernode ()
-      && m_enode_for_diag->get_supernode ()->return_p ())
+  if (returning_from_function_p (m_enode_for_diag->get_supernode ()))
     {
       tree fndecl = m_enode_for_diag->get_function ()->decl;
       if (id_equal (DECL_NAME (fndecl), "main"))
@@ -1467,10 +1523,15 @@ public:
     m_setjmp_point (setjmp_point), m_stack_pop_event (NULL)
   {}
 
+  int get_controlling_option () const FINAL OVERRIDE
+  {
+    return OPT_Wanalyzer_stale_setjmp_buffer;
+  }
+
   bool emit (rich_location *richloc) FINAL OVERRIDE
   {
     return warning_at
-      (richloc, OPT_Wanalyzer_stale_setjmp_buffer,
+      (richloc, get_controlling_option (),
        "%qs called after enclosing function of %qs has returned",
        get_user_facing_name (m_longjmp_call),
        get_user_facing_name (m_setjmp_call));
@@ -3913,7 +3974,7 @@ exploded_graph::process_node (exploded_node *node)
                         analysis of the current function.
 
                         The analyzer handles calls to such functions while
-                        analysing the stmt itself, so the the function call
+                        analysing the stmt itself, so the function call
                         must have been handled by the anlyzer till now.  */
                      exploded_node *next
                        = get_or_create_node (next_point,
@@ -5656,15 +5717,15 @@ impl_run_checkers (logger *logger)
   FOR_EACH_FUNCTION_WITH_GIMPLE_BODY (node)
     node->get_untransformed_body ();
 
-  engine eng (logger);
-
   /* Create the supergraph.  */
   supergraph sg (logger);
+
+  engine eng (&sg, logger);
 
   state_purge_map *purge_map = NULL;
 
   if (flag_analyzer_state_purge)
-    purge_map = new state_purge_map (sg, logger);
+    purge_map = new state_purge_map (sg, eng.get_model_manager (), logger);
 
   if (flag_dump_analyzer_supergraph)
     {
@@ -5749,6 +5810,9 @@ impl_run_checkers (logger *logger)
 
   if (flag_dump_analyzer_json)
     dump_analyzer_json (sg, eg);
+
+  if (flag_dump_analyzer_untracked)
+    eng.get_model_manager ()->dump_untracked_regions ();
 
   delete purge_map;
 }

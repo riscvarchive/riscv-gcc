@@ -2370,6 +2370,11 @@ show_code_node (int level, gfc_code *c)
 	show_expr (c->expr1);
       else
 	fprintf (dumpfile, "%d", c->ext.stop_code);
+      if (c->expr2 != NULL)
+	{
+	  fputs (" QUIET=", dumpfile);
+	  show_expr (c->expr2);
+	}
 
       break;
 
@@ -3538,7 +3543,7 @@ gfc_dump_c_prototypes (gfc_namespace *ns, FILE *file)
   gfc_traverse_ns (ns, write_interop_decl);
 }
 
-/* Loop over all global symbols, writing out their declrations.  */
+/* Loop over all global symbols, writing out their declarations.  */
 
 void
 gfc_dump_external_c_prototypes (FILE * file)

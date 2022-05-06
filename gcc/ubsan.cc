@@ -832,8 +832,8 @@ ubsan_expand_null_ifn (gimple_stmt_iterator *gsip)
   else
     {
       enum built_in_function bcode
-	= (flag_sanitize_recover & ((check_align ? SANITIZE_ALIGNMENT : 0)
-				    | (check_null ? SANITIZE_NULL : 0)))
+	= (flag_sanitize_recover & ((check_align ? SANITIZE_ALIGNMENT + 0 : 0)
+				    | (check_null ? SANITIZE_NULL + 0 : 0)))
 	  ? BUILT_IN_UBSAN_HANDLE_TYPE_MISMATCH_V1
 	  : BUILT_IN_UBSAN_HANDLE_TYPE_MISMATCH_V1_ABORT;
       tree fn = builtin_decl_implicit (bcode);
@@ -2123,6 +2123,8 @@ instrument_object_size (gimple_stmt_iterator *gsi, tree t, bool is_lhs)
 	   || TREE_CODE (inner) == RESULT_DECL)
 	  && DECL_REGISTER (inner))
 	return;
+      if (t == inner && !is_global_var (t))
+	return;
       base = inner;
     }
   else if (TREE_CODE (inner) == MEM_REF)
@@ -2218,6 +2220,11 @@ instrument_object_size (gimple_stmt_iterator *gsi, tree t, bool is_lhs)
 	    return;
 	}
     }
+
+  if (DECL_P (base)
+      && decl_function_context (base) == current_function_decl
+      && !TREE_ADDRESSABLE (base))
+    mark_addressable (base);
 
   if (bos_stmt && gimple_call_builtin_p (bos_stmt, BUILT_IN_OBJECT_SIZE))
     ubsan_create_edge (bos_stmt);

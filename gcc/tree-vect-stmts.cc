@@ -89,9 +89,10 @@ stmt_in_inner_loop_p (vec_info *vinfo, class _stmt_vec_info *stmt_info)
    target model or by saving it in a vector for later processing.
    Return a preliminary estimate of the statement's cost.  */
 
-unsigned
+static unsigned
 record_stmt_cost (stmt_vector_for_cost *body_cost_vec, int count,
-		  enum vect_cost_for_stmt kind, stmt_vec_info stmt_info,
+		  enum vect_cost_for_stmt kind,
+		  stmt_vec_info stmt_info, slp_tree node,
 		  tree vectype, int misalign,
 		  enum vect_cost_model_location where)
 {
@@ -102,11 +103,43 @@ record_stmt_cost (stmt_vector_for_cost *body_cost_vec, int count,
       && (stmt_info && STMT_VINFO_GATHER_SCATTER_P (stmt_info)))
     kind = vector_scatter_store;
 
-  stmt_info_for_cost si = { count, kind, where, stmt_info, vectype, misalign };
+  stmt_info_for_cost si
+    = { count, kind, where, stmt_info, node, vectype, misalign };
   body_cost_vec->safe_push (si);
 
   return (unsigned)
       (builtin_vectorization_cost (kind, vectype, misalign) * count);
+}
+
+unsigned
+record_stmt_cost (stmt_vector_for_cost *body_cost_vec, int count,
+		  enum vect_cost_for_stmt kind, stmt_vec_info stmt_info,
+		  tree vectype, int misalign,
+		  enum vect_cost_model_location where)
+{
+  return record_stmt_cost (body_cost_vec, count, kind, stmt_info, NULL,
+			   vectype, misalign, where);
+}
+
+unsigned
+record_stmt_cost (stmt_vector_for_cost *body_cost_vec, int count,
+		  enum vect_cost_for_stmt kind, slp_tree node,
+		  tree vectype, int misalign,
+		  enum vect_cost_model_location where)
+{
+  return record_stmt_cost (body_cost_vec, count, kind, NULL, node,
+			   vectype, misalign, where);
+}
+
+unsigned
+record_stmt_cost (stmt_vector_for_cost *body_cost_vec, int count,
+		  enum vect_cost_for_stmt kind,
+		  enum vect_cost_model_location where)
+{
+  gcc_assert (kind == cond_branch_taken || kind == cond_branch_not_taken
+	      || kind == scalar_stmt);
+  return record_stmt_cost (body_cost_vec, count, kind, NULL, NULL,
+			   NULL_TREE, 0, where);
 }
 
 /* Return a variable of type ELEM_TYPE[NELEMS].  */
@@ -1657,7 +1690,8 @@ static tree permute_vec_elements (vec_info *, tree, tree, tree, stmt_vec_info,
    as well as whether the target does.
 
    VLS_TYPE says whether the statement is a load or store and VECTYPE
-   is the type of the vector being loaded or stored.  MEMORY_ACCESS_TYPE
+   is the type of the vector being loaded or stored.  SLP_NODE is the SLP
+   node that contains the statement, or null if none.  MEMORY_ACCESS_TYPE
    says how the load or store is going to be implemented and GROUP_SIZE
    is the number of load or store statements in the containing group.
    If the access is a gather load or scatter store, GS_INFO describes
@@ -1670,17 +1704,23 @@ static tree permute_vec_elements (vec_info *, tree, tree, tree, stmt_vec_info,
 
 static void
 check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
+				      slp_tree slp_node,
 				      vec_load_store_type vls_type,
 				      int group_size,
 				      vect_memory_access_type
 				      memory_access_type,
-				      unsigned int ncopies,
 				      gather_scatter_info *gs_info,
 				      tree scalar_mask)
 {
   /* Invariant loads need no special support.  */
   if (memory_access_type == VMAT_INVARIANT)
     return;
+
+  unsigned int nvectors;
+  if (slp_node)
+    nvectors = SLP_TREE_NUMBER_OF_VEC_STMTS (slp_node);
+  else
+    nvectors = vect_get_num_copies (loop_vinfo, vectype);
 
   vec_loop_masks *masks = &LOOP_VINFO_MASKS (loop_vinfo);
   machine_mode vecmode = TYPE_MODE (vectype);
@@ -1699,7 +1739,8 @@ check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
 	  LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo) = false;
 	  return;
 	}
-      vect_record_loop_mask (loop_vinfo, masks, ncopies, vectype, scalar_mask);
+      vect_record_loop_mask (loop_vinfo, masks, nvectors, vectype,
+			     scalar_mask);
       return;
     }
 
@@ -1741,10 +1782,11 @@ check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
           vec_loop_lens *lens = &LOOP_VINFO_LENS (loop_vinfo);
           unsigned factor =
               (vecmode == vmode) ? 1 : GET_MODE_UNIT_SIZE (vecmode);
-          vect_record_loop_len (loop_vinfo, lens, ncopies, vectype, factor);
+          vect_record_loop_len (loop_vinfo, lens, nvectors, vectype, factor);
         }
       else
-        vect_record_loop_mask (loop_vinfo, masks, ncopies, vectype, scalar_mask);
+        vect_record_loop_mask (loop_vinfo, masks, nvectors, vectype,
+                               scalar_mask);
       return;
     }
 
@@ -1774,7 +1816,7 @@ check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
   /* We might load more scalars than we need for permuting SLP loads.
      We checked in get_group_load_store_type that the extra elements
      don't leak into a new vector.  */
-  auto get_valid_nvectors = [] (poly_uint64 size, poly_uint64 nunits)
+  auto group_memory_nvectors = [](poly_uint64 size, poly_uint64 nunits)
   {
     unsigned int nvectors;
     if (can_div_away_from_zero_p (size, nunits, &nvectors))
@@ -1787,17 +1829,11 @@ check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
   machine_mode mask_mode;
   bool using_partial_vectors_p = false;
 
-  /* The loads and stores in RVV (RISC-V 'V' Extension) depend on both
-     vector-length and mask register. We need both maskload and maskstore
-     and len_load and len_store pattern for the auto-vectorization.
-     The current GCC can't make them both work,
-     so we change the code here to work around
-     and let len_load and len_store have higher priority. */
   machine_mode vmode;
   if (get_len_load_store_mode (vecmode, is_load).exists (&vmode)
-    && can_vec_len_load_store_p (vecmode, is_load))
+      && can_vec_len_load_store_p (vecmode, is_load))
     {
-      unsigned int nvectors = get_valid_nvectors (group_size * vf, nunits);
+      nvectors = group_memory_nvectors (group_size * vf, nunits);
       vec_loop_lens *lens = &LOOP_VINFO_LENS (loop_vinfo);
       unsigned factor = (vecmode == vmode) ? 1 : GET_MODE_UNIT_SIZE (vecmode);
       vect_record_loop_len (loop_vinfo, lens, nvectors, vectype, factor);
@@ -1808,7 +1844,7 @@ check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
       && targetm.vectorize.get_mask_mode (vecmode).exists (&mask_mode)
       && can_vec_mask_load_store_p (vecmode, mask_mode, is_load))
     {
-      unsigned int nvectors = get_valid_nvectors (group_size * vf, nunits);
+      unsigned int nvectors = group_memory_nvectors (group_size * vf, nunits);
       vect_record_loop_mask (loop_vinfo, masks, nvectors, vectype, scalar_mask);
       using_partial_vectors_p = true;
     }
@@ -6172,6 +6208,9 @@ vectorizable_operation (vec_info *vinfo,
                              "use not simple.\n");
 	  return false;
 	}
+      if (vectype2
+	  && maybe_ne (nunits_out, TYPE_VECTOR_SUBPARTS (vectype2)))
+	return false;
     }
   if (op_type == ternary_op)
     {
@@ -6183,6 +6222,9 @@ vectorizable_operation (vec_info *vinfo,
                              "use not simple.\n");
 	  return false;
 	}
+      if (vectype3
+	  && maybe_ne (nunits_out, TYPE_VECTOR_SUBPARTS (vectype3)))
+	return false;
     }
 
   /* Multiple types in SLP are handled by creating the appropriate number of
@@ -6499,6 +6541,9 @@ vectorizable_operation (vec_info *vinfo,
 	      gimple_assign_set_lhs (new_stmt, new_temp);
 	    }
           vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
+	  if (using_emulated_vectors_p)
+	    suppress_warning (new_stmt, OPT_Wvector_operation_performance);
+
 	  /* Enter the combined value into the vector cond hash so we don't
 	     AND it with a loop mask again.  */
 	  if (mask)
@@ -7638,9 +7683,10 @@ vectorizable_store (vec_info *vinfo,
 
       if (loop_vinfo
 	  && LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo))
-	check_load_store_for_partial_vectors (loop_vinfo, vectype, vls_type,
-					      group_size, memory_access_type,
-					      ncopies, &gs_info, mask);
+	check_load_store_for_partial_vectors (loop_vinfo, vectype, slp_node,
+					      vls_type, group_size,
+					      memory_access_type, &gs_info,
+					      mask);
 
       if (slp_node
 	  && !vect_maybe_update_slp_op_vectype (SLP_TREE_CHILDREN (slp_node)[0],
@@ -9055,9 +9101,10 @@ vectorizable_load (vec_info *vinfo,
 
       if (loop_vinfo
 	  && LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo))
-	check_load_store_for_partial_vectors (loop_vinfo, vectype, VLS_LOAD,
-					      group_size, memory_access_type,
-					      ncopies, &gs_info, mask);
+	check_load_store_for_partial_vectors (loop_vinfo, vectype, slp_node,
+					      VLS_LOAD, group_size,
+					      memory_access_type, &gs_info,
+					      mask);
 
       if (dump_enabled_p ()
 	  && memory_access_type != VMAT_ELEMENTWISE
@@ -9620,7 +9667,7 @@ vectorizable_load (vec_info *vinfo,
 					  memory_access_type);
     }
 
-  vec<tree> vec_offsets = vNULL;
+  auto_vec<tree> vec_offsets;
   auto_vec<tree> vec_masks;
   if (mask)
     {
@@ -10703,7 +10750,7 @@ vectorizable_condition (vec_info *vinfo,
 	      bool honor_nans = HONOR_NANS (TREE_TYPE (cond.op0));
 	      tree_code orig_code = cond.code;
 	      cond.code = invert_tree_comparison (cond.code, honor_nans);
-	      if (loop_vinfo->scalar_cond_masked_set.contains (cond))
+	      if (!masked && loop_vinfo->scalar_cond_masked_set.contains (cond))
 		{
 		  masks = &LOOP_VINFO_MASKS (loop_vinfo);
 		  cond_code = cond.code;

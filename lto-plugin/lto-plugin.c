@@ -1,4 +1,4 @@
-/* LTO plugin for gold and/or GNU ld.
+/* LTO plugin for linkers like gold, GNU ld or mold.
    Copyright (C) 2009-2022 Free Software Foundation, Inc.
    Contributed by Rafael Avila de Espindola (espindola@google.com).
 
@@ -16,11 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* The plugin has only one external function: onload. Gold passes it an array of
-   function that the plugin uses to communicate back to gold.
+/* The plugin has only one external function: onload. A linker passes it an array of
+   function that the plugin uses to communicate back to the linker.
 
-   With the functions provided by gold, the plugin can be notified when
-   gold first analyzes a file and pass a symbol table back to gold. The plugin
+   With the functions provided by the linker, the plugin can be notified when
+   the linker first analyzes a file and pass a symbol table back to the linker. The plugin
    is also notified when all symbols have been read and it is time to generate
    machine code for the necessary symbols.
 
@@ -799,8 +799,15 @@ all_symbols_read_handler (void)
       char *arg;
       char *offload_objects_file_name;
       struct plugin_offload_file *ofld;
+      const char *suffix = ".ofldlist";
 
-      offload_objects_file_name = make_temp_file (".ofldlist");
+      if (save_temps && link_output_name)
+	{
+	  suffix += skip_in_suffix;
+	  offload_objects_file_name = concat (link_output_name, suffix, NULL);
+	}
+      else
+	offload_objects_file_name = make_temp_file (suffix);
       check (offload_objects_file_name, LDPL_FATAL,
 	     "Failed to generate a temporary file name");
       f = fopen (offload_objects_file_name, "w");
@@ -1139,7 +1146,7 @@ process_offload_section (void *data, const char *name, off_t offset, off_t len)
   return 1;
 }
 
-/* Callback used by gold to check if the plugin will claim FILE. Writes
+/* Callback used by a linker to check if the plugin will claim FILE. Writes
    the result in CLAIMED. */
 
 static enum ld_plugin_status
@@ -1374,7 +1381,7 @@ process_option (const char *option)
   verbose = verbose || debug;
 }
 
-/* Called by gold after loading the plugin. TV is the transfer vector. */
+/* Called by a linker after loading the plugin. TV is the transfer vector. */
 
 enum ld_plugin_status
 onload (struct ld_plugin_tv *tv)

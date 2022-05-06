@@ -80,6 +80,7 @@
 #include "fractional-cost.h"
 #include "rtlanal.h"
 #include "tree-dfa.h"
+#include "asan.h"
 
 /* This file should be included last.  */
 #include "target-def.h"
@@ -518,6 +519,42 @@ static const struct cpu_addrcost_table neoversev1_addrcost_table =
   0 /* imm_offset  */
 };
 
+static const struct cpu_addrcost_table neoversen2_addrcost_table =
+{
+    {
+      1, /* hi  */
+      0, /* si  */
+      0, /* di  */
+      1, /* ti  */
+    },
+  0, /* pre_modify  */
+  0, /* post_modify  */
+  2, /* post_modify_ld3_st3  */
+  2, /* post_modify_ld4_st4  */
+  0, /* register_offset  */
+  0, /* register_sextend  */
+  0, /* register_zextend  */
+  0 /* imm_offset  */
+};
+
+static const struct cpu_addrcost_table demeter_addrcost_table =
+{
+    {
+      1, /* hi  */
+      0, /* si  */
+      0, /* di  */
+      1, /* ti  */
+    },
+  0, /* pre_modify  */
+  0, /* post_modify  */
+  2, /* post_modify_ld3_st3  */
+  2, /* post_modify_ld4_st4  */
+  0, /* register_offset  */
+  0, /* register_sextend  */
+  0, /* register_zextend  */
+  0 /* imm_offset  */
+};
+
 static const struct cpu_regmove_cost generic_regmove_cost =
 {
   1, /* GP2GP  */
@@ -620,6 +657,36 @@ static const struct cpu_regmove_cost a64fx_regmove_cost =
      their cost higher than memmov_cost.  */
   5, /* GP2FP  */
   7, /* FP2GP  */
+  2 /* FP2FP  */
+};
+
+static const struct cpu_regmove_cost neoversen2_regmove_cost =
+{
+  1, /* GP2GP  */
+  /* Spilling to int<->fp instead of memory is recommended so set
+     realistic costs compared to memmov_cost.  */
+  3, /* GP2FP  */
+  2, /* FP2GP  */
+  2 /* FP2FP  */
+};
+
+static const struct cpu_regmove_cost neoversev1_regmove_cost =
+{
+  1, /* GP2GP  */
+  /* Spilling to int<->fp instead of memory is recommended so set
+     realistic costs compared to memmov_cost.  */
+  3, /* GP2FP  */
+  2, /* FP2GP  */
+  2 /* FP2FP  */
+};
+
+static const struct cpu_regmove_cost demeter_regmove_cost =
+{
+  1, /* GP2GP  */
+  /* Spilling to int<->fp instead of memory is recommended so set
+     realistic costs compared to memmov_cost.  */
+  3, /* GP2FP  */
+  2, /* FP2GP  */
   2 /* FP2FP  */
 };
 
@@ -1268,7 +1335,13 @@ static const struct tune_params generic_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   2, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_CMP_BRANCH), /* fusible_ops  */
   "16:12",	/* function_align.  */
@@ -1297,7 +1370,13 @@ static const struct tune_params cortexa35_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   1, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_MOV_MOVK | AARCH64_FUSE_ADRP_ADD
    | AARCH64_FUSE_MOVK_MOVK | AARCH64_FUSE_ADRP_LDR), /* fusible_ops  */
@@ -1324,7 +1403,13 @@ static const struct tune_params cortexa53_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   2, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_MOV_MOVK | AARCH64_FUSE_ADRP_ADD
    | AARCH64_FUSE_MOVK_MOVK | AARCH64_FUSE_ADRP_LDR), /* fusible_ops  */
@@ -1351,7 +1436,13 @@ static const struct tune_params cortexa57_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   3, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_MOV_MOVK | AARCH64_FUSE_ADRP_ADD
    | AARCH64_FUSE_MOVK_MOVK), /* fusible_ops  */
@@ -1378,7 +1469,13 @@ static const struct tune_params cortexa72_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   3, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_MOV_MOVK | AARCH64_FUSE_ADRP_ADD
    | AARCH64_FUSE_MOVK_MOVK), /* fusible_ops  */
@@ -1405,7 +1502,13 @@ static const struct tune_params cortexa73_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost.  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   2, /* issue_rate.  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_MOV_MOVK | AARCH64_FUSE_ADRP_ADD
    | AARCH64_FUSE_MOVK_MOVK | AARCH64_FUSE_ADRP_LDR), /* fusible_ops  */
@@ -1434,7 +1537,13 @@ static const struct tune_params exynosm1_tunings =
   &generic_branch_cost,
   &exynosm1_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4,	/* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   3,	/* issue_rate  */
   (AARCH64_FUSE_AES_AESMC), /* fusible_ops  */
   "4",	/* function_align.  */
@@ -1460,7 +1569,13 @@ static const struct tune_params thunderxt88_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  6, /* memmov_cost  */
+  { 6, /* load_int.  */
+    6, /* store_int.  */
+    6, /* load_fp.  */
+    6, /* store_fp.  */
+    6, /* load_pred.  */
+    6 /* store_pred.  */
+  }, /* memmov_cost.  */
   2, /* issue_rate  */
   AARCH64_FUSE_ALU_BRANCH, /* fusible_ops  */
   "8",	/* function_align.  */
@@ -1486,7 +1601,13 @@ static const struct tune_params thunderx_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  6, /* memmov_cost  */
+  { 6, /* load_int.  */
+    6, /* store_int.  */
+    6, /* load_fp.  */
+    6, /* store_fp.  */
+    6, /* load_pred.  */
+    6 /* store_pred.  */
+  }, /* memmov_cost.  */
   2, /* issue_rate  */
   AARCH64_FUSE_ALU_BRANCH, /* fusible_ops  */
   "8",	/* function_align.  */
@@ -1513,7 +1634,13 @@ static const struct tune_params tsv110_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4,    /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   4,    /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_ALU_BRANCH
    | AARCH64_FUSE_ALU_CBZ), /* fusible_ops  */
@@ -1540,7 +1667,13 @@ static const struct tune_params xgene1_tunings =
   &generic_branch_cost,
   &xgene1_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  6, /* memmov_cost  */
+  { 6, /* load_int.  */
+    6, /* store_int.  */
+    6, /* load_fp.  */
+    6, /* store_fp.  */
+    6, /* load_pred.  */
+    6 /* store_pred.  */
+  }, /* memmov_cost.  */
   4, /* issue_rate  */
   AARCH64_FUSE_NOTHING, /* fusible_ops  */
   "16",	/* function_align.  */
@@ -1566,7 +1699,13 @@ static const struct tune_params emag_tunings =
   &generic_branch_cost,
   &xgene1_approx_modes,
   SVE_NOT_IMPLEMENTED,
-  6, /* memmov_cost  */
+  { 6, /* load_int.  */
+    6, /* store_int.  */
+    6, /* load_fp.  */
+    6, /* store_fp.  */
+    6, /* load_pred.  */
+    6 /* store_pred.  */
+  }, /* memmov_cost.  */
   4, /* issue_rate  */
   AARCH64_FUSE_NOTHING, /* fusible_ops  */
   "16",	/* function_align.  */
@@ -1592,7 +1731,13 @@ static const struct tune_params qdf24xx_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   4, /* issue_rate  */
   (AARCH64_FUSE_MOV_MOVK | AARCH64_FUSE_ADRP_ADD
    | AARCH64_FUSE_MOVK_MOVK), /* fuseable_ops  */
@@ -1621,7 +1766,13 @@ static const struct tune_params saphira_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   4, /* issue_rate  */
   (AARCH64_FUSE_MOV_MOVK | AARCH64_FUSE_ADRP_ADD
    | AARCH64_FUSE_MOVK_MOVK), /* fuseable_ops  */
@@ -1648,7 +1799,13 @@ static const struct tune_params thunderx2t99_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost.  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   4, /* issue_rate.  */
   (AARCH64_FUSE_ALU_BRANCH | AARCH64_FUSE_AES_AESMC
    | AARCH64_FUSE_ALU_CBZ), /* fusible_ops  */
@@ -1675,7 +1832,13 @@ static const struct tune_params thunderx3t110_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost.  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   6, /* issue_rate.  */
   (AARCH64_FUSE_ALU_BRANCH | AARCH64_FUSE_AES_AESMC
    | AARCH64_FUSE_ALU_CBZ), /* fusible_ops  */
@@ -1702,7 +1865,13 @@ static const struct tune_params neoversen1_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    2, /* store_int.  */
+    5, /* load_fp.  */
+    2, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   3, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_CMP_BRANCH), /* fusible_ops  */
   "32:16",	/* function_align.  */
@@ -1728,7 +1897,13 @@ static const struct tune_params ampere1_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_NOT_IMPLEMENTED, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   4, /* issue_rate  */
   (AARCH64_FUSE_ADRP_ADD | AARCH64_FUSE_AES_AESMC |
    AARCH64_FUSE_MOV_MOVK | AARCH64_FUSE_MOVK_MOVK |
@@ -1898,12 +2073,18 @@ static const struct tune_params neoversev1_tunings =
 {
   &cortexa76_extra_costs,
   &neoversev1_addrcost_table,
-  &generic_regmove_cost,
+  &neoversev1_regmove_cost,
   &neoversev1_vector_cost,
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_256, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    2, /* store_int.  */
+    6, /* load_fp.  */
+    2, /* store_fp.  */
+    6, /* load_pred.  */
+    1 /* store_pred.  */
+  }, /* memmov_cost.  */
   3, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_CMP_BRANCH), /* fusible_ops  */
   "32:16",	/* function_align.  */
@@ -2029,12 +2210,18 @@ static const struct tune_params neoverse512tvb_tunings =
 {
   &cortexa76_extra_costs,
   &neoversev1_addrcost_table,
-  &generic_regmove_cost,
+  &neoversev1_regmove_cost,
   &neoverse512tvb_vector_cost,
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_128 | SVE_256, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    2, /* store_int.  */
+    6, /* load_fp.  */
+    2, /* store_fp.  */
+    6, /* load_pred.  */
+    1 /* store_pred.  */
+  }, /* memmov_cost.  */
   3, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_CMP_BRANCH), /* fusible_ops  */
   "32:16",	/* function_align.  */
@@ -2053,16 +2240,176 @@ static const struct tune_params neoverse512tvb_tunings =
   &generic_prefetch_tune
 };
 
+static const advsimd_vec_cost neoversen2_advsimd_vector_cost =
+{
+  2, /* int_stmt_cost  */
+  2, /* fp_stmt_cost  */
+  2, /* ld2_st2_permute_cost */
+  2, /* ld3_st3_permute_cost  */
+  3, /* ld4_st4_permute_cost  */
+  3, /* permute_cost  */
+  4, /* reduc_i8_cost  */
+  4, /* reduc_i16_cost  */
+  2, /* reduc_i32_cost  */
+  2, /* reduc_i64_cost  */
+  6, /* reduc_f16_cost  */
+  4, /* reduc_f32_cost  */
+  2, /* reduc_f64_cost  */
+  2, /* store_elt_extra_cost  */
+  /* This value is just inherited from the Cortex-A57 table.  */
+  8, /* vec_to_scalar_cost  */
+  /* This depends very much on what the scalar value is and
+     where it comes from.  E.g. some constants take two dependent
+     instructions or a load, while others might be moved from a GPR.
+     4 seems to be a reasonable compromise in practice.  */
+  4, /* scalar_to_vec_cost  */
+  4, /* align_load_cost  */
+  4, /* unalign_load_cost  */
+  /* Although stores have a latency of 2 and compete for the
+     vector pipes, in practice it's better not to model that.  */
+  1, /* unalign_store_cost  */
+  1  /* store_cost  */
+};
+
+static const sve_vec_cost neoversen2_sve_vector_cost =
+{
+  {
+    2, /* int_stmt_cost  */
+    2, /* fp_stmt_cost  */
+    3, /* ld2_st2_permute_cost  */
+    4, /* ld3_st3_permute_cost  */
+    4, /* ld4_st4_permute_cost  */
+    3, /* permute_cost  */
+    /* Theoretically, a reduction involving 15 scalar ADDs could
+       complete in ~5 cycles and would have a cost of 15.  [SU]ADDV
+       completes in 11 cycles, so give it a cost of 15 + 6.  */
+    21, /* reduc_i8_cost  */
+    /* Likewise for 7 scalar ADDs (~3 cycles) vs. 9: 7 + 6.  */
+    13, /* reduc_i16_cost  */
+    /* Likewise for 3 scalar ADDs (~2 cycles) vs. 8: 3 + 6.  */
+    9, /* reduc_i32_cost  */
+    /* Likewise for 1 scalar ADD (~1 cycles) vs. 2: 1 + 1.  */
+    2, /* reduc_i64_cost  */
+    /* Theoretically, a reduction involving 7 scalar FADDs could
+       complete in ~8 cycles and would have a cost of 14.  FADDV
+       completes in 6 cycles, so give it a cost of 14 - 2.  */
+    12, /* reduc_f16_cost  */
+    /* Likewise for 3 scalar FADDs (~4 cycles) vs. 4: 6 - 0.  */
+    6, /* reduc_f32_cost  */
+    /* Likewise for 1 scalar FADD (~2 cycles) vs. 2: 2 - 0.  */
+    2, /* reduc_f64_cost  */
+    2, /* store_elt_extra_cost  */
+    /* This value is just inherited from the Cortex-A57 table.  */
+    8, /* vec_to_scalar_cost  */
+    /* See the comment above the Advanced SIMD versions.  */
+    4, /* scalar_to_vec_cost  */
+    4, /* align_load_cost  */
+    4, /* unalign_load_cost  */
+    /* Although stores have a latency of 2 and compete for the
+       vector pipes, in practice it's better not to model that.  */
+    1, /* unalign_store_cost  */
+    1  /* store_cost  */
+  },
+  3, /* clast_cost  */
+  10, /* fadda_f16_cost  */
+  6, /* fadda_f32_cost  */
+  4, /* fadda_f64_cost  */
+  /* A strided Advanced SIMD x64 load would take two parallel FP loads
+     (8 cycles) plus an insertion (2 cycles).  Assume a 64-bit SVE gather
+     is 1 cycle more.  The Advanced SIMD version is costed as 2 scalar loads
+     (cost 8) and a vec_construct (cost 2).  Add a full vector operation
+     (cost 2) to that, to avoid the difference being lost in rounding.
+
+     There is no easy comparison between a strided Advanced SIMD x32 load
+     and an SVE 32-bit gather, but cost an SVE 32-bit gather as 1 vector
+     operation more than a 64-bit gather.  */
+  14, /* gather_load_x32_cost  */
+  12, /* gather_load_x64_cost  */
+  3 /* scatter_store_elt_cost  */
+};
+
+static const aarch64_scalar_vec_issue_info neoversen2_scalar_issue_info =
+{
+  3, /* loads_stores_per_cycle  */
+  2, /* stores_per_cycle  */
+  4, /* general_ops_per_cycle  */
+  0, /* fp_simd_load_general_ops  */
+  1 /* fp_simd_store_general_ops  */
+};
+
+static const aarch64_advsimd_vec_issue_info neoversen2_advsimd_issue_info =
+{
+  {
+    3, /* loads_stores_per_cycle  */
+    2, /* stores_per_cycle  */
+    2, /* general_ops_per_cycle  */
+    0, /* fp_simd_load_general_ops  */
+    1 /* fp_simd_store_general_ops  */
+  },
+  2, /* ld2_st2_general_ops  */
+  2, /* ld3_st3_general_ops  */
+  3 /* ld4_st4_general_ops  */
+};
+
+static const aarch64_sve_vec_issue_info neoversen2_sve_issue_info =
+{
+  {
+    {
+      3, /* loads_per_cycle  */
+      2, /* stores_per_cycle  */
+      2, /* general_ops_per_cycle  */
+      0, /* fp_simd_load_general_ops  */
+      1 /* fp_simd_store_general_ops  */
+    },
+    2, /* ld2_st2_general_ops  */
+    3, /* ld3_st3_general_ops  */
+    3 /* ld4_st4_general_ops  */
+  },
+  2, /* pred_ops_per_cycle  */
+  2, /* while_pred_ops  */
+  2, /* int_cmp_pred_ops  */
+  1, /* fp_cmp_pred_ops  */
+  1, /* gather_scatter_pair_general_ops  */
+  1 /* gather_scatter_pair_pred_ops  */
+};
+
+static const aarch64_vec_issue_info neoversen2_vec_issue_info =
+{
+  &neoversen2_scalar_issue_info,
+  &neoversen2_advsimd_issue_info,
+  &neoversen2_sve_issue_info
+};
+
+/* Neoverse N2 costs for vector insn classes.  */
+static const struct cpu_vector_cost neoversen2_vector_cost =
+{
+  1, /* scalar_int_stmt_cost  */
+  2, /* scalar_fp_stmt_cost  */
+  4, /* scalar_load_cost  */
+  1, /* scalar_store_cost  */
+  1, /* cond_taken_branch_cost  */
+  1, /* cond_not_taken_branch_cost  */
+  &neoversen2_advsimd_vector_cost, /* advsimd  */
+  &neoversen2_sve_vector_cost, /* sve  */
+  &neoversen2_vec_issue_info /* issue_info  */
+};
+
 static const struct tune_params neoversen2_tunings =
 {
   &cortexa76_extra_costs,
-  &generic_addrcost_table,
-  &generic_regmove_cost,
-  &cortexa57_vector_cost,
+  &neoversen2_addrcost_table,
+  &neoversen2_regmove_cost,
+  &neoversen2_vector_cost,
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_128, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    1, /* store_int.  */
+    6, /* load_fp.  */
+    2, /* store_fp.  */
+    6, /* load_pred.  */
+    1 /* store_pred.  */
+  }, /* memmov_cost.  */
   3, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_CMP_BRANCH), /* fusible_ops  */
   "32:16",	/* function_align.  */
@@ -2075,7 +2422,199 @@ static const struct tune_params neoversen2_tunings =
   2,	/* min_div_recip_mul_df.  */
   0,	/* max_case_values.  */
   tune_params::AUTOPREFETCHER_WEAK,	/* autoprefetcher_model.  */
-  (AARCH64_EXTRA_TUNE_CHEAP_SHIFT_EXTEND),	/* tune_flags.  */
+  (AARCH64_EXTRA_TUNE_CHEAP_SHIFT_EXTEND
+   | AARCH64_EXTRA_TUNE_CSE_SVE_VL_CONSTANTS
+   | AARCH64_EXTRA_TUNE_USE_NEW_VECTOR_COSTS
+   | AARCH64_EXTRA_TUNE_MATCHED_VECTOR_THROUGHPUT),	/* tune_flags.  */
+  &generic_prefetch_tune
+};
+
+static const advsimd_vec_cost demeter_advsimd_vector_cost =
+{
+  2, /* int_stmt_cost  */
+  2, /* fp_stmt_cost  */
+  2, /* ld2_st2_permute_cost */
+  2, /* ld3_st3_permute_cost  */
+  3, /* ld4_st4_permute_cost  */
+  3, /* permute_cost  */
+  4, /* reduc_i8_cost  */
+  4, /* reduc_i16_cost  */
+  2, /* reduc_i32_cost  */
+  2, /* reduc_i64_cost  */
+  6, /* reduc_f16_cost  */
+  3, /* reduc_f32_cost  */
+  2, /* reduc_f64_cost  */
+  2, /* store_elt_extra_cost  */
+  /* This value is just inherited from the Cortex-A57 table.  */
+  8, /* vec_to_scalar_cost  */
+  /* This depends very much on what the scalar value is and
+     where it comes from.  E.g. some constants take two dependent
+     instructions or a load, while others might be moved from a GPR.
+     4 seems to be a reasonable compromise in practice.  */
+  4, /* scalar_to_vec_cost  */
+  4, /* align_load_cost  */
+  4, /* unalign_load_cost  */
+  /* Although stores have a latency of 2 and compete for the
+     vector pipes, in practice it's better not to model that.  */
+  1, /* unalign_store_cost  */
+  1  /* store_cost  */
+};
+
+static const sve_vec_cost demeter_sve_vector_cost =
+{
+  {
+    2, /* int_stmt_cost  */
+    2, /* fp_stmt_cost  */
+    3, /* ld2_st2_permute_cost  */
+    3, /* ld3_st3_permute_cost  */
+    4, /* ld4_st4_permute_cost  */
+    3, /* permute_cost  */
+    /* Theoretically, a reduction involving 15 scalar ADDs could
+       complete in ~3 cycles and would have a cost of 15.  [SU]ADDV
+       completes in 11 cycles, so give it a cost of 15 + 8.  */
+    21, /* reduc_i8_cost  */
+    /* Likewise for 7 scalar ADDs (~2 cycles) vs. 9: 7 + 7.  */
+    14, /* reduc_i16_cost  */
+    /* Likewise for 3 scalar ADDs (~2 cycles) vs. 8: 3 + 4.  */
+    7, /* reduc_i32_cost  */
+    /* Likewise for 1 scalar ADD (~1 cycles) vs. 2: 1 + 1.  */
+    2, /* reduc_i64_cost  */
+    /* Theoretically, a reduction involving 7 scalar FADDs could
+       complete in ~6 cycles and would have a cost of 14.  FADDV
+       completes in 8 cycles, so give it a cost of 14 + 2.  */
+    16, /* reduc_f16_cost  */
+    /* Likewise for 3 scalar FADDs (~4 cycles) vs. 6: 6 + 2.  */
+    8, /* reduc_f32_cost  */
+    /* Likewise for 1 scalar FADD (~2 cycles) vs. 4: 2 + 2.  */
+    4, /* reduc_f64_cost  */
+    2, /* store_elt_extra_cost  */
+    /* This value is just inherited from the Cortex-A57 table.  */
+    8, /* vec_to_scalar_cost  */
+    /* See the comment above the Advanced SIMD versions.  */
+    4, /* scalar_to_vec_cost  */
+    4, /* align_load_cost  */
+    4, /* unalign_load_cost  */
+    /* Although stores have a latency of 2 and compete for the
+       vector pipes, in practice it's better not to model that.  */
+    1, /* unalign_store_cost  */
+    1  /* store_cost  */
+  },
+  3, /* clast_cost  */
+  10, /* fadda_f16_cost  */
+  6, /* fadda_f32_cost  */
+  4, /* fadda_f64_cost  */
+  /* A strided Advanced SIMD x64 load would take two parallel FP loads
+     (8 cycles) plus an insertion (2 cycles).  Assume a 64-bit SVE gather
+     is 1 cycle more.  The Advanced SIMD version is costed as 2 scalar loads
+     (cost 8) and a vec_construct (cost 2).  Add a full vector operation
+     (cost 2) to that, to avoid the difference being lost in rounding.
+
+     There is no easy comparison between a strided Advanced SIMD x32 load
+     and an SVE 32-bit gather, but cost an SVE 32-bit gather as 1 vector
+     operation more than a 64-bit gather.  */
+  14, /* gather_load_x32_cost  */
+  12, /* gather_load_x64_cost  */
+  3 /* scatter_store_elt_cost  */
+};
+
+static const aarch64_scalar_vec_issue_info demeter_scalar_issue_info =
+{
+  3, /* loads_stores_per_cycle  */
+  2, /* stores_per_cycle  */
+  6, /* general_ops_per_cycle  */
+  0, /* fp_simd_load_general_ops  */
+  1 /* fp_simd_store_general_ops  */
+};
+
+static const aarch64_advsimd_vec_issue_info demeter_advsimd_issue_info =
+{
+  {
+    3, /* loads_stores_per_cycle  */
+    2, /* stores_per_cycle  */
+    4, /* general_ops_per_cycle  */
+    0, /* fp_simd_load_general_ops  */
+    1 /* fp_simd_store_general_ops  */
+  },
+  2, /* ld2_st2_general_ops  */
+  2, /* ld3_st3_general_ops  */
+  3 /* ld4_st4_general_ops  */
+};
+
+static const aarch64_sve_vec_issue_info demeter_sve_issue_info =
+{
+  {
+    {
+      3, /* loads_per_cycle  */
+      2, /* stores_per_cycle  */
+      4, /* general_ops_per_cycle  */
+      0, /* fp_simd_load_general_ops  */
+      1 /* fp_simd_store_general_ops  */
+    },
+    2, /* ld2_st2_general_ops  */
+    3, /* ld3_st3_general_ops  */
+    3 /* ld4_st4_general_ops  */
+  },
+  2, /* pred_ops_per_cycle  */
+  2, /* while_pred_ops  */
+  2, /* int_cmp_pred_ops  */
+  1, /* fp_cmp_pred_ops  */
+  1, /* gather_scatter_pair_general_ops  */
+  1 /* gather_scatter_pair_pred_ops  */
+};
+
+static const aarch64_vec_issue_info demeter_vec_issue_info =
+{
+  &demeter_scalar_issue_info,
+  &demeter_advsimd_issue_info,
+  &demeter_sve_issue_info
+};
+
+/* Demeter costs for vector insn classes.  */
+static const struct cpu_vector_cost demeter_vector_cost =
+{
+  1, /* scalar_int_stmt_cost  */
+  2, /* scalar_fp_stmt_cost  */
+  4, /* scalar_load_cost  */
+  1, /* scalar_store_cost  */
+  1, /* cond_taken_branch_cost  */
+  1, /* cond_not_taken_branch_cost  */
+  &demeter_advsimd_vector_cost, /* advsimd  */
+  &demeter_sve_vector_cost, /* sve  */
+  &demeter_vec_issue_info /* issue_info  */
+};
+
+static const struct tune_params demeter_tunings =
+{
+  &cortexa76_extra_costs,
+  &demeter_addrcost_table,
+  &demeter_regmove_cost,
+  &demeter_vector_cost,
+  &generic_branch_cost,
+  &generic_approx_modes,
+  SVE_128, /* sve_width  */
+  { 4, /* load_int.  */
+    2, /* store_int.  */
+    6, /* load_fp.  */
+    1, /* store_fp.  */
+    6, /* load_pred.  */
+    2 /* store_pred.  */
+  }, /* memmov_cost.  */
+  5, /* issue_rate  */
+  (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_CMP_BRANCH), /* fusible_ops  */
+  "32:16",	/* function_align.  */
+  "4",		/* jump_align.  */
+  "32:16",	/* loop_align.  */
+  3,	/* int_reassoc_width.  */
+  6,	/* fp_reassoc_width.  */
+  3,	/* vec_reassoc_width.  */
+  2,	/* min_div_recip_mul_sf.  */
+  2,	/* min_div_recip_mul_df.  */
+  0,	/* max_case_values.  */
+  tune_params::AUTOPREFETCHER_WEAK,	/* autoprefetcher_model.  */
+  (AARCH64_EXTRA_TUNE_CHEAP_SHIFT_EXTEND
+   | AARCH64_EXTRA_TUNE_CSE_SVE_VL_CONSTANTS
+   | AARCH64_EXTRA_TUNE_USE_NEW_VECTOR_COSTS
+   | AARCH64_EXTRA_TUNE_MATCHED_VECTOR_THROUGHPUT),	/* tune_flags.  */
   &generic_prefetch_tune
 };
 
@@ -2088,7 +2627,13 @@ static const struct tune_params a64fx_tunings =
   &generic_branch_cost,
   &generic_approx_modes,
   SVE_512, /* sve_width  */
-  4, /* memmov_cost  */
+  { 4, /* load_int.  */
+    4, /* store_int.  */
+    4, /* load_fp.  */
+    4, /* store_fp.  */
+    4, /* load_pred.  */
+    4 /* store_pred.  */
+  }, /* memmov_cost.  */
   7, /* issue_rate  */
   (AARCH64_FUSE_AES_AESMC | AARCH64_FUSE_CMP_BRANCH), /* fusible_ops  */
   "32",	/* function_align.  */
@@ -3781,6 +4326,110 @@ aarch64_gen_compare_reg_maybe_ze (RTX_CODE code, rtx x, rtx y,
   return aarch64_gen_compare_reg (code, x, y);
 }
 
+/* Consider the operation:
+
+     OPERANDS[0] = CODE (OPERANDS[1], OPERANDS[2]) + OPERANDS[3]
+
+   where:
+
+   - CODE is [SU]MAX or [SU]MIN
+   - OPERANDS[2] and OPERANDS[3] are constant integers
+   - OPERANDS[3] is a positive or negative shifted 12-bit immediate
+   - all operands have mode MODE
+
+   Decide whether it is possible to implement the operation using:
+
+     SUBS <tmp>, OPERANDS[1], -OPERANDS[3]
+     or
+     ADDS <tmp>, OPERANDS[1], OPERANDS[3]
+
+   followed by:
+
+     <insn> OPERANDS[0], <tmp>, [wx]zr, <cond>
+
+   where <insn> is one of CSEL, CSINV or CSINC.  Return true if so.
+   If GENERATE_P is true, also update OPERANDS as follows:
+
+     OPERANDS[4] = -OPERANDS[3]
+     OPERANDS[5] = the rtl condition representing <cond>
+     OPERANDS[6] = <tmp>
+     OPERANDS[7] = 0 for CSEL, -1 for CSINV or 1 for CSINC.  */
+bool
+aarch64_maxmin_plus_const (rtx_code code, rtx *operands, bool generate_p)
+{
+  signop sgn = (code == UMAX || code == UMIN ? UNSIGNED : SIGNED);
+  rtx dst = operands[0];
+  rtx maxmin_op = operands[2];
+  rtx add_op = operands[3];
+  machine_mode mode = GET_MODE (dst);
+
+  /* max (x, y) - z == (x >= y + 1 ? x : y) - z
+		    == (x >= y ? x : y) - z
+		    == (x > y ? x : y) - z
+		    == (x > y - 1 ? x : y) - z
+
+     min (x, y) - z == (x <= y - 1 ? x : y) - z
+		    == (x <= y ? x : y) - z
+		    == (x < y ? x : y) - z
+		    == (x < y + 1 ? x : y) - z
+
+     Check whether z is in { y - 1, y, y + 1 } and pick the form(s) for
+     which x is compared with z.  Set DIFF to y - z.  Thus the supported
+     combinations are as follows, with DIFF being the value after the ":":
+
+     max (x, y) - z == x >= y + 1 ? x - (y + 1) : -1   [z == y + 1]
+		    == x >= y ? x - y : 0              [z == y]
+		    == x > y ? x - y : 0               [z == y]
+		    == x > y - 1 ? x - (y - 1) : 1     [z == y - 1]
+
+     min (x, y) - z == x <= y - 1 ? x - (y - 1) : 1    [z == y - 1]
+		    == x <= y ? x - y : 0              [z == y]
+		    == x < y ? x - y : 0               [z == y]
+		    == x < y + 1 ? x - (y + 1) : -1    [z == y + 1].  */
+  auto maxmin_val = rtx_mode_t (maxmin_op, mode);
+  auto add_val = rtx_mode_t (add_op, mode);
+  auto sub_val = wi::neg (add_val);
+  auto diff = wi::sub (maxmin_val, sub_val);
+  if (!(diff == 0
+	|| (diff == 1 && wi::gt_p (maxmin_val, sub_val, sgn))
+	|| (diff == -1 && wi::lt_p (maxmin_val, sub_val, sgn))))
+    return false;
+
+  if (!generate_p)
+    return true;
+
+  rtx_code cmp;
+  switch (code)
+    {
+    case SMAX:
+      cmp = diff == 1 ? GT : GE;
+      break;
+    case UMAX:
+      cmp = diff == 1 ? GTU : GEU;
+      break;
+    case SMIN:
+      cmp = diff == -1 ? LT : LE;
+      break;
+    case UMIN:
+      cmp = diff == -1 ? LTU : LEU;
+      break;
+    default:
+      gcc_unreachable ();
+    }
+  rtx cc = gen_rtx_REG (CCmode, CC_REGNUM);
+
+  operands[4] = immed_wide_int_const (sub_val, mode);
+  operands[5] = gen_rtx_fmt_ee (cmp, VOIDmode, cc, const0_rtx);
+  if (can_create_pseudo_p ())
+    operands[6] = gen_reg_rtx (mode);
+  else
+    operands[6] = dst;
+  operands[7] = immed_wide_int_const (diff, mode);
+
+  return true;
+}
+
+
 /* Build the SYMBOL_REF for __tls_get_addr.  */
 
 static GTY(()) rtx tls_get_addr_libfunc;
@@ -3866,7 +4515,7 @@ aarch64_load_symref_appropriately (rtx dest, rtx imm,
 	if (can_create_pseudo_p ())
 	  tmp_reg = gen_reg_rtx (mode);
 
-	emit_move_insn (tmp_reg, gen_rtx_HIGH (mode, imm));
+	emit_move_insn (tmp_reg, gen_rtx_HIGH (mode, copy_rtx (imm)));
 	emit_insn (gen_add_losym (dest, tmp_reg, imm));
 	return;
       }
@@ -7443,8 +8092,8 @@ aarch64_layout_frame (void)
 #define SLOT_NOT_REQUIRED (-2)
 #define SLOT_REQUIRED     (-1)
 
-  frame.wb_candidate1 = INVALID_REGNUM;
-  frame.wb_candidate2 = INVALID_REGNUM;
+  frame.wb_push_candidate1 = INVALID_REGNUM;
+  frame.wb_push_candidate2 = INVALID_REGNUM;
   frame.spare_pred_reg = INVALID_REGNUM;
 
   /* First mark all the registers that really need to be saved...  */
@@ -7559,9 +8208,9 @@ aarch64_layout_frame (void)
     {
       /* FP and LR are placed in the linkage record.  */
       frame.reg_offset[R29_REGNUM] = offset;
-      frame.wb_candidate1 = R29_REGNUM;
+      frame.wb_push_candidate1 = R29_REGNUM;
       frame.reg_offset[R30_REGNUM] = offset + UNITS_PER_WORD;
-      frame.wb_candidate2 = R30_REGNUM;
+      frame.wb_push_candidate2 = R30_REGNUM;
       offset += 2 * UNITS_PER_WORD;
     }
 
@@ -7569,10 +8218,10 @@ aarch64_layout_frame (void)
     if (known_eq (frame.reg_offset[regno], SLOT_REQUIRED))
       {
 	frame.reg_offset[regno] = offset;
-	if (frame.wb_candidate1 == INVALID_REGNUM)
-	  frame.wb_candidate1 = regno;
-	else if (frame.wb_candidate2 == INVALID_REGNUM)
-	  frame.wb_candidate2 = regno;
+	if (frame.wb_push_candidate1 == INVALID_REGNUM)
+	  frame.wb_push_candidate1 = regno;
+	else if (frame.wb_push_candidate2 == INVALID_REGNUM)
+	  frame.wb_push_candidate2 = regno;
 	offset += UNITS_PER_WORD;
       }
 
@@ -7595,11 +8244,11 @@ aarch64_layout_frame (void)
 	  }
 
 	frame.reg_offset[regno] = offset;
-	if (frame.wb_candidate1 == INVALID_REGNUM)
-	  frame.wb_candidate1 = regno;
-	else if (frame.wb_candidate2 == INVALID_REGNUM
-		 && frame.wb_candidate1 >= V0_REGNUM)
-	  frame.wb_candidate2 = regno;
+	if (frame.wb_push_candidate1 == INVALID_REGNUM)
+	  frame.wb_push_candidate1 = regno;
+	else if (frame.wb_push_candidate2 == INVALID_REGNUM
+		 && frame.wb_push_candidate1 >= V0_REGNUM)
+	  frame.wb_push_candidate2 = regno;
 	offset += vector_save_size;
       }
 
@@ -7630,10 +8279,38 @@ aarch64_layout_frame (void)
   frame.sve_callee_adjust = 0;
   frame.callee_offset = 0;
 
+  frame.wb_pop_candidate1 = frame.wb_push_candidate1;
+  frame.wb_pop_candidate2 = frame.wb_push_candidate2;
+
+  /* Shadow call stack only deals with functions where the LR is pushed
+     onto the stack and without specifying the "no_sanitize" attribute
+     with the argument "shadow-call-stack".  */
+  frame.is_scs_enabled
+    = (!crtl->calls_eh_return
+       && sanitize_flags_p (SANITIZE_SHADOW_CALL_STACK)
+       && known_ge (cfun->machine->frame.reg_offset[LR_REGNUM], 0));
+
+  /* When shadow call stack is enabled, the scs_pop in the epilogue will
+     restore x30, and we don't need to pop x30 again in the traditional
+     way.  Pop candidates record the registers that need to be popped
+     eventually.  */
+  if (frame.is_scs_enabled)
+    {
+      if (frame.wb_pop_candidate2 == R30_REGNUM)
+	frame.wb_pop_candidate2 = INVALID_REGNUM;
+      else if (frame.wb_pop_candidate1 == R30_REGNUM)
+	frame.wb_pop_candidate1 = INVALID_REGNUM;
+    }
+
+  /* If candidate2 is INVALID_REGNUM, we need to adjust max_push_offset to
+     256 to ensure that the offset meets the requirements of emit_move_insn.
+     Similarly, if candidate1 is INVALID_REGNUM, we need to set
+     max_push_offset to 0, because no registers are popped at this time,
+     so callee_adjust cannot be adjusted.  */
   HOST_WIDE_INT max_push_offset = 0;
-  if (frame.wb_candidate2 != INVALID_REGNUM)
+  if (frame.wb_pop_candidate2 != INVALID_REGNUM)
     max_push_offset = 512;
-  else if (frame.wb_candidate1 != INVALID_REGNUM)
+  else if (frame.wb_pop_candidate1 != INVALID_REGNUM)
     max_push_offset = 256;
 
   HOST_WIDE_INT const_size, const_outgoing_args_size, const_fp_offset;
@@ -7723,8 +8400,8 @@ aarch64_layout_frame (void)
     {
       /* We've decided not to associate any register saves with the initial
 	 stack allocation.  */
-      frame.wb_candidate1 = INVALID_REGNUM;
-      frame.wb_candidate2 = INVALID_REGNUM;
+      frame.wb_pop_candidate1 = frame.wb_push_candidate1 = INVALID_REGNUM;
+      frame.wb_pop_candidate2 = frame.wb_push_candidate2 = INVALID_REGNUM;
     }
 
   frame.laid_out = true;
@@ -8037,8 +8714,8 @@ aarch64_save_callee_saves (poly_int64 start_offset,
       bool frame_related_p = aarch64_emit_cfi_for_reg_p (regno);
 
       if (skip_wb
-	  && (regno == cfun->machine->frame.wb_candidate1
-	      || regno == cfun->machine->frame.wb_candidate2))
+	  && (regno == cfun->machine->frame.wb_push_candidate1
+	      || regno == cfun->machine->frame.wb_push_candidate2))
 	continue;
 
       if (cfun->machine->reg_is_wrapped_separately[regno])
@@ -8148,8 +8825,8 @@ aarch64_restore_callee_saves (poly_int64 start_offset, unsigned start,
       rtx reg, mem;
 
       if (skip_wb
-	  && (regno == cfun->machine->frame.wb_candidate1
-	      || regno == cfun->machine->frame.wb_candidate2))
+	  && (regno == cfun->machine->frame.wb_pop_candidate1
+	      || regno == cfun->machine->frame.wb_pop_candidate2))
 	continue;
 
       machine_mode mode = aarch64_reg_save_mode (regno);
@@ -8320,8 +8997,8 @@ aarch64_get_separate_components (void)
   if (cfun->machine->frame.spare_pred_reg != INVALID_REGNUM)
     bitmap_clear_bit (components, cfun->machine->frame.spare_pred_reg);
 
-  unsigned reg1 = cfun->machine->frame.wb_candidate1;
-  unsigned reg2 = cfun->machine->frame.wb_candidate2;
+  unsigned reg1 = cfun->machine->frame.wb_push_candidate1;
+  unsigned reg2 = cfun->machine->frame.wb_push_candidate2;
   /* If registers have been chosen to be stored/restored with
      writeback don't interfere with them to avoid having to output explicit
      stack adjustment instructions.  */
@@ -8930,8 +9607,8 @@ aarch64_expand_prologue (void)
   poly_int64 sve_callee_adjust = cfun->machine->frame.sve_callee_adjust;
   poly_int64 below_hard_fp_saved_regs_size
     = cfun->machine->frame.below_hard_fp_saved_regs_size;
-  unsigned reg1 = cfun->machine->frame.wb_candidate1;
-  unsigned reg2 = cfun->machine->frame.wb_candidate2;
+  unsigned reg1 = cfun->machine->frame.wb_push_candidate1;
+  unsigned reg2 = cfun->machine->frame.wb_push_candidate2;
   bool emit_frame_chain = cfun->machine->frame.emit_frame_chain;
   rtx_insn *insn;
 
@@ -8961,6 +9638,10 @@ aarch64_expand_prologue (void)
       add_reg_note (insn, REG_CFA_TOGGLE_RA_MANGLE, const0_rtx);
       RTX_FRAME_RELATED_P (insn) = 1;
     }
+
+  /* Push return address to shadow call stack.  */
+  if (cfun->machine->frame.is_scs_enabled)
+    emit_insn (gen_scs_push ());
 
   if (flag_stack_usage_info)
     current_function_static_stack_size = constant_lower_bound (frame_size);
@@ -9108,8 +9789,10 @@ aarch64_expand_epilogue (bool for_sibcall)
   poly_int64 sve_callee_adjust = cfun->machine->frame.sve_callee_adjust;
   poly_int64 below_hard_fp_saved_regs_size
     = cfun->machine->frame.below_hard_fp_saved_regs_size;
-  unsigned reg1 = cfun->machine->frame.wb_candidate1;
-  unsigned reg2 = cfun->machine->frame.wb_candidate2;
+  unsigned reg1 = cfun->machine->frame.wb_pop_candidate1;
+  unsigned reg2 = cfun->machine->frame.wb_pop_candidate2;
+  unsigned int last_gpr = (cfun->machine->frame.is_scs_enabled
+			   ? R29_REGNUM : R30_REGNUM);
   rtx cfi_ops = NULL;
   rtx_insn *insn;
   /* A stack clash protection prologue may not have left EP0_REGNUM or
@@ -9179,8 +9862,12 @@ aarch64_expand_epilogue (bool for_sibcall)
 				false, &cfi_ops);
   if (maybe_ne (sve_callee_adjust, 0))
     aarch64_add_sp (NULL_RTX, NULL_RTX, sve_callee_adjust, true);
+
+  /* When shadow call stack is enabled, the scs_pop in the epilogue will
+     restore x30, we don't need to restore x30 again in the traditional
+     way.  */
   aarch64_restore_callee_saves (callee_offset - sve_callee_adjust,
-				R0_REGNUM, R30_REGNUM,
+				R0_REGNUM, last_gpr,
 				callee_adjust != 0, &cfi_ops);
 
   if (need_barrier_p)
@@ -9215,6 +9902,17 @@ aarch64_expand_epilogue (bool for_sibcall)
       insn = get_last_insn ();
       cfi_ops = alloc_reg_note (REG_CFA_DEF_CFA, stack_pointer_rtx, cfi_ops);
       REG_NOTES (insn) = cfi_ops;
+      RTX_FRAME_RELATED_P (insn) = 1;
+    }
+
+  /* Pop return address from shadow call stack.  */
+  if (cfun->machine->frame.is_scs_enabled)
+    {
+      machine_mode mode = aarch64_reg_save_mode (R30_REGNUM);
+      rtx reg = gen_rtx_REG (mode, R30_REGNUM);
+
+      insn = emit_insn (gen_scs_pop ());
+      add_reg_note (insn, REG_CFA_RESTORE, reg);
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 
@@ -14320,12 +15018,28 @@ aarch64_register_move_cost (machine_mode mode,
   return regmove_cost->FP2FP;
 }
 
+/* Implements TARGET_MEMORY_MOVE_COST.  */
 static int
-aarch64_memory_move_cost (machine_mode mode ATTRIBUTE_UNUSED,
-			  reg_class_t rclass ATTRIBUTE_UNUSED,
-			  bool in ATTRIBUTE_UNUSED)
+aarch64_memory_move_cost (machine_mode mode, reg_class_t rclass_i, bool in)
 {
-  return aarch64_tune_params.memmov_cost;
+  enum reg_class rclass = (enum reg_class) rclass_i;
+  if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL
+      ? reg_classes_intersect_p (rclass, PR_REGS)
+      : reg_class_subset_p (rclass, PR_REGS))
+    return (in
+	    ? aarch64_tune_params.memmov_cost.load_pred
+	    : aarch64_tune_params.memmov_cost.store_pred);
+
+  if (VECTOR_MODE_P (mode) || FLOAT_MODE_P (mode)
+      ? reg_classes_intersect_p (rclass, FP_REGS)
+      : reg_class_subset_p (rclass, FP_REGS))
+    return (in
+	    ? aarch64_tune_params.memmov_cost.load_fp
+	    : aarch64_tune_params.memmov_cost.store_fp);
+
+  return (in
+	  ? aarch64_tune_params.memmov_cost.load_int
+	  : aarch64_tune_params.memmov_cost.store_int);
 }
 
 /* Implement TARGET_INIT_BUILTINS.  */
@@ -14816,7 +15530,9 @@ aarch64_vec_op_count::sve_issue_info () const
 fractional_cost
 aarch64_vec_op_count::rename_cycles_per_iter () const
 {
-  if (sve_issue_info () == &neoverse512tvb_sve_issue_info)
+  if (sve_issue_info () == &neoverse512tvb_sve_issue_info
+      || sve_issue_info () == &neoversen2_sve_issue_info
+      || sve_issue_info () == &demeter_sve_issue_info)
     /* + 1 for an addition.  We've already counted a general op for each
        store, so we don't need to account for stores separately.  The branch
        reads no registers and so does not need to be counted either.
@@ -14904,7 +15620,7 @@ public:
   aarch64_vector_costs (vec_info *, bool);
 
   unsigned int add_stmt_cost (int count, vect_cost_for_stmt kind,
-			      stmt_vec_info stmt_info, tree vectype,
+			      stmt_vec_info stmt_info, slp_tree, tree vectype,
 			      int misalign,
 			      vect_cost_model_location where) override;
   void finish_cost (const vector_costs *) override;
@@ -14921,16 +15637,46 @@ private:
   unsigned int adjust_body_cost (loop_vec_info, const aarch64_vector_costs *,
 				 unsigned int);
   bool prefer_unrolled_loop () const;
+  unsigned int determine_suggested_unroll_factor (loop_vec_info);
 
   /* True if we have performed one-time initialization based on the
      vec_info.  */
   bool m_analyzed_vinfo = false;
+
+  /* This loop uses an average operation that is not supported by SVE, but is
+     supported by Advanced SIMD and SVE2.  */
+  bool m_has_avg = false;
 
   /* - If M_VEC_FLAGS is zero then we're costing the original scalar code.
      - If M_VEC_FLAGS & VEC_ADVSIMD is nonzero then we're costing Advanced
        SIMD code.
      - If M_VEC_FLAGS & VEC_ANY_SVE is nonzero then we're costing SVE code.  */
   unsigned int m_vec_flags = 0;
+
+  /* At the moment, we do not model LDP and STP in the vector and scalar costs.
+     This means that code such as:
+
+	a[0] = x;
+	a[1] = x;
+
+     will be costed as two scalar instructions and two vector instructions
+     (a scalar_to_vec and an unaligned_store).  For SLP, the vector form
+     wins if the costs are equal, because of the fact that the vector costs
+     include constant initializations whereas the scalar costs don't.
+     We would therefore tend to vectorize the code above, even though
+     the scalar version can use a single STP.
+
+     We should eventually fix this and model LDP and STP in the main costs;
+     see the comment in aarch64_sve_adjust_stmt_cost for some of the problems.
+     Until then, we look specifically for code that does nothing more than
+     STP-like operations.  We cost them on that basis in addition to the
+     normal latency-based costs.
+
+     If the scalar or vector code could be a sequence of STPs +
+     initialization, this variable counts the cost of the sequence,
+     with 2 units per instruction.  The variable is ~0U for other
+     kinds of code.  */
+  unsigned int m_stp_sequence_cost = 0;
 
   /* On some CPUs, SVE and Advanced SIMD provide the same theoretical vector
      throughput, such as 4x128 Advanced SIMD vs. 2x256 SVE.  In those
@@ -15724,10 +16470,108 @@ aarch64_vector_costs::count_ops (unsigned int count, vect_cost_for_stmt kind,
     }
 }
 
+/* Return true if STMT_INFO contains a memory access and if the constant
+   component of the memory address is aligned to SIZE bytes.  */
+static bool
+aarch64_aligned_constant_offset_p (stmt_vec_info stmt_info,
+				   poly_uint64 size)
+{
+  if (!STMT_VINFO_DATA_REF (stmt_info))
+    return false;
+
+  if (auto first_stmt = DR_GROUP_FIRST_ELEMENT (stmt_info))
+    stmt_info = first_stmt;
+  tree constant_offset = DR_INIT (STMT_VINFO_DATA_REF (stmt_info));
+  /* Needed for gathers & scatters, for example.  */
+  if (!constant_offset)
+    return false;
+
+  return multiple_p (wi::to_poly_offset (constant_offset), size);
+}
+
+/* Check if a scalar or vector stmt could be part of a region of code
+   that does nothing more than store values to memory, in the scalar
+   case using STP.  Return the cost of the stmt if so, counting 2 for
+   one instruction.  Return ~0U otherwise.
+
+   The arguments are a subset of those passed to add_stmt_cost.  */
+unsigned int
+aarch64_stp_sequence_cost (unsigned int count, vect_cost_for_stmt kind,
+			   stmt_vec_info stmt_info, tree vectype)
+{
+  /* Code that stores vector constants uses a vector_load to create
+     the constant.  We don't apply the heuristic to that case for two
+     main reasons:
+
+     - At the moment, STPs are only formed via peephole2, and the
+       constant scalar moves would often come between STRs and so
+       prevent STP formation.
+
+     - The scalar code also has to load the constant somehow, and that
+       isn't costed.  */
+  switch (kind)
+    {
+    case scalar_to_vec:
+      /* Count 2 insns for a GPR->SIMD dup and 1 insn for a FPR->SIMD dup.  */
+      return (FLOAT_TYPE_P (vectype) ? 2 : 4) * count;
+
+    case vec_construct:
+      if (FLOAT_TYPE_P (vectype))
+	/* Count 1 insn for the maximum number of FP->SIMD INS
+	   instructions.  */
+	return (vect_nunits_for_cost (vectype) - 1) * 2 * count;
+
+      /* Count 2 insns for a GPR->SIMD move and 2 insns for the
+	 maximum number of GPR->SIMD INS instructions.  */
+      return vect_nunits_for_cost (vectype) * 4 * count;
+
+    case vector_store:
+    case unaligned_store:
+      /* Count 1 insn per vector if we can't form STP Q pairs.  */
+      if (aarch64_sve_mode_p (TYPE_MODE (vectype)))
+	return count * 2;
+      if (aarch64_tune_params.extra_tuning_flags
+	  & AARCH64_EXTRA_TUNE_NO_LDP_STP_QREGS)
+	return count * 2;
+
+      if (stmt_info)
+	{
+	  /* Assume we won't be able to use STP if the constant offset
+	     component of the address is misaligned.  ??? This could be
+	     removed if we formed STP pairs earlier, rather than relying
+	     on peephole2.  */
+	  auto size = GET_MODE_SIZE (TYPE_MODE (vectype));
+	  if (!aarch64_aligned_constant_offset_p (stmt_info, size))
+	    return count * 2;
+	}
+      return CEIL (count, 2) * 2;
+
+    case scalar_store:
+      if (stmt_info && STMT_VINFO_DATA_REF (stmt_info))
+	{
+	  /* Check for a mode in which STP pairs can be formed.  */
+	  auto size = GET_MODE_SIZE (TYPE_MODE (aarch64_dr_type (stmt_info)));
+	  if (maybe_ne (size, 4) && maybe_ne (size, 8))
+	    return ~0U;
+
+	  /* Assume we won't be able to use STP if the constant offset
+	     component of the address is misaligned.  ??? This could be
+	     removed if we formed STP pairs earlier, rather than relying
+	     on peephole2.  */
+	  if (!aarch64_aligned_constant_offset_p (stmt_info, size))
+	    return ~0U;
+	}
+      return count;
+
+    default:
+      return ~0U;
+    }
+}
+
 unsigned
 aarch64_vector_costs::add_stmt_cost (int count, vect_cost_for_stmt kind,
-				     stmt_vec_info stmt_info, tree vectype,
-				     int misalign,
+				     stmt_vec_info stmt_info, slp_tree,
+				     tree vectype, int misalign,
 				     vect_cost_model_location where)
 {
   fractional_cost stmt_cost
@@ -15745,6 +16589,14 @@ aarch64_vector_costs::add_stmt_cost (int count, vect_cost_for_stmt kind,
 	analyze_loop_vinfo (loop_vinfo);
 
       m_analyzed_vinfo = true;
+    }
+
+  /* Apply the heuristic described above m_stp_sequence_cost.  */
+  if (m_stp_sequence_cost != ~0U)
+    {
+      uint64_t cost = aarch64_stp_sequence_cost (count, kind,
+						 stmt_info, vectype);
+      m_stp_sequence_cost = MIN (m_stp_sequence_cost + cost, ~0U);
     }
 
   /* Try to get a more accurate cost by looking at STMT_INFO instead
@@ -15795,6 +16647,21 @@ aarch64_vector_costs::add_stmt_cost (int count, vect_cost_for_stmt kind,
 	 as one iteration of the SVE loop.  */
       if (where == vect_body && m_unrolled_advsimd_niters)
 	m_unrolled_advsimd_stmts += count * m_unrolled_advsimd_niters;
+
+      /* Detect the use of an averaging operation.  */
+      gimple *stmt = stmt_info->stmt;
+      if (is_gimple_call (stmt)
+	  && gimple_call_internal_p (stmt))
+	{
+	  switch (gimple_call_internal_fn (stmt))
+	    {
+	    case IFN_AVG_FLOOR:
+	    case IFN_AVG_CEIL:
+	      m_has_avg = true;
+	    default:
+	      break;
+	    }
+	}
     }
   return record_stmt_cost (stmt_info, where, (count * stmt_cost).ceil ());
 }
@@ -15876,6 +16743,71 @@ adjust_body_cost_sve (const aarch64_vec_op_count *ops,
     }
 
   return sve_cycles_per_iter;
+}
+
+unsigned int
+aarch64_vector_costs::
+determine_suggested_unroll_factor (loop_vec_info loop_vinfo)
+{
+  bool sve = m_vec_flags & VEC_ANY_SVE;
+  /* If we are trying to unroll an Advanced SIMD main loop that contains
+     an averaging operation that we do not support with SVE and we might use a
+     predicated epilogue, we need to be conservative and block unrolling as
+     this might lead to a less optimal loop for the first and only epilogue
+     using the original loop's vectorization factor.
+     TODO: Remove this constraint when we add support for multiple epilogue
+     vectorization.  */
+  if (!sve && !TARGET_SVE2 && m_has_avg)
+    return 1;
+
+  unsigned int max_unroll_factor = 1;
+  auto vf = LOOP_VINFO_VECT_FACTOR (loop_vinfo);
+  for (auto vec_ops : m_ops)
+    {
+      aarch64_simd_vec_issue_info const *vec_issue
+	= vec_ops.simd_issue_info ();
+      if (!vec_issue)
+	return 1;
+      /* Limit unroll factor to a value adjustable by the user, the default
+	 value is 4. */
+      unsigned int unroll_factor = MIN (aarch64_vect_unroll_limit,
+					(int) known_alignment (vf));
+      unsigned int factor
+       = vec_ops.reduction_latency > 1 ? vec_ops.reduction_latency : 1;
+      unsigned int temp;
+
+      /* Sanity check, this should never happen.  */
+      if ((vec_ops.stores + vec_ops.loads + vec_ops.general_ops) == 0)
+	return 1;
+
+      /* Check stores.  */
+      if (vec_ops.stores > 0)
+	{
+	  temp = CEIL (factor * vec_issue->stores_per_cycle,
+		       vec_ops.stores);
+	  unroll_factor = MIN (unroll_factor, temp);
+	}
+
+      /* Check loads + stores.  */
+      if (vec_ops.loads > 0)
+	{
+	  temp = CEIL (factor * vec_issue->loads_stores_per_cycle,
+		       vec_ops.loads + vec_ops.stores);
+	  unroll_factor = MIN (unroll_factor, temp);
+	}
+
+      /* Check general ops.  */
+      if (vec_ops.general_ops > 0)
+	{
+	  temp = CEIL (factor * vec_issue->general_ops_per_cycle,
+		       vec_ops.general_ops);
+	  unroll_factor = MIN (unroll_factor, temp);
+	 }
+      max_unroll_factor = MAX (max_unroll_factor, unroll_factor);
+    }
+
+  /* Make sure unroll factor is power of 2.  */
+  return 1 << ceil_log2 (max_unroll_factor);
 }
 
 /* BODY_COST is the cost of a vector loop body.  Adjust the cost as necessary
@@ -16014,8 +16946,21 @@ aarch64_vector_costs::finish_cost (const vector_costs *uncast_scalar_costs)
   if (loop_vinfo
       && m_vec_flags
       && aarch64_use_new_vector_costs_p ())
-    m_costs[vect_body] = adjust_body_cost (loop_vinfo, scalar_costs,
-					   m_costs[vect_body]);
+    {
+      m_costs[vect_body] = adjust_body_cost (loop_vinfo, scalar_costs,
+					     m_costs[vect_body]);
+      m_suggested_unroll_factor
+	= determine_suggested_unroll_factor (loop_vinfo);
+    }
+
+  /* Apply the heuristic described above m_stp_sequence_cost.  Prefer
+     the scalar code in the event of a tie, since there is more chance
+     of scalar code being optimized with surrounding operations.  */
+  if (!loop_vinfo
+      && scalar_costs
+      && m_stp_sequence_cost != ~0U
+      && m_stp_sequence_cost >= scalar_costs->m_stp_sequence_cost)
+    m_costs[vect_body] = 2 * scalar_costs->total_cost ();
 
   vector_costs::finish_cost (scalar_costs);
 }
@@ -16634,6 +17579,10 @@ aarch64_override_options_internal (struct gcc_options *opts)
       aarch64_stack_protector_guard_offset = offs;
     }
 
+  if ((flag_sanitize & SANITIZE_SHADOW_CALL_STACK)
+      && !fixed_regs[R18_REGNUM])
+    error ("%<-fsanitize=shadow-call-stack%> requires %<-ffixed-x18%>");
+
   initialize_aarch64_code_model (opts);
   initialize_aarch64_tls_size (opts);
 
@@ -17108,6 +18057,9 @@ aarch64_validate_mtune (const char *str, const struct processor **res)
   return false;
 }
 
+static_assert (TARGET_CPU_generic < TARGET_CPU_MASK,
+	       "TARGET_CPU_NBITS is big enough");
+
 /* Return the CPU corresponding to the enum CPU.
    If it doesn't specify a cpu, return the default.  */
 
@@ -17117,12 +18069,12 @@ aarch64_get_tune_cpu (enum aarch64_processor cpu)
   if (cpu != aarch64_none)
     return &all_cores[cpu];
 
-  /* The & 0x3f is to extract the bottom 6 bits that encode the
-     default cpu as selected by the --with-cpu GCC configure option
+  /* The & TARGET_CPU_MASK is to extract the bottom TARGET_CPU_NBITS bits that
+     encode the default cpu as selected by the --with-cpu GCC configure option
      in config.gcc.
      ???: The whole TARGET_CPU_DEFAULT and AARCH64_CPU_DEFAULT_FLAGS
      flags mechanism should be reworked to make it more sane.  */
-  return &all_cores[TARGET_CPU_DEFAULT & 0x3f];
+  return &all_cores[TARGET_CPU_DEFAULT & TARGET_CPU_MASK];
 }
 
 /* Return the architecture corresponding to the enum ARCH.
@@ -17134,7 +18086,8 @@ aarch64_get_arch (enum aarch64_arch arch)
   if (arch != aarch64_no_arch)
     return &all_architectures[arch];
 
-  const struct processor *cpu = &all_cores[TARGET_CPU_DEFAULT & 0x3f];
+  const struct processor *cpu
+    = &all_cores[TARGET_CPU_DEFAULT & TARGET_CPU_MASK];
 
   return &all_architectures[cpu->arch];
 }
@@ -17221,7 +18174,7 @@ aarch64_override_options (void)
 	{
 	  /* Get default configure-time CPU.  */
 	  selected_cpu = aarch64_get_tune_cpu (aarch64_none);
-	  aarch64_isa_flags = TARGET_CPU_DEFAULT >> 6;
+	  aarch64_isa_flags = TARGET_CPU_DEFAULT >> TARGET_CPU_NBITS;
 	}
 
       if (selected_tune)
@@ -17563,11 +18516,11 @@ aarch64_handle_attr_arch (const char *str)
 	error ("missing name in %<target(\"arch=\")%> pragma or attribute");
 	break;
       case AARCH64_PARSE_INVALID_ARG:
-	error ("invalid name (%qs) in %<target(\"arch=\")%> pragma or attribute", str);
+	error ("invalid name %qs in %<target(\"arch=\")%> pragma or attribute", str);
 	aarch64_print_hint_for_arch (str);
 	break;
       case AARCH64_PARSE_INVALID_FEATURE:
-	error ("invalid feature modifier %s of value (%qs) in "
+	error ("invalid feature modifier %s of value %qs in "
 	       "%<target()%> pragma or attribute", invalid_extension.c_str (), str);
 	aarch64_print_hint_for_extensions (invalid_extension);
 	break;
@@ -17605,11 +18558,11 @@ aarch64_handle_attr_cpu (const char *str)
 	error ("missing name in %<target(\"cpu=\")%> pragma or attribute");
 	break;
       case AARCH64_PARSE_INVALID_ARG:
-	error ("invalid name (%qs) in %<target(\"cpu=\")%> pragma or attribute", str);
+	error ("invalid name %qs in %<target(\"cpu=\")%> pragma or attribute", str);
 	aarch64_print_hint_for_core (str);
 	break;
       case AARCH64_PARSE_INVALID_FEATURE:
-	error ("invalid feature modifier %s of value (%qs) in "
+	error ("invalid feature modifier %qs of value %qs in "
 	       "%<target()%> pragma or attribute", invalid_extension.c_str (), str);
 	aarch64_print_hint_for_extensions (invalid_extension);
 	break;
@@ -17636,7 +18589,7 @@ aarch64_handle_attr_cpu (const char *str)
 	      " attribute");
        break;
      case AARCH64_PARSE_INVALID_ARG:
-       error ("invalid protection type (%qs) in %<target(\"branch-protection"
+       error ("invalid protection type %qs in %<target(\"branch-protection"
 	      "=\")%> pragma or attribute", err_str);
        break;
      case AARCH64_PARSE_OK:
@@ -17671,7 +18624,7 @@ aarch64_handle_attr_tune (const char *str)
   switch (parse_res)
     {
       case AARCH64_PARSE_INVALID_ARG:
-	error ("invalid name (%qs) in %<target(\"tune=\")%> pragma or attribute", str);
+	error ("invalid name %qs in %<target(\"tune=\")%> pragma or attribute", str);
 	aarch64_print_hint_for_core (str);
 	break;
       default:
@@ -17716,7 +18669,7 @@ aarch64_handle_attr_isa_flags (char *str)
 	break;
 
       case AARCH64_PARSE_INVALID_FEATURE:
-	error ("invalid feature modifier %s of value (%qs) in "
+	error ("invalid feature modifier %qs of value %qs in "
 	       "%<target()%> pragma or attribute", invalid_extension.c_str (), str);
 	break;
 
@@ -19057,6 +20010,7 @@ aarch64_member_type_forces_blk (const_tree field_or_array, machine_mode mode)
       a HFA or HVA.  */
 const unsigned int WARN_PSABI_EMPTY_CXX17_BASE = 1U << 0;
 const unsigned int WARN_PSABI_NO_UNIQUE_ADDRESS = 1U << 1;
+const unsigned int WARN_PSABI_ZERO_WIDTH_BITFIELD = 1U << 2;
 
 /* Walk down the type tree of TYPE counting consecutive base elements.
    If *MODEP is VOIDmode, then set it to the first valid floating point
@@ -19210,6 +20164,28 @@ aapcs_vfp_sub_candidate (const_tree type, machine_mode *modep,
 		if (warn_psabi_flags)
 		  {
 		    *warn_psabi_flags |= flag;
+		    continue;
+		  }
+	      }
+	    /* A zero-width bitfield may affect layout in some
+	       circumstances, but adds no members.  The determination
+	       of whether or not a type is an HFA is performed after
+	       layout is complete, so if the type still looks like an
+	       HFA afterwards, it is still classed as one.  This is
+	       potentially an ABI break for the hard-float ABI.  */
+	    else if (DECL_BIT_FIELD (field)
+		     && integer_zerop (DECL_SIZE (field)))
+	      {
+		/* Prior to GCC-12 these fields were striped early,
+		   hiding them from the back-end entirely and
+		   resulting in the correct behaviour for argument
+		   passing.  Simulate that old behaviour without
+		   generating a warning.  */
+		if (DECL_FIELD_CXX_ZERO_WIDTH_BIT_FIELD (field))
+		  continue;
+		if (warn_psabi_flags)
+		  {
+		    *warn_psabi_flags |= WARN_PSABI_ZERO_WIDTH_BITFIELD;
 		    continue;
 		  }
 	      }
@@ -19413,8 +20389,10 @@ aarch64_vfp_is_call_or_return_candidate (machine_mode mode,
 	      && ((alt = aapcs_vfp_sub_candidate (type, &new_mode, NULL))
 		  != ag_count))
 	    {
-	      const char *url
+	      const char *url10
 		= CHANGES_ROOT_URL "gcc-10/changes.html#empty_base";
+	      const char *url12
+		= CHANGES_ROOT_URL "gcc-12/changes.html#zero_width_bitfields";
 	      gcc_assert (alt == -1);
 	      last_reported_type_uid = uid;
 	      /* Use TYPE_MAIN_VARIANT to strip any redundant const
@@ -19423,12 +20401,16 @@ aarch64_vfp_is_call_or_return_candidate (machine_mode mode,
 		inform (input_location, "parameter passing for argument of "
 			"type %qT with %<[[no_unique_address]]%> members "
 			"changed %{in GCC 10.1%}",
-			TYPE_MAIN_VARIANT (type), url);
+			TYPE_MAIN_VARIANT (type), url10);
 	      else if (warn_psabi_flags & WARN_PSABI_EMPTY_CXX17_BASE)
 		inform (input_location, "parameter passing for argument of "
 			"type %qT when C++17 is enabled changed to match "
 			"C++14 %{in GCC 10.1%}",
-			TYPE_MAIN_VARIANT (type), url);
+			TYPE_MAIN_VARIANT (type), url10);
+	      else if (warn_psabi_flags & WARN_PSABI_ZERO_WIDTH_BITFIELD)
+		inform (input_location, "parameter passing for argument of "
+			"type %qT changed %{in GCC 12.1%}",
+			TYPE_MAIN_VARIANT (type), url12);
 	    }
 
 	  if (is_ha != NULL) *is_ha = true;
@@ -23557,17 +24539,15 @@ aarch64_expand_cpymem_mops (rtx *operands)
 {
   if (!TARGET_MOPS)
     return false;
-  rtx addr_dst = XEXP (operands[0], 0);
-  rtx addr_src = XEXP (operands[1], 0);
-  rtx sz_reg = operands[2];
 
-  if (!REG_P (sz_reg))
-    sz_reg = force_reg (DImode, sz_reg);
-  if (!REG_P (addr_dst))
-    addr_dst = force_reg (DImode, addr_dst);
-  if (!REG_P (addr_src))
-    addr_src = force_reg (DImode, addr_src);
-  emit_insn (gen_aarch64_cpymemdi (addr_dst, addr_src, sz_reg));
+  /* All three registers are changed by the instruction, so each one
+     must be a fresh pseudo.  */
+  rtx dst_addr = copy_to_mode_reg (Pmode, XEXP (operands[0], 0));
+  rtx src_addr = copy_to_mode_reg (Pmode, XEXP (operands[1], 0));
+  rtx dst_mem = replace_equiv_address (operands[0], dst_addr);
+  rtx src_mem = replace_equiv_address (operands[1], src_addr);
+  rtx sz_reg = copy_to_mode_reg (DImode, operands[2]);
+  emit_insn (gen_aarch64_cpymemdi (dst_mem, src_mem, sz_reg));
 
   return true;
 }
@@ -23744,17 +24724,15 @@ aarch64_expand_setmem_mops (rtx *operands)
   if (!TARGET_MOPS)
     return false;
 
-  rtx addr_dst = XEXP (operands[0], 0);
-  rtx sz_reg = operands[1];
+  /* The first two registers are changed by the instruction, so both
+     of them must be a fresh pseudo.  */
+  rtx dst_addr = copy_to_mode_reg (Pmode, XEXP (operands[0], 0));
+  rtx dst_mem = replace_equiv_address (operands[0], dst_addr);
+  rtx sz_reg = copy_to_mode_reg (DImode, operands[1]);
   rtx val = operands[2];
-
-  if (!REG_P (sz_reg))
-   sz_reg = force_reg (DImode, sz_reg);
-  if (!REG_P (addr_dst))
-   addr_dst = force_reg (DImode, addr_dst);
-  if (!REG_P (val) && val != CONST0_RTX (QImode))
-   val = force_reg (QImode, val);
-  emit_insn (gen_aarch64_setmemdi (addr_dst, val, sz_reg));
+  if (val != CONST0_RTX (QImode))
+    val = force_reg (QImode, val);
+  emit_insn (gen_aarch64_setmemdi (dst_mem, val, sz_reg));
   return true;
 }
 
@@ -26839,6 +27817,9 @@ aarch64_libgcc_floating_mode_supported_p
 
 #undef TARGET_ASM_FUNCTION_EPILOGUE
 #define TARGET_ASM_FUNCTION_EPILOGUE aarch64_sls_emit_blr_function_thunks
+
+#undef TARGET_HAVE_SHADOW_CALL_STACK
+#define TARGET_HAVE_SHADOW_CALL_STACK true
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 

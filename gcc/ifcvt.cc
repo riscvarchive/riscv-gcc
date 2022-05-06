@@ -1678,10 +1678,10 @@ noce_try_store_flag_mask (struct noce_if_info *if_info)
   reversep = 0;
 
   if ((if_info->a == const0_rtx
-       && rtx_equal_p (if_info->b, if_info->x))
+       && (REG_P (if_info->b) || rtx_equal_p (if_info->b, if_info->x)))
       || ((reversep = (noce_reversed_cond_code (if_info) != UNKNOWN))
 	  && if_info->b == const0_rtx
-	  && rtx_equal_p (if_info->a, if_info->x)))
+	  && (REG_P (if_info->a) || rtx_equal_p (if_info->a, if_info->x))))
     {
       start_sequence ();
       target = noce_emit_store_flag (if_info,
@@ -1689,7 +1689,7 @@ noce_try_store_flag_mask (struct noce_if_info *if_info)
 				     reversep, -1);
       if (target)
         target = expand_simple_binop (GET_MODE (if_info->x), AND,
-				      if_info->x,
+				      reversep ? if_info->a : if_info->b,
 				      target, if_info->x, 0,
 				      OPTAB_WIDEN);
 
@@ -5251,12 +5251,15 @@ find_if_case_1 (basic_block test_bb, edge then_edge, edge else_edge)
   if ((BB_END (then_bb)
        && JUMP_P (BB_END (then_bb))
        && CROSSING_JUMP_P (BB_END (then_bb)))
-      || (BB_END (test_bb)
-	  && JUMP_P (BB_END (test_bb))
+      || (JUMP_P (BB_END (test_bb))
 	  && CROSSING_JUMP_P (BB_END (test_bb)))
       || (BB_END (else_bb)
 	  && JUMP_P (BB_END (else_bb))
 	  && CROSSING_JUMP_P (BB_END (else_bb))))
+    return FALSE;
+
+  /* Verify test_bb ends in a conditional jump with no other side-effects.  */
+  if (!onlyjump_p (BB_END (test_bb)))
     return FALSE;
 
   /* THEN has one successor.  */
@@ -5372,12 +5375,15 @@ find_if_case_2 (basic_block test_bb, edge then_edge, edge else_edge)
   if ((BB_END (then_bb)
        && JUMP_P (BB_END (then_bb))
        && CROSSING_JUMP_P (BB_END (then_bb)))
-      || (BB_END (test_bb)
-	  && JUMP_P (BB_END (test_bb))
+      || (JUMP_P (BB_END (test_bb))
 	  && CROSSING_JUMP_P (BB_END (test_bb)))
       || (BB_END (else_bb)
 	  && JUMP_P (BB_END (else_bb))
 	  && CROSSING_JUMP_P (BB_END (else_bb))))
+    return FALSE;
+
+  /* Verify test_bb ends in a conditional jump with no other side-effects.  */
+  if (!onlyjump_p (BB_END (test_bb)))
     return FALSE;
 
   /* ELSE has one successor.  */

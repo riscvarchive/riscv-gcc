@@ -507,6 +507,18 @@ struct cpu_prefetch_tune
   const int default_opt_level;
 };
 
+/* Model the costs for loads/stores for the register allocators so that it can
+   do more accurate spill heuristics.  */
+struct cpu_memmov_cost
+{
+  int load_int;
+  int store_int;
+  int load_fp;
+  int store_fp;
+  int load_pred;
+  int store_pred;
+};
+
 struct tune_params
 {
   const struct cpu_cost_table *insn_extra_cost;
@@ -519,7 +531,8 @@ struct tune_params
      or SVE_NOT_IMPLEMENTED if not applicable.  Only used for tuning
      decisions, does not disable VLA vectorization.  */
   unsigned int sve_width;
-  int memmov_cost;
+  /* Structure used by reload to cost spills.  */
+  struct cpu_memmov_cost memmov_cost;
   int issue_rate;
   unsigned int fusible_ops;
   const char *function_align;
@@ -733,6 +746,19 @@ const unsigned int AARCH64_BUILTIN_SHIFT = 1;
 /* Mask that selects the aarch64_builtin_class part of a function code.  */
 const unsigned int AARCH64_BUILTIN_CLASS = (1 << AARCH64_BUILTIN_SHIFT) - 1;
 
+/* RAII class for enabling enough features to define built-in types
+   and implement the arm_neon.h pragma.  */
+class aarch64_simd_switcher
+{
+public:
+  aarch64_simd_switcher (unsigned int extra_flags = 0);
+  ~aarch64_simd_switcher ();
+
+private:
+  unsigned long m_old_isa_flags;
+  bool m_old_general_regs_only;
+};
+
 void aarch64_post_cfi_startproc (void);
 poly_int64 aarch64_initial_elimination_offset (unsigned, unsigned);
 int aarch64_get_condition_code (rtx);
@@ -939,6 +965,7 @@ bool aarch64_legitimate_address_p (machine_mode, rtx, bool,
 				   aarch64_addr_query_type = ADDR_QUERY_M);
 machine_mode aarch64_select_cc_mode (RTX_CODE, rtx, rtx);
 rtx aarch64_gen_compare_reg (RTX_CODE, rtx, rtx);
+bool aarch64_maxmin_plus_const (rtx_code, rtx *, bool);
 rtx aarch64_load_tp (rtx);
 
 void aarch64_expand_compare_and_swap (rtx op[]);
@@ -968,6 +995,7 @@ rtx aarch64_general_expand_builtin (unsigned int, tree, rtx, int);
 tree aarch64_general_builtin_decl (unsigned, bool);
 tree aarch64_general_builtin_rsqrt (unsigned int);
 tree aarch64_builtin_vectorized_function (unsigned int, tree, tree);
+void handle_arm_acle_h (void);
 void handle_arm_neon_h (void);
 
 namespace aarch64_sve {

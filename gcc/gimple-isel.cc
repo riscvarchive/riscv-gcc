@@ -396,7 +396,7 @@ gimple_expand_vec_cond_expr (struct function *fun, gimple_stmt_iterator *gsi,
 			GET_MODE_NUNITS (cmp_op_mode)));
   
   /* If the selector can use vcond_mask_vs, we prefer vcond_mask_vs
-     instead of vcond. */
+   instead of vcond. */
   if (splat_vector_p (op1) || splat_vector_p (op2))
     {
       if (get_vcond_mask_vs_icode (mode, TYPE_MODE (TREE_TYPE (op0))) !=
@@ -405,16 +405,24 @@ gimple_expand_vec_cond_expr (struct function *fun, gimple_stmt_iterator *gsi,
                                       op0, op1, op2,
                                       NULL_TREE);
     }
-
+  
   if (!VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (op0b))))
     icode = get_vcond_vs_icode (mode, cmp_op_mode, unsignedp);
   else
     icode = get_vcond_icode (mode, cmp_op_mode, unsignedp);
+  /* Some targets do not have vcondeq and only vcond with NE/EQ
+     but not vcondu, so make sure to also try vcond here as
+     vcond_icode_p would canonicalize the optab query to.  */
+  if (icode == CODE_FOR_nothing
+      && (tcode == NE_EXPR || tcode == EQ_EXPR)
+      && ((icode = get_vcond_icode (mode, cmp_op_mode, !unsignedp))
+	  != CODE_FOR_nothing))
+    unsignedp = !unsignedp;
   if (icode == CODE_FOR_nothing)
     {
       if (tcode == LT_EXPR
 	  && op0a == op0
-	  && !VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (op0b))))
+	  && VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (op0b))))
 	{
 	  /* A VEC_COND_EXPR condition could be folded from EQ_EXPR/NE_EXPR
 	     into a constant when only get_vcond_eq_icode is supported.
@@ -425,7 +433,7 @@ gimple_expand_vec_cond_expr (struct function *fun, gimple_stmt_iterator *gsi,
 	  && direct_internal_fn_supported_p (IFN_VCONDEQ, TREE_TYPE (lhs),
 					     TREE_TYPE (op0a),
 					     OPTIMIZE_FOR_BOTH)
-	  && !VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (op0b))))
+	  && VECTOR_MODE_P (TYPE_MODE (TREE_TYPE (op0b))))
 	{
 	  tree tcode_tree = build_int_cst (integer_type_node, tcode);
 	  return gimple_build_call_internal (IFN_VCONDEQ, 5, op0a, op0b, op1,

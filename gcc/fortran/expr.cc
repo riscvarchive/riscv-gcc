@@ -1594,7 +1594,9 @@ find_array_section (gfc_expr *expr, gfc_ref *ref)
 	{
 	  if ((begin && begin->expr_type != EXPR_CONSTANT)
 	      || (finish && finish->expr_type != EXPR_CONSTANT)
-	      || (step && step->expr_type != EXPR_CONSTANT))
+	      || (step && step->expr_type != EXPR_CONSTANT)
+	      || (!begin && !lower)
+	      || (!finish && !upper))
 	    {
 	      t = false;
 	      goto cleanup;
@@ -1718,7 +1720,13 @@ find_array_section (gfc_expr *expr, gfc_ref *ref)
 	}
 
       cons = gfc_constructor_lookup (base, limit);
-      gcc_assert (cons);
+      if (cons == NULL)
+	{
+	  gfc_error ("Error in array constructor referenced at %L",
+		     &ref->u.ar.where);
+	  t = false;
+	  goto cleanup;
+	}
       gfc_constructor_append_expr (&expr->value.constructor,
 				   gfc_copy_expr (cons->expr), NULL);
     }

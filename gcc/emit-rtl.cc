@@ -6239,9 +6239,22 @@ init_emit_once (void)
 
   /* For BImode, 1 and -1 are unsigned and signed interpretations
      of the same value.  */
-  const_tiny_rtx[0][(int) BImode] = const0_rtx;
-  const_tiny_rtx[1][(int) BImode] = const_true_rtx;
-  const_tiny_rtx[3][(int) BImode] = const_true_rtx;
+  for (mode = MIN_MODE_BOOL;
+       mode <= MAX_MODE_BOOL;
+       mode = (machine_mode)((int)(mode) + 1))
+    {
+      const_tiny_rtx[0][(int) mode] = const0_rtx;
+      if (mode == BImode)
+	{
+	  const_tiny_rtx[1][(int) mode] = const_true_rtx;
+	  const_tiny_rtx[3][(int) mode] = const_true_rtx;
+	}
+      else
+	{
+	  const_tiny_rtx[1][(int) mode] = const1_rtx;
+	  const_tiny_rtx[3][(int) mode] = constm1_rtx;
+	}
+    }
 
   for (mode = MIN_MODE_PARTIAL_INT;
        mode <= MAX_MODE_PARTIAL_INT;
@@ -6260,13 +6273,16 @@ init_emit_once (void)
       const_tiny_rtx[0][(int) mode] = gen_rtx_CONCAT (mode, inner, inner);
     }
 
-  /* As for BImode, "all 1" and "all -1" are unsigned and signed
-     interpretations of the same value.  */
   FOR_EACH_MODE_IN_CLASS (mode, MODE_VECTOR_BOOL)
     {
       const_tiny_rtx[0][(int) mode] = gen_const_vector (mode, 0);
       const_tiny_rtx[3][(int) mode] = gen_const_vector (mode, 3);
-      const_tiny_rtx[1][(int) mode] = const_tiny_rtx[3][(int) mode];
+      if (GET_MODE_INNER (mode) == BImode)
+	/* As for BImode, "all 1" and "all -1" are unsigned and signed
+	   interpretations of the same value.  */
+	const_tiny_rtx[1][(int) mode] = const_tiny_rtx[3][(int) mode];
+      else
+	const_tiny_rtx[1][(int) mode] = gen_const_vector (mode, 1);
     }
 
   FOR_EACH_MODE_IN_CLASS (mode, MODE_VECTOR_INT)
@@ -6424,7 +6440,8 @@ emit_copy_of_insn_after (rtx_insn *insn, rtx_insn *after)
     }
 
   /* Update LABEL_NUSES.  */
-  mark_jump_label (PATTERN (new_rtx), new_rtx, 0);
+  if (NONDEBUG_INSN_P (insn))
+    mark_jump_label (PATTERN (new_rtx), new_rtx, 0);
 
   INSN_LOCATION (new_rtx) = INSN_LOCATION (insn);
 

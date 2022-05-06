@@ -1497,10 +1497,14 @@ asan_redzone_buffer::emit_redzone_byte (HOST_WIDE_INT offset,
   HOST_WIDE_INT off
     = m_prev_offset + ASAN_SHADOW_GRANULARITY * m_shadow_bytes.length ();
   if (off == offset)
+    /* Consecutive shadow memory byte.  */;
+  else if (offset < m_prev_offset + (HOST_WIDE_INT) (ASAN_SHADOW_GRANULARITY
+						     * RZ_BUFFER_SIZE)
+	   && !m_shadow_bytes.is_empty ())
     {
-      /* Consecutive shadow memory byte.  */
-      m_shadow_bytes.safe_push (value);
-      flush_if_full ();
+      /* Shadow memory byte with a small gap.  */
+      for (; off < offset; off += ASAN_SHADOW_GRANULARITY)
+	m_shadow_bytes.safe_push (0);
     }
   else
     {
@@ -1521,9 +1525,9 @@ asan_redzone_buffer::emit_redzone_byte (HOST_WIDE_INT offset,
       m_shadow_mem = adjust_address (m_shadow_mem, VOIDmode,
 				     diff >> ASAN_SHADOW_SHIFT);
       m_prev_offset = offset;
-      m_shadow_bytes.safe_push (value);
-      flush_if_full ();
     }
+  m_shadow_bytes.safe_push (value);
+  flush_if_full ();
 }
 
 /* Emit RTX emission of the content of the buffer.  */
@@ -2688,13 +2692,13 @@ instrument_derefs (gimple_stmt_iterator *iter, tree t,
     return;
 
   poly_int64 decl_size;
-  if (VAR_P (inner)
+  if ((VAR_P (inner) || TREE_CODE (inner) == RESULT_DECL)
       && offset == NULL_TREE
       && DECL_SIZE (inner)
       && poly_int_tree_p (DECL_SIZE (inner), &decl_size)
       && known_subrange_p (bitpos, bitsize, 0, decl_size))
     {
-      if (DECL_THREAD_LOCAL_P (inner))
+      if (VAR_P (inner) && DECL_THREAD_LOCAL_P (inner))
 	return;
       /* If we're not sanitizing globals and we can tell statically that this
 	 access is inside a global variable, then there's no point adding
@@ -2723,6 +2727,11 @@ instrument_derefs (gimple_stmt_iterator *iter, tree t,
 	    return;
 	}
     }
+
+  if (DECL_P (inner)
+      && decl_function_context (inner) == current_function_decl
+      && !TREE_ADDRESSABLE (inner))
+    mark_addressable (inner);
 
   base = build_fold_addr_expr (t);
   if (!has_mem_ref_been_instrumented (base, size_in_bytes))

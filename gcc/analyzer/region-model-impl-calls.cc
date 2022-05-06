@@ -80,6 +80,14 @@ call_details::call_details (const gcall *call, region_model *model,
     }
 }
 
+/* Get the manager from m_model.  */
+
+region_model_manager *
+call_details::get_manager () const
+{
+  return m_model->get_manager ();
+}
+
 /* Get any uncertainty_t associated with the region_model_context.  */
 
 uncertainty_t *
@@ -204,13 +212,15 @@ call_details::dump (bool simple) const
   pp_flush (&pp);
 }
 
-/* Get a conjured_svalue for this call for REG.  */
+/* Get a conjured_svalue for this call for REG,
+   and purge any state already relating to that conjured_svalue.  */
 
 const svalue *
 call_details::get_or_create_conjured_svalue (const region *reg) const
 {
   region_model_manager *mgr = m_model->get_manager ();
-  return mgr->get_or_create_conjured_svalue (reg->get_type (), m_call, reg);
+  return mgr->get_or_create_conjured_svalue (reg->get_type (), m_call, reg,
+					     conjured_purge (m_model, m_ctxt));
 }
 
 /* Implementations of specific functions.  */
@@ -426,7 +436,6 @@ region_model::impl_call_fgets (const call_details &cd)
     {
       const region *base_reg = reg->get_base_region ();
       const svalue *new_sval = cd.get_or_create_conjured_svalue (base_reg);
-      purge_state_involving (new_sval, cd.get_ctxt ());
       set_value (base_reg, new_sval, cd.get_ctxt ());
     }
 }
@@ -441,7 +450,6 @@ region_model::impl_call_fread (const call_details &cd)
     {
       const region *base_reg = reg->get_base_region ();
       const svalue *new_sval = cd.get_or_create_conjured_svalue (base_reg);
-      purge_state_involving (new_sval, cd.get_ctxt ());
       set_value (base_reg, new_sval, cd.get_ctxt ());
     }
 }
@@ -822,7 +830,9 @@ region_model::impl_call_strchr (const call_details &cd)
 	      const svalue *offset
 		= mgr->get_or_create_conjured_svalue (size_type_node,
 						      cd.get_call_stmt (),
-						      str_reg);
+						      str_reg,
+						      conjured_purge (model,
+								      ctxt));
 	      result = mgr->get_or_create_binop (lhs_type, POINTER_PLUS_EXPR,
 						 str_sval, offset);
 	    }

@@ -596,10 +596,10 @@ extern int riscv_builtin_vectorization_cost (enum vect_cost_for_stmt, tree, int)
 riscv_vector_costs::riscv_vector_costs(vec_info *vinfo, bool costing_for_scalar)
     : vector_costs(vinfo, costing_for_scalar) {}
 
-unsigned riscv_vector_costs::add_stmt_cost(int count, vect_cost_for_stmt kind,
-                                           stmt_vec_info stmt_info,
-                                           tree vectype, int misalign,
-                                           vect_cost_model_location where) {
+unsigned riscv_vector_costs::add_stmt_cost (int count, vect_cost_for_stmt kind,
+				     stmt_vec_info stmt_info, slp_tree,
+				     tree vectype, int misalign,
+				     vect_cost_model_location where) {
   int stmt_cost
     = riscv_builtin_vectorization_cost (kind, vectype, misalign);
   return record_stmt_cost(stmt_info, where, count * stmt_cost);

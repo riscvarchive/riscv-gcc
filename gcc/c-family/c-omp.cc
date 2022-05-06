@@ -353,8 +353,13 @@ c_finish_omp_atomic (location_t loc, enum tree_code code,
     }
   bool save = in_late_binary_op;
   in_late_binary_op = true;
-  x = build_modify_expr (loc, blhs ? blhs : lhs, NULL_TREE, opcode,
-			 loc, rhs, NULL_TREE);
+  if ((opcode == MIN_EXPR || opcode == MAX_EXPR)
+      && build_binary_op (loc, LT_EXPR, blhs ? blhs : lhs, rhs,
+			  true) == error_mark_node)
+    x = error_mark_node;
+  else
+    x = build_modify_expr (loc, blhs ? blhs : lhs, NULL_TREE, opcode,
+			   loc, rhs, NULL_TREE);
   in_late_binary_op = save;
   if (x == error_mark_node)
     return error_mark_node;
@@ -2990,39 +2995,6 @@ c_omp_predetermined_mapping (tree decl)
   return OMP_CLAUSE_DEFAULTMAP_CATEGORY_UNSPECIFIED;
 }
 
-
-/* For OpenACC, the OMP_CLAUSE_MAP_KIND of an OMP_CLAUSE_MAP is used internally
-   to distinguish clauses as seen by the user.  Return the "friendly" clause
-   name for error messages etc., where possible.  See also
-   c/c-parser.cc:c_parser_oacc_data_clause and
-   cp/parser.cc:cp_parser_oacc_data_clause.  */
-
-const char *
-c_omp_map_clause_name (tree clause, bool oacc)
-{
-  if (oacc && OMP_CLAUSE_CODE (clause) == OMP_CLAUSE_MAP)
-    switch (OMP_CLAUSE_MAP_KIND (clause))
-    {
-    case GOMP_MAP_FORCE_ALLOC:
-    case GOMP_MAP_ALLOC: return "create";
-    case GOMP_MAP_FORCE_TO:
-    case GOMP_MAP_TO: return "copyin";
-    case GOMP_MAP_FORCE_FROM:
-    case GOMP_MAP_FROM: return "copyout";
-    case GOMP_MAP_FORCE_TOFROM:
-    case GOMP_MAP_TOFROM: return "copy";
-    case GOMP_MAP_RELEASE: return "delete";
-    case GOMP_MAP_FORCE_PRESENT: return "present";
-    case GOMP_MAP_ATTACH: return "attach";
-    case GOMP_MAP_FORCE_DETACH:
-    case GOMP_MAP_DETACH: return "detach";
-    case GOMP_MAP_DEVICE_RESIDENT: return "device_resident";
-    case GOMP_MAP_LINK: return "link";
-    case GOMP_MAP_FORCE_DEVICEPTR: return "deviceptr";
-    default: break;
-    }
-  return omp_clause_code_name[OMP_CLAUSE_CODE (clause)];
-}
 
 /* Used to merge map clause information in c_omp_adjust_map_clauses.  */
 struct map_clause

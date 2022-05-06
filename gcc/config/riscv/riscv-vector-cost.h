@@ -68,10 +68,10 @@ class riscv_vector_costs : public vector_costs {
 public:
   riscv_vector_costs(vec_info *, bool);
 
-  unsigned int add_stmt_cost(int count, vect_cost_for_stmt kind,
-                             stmt_vec_info stmt_info, tree vectype,
-                             int misalign,
-                             vect_cost_model_location where) override;
+  unsigned int add_stmt_cost (int count, vect_cost_for_stmt kind,
+			      stmt_vec_info stmt_info, slp_tree, tree vectype,
+			      int misalign,
+			      vect_cost_model_location where) override;
   void finish_cost(const vector_costs *) override;
   bool better_main_loop_than_p(const vector_costs *other) const override;
 };

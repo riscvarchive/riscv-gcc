@@ -1693,7 +1693,7 @@ function_types_compatible_p (const_tree f1, const_tree f2,
 
   if (args1 == NULL_TREE)
     {
-      if (flag_isoc2x ? stdarg_p (f2) : !self_promoting_args_p (args2))
+      if (!self_promoting_args_p (args2))
 	return 0;
       /* If one of these types comes from a non-prototype fn definition,
 	 compare that with the other type's arglist.
@@ -1706,7 +1706,7 @@ function_types_compatible_p (const_tree f1, const_tree f2,
     }
   if (args2 == NULL_TREE)
     {
-      if (flag_isoc2x ? stdarg_p (f1) : !self_promoting_args_p (args1))
+      if (!self_promoting_args_p (args1))
 	return 0;
       if (TYPE_ACTUAL_ARG_TYPES (f2)
 	  && type_lists_compatible_p (args1, TYPE_ACTUAL_ARG_TYPES (f2),
@@ -8438,6 +8438,7 @@ struct initializer_stack
   char top_level;
   char require_constant_value;
   char require_constant_elements;
+  char designated;
   rich_location *missing_brace_richloc;
 };
 
@@ -8464,6 +8465,7 @@ start_init (tree decl, tree asmspec_tree ATTRIBUTE_UNUSED, int top_level,
   p->top_level = constructor_top_level;
   p->next = initializer_stack;
   p->missing_brace_richloc = richloc;
+  p->designated = constructor_designated;
   initializer_stack = p;
 
   constructor_decl = decl;
@@ -8522,6 +8524,7 @@ finish_init (void)
   require_constant_value = p->require_constant_value;
   require_constant_elements = p->require_constant_elements;
   constructor_stack = p->constructor_stack;
+  constructor_designated = p->designated;
   constructor_range_stack = p->constructor_range_stack;
   constructor_elements = p->elements;
   spelling = p->spelling;
@@ -8731,7 +8734,9 @@ push_init_level (location_t loc, int implicit,
   constructor_depth = SPELLING_DEPTH ();
   constructor_elements = NULL;
   constructor_incremental = 1;
-  constructor_designated = 0;
+  /* If the upper initializer is designated, then mark this as
+     designated too to prevent bogus warnings.  */
+  constructor_designated = p->designated;
   constructor_pending_elts = 0;
   if (!implicit)
     {
@@ -8756,9 +8761,6 @@ push_init_level (location_t loc, int implicit,
 	  push_member_name (constructor_fields);
 	  constructor_depth++;
 	}
-      /* If upper initializer is designated, then mark this as
-	 designated too to prevent bogus warnings.  */
-      constructor_designated = p->designated;
     }
   else if (TREE_CODE (constructor_type) == ARRAY_TYPE)
     {
@@ -12213,7 +12215,8 @@ build_binary_op (location_t location, enum tree_code code,
 	{
 	  doing_shift = true;
 	  if (TREE_CODE (op0) == INTEGER_CST
-	      && tree_int_cst_sgn (op0) < 0)
+	      && tree_int_cst_sgn (op0) < 0
+	      && !TYPE_OVERFLOW_WRAPS (type0))
 	    {
 	      /* Don't reject a left shift of a negative value in a context
 		 where a constant expression is needed in C90.  */
@@ -13372,7 +13375,7 @@ handle_omp_array_sections_1 (tree c, tree t, vec<tree> &types,
 	{
 	  error_at (OMP_CLAUSE_LOCATION (c),
 		    "expected single pointer in %qs clause",
-		    c_omp_map_clause_name (c, ort == C_ORT_ACC));
+		    user_omp_clause_code_name (c, ort == C_ORT_ACC));
 	  return error_mark_node;
 	}
     }
@@ -14095,7 +14098,7 @@ c_oacc_check_attachments (tree c)
       if (TREE_CODE (TREE_TYPE (t)) != POINTER_TYPE)
 	{
 	  error_at (OMP_CLAUSE_LOCATION (c), "expected pointer in %qs clause",
-		    c_omp_map_clause_name (c, true));
+		    user_omp_clause_code_name (c, true));
 	  return true;
 	}
     }
@@ -15891,6 +15894,12 @@ c_build_va_arg (location_t loc1, tree expr, location_t loc2, tree type)
     {
       error_at (loc2, "second argument to %<va_arg%> is of incomplete "
 		"type %qT", type);
+      return error_mark_node;
+    }
+  else if (TREE_CODE (type) == FUNCTION_TYPE)
+    {
+      error_at (loc2, "second argument to %<va_arg%> is a function type %qT",
+		type);
       return error_mark_node;
     }
   else if (warn_cxx_compat && TREE_CODE (type) == ENUMERAL_TYPE)

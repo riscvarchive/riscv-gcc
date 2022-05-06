@@ -817,6 +817,7 @@ libgo_go_objs = \
 	syscall/errno.lo \
 	syscall/signame.lo \
 	syscall/wait.lo \
+	runtime/internal/syscall/errno.lo \
 	os/dir_gccgo_c.lo \
 	$(golangorg_x_net_lif_lo) \
 	$(golangorg_x_net_route_lo) \
@@ -1180,6 +1181,11 @@ syscall/wait.lo: go/syscall/wait.c runtime.inc
 	@$(MKDIR_P) syscall
 	$(LTCOMPILE) -c -o $@ $(srcdir)/go/syscall/wait.c
 
+# Some runtime/internal/syscall functions are written in C.
+runtime/internal/syscall/errno.lo: go/runtime/internal/syscall/errno.c runtime.inc
+	@$(MKDIR_P) runtime/internal/syscall
+	$(LTCOMPILE) -c -o $@ $(srcdir)/go/runtime/internal/syscall/errno.c
+
 # An os function is written in C.
 os/dir_gccgo_c.lo: go/os/dir_gccgo_c.c runtime.inc
 	@$(MKDIR_P) os
@@ -1299,7 +1305,7 @@ check-tail: check-recursive check-multi
 	if test "$$untested" -ne "0"; then \
 	  echo "# of untested testcases		$$untested" >> libgo.sum; \
 	fi; \
-	echo `echo $(GOC) | sed -e 's/ .*//'`  `$(GOC) -v 2>&1 | grep " version" | sed -n -e 's/.* \(version.*$$\)/\1/p'` >> libgo.sum; \
+	echo `echo $(GOC) | sed -e 's/ .*//'`  `$(GOC) -v 2>&1 | grep " version" | sed -n -e 's/.* \(version.*\)$$/\1/p'` >> libgo.sum; \
 	echo >> libgo.log; \
 	echo "runtest completed at `date`" >> libgo.log; \
 	if test "$$fail" -ne "0"; then \

@@ -2857,83 +2857,107 @@ match_exit_cycle (gfc_statement st, gfc_exec_op op)
 
   for (o = p, cnt = 0; o->state == COMP_DO && o->previous != NULL; cnt++)
     o = o->previous;
+
+  int count = 1;
   if (cnt > 0
       && o != NULL
-      && o->state == COMP_OMP_STRUCTURED_BLOCK
-      && (o->head->op == EXEC_OACC_LOOP
-	  || o->head->op == EXEC_OACC_KERNELS_LOOP
-	  || o->head->op == EXEC_OACC_PARALLEL_LOOP
-	  || o->head->op == EXEC_OACC_SERIAL_LOOP))
-    {
-      int collapse = 1;
-      gcc_assert (o->head->next != NULL
+      && o->state == COMP_OMP_STRUCTURED_BLOCK)
+    switch (o->head->op)
+      {
+      case EXEC_OACC_LOOP:
+      case EXEC_OACC_KERNELS_LOOP:
+      case EXEC_OACC_PARALLEL_LOOP:
+      case EXEC_OACC_SERIAL_LOOP:
+	gcc_assert (o->head->next != NULL
+		    && (o->head->next->op == EXEC_DO
+			|| o->head->next->op == EXEC_DO_WHILE)
+		    && o->previous != NULL
+		    && o->previous->tail->op == o->head->op);
+	if (o->previous->tail->ext.omp_clauses != NULL)
+	  {
+	    /* Both collapsed and tiled loops are lowered the same way, but are
+	       not compatible.  In gfc_trans_omp_do, the tile is prioritized. */
+	    if (o->previous->tail->ext.omp_clauses->tile_list)
+	      {
+		count = 0;
+		gfc_expr_list *el
+		  = o->previous->tail->ext.omp_clauses->tile_list;
+		for ( ; el; el = el->next)
+		  ++count;
+	      }
+	    else if (o->previous->tail->ext.omp_clauses->collapse > 1)
+	      count = o->previous->tail->ext.omp_clauses->collapse;
+	  }
+	if (st == ST_EXIT && cnt <= count)
+	  {
+	    gfc_error ("EXIT statement at %C terminating !$ACC LOOP loop");
+	    return MATCH_ERROR;
+	  }
+	if (st == ST_CYCLE && cnt < count)
+	  {
+	    gfc_error (o->previous->tail->ext.omp_clauses->tile_list
+		       ? G_("CYCLE statement at %C to non-innermost tiled "
+			    "!$ACC LOOP loop")
+		       : G_("CYCLE statement at %C to non-innermost collapsed "
+			    "!$ACC LOOP loop"));
+	    return MATCH_ERROR;
+	  }
+	break;
+      case EXEC_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD:
+      case EXEC_OMP_TARGET_PARALLEL_DO_SIMD:
+      case EXEC_OMP_TARGET_SIMD:
+      case EXEC_OMP_TASKLOOP_SIMD:
+      case EXEC_OMP_PARALLEL_MASTER_TASKLOOP_SIMD:
+      case EXEC_OMP_MASTER_TASKLOOP_SIMD:
+      case EXEC_OMP_PARALLEL_MASKED_TASKLOOP_SIMD:
+      case EXEC_OMP_MASKED_TASKLOOP_SIMD:
+      case EXEC_OMP_PARALLEL_DO_SIMD:
+      case EXEC_OMP_DISTRIBUTE_SIMD:
+      case EXEC_OMP_DISTRIBUTE_PARALLEL_DO_SIMD:
+      case EXEC_OMP_TEAMS_DISTRIBUTE_SIMD:
+      case EXEC_OMP_TARGET_TEAMS_DISTRIBUTE_SIMD:
+      case EXEC_OMP_LOOP:
+      case EXEC_OMP_PARALLEL_LOOP:
+      case EXEC_OMP_TEAMS_LOOP:
+      case EXEC_OMP_TARGET_PARALLEL_LOOP:
+      case EXEC_OMP_TARGET_TEAMS_LOOP:
+      case EXEC_OMP_DO:
+      case EXEC_OMP_PARALLEL_DO:
+      case EXEC_OMP_SIMD:
+      case EXEC_OMP_DO_SIMD:
+      case EXEC_OMP_DISTRIBUTE_PARALLEL_DO:
+      case EXEC_OMP_TEAMS_DISTRIBUTE_PARALLEL_DO:
+      case EXEC_OMP_TARGET_TEAMS_DISTRIBUTE_PARALLEL_DO:
+      case EXEC_OMP_TARGET_PARALLEL_DO:
+      case EXEC_OMP_TEAMS_DISTRIBUTE_PARALLEL_DO_SIMD:
+
+	gcc_assert (o->head->next != NULL
 		  && (o->head->next->op == EXEC_DO
 		      || o->head->next->op == EXEC_DO_WHILE)
 		  && o->previous != NULL
 		  && o->previous->tail->op == o->head->op);
-      if (o->previous->tail->ext.omp_clauses != NULL)
-	{
-	  /* Both collapsed and tiled loops are lowered the same way, but are not
-	     compatible.  In gfc_trans_omp_do, the tile is prioritized.  */
-	  if (o->previous->tail->ext.omp_clauses->tile_list)
-	    {
-	      collapse = 0;
-	      gfc_expr_list *el = o->previous->tail->ext.omp_clauses->tile_list;
-	      for ( ; el; el = el->next)
-		++collapse;
-	    }
-	  else if (o->previous->tail->ext.omp_clauses->collapse > 1)
-	    collapse = o->previous->tail->ext.omp_clauses->collapse;
-	}
-      if (st == ST_EXIT && cnt <= collapse)
-	{
-	  gfc_error ("EXIT statement at %C terminating !$ACC LOOP loop");
-	  return MATCH_ERROR;
-	}
-      if (st == ST_CYCLE && cnt < collapse)
-	{
-	  gfc_error (o->previous->tail->ext.omp_clauses->tile_list
-		     ? G_("CYCLE statement at %C to non-innermost tiled"
-			  " !$ACC LOOP loop")
-		     : G_("CYCLE statement at %C to non-innermost collapsed"
-			  " !$ACC LOOP loop"));
-	  return MATCH_ERROR;
-	}
-    }
-  if (cnt > 0
-      && o != NULL
-      && (o->state == COMP_OMP_STRUCTURED_BLOCK)
-      && (o->head->op == EXEC_OMP_DO
-	  || o->head->op == EXEC_OMP_PARALLEL_DO
-	  || o->head->op == EXEC_OMP_SIMD
-	  || o->head->op == EXEC_OMP_DO_SIMD
-	  || o->head->op == EXEC_OMP_PARALLEL_DO_SIMD))
-    {
-      int count = 1;
-      gcc_assert (o->head->next != NULL
-		  && (o->head->next->op == EXEC_DO
-		      || o->head->next->op == EXEC_DO_WHILE)
-		  && o->previous != NULL
-		  && o->previous->tail->op == o->head->op);
-      if (o->previous->tail->ext.omp_clauses != NULL)
-	{
-	  if (o->previous->tail->ext.omp_clauses->collapse > 1)
-	    count = o->previous->tail->ext.omp_clauses->collapse;
-	  if (o->previous->tail->ext.omp_clauses->orderedc)
-	    count = o->previous->tail->ext.omp_clauses->orderedc;
-	}
-      if (st == ST_EXIT && cnt <= count)
-	{
-	  gfc_error ("EXIT statement at %C terminating !$OMP DO loop");
-	  return MATCH_ERROR;
-	}
-      if (st == ST_CYCLE && cnt < count)
-	{
-	  gfc_error ("CYCLE statement at %C to non-innermost collapsed"
-		     " !$OMP DO loop");
-	  return MATCH_ERROR;
-	}
-    }
+	if (o->previous->tail->ext.omp_clauses != NULL)
+	  {
+	    if (o->previous->tail->ext.omp_clauses->collapse > 1)
+	      count = o->previous->tail->ext.omp_clauses->collapse;
+	    if (o->previous->tail->ext.omp_clauses->orderedc)
+	      count = o->previous->tail->ext.omp_clauses->orderedc;
+	  }
+	if (st == ST_EXIT && cnt <= count)
+	  {
+	    gfc_error ("EXIT statement at %C terminating !$OMP DO loop");
+	    return MATCH_ERROR;
+	  }
+	if (st == ST_CYCLE && cnt < count)
+	  {
+	    gfc_error ("CYCLE statement at %C to non-innermost collapsed "
+		       "!$OMP DO loop");
+	    return MATCH_ERROR;
+	  }
+	break;
+      default:
+	break;
+      }
 
   /* Save the first statement in the construct - needed by the backend.  */
   new_st.ext.which_construct = p->construct;
@@ -2978,6 +3002,13 @@ Fortran 2008 has
    R856 allstop-stmt  is ALL STOP [ stop-code ]
    R857 stop-code     is scalar-default-char-constant-expr
                       or scalar-int-constant-expr
+Fortran 2018 has
+
+   R1160 stop-stmt       is STOP [ stop-code ] [ , QUIET = scalar-logical-expr]
+   R1161 error-stop-stmt is
+                      ERROR STOP [ stop-code ] [ , QUIET = scalar-logical-expr]
+   R1162 stop-code       is scalar-default-char-expr
+                         or scalar-int-expr
 
 For free-form source code, all standards contain a statement of the form:
 
@@ -2994,8 +3025,10 @@ static match
 gfc_match_stopcode (gfc_statement st)
 {
   gfc_expr *e = NULL;
+  gfc_expr *quiet = NULL;
   match m;
   bool f95, f03, f08;
+  char c;
 
   /* Set f95 for -std=f95.  */
   f95 = (gfc_option.allow_std == GFC_STD_OPT_F95);
@@ -3006,11 +3039,16 @@ gfc_match_stopcode (gfc_statement st)
   /* Set f08 for -std=f2008.  */
   f08 = (gfc_option.allow_std == GFC_STD_OPT_F08);
 
-  /* Look for a blank between STOP and the stop-code for F2008 or later.  */
-  if (gfc_current_form != FORM_FIXED && !(f95 || f03))
-    {
-      char c = gfc_peek_ascii_char ();
+  /* Plain STOP statement?  */
+  if (gfc_match_eos () == MATCH_YES)
+    goto checks;
 
+  /* Look for a blank between STOP and the stop-code for F2008 or later.
+     But allow for F2018's ,QUIET= specifier.  */
+  c = gfc_peek_ascii_char ();
+
+  if (gfc_current_form != FORM_FIXED && !(f95 || f03) && c != ',')
+    {
       /* Look for end-of-statement.  There is no stop-code.  */
       if (c == '\n' || c == '!' || c == ';')
         goto done;
@@ -3023,7 +3061,12 @@ gfc_match_stopcode (gfc_statement st)
 	}
     }
 
-  if (gfc_match_eos () != MATCH_YES)
+  if (c == ' ')
+    {
+      gfc_gobble_whitespace ();
+      c = gfc_peek_ascii_char ();
+    }
+  if (c != ',')
     {
       int stopcode;
       locus old_locus;
@@ -3053,10 +3096,19 @@ gfc_match_stopcode (gfc_statement st)
 	goto cleanup;
       if (m == MATCH_NO)
 	goto syntax;
-
-      if (gfc_match_eos () != MATCH_YES)
-	goto syntax;
     }
+
+  if (gfc_match (" , quiet = %e", &quiet) == MATCH_YES)
+    {
+      if (!gfc_notify_std (GFC_STD_F2018, "QUIET= specifier for %s at %L",
+			   gfc_ascii_statement (st), &quiet->where))
+	goto cleanup;
+    }
+
+  if (gfc_match_eos () != MATCH_YES)
+    goto syntax;
+
+checks:
 
   if (gfc_pure (NULL))
     {
@@ -3133,10 +3185,22 @@ gfc_match_stopcode (gfc_statement st)
 	  goto cleanup;
 	}
 
-      if (e->ts.type == BT_INTEGER && e->ts.kind != gfc_default_integer_kind)
+      if (e->ts.type == BT_INTEGER && e->ts.kind != gfc_default_integer_kind
+	  && !gfc_notify_std (GFC_STD_F2018,
+			      "STOP code at %L must be default integer KIND=%d",
+			      &e->where, (int) gfc_default_integer_kind))
+	goto cleanup;
+    }
+
+  if (quiet != NULL)
+    {
+      if (!gfc_simplify_expr (quiet, 0))
+	goto cleanup;
+
+      if (quiet->rank != 0)
 	{
-	  gfc_error ("STOP code at %L must be default integer KIND=%d",
-		     &e->where, (int) gfc_default_integer_kind);
+	  gfc_error ("QUIET specifier at %L must be a scalar LOGICAL",
+		     &quiet->where);
 	  goto cleanup;
 	}
     }
@@ -3159,6 +3223,7 @@ done:
     }
 
   new_st.expr1 = e;
+  new_st.expr2 = quiet;
   new_st.ext.stop_code = -1;
 
   return MATCH_YES;
@@ -3169,6 +3234,7 @@ syntax:
 cleanup:
 
   gfc_free_expr (e);
+  gfc_free_expr (quiet);
   return MATCH_ERROR;
 }
 

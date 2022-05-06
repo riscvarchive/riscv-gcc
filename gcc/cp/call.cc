@@ -1680,8 +1680,19 @@ direct_reference_binding (tree type, conversion *conv)
        because the types "int *" and "const int *const" are
        reference-related and we were binding both directly and they
        had the same rank.  To break it up, we add a ck_qual under the
-       ck_ref_bind so that conversion sequence ranking chooses #1.  */
-    conv = build_conv (ck_qual, t, conv);
+       ck_ref_bind so that conversion sequence ranking chooses #1.
+
+       We strip_top_quals here which is also what standard_conversion
+       does.  Failure to do so would confuse comp_cv_qual_signature
+       into thinking that in
+
+	 void f(const int * const &); // #1
+	 void f(const int *); // #2
+	 int *x;
+	 f(x);
+
+       #2 is a better match than #1 even though they're ambiguous (97296).  */
+    conv = build_conv (ck_qual, strip_top_quals (t), conv);
 
   return build_conv (ck_ref_bind, type, conv);
 }
@@ -2821,7 +2832,7 @@ add_builtin_candidate (struct z_candidate **candidates, enum tree_code code,
 	  tree c1 = TREE_TYPE (type1);
 	  tree c2 = TYPE_PTRMEM_CLASS_TYPE (type2);
 
-	  if (MAYBE_CLASS_TYPE_P (c1) && DERIVED_FROM_P (c2, c1)
+	  if (CLASS_TYPE_P (c1) && DERIVED_FROM_P (c2, c1)
 	      && (TYPE_PTRMEMFUNC_P (type2)
 		  || is_complete (TYPE_PTRMEM_POINTED_TO_TYPE (type2))))
 	    break;
@@ -4899,8 +4910,7 @@ build_operator_new_call (tree fnname, vec<tree, va_gc> **args,
        up in the global scope.
 
      we disregard block-scope declarations of "operator new".  */
-  fns = lookup_name (fnname, LOOK_where::NAMESPACE);
-  fns = lookup_arg_dependent (fnname, fns, *args);
+  fns = lookup_qualified_name (global_namespace, fnname);
 
   if (align_arg)
     {
@@ -6023,6 +6033,17 @@ perfect_candidate_p (z_candidate *cand)
   return true;
 }
 
+/* True iff one of CAND's argument conversions is NULL.  */
+
+static bool
+missing_conversion_p (const z_candidate *cand)
+{
+  for (unsigned i = 0; i < cand->num_convs; ++i)
+    if (!cand->convs[i])
+      return true;
+  return false;
+}
+
 /* Add each of the viable functions in FNS (a FUNCTION_DECL or
    OVERLOAD) to the CANDIDATES, returning an updated list of
    CANDIDATES.  The ARGS are the arguments provided to the call;
@@ -6200,7 +6221,7 @@ add_candidates (tree fns, tree first_arg, const vec<tree, va_gc> *args,
 
       if (cand->viable == -1
 	  && shortcut_bad_convs
-	  && !cand->convs[cand->reversed () ? 0 : cand->num_convs - 1])
+	  && missing_conversion_p (cand))
 	{
 	  /* This candidate has been tentatively marked non-strictly viable,
 	     and we didn't compute all argument conversions for it (having
@@ -8947,6 +8968,7 @@ make_base_init_ok (tree exp)
        call target.  It would be possible to splice in the appropriate
        arguments, but probably not worth the complexity.  */
     return false;
+  mark_used (fn);
   AGGR_INIT_EXPR_FN (exp) = build_address (fn);
   return true;
 }
@@ -9928,7 +9950,7 @@ build_over_call (struct z_candidate *cand, int flags, tsubst_flags_t complain)
 		    obj_arg = TREE_OPERAND (addr, 0);
 		}
 	    }
-	  call = cxx_constant_value (call, obj_arg);
+	  call = cxx_constant_value_sfinae (call, obj_arg, complain);
 	  if (obj_arg && !error_operand_p (call))
 	    call = build2 (INIT_EXPR, void_type_node, obj_arg, call);
 	  call = convert_from_reference (call);
@@ -10398,6 +10420,27 @@ build_cxx_call (tree fn, int nargs, tree *argarray,
       if (!check_builtin_function_arguments (EXPR_LOCATION (fn), vNULL, fndecl,
 					     orig_fndecl, nargs, argarray))
 	return error_mark_node;
+      else if (fndecl_built_in_p (fndecl, BUILT_IN_CLEAR_PADDING))
+	{
+	  tree arg0 = argarray[0];
+	  STRIP_NOPS (arg0);
+	  if (TREE_CODE (arg0) == ADDR_EXPR
+	      && DECL_P (TREE_OPERAND (arg0, 0))
+	      && same_type_ignoring_top_level_qualifiers_p
+			(TREE_TYPE (TREE_TYPE (argarray[0])),
+			 TREE_TYPE (TREE_TYPE (arg0))))
+	    /* For __builtin_clear_padding (&var) we know the type
+	       is for a complete object, so there is no risk in clearing
+	       padding that is reused in some derived class member.  */;
+	  else if (!trivially_copyable_p (TREE_TYPE (TREE_TYPE (argarray[0]))))
+	    {
+	      error_at (EXPR_LOC_OR_LOC (argarray[0], input_location),
+			"argument %u in call to function %qE "
+			"has pointer to a non-trivially-copyable type (%qT)",
+			1, fndecl, TREE_TYPE (argarray[0]));
+	      return error_mark_node;
+	    }
+	}
     }
 
   if (VOID_TYPE_P (TREE_TYPE (fn)))
@@ -11503,12 +11546,9 @@ compare_ics (conversion *ics1, conversion *ics2)
 	 P0388R4.)  */
       else if (t1->kind == ck_aggr
 	       && TREE_CODE (t1->type) == ARRAY_TYPE
-	       && TREE_CODE (t2->type) == ARRAY_TYPE)
+	       && TREE_CODE (t2->type) == ARRAY_TYPE
+	       && same_type_p (TREE_TYPE (t1->type), TREE_TYPE (t2->type)))
 	{
-	  /* The type of the array elements must be the same.  */
-	  if (!same_type_p (TREE_TYPE (t1->type), TREE_TYPE (t2->type)))
-	    return 0;
-
 	  tree n1 = nelts_initialized_by_list_init (t1);
 	  tree n2 = nelts_initialized_by_list_init (t2);
 	  if (tree_int_cst_lt (n1, n2))

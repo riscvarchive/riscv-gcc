@@ -531,14 +531,6 @@ gfc_match_omp_detach (gfc_expr **expr)
   if (gfc_match_variable (expr, 0) != MATCH_YES)
     goto syntax_error;
 
-  if ((*expr)->ts.type != BT_INTEGER || (*expr)->ts.kind != gfc_c_intptr_kind)
-    {
-      gfc_error ("%qs at %L should be of type "
-		 "integer(kind=omp_event_handle_kind)",
-		 (*expr)->symtree->n.sym->name, &(*expr)->where);
-      return MATCH_ERROR;
-    }
-
   if (gfc_match_char (')') != MATCH_YES)
     goto syntax_error;
 
@@ -6790,8 +6782,10 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 		  gfc_error ("Cray pointee %qs in SHARED clause at %L",
 			    n->sym->name, &n->where);
 		if (n->sym->attr.associate_var)
-		  gfc_error ("ASSOCIATE name %qs in SHARED clause at %L",
-			     n->sym->name, &n->where);
+		  gfc_error ("Associate name %qs in SHARED clause at %L",
+			     n->sym->attr.select_type_temporary
+			     ? n->sym->assoc->target->symtree->n.sym->name
+			     : n->sym->name, &n->where);
 		if (omp_clauses->detach
 		    && n->sym == omp_clauses->detach->symtree->n.sym)
 		  gfc_error ("DETACH event handle %qs in SHARED clause at %L",
@@ -7171,8 +7165,10 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 		  gfc_error ("Cray pointee %qs in %s clause at %L",
 			    n->sym->name, name, &n->where);
 		if (n->sym->attr.associate_var)
-		  gfc_error ("ASSOCIATE name %qs in %s clause at %L",
-			     n->sym->name, name, &n->where);
+		  gfc_error ("Associate name %qs in %s clause at %L",
+			     n->sym->attr.select_type_temporary
+			     ? n->sym->assoc->target->symtree->n.sym->name
+			     : n->sym->name, name, &n->where);
 		if (list != OMP_LIST_PRIVATE && is_reduction)
 		  {
 		    if (n->sym->attr.proc_pointer)
@@ -7581,9 +7577,29 @@ resolve_omp_clauses (gfc_code *code, gfc_omp_clauses *omp_clauses,
 	gfc_error ("%s must contain at least one MAP clause at %L",
 		   p, &code->loc);
     }
-  if (!openacc && omp_clauses->mergeable && omp_clauses->detach)
-    gfc_error ("%<DETACH%> clause at %L must not be used together with "
-	       "%<MERGEABLE%> clause", &omp_clauses->detach->where);
+
+  if (!openacc && omp_clauses->detach)
+    {
+      if (!gfc_resolve_expr (omp_clauses->detach)
+	  || omp_clauses->detach->ts.type != BT_INTEGER
+	  || omp_clauses->detach->ts.kind != gfc_c_intptr_kind
+	  || omp_clauses->detach->rank != 0)
+	gfc_error ("%qs at %L should be a scalar of type "
+		   "integer(kind=omp_event_handle_kind)",
+		   omp_clauses->detach->symtree->n.sym->name,
+		   &omp_clauses->detach->where);
+      else if (omp_clauses->detach->symtree->n.sym->attr.dimension > 0)
+	gfc_error ("The event handle at %L must not be an array element",
+		   &omp_clauses->detach->where);
+      else if (omp_clauses->detach->symtree->n.sym->ts.type == BT_DERIVED
+	       || omp_clauses->detach->symtree->n.sym->ts.type == BT_CLASS)
+	gfc_error ("The event handle at %L must not be part of "
+		   "a derived type or class", &omp_clauses->detach->where);
+
+      if (omp_clauses->mergeable)
+	gfc_error ("%<DETACH%> clause at %L must not be used together with "
+		   "%<MERGEABLE%> clause", &omp_clauses->detach->where);
+    }
 }
 
 

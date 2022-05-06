@@ -1679,6 +1679,16 @@ process_options (bool no_backend)
       flag_sanitize &= ~SANITIZE_HWADDRESS;
     }
 
+  if (flag_sanitize & SANITIZE_SHADOW_CALL_STACK)
+    {
+      if (!targetm.have_shadow_call_stack)
+	sorry ("%<-fsanitize=shadow-call-stack%> not supported "
+	       "in current platform");
+      else if (flag_exceptions)
+	error_at (UNKNOWN_LOCATION, "%<-fsanitize=shadow-call-stack%> "
+		  "requires %<-fno-exceptions%>");
+    }
+
   HOST_WIDE_INT patch_area_size, patch_area_start;
   parse_and_check_patch_area (flag_patchable_function_entry, false,
 			      &patch_area_size, &patch_area_start);
@@ -2368,6 +2378,8 @@ toplev::finalize (void)
   gcse_cc_finalize ();
   ipa_cp_cc_finalize ();
   ira_costs_cc_finalize ();
+  tree_cc_finalize ();
+  reginfo_cc_finalize ();
 
   /* save_decoded_options uses opts_obstack, so these must
      be cleaned up together.  */

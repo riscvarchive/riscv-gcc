@@ -1,3 +1,26 @@
+2022-04-27  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* tracebak.c: Add support for ARM RTEMS. Add support for RTEMS to PPC
+	ELF.  Add support for RTEMS to SPARC.  Merge aarch64 support of Linux
+	and RTEMS.
+
+2022-04-27  Pierre-Marie de Rodat  <derodat@adacore.com>
+
+	PR ada/104027
+	* gnat1drv.adb: Remove the goto End_Of_Program.
+
+2022-03-24  Pascal Obry  <obry@adacore.com>
+
+	PR ada/104767
+	* libgnat/g-sercom__mingw.adb (Close): Reset port handle to -1.
+	* libgnat/g-sercom__linux.adb (Close): Likewise.
+
+2022-03-10  Richard Biener  <rguenther@suse.de>
+
+	PR ada/104861
+	* gcc-interface/Makefile.in (target_noncanonical): Substitute.
+	(OSCONS_CPP): Pass target_noncanonical as TARGET.
+
 2022-02-13  Maciej W. Rozycki  <macro@orcam.me.uk>
 
 	PR ada/98724

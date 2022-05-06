@@ -734,10 +734,14 @@ check_classfn (tree ctype, tree function, tree template_parms)
   tree pushed_scope = push_scope (ctype);
   tree matched = NULL_TREE;
   tree fns = get_class_binding (ctype, DECL_NAME (function));
-  
+  bool saw_template = false;
+
   for (ovl_iterator iter (fns); !matched && iter; ++iter)
     {
       tree fndecl = *iter;
+
+      if (TREE_CODE (fndecl) == TEMPLATE_DECL)
+	saw_template = true;
 
       /* A member template definition only matches a member template
 	 declaration.  */
@@ -786,6 +790,23 @@ check_classfn (tree ctype, tree function, tree template_parms)
 	  && (!DECL_TEMPLATE_SPECIALIZATION (function)
 	      || (DECL_TI_TEMPLATE (function) == DECL_TI_TEMPLATE (fndecl))))
 	matched = fndecl;
+    }
+
+  if (!matched && !is_template && saw_template
+      && !processing_template_decl && DECL_UNIQUE_FRIEND_P (function))
+    {
+      /* "[if no non-template match is found,] each remaining function template
+	 is replaced with the specialization chosen by deduction from the
+	 friend declaration or discarded if deduction fails."
+
+	 So ask check_explicit_specialization to find a matching template.  */
+      SET_DECL_IMPLICIT_INSTANTIATION (function);
+      tree spec = check_explicit_specialization (DECL_NAME (function),
+						 function, /* tcount */0,
+						 /* friend flag */4,
+						 /* attrlist */NULL_TREE);
+      if (spec != error_mark_node)
+	matched = spec;
     }
 
   if (!matched)
@@ -1298,6 +1319,9 @@ is_late_template_attribute (tree attr, tree decl)
     {
       tree type = TYPE_P (decl) ? decl : TREE_TYPE (decl);
 
+      if (!type)
+	return true;
+
       /* We can't apply any attributes to a completely unknown type until
 	 instantiation time.  */
       enum tree_code code = TREE_CODE (type);
@@ -1311,6 +1335,7 @@ is_late_template_attribute (tree attr, tree decl)
 	       /* But some attributes specifically apply to templates.  */
 	       && !is_attribute_p ("abi_tag", name)
 	       && !is_attribute_p ("deprecated", name)
+	       && !is_attribute_p ("unavailable", name)
 	       && !is_attribute_p ("visibility", name))
 	return true;
       else
@@ -1332,7 +1357,7 @@ splice_template_attributes (tree *attr_p, tree decl)
   tree late_attrs = NULL_TREE;
   tree *q = &late_attrs;
 
-  if (!p)
+  if (!p || *p == error_mark_node)
     return NULL_TREE;
 
   for (; *p; )
@@ -1509,12 +1534,19 @@ cp_check_const_attributes (tree attributes)
   for (attr = attributes; attr; attr = TREE_CHAIN (attr))
     {
       tree arg;
+      /* As we implement alignas using gnu::aligned attribute and
+	 alignas argument is a constant expression, force manifestly
+	 constant evaluation of aligned attribute argument.  */
+      bool manifestly_const_eval
+	= is_attribute_p ("aligned", get_attribute_name (attr));
       for (arg = TREE_VALUE (attr); arg && TREE_CODE (arg) == TREE_LIST;
 	   arg = TREE_CHAIN (arg))
 	{
 	  tree expr = TREE_VALUE (arg);
 	  if (EXPR_P (expr))
-	    TREE_VALUE (arg) = fold_non_dependent_expr (expr);
+	    TREE_VALUE (arg)
+	      = fold_non_dependent_expr (expr, tf_warning_or_error,
+					 manifestly_const_eval);
 	}
     }
 }
@@ -1612,8 +1644,16 @@ find_last_decl (tree decl)
 	  if (TREE_CODE (*iter) == OVERLOAD)
 	    continue;
 
-	  if (decls_match (decl, *iter, /*record_decls=*/false))
-	    return *iter;
+	  tree d = *iter;
+
+	  /* We can't compare versions in the middle of processing the
+	     attribute that has the version.  */
+	  if (TREE_CODE (d) == FUNCTION_DECL
+	      && DECL_FUNCTION_VERSIONED (d))
+	    return NULL_TREE;
+
+	  if (decls_match (decl, d, /*record_decls=*/false))
+	    return d;
 	}
       return NULL_TREE;
     }
@@ -1627,7 +1667,7 @@ void
 cplus_decl_attributes (tree *decl, tree attributes, int flags)
 {
   if (*decl == NULL_TREE || *decl == void_type_node
-      || *decl == error_mark_node)
+      || *decl == error_mark_node || attributes == error_mark_node)
     return;
 
   /* Add implicit "omp declare target" attribute if requested.  */
@@ -1664,7 +1704,7 @@ cplus_decl_attributes (tree *decl, tree attributes, int flags)
 
   cp_check_const_attributes (attributes);
 
-  if ((flag_openmp || flag_openmp_simd) && attributes != error_mark_node)
+  if (flag_openmp || flag_openmp_simd)
     {
       bool diagnosed = false;
       for (tree *pa = &attributes; *pa; )
@@ -5716,6 +5756,32 @@ decl_dependent_p (tree decl)
       && dependent_type_p (DECL_CONTEXT (decl)))
     return true;
   return false;
+}
+
+/* [basic.def.odr] A function is named [and therefore odr-used] by an
+   expression or conversion if it is the selected member of an overload set in
+   an overload resolution performed as part of forming that expression or
+   conversion, unless it is a pure virtual function and either the expression
+   is not an id-expression naming the function with an explicitly qualified
+   name or the expression forms a pointer to member.
+
+   Mostly, we call mark_used in places that actually do something with a
+   function, like build_over_call.  But in a few places we end up with a
+   non-overloaded FUNCTION_DECL that we aren't going to do any more with, like
+   convert_to_void.  resolve_nondeduced_context is called in those places,
+   but it's also called in too many other places.  */
+
+bool
+mark_single_function (tree expr, tsubst_flags_t complain)
+{
+  expr = maybe_undo_parenthesized_ref (expr);
+  expr = tree_strip_any_location_wrapper (expr);
+
+  if (is_overloaded_fn (expr) == 1
+      && !mark_used (expr, complain)
+      && (complain & tf_error))
+    return false;
+  return true;
 }
 
 /* Mark DECL (either a _DECL or a BASELINK) as "used" in the program.

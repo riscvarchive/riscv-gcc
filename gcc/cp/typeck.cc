@@ -1873,9 +1873,9 @@ compparms (const_tree parms1, const_tree parms2)
 }
 
 
-/* Process a sizeof or alignof expression where the operand is a
-   type. STD_ALIGNOF indicates whether an alignof has C++11 (minimum alignment)
-   or GNU (preferred alignment) semantics; it is ignored if op is
+/* Process a sizeof or alignof expression where the operand is a type.
+   STD_ALIGNOF indicates whether an alignof has C++11 (minimum alignment)
+   or GNU (preferred alignment) semantics; it is ignored if OP is
    SIZEOF_EXPR.  */
 
 tree
@@ -1898,6 +1898,13 @@ cxx_sizeof_or_alignof_type (location_t loc, tree type, enum tree_code op,
 	}
       else
 	return error_mark_node;
+    }
+  else if (VOID_TYPE_P (type) && std_alignof)
+    {
+      if (complain)
+	error_at (loc, "invalid application of %qs to a void type",
+		  OVL_OP_INFO (false, op)->name);
+      return error_mark_node;
     }
 
   bool dependent_p = dependent_type_p (type);
@@ -2132,11 +2139,13 @@ cxx_alignas_expr (tree e)
     /* [dcl.align]/3:
        
 	   When the alignment-specifier is of the form
-	   alignas(type-id ), it shall have the same effect as
-	   alignas(alignof(type-id )).  */
+	   alignas(type-id), it shall have the same effect as
+	   alignas(alignof(type-id)).  */
 
     return cxx_sizeof_or_alignof_type (input_location,
-				       e, ALIGNOF_EXPR, true, false);
+				       e, ALIGNOF_EXPR,
+				       /*std_alignof=*/true,
+				       /*complain=*/true);
   
   /* If we reach this point, it means the alignas expression if of
      the form "alignas(assignment-expression)", so we should follow
@@ -5382,6 +5391,7 @@ cp_build_binary_op (const op_location_t &location,
 	  doing_shift = true;
 	  if (TREE_CODE (const_op0) == INTEGER_CST
 	      && tree_int_cst_sgn (const_op0) < 0
+	      && !TYPE_OVERFLOW_WRAPS (type0)
 	      && (complain & tf_warning)
 	      && c_inhibit_evaluation_warnings == 0)
 	    warning_at (location, OPT_Wshift_negative_value,
@@ -6305,7 +6315,9 @@ build_x_shufflevector (location_t loc, vec<tree, va_gc> *args,
   if (processing_template_decl)
     {
       for (unsigned i = 0; i < args->length (); ++i)
-	if (type_dependent_expression_p ((*args)[i]))
+	if (i <= 1
+	    ? type_dependent_expression_p ((*args)[i])
+	    : instantiation_dependent_expression_p ((*args)[i]))
 	  {
 	    tree exp = build_min_nt_call_vec (NULL, args);
 	    CALL_EXPR_IFN (exp) = IFN_SHUFFLEVECTOR;
@@ -6854,6 +6866,12 @@ cp_build_addr_expr_1 (tree arg, bool strict_lvalue, tsubst_flags_t complain)
 	    return error_mark_node;
 	  }
 
+	/* Forming a pointer-to-member is a use of non-pure-virtual fns.  */
+	if (TREE_CODE (t) == FUNCTION_DECL
+	    && !DECL_PURE_VIRTUAL_P (t)
+	    && !mark_used (t, complain) && !(complain & tf_error))
+	  return error_mark_node;
+
 	type = build_ptrmem_type (context_for_name_lookup (t),
 				  TREE_TYPE (t));
 	t = make_ptrmem_cst (type, t);
@@ -6878,9 +6896,7 @@ cp_build_addr_expr_1 (tree arg, bool strict_lvalue, tsubst_flags_t complain)
      so we can just form an ADDR_EXPR with the correct type.  */
   if (processing_template_decl || TREE_CODE (arg) != COMPONENT_REF)
     {
-      tree stripped_arg = tree_strip_any_location_wrapper (arg);
-      if (TREE_CODE (stripped_arg) == FUNCTION_DECL
-	  && !mark_used (stripped_arg, complain) && !(complain & tf_error))
+      if (!mark_single_function (arg, complain))
 	return error_mark_node;
       val = build_address (arg);
       if (TREE_CODE (arg) == OFFSET_REF)

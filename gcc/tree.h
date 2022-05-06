@@ -787,6 +787,12 @@ extern void omp_clause_range_check_failed (const_tree, const char *, int,
 #define SWITCH_BREAK_LABEL_P(NODE) \
   (LABEL_DECL_CHECK (NODE)->base.protected_flag)
 
+/* Set on label that is known not to be jumped to, it can be only
+   reached by falling through from previous statements.
+   This is used to implement -Wimplicit-fallthrough.  */
+#define UNUSED_LABEL_P(NODE) \
+  (LABEL_DECL_CHECK (NODE)->base.default_def_flag)
+
 /* Nonzero means this expression is volatile in the C sense:
    its address should be of type `volatile WHATEVER *'.
    In other words, the declared item is volatile qualified.
@@ -1080,6 +1086,7 @@ extern void omp_clause_range_check_failed (const_tree, const char *, int,
 
 /* Define fields and accessors for some special-purpose tree nodes.  */
 
+/* As with STRING_CST, in C terms this is sizeof, not strlen.  */
 #define IDENTIFIER_LENGTH(NODE) \
   (IDENTIFIER_NODE_CHECK (NODE)->identifier.id.len)
 #define IDENTIFIER_POINTER(NODE) \
@@ -1698,6 +1705,11 @@ class auto_suppress_location_wrappers
    NOTE: this is different than OMP_CLAUSE_MAP_IMPLICIT.  */
 #define OMP_CLAUSE_MAP_RUNTIME_IMPLICIT_P(NODE) \
   (OMP_CLAUSE_SUBCODE_CHECK (NODE, OMP_CLAUSE_MAP)->base.deprecated_flag)
+
+/* Flag that 'OMP_CLAUSE_DECL (NODE)' is to be made addressable during OMP
+   lowering.  */
+#define OMP_CLAUSE_MAP_DECL_MAKE_ADDRESSABLE(NODE) \
+  (OMP_CLAUSE_SUBCODE_CHECK (NODE, OMP_CLAUSE_MAP)->base.addressable_flag)
 
 /* True on an OMP_CLAUSE_USE_DEVICE_PTR with an OpenACC 'if_present'
    clause.  */
@@ -5395,6 +5407,7 @@ extern bool real_minus_onep (const_tree);
 extern void init_ttree (void);
 extern void build_common_tree_nodes (bool);
 extern void build_common_builtin_nodes (void);
+extern void tree_cc_finalize (void);
 extern tree build_nonstandard_integer_type (unsigned HOST_WIDE_INT, int);
 extern tree build_nonstandard_boolean_type (unsigned HOST_WIDE_INT);
 extern tree build_range_type (tree, tree, tree);
@@ -6584,5 +6597,7 @@ extern unsigned fndecl_dealloc_argno (tree);
    if nonnull, set the second argument to the referenced enclosing
    object or pointer.  Otherwise return null.  */
 extern tree get_attr_nonstring_decl (tree, tree * = NULL);
+
+extern int get_target_clone_attr_len (tree);
 
 #endif  /* GCC_TREE_H  */

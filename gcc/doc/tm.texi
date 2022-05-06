@@ -736,7 +736,7 @@ If a target implements string objects then this hook should return
 @end deftypefn
 
 @deftypefn {C Target Hook} void TARGET_CHECK_STRING_OBJECT_FORMAT_ARG (tree @var{format_arg}, tree @var{args_list})
-If a target implements string objects then this hook should should
+If a target implements string objects then this hook should
 provide a facility to check the function arguments in @var{args_list}
 against the format specifiers in @var{format_arg} where the type of
 @var{format_arg} is one recognized as a valid string reference type.
@@ -2799,7 +2799,7 @@ intermediate registers or scratch registers.
 
 If copying a register @var{class} in @var{mode} to @var{x} requires an
 intermediate or scratch register, @code{SECONDARY_OUTPUT_RELOAD_CLASS}
-was supposed to be defined be defined to return the largest register
+was supposed to be defined to return the largest register
 class required.  If the
 requirements for input and output reloads were the same, the macro
 @code{SECONDARY_RELOAD_CLASS} should have been used instead of defining both
@@ -12330,6 +12330,13 @@ This target hook emits instructions to zero the subset of @var{selected_regs}
 that could conceivably contain values that are useful to an attacker.
 Return the set of registers that were actually cleared.
 
+For most targets, the returned set of registers is a subset of
+@var{selected_regs}, however, for some of the targets (for example MIPS),
+clearing some registers that are in the @var{selected_regs} requires
+clearing other call used registers that are not in the @var{selected_regs},
+under such situation, the returned set of registers must be a subset of all
+call used registers.
+
 The default implementation uses normal move instructions to zero
 all the registers in @var{selected_regs}.  Define this hook if the
 target has more efficient ways of zeroing certain registers,
@@ -12596,3 +12603,8 @@ counters are incremented using atomic operations.  Targets not supporting
 64-bit atomic operations may override the default value and request a 32-bit
 type.
 @end deftypefn
+
+@deftypevr {Target Hook} bool TARGET_HAVE_SHADOW_CALL_STACK
+This value is true if the target platform supports
+@option{-fsanitize=shadow-call-stack}.  The default value is false.
+@end deftypevr

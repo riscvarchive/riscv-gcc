@@ -1250,7 +1250,6 @@ extern enum omp_clause_default_kind c_omp_predetermined_sharing (tree);
 extern enum omp_clause_defaultmap_kind c_omp_predetermined_mapping (tree);
 extern tree c_omp_check_context_selector (location_t, tree);
 extern void c_omp_mark_declare_variant (location_t, tree, tree);
-extern const char *c_omp_map_clause_name (tree, bool);
 extern void c_omp_adjust_map_clauses (tree, bool);
 
 enum c_omp_directive_kind {
@@ -1513,8 +1512,10 @@ extern tree braced_lists_to_strings (tree, tree);
 namespace selftest {
   /* Declarations for specific families of tests within c-family,
      by source file, in alphabetical order.  */
+  extern void c_diagnostic_cc_tests (void);
   extern void c_format_cc_tests (void);
   extern void c_indentation_cc_tests (void);
+  extern void c_opt_problem_cc_tests (void);
   extern void c_pretty_print_cc_tests (void);
   extern void c_spellcheck_cc_tests (void);
 

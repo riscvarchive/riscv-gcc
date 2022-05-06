@@ -3512,7 +3512,7 @@ rs6000_linux64_override_options ()
 	{
 	  if (OPTION_SET_P (rs6000_current_cmodel)
 	      && rs6000_current_cmodel != CMODEL_SMALL)
-	    error ("%<-mcmodel incompatible with other toc options%>");
+	    error ("%<-mcmodel%> incompatible with other toc options");
 	  if (TARGET_MINIMAL_TOC)
 	    SET_CMODEL (CMODEL_SMALL);
 	  else if (TARGET_PCREL
@@ -4178,13 +4178,6 @@ rs6000_option_override_internal (bool global_init_p)
     ; /* The option value can be seen when cl_target_option_restore is called.  */
   else if (rs6000_long_double_type_size == 128)
     rs6000_long_double_type_size = FLOAT_PRECISION_TFmode;
-  else if (OPTION_SET_P (rs6000_ieeequad))
-    {
-      if (global_options.x_rs6000_ieeequad)
-	error ("%qs requires %qs", "-mabi=ieeelongdouble", "-mlong-double-128");
-      else
-	error ("%qs requires %qs", "-mabi=ibmlongdouble", "-mlong-double-128");
-    }
 
   /* Set -mabi=ieeelongdouble on some old targets.  In the future, power server
      systems will also set long double to be IEEE 128-bit.  AIX and Darwin
@@ -4194,13 +4187,13 @@ rs6000_option_override_internal (bool global_init_p)
   if (!OPTION_SET_P (rs6000_ieeequad))
     rs6000_ieeequad = TARGET_IEEEQUAD_DEFAULT;
 
-  else
+  else if (TARGET_LONG_DOUBLE_128)
     {
       if (global_options.x_rs6000_ieeequad
 	  && (!TARGET_POPCNTD || !TARGET_VSX))
 	error ("%qs requires full ISA 2.06 support", "-mabi=ieeelongdouble");
 
-      if (rs6000_ieeequad != TARGET_IEEEQUAD_DEFAULT && TARGET_LONG_DOUBLE_128)
+      if (rs6000_ieeequad != TARGET_IEEEQUAD_DEFAULT)
 	{
 	  /* Determine if the user can change the default long double type at
 	     compilation time.  You need GLIBC 2.32 or newer to be able to
@@ -4352,8 +4345,8 @@ rs6000_option_override_internal (bool global_init_p)
 	    rs6000_veclib_handler = rs6000_builtin_vectorized_libmass;
 	  else
 	    {
-	      error ("unknown vectorization library ABI type (%qs) for "
-		     "%qs switch", rs6000_veclibabi_name, "-mveclibabi=");
+	      error ("unknown vectorization library ABI type in "
+		     "%<-mveclibabi=%s%>", rs6000_veclibabi_name);
 	      ret = false;
 	    }
 	}
@@ -4445,30 +4438,6 @@ rs6000_option_override_internal (bool global_init_p)
   if (TARGET_POWER10
       && (rs6000_isa_flags_explicit & OPTION_MASK_P10_FUSION) == 0)
     rs6000_isa_flags |= OPTION_MASK_P10_FUSION;
-
-  if (TARGET_POWER10 &&
-      (rs6000_isa_flags_explicit & OPTION_MASK_P10_FUSION_LD_CMPI) == 0)
-    rs6000_isa_flags |= OPTION_MASK_P10_FUSION_LD_CMPI;
-
-  if (TARGET_POWER10
-      && (rs6000_isa_flags_explicit & OPTION_MASK_P10_FUSION_2LOGICAL) == 0)
-    rs6000_isa_flags |= OPTION_MASK_P10_FUSION_2LOGICAL;
-
-  if (TARGET_POWER10
-      && (rs6000_isa_flags_explicit & OPTION_MASK_P10_FUSION_LOGADD) == 0)
-    rs6000_isa_flags |= OPTION_MASK_P10_FUSION_LOGADD;
-
-  if (TARGET_POWER10
-      && (rs6000_isa_flags_explicit & OPTION_MASK_P10_FUSION_ADDLOG) == 0)
-    rs6000_isa_flags |= OPTION_MASK_P10_FUSION_ADDLOG;
-
-  if (TARGET_POWER10
-      && (rs6000_isa_flags_explicit & OPTION_MASK_P10_FUSION_2ADD) == 0)
-    rs6000_isa_flags |= OPTION_MASK_P10_FUSION_2ADD;
-
-  if (TARGET_POWER10
-      && (rs6000_isa_flags_explicit & OPTION_MASK_P10_FUSION_2STORE) == 0)
-    rs6000_isa_flags |= OPTION_MASK_P10_FUSION_2STORE;
 
   /* Turn off vector pair/mma options on non-power10 systems.  */
   else if (!TARGET_POWER10 && TARGET_MMA)
@@ -5236,7 +5205,7 @@ public:
   using vector_costs::vector_costs;
 
   unsigned int add_stmt_cost (int count, vect_cost_for_stmt kind,
-			      stmt_vec_info stmt_info, tree vectype,
+			      stmt_vec_info stmt_info, slp_tree, tree vectype,
 			      int misalign,
 			      vect_cost_model_location where) override;
   void finish_cost (const vector_costs *) override;
@@ -5452,8 +5421,9 @@ rs6000_cost_data::update_target_cost_per_stmt (vect_cost_for_stmt kind,
 
 unsigned
 rs6000_cost_data::add_stmt_cost (int count, vect_cost_for_stmt kind,
-				 stmt_vec_info stmt_info, tree vectype,
-				 int misalign, vect_cost_model_location where)
+				 stmt_vec_info stmt_info, slp_tree,
+				 tree vectype, int misalign,
+				 vect_cost_model_location where)
 {
   unsigned retval = 0;
 
@@ -5494,7 +5464,8 @@ rs6000_cost_data::adjust_vect_cost_per_loop (loop_vec_info loop_vinfo)
 	  /* Each length needs one shift to fill into bits 0-7.  */
 	  shift_cnt += num_vectors_m1 + 1;
 
-      add_stmt_cost (shift_cnt, scalar_stmt, NULL, NULL_TREE, 0, vect_body);
+      add_stmt_cost (shift_cnt, scalar_stmt, NULL, NULL,
+		     NULL_TREE, 0, vect_body);
     }
 }
 
@@ -5793,33 +5764,68 @@ const char *rs6000_machine;
 const char *
 rs6000_machine_from_flags (void)
 {
-  /* For some CPUs, the machine cannot be determined by ISA flags.  We have to
-     check them first.  */
-  switch (rs6000_cpu)
-    {
-    case PROCESSOR_PPC8540:
-    case PROCESSOR_PPC8548:
-      return "e500";
+  /* e300 and e500 */
+  if (rs6000_cpu == PROCESSOR_PPCE300C2 || rs6000_cpu == PROCESSOR_PPCE300C3)
+    return "e300";
+  if (rs6000_cpu == PROCESSOR_PPC8540 || rs6000_cpu == PROCESSOR_PPC8548)
+    return "e500";
+  if (rs6000_cpu == PROCESSOR_PPCE500MC)
+    return "e500mc";
+  if (rs6000_cpu == PROCESSOR_PPCE500MC64)
+    return "e500mc64";
+  if (rs6000_cpu == PROCESSOR_PPCE5500)
+    return "e5500";
+  if (rs6000_cpu == PROCESSOR_PPCE6500)
+    return "e6500";
 
-    case PROCESSOR_PPCE300C2:
-    case PROCESSOR_PPCE300C3:
-      return "e300";
+  /* 400 series */
+  if (rs6000_cpu == PROCESSOR_PPC403)
+    return "\"403\"";
+  if (rs6000_cpu == PROCESSOR_PPC405)
+    return "\"405\"";
+  if (rs6000_cpu == PROCESSOR_PPC440)
+    return "\"440\"";
+  if (rs6000_cpu == PROCESSOR_PPC476)
+    return "\"476\"";
 
-    case PROCESSOR_PPCE500MC:
-      return "e500mc";
+  /* A2 */
+  if (rs6000_cpu == PROCESSOR_PPCA2)
+    return "a2";
 
-    case PROCESSOR_PPCE500MC64:
-      return "e500mc64";
+  /* Cell BE */
+  if (rs6000_cpu == PROCESSOR_CELL)
+    return "cell";
 
-    case PROCESSOR_PPCE5500:
-      return "e5500";
+  /* Titan */
+  if (rs6000_cpu == PROCESSOR_TITAN)
+    return "titan";
 
-    case PROCESSOR_PPCE6500:
-      return "e6500";
+  /* 500 series and 800 series */
+  if (rs6000_cpu == PROCESSOR_MPCCORE)
+    return "\"821\"";
 
-    default:
-      break;
-    }
+#if 0
+  /* This (and ppc64 below) are disabled here (for now at least) because
+     PROCESSOR_POWERPC, PROCESSOR_POWERPC64, and PROCESSOR_COMMON
+     are #define'd as some of these.  Untangling that is a job for later.  */
+
+  /* 600 series and 700 series, "classic" */
+  if (rs6000_cpu == PROCESSOR_PPC601 || rs6000_cpu == PROCESSOR_PPC603
+      || rs6000_cpu == PROCESSOR_PPC604 || rs6000_cpu == PROCESSOR_PPC604e
+      || rs6000_cpu == PROCESSOR_PPC750)
+    return "ppc";
+#endif
+
+  /* Classic with AltiVec, "G4" */
+  if (rs6000_cpu == PROCESSOR_PPC7400 || rs6000_cpu == PROCESSOR_PPC7450)
+    return "\"7450\"";
+
+#if 0
+  /* The older 64-bit CPUs */
+  if (rs6000_cpu == PROCESSOR_PPC620 || rs6000_cpu == PROCESSOR_PPC630
+      || rs6000_cpu == PROCESSOR_RS64A)
+    return "ppc64";
+#endif
 
   HOST_WIDE_INT flags = rs6000_isa_flags;
 
@@ -9050,7 +9056,7 @@ rs6000_legitimize_address (rtx x, rtx oldx ATTRIBUTE_UNUSED,
       else
 	return force_reg (Pmode, x);
     }
-  if (SYMBOL_REF_P (x))
+  if (SYMBOL_REF_P (x) && !TARGET_MACHO)
     {
       enum tls_model model = SYMBOL_REF_TLS_MODEL (x);
       if (model != 0)
@@ -11017,6 +11023,12 @@ init_float128_ibm (machine_mode mode)
       set_conv_libfunc (trunc_optab, SDmode, mode, "__dpd_trunctfsd");
       set_conv_libfunc (trunc_optab, DDmode, mode, "__dpd_trunctfdd");
       set_conv_libfunc (sext_optab, TDmode, mode, "__dpd_extendtftd");
+
+      set_conv_libfunc (sfix_optab, DImode, mode, "__fixtfdi");
+      set_conv_libfunc (ufix_optab, DImode, mode, "__fixunstfdi");
+
+      set_conv_libfunc (sfloat_optab, mode, DImode, "__floatditf");
+      set_conv_libfunc (ufloat_optab, mode, DImode, "__floatunditf");
 
       if (TARGET_POWERPC64)
 	{
@@ -15855,11 +15867,30 @@ rs6000_maybe_emit_maxc_minc (rtx dest, rtx op, rtx true_cond, rtx false_cond)
   rtx op1 = XEXP (op, 1);
   machine_mode compare_mode = GET_MODE (op0);
   machine_mode result_mode = GET_MODE (dest);
-  bool max_p = false;
 
   if (result_mode != compare_mode)
     return false;
 
+  /* See the comments of this function, it simply expects GE/GT/LE/LT in
+     the checks, but for the reversible equivalent UNLT/UNLE/UNGT/UNGE,
+     we need to do the reversions first to make the following checks
+     support fewer cases, like:
+
+	(a UNLT b) ? op1 : op2 =>  (a >= b) ? op2 : op1;
+	(a UNLE b) ? op1 : op2 =>  (a >  b) ? op2 : op1;
+	(a UNGT b) ? op1 : op2 =>  (a <= b) ? op2 : op1;
+	(a UNGE b) ? op1 : op2 =>  (a <  b) ? op2 : op1;
+
+     By the way, if we see these UNLT/UNLE/UNGT/UNGE it's guaranteed
+     that we have 4-way condition codes (LT/GT/EQ/UN), so we do not
+     have to check for fast-math or the like.  */
+  if (code == UNGE || code == UNGT || code == UNLE || code == UNLT)
+    {
+      code = reverse_condition_maybe_unordered (code);
+      std::swap (true_cond, false_cond);
+    }
+
+  bool max_p;
   if (code == GE || code == GT)
     max_p = true;
   else if (code == LE || code == LT)
@@ -16207,6 +16238,12 @@ rs6000_emit_int_cmove (rtx dest, rtx op, rtx true_cond, rtx false_cond)
   bool signedp;
 
   if (mode != SImode && (!TARGET_POWERPC64 || mode != DImode))
+    return false;
+
+  /* PR104335: We now need to expect CC-mode "comparisons"
+     coming from ifcvt.  The following code expects proper
+     comparisons so better abort here.  */
+  if (GET_MODE_CLASS (GET_MODE (XEXP (op, 0))) == MODE_CC)
     return false;
 
   /* We still have to do the compare, because isel doesn't do a
@@ -19020,8 +19057,7 @@ power10_sched_reorder (rtx_insn **ready, int lastpos)
 
   /* Try to pair certain store insns to adjacent memory locations
      so that the hardware will fuse them to a single operation.  */
-  if (TARGET_P10_FUSION && TARGET_P10_FUSION_2STORE
-      && is_fusable_store (last_scheduled_insn, &mem1))
+  if (TARGET_P10_FUSION && is_fusable_store (last_scheduled_insn, &mem1))
     {
 
       /* A fusable store was just scheduled.  Scan the ready list for another
@@ -25642,10 +25678,19 @@ rs6000_sibcall_aix (rtx value, rtx func_desc, rtx tlsarg, rtx cookie)
   rtx r12 = NULL_RTX;
   rtx func_addr = func_desc;
 
-  gcc_assert (INTVAL (cookie) == 0);
-
   if (global_tlsarg)
     tlsarg = global_tlsarg;
+
+  /* Handle longcall attributes.  */
+  if (INTVAL (cookie) & CALL_LONG && SYMBOL_REF_P (func_desc))
+    {
+      /* PCREL can do a sibling call to a longcall function
+	 because we don't need to restore the TOC register.  */
+      gcc_assert (rs6000_pcrel_p ());
+      func_desc = rs6000_longcall_ref (func_desc, tlsarg);
+    }
+  else
+    gcc_assert (INTVAL (cookie) == 0);
 
   /* For ELFv2, r12 and CTR need to hold the function address
      for an indirect call.  */
@@ -27710,14 +27755,13 @@ emit_fusion_gpr_load (rtx target, rtx mem)
   return "";
 }
 
-
-#ifdef RS6000_GLIBC_ATOMIC_FENV
-/* Function declarations for rs6000_atomic_assign_expand_fenv.  */
-static tree atomic_hold_decl, atomic_clear_decl, atomic_update_decl;
-#endif
+/* This is not inside an  #ifdef RS6000_GLIBC_ATOMIC_FENV  because gengtype
+   ignores it then.  */
+static GTY(()) tree atomic_hold_decl;
+static GTY(()) tree atomic_clear_decl;
+static GTY(()) tree atomic_update_decl;
 
 /* Implement TARGET_ATOMIC_ASSIGN_EXPAND_FENV hook.  */
-
 static void
 rs6000_atomic_assign_expand_fenv (tree *hold, tree *clear, tree *update)
 {

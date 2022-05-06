@@ -609,7 +609,17 @@ set_cleanup_locs (tree stmts, location_t loc)
 {
   if (TREE_CODE (stmts) == CLEANUP_STMT)
     {
-      protected_set_expr_location (CLEANUP_EXPR (stmts), loc);
+      tree t = CLEANUP_EXPR (stmts);
+      protected_set_expr_location (t, loc);
+      /* Avoid locus differences for C++ cdtor calls depending on whether
+	 cdtor_returns_this: a conversion to void is added to discard the return
+	 value, and this conversion ends up carrying the location, and when it
+	 gets discarded, the location is lost.  So hold it in the call as
+	 well.  */
+      if (TREE_CODE (t) == NOP_EXPR
+	  && TREE_TYPE (t) == void_type_node
+	  && TREE_CODE (TREE_OPERAND (t, 0)) == CALL_EXPR)
+	protected_set_expr_location (TREE_OPERAND (t, 0), loc);
       set_cleanup_locs (CLEANUP_BODY (stmts), loc);
     }
   else if (TREE_CODE (stmts) == STATEMENT_LIST)
@@ -656,7 +666,8 @@ do_pushlevel (scope_kind sk)
 
 /* Queue a cleanup.  CLEANUP is an expression/statement to be executed
    when the current scope is exited.  EH_ONLY is true when this is not
-   meant to apply to normal control flow transfer.  */
+   meant to apply to normal control flow transfer.  DECL is the VAR_DECL
+   being cleaned up, if any, or null for temporaries or subobjects.  */
 
 void
 push_cleanup (tree decl, tree cleanup, bool eh_only)
@@ -2319,7 +2330,10 @@ finish_qualified_id_expr (tree qualifying_class,
   if (error_operand_p (expr))
     return error_mark_node;
 
-  if ((DECL_P (expr) || BASELINK_P (expr))
+  if (DECL_P (expr)
+      /* Functions are marked after overload resolution; avoid redundant
+	 warnings.  */
+      && TREE_CODE (expr) != FUNCTION_DECL
       && !mark_used (expr, complain))
     return error_mark_node;
 
@@ -2676,13 +2690,13 @@ finish_call_expr (tree fn, vec<tree, va_gc> **args, bool disallow_virtual,
 
   if (processing_template_decl)
     {
-      /* If FN is a local extern declaration or set thereof, look them up
-	 again at instantiation time.  */
+      /* If FN is a local extern declaration (or set thereof) in a template,
+	 look it up again at instantiation time.  */
       if (is_overloaded_fn (fn))
 	{
 	  tree ifn = get_first_fn (fn);
 	  if (TREE_CODE (ifn) == FUNCTION_DECL
-	      && DECL_LOCAL_DECL_P (ifn))
+	      && dependent_local_decl_p (ifn))
 	    orig_fn = DECL_NAME (ifn);
 	}
 
@@ -3147,7 +3161,13 @@ finish_compound_literal (tree type, tree compound_literal,
 	   && !AUTO_IS_DECLTYPE (type)
 	   && CONSTRUCTOR_NELTS (compound_literal) == 1)
     {
-      if (cxx_dialect < cxx23)
+      if (is_constrained_auto (type))
+	{
+	  if (complain & tf_error)
+	    error ("%<auto{x}%> cannot be constrained");
+	  return error_mark_node;
+	}
+      else if (cxx_dialect < cxx23)
 	pedwarn (input_location, OPT_Wc__23_extensions,
 		 "%<auto{x}%> only available with "
 		 "%<-std=c++2b%> or %<-std=gnu++2b%>");
@@ -3203,13 +3223,9 @@ finish_compound_literal (tree type, tree compound_literal,
     return error_mark_node;
   compound_literal = reshape_init (type, compound_literal, complain);
   if (SCALAR_TYPE_P (type)
-      && !BRACE_ENCLOSED_INITIALIZER_P (compound_literal))
-    {
-      tree t = instantiate_non_dependent_expr_sfinae (compound_literal,
-						      complain);
-      if (!check_narrowing (type, t, complain))
-	return error_mark_node;
-    }
+      && !BRACE_ENCLOSED_INITIALIZER_P (compound_literal)
+      && !check_narrowing (type, compound_literal, complain))
+    return error_mark_node;
   if (TREE_CODE (type) == ARRAY_TYPE
       && TYPE_DOMAIN (type) == NULL_TREE)
     {
@@ -3544,8 +3560,8 @@ finish_member_declaration (tree decl)
     }
 
   if (TREE_CODE (decl) == USING_DECL)
-    /* For now, ignore class-scope USING_DECLS, so that debugging
-       backends do not see them. */
+    /* Avoid debug info for class-scope USING_DECLS for now, we'll
+       call cp_emit_debug_info_for_using later. */
     DECL_IGNORED_P (decl) = 1;
 
   /* Check for bare parameter packs in the non-static data member
@@ -3573,6 +3589,7 @@ finish_member_declaration (tree decl)
   /* Enter the DECL into the scope of the class, if the class
      isn't a closure (whose fields are supposed to be unnamed).  */
   else if (CLASSTYPE_LAMBDA_EXPR (current_class_type)
+	   || maybe_push_used_methods (decl)
 	   || pushdecl_class_level (decl))
     add = true;
 
@@ -4202,9 +4219,6 @@ finish_id_expression_1 (tree id_expression,
 	  decl = (adjust_result_of_qualified_name_lookup
 		  (decl, scope, current_nonlambda_class_type()));
 
-	  if (TREE_CODE (decl) == FUNCTION_DECL)
-	    mark_used (decl);
-
 	  cp_warn_deprecated_use_scopes (scope);
 
 	  if (TYPE_P (scope))
@@ -4235,18 +4249,6 @@ finish_id_expression_1 (tree id_expression,
 	     concerned with (all member fns or all non-members).  */
 	  tree first_fn = get_first_fn (decl);
 	  first_fn = STRIP_TEMPLATE (first_fn);
-
-	  /* [basic.def.odr]: "A function whose name appears as a
-	     potentially-evaluated expression is odr-used if it is the unique
-	     lookup result".
-
-	     But only mark it if it's a complete postfix-expression; in a call,
-	     ADL might select a different function, and we'll call mark_used in
-	     build_over_call.  */
-	  if (done
-	      && !really_overloaded_fn (decl)
-	      && !mark_used (first_fn))
-	    return error_mark_node;
 
 	  if (!template_arg_p
 	      && (TREE_CODE (first_fn) == USING_DECL
@@ -5205,7 +5207,7 @@ handle_omp_array_sections_1 (tree c, tree t, vec<tree> &types,
 	{
 	  error_at (OMP_CLAUSE_LOCATION (c),
 		    "expected single pointer in %qs clause",
-		    c_omp_map_clause_name (c, ort == C_ORT_ACC));
+		    user_omp_clause_code_name (c, ort == C_ORT_ACC));
 	  return error_mark_node;
 	}
     }
@@ -6663,7 +6665,7 @@ cp_oacc_check_attachments (tree c)
       if (TREE_CODE (type) != POINTER_TYPE)
 	{
 	  error_at (OMP_CLAUSE_LOCATION (c), "expected pointer in %qs clause",
-		    c_omp_map_clause_name (c, true));
+		    user_omp_clause_code_name (c, true));
 	  return true;
 	}
     }
@@ -11233,6 +11235,8 @@ finish_decltype_type (tree expr, bool id_expression_or_member_access_p,
   /* decltype is an unevaluated context.  */
   cp_unevaluated u;
 
+  processing_template_decl_sentinel ptds (/*reset=*/false);
+
   /* Depending on the resolution of DR 1172, we may later need to distinguish
      instantiation-dependent but not type-dependent expressions so that, say,
      A<decltype(sizeof(T))>::U doesn't require 'typename'.  */
@@ -11248,14 +11252,20 @@ finish_decltype_type (tree expr, bool id_expression_or_member_access_p,
     }
   else if (processing_template_decl)
     {
-      expr = instantiate_non_dependent_expr_sfinae (expr, complain);
+      expr = instantiate_non_dependent_expr_sfinae (expr, complain|tf_decltype);
       if (expr == error_mark_node)
 	return error_mark_node;
+      /* Keep processing_template_decl cleared for the rest of the function
+	 (for sake of the call to lvalue_kind below, which handles templated
+	 and non-templated COND_EXPR differently).  */
+      processing_template_decl = 0;
     }
 
   /* The type denoted by decltype(e) is defined as follows:  */
 
   expr = resolve_nondeduced_context (expr, complain);
+  if (!mark_single_function (expr, complain))
+    return error_mark_node;
 
   if (invalid_nonstatic_memfn_p (input_location, expr, complain))
     return error_mark_node;
@@ -12199,7 +12209,7 @@ finish_unary_fold_expr (tree expr, int op, tree_code dir)
 
   /* Build the fold expression.  */
   tree code = build_int_cstu (integer_type_node, abs (op));
-  tree fold = build_min_nt_loc (UNKNOWN_LOCATION, dir, code, pack);
+  tree fold = build_min_nt_loc (input_location, dir, code, pack);
   FOLD_EXPR_MODIFY_P (fold) = (op < 0);
   TREE_TYPE (fold) = build_dependent_operator_type (NULL_TREE,
 						    FOLD_EXPR_OP (fold),
@@ -12228,7 +12238,7 @@ finish_binary_fold_expr (tree pack, tree init, int op, tree_code dir)
 {
   pack = make_pack_expansion (pack);
   tree code = build_int_cstu (integer_type_node, abs (op));
-  tree fold = build_min_nt_loc (UNKNOWN_LOCATION, dir, code, pack, init);
+  tree fold = build_min_nt_loc (input_location, dir, code, pack, init);
   FOLD_EXPR_MODIFY_P (fold) = (op < 0);
   TREE_TYPE (fold) = build_dependent_operator_type (NULL_TREE,
 						    FOLD_EXPR_OP (fold),

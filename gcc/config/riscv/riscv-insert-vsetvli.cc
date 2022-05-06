@@ -264,7 +264,7 @@ get_avl_source (rtx avl, rtx_insn *rtl)
         {
           resource_info resource{GET_MODE (avl), REGNO (avl)};
           def_lookup dl = crtl->ssa->find_def (resource, insn);
-          def_info *def = dl.prev_def ();
+          def_info *def = dl.prev_def (insn);
 
           if (!def)
             return NULL_RTX;
@@ -978,11 +978,7 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
             remove_insn (insn);
         }
       else
-        {
-          new_info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
-          new_info.set_avl_source (NULL_RTX);
-          new_info.set_vtype (INTVAL (recog_data.operand[0]));
-        }
+        new_info = vinfo::get_unknown ();
       return new_info;
     }
 
@@ -1193,7 +1189,7 @@ need_vsetvli_phi (vinfo &new_info, rtx_insn *rtl)
           insn_info *phi_insn = ebb->phi_insn ();
           phi_info *phi;
           def_lookup dl = crtl->ssa->find_def (resource, phi_insn);
-          def_info *set = dl.prev_def ();
+          def_info *set = dl.prev_def (phi_insn);
 
           if (!set)
             return true;
@@ -1294,7 +1290,7 @@ compare_avl_from_source (vinfo &new_info, rtx_insn *vsetvl, rtx_insn *rtl)
         {
           resource_info resource{GET_MODE (avl), REGNO (avl)};
           def_lookup dl = crtl->ssa->find_def (resource, insn);
-          def_info *def = dl.prev_def ();
+          def_info *def = dl.prev_def (insn);
 
           if (!def)
             return false;
@@ -1747,7 +1743,10 @@ riscv_vector_insert_vsetvli_after_reload (function *fn)
     FOR_BB_INSNS (bb, insn)
     {
       if (vsetvli_insn_p (insn))
-        curr_info = get_info_for_vsetvli (insn, curr_info);
+        {
+          curr_info = get_info_for_vsetvli (insn, curr_info);
+          continue;
+        }
 
       rtx clobber;
       if (recog_need_insert_vsetvli_after_reload_p (insn, &clobber))
@@ -1773,7 +1772,6 @@ riscv_vector_insert_vsetvli_after_reload (function *fn)
                   fprintf (dump_file, "insert vsetvl1 for insn %d\n", INSN_UID (insn));
                   print_rtl_single(dump_file, clobber);
                 }
-                
             }
 
           rtx pat;
@@ -1808,6 +1806,7 @@ riscv_vector_insert_vsetvli_after_reload (function *fn)
           vinfo new_info = compute_info_for_instr (insn, curr_info);
           if (changed_p && need_vsetvli (insn, new_info, curr_info))
             {
+              changed_p = false;
               curr_info = new_info;
               emit_vsetvl_insn (gen_rtx_REG (Pmode, X0_REGNUM),
                                 new_info.get_avl (),
@@ -1818,7 +1817,6 @@ riscv_vector_insert_vsetvli_after_reload (function *fn)
                   print_rtl_single(dump_file, insn);
                 }
             }
-          changed_p = false;
           replace_op (insn, const0_rtx, REPLACE_VL);
           continue;
         }

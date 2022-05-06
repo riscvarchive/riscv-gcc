@@ -2137,7 +2137,7 @@ typedef struct gfc_namespace
   /* Linked list of !$omp declare variant constructs.  */
   struct gfc_omp_declare_variant *omp_declare_variant;
 
-  /* A hash set for the the gfc expressions that have already
+  /* A hash set for the gfc expressions that have already
      been finalized in this namespace.  */
 
   gfc_was_finalized *was_finalized;
@@ -3897,6 +3897,9 @@ bool gfc_is_finalizable (gfc_symbol *, gfc_expr **);
 	 && CLASS_DATA (sym) \
 	 && CLASS_DATA (sym)->attr.dimension \
 	 && !CLASS_DATA (sym)->attr.class_pointer)
+#define IS_POINTER(sym) \
+	(sym->ts.type == BT_CLASS && sym->attr.class_ok && CLASS_DATA (sym) \
+	 ? CLASS_DATA (sym)->attr.class_pointer : sym->attr.pointer)
 
 /* frontend-passes.cc */
 

@@ -1,3 +1,308 @@
+2022-05-02  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	Backported from master:
+	2022-04-29  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	* gfortran.texi: Fix exchanged period and letter.
+
+2022-04-28  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	Backported from master:
+	2022-04-28  Thomas Koenig  <tkoenig@gcc.gnu.org>
+
+	* gfortran.texi: Mention r16_ieee and r16_ibm.
+	* invoke.texi: Likewise.
+
+2022-04-27  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/103662
+	PR fortran/105379
+	* array.cc (compare_bounds): Use bool as return type.
+	Support non-constant expressions.
+	(gfc_compare_array_spec): Update call to compare_bounds.
+
+2022-04-27  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/102043
+	PR fortran/105381
+	* trans-array.cc (non_negative_strides_array_p): Inline variable
+	orig_decl and merge nested if conditions.  Add condition to not
+	recurse if the next argument is the same as the current.
+
+2022-04-25  Jakub Jelinek  <jakub@redhat.com>
+	    Thomas Schwinge  <thomas@codesourcery.com>
+
+	PR fortran/104717
+	* trans-openmp.cc (gfc_trans_oacc_construct): Wrap construct body
+	in an extra BIND_EXPR.
+
+2022-04-24  Mikael Morin  <mikael@gcc.gnu.org>
+	    Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/103662
+	* interface.cc (gfc_compare_derived_types): Support comparing
+	unlimited polymorphic fake symbols.  Recursively compare class
+	descriptor types and virtual table types.
+	* resolve.cc (resolve_fl_derived): Add type to the types list
+	on unlimited polymorphic short-circuit return.
+
+2022-04-22  Mikael Morin  <mikael@gcc.gnu.org>
+	    Richard Biener  <rguenther@suse.de>
+
+	PR fortran/102043
+	* trans.h (gfc_build_array_ref): Add non_negative_offset
+	argument.
+	* trans.cc (gfc_build_array_ref): Ditto. Use pointer arithmetic
+	if non_negative_offset is false.
+	* trans-expr.cc (gfc_conv_substring): Set flag in the call to
+	gfc_build_array_ref.
+	* trans-array.cc (gfc_get_cfi_dim_item,
+	gfc_conv_descriptor_dimension): Same.
+	(build_array_ref): Decide on whether to set the flag and update
+	the call.
+	(gfc_conv_scalarized_array_ref): Same.  New argument tmp_array.
+	(gfc_conv_tmp_array_ref): Update call to
+	gfc_conv_scalarized_ref.
+	(non_negative_strides_array_p): New function.
+
+2022-04-22  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/102043
+	* trans-array.cc (gfc_conv_expr_descriptor): Use
+	gfc_conv_tmp_array_ref.
+
+2022-04-22  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/102043
+	* trans-io.cc: Add handling for the case where the array
+	is referenced using pointer arithmetic.
+
+2022-04-22  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/102043
+	* trans-expr.cc: Pre-evaluate src and dest to variables
+	before using them.
+
+2022-04-21  Fritz Reese  <foreese@gcc.gnu.org>
+
+	PR fortran/105310
+	* trans-expr.cc (gfc_conv_union_initializer): Pass vec* by reference.
+
+2022-04-13  Tobias Burnus  <tobias@codesourcery.com>
+
+	PR fortran/105242
+	* match.cc (match_exit_cycle): Handle missing OMP LOOP, DO and SIMD
+	directives in the EXIT/CYCLE diagnostic.
+
+2022-04-10  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/105184
+	* array.cc (match_subscript): Reject assumed size coarray
+	specification with missing lower bound.
+	* resolve.cc (resolve_allocate_expr): Fix logic for checking
+	allocate-coshape-spec in ALLOCATE statement.
+
+2022-04-05  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* trans-openmp.cc (gfc_split_omp_clauses): Fix mask for
+	EXEC_OMP_MASKED_TASKLOOP.
+
+2022-04-05  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/104210
+	* arith.cc (eval_intrinsic): Avoid NULL pointer dereference.
+	(gfc_zero_size_array): Likewise.
+
+2022-04-05  Harald Anlauf  <anlauf@gmx.de>
+	    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/105138
+	* intrinsic.cc (gfc_is_intrinsic): When a symbol refers to a
+	RECURSIVE procedure, it cannot be an INTRINSIC.
+
+2022-03-30  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/100892
+	* check.cc (gfc_check_associated): Avoid NULL pointer dereference.
+
+2022-03-29  Harald Anlauf  <anlauf@gmx.de>
+	    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/104571
+	* resolve.cc (resolve_elemental_actual): Avoid NULL pointer
+	dereference.
+
+2022-03-29  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/50549
+	* resolve.cc (resolve_structure_cons): Reject pointer assignments
+	of character with different lengths in structure constructor.
+
+2022-03-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/103691
+	* trans-array.cc (gfc_conv_array_initializer): If TYPE_MAX_VALUE is
+	smaller than TYPE_MIN_VALUE (i.e. empty array), ignore the
+	initializer; if TYPE_MIN_VALUE is equal to TYPE_MAX_VALUE, use just
+	the TYPE_MIN_VALUE as index instead of RANGE_EXPR.
+
+2022-03-23  Tobias Burnus  <tobias@codesourcery.com>
+
+	PR fortran/103560
+	* scanner.cc (add_path_to_list): Don't append '/' to the
+	save include path.
+	(open_included_file): Use '/' in concatenating path + file name.
+	* module.cc (gzopen_included_file_1): Likewise.
+
+2022-03-22  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/104999
+	* simplify.cc (gfc_simplify_cshift): Ensure temporary holding
+	source array stride is initialized.
+
+2022-03-19  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/104228
+	PR fortran/104570
+	* parse.cc (parse_associate): Use a new distinct gfc_charlen if the
+	copied type has one whose length is not known to be constant.
+	* resolve.cc (resolve_assoc_var): Reset charlen if it’s shared with
+	the associate target regardless of the expression type.
+	Don’t reinitialize charlen if it’s deferred.
+
+2022-03-18  Tobias Burnus  <tobias@codesourcery.com>
+
+	PR fortran/103039
+	* trans-openmp.cc (gfc_omp_clause_copy_ctor, gfc_omp_clause_dtor):
+	Only privatize pointer for associate names.
+
+2022-03-18  Tobias Burnus  <tobias@codesourcery.com>
+
+	PR fortran/103039
+	* openmp.cc (resolve_omp_clauses): Improve associate-name diagnostic
+	for select type/rank.
+
+2022-03-11  Tobias Burnus  <tobias@codesourcery.com>
+
+	* trans-openmp.cc (gfc_trans_omp_clauses, gfc_omp_finish_clause):
+	Obtain size for mapping only if allocatable array is allocated.
+
+2022-03-09  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/104849
+	* expr.cc (find_array_section): Avoid NULL pointer dereference on
+	invalid array section.
+
+2022-03-09  Tobias Burnus  <tobias@codesourcery.com>
+
+	* trans-intrinsic.cc (gfc_conv_intrinsic_sizeof): Fix CLASS handling.
+
+2022-03-08  Tobias Burnus  <tobias@codesourcery.com>
+
+	PR fortran/104126
+	* trans-expr.cc (gfc_conv_gfc_desc_to_cfi_desc): Handle NULL
+	without MOLD.
+
+2022-03-08  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/104811
+	* frontend-passes.cc (optimize_minmaxloc): Do not attempt
+	frontend-optimization of MINLOC/MAXLOC for character arrays, as
+	there is no suitable code yet for inline expansion.
+
+2022-03-07  Tobias Burnus  <tobias@codesourcery.com>
+
+	PR fortran/99585
+	PR fortran/104430
+	* trans-expr.cc (conv_parent_component_references): Fix comment;
+	simplify comparison.
+	(gfc_maybe_dereference_var): Avoid d referencing a nonpointer.
+
+2022-03-07  Tobias Burnus  <tobias@codesourcery.com>
+
+	* array.cc (gfc_ref_dimen_size): Fix comment typo.
+	* dump-parse-tree.cc (gfc_dump_c_prototypes): Likewise.
+	* frontend-passes.cc (cfe_code): Likewise.
+	* gfortran.texi: Likewise.
+	* resolve.cc (generate_component_assignments): Likewise.
+	* simplify.cc (gfc_simplify_this_image): Likewise.
+	* trans-expr.cc (trans_scalar_class_assign,
+	gfc_maybe_dereference_var): Likewise.
+	* intrinsic.texi: Remove word duplication.
+	* invoke.texi: Likewise.
+
+2022-03-07  Jakub Jelinek  <jakub@redhat.com>
+
+	* trans-expr.cc: Fix up duplicated word issue in a comment.
+	* gfortran.h: Likewise.
+	* scanner.cc: Likewise.
+
+2022-03-07  Martin Liska  <mliska@suse.cz>
+
+	* intrinsic.cc (gfc_is_intrinsic): Remove asterisk from error
+	message.
+
+2022-03-07  Martin Liska  <mliska@suse.cz>
+
+	PR translation/90148
+	* intrinsic.cc (gfc_is_intrinsic): Put
+	quote to a proper place.
+
+2022-03-03  Kwok Cheung Yeung  <kcy@codesourcery.com>
+
+	PR fortran/104131
+	* openmp.cc (gfc_match_omp_detach): Move check for type of event
+	handle to...
+	(resolve_omp_clauses) ...here.  Also check that the event handle is
+	not an array, or an array access or structure element access.
+
+2022-03-02  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/104573
+	* resolve.cc (resolve_structure_cons): Avoid NULL pointer
+	dereference when there is no valid component.
+
+2022-02-24  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/84519
+	* dump-parse-tree.cc (show_code_node): Dump QUIET specifier when
+	present.
+	* match.cc (gfc_match_stopcode): Implement parsing of F2018 QUIET
+	specifier.  F2018 stopcodes may have non-default integer kind.
+	* resolve.cc (gfc_resolve_code): Add checks for QUIET argument.
+	* trans-stmt.cc (gfc_trans_stop): Pass QUIET specifier to call of
+	library function.
+
+2022-02-22  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/104619
+	* resolve.cc (resolve_structure_cons): Skip shape check if shape
+	of constructor cannot be determined at compile time.
+
+2022-02-20  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/77693
+	* data.cc (gfc_assign_data_value): If a variable in a data
+	statement has the POINTER attribute, check for allowed initial
+	data target that is compatible with pointer assignment.
+	* gfortran.h (IS_POINTER): New macro.
+
+2022-02-15  Tobias Burnus  <tobias@codesourcery.com>
+
+	* trans-openmp.cc (gfc_trans_omp_depobj): Fix to alloc/ptr dummy
+	and for c_ptr.
+
+2022-02-15  Tobias Burnus  <tobias@codesourcery.com>
+
+	* trans-openmp.cc (gfc_trans_omp_clauses, gfc_trans_omp_depobj):
+	Depend on the proper addr, for ptr/alloc depend on pointee.
+
+2022-02-14  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/104211
+	* expr.cc (find_array_section): Replace assertion by error
+	recovery when encountering bad array constructor.
+
 2022-02-13  Mikael Morin  <mikael@gcc.gnu.org>
 
 	PR fortran/104228

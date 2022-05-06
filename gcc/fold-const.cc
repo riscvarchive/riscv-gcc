@@ -2384,7 +2384,7 @@ build_zero_vector (tree type)
 bool
 fold_convertible_p (const_tree type, const_tree arg)
 {
-  tree orig = TREE_TYPE (arg);
+  const_tree orig = TREE_TYPE (arg);
 
   if (type == orig)
     return true;
@@ -2416,7 +2416,7 @@ fold_convertible_p (const_tree type, const_tree arg)
       return (VECTOR_TYPE_P (orig)
 	      && known_eq (TYPE_VECTOR_SUBPARTS (type),
 			   TYPE_VECTOR_SUBPARTS (orig))
-	      && fold_convertible_p (TREE_TYPE (type), TREE_TYPE (orig)));
+	      && tree_int_cst_equal (TYPE_SIZE (type), TYPE_SIZE (orig)));
 
     default:
       return false;
@@ -3357,8 +3357,11 @@ operand_compare::operand_equal_p (const_tree arg0, const_tree arg1,
 		    tree field0 = TREE_OPERAND (arg0, 1);
 		    tree field1 = TREE_OPERAND (arg1, 1);
 
-		    if (!operand_equal_p (DECL_FIELD_OFFSET (field0),
-					  DECL_FIELD_OFFSET (field1), flags)
+		    /* Non-FIELD_DECL operands can appear in C++ templates.  */
+		    if (TREE_CODE (field0) != FIELD_DECL
+			|| TREE_CODE (field1) != FIELD_DECL
+			|| !operand_equal_p (DECL_FIELD_OFFSET (field0),
+					     DECL_FIELD_OFFSET (field1), flags)
 			|| !operand_equal_p (DECL_FIELD_BIT_OFFSET (field0),
 					     DECL_FIELD_BIT_OFFSET (field1),
 					     flags))
@@ -5208,7 +5211,7 @@ make_range_step (location_t loc, enum tree_code code, tree arg0, tree arg1,
 	n_high = fold_convert_loc (loc, arg0_type, n_high);
 
       /* If we're converting arg0 from an unsigned type, to exp,
-	 a signed type,  we will be doing the comparison as unsigned.
+	 a signed type, we will be doing the comparison as unsigned.
 	 The tests above have already verified that LOW and HIGH
 	 are both positive.
 
@@ -5267,6 +5270,32 @@ make_range_step (location_t loc, enum tree_code code, tree arg0, tree arg1,
 		return NULL_TREE;
 
 	      in_p = (in_p != n_in_p);
+	    }
+	}
+
+      /* Otherwise, if we are converting arg0 from signed type, to exp,
+	 an unsigned type, we will do the comparison as signed.  If
+	 high is non-NULL, we punt above if it doesn't fit in the signed
+	 type, so if we get through here, +[-, high] or +[low, high] are
+	 equivalent to +[-, n_high] or +[n_low, n_high].  Similarly,
+	 +[-, -] or -[-, -] are equivalent too.  But if low is specified and
+	 high is not, the +[low, -] range is equivalent to union of
+	 +[n_low, -] and +[-, -1] ranges, so +[low, -] is equivalent to
+	 -[0, n_low-1] and similarly -[low, -] to +[0, n_low-1], except for
+	 low being 0, which should be treated as [-, -].  */
+      else if (TYPE_UNSIGNED (exp_type)
+	       && !TYPE_UNSIGNED (arg0_type)
+	       && low
+	       && !high)
+	{
+	  if (integer_zerop (low))
+	    n_low = NULL_TREE;
+	  else
+	    {
+	      n_high = fold_build2_loc (loc, PLUS_EXPR, arg0_type,
+					n_low, build_int_cst (arg0_type, -1));
+	      n_low = build_zero_cst (arg0_type);
+	      in_p = !in_p;
 	    }
 	}
 
@@ -8643,7 +8672,7 @@ native_interpret_fixed (tree type, const unsigned char *ptr, int len)
    the buffer PTR of length LEN as a REAL_CST of type TYPE.
    If the buffer cannot be interpreted, return NULL_TREE.  */
 
-static tree
+tree
 native_interpret_real (tree type, const unsigned char *ptr, int len)
 {
   scalar_float_mode mode = SCALAR_FLOAT_TYPE_MODE (type);
@@ -8694,19 +8723,7 @@ native_interpret_real (tree type, const unsigned char *ptr, int len)
     }
 
   real_from_target (&r, tmp, mode);
-  tree ret = build_real (type, r);
-  if (MODE_COMPOSITE_P (mode))
-    {
-      /* For floating point values in composite modes, punt if this folding
-	 doesn't preserve bit representation.  As the mode doesn't have fixed
-	 precision while GCC pretends it does, there could be valid values that
-	 GCC can't really represent accurately.  See PR95450.  */
-      unsigned char buf[24];
-      if (native_encode_expr (ret, buf, total_bytes, 0) != total_bytes
-	  || memcmp (ptr, buf, total_bytes) != 0)
-	ret = NULL_TREE;
-    }
-  return ret;
+  return build_real (type, r);
 }
 
 
@@ -8824,7 +8841,23 @@ native_interpret_expr (tree type, const unsigned char *ptr, int len)
       return native_interpret_int (type, ptr, len);
 
     case REAL_TYPE:
-      return native_interpret_real (type, ptr, len);
+      if (tree ret = native_interpret_real (type, ptr, len))
+	{
+	  /* For floating point values in composite modes, punt if this
+	     folding doesn't preserve bit representation.  As the mode doesn't
+	     have fixed precision while GCC pretends it does, there could be
+	     valid values that GCC can't really represent accurately.
+	     See PR95450.  Even for other modes, e.g. x86 XFmode can have some
+	     bit combinationations which GCC doesn't preserve.  */
+	  unsigned char buf[24];
+	  scalar_float_mode mode = SCALAR_FLOAT_TYPE_MODE (type);
+	  int total_bytes = GET_MODE_SIZE (mode);
+	  if (native_encode_expr (ret, buf, total_bytes, 0) != total_bytes
+	      || memcmp (ptr, buf, total_bytes) != 0)
+	    return NULL_TREE;
+	  return ret;
+	}
+      return NULL_TREE;
 
     case FIXED_POINT_TYPE:
       return native_interpret_fixed (type, ptr, len);
@@ -14208,11 +14241,7 @@ multiple_of_p (tree type, const_tree top, const_tree bottom, bool nowrap)
 	      && multiple_of_p (type, TREE_OPERAND (top, 2), bottom, nowrap));
 
     case INTEGER_CST:
-      if (TREE_CODE (bottom) != INTEGER_CST
-	  || integer_zerop (bottom)
-	  || (TYPE_UNSIGNED (type)
-	      && (tree_int_cst_sgn (top) < 0
-		  || tree_int_cst_sgn (bottom) < 0)))
+      if (TREE_CODE (bottom) != INTEGER_CST || integer_zerop (bottom))
 	return 0;
       return wi::multiple_of_p (wi::to_widest (top), wi::to_widest (bottom),
 				SIGNED);
@@ -16790,6 +16819,26 @@ address_compare (tree_code code, tree type, tree op0, tree op1,
     return 0;
 
   return equal;
+}
+
+/* Return the single non-zero element of a CONSTRUCTOR or NULL_TREE.  */
+tree
+ctor_single_nonzero_element (const_tree t)
+{
+  unsigned HOST_WIDE_INT idx;
+  constructor_elt *ce;
+  tree elt = NULL_TREE;
+
+  if (TREE_CODE (t) != CONSTRUCTOR)
+    return NULL_TREE;
+  for (idx = 0; vec_safe_iterate (CONSTRUCTOR_ELTS (t), idx, &ce); idx++)
+    if (!integer_zerop (ce->value) && !real_zerop (ce->value))
+      {
+	if (elt)
+	  return NULL_TREE;
+	elt = ce->value;
+      }
+  return elt;
 }
 
 #if CHECKING_P

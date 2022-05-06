@@ -959,7 +959,7 @@ void access_ref::add_offset (const offset_int &min, const offset_int &max)
 	 (which may be greater than MAX_OBJECT_SIZE).
 	 The lower bound is either the sum of the current offset and
 	 MIN when abs(MAX) is greater than the former, or zero otherwise.
-	 Zero because then then inverted range includes the negative of
+	 Zero because then the inverted range includes the negative of
 	 the lower bound.  */
       offset_int maxoff = wi::to_offset (TYPE_MAX_VALUE (ptrdiff_type_node));
       offrng[1] = maxoff;
@@ -2243,7 +2243,7 @@ compute_objsize_r (tree ptr, gimple *stmt, bool addr, int ostype,
       }
 
     case ARRAY_REF:
-	return handle_array_ref (ptr, stmt, addr, ostype, pref, snlim, qry);
+      return handle_array_ref (ptr, stmt, addr, ostype, pref, snlim, qry);
 
     case COMPONENT_REF:
       return handle_component_ref (ptr, stmt, addr, ostype, pref, snlim, qry);
@@ -2264,12 +2264,14 @@ compute_objsize_r (tree ptr, gimple *stmt, bool addr, int ostype,
       }
 
     case INTEGER_CST:
-      /* Pointer constants other than null are most likely the result
-	 of erroneous null pointer addition/subtraction.  Unless zero
-	 is a valid address set size to zero.  For null pointers, set
-	 size to the maximum for now since those may be the result of
-	 jump threading.  */
-      if (integer_zerop (ptr))
+      /* Pointer constants other than null smaller than param_min_pagesize
+	 might be the result of erroneous null pointer addition/subtraction.
+	 Unless zero is a valid address set size to zero.  For null pointers,
+	 set size to the maximum for now since those may be the result of
+	 jump threading.  Similarly, for values >= param_min_pagesize in
+	 order to support (type *) 0x7cdeab00.  */
+      if (integer_zerop (ptr)
+	  || wi::to_widest (ptr) >= param_min_pagesize)
 	pref->set_max_size_range ();
       else if (POINTER_TYPE_P (TREE_TYPE (ptr)))
 	{
@@ -2297,9 +2299,10 @@ compute_objsize_r (tree ptr, gimple *stmt, bool addr, int ostype,
       if (!compute_objsize_r (ref, stmt, addr, ostype, pref, snlim, qry))
 	return false;
 
-      /* Clear DEREF since the offset is being applied to the target
-	 of the dereference.  */
-      pref->deref = 0;
+      /* The below only makes sense if the offset is being applied to the
+	 address of the object.  */
+      if (pref->deref != -1)
+	return false;
 
       offset_int orng[2];
       tree off = pref->eval (TREE_OPERAND (ptr, 1));

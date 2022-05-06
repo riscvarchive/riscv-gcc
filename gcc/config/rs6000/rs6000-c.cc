@@ -584,6 +584,10 @@ rs6000_target_modify_macros (bool define_p, HOST_WIDE_INT flags,
 	rs6000_define_or_undefine_macro (true, "__float128=__ieee128");
       else
 	rs6000_define_or_undefine_macro (false, "__float128");
+      if (ieee128_float_type_node && define_p)
+	rs6000_define_or_undefine_macro (true, "__SIZEOF_FLOAT128__=16");
+      else
+	rs6000_define_or_undefine_macro (false, "__SIZEOF_FLOAT128__");
     }
   /* OPTION_MASK_FLOAT128_HARDWARE can be turned on if -mcpu=power9 is used or
      via the target attribute/pragma.  */
@@ -624,6 +628,10 @@ rs6000_cpu_cpp_builtins (cpp_reader *pfile)
     builtin_define ("__RSQRTEF__");
   if (TARGET_FLOAT128_TYPE)
     builtin_define ("__FLOAT128_TYPE__");
+  if (ibm128_float_type_node)
+    builtin_define ("__SIZEOF_IBM128__=16");
+  if (ieee128_float_type_node)
+    builtin_define ("__SIZEOF_IEEE128__=16");
 #ifdef TARGET_LIBC_PROVIDES_HWCAP_IN_TCB
   builtin_define ("__BUILTIN_CPU_SUPPORTS__");
 #endif
@@ -1678,6 +1686,10 @@ find_instance (bool *unsupported_builtin, ovlddata **instance,
 
   ovlddata *inst = *instance;
   gcc_assert (inst != NULL);
+  /* It is possible for an instance to require a data type that isn't
+     defined on this target, in which case inst->fntype will be NULL.  */
+  if (!inst->fntype)
+    return error_mark_node;
   tree fntype = rs6000_builtin_info[inst->bifid].fntype;
   tree parmtype0 = TREE_VALUE (TYPE_ARG_TYPES (fntype));
   tree parmtype1 = TREE_VALUE (TREE_CHAIN (TYPE_ARG_TYPES (fntype)));
@@ -1780,8 +1792,9 @@ altivec_resolve_overloaded_builtin (location_t loc, tree fndecl,
 	{
 	  if (TYPE_READONLY (TREE_TYPE (type))
 	      && !TYPE_READONLY (TREE_TYPE (decl_type)))
-	    warning (0, "passing argument %d of %qE discards const qualifier "
-		     "from pointer target type", n + 1, fndecl);
+	    warning (0, "passing argument %d of %qE discards %qs "
+		     "qualifier from pointer target type", n + 1, fndecl,
+		     "const");
 	  type = build_qualified_type (TREE_TYPE (type), 0);
 	  type = build_pointer_type (type);
 	  arg = fold_convert (type, arg);

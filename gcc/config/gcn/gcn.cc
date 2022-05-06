@@ -4460,7 +4460,7 @@ gcn_expand_reduc_scalar (machine_mode mode, rtx src, int unspec)
      pair of lanes, then on every pair of results from the previous
      iteration (thereby effectively reducing every 4 lanes) and so on until
      all lanes are reduced.  */
-  rtx in, out = src;
+  rtx in, out = force_reg (mode, src);
   for (int i = 0, shift = 1; i < 6; i++, shift <<= 1)
     {
       rtx shift_val = gen_rtx_CONST_INT (VOIDmode, shift);
@@ -5588,8 +5588,9 @@ gcn_print_lds_decl (FILE *f, tree var)
       fprintf (f, "%u", gang_private_hwm);
       gang_private_hwm += size;
       if (gang_private_hwm > gang_private_size_opt)
-	error ("gang-private data-share memory exhausted (increase with "
-	       "%<-mgang-private-size=<number>%>)");
+	error ("%d bytes of gang-private data-share memory exhausted"
+	       " (increase with %<-mgang-private-size=%d%>, for example)",
+	       gang_private_size_opt, gang_private_hwm);
     }
 }
 
