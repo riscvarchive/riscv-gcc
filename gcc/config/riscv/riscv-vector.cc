@@ -3616,51 +3616,52 @@ riscv_vector_preferred_simd_mode (scalar_mode mode, unsigned vf)
   switch (mode)
     {
     case E_QImode:
-      return vf == 1 ? VNx16QImode
-          : vf == 2 ? VNx32QImode
-          : vf == 4 ? VNx64QImode
-          : VNx128QImode;
+      return vf == 1   ? VNx16QImode
+             : vf == 2 ? VNx32QImode
+             : vf == 4 ? VNx64QImode
+                       : VNx128QImode;
       break;
     case E_HImode:
-      return vf == 1 ? VNx8HImode
-          : vf == 2 ? VNx16HImode
-          : vf == 4 ? VNx32HImode
-          : VNx64HImode;
+      return vf == 1   ? VNx8HImode
+             : vf == 2 ? VNx16HImode
+             : vf == 4 ? VNx32HImode
+                       : VNx64HImode;
       break;
     case E_SImode:
-      return vf == 1 ? VNx4SImode
-          : vf == 2 ? VNx8SImode
-          : vf == 4 ? VNx16SImode
-          : VNx32SImode;
+      return vf == 1   ? VNx4SImode
+             : vf == 2 ? VNx8SImode
+             : vf == 4 ? VNx16SImode
+                       : VNx32SImode;
       break;
     case E_DImode:
-      if (riscv_vector_elen_flags != MASK_VECTOR_ELEN_32 
-        && riscv_vector_elen_flags != MASK_VECTOR_ELEN_FP_32)
-      return vf == 1 ? VNx2DImode
-          : vf == 2 ? VNx4DImode
-          : vf == 4 ? VNx8DImode
-          : VNx16DImode;
+      if (riscv_vector_elen_flags != MASK_VECTOR_ELEN_32 &&
+          riscv_vector_elen_flags != MASK_VECTOR_ELEN_FP_32)
+        return vf == 1   ? VNx2DImode
+               : vf == 2 ? VNx4DImode
+               : vf == 4 ? VNx8DImode
+                         : VNx16DImode;
       break;
     case E_HFmode:
       if (TARGET_FP16)
-        return vf == 1 ? VNx8HFmode
-          : vf == 2 ? VNx16HFmode
-          : vf == 4 ? VNx32HFmode
-          : VNx64HFmode;
+        return vf == 1   ? VNx8HFmode
+               : vf == 2 ? VNx16HFmode
+               : vf == 4 ? VNx32HFmode
+                         : VNx64HFmode;
       break;
     case E_SFmode:
-      if (TARGET_HARD_FLOAT)
-        return vf == 1 ? VNx4SFmode
-          : vf == 2 ? VNx8SFmode
-          : vf == 4 ? VNx16SFmode
-          : VNx32SFmode;
+      if (TARGET_HARD_FLOAT && riscv_vector_elen_flags != MASK_VECTOR_ELEN_32 &&
+          riscv_vector_elen_flags != MASK_VECTOR_ELEN_64)
+        return vf == 1   ? VNx4SFmode
+               : vf == 2 ? VNx8SFmode
+               : vf == 4 ? VNx16SFmode
+                         : VNx32SFmode;
       break;
     case E_DFmode:
-      if (TARGET_DOUBLE_FLOAT)
-        return vf == 1 ? VNx2DFmode
-          : vf == 2 ? VNx4DFmode
-          : vf == 4 ? VNx8DFmode
-          : VNx16DFmode;
+      if (TARGET_DOUBLE_FLOAT && TARGET_VECTOR_ELEN_FP_64)
+        return vf == 1   ? VNx2DFmode
+               : vf == 2 ? VNx4DFmode
+               : vf == 4 ? VNx8DFmode
+                         : VNx16DFmode;
       break;
     default:
       break;
