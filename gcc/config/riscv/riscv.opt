@@ -78,6 +78,9 @@ EnumValue
 Enum(riscv_vector_bits) String(scalable) Value(RVV_SCALABLE)
 
 EnumValue
+Enum(riscv_vector_bits) String(64) Value(RVV_64)
+
+EnumValue
 Enum(riscv_vector_bits) String(128) Value(RVV_128)
 
 EnumValue

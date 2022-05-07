@@ -72,6 +72,7 @@ enum riscv_vector_bits_enum
 {
   RVV_SCALABLE,
   RVV_NOT_IMPLEMENTED = RVV_SCALABLE,
+  RVV_64 = 64,
   RVV_128 = 128,
   RVV_256 = 256,
   RVV_512 = 512,
