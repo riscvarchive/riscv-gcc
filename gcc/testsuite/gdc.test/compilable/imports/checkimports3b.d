@@ -1,1 +1,0 @@
-private void foo(int) {}

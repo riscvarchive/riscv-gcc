@@ -1,3 +1,0 @@
-$root .
-module:import partitions/module:import.mod
-module module.mod
