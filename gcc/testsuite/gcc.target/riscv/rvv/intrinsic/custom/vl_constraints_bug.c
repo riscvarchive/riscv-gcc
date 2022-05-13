@@ -51,6 +51,400 @@ test_vsm_v (vbool64_t mask, uint8_t *base)
 }
 
 vint16m1_t 
+test_vlse16_v (vbool16_t mask, int16_t *base)
+{
+  start_clobber();
+
+  vint16m1_t result;
+  result = vlse16_v_i16m1_tama(mask, base, 9, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+void 
+test_vsse16_v (vbool16_t mask, int16_t *base, vint16m1_t op1)
+{
+  start_clobber();
+
+  vsse16_v_i16m1_m(mask, base, 9, op1, 32);
+
+  end_clobber();
+}
+
+vint8mf8_t 
+test_vluxei8_v_mf8 (vbool64_t mask, vuint8mf8_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8mf8_t result;
+  result = vluxei8_v_i8mf8_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8mf4_t 
+test_vluxei8_v_mf4 (vbool32_t mask, vuint8mf4_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8mf4_t result;
+  result = vluxei8_v_i8mf4_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8mf2_t 
+test_vluxei8_v_mf2 (vbool16_t mask, vuint8mf2_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8mf2_t result;
+  result = vluxei8_v_i8mf2_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8m1_t 
+test_vluxei8_v_m1 (vbool8_t mask, vuint8m1_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8m1_t result;
+  result = vluxei8_v_i8m1_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8m2_t 
+test_vluxei8_v_m2 (vbool4_t mask, vuint8m2_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8m2_t result;
+  result = vluxei8_v_i8m2_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8m4_t 
+test_vluxei8_v_m4 (vbool2_t mask, vuint8m4_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8m4_t result;
+  result = vluxei8_v_i8m4_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8m8_t 
+test_vluxei8_v_m8 (vbool1_t mask, vuint8m8_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8m8_t result;
+  result = vluxei8_v_i8m8_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+void 
+test_vsuxei8_v_mf8 (vbool64_t mask, vuint8mf8_t index, vint8mf8_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxei8_v_i8mf8_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxei8_v_mf4 (vbool32_t mask, vuint8mf4_t index, vint8mf4_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxei8_v_i8mf4_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxei8_v_mf2 (vbool16_t mask, vuint8mf2_t index, vint8mf2_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxei8_v_i8mf2_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxei8_v_m1 (vbool8_t mask, vuint8m1_t index, vint8m1_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxei8_v_i8m1_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxei8_v_m2 (vbool4_t mask, vuint8m2_t index, vint8m2_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxei8_v_i8m2_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxei8_v_m4 (vbool2_t mask, vuint8m4_t index, vint8m4_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxei8_v_i8m4_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxei8_v_m8 (vbool1_t mask, vuint8m8_t index, vint8m8_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxei8_v_i8m8_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+vint16m1_t 
+test_vle16ff_v (vbool16_t mask, int16_t *base, size_t *new_vl)
+{
+  start_clobber();
+
+  vint16m1_t result;
+  result = vle16ff_v_i16m1_tama(mask, base, new_vl, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint16m1x4_t
+test_vlseg4e16_v (vbool16_t mask, int16_t *base)
+{
+  start_clobber();
+
+  vint16m1x4_t result;
+  result = vlseg4e16_v_i16m1x4_tama(mask, base, 32);
+
+  end_clobber();
+  
+  return result;
+}
+
+void
+test_vsseg4e16_v (vbool16_t mask, int16_t *base, vint16m1x4_t val)
+{
+  start_clobber();
+
+  vsseg4e16_v_i16m1x4_m(mask, base, val, 32);
+
+  end_clobber();
+}
+
+vint16m1x4_t
+test_vlseg4e16ff_v (vbool16_t mask, int16_t *base, size_t *new_vl)
+{
+  start_clobber();
+
+  vint16m1x4_t result;
+  result = vlseg4e16ff_v_i16m1x4_tama(mask, base, new_vl, 32);
+
+  end_clobber();
+  
+  return result;
+}
+
+vint16m1x4_t
+test_vlsseg4e16_v (vbool16_t mask, int16_t *base)
+{
+  start_clobber();
+
+  vint16m1x4_t result;
+  result = vlsseg4e16_v_i16m1x4_tama(mask, base, 9, 32);
+
+  end_clobber();
+  
+  return result;
+}
+
+void
+test_vssseg4e16_v (vbool16_t mask, int16_t *base, vint16m1x4_t val)
+{
+  start_clobber();
+
+  vssseg4e16_v_i16m1x4_m(mask, base, 9, val, 32);
+
+  end_clobber();
+}
+
+vint8mf8x4_t 
+test_vluxseg4ei8_v_mf8 (vbool64_t mask, vuint8mf8_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8mf8x4_t result;
+  result = vluxseg4ei8_v_i8mf8x4_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8mf4x4_t 
+test_vluxseg4ei8_v_mf4 (vbool32_t mask, vuint8mf4_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8mf4x4_t result;
+  result = vluxseg4ei8_v_i8mf4x4_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8mf2x4_t 
+test_vluxseg4ei8_v_mf2 (vbool16_t mask, vuint8mf2_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8mf2x4_t result;
+  result = vluxseg4ei8_v_i8mf2x4_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8m1x4_t 
+test_vluxseg4ei8_v_m1 (vbool8_t mask, vuint8m1_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8m1x4_t result;
+  result = vluxseg4ei8_v_i8m1x4_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8m2x4_t 
+test_vluxseg4ei8_v_m2 (vbool4_t mask, vuint8m2_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8m2x4_t result;
+  result = vluxseg4ei8_v_i8m2x4_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+vint8m4x2_t 
+test_vluxseg4ei8_v_m4 (vbool2_t mask, vuint8m4_t index, int8_t *base)
+{
+  start_clobber();
+
+  vint8m4x2_t result;
+  result = vluxseg2ei8_v_i8m4x2_tama(mask, base, index, 32);
+
+  end_clobber();
+
+  return result;
+}
+
+void 
+test_vsuxseg4ei8_v_mf8 (vbool64_t mask, vuint8mf8_t index, vint8mf8x4_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxseg4ei8_v_i8mf8x4_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxseg4ei8_v_mf4 (vbool32_t mask, vuint8mf4_t index, vint8mf4x4_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxseg4ei8_v_i8mf4x4_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxseg4ei8_v_mf2 (vbool16_t mask, vuint8mf2_t index, vint8mf2x4_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxseg4ei8_v_i8mf2x4_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxseg4ei8_v_m1 (vbool8_t mask, vuint8m1_t index, vint8m1x4_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxseg4ei8_v_i8m1x4_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxseg4ei8_v_m2 (vbool4_t mask, vuint8m2_t index, vint8m2x4_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxseg4ei8_v_i8m2x4_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+void 
+test_vsuxseg4ei8_v_m4 (vbool2_t mask, vuint8m4_t index, vint8m4x2_t val, int8_t *base)
+{
+  start_clobber();
+
+  vsuxseg2ei8_v_i8m4x2_m(mask, base, index, val, 32);
+
+  end_clobber();
+}
+
+vint16m1_t 
 test_vadd_vv (vbool16_t mask, vint16m1_t op1, vint16m1_t op2)
 {
   start_clobber();

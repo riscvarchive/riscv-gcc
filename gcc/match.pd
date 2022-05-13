@@ -7934,7 +7934,7 @@ and,
 (for binary_op (IFN_ADD_VS IFN_SUB_VS)
      widen_binary_op (IFN_VEC_CONVERT_ADDV IFN_VEC_CONVERT_SUBV)
   (simplify
-    (binary_op (convert @0) INTEGER_CST@1)
+    (convert? (view_convert? (binary_op (view_convert? (convert @0)) INTEGER_CST@1)))
       (with
         {
           tree node = make_node (INTEGER_TYPE);
@@ -7951,31 +7951,42 @@ and,
 (for binary_op (IFN_ADD_VS IFN_SUB_VS)
      widen_binary_op (IFN_VEC_CONVERT_ADDV IFN_VEC_CONVERT_SUBV)
   (simplify
-    (binary_op (convert @0) REAL_CST@1)
-      (with
-        {
-          tree node = make_node (REAL_TYPE);
-          machine_mode mode = TYPE_MODE (TREE_TYPE (@0));
-          TYPE_PRECISION (node) = GET_MODE_PRECISION (GET_MODE_INNER (mode));
-          TYPE_UNSIGNED (node) = TYPE_UNSIGNED (TREE_TYPE (@0));
-          SET_TYPE_MODE (node, GET_MODE_INNER (mode));
-          tree tem = build_real (node, TREE_REAL_CST (@1));
-          if (!real_equal (&TREE_REAL_CST (tem), &TREE_REAL_CST (@1)))
-            tem = NULL_TREE;
-        }
-        (if (tem)
-         (widen_binary_op @0 { tem; })))))
-(for binary_op (IFN_ADD_VS IFN_SUB_VS)
-     widen_binary_op (IFN_VEC_CONVERT_ADDV IFN_VEC_CONVERT_SUBV)
-  (simplify
     (binary_op (convert @0) (convert @1))
       (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+       (widen_binary_op @0 @1)))
+  (simplify
+    (binary_op (view_convert (convert @0)) (convert @1))
+      (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+       (widen_binary_op @0 @1))))
+(for binary_op (IFN_VEC_CONVERT_ADDV IFN_VEC_CONVERT_SUBV)
+     widen_binary_op (IFN_VEC_CONVERT_ADDV IFN_VEC_CONVERT_SUBV)
+  (simplify
+    (convert (view_convert? (binary_op @0 @1)))
+      (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
         && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1)))
-       (widen_binary_op @0 @1)))) 
+       (widen_binary_op @0 @1))))
 (for binary_op (plus minus)
      widen_binary_op (IFN_VEC_CONVERT_VADDV IFN_VEC_CONVERT_VSUBV)
   (simplify
     (binary_op (convert @0) (convert @1))
+      (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+        && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+       (widen_binary_op @0 @1)))
+  (simplify
+    (convert (view_convert (binary_op (view_convert (convert @0)) (view_convert (convert @1)))))
+      (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+        && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+       (widen_binary_op @0 @1))))
+(for binary_op (IFN_VEC_CONVERT_VADDV IFN_VEC_CONVERT_VSUBV)
+     widen_binary_op (IFN_VEC_CONVERT_VADDV IFN_VEC_CONVERT_VSUBV)
+  (simplify
+    (convert (binary_op @0 @1))
       (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
         && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1)))
        (widen_binary_op @0 @1))))
@@ -7983,23 +7994,23 @@ and,
      widen_binary_op (IFN_VEC_CONVERT_ADDW IFN_VEC_CONVERT_SUBW)
   (simplify
     (binary_op @0 (convert @1))
-      (widen_binary_op @0 @1))) 
+      (if (GET_MODE_INNER (TYPE_MODE (type)) != TYPE_MODE (TREE_TYPE (@1)))
+        (widen_binary_op @0 @1)))) 
 (for binary_op (plus minus)
      widen_binary_op (IFN_VEC_CONVERT_VADDW IFN_VEC_CONVERT_VSUBW)
   (simplify
     (binary_op @0 (convert @1))
-      (if (VECTOR_TYPE_P (type))
+      (if (VECTOR_TYPE_P (type) && GET_MODE_INNER (TYPE_MODE (type)) != TYPE_MODE (TREE_TYPE (@1)))
         (widen_binary_op @0 @1))))
 (simplify
   (plus (convert @1) @0)
-    (if (VECTOR_TYPE_P (type))
+    (if (VECTOR_TYPE_P (type) && GET_MODE_INNER (TYPE_MODE (type)) != TYPE_MODE (TREE_TYPE (@1)))
       (IFN_VEC_CONVERT_VADDW @0 @1)))
 
 (simplify
-  (IFN_MUL_VS (convert @0) INTEGER_CST@1)
+  (convert? (view_convert? (IFN_MUL_VS (view_convert? (convert @0)) INTEGER_CST@1)))
     (with
       {
-        bool mixed_p = false;
         tree node = make_node (INTEGER_TYPE);
         machine_mode mode = TYPE_MODE (TREE_TYPE (@0));
         TYPE_PRECISION (node) = GET_MODE_PRECISION (GET_MODE_INNER (mode));
@@ -8008,67 +8019,115 @@ and,
         tree tem = build_int_cst (node, int_cst_value (@1));
         if (int_cst_value (tem) != int_cst_value (@1))
           tem = NULL_TREE;     
-        if (!tem)
-          {
-            TYPE_UNSIGNED (node) = !TYPE_UNSIGNED (TREE_TYPE (@0));
-            mixed_p = true;
-            tem = build_int_cst (node, int_cst_value (@1));
-            if (int_cst_value (tem) != int_cst_value (@1))
-              tem = NULL_TREE;
-          }
-      }
-      (switch
-        (if (tem && !mixed_p)
-          (IFN_VEC_CONVERT_MULV @0 { tem; }))
-        (if (tem && mixed_p && TYPE_UNSIGNED (TREE_TYPE (@0)) == 0)
-          (IFN_VEC_CONVERT_SUMULV @0 { tem; }))
-        (if (tem && mixed_p && TYPE_UNSIGNED (TREE_TYPE (@0)) == 1)
-          (IFN_VEC_CONVERT_USMULV @0 { tem; })))))
-(simplify
-  (IFN_MUL_VS (convert @0) REAL_CST@1)
-    (with
-      {
-        tree node = make_node (REAL_TYPE);
-        machine_mode mode = TYPE_MODE (TREE_TYPE (@0));
-        TYPE_PRECISION (node) = GET_MODE_PRECISION (GET_MODE_INNER (mode));
-        TYPE_UNSIGNED (node) = TYPE_UNSIGNED (TREE_TYPE (@0));
-        SET_TYPE_MODE (node, GET_MODE_INNER (mode));
-        tree tem = build_real (node, TREE_REAL_CST (@1));
-        if (!real_equal (&TREE_REAL_CST (tem), &TREE_REAL_CST (@1)))
-          tem = NULL_TREE;
       }
       (if (tem)
-       (IFN_VEC_CONVERT_MULV @0 { tem; }))))     
+        (IFN_VEC_CONVERT_MULV @0 { tem; }))))   
 (simplify
   (mult (convert @0) (convert @1))
     (switch
       (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
-        && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1)))
+        && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
         (IFN_VEC_CONVERT_VMULV @0 @1))
       (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == 0
         && TYPE_UNSIGNED (TREE_TYPE (@1)) == 1
-        && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1)))
+        && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
         (IFN_VEC_CONVERT_VSUMULV @0 @1))
       (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == 1
         && TYPE_UNSIGNED (TREE_TYPE (@1)) == 0
-        && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1)))
+        && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
         (IFN_VEC_CONVERT_VSUMULV @1 @0))))
+(simplify
+  (convert (view_convert (mult (view_convert (convert @0)) (view_convert (convert @1)))))
+    (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+      && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1))
+      && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+      (IFN_VEC_CONVERT_VMULV @0 @1)))
+(simplify
+  (convert (view_convert (mult (convert @0) (view_convert (convert @1)))))
+    (switch
+      (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == 0
+          && TYPE_UNSIGNED (TREE_TYPE (@1)) == 1
+          && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1))
+          && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+        (IFN_VEC_CONVERT_VSUMULV @0 @1))
+      (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == 1
+          && TYPE_UNSIGNED (TREE_TYPE (@1)) == 0
+          && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1))
+          && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+        (IFN_VEC_CONVERT_VSUMULV @1 @0))))
+(simplify
+  (convert (IFN_VEC_CONVERT_VMULV @0 @1))
+    (if (VECTOR_TYPE_P (type) && TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+      && TYPE_MODE (TREE_TYPE (@0)) == TYPE_MODE (TREE_TYPE (@1)))
+     (IFN_VEC_CONVERT_VMULV @0 @1)))
 (simplify
   (IFN_MUL_VS (convert @0) (convert @1))
     (switch
       (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
-        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1)))
+        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
         (IFN_VEC_CONVERT_MULV @0 @1))
       (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == 0
         && TYPE_UNSIGNED (TREE_TYPE (@1)) == 1
-        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1)))
+        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
         (IFN_VEC_CONVERT_SUMULV @0 @1))
       (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == 1
         && TYPE_UNSIGNED (TREE_TYPE (@1)) == 0
-        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1)))
+        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
         (IFN_VEC_CONVERT_USMULV @0 @1))))
+(simplify
+  (IFN_MUL_VS (view_convert (convert @0)) (convert @1))
+    (switch
+      (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+       (IFN_VEC_CONVERT_MULV @0 @1))
+      (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == 0
+        && TYPE_UNSIGNED (TREE_TYPE (@1)) == 1
+        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+        (IFN_VEC_CONVERT_SUMULV @0 @1))
+      (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == 1
+        && TYPE_UNSIGNED (TREE_TYPE (@1)) == 0
+        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1))
+        && TYPE_MODE (type) != TYPE_MODE (TREE_TYPE (@0)))
+        (IFN_VEC_CONVERT_USMULV @0 @1))))
+(simplify
+  (convert (view_convert? (IFN_VEC_CONVERT_MULV @0 @1)))
+    (if (TYPE_UNSIGNED (TREE_TYPE (@0)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+      && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) == TYPE_MODE (TREE_TYPE (@1)))
+     (IFN_VEC_CONVERT_MULV @0 @1)))
+(simplify
+  (convert (view_convert? (IFN_VEC_CONVERT_SUMULV @0 @1)))
+    (IFN_VEC_CONVERT_SUMULV @0 @1))
+(simplify
+  (convert (view_convert? (IFN_VEC_CONVERT_USMULV @0 @1)))
+    (IFN_VEC_CONVERT_USMULV @0 @1))
 
 /* len_* operation. */
+(for convert_op (IFN_LEN_EXTEND IFN_LEN_ZERO_EXTEND IFN_LEN_FLOAT IFN_LEN_FLOATUNS IFN_LEN_FIX_TRUNC IFN_LEN_FIXUNS_TRUNC IFN_LEN_TRUNC)
+  (for binary_op (IFN_LEN_ADD_VS IFN_LEN_SUB_VS)
+       widen_binary_op (IFN_LEN_VEC_CONVERT_ADDV IFN_LEN_VEC_CONVERT_SUBV)
+  (simplify
+    (convert_op (view_convert? (binary_op (view_convert? length_convert_fn_p@0) INTEGER_CST@1 @2)) @2)
+      (with
+        {
+          tree node = make_node (INTEGER_TYPE);
+          machine_mode mode = TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0)));
+          TYPE_PRECISION (node) = GET_MODE_PRECISION (GET_MODE_INNER (mode));
+          TYPE_UNSIGNED (node) = TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0)));
+          SET_TYPE_MODE (node, GET_MODE_INNER (mode));
+          tree tem = build_int_cst (node, int_cst_value (@1));
+          if (int_cst_value (tem) != int_cst_value (@1))
+            tem = NULL_TREE;     
+        }
+        (if (tem)
+          (widen_binary_op { length_convert_fn_p (@0); } { tem; } @2))))))
 (for binary_op (IFN_LEN_ADD_VS IFN_LEN_SUB_VS)
      widen_binary_op (IFN_LEN_VEC_CONVERT_ADDV IFN_LEN_VEC_CONVERT_SUBV)
   (simplify
@@ -8082,47 +8141,59 @@ and,
           SET_TYPE_MODE (node, GET_MODE_INNER (mode));
           tree tem = build_int_cst (node, int_cst_value (@1));
           if (int_cst_value (tem) != int_cst_value (@1))
-            tem = NULL_TREE;
+            tem = NULL_TREE;     
         }
         (if (tem)
-         (widen_binary_op { length_convert_fn_p (@0); } { tem; } @2)))))
+          (widen_binary_op { length_convert_fn_p (@0); } { tem; } @2)))))
+         
 (for binary_op (IFN_LEN_ADD_VS IFN_LEN_SUB_VS)
      widen_binary_op (IFN_LEN_VEC_CONVERT_ADDV IFN_LEN_VEC_CONVERT_SUBV)
+     widen_binary_wop (IFN_LEN_VEC_CONVERT_ADDW IFN_LEN_VEC_CONVERT_SUBW)
   (simplify
-    (binary_op length_convert_fn_p@0 REAL_CST@1 @2)
+    (view_convert? (binary_op (view_convert @0) (convert @1) @2))
       (with
-        {
-          tree node = make_node (REAL_TYPE);
-          machine_mode mode = TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0)));
-          TYPE_PRECISION (node) = GET_MODE_PRECISION (GET_MODE_INNER (mode));
-          TYPE_UNSIGNED (node) = TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0)));
-          SET_TYPE_MODE (node, GET_MODE_INNER (mode));
-          tree tem = build_real (node, TREE_REAL_CST (@1));
-          if (!real_equal (&TREE_REAL_CST (tem), &TREE_REAL_CST (@1)))
-            tem = NULL_TREE;
-        }
+      {
+        tree tem = length_convert_fn_p (@0);
+        if (!(tem && TYPE_UNSIGNED (TREE_TYPE (tem)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+          && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (tem))) == TYPE_MODE (TREE_TYPE (@1))))
+          tem = NULL_TREE;
+      }
+      (switch
         (if (tem)
-         (widen_binary_op { length_convert_fn_p (@0); } { tem; } @2)))))
-(for binary_op (IFN_LEN_ADD_VS IFN_LEN_SUB_VS)
-     widen_binary_op (IFN_LEN_VEC_CONVERT_ADDV IFN_LEN_VEC_CONVERT_SUBV)
+          (widen_binary_op { tem; } @1 @2))
+        (if (!tem && GET_MODE_INNER (TYPE_MODE (type)) != TYPE_MODE (TREE_TYPE (@1)))
+          (widen_binary_wop @0 @1 @2)))))
   (simplify
-    (binary_op length_convert_fn_p@0 (convert @1) @2)
-      (if (TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_UNSIGNED (TREE_TYPE (@1))
-        && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0)))) == TYPE_MODE (TREE_TYPE (@1)))
-       (widen_binary_op { length_convert_fn_p (@0); } @1 @2)))) 
+    (view_convert? (binary_op @0 (convert @1) @2))
+      (with
+      {
+        tree tem = length_convert_fn_p (@0);
+        if (!(tem && TYPE_UNSIGNED (TREE_TYPE (tem)) == TYPE_UNSIGNED (TREE_TYPE (@1))
+          && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (tem))) == TYPE_MODE (TREE_TYPE (@1))))
+          tem = NULL_TREE;
+      }
+      (switch
+        (if (tem)
+          (widen_binary_op { tem; } @1 @2))
+        (if (!tem && GET_MODE_INNER (TYPE_MODE (type)) != TYPE_MODE (TREE_TYPE (@1)))
+          (widen_binary_wop @0 @1 @2))))))            
+(for convert_op (IFN_LEN_EXTEND IFN_LEN_ZERO_EXTEND IFN_LEN_FLOAT IFN_LEN_FLOATUNS IFN_LEN_FIX_TRUNC IFN_LEN_FIXUNS_TRUNC IFN_LEN_TRUNC)
+  (for binary_op (IFN_LEN_VEC_CONVERT_ADDV IFN_LEN_VEC_CONVERT_SUBV)
+    (simplify
+      (convert_op (view_convert? (binary_op @0 @1 @2)) @2)
+        (binary_op @0 @1 @2))))           
 (for binary_op (IFN_LEN_ADD IFN_LEN_SUB)
      widen_binary_op (IFN_LEN_VEC_CONVERT_VADDV IFN_LEN_VEC_CONVERT_VSUBV)
   (simplify
-    (binary_op length_convert_fn_p@0 length_convert_fn_p@1 @2)
+    (view_convert? (binary_op (view_convert? length_convert_fn_p@0) (view_convert? length_convert_fn_p@1) @2))
       (if (TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@1)))
         && TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_MODE (TREE_TYPE (length_convert_fn_p (@1))))
-       (widen_binary_op { length_convert_fn_p (@0); } { length_convert_fn_p (@1); } @2))))
-(for binary_op (IFN_LEN_ADD_VS IFN_LEN_SUB_VS)
-     widen_binary_op (IFN_LEN_VEC_CONVERT_ADDW IFN_LEN_VEC_CONVERT_SUBW)
-  (simplify
-    (binary_op @0 (convert @1) @2)
-      (if (GET_MODE_INNER (TYPE_MODE (TREE_TYPE (@0))) != TYPE_MODE (TREE_TYPE (@1)))
-        (widen_binary_op @0 @1 @2)))) 
+       (widen_binary_op { length_convert_fn_p (@0); } { length_convert_fn_p (@1); } @2)))) 
+(for convert_op (IFN_LEN_EXTEND IFN_LEN_ZERO_EXTEND IFN_LEN_FLOAT IFN_LEN_FLOATUNS IFN_LEN_FIX_TRUNC IFN_LEN_FIXUNS_TRUNC IFN_LEN_TRUNC)
+  (for binary_op (IFN_LEN_VEC_CONVERT_VADDV IFN_LEN_VEC_CONVERT_VSUBV)
+    (simplify
+      (convert_op (binary_op @0 @1 @2) @2)
+        (binary_op @0 @1 @2)))) 
 (for binary_op (IFN_LEN_ADD IFN_LEN_SUB)
      widen_binary_op (IFN_LEN_VEC_CONVERT_VADDW IFN_LEN_VEC_CONVERT_VSUBW)
   (simplify
@@ -8132,11 +8203,26 @@ and,
   (IFN_LEN_ADD length_convert_fn_p@1 @0 @2)
     (IFN_LEN_VEC_CONVERT_VADDW @0 { length_convert_fn_p (@1); } @2))
 
+(for convert_op (IFN_LEN_EXTEND IFN_LEN_ZERO_EXTEND IFN_LEN_FLOAT IFN_LEN_FLOATUNS IFN_LEN_FIX_TRUNC IFN_LEN_FIXUNS_TRUNC IFN_LEN_TRUNC)
+  (simplify
+    (convert_op (view_convert? (IFN_LEN_MUL_VS (view_convert? length_convert_fn_p@0) INTEGER_CST@1 @2)) @2)
+      (with
+        {
+          tree node = make_node (INTEGER_TYPE);
+          machine_mode mode = TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0)));
+          TYPE_PRECISION (node) = GET_MODE_PRECISION (GET_MODE_INNER (mode));
+          TYPE_UNSIGNED (node) = TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0)));
+          SET_TYPE_MODE (node, GET_MODE_INNER (mode));
+          tree tem = build_int_cst (node, int_cst_value (@1));
+          if (int_cst_value (tem) != int_cst_value (@1))
+            tem = NULL_TREE;     
+        }
+        (if (tem)
+          (IFN_LEN_VEC_CONVERT_MULV { length_convert_fn_p (@0); } { tem; } @2)))))
 (simplify
   (IFN_LEN_MUL_VS length_convert_fn_p@0 INTEGER_CST@1 @2)
     (with
       {
-        bool mixed_p = false;
         tree node = make_node (INTEGER_TYPE);
         machine_mode mode = TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0)));
         TYPE_PRECISION (node) = GET_MODE_PRECISION (GET_MODE_INNER (mode));
@@ -8145,39 +8231,11 @@ and,
         tree tem = build_int_cst (node, int_cst_value (@1));
         if (int_cst_value (tem) != int_cst_value (@1))
           tem = NULL_TREE;     
-        if (!tem)
-          {
-            TYPE_UNSIGNED (node) = !TYPE_UNSIGNED (TREE_TYPE (@0));
-            mixed_p = true;
-            tem = build_int_cst (node, int_cst_value (@1));
-            if (int_cst_value (tem) != int_cst_value (@1))
-              tem = NULL_TREE;
-          }
-      }
-      (switch
-        (if (tem && !mixed_p)
-          (IFN_LEN_VEC_CONVERT_MULV { length_convert_fn_p (@0); } { tem; } @2))
-        (if (tem && mixed_p && TYPE_UNSIGNED (TREE_TYPE (@0)) == 0)
-          (IFN_LEN_VEC_CONVERT_SUMULV { length_convert_fn_p (@0); } { tem; } @2))
-        (if (tem && mixed_p && TYPE_UNSIGNED (TREE_TYPE (@0)) == 1)
-          (IFN_LEN_VEC_CONVERT_USMULV { length_convert_fn_p (@0); } { tem; } @2)))))
-(simplify
-  (IFN_LEN_MUL_VS length_convert_fn_p@0 REAL_CST@1 @2)
-    (with
-      {
-        tree node = make_node (REAL_TYPE);
-        machine_mode mode = TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0)));
-        TYPE_PRECISION (node) = GET_MODE_PRECISION (GET_MODE_INNER (mode));
-        TYPE_UNSIGNED (node) = TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0)));
-        SET_TYPE_MODE (node, GET_MODE_INNER (mode));
-        tree tem = build_real (node, TREE_REAL_CST (@1));
-        if (!real_equal (&TREE_REAL_CST (tem), &TREE_REAL_CST (@1)))
-          tem = NULL_TREE;
       }
       (if (tem)
-       (IFN_LEN_VEC_CONVERT_MULV { length_convert_fn_p (@0); } { tem; } @2))))     
+        (IFN_LEN_VEC_CONVERT_MULV { length_convert_fn_p (@0); } { tem; } @2))))
 (simplify
-  (IFN_LEN_MUL length_convert_fn_p@0 length_convert_fn_p@1 @2)
+  (view_convert? (IFN_LEN_MUL (view_convert? length_convert_fn_p@0) (view_convert? length_convert_fn_p@1) @2))
     (switch
       (if (TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@1)))
         && TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_MODE (TREE_TYPE (length_convert_fn_p (@1))))
@@ -8189,9 +8247,25 @@ and,
       (if (TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0))) == 1
         && TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@1))) == 0
         && TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_MODE (TREE_TYPE (length_convert_fn_p (@1))))
-        (IFN_LEN_VEC_CONVERT_VSUMULV { length_convert_fn_p (@1); } { length_convert_fn_p (@0); } @2))))
+        (IFN_LEN_VEC_CONVERT_VSUMULV { length_convert_fn_p (@1); } { length_convert_fn_p (@0); } @2))))      
 (simplify
-  (IFN_LEN_MUL_VS length_convert_fn_p@0 (convert @1) @2)
+  (view_convert? (IFN_LEN_MUL (view_convert length_convert_fn_p@0) length_convert_fn_p@1 @2))
+    (switch
+      (if (TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0))) == 0
+        && TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@1))) == 1
+        && TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_MODE (TREE_TYPE (length_convert_fn_p (@1))))
+        (IFN_LEN_VEC_CONVERT_VSUMULV { length_convert_fn_p (@0); } { length_convert_fn_p (@1); } @2))
+      (if (TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0))) == 1
+        && TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@1))) == 0
+        && TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_MODE (TREE_TYPE (length_convert_fn_p (@1))))
+        (IFN_LEN_VEC_CONVERT_VSUMULV { length_convert_fn_p (@1); } { length_convert_fn_p (@0); } @2))))      
+(for convert_op (IFN_LEN_EXTEND IFN_LEN_ZERO_EXTEND IFN_LEN_FLOAT IFN_LEN_FLOATUNS IFN_LEN_FIX_TRUNC IFN_LEN_FIXUNS_TRUNC IFN_LEN_TRUNC)
+  (for binary_op (IFN_LEN_VEC_CONVERT_VMULV IFN_LEN_VEC_CONVERT_VSUMULV IFN_LEN_VEC_CONVERT_VSUMULV)
+    (simplify
+      (convert_op (view_convert? (binary_op @0 @1 @2)) @2)
+        (binary_op @0 @1 @2))))      
+(simplify
+  (IFN_LEN_MUL_VS (view_convert? length_convert_fn_p@0) (convert @1) @2)
     (switch
       (if (TYPE_UNSIGNED (TREE_TYPE (length_convert_fn_p (@0))) == TYPE_UNSIGNED (TREE_TYPE (@1))
         && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0)))) == TYPE_MODE (TREE_TYPE (@1)))
@@ -8204,7 +8278,12 @@ and,
         && TYPE_UNSIGNED (TREE_TYPE (@1)) == 0
         && GET_MODE_INNER (TYPE_MODE (TREE_TYPE (length_convert_fn_p (@0)))) == TYPE_MODE (TREE_TYPE (@1)))
         (IFN_LEN_VEC_CONVERT_USMULV { length_convert_fn_p (@0); } @1 @2))))
-
+(for convert_op (IFN_LEN_EXTEND IFN_LEN_ZERO_EXTEND IFN_LEN_FLOAT IFN_LEN_FLOATUNS IFN_LEN_FIX_TRUNC IFN_LEN_FIXUNS_TRUNC IFN_LEN_TRUNC)
+  (for binary_op (IFN_LEN_VEC_CONVERT_MULV IFN_LEN_VEC_CONVERT_SUMULV IFN_LEN_VEC_CONVERT_USMULV)
+    (simplify
+      (convert_op (view_convert? (binary_op @0 @1 @2)) @2)
+        (binary_op @0 @1 @2))))
+        
 (simplify
   (plus (view_convert? (IFN_VEC_CONVERT_VMULV @0 @1)) @2)
     (IFN_VEC_CONVERT_VFMAV @0 @1 @2))

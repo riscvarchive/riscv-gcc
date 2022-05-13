@@ -154,15 +154,6 @@
   ;; highpart of the mode
   UNSPEC_HI
 
-  ;; unpack
-  UNSPEC_UNPACKSHI
-  UNSPEC_UNPACKSLO
-  UNSPEC_UNPACKUHI
-  UNSPEC_UNPACKULO
-
-  ;; pack
-  UNSPEC_PACK
-
   UNSPEC_VADD UNSPEC_VSUB UNSPEC_VRSUB
   UNSPEC_VAND UNSPEC_VIOX UNSPEC_VXOR
   UNSPEC_VMIN UNSPEC_VMINU UNSPEC_VMAX UNSPEC_VMAXU
@@ -851,12 +842,26 @@
   (VNx2SF "VNx2HF") (VNx4SF "VNx4HF") (VNx8SF "VNx8HF") (VNx16SF "VNx16HF") (VNx32SF "VNx32HF")
   (VNx2DF "VNx2SF") (VNx4DF "VNx4SF") (VNx8DF "VNx8SF") (VNx16DF "VNx16SF")])
 
+(define_mode_attr VNSUB [
+  (VNx2HI "QI") (VNx4HI "QI") (VNx8HI "QI") (VNx16HI "QI") (VNx32HI "QI") (VNx64HI "QI")
+  (VNx2SI "HI") (VNx4SI "HI") (VNx8SI "HI") (VNx16SI "HI") (VNx32SI "HI")
+  (VNx2DI "SI") (VNx4DI "SI") (VNx8DI "SI") (VNx16DI "SI")
+  (VNx2SF "HF") (VNx4SF "HF") (VNx8SF "HF") (VNx16SF "HF") (VNx32SF "HF")
+  (VNx2DF "SF") (VNx4DF "SF") (VNx8DF "SF") (VNx16DF "SF")])
+
 (define_mode_attr vn [
   (VNx2HI "vnx2qi") (VNx4HI "vnx4qi") (VNx8HI "vnx8qi") (VNx16HI "vnx16qi") (VNx32HI "vnx32qi") (VNx64HI "vnx64qi")
   (VNx2SI "vnx2hi") (VNx4SI "vnx4hi") (VNx8SI "vnx8hi") (VNx16SI "vnx16hi") (VNx32SI "vnx32hi")
   (VNx2DI "vnx2si") (VNx4DI "vnx4si") (VNx8DI "vnx8si") (VNx16DI "vnx16si")
   (VNx2SF "vnx2hf") (VNx4SF "vnx4hf") (VNx8SF "vnx8hf") (VNx16SF "vnx16hf") (VNx32SF "vnx32hf")
   (VNx2DF "vnx2sf") (VNx4DF "vnx4sf") (VNx8DF "vnx8sf") (VNx16DF "vnx16sf")])
+
+(define_mode_attr vnsub [
+  (VNx2HI "qi") (VNx4HI "qi") (VNx8HI "qi") (VNx16HI "qi") (VNx32HI "qi") (VNx64HI "qi")
+  (VNx2SI "hi") (VNx4SI "hi") (VNx8SI "hi") (VNx16SI "hi") (VNx32SI "hi")
+  (VNx2DI "si") (VNx4DI "si") (VNx8DI "si") (VNx16DI "si")
+  (VNx2SF "hf") (VNx4SF "hf") (VNx8SF "hf") (VNx16SF "hf") (VNx32SF "hf")
+  (VNx2DF "sf") (VNx4DF "sf") (VNx8DF "sf") (VNx16DF "sf")])
 
 ;; Map a vector mode to narrow vector mode
 (define_mode_attr VNDIFF [
@@ -896,16 +901,32 @@
   (VNx2DI "VNx2HI") (VNx4DI "VNx4HI") (VNx8DI "VNx8HI") (VNx16DI "VNx16HI")
   (VNx2DF "VNx2HF") (VNx4DF "VNx4HF") (VNx8DF "VNx8HF") (VNx16DF "VNx16HF")])
 
+(define_mode_attr VQNSUB [
+  (VNx2SI "QI") (VNx4SI "QI") (VNx8SI "QI") (VNx16SI "QI") (VNx32SI "QI")
+  (VNx2DI "HI") (VNx4DI "HI") (VNx8DI "HI") (VNx16DI "HI")
+  (VNx2DF "HF") (VNx4DF "HF") (VNx8DF "HF") (VNx16DF "HF")])
+
 (define_mode_attr vqn [
   (VNx2SI "vnx2qi") (VNx4SI "vnx4qi") (VNx8SI "vnx8qi") (VNx16SI "vnx16qi") (VNx32SI "vnx32qi")
   (VNx2DI "vnx2hi") (VNx4DI "vnx4hi") (VNx8DI "vnx8hi") (VNx16DI "vnx16hi")
   (VNx2DF "vnx2hf") (VNx4DF "vnx4hf") (VNx8DF "vnx8hf") (VNx16DF "vnx16hf")])
 
+(define_mode_attr vqnsub [
+  (VNx2SI "qi") (VNx4SI "qi") (VNx8SI "qi") (VNx16SI "qi") (VNx32SI "qi")
+  (VNx2DI "hi") (VNx4DI "hi") (VNx8DI "hi") (VNx16DI "hi")
+  (VNx2DF "hf") (VNx4DF "hf") (VNx8DF "hf") (VNx16DF "hf")])
+
 (define_mode_attr VON [
   (VNx2DI "VNx2QI") (VNx4DI "VNx4QI") (VNx8DI "VNx8QI") (VNx16DI "VNx16QI")])
 
+(define_mode_attr VONSUB [
+  (VNx2DI "QI") (VNx4DI "QI") (VNx8DI "QI") (VNx16DI "QI")])
+  
 (define_mode_attr von [
   (VNx2DI "vnx2qi") (VNx4DI "vnx4qi") (VNx8DI "vnx8qi") (VNx16DI "vnx16qi")])
+
+(define_mode_attr vonsub [
+  (VNx2DI "qi") (VNx4DI "qi") (VNx8DI "qi") (VNx16DI "qi")])
 
 ;; Map a vector int or float mode to quad-widening vector mode.
 (define_mode_attr VQW [
@@ -1950,10 +1971,6 @@
 ;; Attributes for Floating-point multiply-add.
 (define_int_attr fmac [(UNSPEC_MACC "macc") (UNSPEC_NMACC "nmacc") (UNSPEC_MSAC "msac") (UNSPEC_NMSAC "nmsac")
       (UNSPEC_MADD "madd") (UNSPEC_NMADD "nmadd") (UNSPEC_MSUB "msub") (UNSPEC_NMSUB "nmsub")])
-
-;; Attributes for unpack.
-(define_int_attr perm_hilo [(UNSPEC_UNPACKSHI "hi") (UNSPEC_UNPACKUHI "hi")
-			    (UNSPEC_UNPACKSLO "lo") (UNSPEC_UNPACKULO "lo")])
 
 ;; Attributes for signed and unsigned.
 (define_int_attr su

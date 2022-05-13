@@ -11,7 +11,7 @@ riscv-vector-builtins.o: \
   $(srcdir)/config/riscv/riscv-vector-builtins.def \
   $(srcdir)/config/riscv/riscv-vector-builtins-functions.def \
   $(srcdir)/config/riscv/vector-iterators.md \
-  $(srcdir)/config/riscv/riscv_md_parser.py  \
+  $(srcdir)/config/riscv/md-parser  \
   $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) $(RTL_H) \
   $(TM_P_H) memmodel.h insn-codes.h $(OPTABS_H) $(RECOG_H) $(DIAGNOSTIC_H) \
   $(EXPR_H) $(BASIC_BLOCK_H) $(FUNCTION_H) fold-const.h $(GIMPLE_H) \
@@ -20,7 +20,7 @@ riscv-vector-builtins.o: \
   stringpool.h \
   $(srcdir)/config/riscv/riscv-vector-builtins.h \
   $(srcdir)/config/riscv/riscv-vector-builtins-functions.h
-	python3 $(srcdir)/config/riscv/riscv_md_parser.py \
+	python3 $(srcdir)/config/riscv/md-parser \
 		riscv-vector-builtins-iterators.def vector-iterators.md && \
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 		$(srcdir)/config/riscv/riscv-vector-builtins.cc
@@ -30,7 +30,7 @@ riscv-vector-builtins-functions.o: \
   $(srcdir)/config/riscv/riscv-vector-builtins.def \
   $(srcdir)/config/riscv/riscv-vector-builtins-functions.def \
   $(srcdir)/config/riscv/vector-iterators.md \
-  $(srcdir)/config/riscv/riscv_md_parser.py  \
+  $(srcdir)/config/riscv/md-parser  \
   $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) $(TREE_H) $(RTL_H) \
   $(TM_P_H) memmodel.h insn-codes.h $(OPTABS_H) $(RECOG_H) $(DIAGNOSTIC_H) \
   $(EXPR_H) $(BASIC_BLOCK_H) $(FUNCTION_H) fold-const.h $(GIMPLE_H) \
@@ -38,7 +38,7 @@ riscv-vector-builtins-functions.o: \
   stor-layout.h $(REG_H) alias.h gimple-fold.h langhooks.h \
   stringpool.h \
   $(srcdir)/config/riscv/riscv-vector-builtins-functions.h
-	python3 $(srcdir)/config/riscv/riscv_md_parser.py \
+	python3 $(srcdir)/config/riscv/md-parser \
 		riscv-vector-builtins-iterators.def vector-iterators.md && \
 	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
 		$(srcdir)/config/riscv/riscv-vector-builtins-functions.cc

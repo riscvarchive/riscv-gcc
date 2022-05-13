@@ -75,13 +75,10 @@
 
 /* Helper functions for RVV */
 
+/* Generate vtype bitmap for a specific machine mode. */
 unsigned int
 get_vtype_for_mode (machine_mode mode)
 {
-  /* ???? In RVV intrinsics docs, for vsetvl and vsetvlmax intrinsics,
-     the tail and mask policy are set default to be ta,mu. Whether we
-     should have other combinations of policy and add ta or ma operand
-     to vsetvl and vsetvlmax intrinsics needs community confirm. */
   switch (mode)
     {
     case VNx2QImode:
@@ -178,6 +175,7 @@ get_vtype_for_mode (machine_mode mode)
   gcc_unreachable ();
 }
 
+/* Generate policy bitmap for a specific rvv_policy. */
 rtx
 riscv_vector_gen_policy (unsigned int rvv_policy)
 {
@@ -185,10 +183,13 @@ riscv_vector_gen_policy (unsigned int rvv_policy)
     return riscv_vector::gen_mu_policy ();
   else if (rvv_policy == RVV_POLICY_TU)
     return riscv_vector::gen_tu_policy ();
+  else if (rvv_policy == RVV_POLICY_TAMA)
+    return riscv_vector::gen_tama_policy ();
   else
     return riscv_vector::gen_any_policy ();
 }
 
+/* Return true if it is a RVV mask mode. */
 bool
 riscv_vector_mask_mode_p (machine_mode mode)
 {
@@ -197,6 +198,7 @@ riscv_vector_mask_mode_p (machine_mode mode)
           mode == VNx128BImode);
 }
 
+/* Return true if it is a RVV tuple mode. */
 bool
 riscv_tuple_mode_p (machine_mode mode)
 {
@@ -228,6 +230,7 @@ riscv_tuple_mode_p (machine_mode mode)
       VECTOR_DATA_MODE_P_TUPLE2 (16SF) || VECTOR_DATA_MODE_P_TUPLE2 (8DF));
 }
 
+/* Return true if it is a RVV data mode. */
 bool
 riscv_vector_data_mode_p (machine_mode mode)
 {
@@ -246,12 +249,14 @@ riscv_vector_data_mode_p (machine_mode mode)
           mode == VNx16DFmode || riscv_tuple_mode_p (mode));
 }
 
+/* Return true if it is a RVV vector mode. */
 bool
 riscv_vector_mode_p (machine_mode mode)
 {
   return riscv_vector_mask_mode_p (mode) || riscv_vector_data_mode_p (mode);
 }
 
+/* Return true if it is a RVV tuple partial vector mode. */
 bool
 riscv_partial_tuple_vector_mode_p (machine_mode mode)
 {
@@ -334,6 +339,7 @@ riscv_partial_tuple_vector_mode_p (machine_mode mode)
     }
 }
 
+/* Return natural size of a specific machine mode. */
 poly_uint64
 riscv_vector_natural_size (machine_mode mode)
 {
@@ -427,6 +433,7 @@ riscv_vector_natural_size (machine_mode mode)
   return BYTES_PER_RISCV_VECTOR;
 }
 
+/* Return true if it is a const poly int whose size is equal to a full vector. */
 bool
 riscv_const_poly_int_p (rtx x)
 {
@@ -436,30 +443,35 @@ riscv_const_poly_int_p (rtx x)
   return (value.coeffs[1] == factor && factor == UNITS_PER_V_REG.coeffs[0]);
 }
 
+/* Return the vlmul field for a vtype bitmap. */
 unsigned int
 riscv_parse_vlmul_field (unsigned int vtype)
 {
   return vtype & 0x7;
 }
 
+/* Return the vsew field for a vtype bitmap. */
 unsigned int
 riscv_parse_vsew_field (unsigned int vtype)
 {
   return (vtype >> 3) & 0x7;
 }
 
+/* Return the vta field for a vtype bitmap. */
 bool
 riscv_parse_vta_field (unsigned int vtype)
 {
   return (vtype & 0x40) != 0;
 }
 
+/* Return the vma field for a vtype bitmap. */
 bool
 riscv_parse_vma_field (unsigned int vtype)
 {
   return (vtype & 0x80) != 0;
 }
 
+/* Return the vlmul field for a specific machine mode. */
 unsigned int
 riscv_classify_vlmul_field (machine_mode mode)
 {
@@ -595,6 +607,7 @@ riscv_get_lmulx8 (machine_mode mode)
     }
 }
 
+/* Return the vsew field for a specific machine mode. */
 unsigned int
 riscv_classify_vsew_field (machine_mode mode)
 {
@@ -626,6 +639,7 @@ riscv_classify_vsew_field (machine_mode mode)
   return VSEW_FIELD_000;
 }
 
+/* Return the vtype field for a specific machine mode. */
 unsigned int
 riscv_classify_vtype_field (machine_mode mode)
 {
@@ -635,6 +649,7 @@ riscv_classify_vtype_field (machine_mode mode)
   return vtype;
 }
 
+/* Return machine mode for an insn type. */
 machine_mode
 riscv_translate_attr_mode (rtx_insn *insn)
 {
@@ -728,6 +743,7 @@ riscv_translate_attr_mode (rtx_insn *insn)
   return VOIDmode;
 }
 
+/* Return nf for a machine mode. */
 int
 riscv_classify_nf (machine_mode mode)
 {
@@ -795,6 +811,7 @@ riscv_classify_nf (machine_mode mode)
   return 1;
 }
 
+/* Return vlmul register size for a machine mode. */
 int
 riscv_vlmul_regsize (machine_mode mode)
 {
@@ -1133,7 +1150,7 @@ riscv_vector_expand_poly_move (machine_mode mode, rtx dest, rtx clobber,
   int factor = value.coeffs[1];
   int vlenb = BYTES_PER_RISCV_VECTOR.coeffs[1];
   int div_factor = 0;
-  
+
   if (BYTES_PER_RISCV_VECTOR.is_constant ())
     {
       gcc_assert (value.is_constant ());
@@ -1229,7 +1246,7 @@ riscv_vector_expand_poly_move (machine_mode mode, rtx dest, rtx clobber,
 
 /* Adjust frame of vector for prologue && epilogue. */
 void
-riscv_vector_adjust_frame (rtx target, poly_int64 offset)
+riscv_vector_adjust_frame (rtx target, poly_int64 offset, bool epilogue)
 {
   rtx clobber = RISCV_PROLOGUE_TEMP (Pmode);
   rtx space = RISCV_PROLOGUE_TEMP2 (Pmode);
@@ -1237,9 +1254,14 @@ riscv_vector_adjust_frame (rtx target, poly_int64 offset)
 
   riscv_vector_expand_poly_move (Pmode, space, clobber, gen_int_mode (offset, Pmode));
 
-  insn = gen_add3_insn (target,
-                        target,
-                        space);
+  if (epilogue)
+    {
+      insn = gen_add3_insn (target, target, space);
+    }
+  else
+    {
+      insn = gen_sub3_insn (target, target, space);
+    }
 
   insn = emit_insn (insn);
 
@@ -1247,7 +1269,7 @@ riscv_vector_adjust_frame (rtx target, poly_int64 offset)
 
   adjust_frame_rtx =
     gen_rtx_SET (target,
-                 plus_constant (Pmode, target, offset));
+                 plus_constant (Pmode, target, epilogue ? offset : -offset));
 
   dwarf = alloc_reg_note (REG_FRAME_RELATED_EXPR,
                           copy_rtx (adjust_frame_rtx), NULL_RTX);
@@ -1261,22 +1283,22 @@ riscv_vector_adjust_frame (rtx target, poly_int64 offset)
 bool
 riscv_vector_expand_block_move (rtx *operands)
 {
-/*
-  memcpy:
-      mv a3, a0 # Copy destination
-  loop:
-    vsetvli t0, a2, e8, m8, ta, ma   # Vectors of 8b
-    vle8.v v0, (a1)               # Load bytes
-      add a1, a1, t0              # Bump pointer
-      sub a2, a2, t0              # Decrement count
-    vse8.v v0, (a3)               # Store bytes
-      add a3, a3, t0              # Bump pointer
-      bnez a2, loop               # Any more?
-      ret                         # Return
-*/
-  if (!TARGET_VECTOR || !TARGET_RVV)
+  /*
+    memcpy:
+        mv a3, a0 # Copy destination
+    loop:
+      vsetvli t0, a2, e8, m8, ta, ma   # Vectors of 8b
+      vle8.v v0, (a1)               # Load bytes
+        add a1, a1, t0              # Bump pointer
+        sub a2, a2, t0              # Decrement count
+      vse8.v v0, (a3)               # Store bytes
+        add a3, a3, t0              # Bump pointer
+        bnez a2, loop               # Any more?
+        ret                         # Return
+  */
+  if (!TARGET_VECTOR)
     return false;
-  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
+  machine_mode cur_mode = VNx128QImode;
   bool size_p = optimize_function_for_size_p (cfun);
   rtx src, dst;
   rtx end = gen_reg_rtx (Pmode);
@@ -1300,7 +1322,9 @@ riscv_vector_expand_block_move (rtx *operands)
       if (GET_MODE (operands[2]) != Pmode)
         {
           poly_int64 value = rtx_to_poly_int64 (operands[2]);
-          emit_insn (gen_rtx_SET (end, gen_int_mode (poly_int64 (value.coeffs[0], value.coeffs[1]), Pmode)));
+          emit_insn (gen_rtx_SET (
+              end, gen_int_mode (poly_int64 (value.coeffs[0], value.coeffs[1]),
+                                 Pmode)));
         }
       else
         emit_insn (gen_rtx_SET (end, operands[2]));
@@ -1319,14 +1343,15 @@ riscv_vector_expand_block_move (rtx *operands)
 
   unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
   unsigned int vsew = riscv_classify_vsew_field (cur_mode);
-  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0xC0;
 
   rtx label = gen_label_rtx ();
   emit_label (label);
   emit_insn (gen_vsetvl (Pmode, cnt, end, GEN_INT (vtype)));
   emit_insn (gen_vle (cur_mode, vec, const0_rtx, const0_rtx, src, end,
-                      riscv_vector_gen_policy ()));
-  emit_insn (gen_vse (cur_mode, const0_rtx, dst, vec, end, riscv_vector_gen_policy ()));
+                      riscv_vector_gen_policy (RVV_POLICY_TAMA)));
+  emit_insn (gen_vse (cur_mode, const0_rtx, dst, vec, end,
+                      riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
   emit_insn (gen_rtx_SET (dst, gen_rtx_PLUS (Pmode, dst, cnt)));
   emit_insn (gen_rtx_SET (end, gen_rtx_MINUS (Pmode, end, cnt)));
@@ -1338,35 +1363,37 @@ riscv_vector_expand_block_move (rtx *operands)
   return true;
 }
 
+/* Implement strlen<mode> using RVV instructions.  */
 bool
 riscv_vector_expand_strlen (rtx *operands)
 {
-/*
-  strlen:
-      mv a3, a0             # Save start
-  loop:
-      vsetvli a1, x0, e8, m8, ta, ma  # Vector of bytes of maximum length
-      vle8ff.v v8, (a3)      # Load bytes
-      csrr a1, vl           # Get bytes read
-      vmseq.vi v0, v8, 0    # Set v0[i] where v8[i] = 0
-      vfirst.m a2, v0       # Find first set bit
-      add a3, a3, a1        # Bump pointer
-      bltz a2, loop         # Not found?
+  /*
+    strlen:
+        mv a3, a0             # Save start
+    loop:
+        vsetvli a1, x0, e8, m8, ta, ma  # Vector of bytes of maximum length
+        vle8ff.v v8, (a3)      # Load bytes
+        csrr a1, vl           # Get bytes read
+        vmseq.vi v0, v8, 0    # Set v0[i] where v8[i] = 0
+        vfirst.m a2, v0       # Find first set bit
+        add a3, a3, a1        # Bump pointer
+        bltz a2, loop         # Not found?
 
-      add a0, a0, a1        # Sum start + bump
-      add a3, a3, a2        # Add index
-      sub a0, a3, a0        # Subtract start address+bump
+        add a0, a0, a1        # Sum start + bump
+        add a3, a3, a2        # Add index
+        sub a0, a3, a0        # Subtract start address+bump
 
-      ret
-*/
-  if (!TARGET_VECTOR || !TARGET_RVV)
+        ret
+  */
+  if (!TARGET_VECTOR)
     return false;
   if (optimize < 1 || operands[2] != const0_rtx)
     return false;
+  if (optimize_insn_for_size_p ())
+    return false;
 
-  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
-  machine_mode mask_mode;
-  gcc_assert (targetm.vectorize.get_mask_mode (cur_mode).exists (&mask_mode));
+  machine_mode cur_mode = VNx128QImode;
+  machine_mode mask_mode = VNx128BImode;
   rtx src;
   rtx cnt = gen_reg_rtx (Pmode);
   rtx end = gen_reg_rtx (Pmode);
@@ -1380,17 +1407,22 @@ riscv_vector_expand_strlen (rtx *operands)
 
   unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
   unsigned int vsew = riscv_classify_vsew_field (cur_mode);
-  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0xC0;
 
   rtx label = gen_label_rtx ();
   emit_label (label);
-  emit_insn (gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
-  emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, save, gen_rtx_REG (Pmode, X0_REGNUM),
+  emit_insn (
+      gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
+  emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, save,
+                        gen_rtx_REG (Pmode, X0_REGNUM),
                         GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
   emit_insn (gen_readvl (Pmode, cnt, vec));
-  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec, const0_rtx,
-                         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector::gen_any_policy ()));
-  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec,
+                         const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM),
+                         riscv_vector::gen_any_policy ()));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask,
+                           gen_rtx_REG (Pmode, X0_REGNUM),
+                           riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, cnt)));
 
   /* Emit the loop condition.  */
@@ -1403,35 +1435,37 @@ riscv_vector_expand_strlen (rtx *operands)
   return true;
 }
 
+/* Implement movstr using RVV instructions.  */
 bool
 riscv_vector_expand_strcpy (rtx *operands)
 {
-/*
-  strcpy:
-      mv a2, a0             # Copy dst
-      li t0, -1             # Infinite AVL
-  loop:
-    vsetvli x0, t0, e8, m8, ta, ma  # Max length vectors of bytes
-    vle8ff.v v8, (a1)        # Get src bytes
-      csrr t1, vl           # Get number of bytes fetched
-    vmseq.vi v1, v8, 0      # Flag zero bytes
-    vfirst.m a3, v1         # Zero found?
-      add a1, a1, t1        # Bump pointer
-    vmsif.m v0, v1          # Set mask up to and including zero byte.
-    vse8.v v8, (a2), v0.t    # Write out bytes
-      add a2, a2, t1        # Bump pointer
-      bltz a3, loop         # Zero byte not found, so loop
+  /*
+    strcpy:
+        mv a2, a0             # Copy dst
+        li t0, -1             # Infinite AVL
+    loop:
+      vsetvli x0, t0, e8, m8, ta, ma  # Max length vectors of bytes
+      vle8ff.v v8, (a1)        # Get src bytes
+        csrr t1, vl           # Get number of bytes fetched
+      vmseq.vi v1, v8, 0      # Flag zero bytes
+      vfirst.m a3, v1         # Zero found?
+        add a1, a1, t1        # Bump pointer
+      vmsif.m v0, v1          # Set mask up to and including zero byte.
+      vse8.v v8, (a2), v0.t    # Write out bytes
+        add a2, a2, t1        # Bump pointer
+        bltz a3, loop         # Zero byte not found, so loop
 
-      ret
-*/
-  if (!TARGET_VECTOR || !TARGET_RVV)
+        ret
+  */
+  if (!TARGET_VECTOR)
     return false;
   if (optimize < 1)
     return false;
+  if (optimize_insn_for_size_p ())
+    return false;
 
-  machine_mode cur_mode = targetm.vectorize.preferred_simd_mode (QImode);
-  machine_mode mask_mode;
-  gcc_assert (targetm.vectorize.get_mask_mode (cur_mode).exists (&mask_mode));
+  machine_mode cur_mode = VNx128QImode;
+  machine_mode mask_mode = VNx128BImode;
   rtx src, dst;
   rtx cnt = gen_reg_rtx (Pmode);
   rtx end = gen_reg_rtx (Pmode);
@@ -1449,68 +1483,74 @@ riscv_vector_expand_strcpy (rtx *operands)
 
   unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
   unsigned int vsew = riscv_classify_vsew_field (cur_mode);
-  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0xC0;
 
   rtx label = gen_label_rtx ();
   emit_label (label);
-  emit_insn (gen_vsetvl (Pmode, gen_rtx_REG (Pmode, X0_REGNUM), init, GEN_INT (vtype)));
+  emit_insn (gen_vsetvl (Pmode, gen_rtx_REG (Pmode, X0_REGNUM), init,
+                         GEN_INT (vtype)));
   emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, src, init,
                         GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
   emit_insn (gen_readvl (Pmode, cnt, vec));
-  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec, const0_rtx, init,
-                         riscv_vector::gen_any_policy ()));
-  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, init, riscv_vector_gen_policy ()));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec,
+                         const0_rtx, init, riscv_vector::gen_any_policy ()));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, init,
+                           riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
-  emit_insn (gen_vm_m (UNSPEC_SIF, mask_mode, mask2, const0_rtx, const0_rtx, mask, init,
-                       riscv_vector_gen_policy ()));
-  emit_insn (gen_vse (cur_mode, mask2, save, vec, init, riscv_vector_gen_policy ()));
+  emit_insn (gen_vm_m (UNSPEC_SIF, mask_mode, mask2, const0_rtx, const0_rtx,
+                       mask, init, riscv_vector_gen_policy (RVV_POLICY_TAMA)));
+  emit_insn (gen_vse (cur_mode, mask2, save, vec, init,
+                      riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, cnt)));
 
   /* Emit the loop condition.  */
   rtx test = gen_rtx_LT (VOIDmode, end, const0_rtx);
   emit_jump_insn (gen_cbranch4 (Pmode, test, end, const0_rtx, label));
-
+  
   /* store NULL pointer to operands[0]. */
-  riscv_emit_move (operands[0], save);
+  emit_insn (gen_strend (Pmode, operands[0], save, cnt, end));
   return true;
 }
 
+/* Implement cmpstr<mode> using RVV instructions.  */
 bool
 riscv_vector_expand_strcmp (rtx *operands)
 {
-/*
-strcmp:
-    ##  Using LMUL=2, but same register names work for larger LMULs
-    li t1, 0                # Initial pointer bump
-loop:
-    vsetvli t0, x0, e8, m2, ta, ma  # Max length vectors of bytes
-    add a0, a0, t1          # Bump src1 pointer
-    vle8ff.v v8, (a0)       # Get src1 bytes
-    add a1, a1, t1          # Bump src2 pointer
-    vle8ff.v v16, (a1)      # Get src2 bytes
+  /*
+  strcmp:
+      ##  Using LMUL=2, but same register names work for larger LMULs
+      li t1, 0                # Initial pointer bump
+  loop:
+      vsetvli t0, x0, e8, m2, ta, ma  # Max length vectors of bytes
+      add a0, a0, t1          # Bump src1 pointer
+      vle8ff.v v8, (a0)       # Get src1 bytes
+      add a1, a1, t1          # Bump src2 pointer
+      vle8ff.v v16, (a1)      # Get src2 bytes
 
-    vmseq.vi v0, v8, 0      # Flag zero bytes in src1
-    vmsne.vv v1, v8, v16    # Flag if src1 != src2
-    vmor.mm v0, v0, v1      # Combine exit conditions
+      vmseq.vi v0, v8, 0      # Flag zero bytes in src1
+      vmsne.vv v1, v8, v16    # Flag if src1 != src2
+      vmor.mm v0, v0, v1      # Combine exit conditions
 
-    vfirst.m a2, v0         # ==0 or != ?
-    csrr t1, vl             # Get number of bytes fetched
+      vfirst.m a2, v0         # ==0 or != ?
+      csrr t1, vl             # Get number of bytes fetched
 
-    bltz a2, loop           # Loop if all same and no zero byte
+      bltz a2, loop           # Loop if all same and no zero byte
 
-    add a0, a0, a2          # Get src1 element address
-    lbu a3, (a0)            # Get src1 byte from memory
+      add a0, a0, a2          # Get src1 element address
+      lbu a3, (a0)            # Get src1 byte from memory
 
-    add a1, a1, a2          # Get src2 element address
-    lbu a4, (a1)            # Get src2 byte from memory
+      add a1, a1, a2          # Get src2 element address
+      lbu a4, (a1)            # Get src2 byte from memory
 
-    sub a0, a3, a4          # Return value.
+      sub a0, a3, a4          # Return value.
 
-    ret
-*/
-  if (!TARGET_VECTOR || !TARGET_RVV)
+      ret
+  */
+  if (!TARGET_VECTOR)
     return false;
   if (optimize < 1)
+    return false;
+  if (optimize_insn_for_size_p ())
     return false;
 
   machine_mode cur_mode = VNx32QImode;
@@ -1532,22 +1572,32 @@ loop:
 
   unsigned int vlmul = riscv_classify_vlmul_field (cur_mode);
   unsigned int vsew = riscv_classify_vsew_field (cur_mode);
-  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0xC0;
 
   rtx label = gen_label_rtx ();
   emit_label (label);
-  emit_insn (gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
+  emit_insn (
+      gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
   emit_insn (gen_rtx_SET (src1, gen_rtx_PLUS (Pmode, src1, offset)));
   emit_insn (gen_vleff (cur_mode, vec1, const0_rtx, const0_rtx, src1,
-                        gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+                        gen_rtx_REG (Pmode, X0_REGNUM),
+                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
   emit_insn (gen_rtx_SET (src2, gen_rtx_PLUS (Pmode, src2, offset)));
   emit_insn (gen_vleff (cur_mode, vec2, const0_rtx, const0_rtx, src2,
-                        gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
-  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec1, const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
-  emit_insn (gen_vms_vv (NE, cur_mode, mask2, const0_rtx, const0_rtx, vec1, vec2,
-                         gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
-  emit_insn (gen_vm_mm (IOR, mask_mode, mask, mask, mask2, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
-  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+                        gen_rtx_REG (Pmode, X0_REGNUM),
+                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+  emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec1,
+                         const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM),
+                         riscv_vector_gen_policy (RVV_POLICY_TAMA)));
+  emit_insn (gen_vms_vv (NE, cur_mode, mask2, const0_rtx, const0_rtx, vec1,
+                         vec2, gen_rtx_REG (Pmode, X0_REGNUM),
+                         riscv_vector_gen_policy (RVV_POLICY_TAMA)));
+  emit_insn (gen_vm_mm (IOR, mask_mode, mask, mask, mask2,
+                        gen_rtx_REG (Pmode, X0_REGNUM),
+                        riscv_vector_gen_policy (RVV_POLICY_TAMA)));
+  emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask,
+                           gen_rtx_REG (Pmode, X0_REGNUM),
+                           riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_readvl (Pmode, offset, mask));
 
   /* Emit the loop condition.  */
@@ -1558,13 +1608,14 @@ loop:
   emit_insn (gen_rtx_SET (src2, gen_rtx_PLUS (Pmode, src2, end)));
   rtx result1 = gen_reg_rtx (GET_MODE (operands[0]));
   rtx result2 = gen_reg_rtx (GET_MODE (operands[0]));
-  riscv_emit_move (result1, gen_rtx_MEM (GET_MODE (operands[0]), src1));
-  riscv_emit_move (result2, gen_rtx_MEM (GET_MODE (operands[0]), src2));
-  emit_insn (gen_rtx_SET (operands[0],
-      gen_rtx_MINUS (GET_MODE (operands[0]), result1, result2)));
+  riscv_emit_move (gen_lowpart (QImode, result1), gen_rtx_MEM (QImode, src1));
+  riscv_emit_move (gen_lowpart (QImode, result2), gen_rtx_MEM (QImode, src2));
+  emit_insn (gen_rtx_SET (
+      operands[0], gen_rtx_MINUS (GET_MODE (operands[0]), result1, result2)));
   return true;
 }
 
+/* Implement while_len auto-vectorization pattern. */
 void
 riscv_vector_expand_while_len (rtx *operands)
 {
@@ -1776,6 +1827,7 @@ riscv_expand_vcond (machine_mode data_mode, machine_mode cmp_mode,
         gen_vcond_mask (data_mode, data_mode, ops[0], ops[1], ops[2], mask));
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 static rtx
 force_reg_for_over_uimm (rtx vl)
 {
@@ -1787,6 +1839,7 @@ force_reg_for_over_uimm (rtx vl)
   return vl;
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 static rtx
 gen_vlx2 (rtx avl, machine_mode Vmode, machine_mode VSImode)
 {
@@ -1846,6 +1899,7 @@ gen_vlx2 (rtx avl, machine_mode Vmode, machine_mode VSImode)
   return force_reg_for_over_uimm (i32vl);
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 static void
 emit_int64_to_vector_32bit (machine_mode Vmode, machine_mode VSImode,
                             machine_mode VMSImode, rtx vd, rtx s, rtx vl,
@@ -1881,6 +1935,7 @@ emit_int64_to_vector_32bit (machine_mode Vmode, machine_mode VSImode,
   emit_insn (gen_rtx_SET (vd, gen_lowpart (Vmode, vd_si)));
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 bool
 imm32_p (rtx a)
 {
@@ -1903,6 +1958,7 @@ enum GEN_CLASS
   GEN_VV
 };
 
+/* Helper functions for handling sew=64 on RV32 system. */
 enum GEN_CLASS
 modify_operands (machine_mode Vmode, machine_mode VSImode,
                  machine_mode VMSImode, machine_mode VSUBmode, rtx *operands,
@@ -1944,6 +2000,7 @@ modify_operands (machine_mode Vmode, machine_mode VSImode,
     }
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 bool
 emit_op5_vmv_v_x (machine_mode Vmode, machine_mode VSImode,
                   machine_mode VMSImode, machine_mode VSUBmode, rtx *operands,
@@ -1968,6 +2025,7 @@ emit_op5_vmv_v_x (machine_mode Vmode, machine_mode VSImode,
   return false;
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 bool
 emit_op5_vmv_s_x (machine_mode Vmode, machine_mode VSImode,
                   machine_mode VSUBmode, rtx *operands, int i)
@@ -2012,6 +2070,7 @@ emit_op5_vmv_s_x (machine_mode Vmode, machine_mode VSImode,
   return false;
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 void
 emit_op5 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
           machine_mode VMSImode, machine_mode VSUBmode, rtx *operands,
@@ -2044,6 +2103,7 @@ emit_op5 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
       (*gen) (operands[0], operands[1], operands[2], operands[3], operands[4]));
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 void
 emit_op6 (unsigned int unspec ATTRIBUTE_UNUSED, machine_mode Vmode,
           machine_mode VSImode, machine_mode VMSImode, machine_mode VSUBmode,
@@ -2061,6 +2121,7 @@ emit_op6 (unsigned int unspec ATTRIBUTE_UNUSED, machine_mode Vmode,
                      operands[4], operands[5]));
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 bool
 emit_op7_slide1 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
                  machine_mode VSUBmode, rtx *operands, int i)
@@ -2140,6 +2201,7 @@ emit_op7_slide1 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
   return false;
 }
 
+/* Helper functions for handling sew=64 on RV32 system. */
 void
 emit_op7 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
           machine_mode VMSImode, machine_mode VSUBmode, rtx *operands,
@@ -2165,6 +2227,7 @@ emit_op7 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
                      operands[4], force_reg_for_over_uimm (operands[5]), operands[6]));
 }
 
+/* Implement vec_duplicate. */
 static void
 riscv_vector_emit_vec_duplicate (machine_mode mode, machine_mode inner_mode,
                                  rtx target, rtx x)
@@ -2226,6 +2289,7 @@ emit_slide1up (rtx target, rtx source, rtx elem)
         riscv_vector_gen_policy ()));
 }
 
+/* Helper functions for handling vec_init. */
 static int
 get_dup_cnt_idx (const rtx_vector_builder &builder, int nelts, int offset,
                  int *val_idx)
@@ -2404,6 +2468,7 @@ calculate_base_step (const rtx_vector_builder &builder, int nelts,
   return true;
 }
 
+/* Helper functions for handling vec_init. */
 static int
 get_mismatched_rtx_cnt (const rtx_vector_builder &builder, int nelts,
                         int offset, rtx target)
@@ -2418,6 +2483,7 @@ get_mismatched_rtx_cnt (const rtx_vector_builder &builder, int nelts,
   return n_missmatch;
 }
 
+/* Helper functions for handling vec_init. */
 static int
 get_mismatched_bs_cnt (const rtx_vector_builder &builder, int nelts,
                        scalar_mode inner_mode, int offset, int base, int step)
@@ -2437,6 +2503,7 @@ get_mismatched_bs_cnt (const rtx_vector_builder &builder, int nelts,
   return n_missmatch;
 }
 
+/* Helper functions for handling vec_init. */
 static int
 get_first_rtx_index (const rtx_vector_builder &builder, int nelts,
                      scalar_mode inner_mode, rtx target, bool reversed)
@@ -2472,6 +2539,7 @@ get_first_rtx_index (const rtx_vector_builder &builder, int nelts,
   return -1;
 }
 
+/* Helper functions for handling vec_init. */
 static int
 get_first_bs_index (const rtx_vector_builder &builder, int nelts,
                     scalar_mode inner_mode, int base, int step, bool reversed)
@@ -2517,6 +2585,8 @@ riscv_vector_expand_vector_init_insert_leading_elems (
   for (int i = ndups; i < nelts_reqd; i++)
     emit_slide1down (target, target, builder.elt (i));
 }
+
+/* Subroutine of riscv_vector_expand_vector_handle_dup_and_const. */
 
 static void
 riscv_vector_expand_vector_init_handle_ending_const (
@@ -2649,6 +2719,9 @@ riscv_vector_expand_vector_init_handle_leading_const (
   for (int i = nelts_reqd - ending_others; i < nelts_reqd; i++)
     emit_slide1down (target, target, builder.elt (i));
 }
+
+/* Subroutine of riscv_vector_expand_vector_init. 
+   Initial vector if the PARALLEL rtx satisifies the condition. */
 
 static bool
 riscv_vector_expand_vector_handle_dup_and_const (
@@ -2824,12 +2897,16 @@ riscv_vector_expand_vector_init (rtx target, rtx vals)
     riscv_vector_expand_vector_init_insert_leading_elems (target, v, nelts);
 }
 
+/* Return true if it is a cosnt series vector. */
+
 bool
 riscv_vector_strided_const_vector_p (rtx op)
 {
   rtx base, step;
   return const_vec_series_p (op, &base, &step);
 }
+
+/* Implement vec_series<mode>. */
 
 void
 riscv_vector_expand_series_const_vector (rtx target, rtx src)
@@ -2839,6 +2916,9 @@ riscv_vector_expand_series_const_vector (rtx target, rtx src)
   machine_mode mode = GET_MODE (target);
   emit_insn (gen_vec_series (mode, target, base, step));
 }
+
+/* Subroutine of riscv_vector_expand_gather_scatter. 
+   Generate strided load/store for specific gather_load/scatter_store. */
 
 static void
 riscv_vector_expand_strided (rtx ptr, rtx offset, int scale, rtx vector,
@@ -2878,6 +2958,8 @@ riscv_vector_expand_strided (rtx ptr, rtx offset, int scale, rtx vector,
       break;
     }
 }
+
+/* Implement gather_load/scatter_store. */
 
 void
 riscv_vector_expand_gather_scatter (rtx *ops, unsigned int gather_scatter_flag)
@@ -3028,6 +3110,8 @@ riscv_vector_data_mode (scalar_mode inner_mode, poly_uint64 nunits)
   return opt_machine_mode ();
 }
 
+/* Helper function to generate a const value for RVV mask. */
+
 static rtx
 riscv_vector_gen_mask_mem (rtx const_vec, machine_mode mask_mode)
 {
@@ -3054,6 +3138,8 @@ riscv_vector_gen_mask_mem (rtx const_vec, machine_mode mask_mode)
   rtx mem = force_const_mem (store_mode, const_vec);
   return gen_rtx_MEM (mask_mode, XEXP (mem, 0));
 }
+
+/* Implement vec_perm<mode>. */
 
 void
 riscv_vector_expand_vec_perm (rtx target, rtx op0, rtx op1, rtx sel)
@@ -3228,6 +3314,8 @@ riscv_vector_vmerge (struct expand_vec_perm_d *d)
   return true;
 }
 
+/* Try to implement D using RVV duplicete instruction.  */
+
 static bool
 riscv_vector_vdup (struct expand_vec_perm_d *d)
 {
@@ -3253,6 +3341,8 @@ riscv_vector_vdup (struct expand_vec_perm_d *d)
   emit_insn (gen_vec_duplicate (vmode, out, select));
   return true;
 }
+
+/* Try to implement D using RVV vcompress instruction.  */
 
 static bool
 riscv_vector_vcompress (struct expand_vec_perm_d *d)
@@ -3408,9 +3498,8 @@ riscv_vector_vrgather (struct expand_vec_perm_d *d)
   gcc_assert (targetm.vectorize.get_mask_mode (d->vmode).exists (&mask_mode));
   machine_mode sel_mode = related_int_vector_mode (d->vmode).require ();
   if (!d->perm.length ().is_constant ()
-      && ((known_gt (GET_MODE_SIZE (d->vmode), BYTES_PER_RISCV_VECTOR)
+      && known_gt (GET_MODE_SIZE (d->vmode), BYTES_PER_RISCV_VECTOR)
       && GET_MODE_BITSIZE (element_mode) > 16)
-      || GET_MODE_BITSIZE (element_mode) < 16))
     gcc_assert (riscv_vector_data_mode (HImode, d->perm.length ()) .exists (&sel_mode));
 
   unsigned int i = 0;
@@ -3517,11 +3606,16 @@ riscv_vector_vrgather (struct expand_vec_perm_d *d)
   return true;
 }
 
+/* Subroutine of riscv_vector_expand_vectorize_vec_perm_const. */
+
 static bool
 riscv_vector_expand_vec_perm_const (struct expand_vec_perm_d *d)
 {
-  if (!(riscv_vector_data_mode_p (d->vmode) && !riscv_tuple_mode_p (d->vmode)))
+  if (!riscv_vector_data_mode_p (d->vmode))
     return false;
+  if (riscv_tuple_mode_p (d->vmode))
+    return false;
+
   /* The pattern matching functions above are written to look for a small
      number to begin the sequence (0, 1, N/2).  If we begin with an index
      from the second operand, we can swap the operands.  */
@@ -3546,6 +3640,8 @@ riscv_vector_expand_vec_perm_const (struct expand_vec_perm_d *d)
 
   return false;
 }
+
+/* Implement TARGET_VECTORIZE_VEC_PERM_CONST using RVV instructions.  */
 
 bool
 riscv_vector_expand_vectorize_vec_perm_const (machine_mode vmode, rtx target, rtx op0,
@@ -3606,6 +3702,8 @@ riscv_vector_expand_vectorize_vec_perm_const (machine_mode vmode, rtx target, rt
 
   return ret;
 }
+
+/* Implement TARGET_VECTORIZE_PREFERRED_SIMD_MODE for RVV.  */
 
 machine_mode
 riscv_vector_preferred_simd_mode (scalar_mode mode, unsigned vf)
@@ -3670,6 +3768,8 @@ riscv_vector_preferred_simd_mode (scalar_mode mode, unsigned vf)
   return word_mode;
 }
 
+/* Implement TARGET_VECTORIZE_RELATED_MODE for RVV.  */
+
 opt_machine_mode
 riscv_vector_vectorize_related_mode (machine_mode vector_mode,
                                      scalar_mode element_mode,
@@ -3712,6 +3812,8 @@ riscv_vector_vectorize_related_mode (machine_mode vector_mode,
   return default_vectorize_related_mode (vector_mode, element_mode, nunits);
 }
 
+/* Implement TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_MODES for RVV.  */
+
 void
 riscv_vector_autovectorize_vector_modes (vector_modes *modes, unsigned vf, bool)
 {
@@ -3748,6 +3850,8 @@ riscv_vector_autovectorize_vector_modes (vector_modes *modes, unsigned vf, bool)
     }
 }
 
+/* Implement TARGET_VECTORIZE_GET_MASK_MODE for RVV.  */
+
 opt_machine_mode
 riscv_vector_get_mask_mode (machine_mode mode)
 {
@@ -3765,6 +3869,8 @@ riscv_vector_get_mask_mode (machine_mode mode)
   return default_get_mask_mode (mode);
 }
 
+/* Return true if the machine mode can be used in a specific extension.  */
+
 bool
 riscv_vector_check_supported_mode_p (machine_mode mode)
 {
@@ -3772,8 +3878,11 @@ riscv_vector_check_supported_mode_p (machine_mode mode)
     return TARGET_FP16;
   if (mode == SFmode)
     return TARGET_HARD_FLOAT;
+  if (mode == DImode)
+    return riscv_vector_elen_flags != MASK_VECTOR_ELEN_32 &&
+           riscv_vector_elen_flags != MASK_VECTOR_ELEN_FP_32;
   if (mode == DFmode)
     return TARGET_DOUBLE_FLOAT;
-  
+
   return true;
 }

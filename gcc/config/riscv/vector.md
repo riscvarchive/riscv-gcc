@@ -863,9 +863,9 @@
 ;; !x0 | x0  | ~0        | Set vl to VLMAX
 (define_insn "@vsetvl_<mode>"
   [(parallel
-    [(set (match_operand:X 0 "register_operand" "=r,r")
+    [(set (match_operand:X 0 "register_operand" "=r")
       (unspec:X
-        [(match_operand:X 1 "csr_operand" "K,r")] UNSPEC_VSETVLI))
+        [(match_operand:X 1 "csr_operand" "rK")] UNSPEC_VSETVLI))
      (set (reg:SI VL_REGNUM)
        (unspec:SI
         [(match_dup 1)] UNSPEC_VSETVLI))
@@ -927,7 +927,7 @@
   [(parallel
     [(set (reg:SI VL_REGNUM)
        (unspec:SI
-        [(match_operand:X 0 "csr_operand" "K,r")] UNSPEC_VSETVLI))
+        [(match_operand:X 0 "csr_operand" "rK")] UNSPEC_VSETVLI))
      (set (reg:SI VTYPE_REGNUM)
        (unspec:SI
         [(match_operand 1 "const_int_operand")] UNSPEC_VSETVLI))])]
@@ -971,24 +971,20 @@
 
 ;; Vector Unit-Stride Loads.
 (define_insn "@vle<mode>"
-  [(set (match_operand:V 0 "register_operand"                 "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:V 0 "register_operand"                 "=vd,vd,  vr,vr")
     (unspec:V
       [(unspec:V
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,   J,J")
           (unspec:V
-            [(match_operand 3 "pmode_register_operand"        "r,r,r,r,       r,r,r,r")
+            [(match_operand 3 "pmode_register_operand"        "r,r,     r,r")
             (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_LOAD)
-         (match_operand:V 2 "vector_reg_or_const0_operand"    "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-      (match_operand 4 "p_reg_or_const_csr_operand"           "r,r,r,r,       K,K,K,K")
+         (match_operand:V 2 "vector_reg_or_const0_operand"    "0,J,     0,J")] UNSPEC_SELECT)
+      (match_operand 4 "p_reg_or_const_csr_operand"           "rK,rK,   rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vle<sew>.v\t%0,(%3),%1.t
-   vle<sew>.v\t%0,(%3),%1.t
-   vle<sew>.v\t%0,(%3)
-   vle<sew>.v\t%0,(%3)
    vle<sew>.v\t%0,(%3),%1.t
    vle<sew>.v\t%0,(%3),%1.t
    vle<sew>.v\t%0,(%3)
@@ -1001,20 +997,18 @@
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:V
-        [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,J,  vm,J")
+        [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,J")
          (unspec:BLK
-           [(match_operand 1 "pmode_register_operand"         "r,r,   r,r")
-            (match_operand:V 2 "register_operand"             "vr,vr, vr,vr")
+           [(match_operand 1 "pmode_register_operand"         "r,r")
+            (match_operand:V 2 "register_operand"             "vr,vr")
             (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_STORE)
          (match_dup 1)] UNSPEC_SELECT)
-      (match_operand 3 "p_reg_or_const_csr_operand"           "r,r,   K,K")
+      (match_operand 3 "p_reg_or_const_csr_operand"           "rK,rK")
       (match_operand 4 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vse<sew>.v\t%2,(%1),%0.t
-   vse<sew>.v\t%2,(%1)
    vse<sew>.v\t%2,(%1),%0.t
    vse<sew>.v\t%2,(%1)"
   [(set_attr "type" "vse")
@@ -1022,12 +1016,12 @@
 
 ;; Vector Unit-stride mask Loads.
 (define_insn "@vlm<mode>"
-  [(set (match_operand:VB 0 "register_operand"    "=vr, vr")
+  [(set (match_operand:VB 0 "register_operand"    "=vr")
   (unspec:VB
     [(unspec:VB
-      [(match_operand 1 "pmode_register_operand"  "r,   r")
+      [(match_operand 1 "pmode_register_operand"  "r")
        (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_LOAD)
-    (match_operand 2 "p_reg_or_const_csr_operand" "r,   K")
+    (match_operand 2 "p_reg_or_const_csr_operand" "rK")
     (match_operand 3 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1041,10 +1035,10 @@
   [(set (mem:BLK (scratch))
   (unspec:BLK
     [(unspec:BLK
-      [(match_operand 0 "pmode_register_operand"  "r,   r")
-       (match_operand:VB 1 "register_operand"     "vr,  vr")
+      [(match_operand 0 "pmode_register_operand"  "r")
+       (match_operand:VB 1 "register_operand"     "vr")
        (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_STORE)
-    (match_operand 2 "p_reg_or_const_csr_operand" "r,   K")
+    (match_operand 2 "p_reg_or_const_csr_operand" "rK")
     (match_operand 3 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1058,16 +1052,16 @@
 ;; This special pattern, we add policy operand because
 ;; we need it in the expansion.
 (define_insn "@vlse<mode>"
-  [(set (match_operand:V 0 "register_operand" "=vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V 0 "register_operand"                 "=vd,vd,vd,vd,vr,vr,vr,vr")
     (unspec:V
       [(unspec:V
         [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
          (unspec:V
-           [(match_operand 3 "pmode_register_operand" "r,r,r,r,r,r,r,r")
-           (match_operand 4 "p_reg_or_0_operand" "r,J,r,J,r,J,r,J")
+           [(match_operand 3 "pmode_register_operand"         "r,r,r,r,r,r,r,r")
+           (match_operand 4 "p_reg_or_0_operand"              "r,J,r,J,r,J,r,J")
            (mem:BLK (scratch))] UNSPEC_STRIDED_LOAD)
-         (match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+         (match_operand:V 2 "vector_reg_or_const0_operand"    "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1091,11 +1085,11 @@
       [(unspec:V
         [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:BLK
-          [(match_operand 1 "pmode_register_operand" "r,r,r,r")
-           (match_operand 2 "p_reg_or_0_operand" "r,J,r,J")
-           (match_operand:V 3 "register_operand" "vr,vr,vr,vr")] UNSPEC_STRIDED_STORE)
+          [(match_operand 1 "pmode_register_operand"          "r,r,r,r")
+           (match_operand 2 "p_reg_or_0_operand"              "r,J,r,J")
+           (match_operand:V 3 "register_operand"              "vr,vr,vr,vr")] UNSPEC_STRIDED_STORE)
          (match_dup 1)] UNSPEC_SELECT)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 4 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1115,15 +1109,15 @@
 
 ;; pattern of indexed loads for nunits = 2.
 (define_insn "@vl<uo>xei<V2UNITS:mode><V2UNITSI:mode>"
-  [(set (match_operand:V2UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:V2UNITS 0 "register_operand"                     "=&vr,&vr,&vr,&vr")
     (unspec:V2UNITS
       [(unspec:V2UNITS
-        [(match_operand:<V2UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:V2UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V2UNITSI 4 "register_operand" "vr,vr,vr,vr")
+        [(match_operand:<V2UNITS:VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J")
+         (match_operand:V2UNITS 2 "vector_reg_or_const0_operand"        "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V2UNITSI 4 "register_operand"                   "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand"                     "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1138,15 +1132,15 @@
 
 ;; pattern of indexed loads for nunits = 4.
 (define_insn "@vl<uo>xei<V4UNITS:mode><V4UNITSI:mode>"
-  [(set (match_operand:V4UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:V4UNITS 0 "register_operand"                   "=&vr,&vr,&vr,&vr")
     (unspec:V4UNITS
       [(unspec:V4UNITS
         [(match_operand:<V4UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:V4UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V4UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (match_operand:V4UNITS 2 "vector_reg_or_const0_operand"      "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                    "r,r,r,r")
+         (match_operand:V4UNITSI 4 "register_operand"                 "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand"                   "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1161,15 +1155,15 @@
 
 ;; pattern of indexed loads for nunits = 8.
 (define_insn "@vl<uo>xei<V8UNITS:mode><V8UNITSI:mode>"
-  [(set (match_operand:V8UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:V8UNITS 0 "register_operand"                   "=&vr,&vr,&vr,&vr")
     (unspec:V8UNITS
       [(unspec:V8UNITS
         [(match_operand:<V8UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:V8UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V8UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (match_operand:V8UNITS 2 "vector_reg_or_const0_operand"      "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                    "r,r,r,r")
+         (match_operand:V8UNITSI 4 "register_operand"                 "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand"                   "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1184,15 +1178,15 @@
 
 ;; pattern of indexed loads for nunits = 16.
 (define_insn "@vl<uo>xei<V16UNITS:mode><V16UNITSI:mode>"
-  [(set (match_operand:V16UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:V16UNITS 0 "register_operand"                    "=&vr,&vr,&vr,&vr")
     (unspec:V16UNITS
       [(unspec:V16UNITS
-        [(match_operand:<V16UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:V16UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V16UNITSI 4 "register_operand" "vr,vr,vr,vr")
+        [(match_operand:<V16UNITS:VM> 1 "vector_reg_or_const0_operand"  "vm,vm,J,J")
+         (match_operand:V16UNITS 2 "vector_reg_or_const0_operand"       "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V16UNITSI 4 "register_operand"                  "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand"                     "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1207,15 +1201,15 @@
 
 ;; pattern of indexed loads for nunits = 32.
 (define_insn "@vl<uo>xei<V32UNITS:mode><V32UNITSI:mode>"
-  [(set (match_operand:V32UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:V32UNITS 0 "register_operand"                    "=&vr,&vr,&vr,&vr")
     (unspec:V32UNITS
       [(unspec:V32UNITS
-        [(match_operand:<V32UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:V32UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V32UNITSI 4 "register_operand" "vr,vr,vr,vr")
+        [(match_operand:<V32UNITS:VM> 1 "vector_reg_or_const0_operand"  "vm,vm,J,J")
+         (match_operand:V32UNITS 2 "vector_reg_or_const0_operand"       "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V32UNITSI 4 "register_operand"                  "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand"                     "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1230,15 +1224,15 @@
 
 ;; pattern of indexed loads for nunits = 64.
 (define_insn "@vl<uo>xei<V64UNITS:mode><V64UNITSI:mode>"
-  [(set (match_operand:V64UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:V64UNITS 0 "register_operand"                    "=&vr,&vr,&vr,&vr")
     (unspec:V64UNITS
       [(unspec:V64UNITS
-        [(match_operand:<V64UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:V64UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V64UNITSI 4 "register_operand" "vr,vr,vr,vr")
+        [(match_operand:<V64UNITS:VM> 1 "vector_reg_or_const0_operand"  "vm,vm,J,J")
+         (match_operand:V64UNITS 2 "vector_reg_or_const0_operand"       "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V64UNITSI 4 "register_operand"                  "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand"                     "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1253,15 +1247,15 @@
 
 ;; pattern of indexed loads for nunits = 128.
 (define_insn "@vl<uo>xei<V128UNITSI:mode><V128UNITSI:mode>"
-  [(set (match_operand:V128UNITSI 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:V128UNITSI 0 "register_operand"                    "=&vr,&vr,&vr,&vr")
     (unspec:V128UNITSI
       [(unspec:V128UNITSI
-        [(match_operand:<V128UNITSI:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:V128UNITSI 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V128UNITSI 4 "register_operand" "vr,vr,vr,vr")
+        [(match_operand:<V128UNITSI:VM> 1 "vector_reg_or_const0_operand"  "vm,vm,J,J")
+         (match_operand:V128UNITSI 2 "vector_reg_or_const0_operand"       "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                        "r,r,r,r")
+         (match_operand:V128UNITSI 4 "register_operand"                   "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+      (match_operand 5 "p_reg_or_const_csr_operand"                       "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1281,11 +1275,11 @@
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:V2UNITS
-         [(match_operand:<V2UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V2UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:V2UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+         [(match_operand:<V2UNITS:VM> 0 "vector_reg_or_const0_operand"  "vm,J")
+          (match_operand 1 "pmode_register_operand"                     "r,r")
+          (match_operand:V2UNITSI 2 "register_operand"                  "vr,vr")
+          (match_operand:V2UNITS 3 "register_operand"                   "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1301,11 +1295,11 @@
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:V4UNITS
-         [(match_operand:<V4UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V4UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:V4UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+         [(match_operand:<V4UNITS:VM> 0 "vector_reg_or_const0_operand"  "vm,J")
+          (match_operand 1 "pmode_register_operand"                     "r,r")
+          (match_operand:V4UNITSI 2 "register_operand"                  "vr,vr")
+          (match_operand:V4UNITS 3 "register_operand"                   "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1321,11 +1315,11 @@
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:V8UNITS
-         [(match_operand:<V8UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V8UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:V8UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+         [(match_operand:<V8UNITS:VM> 0 "vector_reg_or_const0_operand"  "vm,J")
+          (match_operand 1 "pmode_register_operand"                     "r,r")
+          (match_operand:V8UNITSI 2 "register_operand"                  "vr,vr")
+          (match_operand:V8UNITS 3 "register_operand"                   "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1342,10 +1336,10 @@
     (unspec:BLK
       [(unspec:V16UNITS
          [(match_operand:<V16UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V16UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:V16UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand 1 "pmode_register_operand"                     "r,r")
+          (match_operand:V16UNITSI 2 "register_operand"                 "vr,vr")
+          (match_operand:V16UNITS 3 "register_operand"                  "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1362,10 +1356,10 @@
     (unspec:BLK
       [(unspec:V32UNITS
          [(match_operand:<V32UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V32UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:V32UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand 1 "pmode_register_operand"                     "r,r")
+          (match_operand:V32UNITSI 2 "register_operand"                 "vr,vr")
+          (match_operand:V32UNITS 3 "register_operand"                  "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1382,10 +1376,10 @@
     (unspec:BLK
       [(unspec:V64UNITS
          [(match_operand:<V64UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V64UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:V64UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand 1 "pmode_register_operand"                     "r,r")
+          (match_operand:V64UNITSI 2 "register_operand"                 "vr,vr")
+          (match_operand:V64UNITS 3 "register_operand"                  "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1402,10 +1396,10 @@
     (unspec:BLK
       [(unspec:V128UNITSI
          [(match_operand:<V128UNITSI:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V128UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:V128UNITSI 3 "register_operand" "vr,vr")] INDEXED_STORE)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand 1 "pmode_register_operand"                       "r,r")
+          (match_operand:V128UNITSI 2 "register_operand"                  "vr,vr")
+          (match_operand:V128UNITSI 3 "register_operand"                  "vr,vr")] INDEXED_STORE)
+    (match_operand 4 "p_reg_or_const_csr_operand"                         "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1418,15 +1412,15 @@
 
 ;; Unit-stride Fault-Only-First Loads.
 (define_insn "@vle<mode>ff"
-  [(set (match_operand:V 0 "register_operand" "=vd,vd,vr,vr")
+  [(set (match_operand:V 0 "register_operand"               "=vd,vd,vr,vr")
    (unspec:V
     [(unspec:V
       [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:V
-         [(match_operand 3 "pmode_register_operand" "r,r,r,r")
+         [(match_operand 3 "pmode_register_operand"         "r,r,r,r")
            (mem:BLK (scratch))] UNSPEC_FAULT_ONLY_FIRST_LOAD)
-       (match_operand:V 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+       (match_operand:V 2 "vector_reg_or_const0_operand"    "0,J,0,J")] UNSPEC_SELECT)
+    (match_operand 4 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
@@ -1442,15 +1436,15 @@
 
 ;; Vector Unit-Stride Segment Loads.
 (define_insn "@vlseg<mode>"
-  [(set (match_operand:VT 0 "register_operand" "=vd,vd,vr,vr")
+  [(set (match_operand:VT 0 "register_operand"                "=vd,vd,vr,vr")
     (unspec:VT
       [(unspec:VT
         [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:VT
-           [(match_operand 3 "pmode_register_operand" "r,r,r,r")
+           [(match_operand 3 "pmode_register_operand"         "r,r,r,r")
            (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_LOAD)
-         (match_operand:VT 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
-    (match_operand 4 "p_reg_or_const_csr_operand")
+         (match_operand:VT 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+    (match_operand 4 "p_reg_or_const_csr_operand"             "rK,rK,rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1470,11 +1464,11 @@
       [(unspec:VT
         [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,J")
          (unspec:BLK
-           [(match_operand 1 "pmode_register_operand" "r,r")
-           (match_operand:VT 2 "register_operand" "vr,vr")
+           [(match_operand 1 "pmode_register_operand"         "r,r")
+           (match_operand:VT 2 "register_operand"             "vr,vr")
            (mem:BLK (scratch))] UNSPEC_UNIT_STRIDE_STORE)
          (match_dup 1)] UNSPEC_SELECT)
-      (match_operand 3 "p_reg_or_const_csr_operand")
+      (match_operand 3 "p_reg_or_const_csr_operand"           "rK,rK")
       (match_operand 4 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1487,15 +1481,15 @@
 
 ;; Unit-stride Fault-Only-First Segment Loads
 (define_insn "@vlseg<mode>ff"
-  [(set (match_operand:VT 0 "register_operand" "=vd,vd,vr,vr")
+  [(set (match_operand:VT 0 "register_operand"                "=vd,vd,vr,vr")
     (unspec:VT
       [(unspec:VT
         [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:VT
-           [(match_operand 3 "pmode_register_operand" "r,r,r,r")
+           [(match_operand 3 "pmode_register_operand"         "r,r,r,r")
            (mem:BLK (scratch))] UNSPEC_FAULT_ONLY_FIRST_LOAD)
-         (match_operand:VT 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+         (match_operand:VT 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 4 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
@@ -1511,16 +1505,16 @@
 
 ;; Vector Strided Segment Loads.
 (define_insn "@vlsseg<mode>"
-  [(set (match_operand:VT 0 "register_operand" "=vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VT 0 "register_operand"                "=vd,vd,vd,vd,vr,vr,vr,vr")
     (unspec:VT
       [(unspec:VT
         [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
          (unspec:VT
-           [(match_operand 3 "pmode_register_operand" "r,r,r,r,r,r,r,r")
-           (match_operand 4 "p_reg_or_const_csr_operand" "r,J,r,J,r,J,r,J")
+           [(match_operand 3 "pmode_register_operand"         "r,r,r,r,r,r,r,r")
+           (match_operand 4 "p_reg_or_0_operand"              "r,J,r,J,r,J,r,J")
            (mem:BLK (scratch))] UNSPEC_STRIDED_LOAD)
-         (match_operand:VT 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
+         (match_operand:VT 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1544,11 +1538,11 @@
       [(unspec:VT
         [(match_operand:<VM> 0 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:BLK
-           [(match_operand 1 "pmode_register_operand" "r,r,r,r")
-             (match_operand 2 "p_reg_or_const_csr_operand" "r,J,r,J")
-             (match_operand:VT 3 "register_operand" "vr,vr,vr,vr")] UNSPEC_STRIDED_STORE)
+           [(match_operand 1 "pmode_register_operand"         "r,r,r,r")
+             (match_operand 2 "p_reg_or_0_operand"            "r,J,r,J")
+             (match_operand:VT 3 "register_operand"           "vr,vr,vr,vr")] UNSPEC_STRIDED_STORE)
          (match_dup 1)] UNSPEC_SELECT)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+      (match_operand 4 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1564,15 +1558,15 @@
 ;; Vector Unordered and Ordered Indexed Segment Loads.
 ;; pattern of segments indexed loads for nunits = 2.
 (define_insn "@vl<uo>xsegei<VT2UNITS:mode><V2UNITSI:mode>"
-  [(set (match_operand:VT2UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:VT2UNITS 0 "register_operand"                    "=&vr,&vr,&vr,&vr")
     (unspec:VT2UNITS
       [(unspec:VT2UNITS
-        [(match_operand:<VT2UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:VT2UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V2UNITSI 4 "register_operand" "vr,vr,vr,vr")
+        [(match_operand:<VT2UNITS:VM> 1 "vector_reg_or_const0_operand"  "vm,vm,J,J")
+         (match_operand:VT2UNITS 2 "vector_reg_or_const0_operand"       "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V2UNITSI 4 "register_operand"                   "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1587,15 +1581,15 @@
 
 ;; pattern of segments indexed loads for nunits = 4.
 (define_insn "@vl<uo>xsegei<VT4UNITS:mode><V4UNITSI:mode>"
-  [(set (match_operand:VT4UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:VT4UNITS 0 "register_operand"                    "=&vr,&vr,&vr,&vr")
     (unspec:VT4UNITS
       [(unspec:VT4UNITS
-        [(match_operand:<VT4UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:VT4UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V4UNITSI 4 "register_operand" "vr,vr,vr,vr")
+        [(match_operand:<VT4UNITS:VM> 1 "vector_reg_or_const0_operand"  "vm,vm,J,J")
+         (match_operand:VT4UNITS 2 "vector_reg_or_const0_operand"       "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V4UNITSI 4 "register_operand"                   "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1610,15 +1604,15 @@
 
 ;; pattern of segments indexed loads for nunits = 8.
 (define_insn "@vl<uo>xsegei<VT8UNITS:mode><V8UNITSI:mode>"
-  [(set (match_operand:VT8UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:VT8UNITS 0 "register_operand"                    "=&vr,&vr,&vr,&vr")
     (unspec:VT8UNITS
       [(unspec:VT8UNITS
-        [(match_operand:<VT8UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:VT8UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V8UNITSI 4 "register_operand" "vr,vr,vr,vr")
+        [(match_operand:<VT8UNITS:VM> 1 "vector_reg_or_const0_operand"  "vm,vm,J,J")
+         (match_operand:VT8UNITS 2 "vector_reg_or_const0_operand"       "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V8UNITSI 4 "register_operand"                   "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1633,15 +1627,15 @@
 
 ;; pattern of segments indexed loads for nunits = 16.
 (define_insn "@vl<uo>xsegei<VT16UNITS:mode><V16UNITSI:mode>"
-  [(set (match_operand:VT16UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:VT16UNITS 0 "register_operand"                   "=&vr,&vr,&vr,&vr")
     (unspec:VT16UNITS
       [(unspec:VT16UNITS
         [(match_operand:<VT16UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:VT16UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V16UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (match_operand:VT16UNITS 2 "vector_reg_or_const0_operand"      "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V16UNITSI 4 "register_operand"                  "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1656,15 +1650,15 @@
 
 ;; pattern of segments indexed loads for nunits = 32.
 (define_insn "@vl<uo>xsegei<VT32UNITS:mode><V32UNITSI:mode>"
-  [(set (match_operand:VT32UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:VT32UNITS 0 "register_operand"                   "=&vr,&vr,&vr,&vr")
     (unspec:VT32UNITS
       [(unspec:VT32UNITS
         [(match_operand:<VT32UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:VT32UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V32UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (match_operand:VT32UNITS 2 "vector_reg_or_const0_operand"      "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V32UNITSI 4 "register_operand"                  "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1679,15 +1673,15 @@
 
 ;; pattern of segments indexed loads for nunits = 64.
 (define_insn "@vl<uo>xsegei<VT64UNITS:mode><V64UNITSI:mode>"
-  [(set (match_operand:VT64UNITS 0 "register_operand" "=&vr,&vr,&vr,&vr")
+  [(set (match_operand:VT64UNITS 0 "register_operand"                   "=&vr,&vr,&vr,&vr")
     (unspec:VT64UNITS
       [(unspec:VT64UNITS
         [(match_operand:<VT64UNITS:VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
-         (match_operand:VT64UNITS 2 "vector_reg_or_const0_operand" "0,J,0,J")
-         (match_operand 3 "pmode_register_operand" "r,r,r,r")
-         (match_operand:V64UNITSI 4 "register_operand" "vr,vr,vr,vr")
+         (match_operand:VT64UNITS 2 "vector_reg_or_const0_operand"      "0,J,0,J")
+         (match_operand 3 "pmode_register_operand"                      "r,r,r,r")
+         (match_operand:V64UNITSI 4 "register_operand"                  "vr,vr,vr,vr")
          (mem:BLK (scratch))] INDEXED_LOAD)
-       (match_operand 5 "p_reg_or_const_csr_operand")
+       (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1707,10 +1701,10 @@
     (unspec:BLK
       [(unspec:VT2UNITS
          [(match_operand:<VT2UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V2UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:VT2UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand 1 "pmode_register_operand"                     "r,r")
+          (match_operand:V2UNITSI 2 "register_operand"                  "vr,vr")
+          (match_operand:VT2UNITS 3 "register_operand"                  "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand"                     "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1727,10 +1721,10 @@
     (unspec:BLK
       [(unspec:VT4UNITS
          [(match_operand:<VT4UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V4UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:VT4UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+          (match_operand 1 "pmode_register_operand"                     "r,r")
+          (match_operand:V4UNITSI 2 "register_operand"                  "vr,vr")
+          (match_operand:VT4UNITS 3 "register_operand"                  "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand"                     "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1746,11 +1740,11 @@
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:VT8UNITS
-         [(match_operand:<VT8UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V8UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:VT8UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+         [(match_operand:<VT8UNITS:VM> 0 "vector_reg_or_const0_operand"   "vm,J")
+          (match_operand 1 "pmode_register_operand"                       "r,r")
+          (match_operand:V8UNITSI 2 "register_operand"                    "vr,vr")
+          (match_operand:VT8UNITS 3 "register_operand"                    "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1766,11 +1760,11 @@
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:VT16UNITS
-         [(match_operand:<VT16UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V16UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:VT16UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+         [(match_operand:<VT16UNITS:VM> 0 "vector_reg_or_const0_operand"  "vm,J")
+          (match_operand 1 "pmode_register_operand"                       "r,r")
+          (match_operand:V16UNITSI 2 "register_operand"                   "vr,vr")
+          (match_operand:VT16UNITS 3 "register_operand"                   "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1786,11 +1780,11 @@
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:VT32UNITS
-         [(match_operand:<VT32UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V32UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:VT32UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+         [(match_operand:<VT32UNITS:VM> 0 "vector_reg_or_const0_operand"  "vm,J")
+          (match_operand 1 "pmode_register_operand"                       "r,r")
+          (match_operand:V32UNITSI 2 "register_operand"                   "vr,vr")
+          (match_operand:VT32UNITS 3 "register_operand"                   "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -1806,11 +1800,11 @@
   [(set (mem:BLK (scratch))
     (unspec:BLK
       [(unspec:VT64UNITS
-         [(match_operand:<VT64UNITS:VM> 0 "vector_reg_or_const0_operand" "vm,J")
-          (match_operand 1 "pmode_register_operand" "r,r")
-          (match_operand:V64UNITSI 2 "register_operand" "vr,vr")
-          (match_operand:VT64UNITS 3 "register_operand" "vr,vr")] INDEXED_STORE)
-      (match_operand 4 "p_reg_or_const_csr_operand")
+         [(match_operand:<VT64UNITS:VM> 0 "vector_reg_or_const0_operand"  "vm,J")
+          (match_operand 1 "pmode_register_operand"                       "r,r")
+          (match_operand:V64UNITSI 2 "register_operand"                   "vr,vr")
+          (match_operand:VT64UNITS 3 "register_operand"                   "vr,vr")] INDEXED_STORE)
+      (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2166,36 +2160,28 @@
 ;; optimize the const vector that all elments are
 ;; 5-bit signed immediate by using vadd.vi.
 (define_insn "@vadd<mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,  vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,   J,J,J,J")
        (plus:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-         (match_operand:VI 4 "vector_arith_operand"         "vr,vi,vr,vi,vr,vi,vr,vi,   vr,vi,vr,vi,vr,vi,vr,vi"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr")
+         (match_operand:VI 4 "vector_arith_operand"         "vr,vr,vi,vi,   vr,vr,vi,vi"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")
       ] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,   rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
    vadd.vv\t%0,%3,%4,%1.t
-   vadd.vi\t%0,%3,%v4,%1.t
    vadd.vv\t%0,%3,%4,%1.t
    vadd.vi\t%0,%3,%v4,%1.t
-   vadd.vv\t%0,%3,%4
-   vadd.vi\t%0,%3,%v4
-   vadd.vv\t%0,%3,%4
-   vadd.vi\t%0,%3,%v4
-   vadd.vv\t%0,%3,%4,%1.t
-   vadd.vi\t%0,%3,%v4,%1.t
-   vadd.vv\t%0,%3,%4,%1.t
    vadd.vi\t%0,%3,%v4,%1.t
    vadd.vv\t%0,%3,%4
-   vadd.vi\t%0,%3,%v4
    vadd.vv\t%0,%3,%4
+   vadd.vi\t%0,%3,%v4
    vadd.vi\t%0,%3,%v4"
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
@@ -2205,15 +2191,15 @@
 ;; Optimize this case using vadd.vi for const vector
 ;; that all elements are 5-bit signed immediate neg value.
 (define_insn "@vsub<mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (minus:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-         (match_operand:VI 4 "vector_neg_arith_operand"     "vr,vj,vr,vj,vr,vj,vr,vj,   vr,vj,vr,vj,vr,vj,vr,vj"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:VI 4 "vector_neg_arith_operand"     "vr,vj,vr,vj,vr,vj,vr,vj"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2244,67 +2230,51 @@
 ;; are 5-bit signed immediate value with
 ;; vadd.vi.
 (define_insn "@vadd<mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,  vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,   J,J,J,J")
        (plus:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr")
          (vec_duplicate:VI
-           (match_operand:<VSUB> 4 "reg_or_simm5_operand"   "r,Ws5,r,Ws5,r,Ws5,r,Ws5,   r,Ws5,r,Ws5,r,Ws5,r,Ws5")))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
+           (match_operand:<VSUB> 4 "reg_or_simm5_operand"   "r,r,Ws5,Ws5,   r,r,Ws5,Ws5")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")
       ] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,   rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
    vadd.vx\t%0,%3,%4,%1.t
-   vadd.vi\t%0,%3,%4,%1.t
    vadd.vx\t%0,%3,%4,%1.t
    vadd.vi\t%0,%3,%4,%1.t
-   vadd.vx\t%0,%3,%4
-   vadd.vi\t%0,%3,%4
-   vadd.vx\t%0,%3,%4
-   vadd.vi\t%0,%3,%4
-   vadd.vx\t%0,%3,%4,%1.t
-   vadd.vi\t%0,%3,%4,%1.t
-   vadd.vx\t%0,%3,%4,%1.t
    vadd.vi\t%0,%3,%4,%1.t
    vadd.vx\t%0,%3,%4
-   vadd.vi\t%0,%3,%4
    vadd.vx\t%0,%3,%4
+   vadd.vi\t%0,%3,%4
    vadd.vi\t%0,%3,%4"
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vadd<mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
        (plus:V64BITI
-         (match_operand:V64BITI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:V64BITI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
          (vec_duplicate:V64BITI
            (sign_extend:<VSUB>
-             (match_operand:SI 4 "reg_or_simm5_operand"         "r,Ws5,r,Ws5,r,Ws5,r,Ws5,   r,Ws5,r,Ws5,r,Ws5,r,Ws5"))))
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
+             (match_operand:SI 4 "reg_or_simm5_operand"         "r,Ws5,r,Ws5,r,Ws5,r,Ws5"))))
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J")
       ] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+     (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vadd.vx\t%0,%3,%4,%1.t
-   vadd.vi\t%0,%3,%4,%1.t
-   vadd.vx\t%0,%3,%4,%1.t
-   vadd.vi\t%0,%3,%4,%1.t
-   vadd.vx\t%0,%3,%4
-   vadd.vi\t%0,%3,%4
-   vadd.vx\t%0,%3,%4
-   vadd.vi\t%0,%3,%4
    vadd.vx\t%0,%3,%4,%1.t
    vadd.vi\t%0,%3,%4,%1.t
    vadd.vx\t%0,%3,%4,%1.t
@@ -2322,17 +2292,17 @@
 ;; are 5-bit signed immediate neg value with
 ;; vadd.vi.
 (define_insn "@vsub<mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,vm,vm,J,J,J,J")
        (minus:VI
-        (match_operand:VI 3 "register_operand"                "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:VI 3 "register_operand"                "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:VI
-          (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand"  "r,Wn5,r,Wn5,r,Wn5,r,Wn5,   r,Wn5,r,Wn5,r,Wn5,r,Wn5")))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"     "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
+          (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand"  "r,Wn5,r,Wn5,r,Wn5,r,Wn5")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"     "0,0,J,J,0,0,J,J")
       ] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"            "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2357,17 +2327,17 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vsub<mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
        (minus:V64BITI
-        (match_operand:V64BITI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:V64BITI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:V64BITI
           (sign_extend:<VSUB>
-           (match_operand:SI 4 "reg_or_neg_simm5_operand"       "r,Wn5,r,Wn5,r,Wn5,r,Wn5,   r,Wn5,r,Wn5,r,Wn5,r,Wn5"))))
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+           (match_operand:SI 4 "reg_or_neg_simm5_operand"       "r,Wn5,r,Wn5,r,Wn5,r,Wn5"))))
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2394,16 +2364,16 @@
 ;; Vector-Scalar and Vector-immediate
 ;; Integer Reverse Sub.
 (define_insn "@vrsub<mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (minus:VI
         (vec_duplicate:VI
-         (match_operand:<VSUB> 4 "reg_or_simm5_operand"     "r,Ws5,r,Ws5,r,Ws5,r,Ws5,   r,Ws5,r,Ws5,r,Ws5,r,Ws5"))
-        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:<VSUB> 4 "reg_or_simm5_operand"     "r,Ws5,r,Ws5,r,Ws5,r,Ws5"))
+        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2416,43 +2386,27 @@
    vrsub.vx\t%0,%3,%4
    vrsub.vi\t%0,%3,%4
    vrsub.vx\t%0,%3,%4
-   vrsub.vi\t%0,%3,%4
-   vrsub.vx\t%0,%3,%4,%1.t
-   vrsub.vi\t%0,%3,%4,%1.t
-   vrsub.vx\t%0,%3,%4,%1.t
-   vrsub.vi\t%0,%3,%4,%1.t
-   vrsub.vx\t%0,%3,%4
-   vrsub.vi\t%0,%3,%4
-   vrsub.vx\t%0,%3,%4
    vrsub.vi\t%0,%3,%4"
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vrsub<mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
        (minus:V64BITI
         (vec_duplicate:V64BITI
          (sign_extend:<VSUB>
-          (match_operand:SI 4 "reg_or_simm5_operand"            "r,Ws5,r,Ws5,r,Ws5,r,Ws5,   r,Ws5,r,Ws5,r,Ws5,r,Ws5")))
-        (match_operand:V64BITI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr"))
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+          (match_operand:SI 4 "reg_or_simm5_operand"            "r,Ws5,r,Ws5,r,Ws5,r,Ws5")))
+        (match_operand:V64BITI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr"))
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vrsub.vx\t%0,%3,%4,%1.t
-   vrsub.vi\t%0,%3,%4,%1.t
-   vrsub.vx\t%0,%3,%4,%1.t
-   vrsub.vi\t%0,%3,%4,%1.t
-   vrsub.vx\t%0,%3,%4
-   vrsub.vi\t%0,%3,%4
-   vrsub.vx\t%0,%3,%4
-   vrsub.vi\t%0,%3,%4
    vrsub.vx\t%0,%3,%4,%1.t
    vrsub.vi\t%0,%3,%4,%1.t
    vrsub.vx\t%0,%3,%4,%1.t
@@ -2466,23 +2420,19 @@
 
 ;; pseudo-instruction vneg.v vd,vs = vrsub.vx vd,vs,x0.
 (define_insn "@vneg<mode>_v"
-  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vr,vr")
     (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (neg:VI
-          (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr"))
-         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-       (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+          (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr"))
+         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+       (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
        (match_operand 5 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vneg.v\t%0,%3,%1.t
-   vneg.v\t%0,%3,%1.t
-   vneg.v\t%0,%3
-   vneg.v\t%0,%3
    vneg.v\t%0,%3,%1.t
    vneg.v\t%0,%3,%1.t
    vneg.v\t%0,%3
@@ -2492,26 +2442,22 @@
 
 ;; Vector-Vector Widening Signed/Unsigned Integer Add/Subtract.
 (define_insn "@vw<plus_minus:optab><u><vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus_minus:<VW>
         (any_extend:<VW>
-          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr"))
+          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr"))
         (any_extend:<VW>
-          (match_operand:VWI 4 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+          (match_operand:VWI 4 "register_operand"           "vr,vr,vr,vr")))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vw<insn><u>.vv\t%0,%3,%4,%1.t
-   vw<insn><u>.vv\t%0,%3,%4,%1.t
-   vw<insn><u>.vv\t%0,%3,%4
-   vw<insn><u>.vv\t%0,%3,%4
    vw<insn><u>.vv\t%0,%3,%4,%1.t
    vw<insn><u>.vv\t%0,%3,%4,%1.t
    vw<insn><u>.vv\t%0,%3,%4
@@ -2521,31 +2467,23 @@
 
 ;; Vector-Scalar Widening Signed/Unsigned Integer Add/Subtract.
 (define_insn "@vw<plus_minus:optab><u><vw>_vx"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,               vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (plus_minus:<VW>
         (any_extend:<VW>
-          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr,           vr,vr,vr,vr,vr,vr,vr,vr"))
+          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr"))
         (any_extend:<VW>
           (vec_duplicate:VWI
-            (match_operand:<VSUB> 4 "reg_or_0_operand"      "r,J,r,J,r,J,r,J,                   r,J,r,J,r,J,r,J"))))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J,                   0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,                   K,K,K,K,K,K,K,K")
+            (match_operand:<VSUB> 4 "reg_or_0_operand"      "r,J,r,J,r,J,r,J"))))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vw<insn><u>.vx\t%0,%3,%4,%1.t
-   vw<insn><u>.vx\t%0,%3,zero,%1.t
-   vw<insn><u>.vx\t%0,%3,%4,%1.t
-   vw<insn><u>.vx\t%0,%3,zero,%1.t
-   vw<insn><u>.vx\t%0,%3,%4
-   vw<insn><u>.vx\t%0,%3,zero
-   vw<insn><u>.vx\t%0,%3,%4
-   vw<insn><u>.vx\t%0,%3,zero
    vw<insn><u>.vx\t%0,%3,%4,%1.t
    vw<insn><u>.vx\t%0,%3,zero,%1.t
    vw<insn><u>.vx\t%0,%3,%4,%1.t
@@ -2559,25 +2497,21 @@
 
 ;; Vector-Vector Widening Signed/Unsigned Integer Add/Subtract.
 (define_insn "@vw<plus_minus:optab><u><vw>_wv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus_minus:<VW>
-        (match_operand:<VW> 3 "register_operand"            "vr,vr,vr,vr,       vr,vr,vr,vr")
+        (match_operand:<VW> 3 "register_operand"            "vr,vr,vr,vr")
         (any_extend:<VW>
-          (match_operand:VWI 4 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+          (match_operand:VWI 4 "register_operand"           "vr,vr,vr,vr")))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vw<insn><u>.wv\t%0,%3,%4,%1.t
-   vw<insn><u>.wv\t%0,%3,%4,%1.t
-   vw<insn><u>.wv\t%0,%3,%4
-   vw<insn><u>.wv\t%0,%3,%4
    vw<insn><u>.wv\t%0,%3,%4,%1.t
    vw<insn><u>.wv\t%0,%3,%4,%1.t
    vw<insn><u>.wv\t%0,%3,%4
@@ -2587,31 +2521,23 @@
 
 ;; Vector-Scalar Widening Signed/Unsigned Integer Add/Subtract.
 (define_insn "@vw<plus_minus:optab><u><vw>_wx"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,               vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (plus_minus:<VW>
-        (match_operand:<VW> 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,           vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:<VW> 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
         (any_extend:<VW>
           (unspec:VWI
-             [(match_operand:<VSUB> 4 "reg_or_0_operand"    "r,J,r,J,r,J,r,J,                   r,J,r,J,r,J,r,J")
+             [(match_operand:<VSUB> 4 "reg_or_0_operand"    "r,J,r,J,r,J,r,J")
             ] UNSPEC_VEC_DUPLICATE)))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J,                   0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,                   K,K,K,K,K,K,K,K")
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vw<insn><u>.wx\t%0,%3,%4,%1.t
-   vw<insn><u>.wx\t%0,%3,zero,%1.t
-   vw<insn><u>.wx\t%0,%3,%4,%1.t
-   vw<insn><u>.wx\t%0,%3,zero,%1.t
-   vw<insn><u>.wx\t%0,%3,%4
-   vw<insn><u>.wx\t%0,%3,zero
-   vw<insn><u>.wx\t%0,%3,%4
-   vw<insn><u>.wx\t%0,%3,zero
    vw<insn><u>.wx\t%0,%3,%4,%1.t
    vw<insn><u>.wx\t%0,%3,zero,%1.t
    vw<insn><u>.wx\t%0,%3,%4,%1.t
@@ -2625,24 +2551,20 @@
 
 ;; pseudo-instruction vwcvt.x.x.v vd,vs,vm = vwadd.vx vd,vs,x0,vm.
 (define_insn "@vwcvt<u><vw>_x_x_v"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:<VW>
          [(any_extend:<VW>
-           (match_operand:VWI 3 "register_operand"          "vr,vr,vr,vr,       vr,vr,vr,vr"))] UNSPEC_DOUBLE_WIDEN)
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+           (match_operand:VWI 3 "register_operand"          "vr,vr,vr,vr"))] UNSPEC_DOUBLE_WIDEN)
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwcvt<u>.x.x.v\t%0,%3,%1.t
-   vwcvt<u>.x.x.v\t%0,%3,%1.t
-   vwcvt<u>.x.x.v\t%0,%3
-   vwcvt<u>.x.x.v\t%0,%3
    vwcvt<u>.x.x.v\t%0,%3,%1.t
    vwcvt<u>.x.x.v\t%0,%3,%1.t
    vwcvt<u>.x.x.v\t%0,%3
@@ -2652,23 +2574,19 @@
 
 ;; Vector Double-Widening Sign-extend and Zero-extend.
 (define_insn "@v<sz>ext<vw>_vf2"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (any_extend:<VW>
-        (match_operand:VWI 3 "register_operand"             "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+        (match_operand:VWI 3 "register_operand"             "vr,vr,vr,vr"))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<sz>ext.vf2\t%0,%3,%1.t
-   v<sz>ext.vf2\t%0,%3,%1.t
-   v<sz>ext.vf2\t%0,%3
-   v<sz>ext.vf2\t%0,%3
    v<sz>ext.vf2\t%0,%3,%1.t
    v<sz>ext.vf2\t%0,%3,%1.t
    v<sz>ext.vf2\t%0,%3
@@ -2678,23 +2596,19 @@
 
 ;; Vector Quad-Widening Sign-extend and Zero-extend.
 (define_insn "@v<sz>ext<vqw>_vf4"
-  [(set (match_operand:<VQW> 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VQW> 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:<VQW>
     [(unspec:<VQW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J")
        (any_extend:<VQW>
-        (match_operand:VQWI 3 "register_operand"              "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:<VQW> 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"            "r,r,r,r,           K,K,K,K")
+        (match_operand:VQWI 3 "register_operand"              "vr,vr,vr,vr"))
+       (match_operand:<VQW> 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<sz>ext.vf4\t%0,%3,%1.t
-   v<sz>ext.vf4\t%0,%3,%1.t
-   v<sz>ext.vf4\t%0,%3
-   v<sz>ext.vf4\t%0,%3
    v<sz>ext.vf4\t%0,%3,%1.t
    v<sz>ext.vf4\t%0,%3,%1.t
    v<sz>ext.vf4\t%0,%3
@@ -2704,23 +2618,19 @@
 
 ;; Vector Oct-Widening Sign-extend and Zero-extend.
 (define_insn "@v<sz>ext<vow>_vf8"
-  [(set (match_operand:<VOW> 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VOW> 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:<VOW>
     [(unspec:<VOW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J")
        (any_extend:<VOW>
-        (match_operand:VOWI 3 "register_operand"              "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:<VOW> 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"            "r,r,r,r,           K,K,K,K")
+        (match_operand:VOWI 3 "register_operand"              "vr,vr,vr,vr"))
+       (match_operand:<VOW> 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<sz>ext.vf8\t%0,%3,%1.t
-   v<sz>ext.vf8\t%0,%3,%1.t
-   v<sz>ext.vf8\t%0,%3
-   v<sz>ext.vf8\t%0,%3
    v<sz>ext.vf8\t%0,%3,%1.t
    v<sz>ext.vf8\t%0,%3,%1.t
    v<sz>ext.vf8\t%0,%3
@@ -2733,27 +2643,23 @@
 ;; vector register is v0.
 ;; Vector-Vector Produce sum with carry.
 (define_insn "@vadc<mode>_vvm"
-  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd,&vd,&vd,  &vd,&vd,&vd,&vd")
+  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd,&vd,&vd")
   (unspec:VI
-    [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J,           0,0,J,J")
+    [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J")
      (plus:VI
        (plus:VI
-         (match_operand:VI 2 "register_operand"         "vr,vr,vr,vr,       vr,vr,vr,vr")
-         (match_operand:VI 3 "vector_arith_operand"     "vr,vi,vr,vi,       vr,vi,vr,vi"))
+         (match_operand:VI 2 "register_operand"         "vr,vr,vr,vr")
+         (match_operand:VI 3 "vector_arith_operand"     "vr,vi,vr,vi"))
        (if_then_else:VI
-         (match_operand:<VM> 4 "register_operand"       "vm,vm,vm,vm,       vm,vm,vm,vm")
+         (match_operand:<VM> 4 "register_operand"       "vm,vm,vm,vm")
          (vec_duplicate:VI (const_int 1))
          (vec_duplicate:VI (const_int 0))))
-     (match_operand 5 "p_reg_or_const_csr_operand"      "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vadc.vvm\t%0,%2,%3,%4
-   vadc.vim\t%0,%2,%v3,%4
-   vadc.vvm\t%0,%2,%3,%4
-   vadc.vim\t%0,%2,%v3,%4
    vadc.vvm\t%0,%2,%3,%4
    vadc.vim\t%0,%2,%v3,%4
    vadc.vvm\t%0,%2,%3,%4
@@ -2763,18 +2669,18 @@
 
 ;; Vector-Vector Produce difference with borrow.
 (define_insn "@vsbc<mode>_vvm"
-  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd,  &vd,&vd")
+  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd")
   (unspec:VI
-    [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,J,       0,J")
+    [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,J")
      (minus:VI
        (minus:VI
-         (match_operand:VI 2 "register_operand"         "vr,vr,     vr,vr")
-         (match_operand:VI 3 "register_operand"         "vr,vr,     vr,vr"))
+         (match_operand:VI 2 "register_operand"         "vr,vr")
+         (match_operand:VI 3 "register_operand"         "vr,vr"))
        (if_then_else:VI
-         (match_operand:<VM> 4 "register_operand"       "vm,vm,     vm,vm")
+         (match_operand:<VM> 4 "register_operand"       "vm,vm")
          (vec_duplicate:VI (const_int 1))
          (vec_duplicate:VI (const_int 0))))
-     (match_operand 5 "p_reg_or_const_csr_operand"      "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2785,19 +2691,19 @@
 
 ;; Vector-Scalar Produce sum with carry.
 (define_insn "@vadc<mode>_vxm_internal"
-  [(set (match_operand:VI 0 "register_operand"            "=&vd,&vd,&vd,&vd,  &vd,&vd,&vd,&vd")
+  [(set (match_operand:VI 0 "register_operand"            "=&vd,&vd,&vd,&vd")
   (unspec:VI
-    [(match_operand:VI 1 "vector_reg_or_const0_operand"   "0,0,J,J,           0,0,J,J")
+    [(match_operand:VI 1 "vector_reg_or_const0_operand"   "0,0,J,J")
       (plus:VI
        (plus:VI
-         (match_operand:VI 2 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")
+         (match_operand:VI 2 "register_operand"           "vr,vr,vr,vr")
          (vec_duplicate:VI
-           (match_operand:<VSUB> 3 "reg_or_simm5_operand" "r,Ws5,r,Ws5,       r,Ws5,r,Ws5")))
+           (match_operand:<VSUB> 3 "reg_or_simm5_operand" "r,Ws5,r,Ws5")))
        (if_then_else:VI
-         (match_operand:<VM> 4 "register_operand"         "vm,vm,vm,vm,       vm,vm,vm,vm")
+         (match_operand:<VM> 4 "register_operand"         "vm,vm,vm,vm")
          (vec_duplicate:VI (const_int 1))
          (vec_duplicate:VI (const_int 0))))
-     (match_operand 5 "p_reg_or_const_csr_operand"        "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"        "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2806,38 +2712,30 @@
    vadc.vxm\t%0,%2,%3,%4
    vadc.vim\t%0,%2,%3,%4
    vadc.vxm\t%0,%2,%3,%4
-   vadc.vim\t%0,%2,%3,%4
-   vadc.vxm\t%0,%2,%3,%4
-   vadc.vim\t%0,%2,%3,%4
-   vadc.vxm\t%0,%2,%3,%4
    vadc.vim\t%0,%2,%3,%4"
   [(set_attr "type" "vadc")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vadc<mode>_vxm_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"           "=&vd,&vd,&vd,&vd,  &vd,&vd,&vd,&vd")
+  [(set (match_operand:V64BITI 0 "register_operand"           "=&vd,&vd,&vd,&vd")
   (unspec:V64BITI
-    [(match_operand:V64BITI 1 "vector_reg_or_const0_operand"  "0,0,J,J,           0,0,J,J")
+    [(match_operand:V64BITI 1 "vector_reg_or_const0_operand"  "0,0,J,J")
       (plus:V64BITI
        (plus:V64BITI
-         (match_operand:V64BITI 2 "register_operand"          "vr,vr,vr,vr,       vr,vr,vr,vr")
+         (match_operand:V64BITI 2 "register_operand"          "vr,vr,vr,vr")
          (vec_duplicate:V64BITI
            (sign_extend:<VSUB>
-            (match_operand:SI 3 "reg_or_simm5_operand"        "r,Ws5,r,Ws5,       r,Ws5,r,Ws5"))))
+            (match_operand:SI 3 "reg_or_simm5_operand"        "r,Ws5,r,Ws5"))))
        (if_then_else:V64BITI
-         (match_operand:<VM> 4 "register_operand"             "vm,vm,vm,vm,       vm,vm,vm,vm")
+         (match_operand:<VM> 4 "register_operand"             "vm,vm,vm,vm")
          (vec_duplicate:V64BITI (const_int 1))
          (vec_duplicate:V64BITI (const_int 0))))
-     (match_operand:SI 5 "csr_operand"                        "r,r,r,r,           K,K,K,K")
+     (match_operand:SI 5 "csr_operand"                        "rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vadc.vxm\t%0,%2,%3,%4
-   vadc.vim\t%0,%2,%3,%4
-   vadc.vxm\t%0,%2,%3,%4
-   vadc.vim\t%0,%2,%3,%4
    vadc.vxm\t%0,%2,%3,%4
    vadc.vim\t%0,%2,%3,%4
    vadc.vxm\t%0,%2,%3,%4
@@ -2847,19 +2745,19 @@
 
 ;; Vector-Vector Scalar difference with borrow.
 (define_insn "@vsbc<mode>_vxm_internal"
-  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd,&vd,&vd,  &vd,&vd,&vd,&vd")
+  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd,&vd,&vd")
   (unspec:VI
-    [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J,           0,0,J,J")
+    [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J")
      (minus:VI
        (minus:VI
-         (match_operand:VI 2 "register_operand"         "vr,vr,vr,vr,       vr,vr,vr,vr")
+         (match_operand:VI 2 "register_operand"         "vr,vr,vr,vr")
          (vec_duplicate:VI
-           (match_operand:<VSUB> 3 "reg_or_0_operand"   "r,J,r,J,           r,J,r,J")))
+           (match_operand:<VSUB> 3 "reg_or_0_operand"   "r,J,r,J")))
        (if_then_else:VI
-         (match_operand:<VM> 4 "register_operand"       "vm,vm,vm,vm,       vm,vm,vm,vm")
+         (match_operand:<VM> 4 "register_operand"       "vm,vm,vm,vm")
          (vec_duplicate:VI (const_int 1))
          (vec_duplicate:VI (const_int 0))))
-     (match_operand 5 "p_reg_or_const_csr_operand"      "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2868,37 +2766,29 @@
    vsbc.vxm\t%0,%2,%3,%4
    vsbc.vxm\t%0,%2,zero,%4
    vsbc.vxm\t%0,%2,%3,%4
-   vsbc.vxm\t%0,%2,zero,%4
-   vsbc.vxm\t%0,%2,%3,%4
-   vsbc.vxm\t%0,%2,zero,%4
-   vsbc.vxm\t%0,%2,%3,%4
    vsbc.vxm\t%0,%2,zero,%4"
   [(set_attr "type" "vadc")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vsbc<mode>_vxm_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                   "=&vd,&vd,&vd,&vd,  &vd,&vd,&vd,&vd")
+  [(set (match_operand:V64BITI 0 "register_operand"                   "=&vd,&vd,&vd,&vd")
   (unspec:V64BITI
-    [(match_operand:V64BITI 1 "vector_reg_or_const0_operand"          "0,0,J,J,           0,0,J,J")
+    [(match_operand:V64BITI 1 "vector_reg_or_const0_operand"          "0,0,J,J")
      (minus:V64BITI
        (minus:V64BITI
-         (match_operand:V64BITI 2 "register_operand"                  "vr,vr,vr,vr,       vr,vr,vr,vr")
+         (match_operand:V64BITI 2 "register_operand"                  "vr,vr,vr,vr")
          (vec_duplicate:V64BITI
-           (sign_extend:<VSUB> (match_operand:SI 3 "reg_or_0_operand" "r,J,r,J,           r,J,r,J"))))
+           (sign_extend:<VSUB> (match_operand:SI 3 "reg_or_0_operand" "r,J,r,J"))))
        (if_then_else:V64BITI
-         (match_operand:<VM> 4 "register_operand"                     "vm,vm,vm,vm,       vm,vm,vm,vm")
+         (match_operand:<VM> 4 "register_operand"                     "vm,vm,vm,vm")
          (vec_duplicate:V64BITI (const_int 1))
          (vec_duplicate:V64BITI (const_int 0))))
-     (match_operand:SI 5 "csr_operand"                                "r,r,r,r,           K,K,K,K")
+     (match_operand:SI 5 "csr_operand"                                "rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vsbc.vxm \t%0,%2,%3,%4
-   vsbc.vxm \t%0,%2,zero,%4
-   vsbc.vxm \t%0,%2,%3,%4
-   vsbc.vxm \t%0,%2,zero,%4
    vsbc.vxm \t%0,%2,%3,%4
    vsbc.vxm \t%0,%2,zero,%4
    vsbc.vxm \t%0,%2,%3,%4
@@ -2908,24 +2798,22 @@
 
 ;; Vector-Vector Produce carry out in mask register format.
 (define_insn "@vmadc<mode>_vvm"
-  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,&vr")
   (unspec:<VM>
     [(plus:VI
       (plus:VI
-        (match_operand:VI 1 "register_operand"      "vr,vr,     vr,vr")
-        (match_operand:VI 2 "vector_arith_operand"  "vr,vi,     vr,vi"))
+        (match_operand:VI 1 "register_operand"      "vr,vr")
+        (match_operand:VI 2 "vector_arith_operand"  "vr,vi"))
       (if_then_else:VI
-        (match_operand:<VM> 3 "register_operand"    "vm,vm,     vm,vm")
+        (match_operand:<VM> 3 "register_operand"    "vm,vm")
         (vec_duplicate:VI (const_int 1))
         (vec_duplicate:VI (const_int 0))))
-     (match_operand 4 "p_reg_or_const_csr_operand"  "r,r,       K,K")
+     (match_operand 4 "p_reg_or_const_csr_operand"  "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmadc.vvm\t%0,%1,%2,%3
-   vmadc.vim\t%0,%1,%v2,%3
    vmadc.vvm\t%0,%1,%2,%3
    vmadc.vim\t%0,%1,%v2,%3"
   [(set_attr "type" "vmadc")
@@ -2933,17 +2821,17 @@
 
 ;; Vector-Vector Produce borrow out in mask register format.
 (define_insn "@vmsbc<mode>_vvm"
-  [(set (match_operand:<VM> 0 "register_operand"  "=&vr,  &vr")
+  [(set (match_operand:<VM> 0 "register_operand"  "=&vr")
   (unspec:<VM>
     [(minus:VI
       (minus:VI
-        (match_operand:VI 1 "register_operand"      "vr,    vr")
-        (match_operand:VI 2 "register_operand"      "vr,    vr"))
+        (match_operand:VI 1 "register_operand"      "vr")
+        (match_operand:VI 2 "register_operand"      "vr"))
       (if_then_else:VI
-        (match_operand:<VM> 3 "register_operand"    "vm,    vm")
+        (match_operand:<VM> 3 "register_operand"    "vm")
         (vec_duplicate:VI (const_int 1))
         (vec_duplicate:VI (const_int 0))))
-     (match_operand 4 "p_reg_or_const_csr_operand"  "r,     K")
+     (match_operand 4 "p_reg_or_const_csr_operand"  "rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -2954,51 +2842,47 @@
 
 ;; Vector-Scalar Produce carry out in mask register format.
 (define_insn "@vmadc<mode>_vxm_internal"
-  [(set (match_operand:<VM> 0 "register_operand"          "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"          "=&vr,&vr")
   (unspec:<VM>
     [(plus:VI
       (plus:VI
-        (match_operand:VI 1 "register_operand"            "vr,vr,     vr,vr")
+        (match_operand:VI 1 "register_operand"            "vr,vr")
         (vec_duplicate:VI
-          (match_operand:<VSUB> 2 "reg_or_simm5_operand"  "r,Ws5,     r,Ws5")))
+          (match_operand:<VSUB> 2 "reg_or_simm5_operand"  "r,Ws5")))
       (if_then_else:VI
-        (match_operand:<VM> 3 "register_operand"          "vm,vm,     vm,vm")
+        (match_operand:<VM> 3 "register_operand"          "vm,vm")
         (vec_duplicate:VI (const_int 1))
         (vec_duplicate:VI (const_int 0))))
-     (match_operand 4 "p_reg_or_const_csr_operand"        "r,r,       K,K")
+     (match_operand 4 "p_reg_or_const_csr_operand"        "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmadc.vxm\t%0,%1,%2,%3
-   vmadc.vim\t%0,%1,%2,%3
    vmadc.vxm\t%0,%1,%2,%3
    vmadc.vim\t%0,%1,%2,%3"
   [(set_attr "type" "vmadc")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmadc<mode>_vxm_32bit"
-  [(set (match_operand:<VM> 0 "register_operand"        "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"        "=&vr,&vr")
   (unspec:<VM>
     [(plus:V64BITI
       (plus:V64BITI
-        (match_operand:V64BITI 1 "register_operand"     "vr,vr,     vr,vr")
+        (match_operand:V64BITI 1 "register_operand"     "vr,vr")
         (vec_duplicate:V64BITI
           (sign_extend:<VSUB>
-            (match_operand:SI 2 "reg_or_simm5_operand"  "r,Ws5,     r,Ws5"))))
+            (match_operand:SI 2 "reg_or_simm5_operand"  "r,Ws5"))))
       (if_then_else:V64BITI
-        (match_operand:<VM> 3 "register_operand"        "vm,vm,     vm,vm")
+        (match_operand:<VM> 3 "register_operand"        "vm,vm")
         (vec_duplicate:V64BITI (const_int 1))
         (vec_duplicate:V64BITI (const_int 0))))
-     (match_operand:SI 4 "csr_operand"                  "r,r,       K,K")
+     (match_operand:SI 4 "csr_operand"                  "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmadc.vxm\t%0,%1,%2,%3
-   vmadc.vim\t%0,%1,%2,%3
    vmadc.vxm\t%0,%1,%2,%3
    vmadc.vim\t%0,%1,%2,%3"
   [(set_attr "type" "vmadc")
@@ -3006,51 +2890,47 @@
 
 ;; Vector-Scalar Produce borrow out in mask register format.
 (define_insn "@vmsbc<mode>_vxm_internal"
-  [(set (match_operand:<VM> 0 "register_operand"      "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"      "=&vr,&vr")
   (unspec:<VM>
     [(minus:VI
       (minus:VI
-        (match_operand:VI 1 "register_operand"        "vr,vr,     vr,vr")
+        (match_operand:VI 1 "register_operand"        "vr,vr")
         (vec_duplicate:VI
-          (match_operand:<VSUB> 2 "reg_or_0_operand"  "r,J,       r,J")))
+          (match_operand:<VSUB> 2 "reg_or_0_operand"  "r,J")))
       (if_then_else:VI
-        (match_operand:<VM> 3 "register_operand"      "vm,vm,     vm,vm")
+        (match_operand:<VM> 3 "register_operand"      "vm,vm")
         (vec_duplicate:VI (const_int 1))
         (vec_duplicate:VI (const_int 0))))
-     (match_operand 4 "p_reg_or_const_csr_operand"    "r,r,       K,K")
+     (match_operand 4 "p_reg_or_const_csr_operand"    "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmsbc.vxm\t%0,%1,%2,%3
-   vmsbc.vxm\t%0,%1,zero,%3
    vmsbc.vxm\t%0,%1,%2,%3
    vmsbc.vxm\t%0,%1,zero,%3"
   [(set_attr "type" "vmadc")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmsbc<mode>_vxm_32bit"
-  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,&vr")
   (unspec:<VM>
     [(minus:V64BITI
       (minus:V64BITI
-        (match_operand:V64BITI 1 "register_operand" "vr,vr,     vr,vr")
+        (match_operand:V64BITI 1 "register_operand" "vr,vr")
         (vec_duplicate:V64BITI
           (sign_extend:<VSUB>
-            (match_operand:SI 2 "reg_or_0_operand"  "r,J,       r,J"))))
+            (match_operand:SI 2 "reg_or_0_operand"  "r,J"))))
       (if_then_else:V64BITI
-        (match_operand:<VM> 3 "register_operand"    "vm,vm,     vm,vm")
+        (match_operand:<VM> 3 "register_operand"    "vm,vm")
         (vec_duplicate:V64BITI (const_int 1))
         (vec_duplicate:V64BITI (const_int 0))))
-     (match_operand:SI 4 "csr_operand"              "r,r,       K,K")
+     (match_operand:SI 4 "csr_operand"              "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmsbc.vxm\t%0,%1,%2,%3
-   vmsbc.vxm\t%0,%1,zero,%3
    vmsbc.vxm\t%0,%1,%2,%3
    vmsbc.vxm\t%0,%1,zero,%3"
   [(set_attr "type" "vmadc")
@@ -3058,19 +2938,17 @@
 
 ;; Vector-Vector Produce carry out in mask register format.
 (define_insn "@vmadc<mode>_vv"
-  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,&vr")
     (unspec:<VM>
       [(plus:VI
-        (match_operand:VI 1 "register_operand"      "vr,vr,     vr,vr")
-        (match_operand:VI 2 "vector_arith_operand"  "vr,vi,     vr,vi"))
-      (match_operand 3 "p_reg_or_const_csr_operand" "r,r,       K,K")
+        (match_operand:VI 1 "register_operand"      "vr,vr")
+        (match_operand:VI 2 "vector_arith_operand"  "vr,vi"))
+      (match_operand 3 "p_reg_or_const_csr_operand" "rK,rK")
       (match_operand 4 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmadc.vv\t%0,%1,%2
-   vmadc.vi\t%0,%1,%v2
    vmadc.vv\t%0,%1,%2
    vmadc.vi\t%0,%1,%v2"
   [(set_attr "type" "vmadc")
@@ -3078,12 +2956,12 @@
 
 ;; Vector-Vector Produce borrow out in mask register format.
 (define_insn "@vmsbc<mode>_vv"
-  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,  &vr")
+  [(set (match_operand:<VM> 0 "register_operand"    "=&vr")
   (unspec:<VM>
     [(minus:VI
-      (match_operand:VI 1 "register_operand"        "vr,    vr")
-      (match_operand:VI 2 "register_operand"        "vr,    vr"))
-     (match_operand 3 "p_reg_or_const_csr_operand"  "r,     K")
+      (match_operand:VI 1 "register_operand"        "vr")
+      (match_operand:VI 2 "register_operand"        "vr"))
+     (match_operand 3 "p_reg_or_const_csr_operand"  "rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3094,41 +2972,37 @@
 
 ;; Vector-Scalar Produce carry out in mask register format.
 (define_insn "@vmadc<mode>_vx_internal"
-  [(set (match_operand:<VM> 0 "register_operand"          "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"          "=&vr,&vr")
     (unspec:<VM>
       [(plus:VI
-        (match_operand:VI 1 "register_operand"            "vr,vr,     vr,vr")
+        (match_operand:VI 1 "register_operand"            "vr,vr")
         (vec_duplicate:VI
-          (match_operand:<VSUB> 2 "reg_or_simm5_operand"  "r,Ws5,     r,Ws5")))
-       (match_operand 3 "p_reg_or_const_csr_operand"      "r,r,       K,K")
+          (match_operand:<VSUB> 2 "reg_or_simm5_operand"  "r,Ws5")))
+       (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmadc.vx\t%0,%1,%2
-   vmadc.vi\t%0,%1,%2
    vmadc.vx\t%0,%1,%2
    vmadc.vi\t%0,%1,%2"
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmadc<mode>_vx_32bit"
-  [(set (match_operand:<VM> 0 "register_operand"        "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"        "=&vr,&vr")
     (unspec:<VM>
       [(plus:V64BITI
-        (match_operand:V64BITI 1 "register_operand"     "vr,vr,     vr,vr")
+        (match_operand:V64BITI 1 "register_operand"     "vr,vr")
         (vec_duplicate:V64BITI
           (sign_extend:<VSUB>
-            (match_operand:SI 2 "reg_or_simm5_operand"  "r,Ws5,     r,Ws5"))))
-       (match_operand:SI 3 "csr_operand"                "r,r,       K,K")
+            (match_operand:SI 2 "reg_or_simm5_operand"  "r,Ws5"))))
+       (match_operand:SI 3 "csr_operand"                "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmadc.vx \t%0,%1,%2
-   vmadc.vi \t%0,%1,%2
    vmadc.vx \t%0,%1,%2
    vmadc.vi \t%0,%1,%2"
   [(set_attr "type" "varith")
@@ -3136,41 +3010,37 @@
 
 ;; Vector-Scalar Produce borrow out in mask register format.
 (define_insn "@vmsbc<mode>_vx_internal"
-  [(set (match_operand:<VM> 0 "register_operand"      "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"      "=&vr,&vr")
     (unspec:<VM>
       [(minus:VI
-        (match_operand:VI 1 "register_operand"        "vr,vr,     vr,vr")
+        (match_operand:VI 1 "register_operand"        "vr,vr")
         (vec_duplicate:VI
-          (match_operand:<VSUB> 2 "reg_or_0_operand"  "r,J,       r,J")))
-       (match_operand 3 "p_reg_or_const_csr_operand"  "r,r,       K,K")
+          (match_operand:<VSUB> 2 "reg_or_0_operand"  "r,J")))
+       (match_operand 3 "p_reg_or_const_csr_operand"  "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmsbc.vx\t%0,%1,%2
-   vmsbc.vx\t%0,%1,zero
    vmsbc.vx\t%0,%1,%2
    vmsbc.vx\t%0,%1,zero"
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmsbc<mode>_vx_32bit"
-  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"    "=&vr,&vr")
     (unspec:<VM>
       [(minus:V64BITI
-        (match_operand:V64BITI 1 "register_operand" "vr,vr,     vr,vr")
+        (match_operand:V64BITI 1 "register_operand" "vr,vr")
         (vec_duplicate:V64BITI
           (sign_extend:<VSUB>
-            (match_operand:SI 2 "reg_or_0_operand"  "r,J,       r,J"))))
-       (match_operand:SI 3 "csr_operand"            "r,r,       K,K")
+            (match_operand:SI 2 "reg_or_0_operand"  "r,J"))))
+       (match_operand:SI 3 "csr_operand"            "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmsbc.vx \t%0,%1,%2
-   vmsbc.vx \t%0,%1,zero
    vmsbc.vx \t%0,%1,%2
    vmsbc.vx \t%0,%1,zero"
   [(set_attr "type" "varith")
@@ -3178,28 +3048,20 @@
 
 ;; Vector-Vector Bitwise logical operations.
 (define_insn "@v<optab><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_bitwise:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-         (match_operand:VI 4 "vector_arith_operand"         "vr,vi,vr,vi,vr,vi,vr,vi,   vr,vi,vr,vi,vr,vi,vr,vi"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:VI 4 "vector_arith_operand"         "vr,vi,vr,vi,vr,vi,vr,vi"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%v4,%1.t
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%v4,%1.t
-   v<insn>.vv\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%v4
-   v<insn>.vv\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%v4
    v<insn>.vv\t%0,%3,%4,%1.t
    v<insn>.vi\t%0,%3,%v4,%1.t
    v<insn>.vv\t%0,%3,%4,%1.t
@@ -3213,17 +3075,17 @@
 
 ;; Vector-Scalar Bitwise logical operations.
 (define_insn "@v<optab><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_bitwise:VI
-        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:VI
-          (match_operand:<VSUB> 4 "reg_or_simm5_operand"    "r,Ws5,r,Ws5,r,Ws5,r,Ws5,   r,Ws5,r,Ws5,r,Ws5,r,Ws5")))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
+          (match_operand:<VSUB> 4 "reg_or_simm5_operand"    "r,Ws5,r,Ws5,r,Ws5,r,Ws5")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")
       ] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3236,43 +3098,27 @@
    v<insn>.vx\t%0,%3,%4
    v<insn>.vi\t%0,%3,%4
    v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
-   v<insn>.vx\t%0,%3,%4
    v<insn>.vi\t%0,%3,%4"
   [(set_attr "type" "vlogical")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@v<optab><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                       "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"                       "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"               "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"               "vm,vm,vm,vm,J,J,J,J")
        (any_bitwise:V64BITI
-        (match_operand:V64BITI 3 "register_operand"                       "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:V64BITI 3 "register_operand"                       "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:V64BITI
-          (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_simm5_operand"  "r,Ws5,r,Ws5,r,Ws5,r,Ws5,   r,Ws5,r,Ws5,r,Ws5,r,Ws5"))))
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"            "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
+          (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_simm5_operand"  "r,Ws5,r,Ws5,r,Ws5,r,Ws5"))))
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"            "0,0,J,J,0,0,J,J")
       ] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                                    "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+     (match_operand:SI 5 "csr_operand"                                    "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
    v<insn>.vx\t%0,%3,%4,%1.t
    v<insn>.vi\t%0,%3,%4,%1.t
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -3286,23 +3132,19 @@
 
 ;; pseudo-instruction vnot.v vd,vs = vxor.vi vd,vs,-1.
 (define_insn "@vnot<mode>_v"
-  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vr,vr")
     (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (not:VI
-          (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr"))
-         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-       (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+          (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr"))
+         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+       (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
        (match_operand 5 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vnot.v\t%0,%3,%1.t
-   vnot.v\t%0,%3,%1.t
-   vnot.v\t%0,%3
-   vnot.v\t%0,%3
    vnot.v\t%0,%3,%1.t
    vnot.v\t%0,%3,%1.t
    vnot.v\t%0,%3
@@ -3312,28 +3154,20 @@
 
 ;; Vector-Vector Bit shift operations.
 (define_insn "@v<optab><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_shift:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-         (match_operand:VI 4 "vector_arith_operand"         "vr,vk,vr,vk,vr,vk,vr,vk,   vr,vk,vr,vk,vr,vk,vr,vk"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:VI 4 "vector_arith_operand"         "vr,vk,vr,vk,vr,vk,vr,vk"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%v4,%1.t
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%v4,%1.t
-   v<insn>.vv\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%v4
-   v<insn>.vv\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%v4
    v<insn>.vv\t%0,%3,%4,%1.t
    v<insn>.vi\t%0,%3,%v4,%1.t
    v<insn>.vv\t%0,%3,%4,%1.t
@@ -3347,29 +3181,21 @@
 
 ;; Vector-Scalar Bit shift operations.
 (define_insn "@v<optab><mode>_vx"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_shift:VI
-        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-        (match_operand 4 "p_reg_or_uimm5_operand"           "r,K,r,K,r,K,r,K,           r,K,r,K,r,K,r,K"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
+        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand 4 "p_reg_or_uimm5_operand"           "r,K,r,K,r,K,r,K"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")
       ] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
    v<insn>.vx\t%0,%3,%4,%1.t
    v<insn>.vi\t%0,%3,%4,%1.t
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -3382,7 +3208,7 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Narrowing Integer Right Shift Instructions.
-(define_expand "@vn<optab><mode>_wv"
+(define_insn "@vn<optab><mode>_wv"
   [(set (match_operand:VWI 0 "register_operand"             "=vd,vd,&vd,vd,&vd,   vd,vd,&vd,vd,&vd,   vr,vr,&vr,vr,&vr,   vr,vr,&vr,vr,&vr")
   (unspec:VWI
     [(unspec:VWI
@@ -3392,24 +3218,7 @@
            (match_operand:<VW> 3 "register_operand"         "0,vr,vr,0,vr,        0,vr,vr,0,vr,       0,vr,vr,0,vr,       0,vr,vr,0,vr")
            (match_operand:VWI 4 "vector_shift_operand"      "vr,0,vr,vk,vk,       vr,0,vr,vk,vk,      vr,0,vr,vk,vk,      vr,0,vr,vk,vk")))
        (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,0,0,0,0,           J,J,J,J,J,          0,0,0,0,0,          J,J,J,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand")
-     (match_operand 6 "const_int_operand")
-     (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  {})
-
-(define_insn "*vn<optab><mode>_wv_1"
-  [(set (match_operand:VWI 0 "register_operand"             "=vd,vd,&vd,vd,&vd,   vd,vd,&vd,vd,&vd,   vr,vr,&vr,vr,&vr,   vr,vr,&vr,vr,&vr")
-  (unspec:VWI
-    [(unspec:VWI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,vm,      vm,vm,vm,vm,vm,     J,J,J,J,J,          J,J,J,J,J")
-       (truncate:VWI
-         (any_shiftrt:<VW>
-           (match_operand:<VW> 3 "register_operand"         "0,vr,vr,0,vr,        0,vr,vr,0,vr,       0,vr,vr,0,vr,       0,vr,vr,0,vr")
-           (match_operand:VWI 4 "vector_shift_operand"      "vr,0,vr,vk,vk,       vr,0,vr,vk,vk,      vr,0,vr,vk,vk,      vr,0,vr,vk,vk")))
-       (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,0,0,0,0,           J,J,J,J,J,          0,0,0,0,0,          J,J,J,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg"                               "r,r,r,r,r,           r,r,r,r,r,          r,r,r,r,r,          r,r,r,r,r")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,      rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3437,81 +3246,25 @@
    vn<insn>.wi\t%0,%3,%v4"
   [(set_attr "type" "vshift")
    (set_attr "mode" "<MODE>")])
-
-(define_insn "*vn<optab><mode>_wv_2"
-  [(set (match_operand:VWI 0 "register_operand"             "=vd,vd,&vd,vd,&vd,   vd,vd,&vd,vd,&vd,   vr,vr,&vr,vr,&vr,   vr,vr,&vr,vr,&vr")
-  (unspec:VWI
-    [(unspec:VWI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,vm,      vm,vm,vm,vm,vm,     J,J,J,J,J,          J,J,J,J,J")
-       (truncate:VWI
-         (any_shiftrt:<VW>
-           (match_operand:<VW> 3 "register_operand"         "0,vr,vr,0,vr,        0,vr,vr,0,vr,       0,vr,vr,0,vr,       0,vr,vr,0,vr")
-           (match_operand:VWI 4 "vector_shift_operand"      "vr,0,vr,vk,vk,       vr,0,vr,vk,vk,      vr,0,vr,vk,vk,      vr,0,vr,vk,vk")))
-       (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,0,0,0,0,           J,J,J,J,J,          0,0,0,0,0,          J,J,J,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "const_csr_operand"                   "K,K,K,K,K,           K,K,K,K,K,          K,K,K,K,K,          K,K,K,K,K")
-     (match_operand 6 "const_int_operand")
-     (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  "@
-   vn<insn>.wv\t%0,%3,%4,%1.t
-   vn<insn>.wv\t%0,%3,%4,%1.t
-   vn<insn>.wv\t%0,%3,%4,%1.t
-   vn<insn>.wi\t%0,%3,%v4,%1.t
-   vn<insn>.wi\t%0,%3,%v4,%1.t
-   vn<insn>.wv\t%0,%3,%4,%1.t
-   vn<insn>.wv\t%0,%3,%4,%1.t
-   vn<insn>.wv\t%0,%3,%4,%1.t
-   vn<insn>.wi\t%0,%3,%v4,%1.t
-   vn<insn>.wi\t%0,%3,%v4,%1.t
-   vn<insn>.wv\t%0,%3,%4
-   vn<insn>.wv\t%0,%3,%4
-   vn<insn>.wv\t%0,%3,%4
-   vn<insn>.wi\t%0,%3,%v4
-   vn<insn>.wi\t%0,%3,%v4
-   vn<insn>.wv\t%0,%3,%4
-   vn<insn>.wv\t%0,%3,%4
-   vn<insn>.wv\t%0,%3,%4
-   vn<insn>.wi\t%0,%3,%v4
-   vn<insn>.wi\t%0,%3,%v4"
-  [(set_attr "type" "vshift")
-   (set_attr "mode" "<MODE>")])
-
 
 ;; Vector-Scalar Narrowing Integer Right Shift Instructions.
 (define_insn "@vn<optab><mode>_wx"
-  [(set (match_operand:VWI 0 "register_operand"             "=vd,&vd,vd,&vd,  vd,&vd,vd,&vd,  vr,&vr,vr,&vr,  vr,&vr,vr,&vr,  vd,&vd,vd,&vd,  vd,&vd,vd,&vd,  vr,&vr,vr,&vr,  vr,&vr,vr,&vr")
+  [(set (match_operand:VWI 0 "register_operand"             "=vd,&vd,vd,&vd,  vd,&vd,vd,&vd,  vr,&vr,vr,&vr,  vr,&vr,vr,&vr")
   (unspec:VWI
     [(unspec:VWI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,     vm,vm,vm,vm,    J,J,J,J,        J,J,J,J,        vm,vm,vm,vm,    vm,vm,vm,vm,    J,J,J,J,        J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,     vm,vm,vm,vm,    J,J,J,J,        J,J,J,J")
         (truncate:VWI
         (any_shiftrt:<VW>
-          (match_operand:<VW> 3 "register_operand"          "0,vr,0,vr,       0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr")
-          (match_operand 4 "p_reg_or_uimm5_operand"         "r,r,K,K,         r,r,K,K,        r,r,K,K,        r,r,K,K,        r,r,K,K,        r,r,K,K,        r,r,K,K,        r,r,K,K")))
-       (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,0,0,0,         J,J,J,J,        0,0,0,0,        J,J,J,J,        0,0,0,0,        J,J,J,J,        0,0,0,0,        J,J,J,J")
+          (match_operand:<VW> 3 "register_operand"          "0,vr,0,vr,       0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr")
+          (match_operand 4 "p_reg_or_uimm5_operand"         "r,r,K,K,         r,r,K,K,        r,r,K,K,        r,r,K,K")))
+       (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,0,0,0,         J,J,J,J,        0,0,0,0,        J,J,J,J")
       ] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,         r,r,r,r,        r,r,r,r,        r,r,r,r,        K,K,K,K,        K,K,K,K,        K,K,K,K,        K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,     rK,rK,rK,rK,    rK,rK,rK,rK,    rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vn<insn>.wx\t%0,%3,%4,%1.t
-   vn<insn>.wx\t%0,%3,%4,%1.t
-   vn<insn>.wi\t%0,%3,%4,%1.t
-   vn<insn>.wi\t%0,%3,%4,%1.t
-   vn<insn>.wx\t%0,%3,%4,%1.t
-   vn<insn>.wx\t%0,%3,%4,%1.t
-   vn<insn>.wi\t%0,%3,%4,%1.t
-   vn<insn>.wi\t%0,%3,%4,%1.t
-   vn<insn>.wx\t%0,%3,%4
-   vn<insn>.wx\t%0,%3,%4
-   vn<insn>.wi\t%0,%3,%4
-   vn<insn>.wi\t%0,%3,%4
-   vn<insn>.wx\t%0,%3,%4
-   vn<insn>.wx\t%0,%3,%4
-   vn<insn>.wi\t%0,%3,%4
-   vn<insn>.wi\t%0,%3,%4
    vn<insn>.wx\t%0,%3,%4,%1.t
    vn<insn>.wx\t%0,%3,%4,%1.t
    vn<insn>.wi\t%0,%3,%4,%1.t
@@ -3533,15 +3286,15 @@
 
 ;; pseudo-instruction vncvt.x.x.w vd,vs,vm = vnsrl.wx vd,vs,x0,vm.
 (define_insn "@vncvt<mode>_x_x_w"
-  [(set (match_operand:VWI 0 "register_operand"               "=vd,&vd,   vd,&vd,   vr,&vr,   vr,&vr,   vd,&vd,   vd,&vd,   vr,&vr,   vr,&vr")
+  [(set (match_operand:VWI 0 "register_operand"               "=vd,&vd,   vd,&vd,   vr,&vr,   vr,&vr")
   (unspec:VWI
     [(unspec:VWI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,     vm,vm,    J,J,      J,J,      vm,vm,    vm,vm,    J,J,      J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,     vm,vm,    J,J,      J,J")
        (truncate:VWI
-        (match_operand:<VW> 3 "register_operand"              "0,vr,      0,vr,     0,vr,     0,vr,     0,vr,     0,vr,     0,vr,     0,vr"))
-       (match_operand:VWI 2 "vector_reg_or_const0_operand"    "0,0,       J,J,      0,0,      J,J,      0,0,      J,J,      0,0,      J,J")
+        (match_operand:<VW> 3 "register_operand"              "0,vr,      0,vr,     0,vr,     0,vr"))
+       (match_operand:VWI 2 "vector_reg_or_const0_operand"    "0,0,       J,J,      0,0,      J,J")
       ] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"            "r,r,       r,r,      r,r,      r,r,      K,K,      K,K,      K,K,      K,K")
+     (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,     rK,rK,    rK,rK,    rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3554,20 +3307,12 @@
    vncvt.x.x.w\t%0,%3
    vncvt.x.x.w\t%0,%3
    vncvt.x.x.w\t%0,%3
-   vncvt.x.x.w\t%0,%3
-   vncvt.x.x.w\t%0,%3,%1.t
-   vncvt.x.x.w\t%0,%3,%1.t
-   vncvt.x.x.w\t%0,%3,%1.t
-   vncvt.x.x.w\t%0,%3,%1.t
-   vncvt.x.x.w\t%0,%3
-   vncvt.x.x.w\t%0,%3
-   vncvt.x.x.w\t%0,%3
    vncvt.x.x.w\t%0,%3"
   [(set_attr "type" "vshift")
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Integer Comparision Instructions.
-(define_expand "@vms<optab><mode>_vv"
+(define_insn "@vms<optab><mode>_vv"
   [(set (match_operand:<VM> 0 "register_operand"              "=vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,&vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
@@ -3577,24 +3322,7 @@
            (match_operand:VI 4 "vector_arith_operand"         "vr,0,vr,vr,vi,vi,vi,       vr,0,vr,vr,vi,vi,vi,      vr,0,vr,vi,vi"))
          (match_operand:<VM> 2 "vector_reg_or_const0_operand" "0,0,0,0,0,0,0,             J,J,J,J,J,J,J,            J,J,J,J,J")
         ] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand")
-       (match_operand 6 "const_int_operand")
-       (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  {})
-
-(define_insn "*vms<optab><mode>_vv_1"
-  [(set (match_operand:<VM> 0 "register_operand"              "=vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,&vr,vr,&vr")
-    (unspec:<VM>
-      [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,0,vm,vm,0,vm,        vm,vm,0,vm,vm,0,vm,       J,J,J,J,J")
-         (cmp_noltge:<VM>
-           (match_operand:VI 3 "register_operand"             "0,vr,vr,vr,0,vr,vr,        0,vr,vr,vr,0,vr,vr,       0,vr,vr,0,vr")
-           (match_operand:VI 4 "vector_arith_operand"         "vr,0,vr,vr,vi,vi,vi,       vr,0,vr,vr,vi,vi,vi,      vr,0,vr,vi,vi"))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand" "0,0,0,0,0,0,0,             J,J,J,J,J,J,J,            J,J,J,J,J")
-        ] UNSPEC_SELECT)
-       (match_operand 5 "p_reg"                               "r,r,r,r,r,r,r,             r,r,r,r,r,r,r,            r,r,r,r,r")
+       (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,      rK,rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3622,45 +3350,7 @@
   [(set_attr "type" "vcmp")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "*vms<optab><mode>_vv_2"
-  [(set (match_operand:<VM> 0 "register_operand"              "=vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,&vr,vr,&vr")
-    (unspec:<VM>
-      [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,0,vm,vm,0,vm,        vm,vm,0,vm,vm,0,vm,       J,J,J,J,J")
-         (cmp_noltge:<VM>
-           (match_operand:VI 3 "register_operand"             "0,vr,vr,vr,0,vr,vr,        0,vr,vr,vr,0,vr,vr,       0,vr,vr,0,vr")
-           (match_operand:VI 4 "vector_arith_operand"         "vr,0,vr,vr,vi,vi,vi,       vr,0,vr,vr,vi,vi,vi,      vr,0,vr,vi,vi"))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand" "0,0,0,0,0,0,0,             J,J,J,J,J,J,J,            J,J,J,J,J")
-        ] UNSPEC_SELECT)
-       (match_operand 5 "const_csr_operand"                   "K,K,K,K,K,K,K,             K,K,K,K,K,K,K,            K,K,K,K,K")
-       (match_operand 6 "const_int_operand")
-       (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  "@
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vv\t%0,%3,%4
-   vms<insn>.vv\t%0,%3,%4
-   vms<insn>.vv\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%v4
-   vms<insn>.vi\t%0,%3,%v4"
-  [(set_attr "type" "vcmp")
-   (set_attr "mode" "<MODE>")])
-
-(define_expand "@vms<optab><mode>_vv"
+(define_insn "@vms<optab><mode>_vv"
   [(set (match_operand:<VM> 0 "register_operand"                "=vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,&vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
@@ -3670,62 +3360,7 @@
            (match_operand:VI 4 "vector_neg_arith_operand"       "vr,0,vr,vr,vj,vj,vj,       vr,0,vr,vr,vj,vj,vj,      vr,0,vr,vj,vj"))
          (match_operand:<VM> 2 "vector_reg_or_const0_operand"   "0,0,0,0,0,0,0,             J,J,J,J,J,J,J,            J,J,J,J,J")
         ] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand")
-       (match_operand 6 "const_int_operand")
-       (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  {})
-
-(define_insn "*vms<optab><mode>_vv_1"
-  [(set (match_operand:<VM> 0 "register_operand"                "=vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,&vr,vr,&vr")
-    (unspec:<VM>
-      [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,0,vm,vm,0,vm,        vm,vm,0,vm,vm,0,vm,       J,J,J,J,J")
-         (cmp_ltge:<VM>
-           (match_operand:VI 3 "register_operand"               "0,vr,vr,vr,0,vr,vr,        0,vr,vr,vr,0,vr,vr,       0,vr,vr,0,vr")
-           (match_operand:VI 4 "vector_neg_arith_operand"       "vr,0,vr,vr,vj,vj,vj,       vr,0,vr,vr,vj,vj,vj,      vr,0,vr,vj,vj"))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand"   "0,0,0,0,0,0,0,             J,J,J,J,J,J,J,            J,J,J,J,J")
-        ] UNSPEC_SELECT)
-       (match_operand 5 "p_reg"                                 "r,r,r,r,r,r,r,             r,r,r,r,r,r,r,            r,r,r,r,r")
-       (match_operand 6 "const_int_operand")
-       (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  "@
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vv\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vi\t%0,%3,%v4,%1.t
-   vms<insn>.vv\t%0,%3,%4
-   vms<insn>.vv\t%0,%3,%4
-   vms<insn>.vv\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%v4
-   vms<insn>.vi\t%0,%3,%v4"
-  [(set_attr "type" "vcmp")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "*vms<optab><mode>_vv_2"
-  [(set (match_operand:<VM> 0 "register_operand"                "=vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,vm,&vr,vr,vm,&vr,   vr,vr,&vr,vr,&vr")
-    (unspec:<VM>
-      [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,0,vm,vm,0,vm,        vm,vm,0,vm,vm,0,vm,       J,J,J,J,J")
-         (cmp_ltge:<VM>
-           (match_operand:VI 3 "register_operand"               "0,vr,vr,vr,0,vr,vr,        0,vr,vr,vr,0,vr,vr,       0,vr,vr,0,vr")
-           (match_operand:VI 4 "vector_neg_arith_operand"       "vr,0,vr,vr,vj,vj,vj,       vr,0,vr,vr,vj,vj,vj,      vr,0,vr,vj,vj"))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand"   "0,0,0,0,0,0,0,             J,J,J,J,J,J,J,            J,J,J,J,J")
-        ] UNSPEC_SELECT)
-       (match_operand 5 "const_csr_operand"                     "K,K,K,K,K,K,K,             K,K,K,K,K,K,K,            K,K,K,K,K")
+       (match_operand 5 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK,rK,rK,rK,      rK,rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -3755,38 +3390,22 @@
 
 ;; Vector-Scalar Integer Comparision Instructions.
 (define_insn "@vms<optab><mode>_vx_internal"
-  [(set (match_operand:<VM> 0 "register_operand"                "=vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"                "=vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,0,vm,vm,0,vm,       vm,0,vm,vm,0,vm,      J,J,J,J,        vm,0,vm,vm,0,vm,      vm,0,vm,vm,0,vm,      J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,0,vm,vm,0,vm,       vm,0,vm,vm,0,vm,      J,J,J,J")
          (cmp_noltge:<VM>
-           (match_operand:VI 3 "register_operand"               "0,vr,vr,0,vr,vr,       0,vr,vr,0,vr,vr,      0,vr,0,vr,      0,vr,vr,0,vr,vr,      0,vr,vr,0,vr,vr,      0,vr,0,vr")
+           (match_operand:VI 3 "register_operand"               "0,vr,vr,0,vr,vr,       0,vr,vr,0,vr,vr,      0,vr,0,vr")
            (vec_duplicate:VI
-             (match_operand:<VSUB> 4 "reg_or_simm5_operand"     "r,r,r,Ws5,Ws5,Ws5,     r,r,r,Ws5,Ws5,Ws5,    r,r,Ws5,Ws5,    r,r,r,Ws5,Ws5,Ws5,    r,r,r,Ws5,Ws5,Ws5,    r,r,Ws5,Ws5")))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand"   "0,0,0,0,0,0,           J,J,J,J,J,J,          J,J,J,J,        0,0,0,0,0,0,          J,J,J,J,J,J,          J,J,J,J")
+             (match_operand:<VSUB> 4 "reg_or_simm5_operand"     "r,r,r,Ws5,Ws5,Ws5,     r,r,r,Ws5,Ws5,Ws5,    r,r,Ws5,Ws5")))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand"   "0,0,0,0,0,0,           J,J,J,J,J,J,          J,J,J,J")
         ] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand"            "r,r,r,r,r,r,           r,r,r,r,r,r,          r,r,r,r,        K,K,K,K,K,K,          K,K,K,K,K,K,          K,K,K,K")
+       (match_operand 5 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,rK,    rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -3807,38 +3426,22 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vms<optab><mode>_vx_32bit"
-  [(set (match_operand:<VM> 0 "register_operand"                            "=vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"                            "=vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"               "vm,0,vm,vm,0,vm,       vm,0,vm,vm,0,vm,      J,J,J,J,        vm,0,vm,vm,0,vm,      vm,0,vm,vm,0,vm,      J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"               "vm,0,vm,vm,0,vm,       vm,0,vm,vm,0,vm,      J,J,J,J")
          (cmp_noltge:<VM>
-           (match_operand:V64BITI 3 "register_operand"                      "0,vr,vr,0,vr,vr,       0,vr,vr,0,vr,vr,      0,vr,0,vr,      0,vr,vr,0,vr,vr,      0,vr,vr,0,vr,vr,      0,vr,0,vr")
+           (match_operand:V64BITI 3 "register_operand"                      "0,vr,vr,0,vr,vr,       0,vr,vr,0,vr,vr,      0,vr,0,vr")
            (vec_duplicate:V64BITI
-             (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_simm5_operand" "r,r,r,Ws5,Ws5,Ws5,     r,r,r,Ws5,Ws5,Ws5,    r,r,Ws5,Ws5,    r,r,r,Ws5,Ws5,Ws5,    r,r,r,Ws5,Ws5,Ws5,    r,r,Ws5,Ws5"))))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand"               "0,0,0,0,0,0,           J,J,J,J,J,J,          J,J,J,J,        0,0,0,0,0,0,          J,J,J,J,J,J,          J,J,J,J")
+             (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_simm5_operand" "r,r,r,Ws5,Ws5,Ws5,     r,r,r,Ws5,Ws5,Ws5,    r,r,Ws5,Ws5"))))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand"               "0,0,0,0,0,0,           J,J,J,J,J,J,          J,J,J,J")
         ] UNSPEC_SELECT)
-       (match_operand:SI 5 "csr_operand"                                    "r,r,r,r,r,r,           r,r,r,r,r,r,          r,r,r,r,        K,K,K,K,K,K,          K,K,K,K,K,K,          K,K,K,K")
+       (match_operand:SI 5 "csr_operand"                                    "rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,rK,    rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -3859,38 +3462,22 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vms<optab><mode>_vx_internal"
-  [(set (match_operand:<VM> 0 "register_operand"                  "=vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"                  "=vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,0,vm,vm,0,vm,       vm,0,vm,vm,0,vm,      J,J,J,J,        vm,0,vm,vm,0,vm,      vm,0,vm,vm,0,vm,      J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,0,vm,vm,0,vm,       vm,0,vm,vm,0,vm,      J,J,J,J")
          (cmp_lt:<VM>
-           (match_operand:VI 3 "register_operand"                 "0,vr,vr,0,vr,vr,       0,vr,vr,0,vr,vr,      0,vr,0,vr,      0,vr,vr,0,vr,vr,      0,vr,vr,0,vr,vr,      0,vr,0,vr")
+           (match_operand:VI 3 "register_operand"                 "0,vr,vr,0,vr,vr,       0,vr,vr,0,vr,vr,      0,vr,0,vr")
            (vec_duplicate:VI
-             (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand"   "r,r,r,Wn5,Wn5,Wn5,     r,r,r,Wn5,Wn5,Wn5,    r,r,Wn5,Wn5,    r,r,r,Wn5,Wn5,Wn5,    r,r,r,Wn5,Wn5,Wn5,    r,r,Wn5,Wn5")))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand"     "0,0,0,0,0,0,           J,J,J,J,J,J,          J,J,J,J,        0,0,0,0,0,0,          J,J,J,J,J,J,          J,J,J,J")
+             (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand"   "r,r,r,Wn5,Wn5,Wn5,     r,r,r,Wn5,Wn5,Wn5,    r,r,Wn5,Wn5")))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand"     "0,0,0,0,0,0,           J,J,J,J,J,J,          J,J,J,J")
         ] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand"              "r,r,r,r,r,r,           r,r,r,r,r,r,          r,r,r,r,        K,K,K,K,K,K,          K,K,K,K,K,K,          K,K,K,K")
+       (match_operand 5 "p_reg_or_const_csr_operand"              "rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,rK,    rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -3911,38 +3498,22 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vms<optab><mode>_vx_32bit"
-  [(set (match_operand:<VM> 0 "register_operand"                                "=vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"                                "=vr,vm,&vr,vr,vm,&vr,  vr,vm,&vr,vr,vm,&vr,  vr,&vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"                   "vm,0,vm,vm,0,vm,       vm,0,vm,vm,0,vm,      J,J,J,J,        vm,0,vm,vm,0,vm,      vm,0,vm,vm,0,vm,      J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"                   "vm,0,vm,vm,0,vm,       vm,0,vm,vm,0,vm,      J,J,J,J")
          (cmp_lt:<VM>
-           (match_operand:V64BITI 3 "register_operand"                          "0,vr,vr,0,vr,vr,       0,vr,vr,0,vr,vr,      0,vr,0,vr,      0,vr,vr,0,vr,vr,      0,vr,vr,0,vr,vr,      0,vr,0,vr")
+           (match_operand:V64BITI 3 "register_operand"                          "0,vr,vr,0,vr,vr,       0,vr,vr,0,vr,vr,      0,vr,0,vr")
            (vec_duplicate:V64BITI
-             (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_neg_simm5_operand" "r,r,r,Wn5,Wn5,Wn5,     r,r,r,Wn5,Wn5,Wn5,    r,r,Wn5,Wn5,    r,r,r,Wn5,Wn5,Wn5,    r,r,r,Wn5,Wn5,Wn5,    r,r,Wn5,Wn5"))))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand"                   "0,0,0,0,0,0,           J,J,J,J,J,J,          J,J,J,J,        0,0,0,0,0,0,          J,J,J,J,J,J,          J,J,J,J")
+             (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_neg_simm5_operand" "r,r,r,Wn5,Wn5,Wn5,     r,r,r,Wn5,Wn5,Wn5,    r,r,Wn5,Wn5"))))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand"                   "0,0,0,0,0,0,           J,J,J,J,J,J,          J,J,J,J")
         ] UNSPEC_SELECT)
-       (match_operand:SI 5 "csr_operand"                                        "r,r,r,r,r,r,           r,r,r,r,r,r,          r,r,r,r,        K,K,K,K,K,K,          K,K,K,K,K,K,          K,K,K,K")
+       (match_operand:SI 5 "csr_operand"                                        "rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,rK,    rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -4011,36 +3582,23 @@
 ;;    match_operand 0 &vr       match_operand 0 vr, ?&vr
 ;;    match_operand 3 vr        match_operand 3 0,  vr
 (define_insn "*vms<optab><mode>_vx"
-  [(set (match_operand:<VM> 0 "register_operand"                "=vm, vd,&vd,vd,&vd,  &vd,vd,vd,&vd,  vr,&vr,vr,&vr,  vm, vd,&vd,vd,&vd,  &vd,vd,vd,&vd,  vr,&vr,vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"                "=vm, vd,&vd,vd,&vd,  &vd,vd,vd,&vd,  vr,&vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "0,   vm,vm,vm,vm,    vm,vm,vm,vm,    J,J,J,J,        0,  vm,vm,vm,vm,    vm,vm,vm,vm,    J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "0,   vm,vm,vm,vm,    vm,vm,vm,vm,    J,J,J,J")
          (cmp_ge:<VM>
-           (match_operand:VI 3 "register_operand"               "vr,  0,vr,0,vr,      vr,0,0,vr,      0,vr,0,vr,      vr, 0,vr,0,vr,      vr,0,0,vr,      0,vr,0,vr")
+           (match_operand:VI 3 "register_operand"               "vr,  0,vr,0,vr,      vr,0,0,vr,      0,vr,0,vr")
            (vec_duplicate:VI
-             (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand" "r,   r,r,Wn5,Wn5,    r,r,Wn5,Wn5,    r,r,Wn5,Wn5,    r,  r,r,Wn5,Wn5,    r,r,Wn5,Wn5,    r,r,Wn5,Wn5")))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand"   "0,   0,0,0,0,        J,J,J,J,        J,J,J,J,        0,  0,0,0,0,        J,J,J,J,        J,J,J,J")
+             (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand" "r,   r,r,Wn5,Wn5,    r,r,Wn5,Wn5,    r,r,Wn5,Wn5")))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand"   "0,   0,0,0,0,        J,J,J,J,        J,J,J,J")
         ] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"             "r,   r,r,r,r,        r,r,r,r,        r,r,r,r,        K,  K,K,K,K,        K,K,K,K,        K,K,K,K")
+      (match_operand 5 "p_reg_or_const_csr_operand"             "rK,  rK,rK,rK,rK,    rK,rK,rK,rK,    rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
-   (clobber (match_scratch:<VM> 7                               "=&vr,X,X,X,X,        X,X,X,X,        X,X,X,X,        &vr,X,X,X,X,        X,X,X,X,        X,X,X,X"))]
+   (clobber (match_scratch:<VM> 7                               "=&vr,X,X,X,X,        X,X,X,X,        X,X,X,X"))]
   "TARGET_VECTOR"
   "@
-   vms<insn>.vx\t%0,%3,%4,%1.t,%7
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
    vms<insn>.vx\t%0,%3,%4,%1.t,%7
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -4058,36 +3616,23 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*vms<optab><mode>_vx_32bit"
-  [(set (match_operand:<VM> 0 "register_operand"                                "=vm, vd,&vd,vd,&vd,  &vd,vd,vd,&vd,  vr,&vr,vr,&vr,  vm, vd,&vd,vd,&vd,  &vd,vd,vd,&vd,  vr,&vr,vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"                                "=vm, vd,&vd,vd,&vd,  &vd,vd,vd,&vd,  vr,&vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"                   "0,   vm,vm,vm,vm,    vm,vm,vm,vm,    J,J,J,J,        0,  vm,vm,vm,vm,    vm,vm,vm,vm,    J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"                   "0,   vm,vm,vm,vm,    vm,vm,vm,vm,    J,J,J,J")
          (cmp_ge:<VM>
-           (match_operand:V64BITI 3 "register_operand"                          "vr,  0,vr,0,vr,      vr,0,0,vr,      0,vr,0,vr,      vr, 0,vr,0,vr,      vr,0,0,vr,      0,vr,0,vr")
+           (match_operand:V64BITI 3 "register_operand"                          "vr,  0,vr,0,vr,      vr,0,0,vr,      0,vr,0,vr")
            (vec_duplicate:V64BITI
-             (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_neg_simm5_operand" "r,   r,r,Wn5,Wn5,    r,r,Wn5,Wn5,    r,r,Wn5,Wn5,    r,  r,r,Wn5,Wn5,    r,r,Wn5,Wn5,    r,r,Wn5,Wn5"))))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand"                   "0,   0,0,0,0,        J,J,J,J,        J,J,J,J,        0,  0,0,0,0,        J,J,J,J,        J,J,J,J")
+             (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_neg_simm5_operand" "r,   r,r,Wn5,Wn5,    r,r,Wn5,Wn5,    r,r,Wn5,Wn5"))))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand"                   "0,   0,0,0,0,        J,J,J,J,        J,J,J,J")
         ] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"                             "r,   r,r,r,r,        r,r,r,r,        r,r,r,r,        K,  K,K,K,K,        K,K,K,K,        K,K,K,K")
+      (match_operand 5 "p_reg_or_const_csr_operand"                             "rK,  rK,rK,rK,rK,    rK,rK,rK,rK,    rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
-   (clobber (match_scratch:<VM> 7                                               "=&vr,X,X,X,X,        X,X,X,X,        X,X,X,X,        &vr,X,X,X,X,        X,X,X,X,        X,X,X,X"))]
+   (clobber (match_scratch:<VM> 7                                               "=&vr,X,X,X,X,        X,X,X,X,        X,X,X,X"))]
   "TARGET_VECTOR"
   "@
-   vms<insn>.vx\t%0,%3,%4,%1.t,%7
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vi\t%0,%3,%4,%1.t
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vx\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
-   vms<insn>.vi\t%0,%3,%4
    vms<insn>.vx\t%0,%3,%4,%1.t,%7
    vms<insn>.vx\t%0,%3,%4,%1.t
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -4106,25 +3651,21 @@
 
 ;; Vector-Vector Integer Signed/Unsigned Minimum/Maximum.
 (define_insn "@v<optab><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (any_minmax:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr")
-         (match_operand:VI 4 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr")
+         (match_operand:VI 4 "register_operand"             "vr,vr,vr,vr"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")
       ] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vv\t%0,%3,%4
-   v<insn>.vv\t%0,%3,%4
    v<insn>.vv\t%0,%3,%4,%1.t
    v<insn>.vv\t%0,%3,%4,%1.t
    v<insn>.vv\t%0,%3,%4
@@ -4134,29 +3675,21 @@
 
 ;; Vector-Scalar Signed/Unsigned min/max.
 (define_insn "@v<optab><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_minmax:VI
-        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:VI
-          (match_operand:<VSUB> 4 "reg_or_0_operand"        "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+          (match_operand:<VSUB> 4 "reg_or_0_operand"        "r,J,r,J,r,J,r,J")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,zero,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,zero,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vx\t%0,%3,zero
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vx\t%0,%3,zero
    v<insn>.vx\t%0,%3,%4,%1.t
    v<insn>.vx\t%0,%3,zero,%1.t
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -4169,29 +3702,21 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@v<optab><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                   "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"                   "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"           "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"           "vm,vm,vm,vm,J,J,J,J")
        (any_minmax:V64BITI
-        (match_operand:V64BITI 3 "register_operand"                   "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:V64BITI 3 "register_operand"                   "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:V64BITI
-          (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand"  "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J"))))
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"        "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                                "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+          (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand"  "r,J,r,J,r,J,r,J"))))
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"        "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand"                                "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,zero,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,zero,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vx\t%0,%3,zero
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vx\t%0,%3,zero
    v<insn>.vx\t%0,%3,%4,%1.t
    v<insn>.vx\t%0,%3,zero,%1.t
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -4205,24 +3730,20 @@
 
 ;; Vector-Vector Signed multiply, returning low bits of product.
 (define_insn "@vmul<mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (mult:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr")
-         (match_operand:VI 4 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr")
+         (match_operand:VI 4 "register_operand"             "vr,vr,vr,vr"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmul.vv\t%0,%3,%4,%1.t
-   vmul.vv\t%0,%3,%4,%1.t
-   vmul.vv\t%0,%3,%4
-   vmul.vv\t%0,%3,%4
    vmul.vv\t%0,%3,%4,%1.t
    vmul.vv\t%0,%3,%4,%1.t
    vmul.vv\t%0,%3,%4
@@ -4232,29 +3753,21 @@
 
 ;; Vector-Scalar Signed multiply, returning low bits of product.
 (define_insn "@vmul<mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (mult:VI
-        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:VI
-          (match_operand:<VSUB> 4 "reg_or_0_operand"        "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+          (match_operand:<VSUB> 4 "reg_or_0_operand"        "r,J,r,J,r,J,r,J")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmul.vx\t%0,%3,%4,%1.t
-   vmul.vx\t%0,%3,zero,%1.t
-   vmul.vx\t%0,%3,%4,%1.t
-   vmul.vx\t%0,%3,zero,%1.t
-   vmul.vx\t%0,%3,%4
-   vmul.vx\t%0,%3,zero
-   vmul.vx\t%0,%3,%4
-   vmul.vx\t%0,%3,zero
    vmul.vx\t%0,%3,%4,%1.t
    vmul.vx\t%0,%3,zero,%1.t
    vmul.vx\t%0,%3,%4,%1.t
@@ -4267,29 +3780,21 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmul<mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                   "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"                   "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"           "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"           "vm,vm,vm,vm,J,J,J,J")
        (mult:V64BITI
-        (match_operand:V64BITI 3 "register_operand"                   "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:V64BITI 3 "register_operand"                   "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:V64BITI
-          (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand"  "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J"))))
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"        "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                                "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+          (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand"  "r,J,r,J,r,J,r,J"))))
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"        "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand"                                "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmul.vx\t%0,%3,%4,%1.t
-   vmul.vx\t%0,%3,zero,%1.t
-   vmul.vx\t%0,%3,%4,%1.t
-   vmul.vx\t%0,%3,zero,%1.t
-   vmul.vx\t%0,%3,%4
-   vmul.vx\t%0,%3,zero
-   vmul.vx\t%0,%3,%4
-   vmul.vx\t%0,%3,zero
    vmul.vx\t%0,%3,%4,%1.t
    vmul.vx\t%0,%3,zero,%1.t
    vmul.vx\t%0,%3,%4,%1.t
@@ -4303,25 +3808,21 @@
 
 ;; Vector-Vector Signed/Unsigned highpart multiply, returning high bits of product.
 (define_insn "@vmulh<u><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VI
-  	     [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")
-  	      (match_operand:VI 4 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")]
+        [(match_operand:VI 3 "register_operand"             "vr,vr,vr,vr")
+         (match_operand:VI 4 "register_operand"             "vr,vr,vr,vr")]
          MUL_HIGHPART)
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmulh<u>.vv\t%0,%3,%4,%1.t
-   vmulh<u>.vv\t%0,%3,%4,%1.t
-   vmulh<u>.vv\t%0,%3,%4
-   vmulh<u>.vv\t%0,%3,%4
    vmulh<u>.vv\t%0,%3,%4,%1.t
    vmulh<u>.vv\t%0,%3,%4,%1.t
    vmulh<u>.vv\t%0,%3,%4
@@ -4331,29 +3832,21 @@
 
 ;; Vector-Scalar Signed/Unsigned multiply, returning high bits of product.
 (define_insn "@vmulh<u><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (unspec:VI
-  	     [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-  	      (match_operand:<VSUB> 4 "reg_or_0_operand"        "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")]
+  	     [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
+  	      (match_operand:<VSUB> 4 "reg_or_0_operand"        "r,J,r,J,r,J,r,J")]
          MUL_HIGHPART)
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmulh<u>.vx\t%0,%3,%4,%1.t
-   vmulh<u>.vx\t%0,%3,zero,%1.t
-   vmulh<u>.vx\t%0,%3,%4,%1.t
-   vmulh<u>.vx\t%0,%3,zero,%1.t
-   vmulh<u>.vx\t%0,%3,%4
-   vmulh<u>.vx\t%0,%3,zero
-   vmulh<u>.vx\t%0,%3,%4
-   vmulh<u>.vx\t%0,%3,zero
    vmulh<u>.vx\t%0,%3,%4,%1.t
    vmulh<u>.vx\t%0,%3,zero,%1.t
    vmulh<u>.vx\t%0,%3,%4,%1.t
@@ -4366,29 +3859,21 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmulh<u><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
        (unspec:V64BITI
-  	     [(match_operand:V64BITI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-  	      (match_operand:SI 4 "reg_or_0_operand"                "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")]
+  	     [(match_operand:V64BITI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr")
+  	      (match_operand:SI 4 "reg_or_0_operand"                "r,J,r,J,r,J,r,J")]
          MUL_HIGHPART)
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmulh<u>.vx\t%0,%3,%4,%1.t
-   vmulh<u>.vx\t%0,%3,zero,%1.t
-   vmulh<u>.vx\t%0,%3,%4,%1.t
-   vmulh<u>.vx\t%0,%3,zero,%1.t
-   vmulh<u>.vx\t%0,%3,%4
-   vmulh<u>.vx\t%0,%3,zero
-   vmulh<u>.vx\t%0,%3,%4
-   vmulh<u>.vx\t%0,%3,zero
    vmulh<u>.vx\t%0,%3,%4,%1.t
    vmulh<u>.vx\t%0,%3,zero,%1.t
    vmulh<u>.vx\t%0,%3,%4,%1.t
@@ -4402,24 +3887,20 @@
 
 ;; Vector-Vector Signed(vs2)-Unsigned multiply, returning high bits of product.
 (define_insn "@vmulhsu<mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vr,vr")
     (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:VI
-  	       [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")
-  	        (match_operand:VI 4 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")] UNSPEC_VMULHSU)
-         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+  	       [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr")
+  	        (match_operand:VI 4 "register_operand"            "vr,vr,vr,vr")] UNSPEC_VMULHSU)
+         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+       (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmulhsu.vv\t%0,%3,%4,%1.t
-   vmulhsu.vv\t%0,%3,%4,%1.t
-   vmulhsu.vv\t%0,%3,%4
-   vmulhsu.vv\t%0,%3,%4
    vmulhsu.vv\t%0,%3,%4,%1.t
    vmulhsu.vv\t%0,%3,%4,%1.t
    vmulhsu.vv\t%0,%3,%4
@@ -4429,16 +3910,16 @@
 
 ;; Vector-Scalar Signed(vs2)-Unsigned multiply, returning high bits of product.
 (define_insn "@vmulhsu<mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (unspec:VI
-  	     [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-  	      (match_operand:<VSUB> 4 "reg_or_0_operand"        "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")]
+  	     [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
+  	      (match_operand:<VSUB> 4 "reg_or_0_operand"        "r,J,r,J,r,J,r,J")]
          UNSPEC_VMULHSU)
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -4451,42 +3932,26 @@
    vmulhsu.vx\t%0,%3,%4
    vmulhsu.vx\t%0,%3,zero
    vmulhsu.vx\t%0,%3,%4
-   vmulhsu.vx\t%0,%3,zero
-   vmulhsu.vx\t%0,%3,%4,%1.t
-   vmulhsu.vx\t%0,%3,zero,%1.t
-   vmulhsu.vx\t%0,%3,%4,%1.t
-   vmulhsu.vx\t%0,%3,zero,%1.t
-   vmulhsu.vx\t%0,%3,%4
-   vmulhsu.vx\t%0,%3,zero
-   vmulhsu.vx\t%0,%3,%4
    vmulhsu.vx\t%0,%3,zero"
   [(set_attr "type" "vmulh")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmulhsu<mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
        (unspec:V64BITI
-  	     [(match_operand:V64BITI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-  	      (match_operand:SI 4 "reg_or_0_operand"                "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")]
+  	     [(match_operand:V64BITI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr")
+  	      (match_operand:SI 4 "reg_or_0_operand"                "r,J,r,J,r,J,r,J")]
          UNSPEC_VMULHSU)
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmulhsu.vx\t%0,%3,%4,%1.t
-   vmulhsu.vx\t%0,%3,zero,%1.t
-   vmulhsu.vx\t%0,%3,%4,%1.t
-   vmulhsu.vx\t%0,%3,zero,%1.t
-   vmulhsu.vx\t%0,%3,%4
-   vmulhsu.vx\t%0,%3,zero
-   vmulhsu.vx\t%0,%3,%4
-   vmulhsu.vx\t%0,%3,zero
    vmulhsu.vx\t%0,%3,%4,%1.t
    vmulhsu.vx\t%0,%3,zero,%1.t
    vmulhsu.vx\t%0,%3,%4,%1.t
@@ -4500,24 +3965,20 @@
 
 ;; Vector-Vector Signed/Unsigned divide/remainder.
 (define_insn "@v<optab><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (any_div:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr")
-         (match_operand:VI 4 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr")
+         (match_operand:VI 4 "register_operand"             "vr,vr,vr,vr"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vv\t%0,%3,%4
-   v<insn>.vv\t%0,%3,%4
    v<insn>.vv\t%0,%3,%4,%1.t
    v<insn>.vv\t%0,%3,%4,%1.t
    v<insn>.vv\t%0,%3,%4
@@ -4527,29 +3988,21 @@
 
 ;; Vector-Scalar Signed/Unsigned divide/remainder.
 (define_insn "@v<optab><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-     [(match_operand:<VM> 1 "vector_reg_or_const0_operand"  "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+     [(match_operand:<VM> 1 "vector_reg_or_const0_operand"  "vm,vm,vm,vm,J,J,J,J")
       (any_div:VI
-       (match_operand:VI 3 "register_operand"               "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+       (match_operand:VI 3 "register_operand"               "vr,vr,vr,vr,vr,vr,vr,vr")
        (vec_duplicate:VI
-         (match_operand:<VSUB> 4 "reg_or_0_operand"         "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")))
-      (match_operand:VI 2 "vector_reg_or_const0_operand"    "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:<VSUB> 4 "reg_or_0_operand"         "r,J,r,J,r,J,r,J")))
+      (match_operand:VI 2 "vector_reg_or_const0_operand"    "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,zero,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,zero,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vx\t%0,%3,zero
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vx\t%0,%3,zero
    v<insn>.vx\t%0,%3,%4,%1.t
    v<insn>.vx\t%0,%3,zero,%1.t
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -4562,30 +4015,22 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@v<optab><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                 "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"                 "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-     [(match_operand:<VM> 1 "vector_reg_or_const0_operand"          "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+     [(match_operand:<VM> 1 "vector_reg_or_const0_operand"          "vm,vm,vm,vm,J,J,J,J")
       (any_div:V64BITI
-       (match_operand:V64BITI 3 "register_operand"                  "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+       (match_operand:V64BITI 3 "register_operand"                  "vr,vr,vr,vr,vr,vr,vr,vr")
        (vec_duplicate:V64BITI
-         (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J"))))
-      (match_operand:V64BITI 2 "vector_reg_or_const0_operand"       "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
+         (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J"))))
+      (match_operand:V64BITI 2 "vector_reg_or_const0_operand"       "0,0,J,J,0,0,J,J")
       ] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                              "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+     (match_operand:SI 5 "csr_operand"                              "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,zero,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,zero,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vx\t%0,%3,zero
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vx\t%0,%3,zero
    v<insn>.vx\t%0,%3,%4,%1.t
    v<insn>.vx\t%0,%3,zero,%1.t
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -4599,26 +4044,22 @@
 
 ;; Vector-Vector Widening Signed/Unsigned Integer multiply.
 (define_insn "@vwmul<u><vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (mult:<VW>
         (any_extend:<VW>
-          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr"))
+          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr"))
         (any_extend:<VW>
-          (match_operand:VWI 4 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+          (match_operand:VWI 4 "register_operand"           "vr,vr,vr,vr")))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmul<u>.vv\t%0,%3,%4,%1.t
-   vwmul<u>.vv\t%0,%3,%4,%1.t
-   vwmul<u>.vv\t%0,%3,%4
-   vwmul<u>.vv\t%0,%3,%4
    vwmul<u>.vv\t%0,%3,%4,%1.t
    vwmul<u>.vv\t%0,%3,%4,%1.t
    vwmul<u>.vv\t%0,%3,%4
@@ -4628,31 +4069,23 @@
 
 ;; Vector-Scalar Widening Signed/Unsigned Integer multiply.
 (define_insn "@vwmul<u><vw>_vx"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,               vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (mult:<VW>
         (any_extend:<VW>
-          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr,           vr,vr,vr,vr,vr,vr,vr,vr"))
+          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr"))
         (any_extend:<VW>
           (vec_duplicate:VWI
-            (match_operand:<VSUB> 4 "reg_or_0_operand"      "r,J,r,J,r,J,r,J,                   r,J,r,J,r,J,r,J"))))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J,                   0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,                   K,K,K,K,K,K,K,K")
+            (match_operand:<VSUB> 4 "reg_or_0_operand"      "r,J,r,J,r,J,r,J"))))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmul<u>.vx\t%0,%3,%4,%1.t
-   vwmul<u>.vx\t%0,%3,zero,%1.t
-   vwmul<u>.vx\t%0,%3,%4,%1.t
-   vwmul<u>.vx\t%0,%3,zero,%1.t
-   vwmul<u>.vx\t%0,%3,%4
-   vwmul<u>.vx\t%0,%3,zero
-   vwmul<u>.vx\t%0,%3,%4
-   vwmul<u>.vx\t%0,%3,zero
    vwmul<u>.vx\t%0,%3,%4,%1.t
    vwmul<u>.vx\t%0,%3,zero,%1.t
    vwmul<u>.vx\t%0,%3,%4,%1.t
@@ -4666,26 +4099,22 @@
 
 ;; Vector-Vector Widening Signed-Unsigned Integer multiply.
 (define_insn "@vwmulsu<vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (mult:<VW>
         (sign_extend:<VW>
-          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr"))
+          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr"))
         (zero_extend:<VW>
-          (match_operand:VWI 4 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+          (match_operand:VWI 4 "register_operand"           "vr,vr,vr,vr")))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmulsu.vv\t%0,%3,%4,%1.t
-   vwmulsu.vv\t%0,%3,%4,%1.t
-   vwmulsu.vv\t%0,%3,%4
-   vwmulsu.vv\t%0,%3,%4
    vwmulsu.vv\t%0,%3,%4,%1.t
    vwmulsu.vv\t%0,%3,%4,%1.t
    vwmulsu.vv\t%0,%3,%4
@@ -4695,31 +4124,23 @@
 
 ;; Vector-Scalar Widening Signed-Unsigned Integer multiply.
 (define_insn "@vwmulsu<vw>_vx"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,               vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (mult:<VW>
         (sign_extend:<VW>
-          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr,           vr,vr,vr,vr,vr,vr,vr,vr"))
+          (match_operand:VWI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr"))
         (zero_extend:<VW>
           (vec_duplicate:VWI
-           (match_operand:<VSUB> 4 "reg_or_0_operand"       "r,J,r,J,r,J,r,J,                   r,J,r,J,r,J,r,J"))))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J,                   0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,                   K,K,K,K,K,K,K,K")
+           (match_operand:<VSUB> 4 "reg_or_0_operand"       "r,J,r,J,r,J,r,J"))))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmulsu.vx\t%0,%3,%4,%1.t
-   vwmulsu.vx\t%0,%3,zero,%1.t
-   vwmulsu.vx\t%0,%3,%4,%1.t
-   vwmulsu.vx\t%0,%3,zero,%1.t
-   vwmulsu.vx\t%0,%3,%4
-   vwmulsu.vx\t%0,%3,zero
-   vwmulsu.vx\t%0,%3,%4
-   vwmulsu.vx\t%0,%3,zero
    vwmulsu.vx\t%0,%3,%4,%1.t
    vwmulsu.vx\t%0,%3,zero,%1.t
    vwmulsu.vx\t%0,%3,%4,%1.t
@@ -4733,23 +4154,21 @@
 
 ;; Vector-Vector Single-Width Integer Multiply-Add Instructions.
 (define_insn "@v<imac><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vr,  vd,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,    vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (unspec:VI
-         [(match_operand:VI 2 "register_operand"            "0,0,     0,0")
-          (match_operand:VI 3 "register_operand"            "vr,vr,   vr,vr")
-          (match_operand:VI 4 "register_operand"            "vr,vr,   vr,vr")] IMAC)
+         [(match_operand:VI 2 "register_operand"            "0,0")
+          (match_operand:VI 3 "register_operand"            "vr,vr")
+          (match_operand:VI 4 "register_operand"            "vr,vr")] IMAC)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,     K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<imac>.vv\t%0,%3,%4,%1.t
-   v<imac>.vv\t%0,%3,%4
    v<imac>.vv\t%0,%3,%4,%1.t
    v<imac>.vv\t%0,%3,%4"
   [(set_attr "type" "vmadd")
@@ -4757,26 +4176,22 @@
 
 ;; Vector-Scalar Single-Width Integer Multiply-Add Instructions.
 (define_insn "@v<imac><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VI
-         [(match_operand:VI 2 "register_operand"            "0,0,0,0,       0,0,0,0")
+         [(match_operand:VI 2 "register_operand"            "0,0,0,0")
           (vec_duplicate:VI
-             (match_operand:<VSUB> 3 "reg_or_0_operand"     "r,J,r,J,       r,J,r,J"))
-          (match_operand:VI 4 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")] IMAC)
+             (match_operand:<VSUB> 3 "reg_or_0_operand"     "r,J,r,J"))
+          (match_operand:VI 4 "register_operand"            "vr,vr,vr,vr")] IMAC)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<imac>.vx\t%0,%3,%4,%1.t
-   v<imac>.vx\t%0,zero,%4,%1.t
-   v<imac>.vx\t%0,%3,%4
-   v<imac>.vx\t%0,zero,%4
    v<imac>.vx\t%0,%3,%4,%1.t
    v<imac>.vx\t%0,zero,%4,%1.t
    v<imac>.vx\t%0,%3,%4
@@ -4785,26 +4200,22 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@v<imac><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                     "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"                     "=vd,vd,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"             "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"             "vm,vm,J,J")
        (unspec:V64BITI
-         [(match_operand:V64BITI 2 "register_operand"                   "0,0,0,0,       0,0,0,0")
+         [(match_operand:V64BITI 2 "register_operand"                   "0,0,0,0")
           (vec_duplicate:V64BITI
-             (sign_extend:<VSUB> (match_operand:SI 3 "reg_or_0_operand" "r,J,r,J,       r,J,r,J")))
-          (match_operand:V64BITI 4 "register_operand"                   "vr,vr,vr,vr,   vr,vr,vr,vr")] IMAC)
+             (sign_extend:<VSUB> (match_operand:SI 3 "reg_or_0_operand" "r,J,r,J")))
+          (match_operand:V64BITI 4 "register_operand"                   "vr,vr,vr,vr")] IMAC)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                                  "r,r,r,r,       K,K,K,K")
+     (match_operand:SI 5 "csr_operand"                                  "rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<imac>.vx\t%0,%3,%4,%1.t
-   v<imac>.vx\t%0,zero,%4,%1.t
-   v<imac>.vx\t%0,%3,%4
-   v<imac>.vx\t%0,zero,%4
    v<imac>.vx\t%0,%3,%4,%1.t
    v<imac>.vx\t%0,zero,%4,%1.t
    v<imac>.vx\t%0,%3,%4
@@ -4815,26 +4226,24 @@
 ;; Vector-Vector Widening signed-integer multiply-add, overwrite addend.
 ;; Vector-Vector Widening unsigned-integer multiply-add, overwrite addend.
 (define_insn "@vwmacc<u><vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (plus:<VW>
          (mult:<VW>
            (any_extend:<VW>
-             (match_operand:VWI 3 "register_operand"        "vr,vr,     vr,vr"))
+             (match_operand:VWI 3 "register_operand"        "vr,vr"))
            (any_extend:<VW>
-             (match_operand:VWI 4 "register_operand"        "vr,vr,     vr,vr")))
-         (match_operand:<VW> 2 "register_operand"           "0,0,       0,0"))
+             (match_operand:VWI 4 "register_operand"        "vr,vr")))
+         (match_operand:<VW> 2 "register_operand"           "0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmacc<u>.vv\t%0,%3,%4,%1.t
-   vwmacc<u>.vv\t%0,%3,%4
    vwmacc<u>.vv\t%0,%3,%4,%1.t
    vwmacc<u>.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
@@ -4843,29 +4252,25 @@
 ;; Vector-Scalar Widening signed-integer multiply-add, overwrite addend.
 ;; Vector-Scalar Widening unsigned-integer multiply-add, overwrite addend.
 (define_insn "@vwmacc<u><vw>_vx"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus:<VW>
          (mult:<VW>
            (any_extend:<VW>
              (vec_duplicate:VWI
-               (match_operand:<VSUB> 3 "reg_or_0_operand"   "r,J,r,J,           r,J,r,J")))
+               (match_operand:<VSUB> 3 "reg_or_0_operand"   "r,J,r,J")))
            (any_extend:<VW>
-             (match_operand:VWI 4 "register_operand"        "vr,vr,vr,vr,       vr,vr,vr,vr")))
-         (match_operand:<VW> 2 "register_operand"           "0,0,0,0,           0,0,0,0"))
+             (match_operand:VWI 4 "register_operand"        "vr,vr,vr,vr")))
+         (match_operand:<VW> 2 "register_operand"           "0,0,0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmacc<u>.vx\t%0,%3,%4,%1.t
-   vwmacc<u>.vx\t%0,zero,%4,%1.t
-   vwmacc<u>.vx\t%0,%3,%4
-   vwmacc<u>.vx\t%0,zero,%4
    vwmacc<u>.vx\t%0,%3,%4,%1.t
    vwmacc<u>.vx\t%0,zero,%4,%1.t
    vwmacc<u>.vx\t%0,%3,%4
@@ -4875,26 +4280,24 @@
 
 ;; Vector-Vector Widening signed-unsigned-integer multiply-add, overwrite addend.
 (define_insn "@vwmaccsu<vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (plus:<VW>
          (mult:<VW>
            (sign_extend:<VW>
-             (match_operand:VWI 3 "register_operand"        "vr,vr,     vr,vr"))
+             (match_operand:VWI 3 "register_operand"        "vr,vr"))
            (zero_extend:<VW>
-             (match_operand:VWI 4 "register_operand"        "vr,vr,     vr,vr")))
-         (match_operand:<VW> 2 "register_operand"           "0,0,       0,0"))
+             (match_operand:VWI 4 "register_operand"        "vr,vr")))
+         (match_operand:<VW> 2 "register_operand"           "0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmaccsu.vv\t%0,%3,%4,%1.t
-   vwmaccsu.vv\t%0,%3,%4
    vwmaccsu.vv\t%0,%3,%4,%1.t
    vwmaccsu.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
@@ -4902,29 +4305,25 @@
 
 ;; Vector-Scalar Widening signed-unsigned-integer multiply-add, overwrite addend.
 (define_insn "@vwmaccsu<vw>_vx"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus:<VW>
          (mult:<VW>
            (sign_extend:<VW>
              (vec_duplicate:VWI
-               (match_operand:<VSUB> 3 "reg_or_0_operand"   "r,J,r,J,           r,J,r,J")))
+               (match_operand:<VSUB> 3 "reg_or_0_operand"   "r,J,r,J")))
            (zero_extend:<VW>
-             (match_operand:VWI 4 "register_operand"        "vr,vr,vr,vr,       vr,vr,vr,vr")))
-         (match_operand:<VW> 2 "register_operand"           "0,0,0,0,           0,0,0,0"))
+             (match_operand:VWI 4 "register_operand"        "vr,vr,vr,vr")))
+         (match_operand:<VW> 2 "register_operand"           "0,0,0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmaccsu.vx\t%0,%3,%4,%1.t
-   vwmaccsu.vx\t%0,zero,%4,%1.t
-   vwmaccsu.vx\t%0,%3,%4
-   vwmaccsu.vx\t%0,zero,%4
    vwmaccsu.vx\t%0,%3,%4,%1.t
    vwmaccsu.vx\t%0,zero,%4,%1.t
    vwmaccsu.vx\t%0,%3,%4
@@ -4934,29 +4333,25 @@
 
 ;; Vector-Scalar Widening unsigned-signed-integer multiply-add, overwrite addend.
 (define_insn "@vwmaccus<vw>_vx"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus:<VW>
          (mult:<VW>
            (zero_extend:<VW>
              (vec_duplicate:VWI
-               (match_operand:<VSUB> 3 "reg_or_0_operand"   "r,J,r,J,           r,J,r,J")))
+               (match_operand:<VSUB> 3 "reg_or_0_operand"   "r,J,r,J")))
            (sign_extend:<VW>
-             (match_operand:VWI 4 "register_operand"        "vr,vr,vr,vr,       vr,vr,vr,vr")))
-         (match_operand:<VW> 2 "register_operand"           "0,0,0,0,           0,0,0,0"))
+             (match_operand:VWI 4 "register_operand"        "vr,vr,vr,vr")))
+         (match_operand:<VW> 2 "register_operand"           "0,0,0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwmaccus.vx\t%0,%3,%4,%1.t
-   vwmaccus.vx\t%0,zero,%4,%1.t
-   vwmaccus.vx\t%0,%3,%4
-   vwmaccus.vx\t%0,zero,%4
    vwmaccus.vx\t%0,%3,%4,%1.t
    vwmaccus.vx\t%0,zero,%4,%1.t
    vwmaccus.vx\t%0,%3,%4
@@ -4966,23 +4361,19 @@
 
 ;; Vector-Vector integer and float merge.
 (define_insn "@vmerge<mode>_vvm"
-  [(set (match_operand:V 0 "register_operand"             "=vd,vd,vd,vd,  vd,vd,vd,vd")
+  [(set (match_operand:V 0 "register_operand"             "=vd,vd,vd,vd")
     (unspec:V
-      [(match_operand:V 2 "vector_reg_or_const0_operand"  "0,0,J,J,       0,0,J,J")
+      [(match_operand:V 2 "vector_reg_or_const0_operand"  "0,0,J,J")
        (unspec:V
-        [(match_operand:<VM> 1 "register_operand"         "vm,vm,vm,vm,   vm,vm,vm,vm")
-         (match_operand:V 3 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")
-         (match_operand:V 4 "vector_arith_operand"        "vr,vi,vr,vi,   vr,vi,vr,vi")] UNSPEC_MERGE)
-       (match_operand 5 "p_reg_or_const_csr_operand"      "r,r,r,r,       K,K,K,K")
+        [(match_operand:<VM> 1 "register_operand"         "vm,vm,vm,vm")
+         (match_operand:V 3 "register_operand"            "vr,vr,vr,vr")
+         (match_operand:V 4 "vector_arith_operand"        "vr,vi,vr,vi")] UNSPEC_MERGE)
+       (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "@
-  vmerge.vvm\t%0,%3,%4,%1
-  vmerge.vim\t%0,%3,%v4,%1
-  vmerge.vvm\t%0,%3,%4,%1
-  vmerge.vim\t%0,%3,%v4,%1
   vmerge.vvm\t%0,%3,%4,%1
   vmerge.vim\t%0,%3,%v4,%1
   vmerge.vvm\t%0,%3,%4,%1
@@ -4992,15 +4383,15 @@
 
 ;; Vector-Scalar integer merge.
 (define_insn "@vmerge<mode>_vxm_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,  vd,vd,vd,vd")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd")
     (unspec:VI
-      [(match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,       0,0,J,J")
+      [(match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J")
         (unspec:VI
-          [(match_operand:<VM> 1 "register_operand"         "vm,vm,vm,vm,   vm,vm,vm,vm")
-           (match_operand:VI 3 "register_operand"           "vr,vr,vr,vr,   vr,vr,vr,vr")
+          [(match_operand:<VM> 1 "register_operand"         "vm,vm,vm,vm")
+           (match_operand:VI 3 "register_operand"           "vr,vr,vr,vr")
            (vec_duplicate:VI
-             (match_operand:<VSUB> 4 "reg_or_simm5_operand" "r,Ws5,r,Ws5,   r,Ws5,r,Ws5"))] UNSPEC_MERGE)
-       (match_operand 5 "p_reg_or_const_csr_operand"        "r,r,r,r,       K,K,K,K")
+             (match_operand:<VSUB> 4 "reg_or_simm5_operand" "r,Ws5,r,Ws5"))] UNSPEC_MERGE)
+       (match_operand 5 "p_reg_or_const_csr_operand"        "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5009,34 +4400,26 @@
   vmerge.vxm\t%0,%3,%4,%1
   vmerge.vim\t%0,%3,%4,%1
   vmerge.vxm\t%0,%3,%4,%1
-  vmerge.vim\t%0,%3,%4,%1
-  vmerge.vxm\t%0,%3,%4,%1
-  vmerge.vim\t%0,%3,%4,%1
-  vmerge.vxm\t%0,%3,%4,%1
   vmerge.vim\t%0,%3,%4,%1"
  [(set_attr "type" "vmerge")
   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmerge<mode>_vxm_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,  vd,vd,vd,vd")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd")
     (unspec:V64BITI
-      [(match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,       0,0,J,J")
+      [(match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J")
         (unspec:V64BITI
-          [(match_operand:<VM> 1 "register_operand"             "vm,vm,vm,vm,   vm,vm,vm,vm")
-           (match_operand:V64BITI 3 "register_operand"          "vr,vr,vr,vr,   vr,vr,vr,vr")
+          [(match_operand:<VM> 1 "register_operand"             "vm,vm,vm,vm")
+           (match_operand:V64BITI 3 "register_operand"          "vr,vr,vr,vr")
            (vec_duplicate:V64BITI
              (sign_extend:<VSUB>
-              (match_operand:SI 4 "reg_or_simm5_operand"        "r,Ws5,r,Ws5,   r,Ws5,r,Ws5")))] UNSPEC_MERGE)
-       (match_operand:SI 5 "csr_operand"                        "r,r,r,r,       K,K,K,K")
+              (match_operand:SI 4 "reg_or_simm5_operand"        "r,Ws5,r,Ws5")))] UNSPEC_MERGE)
+       (match_operand:SI 5 "csr_operand"                        "rK,rK,rK,rK")
        (match_operand:SI 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "@
-  vmerge.vxm\t%0,%3,%4,%1
-  vmerge.vim\t%0,%3,%4,%1
-  vmerge.vxm\t%0,%3,%4,%1
-  vmerge.vim\t%0,%3,%4,%1
   vmerge.vxm\t%0,%3,%4,%1
   vmerge.vim\t%0,%3,%4,%1
   vmerge.vxm\t%0,%3,%4,%1
@@ -5046,12 +4429,12 @@
 
 ;; Vector-Vector Integer/Float Move.
 (define_insn "@vmv<mode>_v_v"
-  [(set (match_operand:V 0 "register_operand"             "=vr,vr,  vr,vr")
+  [(set (match_operand:V 0 "register_operand"             "=vr,vr")
     (unspec:V
-      [(match_operand:V 1 "vector_reg_or_const0_operand"  "0,J,     0,J")
+      [(match_operand:V 1 "vector_reg_or_const0_operand"  "0,J")
        (unspec:V
-        [(match_operand:V 2 "register_operand"            "vr,vr,   vr,vr")] UNSPEC_MOVE)
-       (match_operand 3 "p_reg_or_const_csr_operand"      "r,r,     K,K")
+        [(match_operand:V 2 "register_operand"            "vr,vr")] UNSPEC_MOVE)
+       (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5062,12 +4445,12 @@
 
 ;; Vector-Scalar Integer Move.
 (define_insn "@vmv<mode>_v_x_internal"
-  [(set (match_operand:VI 0 "register_operand"          "=vr,vr,vr,vr,  vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"          "=vr,vr,vr,vr")
   (unspec:VI
-    [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J,       0,0,J,J")
+    [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J")
      (vec_duplicate:VI
-        (match_operand:<VSUB> 2 "reg_or_simm5_operand"  "r,Ws5,r,Ws5,   r,Ws5,r,Ws5"))
-     (match_operand 3 "p_reg_or_const_csr_operand"      "r,r,r,r,       K,K,K,K")
+        (match_operand:<VSUB> 2 "reg_or_simm5_operand"  "r,Ws5,r,Ws5"))
+     (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5076,30 +4459,22 @@
   vmv.v.x\t%0,%2
   vmv.v.i\t%0,%2
   vmv.v.x\t%0,%2
-  vmv.v.i\t%0,%2
-  vmv.v.x\t%0,%2
-  vmv.v.i\t%0,%2
-  vmv.v.x\t%0,%2
   vmv.v.i\t%0,%2"
  [(set_attr "type" "vmove")
   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmv<mode>_v_x_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                     "=vr,vr,vr,vr,  vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"                     "=vr,vr,vr,vr")
   (unspec:V64BITI
-    [(match_operand:V64BITI 1 "vector_reg_or_const0_operand"            "0,0,J,J,       0,0,J,J")
+    [(match_operand:V64BITI 1 "vector_reg_or_const0_operand"            "0,0,J,J")
      (vec_duplicate:V64BITI
-        (sign_extend:<VSUB> (match_operand:SI 2 "reg_or_simm5_operand"  "r,Ws5,r,Ws5,   r,Ws5,r,Ws5")))
-     (match_operand:SI 3 "csr_operand"                                  "r,r,r,r,       K,K,K,K")
+        (sign_extend:<VSUB> (match_operand:SI 2 "reg_or_simm5_operand"  "r,Ws5,r,Ws5")))
+     (match_operand:SI 3 "csr_operand"                                  "rK,rK,rK,rK")
      (match_operand:SI 4 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "@
-  vmv.v.x\t%0,%2
-  vmv.v.i\t%0,%2
-  vmv.v.x\t%0,%2
-  vmv.v.i\t%0,%2
   vmv.v.x\t%0,%2
   vmv.v.i\t%0,%2
   vmv.v.x\t%0,%2
@@ -5120,28 +4495,20 @@
 
 ;; Vector-Vector Single-Width Saturating Add.
 (define_insn "@v<optab><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_satplus:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-         (match_operand:VI 4 "vector_arith_operand"         "vr,vi,vr,vi,vr,vi,vr,vi,   vr,vi,vr,vi,vr,vi,vr,vi"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:VI 4 "vector_arith_operand"         "vr,vi,vr,vi,vr,vi,vr,vi"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%v4,%1.t
-   v<insn>.vv\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%v4,%1.t
-   v<insn>.vv\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%v4
-   v<insn>.vv\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%v4
    v<insn>.vv\t%0,%3,%4,%1.t
    v<insn>.vi\t%0,%3,%v4,%1.t
    v<insn>.vv\t%0,%3,%4,%1.t
@@ -5155,15 +4522,15 @@
 
 ;; Vector-Vector Single-Width Saturating Sub.
 (define_insn "@v<optab><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_satminus:VI
-         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-         (match_operand:VI 4 "vector_neg_arith_operand"     "vr,vj,vr,vj,vr,vj,vr,vj,   vr,vj,vr,vj,vr,vj,vr,vj"))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand:VI 4 "vector_neg_arith_operand"     "vr,vj,vr,vj,vr,vj,vr,vj"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5192,16 +4559,16 @@
 
 ;; Vector-Scalar Single-Width Saturating Add.
 (define_insn "@v<optab><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_satplus:VI
-        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:VI
-         (match_operand:<VSUB> 4 "reg_or_simm5_operand"     "r,Ws5,r,Ws5,r,Ws5,r,Ws5,   r,Ws5,r,Ws5,r,Ws5,r,Ws5")))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:<VSUB> 4 "reg_or_simm5_operand"     "r,Ws5,r,Ws5,r,Ws5,r,Ws5")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5214,43 +4581,27 @@
    v<insn>.vx\t%0,%3,%4
    v<insn>.vi\t%0,%3,%4
    v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
-   v<insn>.vx\t%0,%3,%4
    v<insn>.vi\t%0,%3,%4"
   [(set_attr "type" "vsarith")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@v<optab><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
        (any_satplus:V64BITI
-        (match_operand:V64BITI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:V64BITI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:V64BITI
          (sign_extend:<VSUB>
-          (match_operand:SI 4 "reg_or_simm5_operand"            "r,Ws5,r,Ws5,r,Ws5,r,Ws5,   r,Ws5,r,Ws5,r,Ws5,r,Ws5"))))
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+          (match_operand:SI 4 "reg_or_simm5_operand"            "r,Ws5,r,Ws5,r,Ws5,r,Ws5"))))
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4,%1.t
-   v<insn>.vi\t%0,%3,%4,%1.t
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
-   v<insn>.vx\t%0,%3,%4
-   v<insn>.vi\t%0,%3,%4
    v<insn>.vx\t%0,%3,%4,%1.t
    v<insn>.vi\t%0,%3,%4,%1.t
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -5264,16 +4615,16 @@
 
 ;; Vector-Scalar Single-Width Saturating Sub.
 (define_insn "@v<optab><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (any_satminus:VI
-        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:VI
-         (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand" "r,Wn5,r,Wn5,r,Wn5,r,Wn5,   r,Wn5,r,Wn5,r,Wn5,r,Wn5")))
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand" "r,Wn5,r,Wn5,r,Wn5,r,Wn5")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5298,17 +4649,17 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@v<optab><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"               "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"               "=vd,vd,vd,vd,vr,vr,vr,vr")
     (unspec:V64BITI
       [(unspec:V64BITI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
          (any_satminus:V64BITI
-           (match_operand:V64BITI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand:V64BITI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
            (vec_duplicate:V64BITI
              (sign_extend:<VSUB>
-              (match_operand:SI 4 "reg_or_neg_simm5_operand"      "r,Wn5,r,Wn5,r,Wn5,r,Wn5,   r,Wn5,r,Wn5,r,Wn5,r,Wn5"))))
-         (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-        (match_operand:SI 5 "csr_operand"                         "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+              (match_operand:SI 4 "reg_or_neg_simm5_operand"      "r,Wn5,r,Wn5,r,Wn5,r,Wn5"))))
+         (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+        (match_operand:SI 5 "csr_operand"                         "rK,rK,rK,rK,rK,rK,rK,rK")
         (match_operand:SI 6 "const_int_operand")
         (reg:SI VL_REGNUM)
         (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5335,24 +4686,20 @@
 ;; Vector-Vector Single-Width Averaging Add and Subtract.
 ;; Vector-Vector Single-Width Fractional Multiply with Rounding and Saturation.
 (define_insn "@v<sat_op><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VI
-         [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")
-          (match_operand:VI 4 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")] SAT_OP)
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr")
+          (match_operand:VI 4 "register_operand"            "vr,vr,vr,vr")] SAT_OP)
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<sat_op>.vv\t%0,%3,%4,%1.t
-   v<sat_op>.vv\t%0,%3,%4,%1.t
-   v<sat_op>.vv\t%0,%3,%4
-   v<sat_op>.vv\t%0,%3,%4
    v<sat_op>.vv\t%0,%3,%4,%1.t
    v<sat_op>.vv\t%0,%3,%4,%1.t
    v<sat_op>.vv\t%0,%3,%4
@@ -5363,29 +4710,21 @@
 ;; Vector-Scalar Single-Width Averaging Add and Subtract.
 ;; Vector-Scalar Single-Width Fractional Multiply with Rounding and Saturation.
 (define_insn "@v<sat_op><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (unspec:VI
-         [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+         [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
           (vec_duplicate:VI
-           (match_operand:<VSUB> 4 "reg_or_0_operand"       "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J"))] SAT_OP)
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+           (match_operand:<VSUB> 4 "reg_or_0_operand"       "r,J,r,J,r,J,r,J"))] SAT_OP)
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<sat_op>.vx\t%0,%3,%4,%1.t
-   v<sat_op>.vx\t%0,%3,zero,%1.t
-   v<sat_op>.vx\t%0,%3,%4,%1.t
-   v<sat_op>.vx\t%0,%3,zero,%1.t
-   v<sat_op>.vx\t%0,%3,%4
-   v<sat_op>.vx\t%0,%3,zero
-   v<sat_op>.vx\t%0,%3,%4
-   v<sat_op>.vx\t%0,%3,zero
    v<sat_op>.vx\t%0,%3,%4,%1.t
    v<sat_op>.vx\t%0,%3,zero,%1.t
    v<sat_op>.vx\t%0,%3,%4,%1.t
@@ -5398,30 +4737,22 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@v<sat_op><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
        (unspec:V64BITI
-         [(match_operand:V64BITI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
+         [(match_operand:V64BITI 3 "register_operand"           "vr,vr,vr,vr,vr,vr,vr,vr")
           (vec_duplicate:V64BITI
            (sign_extend:<VSUB>
-            (match_operand:SI 4 "reg_or_0_operand"              "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")))] SAT_OP)
-       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand:SI 5 "csr_operand"                          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+            (match_operand:SI 4 "reg_or_0_operand"              "r,J,r,J,r,J,r,J")))] SAT_OP)
+       (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<sat_op>.vx\t%0,%3,%4,%1.t
-   v<sat_op>.vx\t%0,%3,zero,%1.t
-   v<sat_op>.vx\t%0,%3,%4,%1.t
-   v<sat_op>.vx\t%0,%3,zero,%1.t
-   v<sat_op>.vx\t%0,%3,%4
-   v<sat_op>.vx\t%0,%3,zero
-   v<sat_op>.vx\t%0,%3,%4
-   v<sat_op>.vx\t%0,%3,zero
    v<sat_op>.vx\t%0,%3,%4,%1.t
    v<sat_op>.vx\t%0,%3,zero,%1.t
    v<sat_op>.vx\t%0,%3,%4,%1.t
@@ -5435,28 +4766,20 @@
 
 ;; Vector-Vector Single-Width Scaling Shift Instructions.
 (define_insn "@v<sshift><mode>_vv"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (unspec:VI
-         [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-          (match_operand:VI 4 "vector_shift_operand"        "vr,vk,vr,vk,vr,vk,vr,vk,   vr,vk,vr,vk,vr,vk,vr,vk")] SSHIFT)
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+         [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
+          (match_operand:VI 4 "vector_shift_operand"        "vr,vk,vr,vk,vr,vk,vr,vk")] SSHIFT)
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   v<sshift>.vv\t%0,%3,%4,%1.t
-   v<sshift>.vi\t%0,%3,%v4,%1.t
-   v<sshift>.vv\t%0,%3,%4,%1.t
-   v<sshift>.vi\t%0,%3,%v4,%1.t
-   v<sshift>.vv\t%0,%3,%4
-   v<sshift>.vi\t%0,%3,%v4
-   v<sshift>.vv\t%0,%3,%4
-   v<sshift>.vi\t%0,%3,%v4
    v<sshift>.vv\t%0,%3,%4,%1.t
    v<sshift>.vi\t%0,%3,%v4,%1.t
    v<sshift>.vv\t%0,%3,%4,%1.t
@@ -5470,15 +4793,15 @@
 
 ;; Vector-Scalar Single-Width Scaling Shift Instructions.
 (define_insn "@v<sshift><mode>_vx"
-  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
        (unspec:VI
-        [(match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-         (match_operand 4 "p_reg_or_uimm5_operand"          "r,K,r,K,r,K,r,K,           r,K,r,K,r,K,r,K")] SSHIFT)
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+        [(match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
+         (match_operand 4 "p_reg_or_uimm5_operand"          "r,K,r,K,r,K,r,K")] SSHIFT)
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5491,20 +4814,12 @@
    v<sshift>.vx\t%0,%3,%4
    v<sshift>.vi\t%0,%3,%4
    v<sshift>.vx\t%0,%3,%4
-   v<sshift>.vi\t%0,%3,%4
-   v<sshift>.vx\t%0,%3,%4,%1.t
-   v<sshift>.vi\t%0,%3,%4,%1.t
-   v<sshift>.vx\t%0,%3,%4,%1.t
-   v<sshift>.vi\t%0,%3,%4,%1.t
-   v<sshift>.vx\t%0,%3,%4
-   v<sshift>.vi\t%0,%3,%4
-   v<sshift>.vx\t%0,%3,%4
    v<sshift>.vi\t%0,%3,%4"
   [(set_attr "type" "vscaleshift")
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector signed/unsigned clip.
-(define_expand "@vn<clip><mode>_wv"
+(define_insn "@vn<clip><mode>_wv"
   [(set (match_operand:VWI 0 "register_operand"               "=vd,vd,&vd,vd,&vd,   vd,vd,&vd,vd,&vd,   vr,vr,&vr,vr,&vr,   vr,vr,&vr,vr,&vr")
     (unspec:VWI
       [(unspec:VWI
@@ -5514,63 +4829,7 @@
             (match_operand:VWI 4 "vector_shift_operand"       "vr,0,vr,vk,vk,       vr,0,vr,vk,vk,      vr,0,vr,vk,vk,      vr,0,vr,vk,vk")] CLIP)
         (match_operand:VWI 2 "vector_reg_or_const0_operand"   "0,0,0,0,0,           J,J,J,J,J,          0,0,0,0,0,          J,J,J,J,J")
       ] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand")
-      (match_operand 6 "const_int_operand")
-      (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  {})
-
-(define_insn "*vn<clip><mode>_wv_1"
-  [(set (match_operand:VWI 0 "register_operand"               "=vd,vd,&vd,vd,&vd,   vd,vd,&vd,vd,&vd,   vr,vr,&vr,vr,&vr,   vr,vr,&vr,vr,&vr")
-    (unspec:VWI
-      [(unspec:VWI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,vm,      vm,vm,vm,vm,vm,     J,J,J,J,J,          J,J,J,J,J")
-        (unspec:VWI
-          [(match_operand:<VW> 3 "register_operand"           "0,vr,vr,0,vr,        0,vr,vr,0,vr,       0,vr,vr,0,vr,       0,vr,vr,0,vr")
-            (match_operand:VWI 4 "vector_shift_operand"       "vr,0,vr,vk,vk,       vr,0,vr,vk,vk,      vr,0,vr,vk,vk,      vr,0,vr,vk,vk")] CLIP)
-        (match_operand:VWI 2 "vector_reg_or_const0_operand"   "0,0,0,0,0,           J,J,J,J,J,          0,0,0,0,0,          J,J,J,J,J")
-      ] UNSPEC_SELECT)
-      (match_operand 5 "p_reg"                                "r,r,r,r,r,           r,r,r,r,r,          r,r,r,r,r,          r,r,r,r,r")
-      (match_operand 6 "const_int_operand")
-      (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  "@
-   vn<clip>.wv\t%0,%3,%4,%1.t
-   vn<clip>.wv\t%0,%3,%4,%1.t
-   vn<clip>.wv\t%0,%3,%4,%1.t
-   vn<clip>.wi\t%0,%3,%v4,%1.t
-   vn<clip>.wi\t%0,%3,%v4,%1.t
-   vn<clip>.wv\t%0,%3,%4,%1.t
-   vn<clip>.wv\t%0,%3,%4,%1.t
-   vn<clip>.wv\t%0,%3,%4,%1.t
-   vn<clip>.wi\t%0,%3,%v4,%1.t
-   vn<clip>.wi\t%0,%3,%v4,%1.t
-   vn<clip>.wv\t%0,%3,%4
-   vn<clip>.wv\t%0,%3,%4
-   vn<clip>.wv\t%0,%3,%4
-   vn<clip>.wi\t%0,%3,%v4
-   vn<clip>.wi\t%0,%3,%v4
-   vn<clip>.wv\t%0,%3,%4
-   vn<clip>.wv\t%0,%3,%4
-   vn<clip>.wv\t%0,%3,%4
-   vn<clip>.wi\t%0,%3,%v4
-   vn<clip>.wi\t%0,%3,%v4"
-  [(set_attr "type" "vclip")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "*vn<clip><mode>_wv_2"
-  [(set (match_operand:VWI 0 "register_operand"               "=vd,vd,&vd,vd,&vd,   vd,vd,&vd,vd,&vd,   vr,vr,&vr,vr,&vr,   vr,vr,&vr,vr,&vr")
-    (unspec:VWI
-      [(unspec:VWI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,vm,      vm,vm,vm,vm,vm,     J,J,J,J,J,          J,J,J,J,J")
-        (unspec:VWI
-          [(match_operand:<VW> 3 "register_operand"           "0,vr,vr,0,vr,        0,vr,vr,0,vr,       0,vr,vr,0,vr,       0,vr,vr,0,vr")
-            (match_operand:VWI 4 "vector_shift_operand"       "vr,0,vr,vk,vk,       vr,0,vr,vk,vk,      vr,0,vr,vk,vk,      vr,0,vr,vk,vk")] CLIP)
-        (match_operand:VWI 2 "vector_reg_or_const0_operand"   "0,0,0,0,0,           J,J,J,J,J,          0,0,0,0,0,          J,J,J,J,J")
-      ] UNSPEC_SELECT)
-      (match_operand 5 "const_csr_operand"                    "K,K,K,K,K,           K,K,K,K,K,          K,K,K,K,K,          K,K,K,K,K")
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,      rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -5601,37 +4860,21 @@
 
 ;; Vector-Scalar signed/unsigned clip.
 (define_insn "@vn<clip><mode>_wx"
-  [(set (match_operand:VWI 0 "register_operand"               "=vd,&vd,vd,&vd,  vd,&vd,vd,&vd,  vr,&vr,vr,&vr,  vr,?&vr,vr,&vr, vd,&vd,vd,&vd,  vd,&vd,vd,&vd,  vr,&vr,vr,&vr,  vr,?&vr,vr,&vr")
+  [(set (match_operand:VWI 0 "register_operand"               "=vd,&vd,vd,&vd,  vd,&vd,vd,&vd,  vr,&vr,vr,&vr,  vr,?&vr,vr,&vr")
     (unspec:VWI
       [(unspec:VWI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,     vm,vm,vm,vm,    J,J,J,J,        J,J,J,J,        vm,vm,vm,vm,    vm,vm,vm,vm,    J,J,J,J,        J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,     vm,vm,vm,vm,    J,J,J,J,        J,J,J,J")
         (unspec:VWI
-          [(match_operand:<VW> 3 "register_operand"           "0,vr,0,vr,       0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr")
-            (match_operand 4 "p_reg_or_uimm5_operand"         "r,r,K,K,         r,r,K,K,        r,r,K,K,        r,r,K,K,        r,r,K,K,        r,r,K,K,        r,r,K,K,        r,r,K,K")] CLIP)
-        (match_operand:VWI 2 "vector_reg_or_const0_operand"   "0,0,0,0,         J,J,J,J,        0,0,0,0,        J,J,J,J,        0,0,0,0,        J,J,J,J,        0,0,0,0,        J,J,J,J")
+          [(match_operand:<VW> 3 "register_operand"           "0,vr,0,vr,       0,vr,0,vr,      0,vr,0,vr,      0,vr,0,vr")
+            (match_operand 4 "p_reg_or_uimm5_operand"         "r,r,K,K,         r,r,K,K,        r,r,K,K,        r,r,K,K")] CLIP)
+        (match_operand:VWI 2 "vector_reg_or_const0_operand"   "0,0,0,0,         J,J,J,J,        0,0,0,0,        J,J,J,J")
       ] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"           "r,r,r,r,         r,r,r,r,        r,r,r,r,        r,r,r,r,        K,K,K,K,        K,K,K,K,        K,K,K,K,        K,K,K,K")
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,     rK,rK,rK,rK,    rK,rK,rK,rK,    rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vn<clip>.wx\t%0,%3,%4,%1.t
-   vn<clip>.wx\t%0,%3,%4,%1.t
-   vn<clip>.wi\t%0,%3,%4,%1.t
-   vn<clip>.wi\t%0,%3,%4,%1.t
-   vn<clip>.wx\t%0,%3,%4,%1.t
-   vn<clip>.wx\t%0,%3,%4,%1.t
-   vn<clip>.wi\t%0,%3,%4,%1.t
-   vn<clip>.wi\t%0,%3,%4,%1.t
-   vn<clip>.wx\t%0,%3,%4
-   vn<clip>.wx\t%0,%3,%4
-   vn<clip>.wi\t%0,%3,%4
-   vn<clip>.wi\t%0,%3,%4
-   vn<clip>.wx\t%0,%3,%4
-   vn<clip>.wx\t%0,%3,%4
-   vn<clip>.wi\t%0,%3,%4
-   vn<clip>.wi\t%0,%3,%4
    vn<clip>.wx\t%0,%3,%4,%1.t
    vn<clip>.wx\t%0,%3,%4,%1.t
    vn<clip>.wi\t%0,%3,%4,%1.t
@@ -5679,24 +4922,20 @@
 ;; Vector-Vector Single-Width Floating-Point Multiply/Divide Instrucions.
 ;; Vector-Vector Single-Width Floating-Point MIN/MAX Instrucions.
 (define_insn "@vf<optab><mode>_vv"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (any_fop:VF
-        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr")
-        (match_operand:VF 4 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr")
+        (match_operand:VF 4 "register_operand"              "vr,vr,vr,vr"))
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vf<insn>.vv\t%0,%3,%4,%1.t
-   vf<insn>.vv\t%0,%3,%4,%1.t
-   vf<insn>.vv\t%0,%3,%4
-   vf<insn>.vv\t%0,%3,%4
    vf<insn>.vv\t%0,%3,%4,%1.t
    vf<insn>.vv\t%0,%3,%4,%1.t
    vf<insn>.vv\t%0,%3,%4
@@ -5708,25 +4947,21 @@
 ;; Vector-Scalar Single-Width Floating-Point Multiply/Divide Instrucions.
 ;; Vector-Scalar Single-Width Floating-Point MIN/MAX Instrucions.
 (define_insn "@vf<optab><mode>_vf"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (any_fop:VF
-        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr")
+        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr")
         (vec_duplicate:VF
-         (match_operand:<VSUB> 4 "register_operand"         "f,f,f,f,       f,f,f,f")))
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         (match_operand:<VSUB> 4 "register_operand"         "f,f,f,f")))
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vf<insn>.vf\t%0,%3,%4,%1.t
-   vf<insn>.vf\t%0,%3,%4,%1.t
-   vf<insn>.vf\t%0,%3,%4
-   vf<insn>.vf\t%0,%3,%4
    vf<insn>.vf\t%0,%3,%4,%1.t
    vf<insn>.vf\t%0,%3,%4,%1.t
    vf<insn>.vf\t%0,%3,%4
@@ -5736,25 +4971,21 @@
 
 ;; Floating-Point Reverse Sub/Div.
 (define_insn "@vfr<optab><mode>_vf"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (minus_div:VF
         (vec_duplicate:VF
-         (match_operand:<VSUB> 4 "register_operand"         "f,f,f,f,       f,f,f,f"))
-        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         (match_operand:<VSUB> 4 "register_operand"         "f,f,f,f"))
+        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr"))
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfr<insn>.vf\t%0,%3,%4,%1.t
-   vfr<insn>.vf\t%0,%3,%4,%1.t
-   vfr<insn>.vf\t%0,%3,%4
-   vfr<insn>.vf\t%0,%3,%4
    vfr<insn>.vf\t%0,%3,%4,%1.t
    vfr<insn>.vf\t%0,%3,%4,%1.t
    vfr<insn>.vf\t%0,%3,%4
@@ -5764,26 +4995,22 @@
 
 ;; Vector-Vector Widening Float Add/Subtract.
 (define_insn "@vfw<plus_minus:optab><vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus_minus:<VW>
         (float_extend:<VW>
-          (match_operand:VWF 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr"))
+          (match_operand:VWF 3 "register_operand"           "vr,vr,vr,vr"))
         (float_extend:<VW>
-          (match_operand:VWF 4 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+          (match_operand:VWF 4 "register_operand"           "vr,vr,vr,vr")))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfw<insn>.vv\t%0,%3,%4,%1.t
-   vfw<insn>.vv\t%0,%3,%4,%1.t
-   vfw<insn>.vv\t%0,%3,%4
-   vfw<insn>.vv\t%0,%3,%4
    vfw<insn>.vv\t%0,%3,%4,%1.t
    vfw<insn>.vv\t%0,%3,%4,%1.t
    vfw<insn>.vv\t%0,%3,%4
@@ -5793,27 +5020,23 @@
 
 ;; Vector-Scalar Widening Float Add/Subtract.
 (define_insn "@vfw<plus_minus:optab><vw>_vf"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus_minus:<VW>
         (float_extend:<VW>
-          (match_operand:VWF 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr"))
+          (match_operand:VWF 3 "register_operand"           "vr,vr,vr,vr"))
         (float_extend:<VW>
           (vec_duplicate:VWF
-           (match_operand:<VSUB> 4 "register_operand"       "f,f,f,f,           f,f,f,f"))))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+           (match_operand:<VSUB> 4 "register_operand"       "f,f,f,f"))))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfw<insn>.vf\t%0,%3,%4,%1.t
-   vfw<insn>.vf\t%0,%3,%4,%1.t
-   vfw<insn>.vf\t%0,%3,%4
-   vfw<insn>.vf\t%0,%3,%4
    vfw<insn>.vf\t%0,%3,%4,%1.t
    vfw<insn>.vf\t%0,%3,%4,%1.t
    vfw<insn>.vf\t%0,%3,%4
@@ -5823,25 +5046,21 @@
 
 ;; Vector-Vector Widening Float Add/Subtract.
 (define_insn "@vfw<plus_minus:optab><vw>_wv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus_minus:<VW>
-        (match_operand:<VW> 3 "register_operand"            "vr,vr,vr,vr,       vr,vr,vr,vr")
+        (match_operand:<VW> 3 "register_operand"            "vr,vr,vr,vr")
         (float_extend:<VW>
-          (match_operand:VWF 4 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+          (match_operand:VWF 4 "register_operand"           "vr,vr,vr,vr")))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfw<insn>.wv\t%0,%3,%4,%1.t
-   vfw<insn>.wv\t%0,%3,%4,%1.t
-   vfw<insn>.wv\t%0,%3,%4
-   vfw<insn>.wv\t%0,%3,%4
    vfw<insn>.wv\t%0,%3,%4,%1.t
    vfw<insn>.wv\t%0,%3,%4,%1.t
    vfw<insn>.wv\t%0,%3,%4
@@ -5851,26 +5070,22 @@
 
 ;; Vector-Scalar Widening Float Add/Subtract.
 (define_insn "@vfw<plus_minus:optab><vw>_wf"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (plus_minus:<VW>
-        (match_operand:<VW> 3 "register_operand"            "vr,vr,vr,vr,       vr,vr,vr,vr")
+        (match_operand:<VW> 3 "register_operand"            "vr,vr,vr,vr")
         (float_extend:<VW>
           (vec_duplicate:VWF
-           (match_operand:<VSUB> 4 "register_operand"       "f,f,f,f,           f,f,f,f"))))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+           (match_operand:<VSUB> 4 "register_operand"       "f,f,f,f"))))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfw<insn>.wf\t%0,%3,%4,%1.t
-   vfw<insn>.wf\t%0,%3,%4,%1.t
-   vfw<insn>.wf\t%0,%3,%4
-   vfw<insn>.wf\t%0,%3,%4
    vfw<insn>.wf\t%0,%3,%4,%1.t
    vfw<insn>.wf\t%0,%3,%4,%1.t
    vfw<insn>.wf\t%0,%3,%4
@@ -5880,26 +5095,22 @@
 
 ;; Vector-Vector Widening Float multiply.
 (define_insn "@vfwmul<vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (mult:<VW>
         (float_extend:<VW>
-          (match_operand:VWF 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr"))
+          (match_operand:VWF 3 "register_operand"           "vr,vr,vr,vr"))
         (float_extend:<VW>
-          (match_operand:VWF 4 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+          (match_operand:VWF 4 "register_operand"           "vr,vr,vr,vr")))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwmul.vv\t%0,%3,%4,%1.t
-   vfwmul.vv\t%0,%3,%4,%1.t
-   vfwmul.vv\t%0,%3,%4
-   vfwmul.vv\t%0,%3,%4
    vfwmul.vv\t%0,%3,%4,%1.t
    vfwmul.vv\t%0,%3,%4,%1.t
    vfwmul.vv\t%0,%3,%4
@@ -5909,27 +5120,23 @@
 
 ;; Vector-Scalar Widening Float multiply.
 (define_insn "@vfwmul<vw>_vf"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (mult:<VW>
         (float_extend:<VW>
-          (match_operand:VWF 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr"))
+          (match_operand:VWF 3 "register_operand"           "vr,vr,vr,vr"))
         (float_extend:<VW>
           (vec_duplicate:VWF
-           (match_operand:<VSUB> 4 "register_operand"       "f,f,f,f,           f,f,f,f"))))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+           (match_operand:<VSUB> 4 "register_operand"       "f,f,f,f"))))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwmul.vf\t%0,%3,%4,%1.t
-   vfwmul.vf\t%0,%3,%4,%1.t
-   vfwmul.vf\t%0,%3,%4
-   vfwmul.vf\t%0,%3,%4
    vfwmul.vf\t%0,%3,%4,%1.t
    vfwmul.vf\t%0,%3,%4,%1.t
    vfwmul.vf\t%0,%3,%4
@@ -5939,23 +5146,21 @@
 
 ;; Vector-Vector Single-Width Floating-Point Fused Multiply-Add Instrucions.
 (define_insn "@vf<fmac><mode>_vv"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vr,  vd,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,    vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (unspec:VF
-         [(match_operand:VF 2 "register_operand"            "0,0,     0,0")
-          (match_operand:VF 3 "register_operand"            "vr,vr,   vr,vr")
-          (match_operand:VF 4 "register_operand"            "vr,vr,   vr,vr")] FMAC)
+         [(match_operand:VF 2 "register_operand"            "0,0")
+          (match_operand:VF 3 "register_operand"            "vr,vr")
+          (match_operand:VF 4 "register_operand"            "vr,vr")] FMAC)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,     K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vf<fmac>.vv\t%0,%3,%4,%1.t
-   vf<fmac>.vv\t%0,%3,%4
    vf<fmac>.vv\t%0,%3,%4,%1.t
    vf<fmac>.vv\t%0,%3,%4"
   [(set_attr "type" "vmadd")
@@ -5963,24 +5168,22 @@
 
 ;; Vector-Scalar Single-Width Floating-Point Fused Multiply-Add Instrucions.
 (define_insn "@vf<fmac><mode>_vf"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vr,  vd,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,    vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (unspec:VF
-         [(match_operand:VF 2 "register_operand"            "0,0,     0,0")
+         [(match_operand:VF 2 "register_operand"            "0,0")
           (vec_duplicate:VF
-            (match_operand:<VSUB> 3 "register_operand"      "f,f,     f,f"))
-          (match_operand:VF 4 "register_operand"            "vr,vr,   vr,vr")] FMAC)
+            (match_operand:<VSUB> 3 "register_operand"      "f,f"))
+          (match_operand:VF 4 "register_operand"            "vr,vr")] FMAC)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,     K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vf<fmac>.vf\t%0,%3,%4,%1.t
-   vf<fmac>.vf\t%0,%3,%4
    vf<fmac>.vf\t%0,%3,%4,%1.t
    vf<fmac>.vf\t%0,%3,%4"
   [(set_attr "type" "vmadd")
@@ -5989,52 +5192,48 @@
 ;; Vector-Vector Widening multiply-accumulate, overwrite addend.
 ;; Vector-Vector Widening multiply-subtract-accumulate, overwrite addend.
 (define_insn "@vfwmacc<vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (plus:<VW>
          (mult:<VW>
           (float_extend:<VW>
-            (match_operand:VWF 3 "register_operand"         "vr,vr,     vr,vr"))
+            (match_operand:VWF 3 "register_operand"         "vr,vr"))
           (float_extend:<VW>
-            (match_operand:VWF 4 "register_operand"         "vr,vr,     vr,vr")))
-         (match_operand:<VW> 2 "register_operand"           "0,0,       0,0"))
+            (match_operand:VWF 4 "register_operand"         "vr,vr")))
+         (match_operand:<VW> 2 "register_operand"           "0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwmacc.vv\t%0,%3,%4,%1.t
-   vfwmacc.vv\t%0,%3,%4
    vfwmacc.vv\t%0,%3,%4,%1.t
    vfwmacc.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfwmsac<vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (minus:<VW>
          (mult:<VW>
           (float_extend:<VW>
-            (match_operand:VWF 3 "register_operand"         "vr,vr,     vr,vr"))
+            (match_operand:VWF 3 "register_operand"         "vr,vr"))
           (float_extend:<VW>
-            (match_operand:VWF 4 "register_operand"         "vr,vr,     vr,vr")))
-         (match_operand:<VW> 2 "register_operand"           "0,0,       0,0"))
+            (match_operand:VWF 4 "register_operand"         "vr,vr")))
+         (match_operand:<VW> 2 "register_operand"           "0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwmsac.vv\t%0,%3,%4,%1.t
-   vfwmsac.vv\t%0,%3,%4
    vfwmsac.vv\t%0,%3,%4,%1.t
    vfwmsac.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
@@ -6043,54 +5242,50 @@
 ;; Vector-Scalar Widening multiply-accumulate, overwrite addend.
 ;; Vector-Scalar Widening multiply-subtract-accumulate, overwrite addend.
 (define_insn "@vfwmacc<vw>_vf"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (plus:<VW>
          (mult:<VW>
           (float_extend:<VW>
-            (match_operand:VWF 4 "register_operand"         "vr,vr,     vr,vr"))
+            (match_operand:VWF 4 "register_operand"         "vr,vr"))
           (float_extend:<VW>
             (vec_duplicate:VWF
-             (match_operand:<VSUB> 3 "register_operand"     "f,f,       f,f"))))
-       (match_operand:<VW> 2 "register_operand"             "0,0,       0,0"))
+             (match_operand:<VSUB> 3 "register_operand"     "f,f"))))
+       (match_operand:<VW> 2 "register_operand"             "0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwmacc.vf\t%0,%3,%4,%1.t
-   vfwmacc.vf\t%0,%3,%4
    vfwmacc.vf\t%0,%3,%4,%1.t
    vfwmacc.vf\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfwmsac<vw>_vf"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (minus:<VW>
          (mult:<VW>
           (float_extend:<VW>
-            (match_operand:VWF 4 "register_operand"         "vr,vr,     vr,vr"))
+            (match_operand:VWF 4 "register_operand"         "vr,vr"))
           (float_extend:<VW>
             (vec_duplicate:VWF
-             (match_operand:<VSUB> 3 "register_operand"     "f,f,       f,f"))))
-       (match_operand:<VW> 2 "register_operand"             "0,0,       0,0"))
+             (match_operand:<VSUB> 3 "register_operand"     "f,f"))))
+       (match_operand:<VW> 2 "register_operand"             "0,0"))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwmsac.vf\t%0,%3,%4,%1.t
-   vfwmsac.vf\t%0,%3,%4
    vfwmsac.vf\t%0,%3,%4,%1.t
    vfwmsac.vf\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
@@ -6099,54 +5294,50 @@
 ;; Vector-Vector Widening negate-(multiply-accumulate), overwrite addend.
 ;; Vector-Vector Widening negate-(multiply-subtract-accumulate), overwrite addend.
 (define_insn "@vfwnmacc<vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (neg:<VW>
          (plus:<VW>
            (mult:<VW>
             (float_extend:<VW>
-              (match_operand:VWF 4 "register_operand"       "vr,vr,     vr,vr"))
+              (match_operand:VWF 4 "register_operand"       "vr,vr"))
             (float_extend:<VW>
-              (match_operand:VWF 3 "register_operand"       "vr,vr,     vr,vr")))
-           (match_operand:<VW> 2 "register_operand"         "0,0,       0,0")))
+              (match_operand:VWF 3 "register_operand"       "vr,vr")))
+           (match_operand:<VW> 2 "register_operand"         "0,0")))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwnmacc.vv\t%0,%3,%4,%1.t
-   vfwnmacc.vv\t%0,%3,%4
    vfwnmacc.vv\t%0,%3,%4,%1.t
    vfwnmacc.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfwnmsac<vw>_vv"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (neg:<VW>
          (minus:<VW>
            (mult:<VW>
             (float_extend:<VW>
-              (match_operand:VWF 4 "register_operand"       "vr,vr,     vr,vr"))
+              (match_operand:VWF 4 "register_operand"       "vr,vr"))
             (float_extend:<VW>
-              (match_operand:VWF 3 "register_operand"       "vr,vr,     vr,vr")))
-           (match_operand:<VW> 2 "register_operand"         "0,0,       0,0")))
+              (match_operand:VWF 3 "register_operand"       "vr,vr")))
+           (match_operand:<VW> 2 "register_operand"         "0,0")))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwnmsac.vv\t%0,%3,%4,%1.t
-   vfwnmsac.vv\t%0,%3,%4
    vfwnmsac.vv\t%0,%3,%4,%1.t
    vfwnmsac.vv\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
@@ -6155,56 +5346,52 @@
 ;; Vector-Scalar Widening negate-(multiply-accumulate), overwrite addend.
 ;; Vector-Scalar Widening negate-(multiply-subtract-accumulate), overwrite addend.
 (define_insn "@vfwnmacc<vw>_vf"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (neg:<VW>
          (plus:<VW>
            (mult:<VW>
             (float_extend:<VW>
-              (match_operand:VWF 4 "register_operand"       "vr,vr,     vr,vr"))
+              (match_operand:VWF 4 "register_operand"       "vr,vr"))
             (float_extend:<VW>
               (vec_duplicate:VWF
-               (match_operand:<VSUB> 3 "register_operand"   "f,f,       f,f"))))
-       (match_operand:<VW> 2 "register_operand"             "0,0,       0,0")))
+               (match_operand:<VSUB> 3 "register_operand"   "f,f"))))
+       (match_operand:<VW> 2 "register_operand"             "0,0")))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwnmacc.vf\t%0,%3,%4,%1.t
-   vfwnmacc.vf\t%0,%3,%4
    vfwnmacc.vf\t%0,%3,%4,%1.t
    vfwnmacc.vf\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfwnmsac<vw>_vf"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J,      vm,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,J")
        (neg:<VW>
          (minus:<VW>
            (mult:<VW>
             (float_extend:<VW>
-              (match_operand:VWF 4 "register_operand"       "vr,vr,     vr,vr"))
+              (match_operand:VWF 4 "register_operand"       "vr,vr"))
             (float_extend:<VW>
               (vec_duplicate:VWF
-               (match_operand:<VSUB> 3 "register_operand"   "f,f,       f,f"))))
-       (match_operand:<VW> 2 "register_operand"             "0,0,       0,0")))
+               (match_operand:<VSUB> 3 "register_operand"   "f,f"))))
+       (match_operand:<VW> 2 "register_operand"             "0,0")))
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,       K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwnmsac.vf\t%0,%3,%4,%1.t
-   vfwnmsac.vf\t%0,%3,%4
    vfwnmsac.vf\t%0,%3,%4,%1.t
    vfwnmsac.vf\t%0,%3,%4"
   [(set_attr "type" "vwmadd")
@@ -6212,23 +5399,19 @@
 
 ;; Floating-Point square root.
 (define_insn "@vfsqrt<mode>_v"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (sqrt:VF
-         (match_operand:VF 3 "register_operand"             "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         (match_operand:VF 3 "register_operand"             "vr,vr,vr,vr"))
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfsqrt.v\t%0,%3,%1.t
-   vfsqrt.v\t%0,%3,%1.t
-   vfsqrt.v\t%0,%3
-   vfsqrt.v\t%0,%3
    vfsqrt.v\t%0,%3,%1.t
    vfsqrt.v\t%0,%3,%1.t
    vfsqrt.v\t%0,%3
@@ -6239,23 +5422,19 @@
 ;; Floating-Point Reciprocal Square-Root Estimate.
 ;; Floating-Point Reciprocal Estimate.
 (define_insn "@vf<reciprocal><mode>_v"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VF
-         [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")] RECIPROCAL)
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr")] RECIPROCAL)
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vf<reciprocal>.v\t%0,%3,%1.t
-   vf<reciprocal>.v\t%0,%3,%1.t
-   vf<reciprocal>.v\t%0,%3
-   vf<reciprocal>.v\t%0,%3
    vf<reciprocal>.v\t%0,%3,%1.t
    vf<reciprocal>.v\t%0,%3,%1.t
    vf<reciprocal>.v\t%0,%3
@@ -6265,24 +5444,20 @@
 
 ;; Vector-Vector Floating-Point Sign-Injection.
 (define_insn "@vfsgnj<nx><mode>_vv"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VF
-         [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")
-          (match_operand:VF 4 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")] COPYSIGNS)
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr")
+          (match_operand:VF 4 "register_operand"            "vr,vr,vr,vr")] COPYSIGNS)
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfsgnj<nx>.vv\t%0,%3,%4,%1.t
-   vfsgnj<nx>.vv\t%0,%3,%4,%1.t
-   vfsgnj<nx>.vv\t%0,%3,%4
-   vfsgnj<nx>.vv\t%0,%3,%4
    vfsgnj<nx>.vv\t%0,%3,%4,%1.t
    vfsgnj<nx>.vv\t%0,%3,%4,%1.t
    vfsgnj<nx>.vv\t%0,%3,%4
@@ -6292,25 +5467,21 @@
 
 ;; Vector-Scalar Floating-Point Sign-Injection.
 (define_insn "@vfsgnj<nx><mode>_vf"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VF
-         [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")
+         [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr")
           (vec_duplicate:VF
-           (match_operand:<VSUB> 4 "register_operand"       "f,f,f,f,       f,f,f,f"))] COPYSIGNS)
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+           (match_operand:<VSUB> 4 "register_operand"       "f,f,f,f"))] COPYSIGNS)
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfsgnj<nx>.vf\t%0,%3,%4,%1.t
-   vfsgnj<nx>.vf\t%0,%3,%4,%1.t
-   vfsgnj<nx>.vf\t%0,%3,%4
-   vfsgnj<nx>.vf\t%0,%3,%4
    vfsgnj<nx>.vf\t%0,%3,%4,%1.t
    vfsgnj<nx>.vf\t%0,%3,%4,%1.t
    vfsgnj<nx>.vf\t%0,%3,%4
@@ -6320,23 +5491,19 @@
 
 ;; vfneg.v vd,vs = vfsgnjn.vv vd,vs,vs.
 (define_insn "@vfneg<mode>_v"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (neg:VF
-        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr"))
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfneg.v\t%0,%3,%1.t
-   vfneg.v\t%0,%3,%1.t
-   vfneg.v\t%0,%3
-   vfneg.v\t%0,%3
    vfneg.v\t%0,%3,%1.t
    vfneg.v\t%0,%3,%1.t
    vfneg.v\t%0,%3
@@ -6346,23 +5513,19 @@
 
 ;; vfabs.v vd,vs = vfsgnjn.vv vd,vs,vs.
 (define_insn "@vfabs<mode>_v"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (abs:VF
-        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+        (match_operand:VF 3 "register_operand"              "vr,vr,vr,vr"))
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfabs.v\t%0,%3,%1.t
-   vfabs.v\t%0,%3,%1.t
-   vfabs.v\t%0,%3
-   vfabs.v\t%0,%3
    vfabs.v\t%0,%3,%1.t
    vfabs.v\t%0,%3,%1.t
    vfabs.v\t%0,%3
@@ -6372,31 +5535,20 @@
 
 ;; Vector-Vector Floating-Point Compare Instrucions.
 (define_insn "@vmf<optab><mode>_vv"
-  [(set (match_operand:<VM> 0 "register_operand"              "=vr,vr,vm,&vr,  vr,vr,vm,&vr,  vr,vr,&vr,  vr,vr,vm,&vr,  vr,vr,vm,&vr,  vr,vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"              "=vr,vr,vm,&vr,  vr,vr,vm,&vr,  vr,vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,0,vm,     vm,vm,0,vm,    J,J,J,      vm,vm,0,vm,     vm,vm,0,vm,    J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,0,vm,     vm,vm,0,vm,    J,J,J")
          (any_fcmp:<VM>
-          (match_operand:VF 3 "register_operand"              "0,vr,vr,vr,     0,vr,vr,vr,    0,vr,vr,    0,vr,vr,vr,     0,vr,vr,vr,    0,vr,vr")
-          (match_operand:VF 4 "register_operand"              "vr,0,vr,vr,     vr,0,vr,vr,    vr,0,vr,    vr,0,vr,vr,     vr,0,vr,vr,    vr,0,vr"))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand" "0,0,0,0,        J,J,J,J,       J,J,J,      0,0,0,0,        J,J,J,J,       J,J,J")] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,        r,r,r,r,       r,r,r,      K,K,K,K,        K,K,K,K,       K,K,K")
+          (match_operand:VF 3 "register_operand"              "0,vr,vr,vr,     0,vr,vr,vr,    0,vr,vr")
+          (match_operand:VF 4 "register_operand"              "vr,0,vr,vr,     vr,0,vr,vr,    vr,0,vr"))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand" "0,0,0,0,        J,J,J,J,       J,J,J")] UNSPEC_SELECT)
+       (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,    rK,rK,rK,rK,   rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmf<insn>.vv\t%0,%3,%4,%1.t
-   vmf<insn>.vv\t%0,%3,%4,%1.t
-   vmf<insn>.vv\t%0,%3,%4,%1.t
-   vmf<insn>.vv\t%0,%3,%4,%1.t
-   vmf<insn>.vv\t%0,%3,%4,%1.t
-   vmf<insn>.vv\t%0,%3,%4,%1.t
-   vmf<insn>.vv\t%0,%3,%4,%1.t
-   vmf<insn>.vv\t%0,%3,%4,%1.t
-   vmf<insn>.vv\t%0,%3,%4
-   vmf<insn>.vv\t%0,%3,%4
-   vmf<insn>.vv\t%0,%3,%4
    vmf<insn>.vv\t%0,%3,%4,%1.t
    vmf<insn>.vv\t%0,%3,%4,%1.t
    vmf<insn>.vv\t%0,%3,%4,%1.t
@@ -6413,29 +5565,21 @@
 
 ;; Vector-Scalar Floating-Point Compare Instrucions.
 (define_insn "@vmf<optab><mode>_vf"
-  [(set (match_operand:<VM> 0 "register_operand"              "=vr,vm,&vr,   vr,vm,&vr,   vr,&vr,   vr,vm,&vr,   vr,vm,&vr,   vr,&vr")
+  [(set (match_operand:<VM> 0 "register_operand"              "=vr,vm,&vr,   vr,vm,&vr,   vr,&vr")
     (unspec:<VM>
       [(unspec:<VM>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,0,vm,      vm,0,vm,     J,J,      vm,0,vm,     vm,0,vm,     J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,0,vm,      vm,0,vm,     J,J")
          (any_fcmp:<VM>
-          (match_operand:VF 3 "register_operand"              "0,vr,vr,      0,vr,vr,     0,vr,     0,vr,vr,     0,vr,vr,     0,vr")
+          (match_operand:VF 3 "register_operand"              "0,vr,vr,      0,vr,vr,     0,vr")
           (vec_duplicate:VF
-           (match_operand:<VSUB> 4 "register_operand"         "f,f,f,        f,f,f,       f,f,      f,f,f,       f,f,f,       f,f")))
-         (match_operand:<VM> 2 "vector_reg_or_const0_operand" "0,0,0,        J,J,J,       J,J,      0,0,0,       J,J,J,       J,J")] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,        r,r,r,       r,r,      K,K,K,       K,K,K,       K,K")
+           (match_operand:<VSUB> 4 "register_operand"         "f,f,f,        f,f,f,       f,f")))
+         (match_operand:<VM> 2 "vector_reg_or_const0_operand" "0,0,0,        J,J,J,       J,J")] UNSPEC_SELECT)
+       (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,     rK,rK,rK,    rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmf<insn>.vf\t%0,%3,%4,%1.t
-   vmf<insn>.vf\t%0,%3,%4,%1.t
-   vmf<insn>.vf\t%0,%3,%4,%1.t
-   vmf<insn>.vf\t%0,%3,%4,%1.t
-   vmf<insn>.vf\t%0,%3,%4,%1.t
-   vmf<insn>.vf\t%0,%3,%4,%1.t
-   vmf<insn>.vf\t%0,%3,%4
-   vmf<insn>.vf\t%0,%3,%4
    vmf<insn>.vf\t%0,%3,%4,%1.t
    vmf<insn>.vf\t%0,%3,%4,%1.t
    vmf<insn>.vf\t%0,%3,%4,%1.t
@@ -6511,23 +5655,19 @@
 
 ;; Floating-Point Classify Instruction.
 (define_insn "@vfclass<vmap>_v"
-  [(set (match_operand:<VMAP> 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:<VMAP> 0 "register_operand"              "=vd,vd,vr,vr")
     (unspec:<VMAP>
       [(unspec:<VMAP>
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J,     vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J")
          (unspec:<VMAP>
-          [(match_operand:VF 3 "register_operand"               "vr,vr,vr,vr,   vr,vr,vr,vr")] UNSPEC_FCLASS)
-         (match_operand:<VMAP> 2 "vector_reg_or_const0_operand" "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-       (match_operand 4 "p_reg_or_const_csr_operand"            "r,r,r,r,       K,K,K,K")
+          [(match_operand:VF 3 "register_operand"               "vr,vr,vr,vr")] UNSPEC_FCLASS)
+         (match_operand:<VMAP> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+       (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
        (match_operand 5 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfclass.v\t%0,%3,%1.t
-   vfclass.v\t%0,%3,%1.t
-   vfclass.v\t%0,%3
-   vfclass.v\t%0,%3
    vfclass.v\t%0,%3,%1.t
    vfclass.v\t%0,%3,%1.t
    vfclass.v\t%0,%3
@@ -6537,22 +5677,20 @@
 
 ;; Vector-Scalar Floating-Point merge.
 (define_insn "@vfmerge<mode>_vfm"
-  [(set (match_operand:VF 0 "register_operand"          "=vd,vd,  vd,vd")
+  [(set (match_operand:VF 0 "register_operand"          "=vd,vd")
   (unspec:VF
-    [(match_operand:VF 2 "vector_reg_or_const0_operand" "0,J,     0,J")
+    [(match_operand:VF 2 "vector_reg_or_const0_operand" "0,J")
       (unspec:VF
-      [(match_operand:<VM> 1 "register_operand"         "vm,vm,   vm,vm")
-       (match_operand:VF 3 "register_operand"           "vr,vr,   vr,vr")
+      [(match_operand:<VM> 1 "register_operand"         "vm,vm")
+       (match_operand:VF 3 "register_operand"           "vr,vr")
        (vec_duplicate:VF
-        (match_operand:<VSUB> 4 "register_operand"      "f,f,     f,f"))] UNSPEC_MERGE)
-     (match_operand 5 "p_reg_or_const_csr_operand"      "r,r,     K,K")
+        (match_operand:<VSUB> 4 "register_operand"      "f,f"))] UNSPEC_MERGE)
+     (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "@
-  vfmerge.vfm\t%0,%3,%4,%1
-  vfmerge.vfm\t%0,%3,%4,%1
   vfmerge.vfm\t%0,%3,%4,%1
   vfmerge.vfm\t%0,%3,%4,%1"
  [(set_attr "type" "vmerge")
@@ -6560,12 +5698,12 @@
 
 ;; Vector-Scalar Floating-Point Move.
 (define_insn "@vfmv<mode>_v_f"
-  [(set (match_operand:VF 0 "register_operand"          "=vr,vr,  vr,vr")
+  [(set (match_operand:VF 0 "register_operand"          "=vr,vr")
   (unspec:VF
-    [(match_operand:VF 1 "vector_reg_or_const0_operand" "0,J,     0,J")
+    [(match_operand:VF 1 "vector_reg_or_const0_operand" "0,J")
      (vec_duplicate:VF
-       (match_operand:<VSUB> 2 "register_operand"       "f,f,     f,f"))
-     (match_operand 3 "p_reg_or_const_csr_operand"      "r,r,     K,K")
+       (match_operand:<VSUB> 2 "register_operand"       "f,f"))
+     (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -6577,23 +5715,19 @@
 ;; Convert float to unsigned integer.
 ;; Convert float to signed integer.
 (define_insn "@vfcvt<vmap>_x<fu>_f_v"
-  [(set (match_operand:<VMAP> 0 "register_operand"            "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:<VMAP> 0 "register_operand"            "=vd,vd,vr,vr")
   (unspec:<VMAP>
     [(unspec:<VMAP>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J")
        (unspec:<VMAP>
-         [(match_operand:VF 3 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr")] FCVT)
-       (match_operand:<VMAP> 2 "vector_reg_or_const0_operand" "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"            "r,r,r,r,       K,K,K,K")
+         [(match_operand:VF 3 "register_operand"              "vr,vr,vr,vr")] FCVT)
+       (match_operand:<VMAP> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfcvt.x<fu>.f.v\t%0,%3,%1.t
-   vfcvt.x<fu>.f.v\t%0,%3,%1.t
-   vfcvt.x<fu>.f.v\t%0,%3
-   vfcvt.x<fu>.f.v\t%0,%3
    vfcvt.x<fu>.f.v\t%0,%3,%1.t
    vfcvt.x<fu>.f.v\t%0,%3,%1.t
    vfcvt.x<fu>.f.v\t%0,%3
@@ -6604,23 +5738,19 @@
 ;; Convert float to unsigned integer, truncating.
 ;; Convert float to signed integer, truncating.
 (define_insn "@vfcvt<vmap>_rtz_x<u>_f_v"
-  [(set (match_operand:<VMAP> 0 "register_operand"            "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:<VMAP> 0 "register_operand"            "=vd,vd,vr,vr")
   (unspec:<VMAP>
     [(unspec:<VMAP>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"   "vm,vm,J,J")
        (any_fix:<VMAP>
-         (match_operand:VF 3 "register_operand"               "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:<VMAP> 2 "vector_reg_or_const0_operand" "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"            "r,r,r,r,       K,K,K,K")
+         (match_operand:VF 3 "register_operand"               "vr,vr,vr,vr"))
+       (match_operand:<VMAP> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfcvt.rtz.x<u>.f.v\t%0,%3,%1.t
-   vfcvt.rtz.x<u>.f.v\t%0,%3,%1.t
-   vfcvt.rtz.x<u>.f.v\t%0,%3
-   vfcvt.rtz.x<u>.f.v\t%0,%3
    vfcvt.rtz.x<u>.f.v\t%0,%3,%1.t
    vfcvt.rtz.x<u>.f.v\t%0,%3,%1.t
    vfcvt.rtz.x<u>.f.v\t%0,%3
@@ -6631,23 +5761,19 @@
 ;; Convert unsigned integer to float.
 ;; Convert signed integer to float.
 (define_insn "@vfcvt<mode>_f_x<u>_v"
-  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"              "=vd,vd,vr,vr")
   (unspec:VF
     [(unspec:VF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (any_float:VF
-         (match_operand:<VMAP> 3 "register_operand"         "vr,vr,vr,vr,   vr,vr,vr,vr"))
-       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,       K,K,K,K")
+         (match_operand:<VMAP> 3 "register_operand"         "vr,vr,vr,vr"))
+       (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfcvt.f.x<u>.v\t%0,%3,%1.t
-   vfcvt.f.x<u>.v\t%0,%3,%1.t
-   vfcvt.f.x<u>.v\t%0,%3
-   vfcvt.f.x<u>.v\t%0,%3
    vfcvt.f.x<u>.v\t%0,%3,%1.t
    vfcvt.f.x<u>.v\t%0,%3,%1.t
    vfcvt.f.x<u>.v\t%0,%3
@@ -6658,23 +5784,19 @@
 ;; Convert float to double-width unsigned integer.
 ;; Convert float to double-width signed integer.
 (define_insn "@vfwcvt<vwmap>_x<fu>_f_v"
-  [(set (match_operand:<VWMAP> 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VWMAP> 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:<VWMAP>
     [(unspec:<VWMAP>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,J,J")
        (unspec:<VWMAP>
-         [(match_operand:VWF 3 "register_operand"               "vr,vr,vr,vr,       vr,vr,vr,vr")] FCVT)
-       (match_operand:<VWMAP> 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"              "r,r,r,r,           K,K,K,K")
+         [(match_operand:VWF 3 "register_operand"               "vr,vr,vr,vr")] FCVT)
+       (match_operand:<VWMAP> 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"              "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwcvt.x<fu>.f.v\t%0,%3,%1.t
-   vfwcvt.x<fu>.f.v\t%0,%3,%1.t
-   vfwcvt.x<fu>.f.v\t%0,%3
-   vfwcvt.x<fu>.f.v\t%0,%3
    vfwcvt.x<fu>.f.v\t%0,%3,%1.t
    vfwcvt.x<fu>.f.v\t%0,%3,%1.t
    vfwcvt.x<fu>.f.v\t%0,%3
@@ -6685,23 +5807,19 @@
 ;; Convert float to double-width unsigned integer, truncating.
 ;; Convert float to double-width signed integer, truncating.
 (define_insn "@vfwcvt<vwmap>_rtz_x<u>_f_v"
-  [(set (match_operand:<VWMAP> 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VWMAP> 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:<VWMAP>
     [(unspec:<VWMAP>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,J,J")
        (any_fix:<VWMAP>
-         (match_operand:VWF 3 "register_operand"                "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:<VWMAP> 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"              "r,r,r,r,           K,K,K,K")
+         (match_operand:VWF 3 "register_operand"                "vr,vr,vr,vr"))
+       (match_operand:<VWMAP> 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"              "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwcvt.rtz.x<u>.f.v\t%0,%3,%1.t
-   vfwcvt.rtz.x<u>.f.v\t%0,%3,%1.t
-   vfwcvt.rtz.x<u>.f.v\t%0,%3
-   vfwcvt.rtz.x<u>.f.v\t%0,%3
    vfwcvt.rtz.x<u>.f.v\t%0,%3,%1.t
    vfwcvt.rtz.x<u>.f.v\t%0,%3,%1.t
    vfwcvt.rtz.x<u>.f.v\t%0,%3
@@ -6712,23 +5830,19 @@
 ;; Convert unsigned integer to double-width float.
 ;; Convert signed integer to double-width float.
 (define_insn "@vfwcvt<vwfmap>_f_x<u>_v"
-  [(set (match_operand:<VWFMAP> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VWFMAP> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VWFMAP>
     [(unspec:<VWFMAP>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,J,J")
        (any_float:<VWFMAP>
-         (match_operand:VWI 3 "register_operand"                "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:<VWFMAP> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"              "r,r,r,r,           K,K,K,K")
+         (match_operand:VWI 3 "register_operand"                "vr,vr,vr,vr"))
+       (match_operand:<VWFMAP> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"              "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwcvt.f.x<u>.v\t%0,%3,%1.t
-   vfwcvt.f.x<u>.v\t%0,%3,%1.t
-   vfwcvt.f.x<u>.v\t%0,%3
-   vfwcvt.f.x<u>.v\t%0,%3
    vfwcvt.f.x<u>.v\t%0,%3,%1.t
    vfwcvt.f.x<u>.v\t%0,%3,%1.t
    vfwcvt.f.x<u>.v\t%0,%3
@@ -6738,23 +5852,19 @@
 
 ;; Convert single-width float to double-width float
 (define_insn "@vfwcvt<vw>_f_f_v"
-  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VW> 0 "register_operand"            "=&vr,&vr,&vr,&vr")
   (unspec:<VW>
     [(unspec:<VW>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (float_extend:<VW>
-         (match_operand:VWF 3 "register_operand"            "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+         (match_operand:VWF 3 "register_operand"            "vr,vr,vr,vr"))
+       (match_operand:<VW> 2 "vector_reg_or_const0_operand" "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwcvt.f.f.v\t%0,%3,%1.t
-   vfwcvt.f.f.v\t%0,%3,%1.t
-   vfwcvt.f.f.v\t%0,%3
-   vfwcvt.f.f.v\t%0,%3
    vfwcvt.f.f.v\t%0,%3,%1.t
    vfwcvt.f.f.v\t%0,%3,%1.t
    vfwcvt.f.f.v\t%0,%3
@@ -6765,23 +5875,19 @@
 ;; Convert double-width float to unsigned integer.
 ;; Convert double-width float to signed integer.
 (define_insn "@vfncvt<mode>_x<fu>_f_w"
-  [(set (match_operand:VWI 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:VWI 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:VWI
     [(unspec:VWI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VWI
-         [(match_operand:<VWFMAP> 3 "register_operand"      "vr,vr,vr,vr,       vr,vr,vr,vr")] FCVT)
-       (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+         [(match_operand:<VWFMAP> 3 "register_operand"      "vr,vr,vr,vr")] FCVT)
+       (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfncvt.x<fu>.f.w\t%0,%3,%1.t
-   vfncvt.x<fu>.f.w\t%0,%3,%1.t
-   vfncvt.x<fu>.f.w\t%0,%3
-   vfncvt.x<fu>.f.w\t%0,%3
    vfncvt.x<fu>.f.w\t%0,%3,%1.t
    vfncvt.x<fu>.f.w\t%0,%3,%1.t
    vfncvt.x<fu>.f.w\t%0,%3
@@ -6792,23 +5898,19 @@
 ;; Convert double-width float to unsigned integer, truncating.
 ;; Convert double-width float to signed integer, truncating.
 (define_insn "@vfncvt<mode>_rtz_x<u>_f_w"
-  [(set (match_operand:VWI 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:VWI 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:VWI
     [(unspec:VWI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (any_fix:VWI
-         (match_operand:<VWFMAP> 3 "register_operand"       "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+         (match_operand:<VWFMAP> 3 "register_operand"       "vr,vr,vr,vr"))
+       (match_operand:VWI 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfncvt.rtz.x<u>.f.w\t%0,%3,%1.t
-   vfncvt.rtz.x<u>.f.w\t%0,%3,%1.t
-   vfncvt.rtz.x<u>.f.w\t%0,%3
-   vfncvt.rtz.x<u>.f.w\t%0,%3
    vfncvt.rtz.x<u>.f.w\t%0,%3,%1.t
    vfncvt.rtz.x<u>.f.w\t%0,%3,%1.t
    vfncvt.rtz.x<u>.f.w\t%0,%3
@@ -6819,23 +5921,19 @@
 ;; Convert double-width unsigned integer to float.
 ;; Convert double-width signed integer to float.
 (define_insn "@vfncvt<mode>_f_x<u>_w"
-  [(set (match_operand:VWF 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:VWF 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:VWF
     [(unspec:VWF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (any_float:VWF
-         (match_operand:<VWMAP> 3 "register_operand"        "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:VWF 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+         (match_operand:<VWMAP> 3 "register_operand"        "vr,vr,vr,vr"))
+       (match_operand:VWF 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfncvt.f.x<u>.w\t%0,%3,%1.t
-   vfncvt.f.x<u>.w\t%0,%3,%1.t
-   vfncvt.f.x<u>.w\t%0,%3
-   vfncvt.f.x<u>.w\t%0,%3
    vfncvt.f.x<u>.w\t%0,%3,%1.t
    vfncvt.f.x<u>.w\t%0,%3,%1.t
    vfncvt.f.x<u>.w\t%0,%3
@@ -6845,23 +5943,19 @@
 
 ;; Convert double-width float to single-width float.
 (define_insn "@vfncvt<mode>_f_f_w"
-  [(set (match_operand:VWF 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:VWF 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:VWF
     [(unspec:VWF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (float_truncate:VWF
-         (match_operand:<VW> 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr"))
-       (match_operand:VWF 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+         (match_operand:<VW> 3 "register_operand"           "vr,vr,vr,vr"))
+       (match_operand:VWF 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfncvt.f.f.w\t%0,%3,%1.t
-   vfncvt.f.f.w\t%0,%3,%1.t
-   vfncvt.f.f.w\t%0,%3
-   vfncvt.f.f.w\t%0,%3
    vfncvt.f.f.w\t%0,%3,%1.t
    vfncvt.f.f.w\t%0,%3,%1.t
    vfncvt.f.f.w\t%0,%3
@@ -6871,24 +5965,20 @@
 
 ;; Convert double-width float to single-width float, rounding towards odd.
 (define_insn "@vfncvt<mode>_rod_f_f_w"
-  [(set (match_operand:VWF 0 "register_operand"             "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:VWF 0 "register_operand"             "=&vr,&vr,&vr,&vr")
   (unspec:VWF
     [(unspec:VWF
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VWF
          [(float_extend:VWF
-           (match_operand:<VW> 3 "register_operand"         "vr,vr,vr,vr,       vr,vr,vr,vr"))] UNSPEC_ROD)
-       (match_operand:VWF 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+           (match_operand:<VW> 3 "register_operand"         "vr,vr,vr,vr"))] UNSPEC_ROD)
+       (match_operand:VWF 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfncvt.rod.f.f.w\t%0,%3,%1.t
-   vfncvt.rod.f.f.w\t%0,%3,%1.t
-   vfncvt.rod.f.f.w\t%0,%3
-   vfncvt.rod.f.f.w\t%0,%3
    vfncvt.rod.f.f.w\t%0,%3,%1.t
    vfncvt.rod.f.f.w\t%0,%3,%1.t
    vfncvt.rod.f.f.w\t%0,%3
@@ -6908,25 +5998,21 @@
 
 ;; Integer simple-reductions.
 (define_insn "@vred<reduc><mode>_vs"
-  [(set (match_operand:<VLMUL1> 0 "register_operand"                "=vr,vr,vr,vr,  vr,vr,vr,vr")
+  [(set (match_operand:<VLMUL1> 0 "register_operand"                "=vr,vr,vr,vr")
   (unspec:<VLMUL1>
     [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (unspec:<VLMUL1>
-         [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand"  "0,J,0,J,       0,J,0,J")
-          (match_operand:VI 3 "register_operand"                    "vr,vr,vr,vr,   vr,vr,vr,vr")
-          (match_operand:<VLMUL1> 4 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr")] REDUC)
+         [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand"  "0,J,0,J")
+          (match_operand:VI 3 "register_operand"                    "vr,vr,vr,vr")
+          (match_operand:<VLMUL1> 4 "register_operand"              "vr,vr,vr,vr")] REDUC)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"                  "r,r,r,r,       K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vred<reduc>.vs\t%0,%3,%4,%1.t
-   vred<reduc>.vs\t%0,%3,%4,%1.t
-   vred<reduc>.vs\t%0,%3,%4
-   vred<reduc>.vs\t%0,%3,%4
    vred<reduc>.vs\t%0,%3,%4,%1.t
    vred<reduc>.vs\t%0,%3,%4,%1.t
    vred<reduc>.vs\t%0,%3,%4
@@ -6936,26 +6022,22 @@
 
 ;; Signed/Unsigned sum reduction into double-width accumulator.
 (define_insn "@vwredsum<u><mode>_vs"
-  [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
     [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (unspec:<VWLMUL1>
-         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")
+         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
           (any_extend:<VWLMUL1>
-           (match_operand:VWREDI 3 "register_operand"               "vr,vr,vr,vr,       vr,vr,vr,vr"))
-          (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr,       vr,vr,vr,vr")] UNSPEC_REDUC_SUM)
+           (match_operand:VWREDI 3 "register_operand"               "vr,vr,vr,vr"))
+          (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr")] UNSPEC_REDUC_SUM)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"                  "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vwredsum<u>.vs\t%0,%3,%4,%1.t
-   vwredsum<u>.vs\t%0,%3,%4,%1.t
-   vwredsum<u>.vs\t%0,%3,%4
-   vwredsum<u>.vs\t%0,%3,%4
    vwredsum<u>.vs\t%0,%3,%4,%1.t
    vwredsum<u>.vs\t%0,%3,%4,%1.t
    vwredsum<u>.vs\t%0,%3,%4
@@ -6965,25 +6047,21 @@
 
 ;; Floating-Point simple-reductions.
 (define_insn "@vfred<reduc><mode>_vs"
-  [(set (match_operand:<VLMUL1> 0 "register_operand"                "=vr,vr,vr,vr,  vr,vr,vr,vr")
+  [(set (match_operand:<VLMUL1> 0 "register_operand"                "=vr,vr,vr,vr")
   (unspec:<VLMUL1>
     [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J,     vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (unspec:<VLMUL1>
-         [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand"  "0,J,0,J,       0,J,0,J")
-          (match_operand:VF 3 "register_operand"                    "vr,vr,vr,vr,   vr,vr,vr,vr")
-          (match_operand:<VLMUL1> 4 "register_operand"              "vr,vr,vr,vr,   vr,vr,vr,vr")] FREDUC)
+         [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand"  "0,J,0,J")
+          (match_operand:VF 3 "register_operand"                    "vr,vr,vr,vr")
+          (match_operand:<VLMUL1> 4 "register_operand"              "vr,vr,vr,vr")] FREDUC)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"                  "r,r,r,r,       K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfred<reduc>.vs\t%0,%3,%4,%1.t
-   vfred<reduc>.vs\t%0,%3,%4,%1.t
-   vfred<reduc>.vs\t%0,%3,%4
-   vfred<reduc>.vs\t%0,%3,%4
    vfred<reduc>.vs\t%0,%3,%4,%1.t
    vfred<reduc>.vs\t%0,%3,%4,%1.t
    vfred<reduc>.vs\t%0,%3,%4
@@ -6993,26 +6071,22 @@
 
 ;; unordered sum reduction into double-width accumulator.
 (define_insn "@vfwredusum<mode>_vs"
-  [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
     [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (unspec:<VWLMUL1>
-         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")
+         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
           (float_extend:<VWLMUL1>
-           (match_operand:VWREDF 3 "register_operand"               "vr,vr,vr,vr,       vr,vr,vr,vr"))
-          (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr,       vr,vr,vr,vr")] UNSPEC_REDUC_UNORDERED_SUM)
+           (match_operand:VWREDF 3 "register_operand"               "vr,vr,vr,vr"))
+          (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr")] UNSPEC_REDUC_UNORDERED_SUM)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"                  "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwredusum.vs\t%0,%3,%4,%1.t
-   vfwredusum.vs\t%0,%3,%4,%1.t
-   vfwredusum.vs\t%0,%3,%4
-   vfwredusum.vs\t%0,%3,%4
    vfwredusum.vs\t%0,%3,%4,%1.t
    vfwredusum.vs\t%0,%3,%4,%1.t
    vfwredusum.vs\t%0,%3,%4
@@ -7022,26 +6096,22 @@
 
 ;; ordered sum reduction into double-width accumulator.
 (define_insn "@vfwredosum<mode>_vs"
-  [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
     [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (unspec:<VWLMUL1>
-         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J,           0,J,0,J")
+         [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
           (float_extend:<VWLMUL1>
-           (match_operand:VWREDF 3 "register_operand"               "vr,vr,vr,vr,       vr,vr,vr,vr"))
-          (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr,       vr,vr,vr,vr")] UNSPEC_REDUC_ORDERED_SUM)
+           (match_operand:VWREDF 3 "register_operand"               "vr,vr,vr,vr"))
+          (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr")] UNSPEC_REDUC_ORDERED_SUM)
        (match_dup 2)] UNSPEC_SELECT)
-     (match_operand 5 "p_reg_or_const_csr_operand"                  "r,r,r,r,           K,K,K,K")
+     (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfwredosum.vs\t%0,%3,%4,%1.t
-   vfwredosum.vs\t%0,%3,%4,%1.t
-   vfwredosum.vs\t%0,%3,%4
-   vfwredosum.vs\t%0,%3,%4
    vfwredosum.vs\t%0,%3,%4,%1.t
    vfwredosum.vs\t%0,%3,%4,%1.t
    vfwredosum.vs\t%0,%3,%4
@@ -7065,12 +6135,12 @@
 
 ;; Vector Mask-Register Logical Instructions.
 (define_insn "@vm<optab><mode>_mm"
-  [(set (match_operand:VB 0 "register_operand"        "=vr, vr")
+  [(set (match_operand:VB 0 "register_operand"        "=vr")
     (unspec:VB
       [(any_bitwise:VB
-        (match_operand:VB 1 "register_operand"        "vr,  vr")
-        (match_operand:VB 2 "register_operand"        "vr,  vr"))
-       (match_operand 3 "p_reg_or_const_csr_operand"  "r,   K")
+        (match_operand:VB 1 "register_operand"        "vr")
+        (match_operand:VB 2 "register_operand"        "vr"))
+       (match_operand 3 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7080,13 +6150,13 @@
   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmn<optab><mode>_mm"
-  [(set (match_operand:VB 0 "register_operand"        "=vr, vr")
+  [(set (match_operand:VB 0 "register_operand"        "=vr")
     (unspec:VB
       [(not:VB
         (any_bitwise:VB
-          (match_operand:VB 1 "register_operand"      "vr,  vr")
-          (match_operand:VB 2 "register_operand"      "vr,  vr")))
-       (match_operand 3 "p_reg_or_const_csr_operand"  "r,   K")
+          (match_operand:VB 1 "register_operand"      "vr")
+          (match_operand:VB 2 "register_operand"      "vr")))
+       (match_operand 3 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7096,13 +6166,13 @@
   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vm<optab>not<mode>_mm"
-  [(set (match_operand:VB 0 "register_operand"        "=vr, vr")
+  [(set (match_operand:VB 0 "register_operand"        "=vr")
     (unspec:VB
       [(any_logicalnot:VB
-        (match_operand:VB 1 "register_operand"        "vr,  vr")
+        (match_operand:VB 1 "register_operand"        "vr")
         (not:VB
-          (match_operand:VB 2 "register_operand"      "vr,  vr")))
-       (match_operand 3 "p_reg_or_const_csr_operand"  "r,   K")
+          (match_operand:VB 2 "register_operand"      "vr")))
+       (match_operand 3 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7113,10 +6183,10 @@
 
 ;; vmmv.m vd,vs -> vmand.mm vd,vs,vs # Copy mask register
 (define_insn "@vmmv<mode>_m"
-  [(set (match_operand:VB 0 "register_operand"        "=vr, vr")
+  [(set (match_operand:VB 0 "register_operand"        "=vr")
     (unspec:VB
-      [(match_operand:VB 1 "register_operand"         "vr,  vr")
-       (match_operand 2 "p_reg_or_const_csr_operand"  "r,   K")
+      [(match_operand:VB 1 "register_operand"         "vr")
+       (match_operand 2 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 3 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7127,10 +6197,10 @@
 
 ;; vmclr.m vd -> vmxor.mm vd,vd,vd # Clear mask register
 (define_insn "@vmclr<mode>_m"
-  [(set (match_operand:VB 0 "register_operand"        "=vr, vr")
+  [(set (match_operand:VB 0 "register_operand"        "=vr")
     (unspec:VB
       [(vec_duplicate:VB (const_int 0))
-       (match_operand 1 "p_reg_or_const_csr_operand"  "r,   K")
+       (match_operand 1 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 2 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7141,10 +6211,10 @@
 
 ;; vmset.m vd -> vmxnor.mm vd,vd,vd # Set mask register
 (define_insn "@vmset<mode>_m"
-  [(set (match_operand:VB 0 "register_operand"        "=vr, vr")
+  [(set (match_operand:VB 0 "register_operand"        "=vr")
     (unspec:VB
       [(vec_duplicate:VB (const_int 1))
-       (match_operand 1 "p_reg_or_const_csr_operand"  "r,   K")
+       (match_operand 1 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 2 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7155,11 +6225,11 @@
 
 ;; vmnot.m vd,vs -> vmnand.mm vd,vs,vs # Invert bits
 (define_insn "@vmnot<mode>_m"
-  [(set (match_operand:VB 0 "register_operand"        "=vr, vr")
+  [(set (match_operand:VB 0 "register_operand"        "=vr")
     (unspec:VB
       [(not:VB
-        (match_operand:VB 1 "register_operand"        "vr,  vr"))
-       (match_operand 2 "p_reg_or_const_csr_operand"  "r,   K")
+        (match_operand:VB 1 "register_operand"        "vr"))
+       (match_operand 2 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 3 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7170,20 +6240,18 @@
 
 ;; Vector mask population count vpopc
 (define_insn "@vcpop<VB:mode>_<X:mode>_m"
-  [(set (match_operand:X 0 "register_operand"                 "=r,r,  r,r")
+  [(set (match_operand:X 0 "register_operand"                 "=r,r")
     (unspec:X
       [(unspec:VB
-         [(match_operand:VB 1 "vector_reg_or_const0_operand"  "vr,J,  vr,J")
-          (match_operand:VB 2 "register_operand"              "vr,vr, vr,vr")
+         [(match_operand:VB 1 "vector_reg_or_const0_operand"  "vr,J")
+          (match_operand:VB 2 "register_operand"              "vr,vr")
           ] UNSPEC_VCPOP)
-       (match_operand 3 "p_reg_or_const_csr_operand"          "r,r,   K,K")
+       (match_operand 3 "p_reg_or_const_csr_operand"          "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "@
-  vcpop.m\t%0,%2,%1.t
-  vcpop.m\t%0,%2
   vcpop.m\t%0,%2,%1.t
   vcpop.m\t%0,%2"
  [(set_attr "type" "vcpop")
@@ -7191,19 +6259,17 @@
 
 ;; vfirst find-first-set mask bit
 (define_insn "@vfirst<VB:mode>_<X:mode>_m"
-  [(set (match_operand:X 0 "register_operand"               "=r,r,  r,r")
+  [(set (match_operand:X 0 "register_operand"               "=r,r")
     (unspec:X
       [(unspec:VB
-        [(match_operand:VB 1 "vector_reg_or_const0_operand" "vr,J,  vr,J")
-         (match_operand:VB 2 "register_operand"             "vr,vr, vr,vr")] UNSPEC_FIRST)
-       (match_operand 3 "p_reg_or_const_csr_operand"        "r,r,   K,K")
+        [(match_operand:VB 1 "vector_reg_or_const0_operand" "vr,J")
+         (match_operand:VB 2 "register_operand"             "vr,vr")] UNSPEC_FIRST)
+       (match_operand 3 "p_reg_or_const_csr_operand"        "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "@
-  vfirst.m\t%0,%2,%1.t
-  vfirst.m\t%0,%2
   vfirst.m\t%0,%2,%1.t
   vfirst.m\t%0,%2"
  [(set_attr "type" "vmsetbit")
@@ -7213,22 +6279,19 @@
 ;; vmsif.m set-including-fisrt mask bit.
 ;; vmsof.m set-only-first mask bit.
 (define_insn "@vm<smb><mode>_m"
-  [(set (match_operand:VB 0 "register_operand"              "=&vr,&vr,&vr,  &vr,&vr,&vr")
+  [(set (match_operand:VB 0 "register_operand"              "=&vr,&vr,&vr")
     (unspec:VB
       [(unspec:VB
-        [(match_operand:VB 1 "vector_reg_or_const0_operand" "vm,vm,J,       vm,vm,J")
+        [(match_operand:VB 1 "vector_reg_or_const0_operand" "vm,vm,J")
          (unspec:VB
-           [(match_operand:VB 3 "register_operand"          "vr,vr,vr,      vr,vr,vr")] MASK_SET)
-         (match_operand:VB 2 "vector_reg_or_const0_operand" "0,J,J,         0,J,J")] UNSPEC_SELECT)
-       (match_operand 4 "p_reg_or_const_csr_operand"        "r,r,r,         K,K,K")
+           [(match_operand:VB 3 "register_operand"          "vr,vr,vr")] MASK_SET)
+         (match_operand:VB 2 "vector_reg_or_const0_operand" "0,J,J")] UNSPEC_SELECT)
+       (match_operand 4 "p_reg_or_const_csr_operand"        "rK,rK,rK")
        (match_operand 5 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "@
-  vm<smb>.m\t%0,%3,%1.t
-  vm<smb>.m\t%0,%3,%1.t
-  vm<smb>.m\t%0,%3
   vm<smb>.m\t%0,%3,%1.t
   vm<smb>.m\t%0,%3,%1.t
   vm<smb>.m\t%0,%3"
@@ -7237,23 +6300,19 @@
 
 ;; Vector Iota Instruction.
 (define_insn "@viota<mode>_m"
-  [(set (match_operand:VI 0 "register_operand"              "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:VI 0 "register_operand"              "=&vr,&vr,&vr,&vr")
   (unspec:VI
     [(unspec:VI
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
        (unspec:VI
-         [(match_operand:<VM> 3 "register_operand"          "vr,vr,vr,vr,       vr,vr,vr,vr")] UNSPEC_IOTA)
-       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-     (match_operand 4 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+         [(match_operand:<VM> 3 "register_operand"          "vr,vr,vr,vr")] UNSPEC_IOTA)
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "@
-  viota.m\t%0,%3,%1.t
-  viota.m\t%0,%3,%1.t
-  viota.m\t%0,%3
-  viota.m\t%0,%3
   viota.m\t%0,%3,%1.t
   viota.m\t%0,%3,%1.t
   viota.m\t%0,%3
@@ -7263,22 +6322,18 @@
 
 ;; Vector Element Index Instructions.
 (define_insn "@vid<mode>_v"
-  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vr,vr")
     (unspec:VI
      [(unspec:VI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:VI
-           [(match_operand 3 "p_reg_or_const_csr_operand"     "r,r,r,r,       K,K,K,K")
+           [(match_operand 3 "p_reg_or_const_csr_operand"     "rK,rK,rK,rK")
             (match_operand 4 "const_int_operand")] UNSPEC_ID)
-         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
+         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vid.v\t%0,%1.t
-   vid.v\t%0,%1.t
-   vid.v\t%0
-   vid.v\t%0
    vid.v\t%0,%1.t
    vid.v\t%0,%1.t
    vid.v\t%0
@@ -7377,14 +6432,14 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmv<mode>_s_x_internal"
-  [(set (match_operand:VI 0 "register_operand"            "=vr,vr,vr,vr,  vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"            "=vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
       [(vec_duplicate:VI
-         (match_operand:<VSUB> 2 "reg_or_0_operand"       "r,J,r,J,       r,J,r,J"))
-       (match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J,       0,0,J,J")
+         (match_operand:<VSUB> 2 "reg_or_0_operand"       "r,J,r,J"))
+       (match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J")
        (const_int 1)] UNSPEC_VMV_SX)
-     (match_operand 3 "p_reg_or_const_csr_operand"        "r,r,r,r,       K,K,K,K")
+     (match_operand 3 "p_reg_or_const_csr_operand"        "rK,rK,rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7393,33 +6448,25 @@
    vmv.s.x\t%0,%2
    vmv.s.x\t%0,zero
    vmv.s.x\t%0,%2
-   vmv.s.x\t%0,zero
-   vmv.s.x\t%0,%2
-   vmv.s.x\t%0,zero
-   vmv.s.x\t%0,%2
    vmv.s.x\t%0,zero"
   [(set_attr "type" "vmv_s_x")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmv<mode>_s_x_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"             "=vr,vr,vr,vr,  vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"             "=vr,vr,vr,vr")
   (unspec:V64BITI
     [(unspec:V64BITI
       [(vec_duplicate:V64BITI
          (sign_extend:<VSUB>
-          (match_operand:SI 2 "reg_or_0_operand"                "r,J,r,J,       r,J,r,J")))
-       (match_operand:V64BITI 1 "vector_reg_or_const0_operand"  "0,0,J,J,       0,0,J,J")
+          (match_operand:SI 2 "reg_or_0_operand"                "r,J,r,J")))
+       (match_operand:V64BITI 1 "vector_reg_or_const0_operand"  "0,0,J,J")
        (const_int 1)] UNSPEC_VMV_SX)
-     (match_operand:SI 3 "csr_operand"                          "r,r,r,r,       K,K,K,K")
+     (match_operand:SI 3 "csr_operand"                          "rK,rK,rK,rK")
      (match_operand:SI 4 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vmv.s.x\t%0,%2
-   vmv.s.x\t%0,zero
-   vmv.s.x\t%0,%2
-   vmv.s.x\t%0,zero
    vmv.s.x\t%0,%2
    vmv.s.x\t%0,zero
    vmv.s.x\t%0,%2
@@ -7432,12 +6479,12 @@
 ;; zero. We dont't want to use subreg to generate
 ;; transformation between floating-point and integer.
 (define_insn "@vmv<mode>_s_x_internal"
-  [(set (match_operand:VF 0 "register_operand"      "=vr, vr")
+  [(set (match_operand:VF 0 "register_operand"      "=vr")
   (unspec:VF
     [(unspec:VF
       [(const_int 0)
        (const_int 1)] UNSPEC_VMV_SX)
-     (match_operand 1 "p_reg_or_const_csr_operand"  "r,   K")
+     (match_operand 1 "p_reg_or_const_csr_operand"  "rK")
      (match_operand 2 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7460,14 +6507,14 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfmv<mode>_s_f"
-  [(set (match_operand:VF 0 "register_operand"            "=vr,vr,  vr,vr")
+  [(set (match_operand:VF 0 "register_operand"            "=vr,vr")
   (unspec:VF
     [(unspec:VF
       [(vec_duplicate:VF
-         (match_operand:<VSUB> 2 "register_operand"       "f,f,     f,f"))
-       (match_operand:VF 1 "vector_reg_or_const0_operand" "0,J,     0,J")
+         (match_operand:<VSUB> 2 "register_operand"       "f,f"))
+       (match_operand:VF 1 "vector_reg_or_const0_operand" "0,J")
        (const_int 1)] UNSPEC_VMV_SX)
-     (match_operand 3 "p_reg_or_const_csr_operand"        "r,r,     K,K")
+     (match_operand 3 "p_reg_or_const_csr_operand"        "rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7478,16 +6525,16 @@
 
 ;; Vector Slideup/Slidedown Instructions.
 (define_insn "@vslide<ud><mode>_vx"
-  [(set (match_operand:V 0 "register_operand"                 "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+  [(set (match_operand:V 0 "register_operand"                 "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
     (unspec:V
       [(unspec:V
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,               vm,vm,vm,vm,J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
          (unspec:V
-           [(match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J,                   0,0,J,J,0,0,J,J")
-           (match_operand:V 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,           vr,vr,vr,vr,vr,vr,vr,vr")
-           (match_operand 4 "p_reg_or_uimm5_operand"          "r,K,r,K,r,K,r,K,                   r,K,r,K,r,K,r,K")] SLIDE_UP)
+           [(match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")
+           (match_operand:V 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand 4 "p_reg_or_uimm5_operand"          "r,K,r,K,r,K,r,K")] SLIDE_UP)
          (match_dup 2)] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"           "r,r,r,r,r,r,r,r,                   K,K,K,K,K,K,K,K")
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7500,42 +6547,26 @@
    vslide<ud>.vx\t%0,%3,%4
    vslide<ud>.vi\t%0,%3,%4
    vslide<ud>.vx\t%0,%3,%4
-   vslide<ud>.vi\t%0,%3,%4
-   vslide<ud>.vx\t%0,%3,%4,%1.t
-   vslide<ud>.vi\t%0,%3,%4,%1.t
-   vslide<ud>.vx\t%0,%3,%4,%1.t
-   vslide<ud>.vi\t%0,%3,%4,%1.t
-   vslide<ud>.vx\t%0,%3,%4
-   vslide<ud>.vi\t%0,%3,%4
-   vslide<ud>.vx\t%0,%3,%4
    vslide<ud>.vi\t%0,%3,%4"
   [(set_attr "type" "vslide")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vslide<ud><mode>_vx"
-  [(set (match_operand:V 0 "register_operand"                 "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V 0 "register_operand"                 "=vd,vd,vd,vd,vr,vr,vr,vr")
     (unspec:V
       [(unspec:V
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
          (unspec:V
-           [(match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")
-           (match_operand:V 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-           (match_operand 4 "p_reg_or_uimm5_operand"          "r,K,r,K,r,K,r,K,           r,K,r,K,r,K,r,K")] SLIDE_DOWN)
+           [(match_operand:V 2 "vector_reg_or_const0_operand" "0,0,J,J,0,0,J,J")
+           (match_operand:V 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand 4 "p_reg_or_uimm5_operand"          "r,K,r,K,r,K,r,K")] SLIDE_DOWN)
          (match_dup 2)] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+       (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vslide<ud>.vx\t%0,%3,%4,%1.t
-   vslide<ud>.vi\t%0,%3,%4,%1.t
-   vslide<ud>.vx\t%0,%3,%4,%1.t
-   vslide<ud>.vi\t%0,%3,%4,%1.t
-   vslide<ud>.vx\t%0,%3,%4
-   vslide<ud>.vi\t%0,%3,%4
-   vslide<ud>.vx\t%0,%3,%4
-   vslide<ud>.vi\t%0,%3,%4
    vslide<ud>.vx\t%0,%3,%4,%1.t
    vslide<ud>.vi\t%0,%3,%4,%1.t
    vslide<ud>.vx\t%0,%3,%4,%1.t
@@ -7549,28 +6580,20 @@
 
 ;; Vector Integer Slide1up/Slide1down Instructions.
 (define_insn "@vslide1<ud><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"                "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+  [(set (match_operand:VI 0 "register_operand"                "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
     (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,               vm,vm,vm,vm,J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
          (unspec:VI
-           [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,           vr,vr,vr,vr,vr,vr,vr,vr")
-           (match_operand:<VSUB> 4 "reg_or_0_operand"         "r,J,r,J,r,J,r,J,                   r,J,r,J,r,J,r,J")] SLIDE1_UP)
-         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,                   0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"           "r,r,r,r,r,r,r,r,                   K,K,K,K,K,K,K,K")
+           [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand:<VSUB> 4 "reg_or_0_operand"         "r,J,r,J,r,J,r,J")] SLIDE1_UP)
+         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vslide1<ud>.vx\t%0,%3,%4,%1.t
-   vslide1<ud>.vx\t%0,%3,zero,%1.t
-   vslide1<ud>.vx\t%0,%3,%4,%1.t
-   vslide1<ud>.vx\t%0,%3,zero,%1.t
-   vslide1<ud>.vx\t%0,%3,%4
-   vslide1<ud>.vx\t%0,%3,zero
-   vslide1<ud>.vx\t%0,%3,%4
-   vslide1<ud>.vx\t%0,%3,zero
    vslide1<ud>.vx\t%0,%3,%4,%1.t
    vslide1<ud>.vx\t%0,%3,zero,%1.t
    vslide1<ud>.vx\t%0,%3,%4,%1.t
@@ -7583,15 +6606,15 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vslide1<ud><mode>_vx_internal"
-  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:VI 0 "register_operand"                "=vd,vd,vd,vd,vr,vr,vr,vr")
     (unspec:VI
       [(unspec:VI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
          (unspec:VI
-           [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-           (match_operand:<VSUB> 4 "reg_or_0_operand"         "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J")] SLIDE1_DOWN)
-         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"           "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+           [(match_operand:VI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand:<VSUB> 4 "reg_or_0_operand"         "r,J,r,J,r,J,r,J")] SLIDE1_DOWN)
+         (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7604,28 +6627,20 @@
    vslide1<ud>.vx\t%0,%3,%4
    vslide1<ud>.vx\t%0,%3,zero
    vslide1<ud>.vx\t%0,%3,%4
-   vslide1<ud>.vx\t%0,%3,zero
-   vslide1<ud>.vx\t%0,%3,%4,%1.t
-   vslide1<ud>.vx\t%0,%3,zero,%1.t
-   vslide1<ud>.vx\t%0,%3,%4,%1.t
-   vslide1<ud>.vx\t%0,%3,zero,%1.t
-   vslide1<ud>.vx\t%0,%3,%4
-   vslide1<ud>.vx\t%0,%3,zero
-   vslide1<ud>.vx\t%0,%3,%4
    vslide1<ud>.vx\t%0,%3,zero"
   [(set_attr "type" "vslide")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vslide1<ud><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                   "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+  [(set (match_operand:V64BITI 0 "register_operand"                   "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
     (unspec:V64BITI
       [(unspec:V64BITI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,vm,vm,J,J,J,J,               vm,vm,vm,vm,J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,vm,vm,J,J,J,J")
          (unspec:V64BITI
-           [(match_operand:V64BITI 3 "register_operand"               "vr,vr,vr,vr,vr,vr,vr,vr,           vr,vr,vr,vr,vr,vr,vr,vr")
-           (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J,                   r,J,r,J,r,J,r,J"))] SLIDE1_UP)
-         (match_operand:V64BITI 2 "vector_reg_or_const0_operand"      "0,0,J,J,0,0,J,J,                   0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-      (match_operand:SI 5 "csr_operand"                               "r,r,r,r,r,r,r,r,                   K,K,K,K,K,K,K,K")
+           [(match_operand:V64BITI 3 "register_operand"               "vr,vr,vr,vr,vr,vr,vr,vr")
+           (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J"))] SLIDE1_UP)
+         (match_operand:V64BITI 2 "vector_reg_or_const0_operand"      "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand:SI 5 "csr_operand"                               "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand:SI 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
@@ -7638,41 +6653,25 @@
    vslide1<ud>.vx\t%0,%3,%4
    vslide1<ud>.vx\t%0,%3,zero
    vslide1<ud>.vx\t%0,%3,%4
-   vslide1<ud>.vx\t%0,%3,zero
-   vslide1<ud>.vx\t%0,%3,%4,%1.t
-   vslide1<ud>.vx\t%0,%3,zero,%1.t
-   vslide1<ud>.vx\t%0,%3,%4,%1.t
-   vslide1<ud>.vx\t%0,%3,zero,%1.t
-   vslide1<ud>.vx\t%0,%3,%4
-   vslide1<ud>.vx\t%0,%3,zero
-   vslide1<ud>.vx\t%0,%3,%4
    vslide1<ud>.vx\t%0,%3,zero"
   [(set_attr "type" "vslide")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vslide1<ud><mode>_vx_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                   "=vd,vd,vd,vd,vr,vr,vr,vr,  vd,vd,vd,vd,vr,vr,vr,vr")
+  [(set (match_operand:V64BITI 0 "register_operand"                   "=vd,vd,vd,vd,vr,vr,vr,vr")
     (unspec:V64BITI
       [(unspec:V64BITI
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,vm,vm,J,J,J,J,       vm,vm,vm,vm,J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,vm,vm,J,J,J,J")
          (unspec:V64BITI
-           [(match_operand:V64BITI 3 "register_operand"               "vr,vr,vr,vr,vr,vr,vr,vr,   vr,vr,vr,vr,vr,vr,vr,vr")
-           (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J,           r,J,r,J,r,J,r,J"))] SLIDE1_DOWN)
-         (match_operand:V64BITI 2 "vector_reg_or_const0_operand"      "0,0,J,J,0,0,J,J,           0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-      (match_operand:SI 5 "csr_operand"                               "r,r,r,r,r,r,r,r,           K,K,K,K,K,K,K,K")
+           [(match_operand:V64BITI 3 "register_operand"               "vr,vr,vr,vr,vr,vr,vr,vr")
+           (sign_extend:<VSUB> (match_operand:SI 4 "reg_or_0_operand" "r,J,r,J,r,J,r,J"))] SLIDE1_DOWN)
+         (match_operand:V64BITI 2 "vector_reg_or_const0_operand"      "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand:SI 5 "csr_operand"                               "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand:SI 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vslide1<ud>.vx\t%0,%3,%4,%1.t
-   vslide1<ud>.vx\t%0,%3,zero,%1.t
-   vslide1<ud>.vx\t%0,%3,%4,%1.t
-   vslide1<ud>.vx\t%0,%3,zero,%1.t
-   vslide1<ud>.vx\t%0,%3,%4
-   vslide1<ud>.vx\t%0,%3,zero
-   vslide1<ud>.vx\t%0,%3,%4
-   vslide1<ud>.vx\t%0,%3,zero
    vslide1<ud>.vx\t%0,%3,%4,%1.t
    vslide1<ud>.vx\t%0,%3,zero,%1.t
    vslide1<ud>.vx\t%0,%3,%4,%1.t
@@ -7686,24 +6685,20 @@
 
 ;; Vector Floating-Point Slide1up/Slide1down Instructions.
 (define_insn "@vfslide1<ud><mode>_vf"
-  [(set (match_operand:VF 0 "register_operand"                "=vd,vd,vr,vr,  vd,vd,vr,vr")
+  [(set (match_operand:VF 0 "register_operand"                "=vd,vd,vr,vr")
     (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,     vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:VF
-           [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr,   vr,vr,vr,vr")
-           (match_operand:<VSUB> 4 "register_operand"         "f,f,f,f,       f,f,f,f")] SLIDE1_DOWN)
-         (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,       0,J,0,J")] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"           "r,r,r,r,       K,K,K,K")
+           [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr")
+           (match_operand:<VSUB> 4 "register_operand"         "f,f,f,f")] SLIDE1_DOWN)
+         (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfslide1<ud>.vf\t%0,%3,%4,%1.t
-   vfslide1<ud>.vf\t%0,%3,%4,%1.t
-   vfslide1<ud>.vf\t%0,%3,%4
-   vfslide1<ud>.vf\t%0,%3,%4
    vfslide1<ud>.vf\t%0,%3,%4,%1.t
    vfslide1<ud>.vf\t%0,%3,%4,%1.t
    vfslide1<ud>.vf\t%0,%3,%4
@@ -7712,24 +6707,20 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfslide1<ud><mode>_vf"
-  [(set (match_operand:VF 0 "register_operand"                "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:VF 0 "register_operand"                "=&vr,&vr,&vr,&vr")
     (unspec:VF
       [(unspec:VF
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:VF
-           [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr,       vr,vr,vr,vr")
-           (match_operand:<VSUB> 4 "register_operand"         "f,f,f,f,           f,f,f,f")] SLIDE1_UP)
-         (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"           "r,r,r,r,           K,K,K,K")
+           [(match_operand:VF 3 "register_operand"            "vr,vr,vr,vr")
+           (match_operand:<VSUB> 4 "register_operand"         "f,f,f,f")] SLIDE1_UP)
+         (match_operand:VF 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vfslide1<ud>.vf\t%0,%3,%4,%1.t
-   vfslide1<ud>.vf\t%0,%3,%4,%1.t
-   vfslide1<ud>.vf\t%0,%3,%4
-   vfslide1<ud>.vf\t%0,%3,%4
    vfslide1<ud>.vf\t%0,%3,%4,%1.t
    vfslide1<ud>.vf\t%0,%3,%4,%1.t
    vfslide1<ud>.vf\t%0,%3,%4
@@ -7739,24 +6730,20 @@
 
 ;; Vector-Vector vrgater instruction.
 (define_insn "@vrgather<mode>_vv"
-  [(set (match_operand:V 0 "register_operand"                 "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:V 0 "register_operand"                 "=&vr,&vr,&vr,&vr")
     (unspec:V
       [(unspec:V
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:V
-           [(match_operand:V 3 "register_operand"             "vr,vr,vr,vr,       vr,vr,vr,vr")
-            (match_operand:<VMAP> 4 "register_operand"        "vr,vr,vr,vr,       vr,vr,vr,vr")] UNSPEC_RGATHER)
-         (match_operand:V 2 "vector_reg_or_const0_operand"    "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"           "r,r,r,r,           K,K,K,K")
+           [(match_operand:V 3 "register_operand"             "vr,vr,vr,vr")
+            (match_operand:<VMAP> 4 "register_operand"        "vr,vr,vr,vr")] UNSPEC_RGATHER)
+         (match_operand:V 2 "vector_reg_or_const0_operand"    "0,J,0,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vrgather.vv\t%0,%3,%4,%1.t
-   vrgather.vv\t%0,%3,%4,%1.t
-   vrgather.vv\t%0,%3,%4
-   vrgather.vv\t%0,%3,%4
    vrgather.vv\t%0,%3,%4,%1.t
    vrgather.vv\t%0,%3,%4,%1.t
    vrgather.vv\t%0,%3,%4
@@ -7766,24 +6753,20 @@
 
 ;; Vector-Vector vrgaterei16 instruction.
 (define_insn "@vrgatherei16<V16:mode>_vv"
-  [(set (match_operand:V16 0 "register_operand"               "=&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr")
+  [(set (match_operand:V16 0 "register_operand"               "=&vr,&vr,&vr,&vr")
     (unspec:V16
       [(unspec:V16
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J,         vm,vm,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
          (unspec:V16
-           [(match_operand:V16 3 "register_operand"           "vr,vr,vr,vr,       vr,vr,vr,vr")
-            (match_operand:<VMAPI16> 4 "register_operand"     "vr,vr,vr,vr,       vr,vr,vr,vr")] UNSPEC_RGATHEREI16)
-         (match_operand:V16 2 "vector_reg_or_const0_operand"  "0,J,0,J,           0,J,0,J")] UNSPEC_SELECT)
-       (match_operand 5 "p_reg_or_const_csr_operand"          "r,r,r,r,           K,K,K,K")
+           [(match_operand:V16 3 "register_operand"           "vr,vr,vr,vr")
+            (match_operand:<VMAPI16> 4 "register_operand"     "vr,vr,vr,vr")] UNSPEC_RGATHEREI16)
+         (match_operand:V16 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+       (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vrgatherei16.vv\t%0,%3,%4,%1.t
-   vrgatherei16.vv\t%0,%3,%4,%1.t
-   vrgatherei16.vv\t%0,%3,%4
-   vrgatherei16.vv\t%0,%3,%4
    vrgatherei16.vv\t%0,%3,%4,%1.t
    vrgatherei16.vv\t%0,%3,%4,%1.t
    vrgatherei16.vv\t%0,%3,%4
@@ -7793,28 +6776,20 @@
 
 ;; Vector-Scalar vrgater instruction.
 (define_insn "@vrgather<mode>_vx"
-  [(set (match_operand:V 0 "register_operand"                 "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr,  &vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
+  [(set (match_operand:V 0 "register_operand"                 "=&vr,&vr,&vr,&vr,&vr,&vr,&vr,&vr")
     (unspec:V
       [(unspec:V
-        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J,               vm,vm,vm,vm,J,J,J,J")
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
          (unspec:V
-           [(match_operand:V 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr,           vr,vr,vr,vr,vr,vr,vr,vr")
-           (match_operand 4 "p_reg_or_uimm5_operand"          "r,K,r,K,r,K,r,K,                   r,K,r,K,r,K,r,K")] UNSPEC_RGATHER)
-         (match_operand:V 2 "vector_reg_or_const0_operand"    "0,0,J,J,0,0,J,J,                   0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
-      (match_operand 5 "p_reg_or_const_csr_operand"           "r,r,r,r,r,r,r,r,                   K,K,K,K,K,K,K,K")
+           [(match_operand:V 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
+           (match_operand 4 "p_reg_or_uimm5_operand"          "r,K,r,K,r,K,r,K")] UNSPEC_RGATHER)
+         (match_operand:V 2 "vector_reg_or_const0_operand"    "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
+      (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "@
-   vrgather.vx\t%0,%3,%4,%1.t
-   vrgather.vi\t%0,%3,%4,%1.t
-   vrgather.vx\t%0,%3,%4,%1.t
-   vrgather.vi\t%0,%3,%4,%1.t
-   vrgather.vx\t%0,%3,%4
-   vrgather.vi\t%0,%3,%4
-   vrgather.vx\t%0,%3,%4
-   vrgather.vi\t%0,%3,%4
    vrgather.vx\t%0,%3,%4,%1.t
    vrgather.vi\t%0,%3,%4,%1.t
    vrgather.vx\t%0,%3,%4,%1.t
@@ -7828,13 +6803,13 @@
 
 ;; Vector Compress Instruction.
 (define_insn "@vcompress<mode>_vm"
-  [(set (match_operand:V 0 "register_operand"               "=&vr,&vr,  &vr,&vr")
+  [(set (match_operand:V 0 "register_operand"               "=&vr,&vr")
     (unspec:V
       [(unspec:V
-        [(match_operand:<VM> 1 "register_operand"           "vm,vm,     vm,vm")
-         (match_operand:V 2 "vector_reg_or_const0_operand"  "0,J,       0,J")
-         (match_operand:V 3 "register_operand"              "vr,vr,     vr,vr")] UNSPEC_COMPRESS)
-      (match_operand 4 "p_reg_or_const_csr_operand"         "r,r,       K,K")
+        [(match_operand:<VM> 1 "register_operand"           "vm,vm")
+         (match_operand:V 2 "vector_reg_or_const0_operand"  "0,J")
+         (match_operand:V 3 "register_operand"              "vr,vr")] UNSPEC_COMPRESS)
+      (match_operand 4 "p_reg_or_const_csr_operand"         "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]

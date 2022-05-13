@@ -37,7 +37,7 @@ poly_uint64 riscv_vector_natural_size (machine_mode);
 unsigned int riscv_offset_temporaries (bool, poly_int64);
 void riscv_report_vector_required (void);
 void riscv_vector_expand_poly_move (machine_mode, rtx, rtx, rtx);
-void riscv_vector_adjust_frame (rtx, poly_int64);
+void riscv_vector_adjust_frame (rtx, poly_int64, bool);
 bool riscv_vector_expand_vectorize_vec_perm_const (machine_mode, rtx, rtx, rtx,
                                               const vec_perm_indices &);
 opt_machine_mode riscv_vector_array_mode (machine_mode, unsigned HOST_WIDE_INT);
