@@ -65,77 +65,9 @@
   if (MEM_P (operands[0]) && !REG_P (operands[1]))
     operands[1] = force_reg (<MODE>mode, operands[1]);
 
-  rtx x, base, step;
-
-  if (const_vec_duplicate_p (operands[1], &x))
-    {
-      if (FLOAT_MODE_P (<MODE>mode))
-        emit_insn (
-            gen_vec_duplicate<mode> (operands[0], force_reg (<VSUB>mode, x)));
-      else
-        emit_insn (gen_vec_duplicate<mode> (operands[0], x));
-      DONE;
-    }
-
   if (GET_CODE (operands[1]) == CONST_VECTOR &&
-      const_vec_series_p (operands[1], &base, &step))
-    {
-      riscv_vector_expand_series_const_vector (operands[0], operands[1]);
-      DONE;
-    }
-
-  if (GET_CODE (operands[1]) == CONST_VECTOR)
-    {
-      if (GET_MODE_SIZE (<MODE>mode).is_constant ())
-        {
-          operands[1] = force_const_mem (GET_MODE (operands[1]), operands[1]);
-          rtx base = gen_reg_rtx (Pmode);
-          riscv_emit_move (base, XEXP (operands[1], 0));
-          operands[1] = replace_equiv_address (operands[1], base, false);
-          riscv_emit_move (operands[0], operands[1]);
-          DONE;
-        }
-
-      if (CONST_VECTOR_DUPLICATE_P (operands[1]))
-        {
-          unsigned int n_elts = CONST_VECTOR_NPATTERNS (operands[1]);
-          emit_insn (gen_vid_v (<MODE>mode, operands[0], const0_rtx,
-                                const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM),
-                                riscv_vector_gen_policy ()));
-          emit_insn (gen_v_vx (
-              UNSPEC_VAND, <MODE>mode, operands[0], const0_rtx, const0_rtx,
-              operands[0], GEN_INT (n_elts - 1), gen_rtx_REG (Pmode, X0_REGNUM),
-              riscv_vector_gen_policy ()));
-          emit_insn (gen_vec_duplicate (<MODE>mode, operands[0],
-                                        CONST_VECTOR_ELT (operands[1], 0)));
-
-          for (unsigned int i = 1; i < n_elts; i++)
-            {
-              rtx mask = gen_reg_rtx (<VM>mode);
-              emit_insn (gen_vms_vx (EQ, <MODE>mode, mask, const0_rtx,
-                                     const0_rtx, operands[0], GEN_INT (i),
-                                     gen_rtx_REG (Pmode, X0_REGNUM),
-                                     riscv_vector_gen_policy ()));
-
-              if (FLOAT_MODE_P (<MODE>mode))
-                emit_insn (gen_vfmerge_vfm (
-                    <MODE>mode, operands[0], mask, const0_rtx, operands[0],
-                    force_reg (<VSUB>mode, CONST_VECTOR_ELT (operands[1], 1)),
-                    gen_rtx_REG (Pmode, X0_REGNUM),
-                    riscv_vector_gen_policy ()));
-              else
-                emit_insn (gen_v_vxm (UNSPEC_VMERGE, <MODE>mode, operands[0],
-                                      mask, operands[0],
-                                      CONST_VECTOR_ELT (operands[1], 1),
-                                      gen_rtx_REG (Pmode, X0_REGNUM),
-                                      riscv_vector_gen_policy ()));
-            }
-          DONE;
-        }
-      
-      if (riscv_vector_expand_const_vector (operands[0], operands[1]))
-        DONE;
-    }
+      riscv_vector_expand_const_vector (operands[0], operands[1]))
+    DONE;
 })
 
 ;; Full vector load/store/move.
@@ -162,77 +94,9 @@
   if (MEM_P (operands[0]) && !REG_P (operands[1]))
     operands[1] = force_reg (<MODE>mode, operands[1]);
 
-  rtx x, base, step;
-
-  if (const_vec_duplicate_p (operands[1], &x))
-    {
-      if (FLOAT_MODE_P (<MODE>mode))
-        emit_insn (
-            gen_vec_duplicate<mode> (operands[0], force_reg (<VSUB>mode, x)));
-      else
-        emit_insn (gen_vec_duplicate<mode> (operands[0], x));
-      DONE;
-    }
-
   if (GET_CODE (operands[1]) == CONST_VECTOR &&
-      const_vec_series_p (operands[1], &base, &step))
-    {
-      riscv_vector_expand_series_const_vector (operands[0], operands[1]);
-      DONE;
-    }
-
-  if (GET_CODE (operands[1]) == CONST_VECTOR)
-    {
-      if (GET_MODE_SIZE (<MODE>mode).is_constant ())
-        {
-          operands[1] = force_const_mem (GET_MODE (operands[1]), operands[1]);
-          rtx base = gen_reg_rtx (Pmode);
-          riscv_emit_move (base, XEXP (operands[1], 0));
-          operands[1] = replace_equiv_address (operands[1], base, false);
-          riscv_emit_move (operands[0], operands[1]);
-          DONE;
-        }
-
-      if (CONST_VECTOR_DUPLICATE_P (operands[1]))
-        {
-          unsigned int n_elts = CONST_VECTOR_NPATTERNS (operands[1]);
-          emit_insn (gen_vid_v (<MODE>mode, operands[0], const0_rtx,
-                                const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM),
-                                riscv_vector_gen_policy ()));
-          emit_insn (gen_v_vx (
-              UNSPEC_VAND, <MODE>mode, operands[0], const0_rtx, const0_rtx,
-              operands[0], GEN_INT (n_elts - 1), gen_rtx_REG (Pmode, X0_REGNUM),
-              riscv_vector_gen_policy ()));
-          emit_insn (gen_vec_duplicate (<MODE>mode, operands[0],
-                                        CONST_VECTOR_ELT (operands[1], 0)));
-
-          for (unsigned int i = 1; i < n_elts; i++)
-            {
-              rtx mask = gen_reg_rtx (<VM>mode);
-              emit_insn (gen_vms_vx (EQ, <MODE>mode, mask, const0_rtx,
-                                     const0_rtx, operands[0], GEN_INT (i),
-                                     gen_rtx_REG (Pmode, X0_REGNUM),
-                                     riscv_vector_gen_policy ()));
-
-              if (FLOAT_MODE_P (<MODE>mode))
-                emit_insn (gen_vfmerge_vfm (
-                    <MODE>mode, operands[0], mask, const0_rtx, operands[0],
-                    force_reg (<VSUB>mode, CONST_VECTOR_ELT (operands[1], 1)),
-                    gen_rtx_REG (Pmode, X0_REGNUM),
-                    riscv_vector_gen_policy ()));
-              else
-                emit_insn (gen_v_vxm (UNSPEC_VMERGE, <MODE>mode, operands[0],
-                                      mask, operands[0],
-                                      CONST_VECTOR_ELT (operands[1], 1),
-                                      gen_rtx_REG (Pmode, X0_REGNUM),
-                                      riscv_vector_gen_policy ()));
-            }
-          DONE;
-        }
-      
-      if (riscv_vector_expand_const_vector (operands[0], operands[1]))
-        DONE;
-    }
+      riscv_vector_expand_const_vector (operands[0], operands[1]))
+    DONE;
 })
 
 ;; Partial vector load/store/move.

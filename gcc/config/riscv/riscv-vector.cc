@@ -2906,17 +2906,6 @@ riscv_vector_strided_const_vector_p (rtx op)
   return const_vec_series_p (op, &base, &step);
 }
 
-/* Implement vec_series<mode>. */
-
-void
-riscv_vector_expand_series_const_vector (rtx target, rtx src)
-{
-  rtx base, step;
-  gcc_assert (const_vec_series_p (src, &base, &step));
-  machine_mode mode = GET_MODE (target);
-  emit_insn (gen_vec_series (mode, target, base, step));
-}
-
 /* Subroutine of riscv_vector_expand_gather_scatter. 
    Generate strided load/store for specific gather_load/scatter_store. */
 
@@ -3697,7 +3686,84 @@ riscv_vector_expand_vec_perm_const (struct expand_vec_perm_d *d)
 bool
 riscv_vector_expand_const_vector (rtx target, rtx src)
 {
-  /*
+  rtx x, base, step;
+  unsigned int npatterns = CONST_VECTOR_NPATTERNS (src);
+  unsigned int nelts_per_pattern = CONST_VECTOR_NELTS_PER_PATTERN (src);
+  machine_mode mode = GET_MODE (target);
+  machine_mode inner_mode = GET_MODE_INNER (mode);
+  machine_mode mask_mode;
+  gcc_assert (targetm.vectorize.get_mask_mode (mode).exists (&mask_mode));
+  scalar_mode element_mode = GET_MODE_INNER (mode);
+  machine_mode sel_mode = related_int_vector_mode (mode).require ();
+  rtx_vector_builder builder;
+  auto_vec<rtx, 16> vectors (npatterns);
+  
+  /* Case 1: Handle const duplicate vector. */
+  if (const_vec_duplicate_p (src, &x))
+    {
+      if (FLOAT_MODE_P (mode))
+        x = force_reg (inner_mode, x);
+      emit_insn (gen_vec_duplicate (mode, target, x));
+      return true;
+    }
+  
+  /* Case 2: Handle const series vector. */
+  if (const_vec_series_p (src, &base, &step))
+    {
+      emit_insn (gen_vec_series (mode, target, base, step));
+      return true;
+    }
+  
+  /* Case 3: Handle fixed-size const vector. */
+  if (GET_MODE_SIZE (mode).is_constant ())
+    {
+      src = force_const_mem (mode, src);
+      rtx base = gen_reg_rtx (Pmode);
+      riscv_emit_move (base, XEXP (src, 0));
+      src = replace_equiv_address (src, base, false);
+      riscv_emit_move (target, src);
+      return true;
+    }
+  
+  /* Case 4: Handle scalable partial const duplicate vector. */
+  if (CONST_VECTOR_DUPLICATE_P (src))
+    {
+      unsigned int npatterns = CONST_VECTOR_NPATTERNS (src);
+      emit_insn (gen_vid_v (mode, target, const0_rtx,
+                            const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM),
+                            riscv_vector_gen_policy ()));
+      emit_insn (gen_v_vx (
+          UNSPEC_VAND, mode, target, const0_rtx, const0_rtx,
+          target, GEN_INT (npatterns - 1), gen_rtx_REG (Pmode, X0_REGNUM),
+          riscv_vector_gen_policy ()));
+      emit_insn (gen_vec_duplicate (mode, target,
+                                    CONST_VECTOR_ELT (src, 0)));
+
+      for (unsigned int i = 1; i < npatterns; i++)
+        {
+          rtx mask = gen_reg_rtx (mask_mode);
+          emit_insn (gen_vms_vx (EQ, mode, mask, const0_rtx,
+                                 const0_rtx, target, GEN_INT (i),
+                                 gen_rtx_REG (Pmode, X0_REGNUM),
+                                 riscv_vector_gen_policy ()));
+
+          if (FLOAT_MODE_P (mode))
+            emit_insn (gen_vfmerge_vfm (
+                mode, target, mask, const0_rtx, target,
+                force_reg (inner_mode, CONST_VECTOR_ELT (src, 1)),
+                gen_rtx_REG (Pmode, X0_REGNUM),
+                riscv_vector_gen_policy ()));
+          else
+            emit_insn (gen_v_vxm (UNSPEC_VMERGE, mode, target,
+                                  mask, target,
+                                  CONST_VECTOR_ELT (src, 1),
+                                  gen_rtx_REG (Pmode, X0_REGNUM),
+                                  riscv_vector_gen_policy ()));
+        }
+      return true;
+    }
+    
+  /* Case 5: Handle the following case:
   (insn 41 40 42 5 (set (reg:VNx4SI 207)
         (const_vector:VNx4SI [
                 (const_int 1 [0x1])
@@ -3711,16 +3777,6 @@ riscv_vector_expand_const_vector (rtx target, rtx src)
             ])) "pr93868.c":13:16 -1
      (nil))
   */
-  unsigned int npatterns = CONST_VECTOR_NPATTERNS (src);
-  unsigned int nelts_per_pattern = CONST_VECTOR_NELTS_PER_PATTERN (src);
-  machine_mode mode = GET_MODE (target);
-  machine_mode mask_mode;
-  gcc_assert (targetm.vectorize.get_mask_mode (mode).exists (&mask_mode));
-  scalar_mode element_mode = GET_MODE_INNER (mode);
-  machine_mode sel_mode = related_int_vector_mode (mode).require ();
-  rtx_vector_builder builder;
-  auto_vec<rtx, 16> vectors (npatterns);
-
   gcc_assert (exact_log2 (npatterns) >= 1);
   for (unsigned int i = 0; i < npatterns; ++i)
     {
@@ -3779,6 +3835,7 @@ riscv_vector_expand_const_vector (rtx target, rtx src)
       riscv_vector_data_mode (element_mode, poly_offset).exists (&m1_mode));
   rtx mask = gen_reg_rtx (m1_mode);
   rtx pat_idx2 = gen_reg_rtx (sel_mode);
+  
   /* Use vrgather to interleave the separate vectors.  */
   for (unsigned int i = 1; i < npatterns; ++i)
     {
@@ -3803,6 +3860,7 @@ riscv_vector_expand_const_vector (rtx target, rtx src)
                                     target, vectors[i], pat_idx2, vl,
                                     riscv_vector_gen_policy ()));
     }
+    
   gcc_assert (vectors[0] == target);
   return true;
 }
@@ -3839,7 +3897,7 @@ riscv_vector_expand_const_mask (rtx target, rtx src)
   rtx vector = gen_reg_rtx (vector_mode);     
   emit_insn (gen_vec_duplicate (vector_mode, vector, const0_rtx));
 
-  for (unsigned int i = 0; i < XVECLEN (src, 0); ++i)
+  for (int i = 0; i < XVECLEN (src, 0); ++i)
     {
       if (INTVAL (XVECEXP(src, 0, i)) == 1)
         emit_insn (gen_vec_set (vector_mode, vector, const1_rtx, GEN_INT (i)));
