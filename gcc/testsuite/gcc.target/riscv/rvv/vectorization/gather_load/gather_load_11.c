@@ -54,11 +54,4 @@ f5 (int64_t *restrict y, int64_t *restrict x, uint64_t *restrict index)
     }
 }
 
-/* { dg-final { scan-tree-dump-times "\.LEN_GATHER_LOAD" 10 "optimized" {target riscv64-*-*} } } */
-/* For the f5 (), we don't enable vec_pack_trunc because it breaks in most cases,
-   so it doesn't use LEN_GATHER_LOAD. But it makes sense, because in RV32 system,
-   we don't recommand programmer uses 64bit as memory address access type. */
-/* { dg-final { scan-tree-dump-times "\.LEN_GATHER_LOAD" 8 "optimized" {target riscv32-*-*} } } */
-/* { dg-final { scan-tree-dump-times " \.GATHER_LOAD" 2 "optimized" {target riscv32-*-*} } } */
-/* { dg-final { scan-tree-dump-times "\.WHILE_LEN" 5 "optimized" {target riscv64-*-*} } } */
-/* { dg-final { scan-tree-dump-times "\.WHILE_LEN" 4 "optimized" {target riscv32-*-*} } } */
+/* { dg-final { scan-tree-dump-times " \.GATHER_LOAD" 18 "optimized" } } */

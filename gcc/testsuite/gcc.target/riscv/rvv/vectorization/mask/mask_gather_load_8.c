@@ -60,5 +60,4 @@ f4 (int64_t *restrict y, int64_t *restrict x, uint64_t *restrict index)
     }
 }
 
-/* { dg-final { scan-tree-dump-times "\.LEN_MASK_GATHER_LOAD" 8 "optimized" } } */
-/* { dg-final { scan-tree-dump-times "\.WHILE_LEN" 4 "optimized" } } */
+/* { dg-final { scan-tree-dump-times "\.MASK_GATHER_LOAD" 16 "optimized" } } */

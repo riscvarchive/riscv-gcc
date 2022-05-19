@@ -609,7 +609,7 @@ void riscv_vector_costs::finish_cost(const vector_costs *uncast_scalar_costs) {
   auto *scalar_costs =
       static_cast<const riscv_vector_costs *>(uncast_scalar_costs);
   loop_vec_info loop_vinfo = dyn_cast<loop_vec_info>(m_vinfo);
-  if (loop_vinfo && TARGET_RVV)
+  if (loop_vinfo)
       m_costs[vect_body] = 1;
   vector_costs::finish_cost(scalar_costs);
 }

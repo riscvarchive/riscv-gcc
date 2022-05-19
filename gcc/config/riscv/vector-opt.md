@@ -1157,7 +1157,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
 {
 })
 
@@ -1177,7 +1177,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vmadd.vx\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vmadd.vx\t%0,%3,%4,%1.t"
@@ -1200,7 +1200,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vmacc.vx\t%0,%3,%2,%1.t
    vmv<lmul>r.v\t%0,%4\;vmacc.vx\t%0,%3,%2,%1.t"
@@ -1223,7 +1223,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV
+  "TARGET_VECTOR
    && !rtx_equal_p (operands[2], operands[5])
    && !rtx_equal_p (operands[4], operands[5])"
   "#"
@@ -1287,7 +1287,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
 {
 })
 
@@ -1307,7 +1307,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vfmadd.vf\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vfmadd.vf\t%0,%3,%4,%1.t"
@@ -1330,7 +1330,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vfmacc.vf\t%0,%3,%2,%1.t
    vmv<lmul>r.v\t%0,%4\;vfmacc.vf\t%0,%3,%2,%1.t"
@@ -1353,7 +1353,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV
+  "TARGET_VECTOR
    && !rtx_equal_p (operands[2], operands[5])
    && !rtx_equal_p (operands[4], operands[5])"
   "#"
@@ -1418,7 +1418,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
 {
 })
 
@@ -1439,7 +1439,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vnmsub.vx\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vnmsub.vx\t%0,%3,%4,%1.t"
@@ -1463,7 +1463,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vnmsac.vx\t%0,%3,%2,%1.t
    vmv<lmul>r.v\t%0,%4\;vnmsac.vx\t%0,%3,%2,%1.t"
@@ -1487,7 +1487,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV
+  "TARGET_VECTOR
    && !rtx_equal_p (operands[2], operands[5])
    && !rtx_equal_p (operands[4], operands[5])"
   "#"
@@ -1552,7 +1552,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
 {
 })
 
@@ -1573,7 +1573,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vfnmsub.vf\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vfnmsub.vf\t%0,%3,%4,%1.t"
@@ -1597,7 +1597,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vfnmsac.vf\t%0,%3,%2,%1.t
    vmv<lmul>r.v\t%0,%4\;vfnmsac.vf\t%0,%3,%2,%1.t"
@@ -1621,7 +1621,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV
+  "TARGET_VECTOR
    && !rtx_equal_p (operands[2], operands[5])
    && !rtx_equal_p (operands[4], operands[5])"
   "#"
@@ -1685,7 +1685,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
 {
 })
 
@@ -1705,7 +1705,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vfmsub.vf\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vfmsub.vf\t%0,%3,%4,%1.t"
@@ -1728,7 +1728,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vfmsac.vf\t%0,%3,%2,%1.t
    vmv<lmul>r.v\t%0,%4\;vfmsac.vf\t%0,%3,%2,%1.t"
@@ -1751,7 +1751,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV
+  "TARGET_VECTOR
    && !rtx_equal_p (operands[2], operands[5])
    && !rtx_equal_p (operands[4], operands[5])"
   "#"
@@ -1847,7 +1847,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
 {
 })
 
@@ -1868,7 +1868,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vfnmadd.vf\t%0,%3,%4,%1.t
    vmv<lmul>r.v\t%0,%2\;vfnmadd.vf\t%0,%3,%4,%1.t"
@@ -1892,7 +1892,7 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV"
+  "TARGET_VECTOR"
   "@
    vfnmacc.vf\t%0,%3,%2,%1.t
    vmv<lmul>r.v\t%0,%4\;vfnmacc.vf\t%0,%3,%2,%1.t"
@@ -1916,7 +1916,7 @@
       (match_operand 7 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR && TARGET_RVV
+  "TARGET_VECTOR
    && !rtx_equal_p (operands[2], operands[5])
    && !rtx_equal_p (operands[4], operands[5])"
   "#"

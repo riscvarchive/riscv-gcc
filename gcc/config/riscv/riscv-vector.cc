@@ -2959,6 +2959,52 @@ riscv_vector_expand_strided (rtx ptr, rtx offset, int scale, rtx vector,
     }
 }
 
+/* Helper function of riscv_vector_expand_gather_scatter. */
+static machine_mode
+riscv_vector_gather_scatter_index_inner_mode (machine_mode mode)
+{
+  switch (GET_MODE_INNER (mode))
+  {
+  case HFmode:
+    return HImode;
+  case SFmode:
+    return SImode;
+  case DFmode:
+    return DImode;
+  default:
+    break;
+  }
+  
+  return GET_MODE_INNER (mode);
+}
+
+/* Helper function of riscv_vector_expand_gather_scatter. 
+   emit vector extend instruction for operands*/
+static void
+emit_extend (rtx offset, rtx new_offset, rtx vl, bool unsigned_p)
+{
+  machine_mode offset_mode = GET_MODE (offset);
+  machine_mode new_offset_mode = GET_MODE (new_offset);
+  unsigned int factor = GET_MODE_BITSIZE (GET_MODE_INNER (new_offset_mode)) /
+                        GET_MODE_BITSIZE (GET_MODE_INNER (offset_mode));
+  enum rtx_code code = unsigned_p ? ZERO_EXTEND : SIGN_EXTEND;
+  if (factor == 2)
+    emit_insn (gen_vext_vf2 (code, offset_mode, new_offset, const0_rtx,
+                             const0_rtx, offset, vl,
+                             riscv_vector::gen_ta_policy ()));
+  else if (factor == 4)
+    emit_insn (gen_vext_vf4 (code, offset_mode, new_offset, const0_rtx,
+                             const0_rtx, offset, vl,
+                             riscv_vector::gen_ta_policy ()));
+  else
+    {
+      gcc_assert (factor == 8);
+      emit_insn (gen_vext_vf8 (code, offset_mode, new_offset, const0_rtx,
+                               const0_rtx, offset, vl,
+                               riscv_vector::gen_ta_policy ()));
+    }
+}
+
 /* Implement gather_load/scatter_store. */
 
 void
@@ -2992,41 +3038,7 @@ riscv_vector_expand_gather_scatter (rtx *ops, unsigned int gather_scatter_flag)
     }
 
   base = force_reg (Pmode, base);
-  offset = force_reg (offset_mode, offset);
-
-  /* RVV only support zero_extend offset. For sign_extend offset, we
-     need to sign_extend the offset and use gather scatter instructions
-     that have the same offset and base mode. */
-  if (unsigned_p == 0 && GET_MODE_INNER (offset_mode) != Pmode)
-    {
-      machine_mode new_offset_mode;
-      gcc_assert (riscv_vector_data_mode (Pmode, GET_MODE_NUNITS (offset_mode))
-                      .exists (&new_offset_mode));
-      rtx new_offset = gen_reg_rtx (new_offset_mode);
-
-      unsigned int factor =
-          GET_MODE_BITSIZE (GET_MODE_INNER (new_offset_mode)) /
-          GET_MODE_BITSIZE (GET_MODE_INNER (offset_mode));
-      if (factor == 2)
-        emit_insn (gen_vext_vf2 (SIGN_EXTEND, offset_mode, new_offset,
-                                 const0_rtx, const0_rtx, offset,
-                                 gen_rtx_REG (Pmode, X0_REGNUM),
-                                 riscv_vector::gen_ta_policy ()));
-      else if (factor == 4)
-        emit_insn (gen_vext_vf4 (SIGN_EXTEND, offset_mode, new_offset,
-                                 const0_rtx, const0_rtx, offset,
-                                 gen_rtx_REG (Pmode, X0_REGNUM),
-                                 riscv_vector::gen_ta_policy ()));
-      else
-        emit_insn (gen_vext_vf8 (SIGN_EXTEND, offset_mode, new_offset,
-                                 const0_rtx, const0_rtx, offset,
-                                 gen_rtx_REG (Pmode, X0_REGNUM),
-                                 riscv_vector::gen_ta_policy ()));
-
-      offset = new_offset;
-      offset_mode = new_offset_mode;
-    }
-
+  
   rtx vl;
   if ((gather_scatter_flag >> 1) & 0x1)
     {
@@ -3051,16 +3063,48 @@ riscv_vector_expand_gather_scatter (rtx *ops, unsigned int gather_scatter_flag)
                                    vl, gather_scatter_flag);
       return;
     }
+  
+  offset = force_reg (offset_mode, offset);
+  /* RVV only support zero_extend offset. For sign_extend offset, we
+     need to sign_extend the offset and use gather scatter instructions
+     that have the same offset and base mode. */
+  machine_mode inner_mode = VOIDmode;
+  if (!unsigned_p && GET_MODE_BITSIZE (GET_MODE_INNER (offset_mode)) < GET_MODE_BITSIZE (Pmode))
+    inner_mode = Pmode;
 
-  if (log2 != 0)
+  if (unsigned_p && log2 != 0 &&
+      GET_MODE_BITSIZE (GET_MODE_INNER (offset_mode)) <
+          GET_MODE_BITSIZE (GET_MODE_INNER (vector_mode)))
+    inner_mode = riscv_vector_gather_scatter_index_inner_mode (vector_mode);
+    
+  machine_mode new_offset_mode = offset_mode;
+  if (inner_mode != VOIDmode)
+    gcc_assert (riscv_vector_data_mode (as_a<scalar_int_mode> (inner_mode),
+                                        GET_MODE_NUNITS (offset_mode))
+                    .exists (&new_offset_mode));
+  rtx new_offset = gen_reg_rtx (new_offset_mode);
+  
+  if (inner_mode != VOIDmode)
     {
-      rtx new_offset = gen_reg_rtx (offset_mode);
-      emit_insn (gen_v_vx (ASHIFT, offset_mode, new_offset, const0_rtx,
-                           const0_rtx, offset, GEN_INT (log2), vl,
-                           riscv_vector_gen_policy ()));
+      emit_extend (offset, new_offset, vl, unsigned_p);
+      if (log2 != 0)
+        emit_insn (gen_v_vx (ASHIFT, new_offset_mode, new_offset, const0_rtx,
+                             const0_rtx, new_offset, GEN_INT (log2), vl,
+                             riscv_vector_gen_policy ()));
+      offset_mode = new_offset_mode;
       offset = new_offset;
     }
-
+  else
+    {
+      if (log2 != 0)
+        {
+          emit_insn (gen_v_vx (ASHIFT, new_offset_mode, new_offset, const0_rtx,
+                               const0_rtx, offset, GEN_INT (log2), vl,
+                               riscv_vector_gen_policy ()));
+          offset = new_offset;
+        }
+    }
+  
   switch (gather_scatter_flag)
     {
     case RVV_GATHER_LOAD:
@@ -3072,8 +3116,9 @@ riscv_vector_expand_gather_scatter (rtx *ops, unsigned int gather_scatter_flag)
     case RVV_MASK_GATHER_LOAD:
     case RVV_LEN_MASK_GATHER_LOAD:
       emit_insn (gen_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, vector_mode,
-                            offset_mode, vector, ops[5], const0_rtx, base, offset,
-                            vl, riscv_vector_gen_policy (RVV_POLICY_MU)));
+                            offset_mode, vector, ops[5], const0_rtx, base,
+                            offset, vl,
+                            riscv_vector_gen_policy (RVV_POLICY_MU)));
       break;
     case RVV_SCATTER_STORE:
     case RVV_LEN_SCATTER_STORE:
@@ -3497,10 +3542,17 @@ riscv_vector_vrgather (struct expand_vec_perm_d *d)
   machine_mode mask_mode;
   gcc_assert (targetm.vectorize.get_mask_mode (d->vmode).exists (&mask_mode));
   machine_mode sel_mode = related_int_vector_mode (d->vmode).require ();
-  if (!d->perm.length ().is_constant ()
-      && known_gt (GET_MODE_SIZE (d->vmode), BYTES_PER_RISCV_VECTOR)
-      && GET_MODE_BITSIZE (element_mode) > 16)
-    gcc_assert (riscv_vector_data_mode (HImode, d->perm.length ()) .exists (&sel_mode));
+  if (!d->perm.length ().is_constant ())
+    {
+      if (GET_MODE_BITSIZE (element_mode) > 16 &&
+          known_gt (GET_MODE_SIZE (d->vmode), BYTES_PER_RISCV_VECTOR))
+        gcc_assert (riscv_vector_data_mode (HImode, d->perm.length ())
+                        .exists (&sel_mode));
+      if (GET_MODE_BITSIZE (element_mode) < 16 &&
+          !riscv_vector_data_mode (HImode, d->perm.length ())
+               .exists (&sel_mode))
+        return false;
+    }
 
   unsigned int i = 0;
   while (known_gt (d->perm.length (), ++i))
@@ -3641,13 +3693,170 @@ riscv_vector_expand_vec_perm_const (struct expand_vec_perm_d *d)
   return false;
 }
 
+/* Expand const vector using RVV instructions. */
+bool
+riscv_vector_expand_const_vector (rtx target, rtx src)
+{
+  /*
+  (insn 41 40 42 5 (set (reg:VNx4SI 207)
+        (const_vector:VNx4SI [
+                (const_int 1 [0x1])
+                (const_int 0 [0])
+                stepped (interleave 2) [
+                    (const_int 3 [0x3])
+                    (const_int 2 [0x2])
+                    (const_int 5 [0x5])
+                    (const_int 4 [0x4])
+                ]
+            ])) "pr93868.c":13:16 -1
+     (nil))
+  */
+  unsigned int npatterns = CONST_VECTOR_NPATTERNS (src);
+  unsigned int nelts_per_pattern = CONST_VECTOR_NELTS_PER_PATTERN (src);
+  machine_mode mode = GET_MODE (target);
+  machine_mode mask_mode;
+  gcc_assert (targetm.vectorize.get_mask_mode (mode).exists (&mask_mode));
+  scalar_mode element_mode = GET_MODE_INNER (mode);
+  machine_mode sel_mode = related_int_vector_mode (mode).require ();
+  rtx_vector_builder builder;
+  auto_vec<rtx, 16> vectors (npatterns);
+
+  gcc_assert (exact_log2 (npatterns) >= 1);
+  for (unsigned int i = 0; i < npatterns; ++i)
+    {
+      builder.new_vector (mode, 1, nelts_per_pattern);
+      for (unsigned int j = 0; j < nelts_per_pattern; ++j)
+        builder.quick_push (CONST_VECTOR_ELT (src, i + j * npatterns));
+      vectors.quick_push (force_reg (mode, builder.build ()));
+    }
+
+  /* step1: fetch vlmax for specific mode. */
+  unsigned int vlmul = riscv_classify_vlmul_field (mode);
+  unsigned int vsew = riscv_classify_vsew_field (mode);
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+  rtx vl = gen_reg_rtx (Pmode);
+  bool use_ei16_p = false;
+  if (known_gt (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR) &&
+      GET_MODE_BITSIZE (element_mode) > 16)
+    use_ei16_p = true;
+  if (GET_MODE_BITSIZE (element_mode) < 16)
+    use_ei16_p = true;
+
+  if (GET_MODE_BITSIZE (element_mode) > 16 &&
+      known_gt (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR))
+    gcc_assert (riscv_vector_data_mode (HImode, GET_MODE_NUNITS (mode))
+                    .exists (&sel_mode));
+  if (GET_MODE_BITSIZE (element_mode) < 16 &&
+      !riscv_vector_data_mode (HImode, GET_MODE_NUNITS (mode))
+           .exists (&sel_mode))
+    return false;
+  rtx ori_idx = gen_reg_rtx (sel_mode);
+  rtx pat_idx = gen_reg_rtx (sel_mode);
+  emit_insn (
+      gen_vsetvl (Pmode, vl, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
+  emit_insn (gen_rtx_SET (
+      vl, gen_rtx_LSHIFTRT (Pmode, vl, GEN_INT (exact_log2 (npatterns)))));
+  emit_insn (gen_vid_v (sel_mode, ori_idx, const0_rtx, const0_rtx, vl,
+                        riscv_vector_gen_policy ()));
+  emit_insn (gen_v_vx (ASHIFT, sel_mode, pat_idx, const0_rtx, const0_rtx,
+                       ori_idx, GEN_INT (exact_log2 (npatterns)), vl,
+                       riscv_vector_gen_policy ()));
+  if (use_ei16_p)
+    emit_insn (gen_vrgatherei16_vv (mode, target, const0_rtx, const0_rtx,
+                                    vectors[0], pat_idx, vl,
+                                    riscv_vector_gen_policy ()));
+  else
+    emit_insn (gen_vrgather_vv (mode, target, const0_rtx, const0_rtx,
+                                vectors[0], pat_idx, vl,
+                                riscv_vector_gen_policy ()));
+
+  vectors[0] = target;
+  machine_mode m1_mode;
+  int factor =
+      BYTES_PER_RISCV_VECTOR.coeffs[0] / (GET_MODE_BITSIZE (element_mode) / 8);
+  poly_int64 poly_offset (factor, factor);
+  gcc_assert (
+      riscv_vector_data_mode (element_mode, poly_offset).exists (&m1_mode));
+  rtx mask = gen_reg_rtx (m1_mode);
+  rtx pat_idx2 = gen_reg_rtx (sel_mode);
+  /* Use vrgather to interleave the separate vectors.  */
+  for (unsigned int i = 1; i < npatterns; ++i)
+    {
+      unsigned int base_mask = 1 << i;
+      unsigned int iter_num = GET_MODE_BITSIZE (element_mode) / npatterns;
+      unsigned int mask_sum = 0;
+      for (unsigned int j = 0; j < iter_num; j++)
+        mask_sum += base_mask << j;
+
+      emit_insn (gen_v_v_x (UNSPEC_VMV, m1_mode, mask, const0_rtx,
+                            GEN_INT (mask_sum), vl,
+                            riscv_vector_gen_policy ()));
+      emit_insn (gen_v_vx (UNSPEC_VADD, sel_mode, pat_idx2, const0_rtx,
+                           const0_rtx, pat_idx, GEN_INT (i), vl,
+                           riscv_vector_gen_policy ()));
+      if (use_ei16_p)
+        emit_insn (gen_vrgatherei16_vv (
+            mode, target, gen_lowpart (mask_mode, mask), target, vectors[i],
+            pat_idx2, vl, riscv_vector_gen_policy ()));
+      else
+        emit_insn (gen_vrgather_vv (mode, target, gen_lowpart (mask_mode, mask),
+                                    target, vectors[i], pat_idx2, vl,
+                                    riscv_vector_gen_policy ()));
+    }
+  gcc_assert (vectors[0] == target);
+  return true;
+}
+
+/* Expand const mask using RVV instructions. */
+bool
+riscv_vector_expand_const_mask (rtx target, rtx src)
+{
+  rtx ele;
+  rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
+  machine_mode mode = GET_MODE (target);
+  if (const_vec_duplicate_p (src, &ele))
+    {
+      gcc_assert (CONST_SCALAR_INT_P (ele));
+      switch (INTVAL (ele))
+        {
+        case 0:
+          emit_insn (gen_vmclr_m (mode, target, zero,
+                                  riscv_vector_gen_policy ()));
+          break;
+        case 1:
+          emit_insn (gen_vmset_m (mode, target, zero,
+                                  riscv_vector_gen_policy ()));
+          break;
+        default:
+          gcc_unreachable ();
+        }
+      return true;
+    }
+  
+  machine_mode vector_mode;
+  gcc_assert (riscv_vector_data_mode (QImode, GET_MODE_NUNITS (mode))
+         .exists (&vector_mode));
+  rtx vector = gen_reg_rtx (vector_mode);     
+  emit_insn (gen_vec_duplicate (vector_mode, vector, const0_rtx));
+
+  for (unsigned int i = 0; i < XVECLEN (src, 0); ++i)
+    {
+      if (INTVAL (XVECEXP(src, 0, i)) == 1)
+        emit_insn (gen_vec_set (vector_mode, vector, const1_rtx, GEN_INT (i)));
+    }
+  emit_insn (gen_vms_vx (EQ, vector_mode, target, const0_rtx, const0_rtx, vector,
+             const1_rtx, gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+
+  return true;
+}
+
 /* Implement TARGET_VECTORIZE_VEC_PERM_CONST using RVV instructions.  */
 
 bool
 riscv_vector_expand_vectorize_vec_perm_const (machine_mode vmode, rtx target, rtx op0,
                                               rtx op1, const vec_perm_indices &sel)
 {
-  if (!TARGET_VECTOR || !TARGET_RVV)
+  if (!TARGET_VECTOR)
     return false;
 
   struct expand_vec_perm_d d;
@@ -3708,7 +3917,7 @@ riscv_vector_expand_vectorize_vec_perm_const (machine_mode vmode, rtx target, rt
 machine_mode
 riscv_vector_preferred_simd_mode (scalar_mode mode, unsigned vf)
 {
-  if (!TARGET_VECTOR || !TARGET_RVV)
+  if (!TARGET_VECTOR)
     return word_mode;
 
   switch (mode)
@@ -3776,8 +3985,8 @@ riscv_vector_vectorize_related_mode (machine_mode vector_mode,
                                      poly_uint64 nunits,
                                      unsigned vf)
 {
-  bool rvv_mode_p = TARGET_VECTOR & riscv_vector_mode_p (vector_mode) & TARGET_RVV;
-
+  bool rvv_mode_p = TARGET_VECTOR && riscv_vector_mode_p (vector_mode);
+  
   /* If we're operating on RVV vectors, try to return an RVV mode.  */
   poly_uint64 rvv_nunits;
   if (rvv_mode_p
@@ -3817,7 +4026,7 @@ riscv_vector_vectorize_related_mode (machine_mode vector_mode,
 void
 riscv_vector_autovectorize_vector_modes (vector_modes *modes, unsigned vf, bool)
 {
-  if (!TARGET_VECTOR || !TARGET_RVV)
+  if (!TARGET_VECTOR)
     return;
 
   if (vf == RVV_LMUL1)

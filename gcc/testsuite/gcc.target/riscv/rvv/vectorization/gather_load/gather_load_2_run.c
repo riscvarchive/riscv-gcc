@@ -105,7 +105,6 @@ int main (void)
     int len_float = sizeof(indices_float)/sizeof(indices_float[0]);
     f_float(dest_float,src_float,indices_float,len_float);
     for(int i=0; i<len_float; i++) {
-        printf("f_float=dest_float:%1.1f,expect_float:%1.1f\n",dest_float[i],expect_float[i]);
         if (dest_float[i]!=expect_float[i] ) {
             printf("f_float=dest_float:%1.1f,expect_float:%1.1f\n",dest_float[i],expect_float[i]);
             __builtin_abort();

@@ -3998,7 +3998,7 @@ expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
   insn_code icode = convert_optab_handler (optab, TYPE_MODE (rhs_type[0]),
 					   TYPE_MODE (lhs_type));
 
-  expand_insn (icode, gimple_call_num_args (stmt) + 1, ops);
+  expand_insn (icode, optab == while_ult_optab ? 3 : 4, ops);
   if (!rtx_equal_p (lhs_rtx, ops[0].value))
     emit_move_insn (lhs_rtx, ops[0].value);
 }

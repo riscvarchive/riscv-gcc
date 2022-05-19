@@ -24,5 +24,5 @@ REDUC (uint64_t)
 REDUC (float)
 REDUC (double)
 
-/* { dg-final { scan-assembler-times {\tvredsum\.vs} 8 } } */
-/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 2 } } */
+/* { dg-final { scan-assembler-times {\tvredsum\.vs} 14 } } */
+/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 3 } } */

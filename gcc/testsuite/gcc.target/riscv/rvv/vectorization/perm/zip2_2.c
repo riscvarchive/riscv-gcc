@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -mriscv-vector-bits=2048 -mrvv --save-temps" } */
+/* { dg-options "-O -mriscv-vector-bits=2048  --save-temps" } */
 
 typedef unsigned char v128qi __attribute__((vector_size(128)));
 typedef unsigned char v64qi __attribute__((vector_size(64)));
@@ -21,11 +21,6 @@ typedef float v32sf __attribute__((vector_size(128)));
 
 /*
 ** qi_zip2_h_a:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.h, \2\.h, \2\.h
-**	st1b	\3\.h, \1, \[x8\]
-**	ret
 */
 v128qi
 qi_zip2_h_a (v128qi x)
@@ -35,11 +30,6 @@ qi_zip2_h_a (v128qi x)
 
 /*
 ** qi_zip2_h_b:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.h, \2\.h, \2\.h
-**	st1b	\3\.h, \1, \[x8\]
-**	ret
 */
 v128qi
 qi_zip2_h_b (v128qi x)
@@ -49,11 +39,6 @@ qi_zip2_h_b (v128qi x)
 
 /*
 ** qi_zip2_h_c:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.h, \2\.h, \2\.h
-**	st1b	\3\.h, \1, \[x8\]
-**	ret
 */
 v128qi
 qi_zip2_h_c (v128qi x)
@@ -63,19 +48,6 @@ qi_zip2_h_c (v128qi x)
 
 /*
 ** qi_zip2_h_two_op:
-**	ptrue	(p[0-7])\.b, vl256
-** (
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x1\]
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	zip2	\3\.h, \3\.h, \2\.h
-**	st1b	\3\.h, \1, \[x8\]
-** |
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x1\]
-**	zip2	\4\.h, \4\.h, \5\.h
-**	st1b	\4\.h, \1, \[x8\]
-** )
-**	ret
 */
 v128qi
 qi_zip2_h_two_op (v128qi x, v128qi y)
@@ -85,11 +57,6 @@ qi_zip2_h_two_op (v128qi x, v128qi y)
 
 /*
 ** qi_zip2_s:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.s, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.s, \2\.s, \2\.s
-**	st1b	\3\.s, \1, \[x8\]
-**	ret
 */
 v64qi
 qi_zip2_s (v64qi x)
@@ -99,19 +66,6 @@ qi_zip2_s (v64qi x)
 
 /*
 ** qi_zip2_s_two_op:
-**	ptrue	(p[0-7])\.b, vl256
-** (
-**	ld1b	(z[0-9]+)\.s, \1/z, \[x1\]
-**	ld1b	(z[0-9]+)\.s, \1/z, \[x0\]
-**	zip2	\3\.s, \3\.s, \2\.s
-**	st1b	\3\.s, \1, \[x8\]
-** |
-**	ld1b	(z[0-9]+)\.s, \1/z, \[x0\]
-**	ld1b	(z[0-9]+)\.s, \1/z, \[x1\]
-**	zip2	\4\.s, \4\.s, \5\.s
-**	st1b	\4\.s, \1, \[x8\]
-** )
-**	ret
 */
 v64qi
 qi_zip2_s_two_op (v64qi x, v64qi y)
@@ -121,11 +75,6 @@ qi_zip2_s_two_op (v64qi x, v64qi y)
 
 /*
 ** qi_zip2_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.d, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.d, \2\.d, \2\.d
-**	st1b	\3\.d, \1, \[x8\]
-**	ret
 */
 v32qi
 qi_zip2_d (v32qi x)
@@ -135,19 +84,6 @@ qi_zip2_d (v32qi x)
 
 /*
 ** qi_zip2_d_two_op:
-**	ptrue	(p[0-7])\.b, vl256
-** (
-**	ld1b	(z[0-9]+)\.d, \1/z, \[x1\]
-**	ld1b	(z[0-9]+)\.d, \1/z, \[x0\]
-**	zip2	\3\.d, \3\.d, \2\.d
-**	st1b	\3\.d, \1, \[x8\]
-** |
-**	ld1b	(z[0-9]+)\.d, \1/z, \[x0\]
-**	ld1b	(z[0-9]+)\.d, \1/z, \[x1\]
-**	zip2	\4\.d, \4\.d, \5\.d
-**	st1b	\4\.d, \1, \[x8\]
-** )
-**	ret
 */
 v32qi
 qi_zip2_d_two_op (v32qi x, v32qi y)
@@ -157,11 +93,6 @@ qi_zip2_d_two_op (v32qi x, v32qi y)
 
 /*
 ** hi_zip2_s:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.s, \2\.s, \2\.s
-**	st1h	\3\.s, \1, \[x8\]
-**	ret
 */
 v64hi
 hi_zip2_s (v64hi x)
@@ -171,19 +102,6 @@ hi_zip2_s (v64hi x)
 
 /*
 ** hi_zip2_s_two_op:
-**	ptrue	(p[0-7])\.b, vl256
-** (
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x1\]
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	zip2	\3\.s, \3\.s, \2\.s
-**	st1h	\3\.s, \1, \[x8\]
-** |
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x1\]
-**	zip2	\4\.s, \4\.s, \5\.s
-**	st1h	\4\.s, \1, \[x8\]
-** )
-**	ret
 */
 v64hi
 hi_zip2_s_two_op (v64hi x, v64hi y)
@@ -193,11 +111,6 @@ hi_zip2_s_two_op (v64hi x, v64hi y)
 
 /*
 ** hf_zip2_s:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.s, \2\.s, \2\.s
-**	st1h	\3\.s, \1, \[x8\]
-**	ret
 */
 v64hf
 hf_zip2_s (v64hf x)
@@ -207,19 +120,6 @@ hf_zip2_s (v64hf x)
 
 /*
 ** hf_zip2_s_two_op:
-**	ptrue	(p[0-7])\.b, vl256
-** (
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x1\]
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	zip2	\3\.s, \3\.s, \2\.s
-**	st1h	\3\.s, \1, \[x8\]
-** |
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x1\]
-**	zip2	\4\.s, \4\.s, \5\.s
-**	st1h	\4\.s, \1, \[x8\]
-** )
-**	ret
 */
 v64hf
 hf_zip2_s_two_op (v64hf x, v64hf y)
@@ -229,11 +129,6 @@ hf_zip2_s_two_op (v64hf x, v64hf y)
 
 /*
 ** hi_zip2_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.d, \2\.d, \2\.d
-**	st1h	\3\.d, \1, \[x8\]
-**	ret
 */
 v32hi
 hi_zip2_d (v32hi x)
@@ -243,19 +138,6 @@ hi_zip2_d (v32hi x)
 
 /*
 ** hi_zip2_d_two_op:
-**	ptrue	(p[0-7])\.b, vl256
-** (
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x1\]
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	zip2	\3\.d, \3\.d, \2\.d
-**	st1h	\3\.d, \1, \[x8\]
-** |
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x1\]
-**	zip2	\4\.d, \4\.d, \5\.d
-**	st1h	\4\.d, \1, \[x8\]
-** )
-**	ret
 */
 v32hi
 hi_zip2_d_two_op (v32hi x, v32hi y)
@@ -265,11 +147,6 @@ hi_zip2_d_two_op (v32hi x, v32hi y)
 
 /*
 ** hf_zip2_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.d, \2\.d, \2\.d
-**	st1h	\3\.d, \1, \[x8\]
-**	ret
 */
 v32hf
 hf_zip2_d (v32hf x)
@@ -279,19 +156,6 @@ hf_zip2_d (v32hf x)
 
 /*
 ** hf_zip2_d_two_op:
-**	ptrue	(p[0-7])\.b, vl256
-** (
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x1\]
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	zip2	\3\.d, \3\.d, \2\.d
-**	st1h	\3\.d, \1, \[x8\]
-** |
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x1\]
-**	zip2	\4\.d, \4\.d, \5\.d
-**	st1h	\4\.d, \1, \[x8\]
-** )
-**	ret
 */
 v32hf
 hf_zip2_d_two_op (v32hf x, v32hf y)
@@ -301,11 +165,6 @@ hf_zip2_d_two_op (v32hf x, v32hf y)
 
 /*
 ** si_zip2_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1w	(z[0-9]+)\.d, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.d, \2\.d, \2\.d
-**	st1w	\3\.d, \1, \[x8\]
-**	ret
 */
 v32si
 si_zip2_d (v32si x)
@@ -315,11 +174,6 @@ si_zip2_d (v32si x)
 
 /*
 ** sf_zip2_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1w	(z[0-9]+)\.d, \1/z, \[x0\]
-**	zip2	(z[0-9]+)\.d, \2\.d, \2\.d
-**	st1w	\3\.d, \1, \[x8\]
-**	ret
 */
 v32sf
 sf_zip2_d (v32sf x)

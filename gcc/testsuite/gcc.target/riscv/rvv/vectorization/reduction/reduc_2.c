@@ -117,14 +117,14 @@ reduc_##NAME##TYPE (TYPE (*restrict a)[NUM_ELEMS(TYPE)],	\
 
 TEST_BITWISE (DEF_REDUC_BITWISE)
 
-/* { dg-final { scan-assembler-times {\tvredsum\.vs} 8 } } */
-/* { dg-final { scan-assembler-times {\tvredmax\.vs} 4 } } */
-/* { dg-final { scan-assembler-times {\tvredmaxu\.vs} 4 } } */
-/* { dg-final { scan-assembler-times {\tvredmin\.vs} 4 } } */
-/* { dg-final { scan-assembler-times {\tvredminu\.vs} 4 } } */
-/* { dg-final { scan-assembler-times {\tvredand\.vs} 8 } } */
-/* { dg-final { scan-assembler-times {\tvredor\.vs} 8 } } */
-/* { dg-final { scan-assembler-times {\tvredxor\.vs} 8 } } */
-/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 3 } } */
-/* { dg-final { scan-assembler-times {\tvfredmax\.vs} 3 } } */
-/* { dg-final { scan-assembler-times {\tvfredmin\.vs} 3 } } */
+/* { dg-final { scan-assembler-times {\tvredsum\.vs} 14 } } */
+/* { dg-final { scan-assembler-times {\tvredmax\.vs} 7 } } */
+/* { dg-final { scan-assembler-times {\tvredmaxu\.vs} 7 } } */
+/* { dg-final { scan-assembler-times {\tvredmin\.vs} 7 } } */
+/* { dg-final { scan-assembler-times {\tvredminu\.vs} 7 } } */
+/* { dg-final { scan-assembler-times {\tvredand\.vs} 14 } } */
+/* { dg-final { scan-assembler-times {\tvredor\.vs} 14 } } */
+/* { dg-final { scan-assembler-times {\tvredxor\.vs} 14 } } */
+/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 5 } } */
+/* { dg-final { scan-assembler-times {\tvfredmax\.vs} 5 } } */
+/* { dg-final { scan-assembler-times {\tvfredmin\.vs} 5 } } */

@@ -2549,23 +2549,13 @@ start_over:
       && !LOOP_VINFO_MASKS (loop_vinfo).is_empty ()
       && !LOOP_VINFO_LENS (loop_vinfo).is_empty ())
     {
-      tree type = build_nonstandard_integer_type (GET_MODE_BITSIZE (Pmode), true);
-      if (direct_internal_fn_supported_p (IFN_WHILE_LEN, type, type,
-                                          OPTIMIZE_FOR_BOTH))
-        {
-          /* We use length approach if the we have while_len pattern. */
-          LOOP_VINFO_MASKS (loop_vinfo).release ();
-        }
-      else
-        {
-          if (dump_enabled_p ())
-	    dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
-	    		 "can't vectorize a loop with partial vectors"
-	    		 " because we don't expect to mix different"
-	    		 " approaches with partial vectors for the"
-	    		 " same loop.\n");
-          LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo) = false;
-        }
+      if (dump_enabled_p ())
+	dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
+			 "can't vectorize a loop with partial vectors"
+			 " because we don't expect to mix different"
+			 " approaches with partial vectors for the"
+			 " same loop.\n");
+      LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo) = false;
     }
 
   /* If we still have the option of using partial vectors,

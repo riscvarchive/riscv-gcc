@@ -439,61 +439,61 @@ vect_set_loop_controls_for_while_len (
   tree ctrl;
   unsigned int i;
   FOR_EACH_VEC_ELT_REVERSE (rgc->controls, i, ctrl)
-  {
-    /* Get the control value for the next iteration of the loop.  */
-    next_ctrl = make_temp_ssa_name (compare_type, NULL, "next_len");
-
-    vect_add_len_without_overflow (
-        header_seq, total_iters, loop, ctrl, compare_type, ctrl_type,
-        build_int_cst (iv_type, final_vf), &incr_gsi, insert_after,
-        &index_before_incr, &index_after_incr);
-
-    /* Create the initial control.  First include all items that
-       are within the loop limit.  */
-    tree init_ctrl = nitems_total;
-
-    /* Previous controls will cover BIAS items.  This control covers the
-       next batch.  */
-    poly_uint64 bias = nitems_per_ctrl * i;
-    tree bias_tree = build_int_cst (compare_type, bias);
-
-    /* See whether the first iteration of the vector loop is known
-       to have a full control.  */
-    poly_uint64 const_limit;
-    bool first_iteration_full
-        = (poly_int_tree_p (first_limit, &const_limit)
-           && known_ge (const_limit, (i + 1) * nitems_per_ctrl));
-
-    /* Rather than have a new IV that starts at BIAS and goes up to
-       TEST_LIMIT, prefer to use the same 0-based IV for each control
-       and adjust the bound down by BIAS.  */
-    tree this_test_limit = test_limit;
-    if (i != 0)
-      {
-        this_test_limit = gimple_build (preheader_seq, MAX_EXPR, compare_type,
-                                        this_test_limit, bias_tree);
-        this_test_limit
-            = gimple_build (preheader_seq, MINUS_EXPR, compare_type,
-                            this_test_limit, bias_tree);
-      }
-
-    /* Create the initial control.  First include all items that
-       are within the loop limit.  */
-    if (!first_iteration_full && rgc->controls.length () > 1)
-      {
-        init_ctrl = gimple_build (
-            preheader_seq, IFN_WHILE_LEN, compare_type, this_test_limit,
-            build_int_cst (iv_type, GET_MODE_BITSIZE (GET_MODE_INNER (
-                                        TYPE_MODE (ctrl_type)))),
-            build_int_cst (iv_type, final_vf));
-      }
-    gimple_seq stmts = NULL;
-
-    gimple *stmt = gimple_build_assign (next_ctrl, index_after_incr);
-    gimple_seq_add_stmt (&stmts, stmt);
-    gsi_insert_seq_before (test_gsi, stmts, GSI_NEW_STMT);
-    vect_set_loop_control (loop, ctrl, init_ctrl, next_ctrl);
-  }
+    {
+      /* Get the control value for the next iteration of the loop.  */
+      next_ctrl = make_temp_ssa_name (compare_type, NULL, "next_len");
+  
+      vect_add_len_without_overflow (
+          header_seq, total_iters, loop, ctrl, compare_type, ctrl_type,
+          build_int_cst (iv_type, final_vf), &incr_gsi, insert_after,
+          &index_before_incr, &index_after_incr);
+  
+      /* Create the initial control.  First include all items that
+         are within the loop limit.  */
+      tree init_ctrl = nitems_total;
+  
+      /* Previous controls will cover BIAS items.  This control covers the
+         next batch.  */
+      poly_uint64 bias = nitems_per_ctrl * i;
+      tree bias_tree = build_int_cst (compare_type, bias);
+  
+      /* See whether the first iteration of the vector loop is known
+         to have a full control.  */
+      poly_uint64 const_limit;
+      bool first_iteration_full
+          = (poly_int_tree_p (first_limit, &const_limit)
+             && known_ge (const_limit, (i + 1) * nitems_per_ctrl));
+  
+      /* Rather than have a new IV that starts at BIAS and goes up to
+         TEST_LIMIT, prefer to use the same 0-based IV for each control
+         and adjust the bound down by BIAS.  */
+      tree this_test_limit = test_limit;
+      if (i != 0)
+        {
+          this_test_limit = gimple_build (preheader_seq, MAX_EXPR, compare_type,
+                                          this_test_limit, bias_tree);
+          this_test_limit
+              = gimple_build (preheader_seq, MINUS_EXPR, compare_type,
+                              this_test_limit, bias_tree);
+        }
+  
+      /* Create the initial control.  First include all items that
+         are within the loop limit.  */
+      if (!first_iteration_full && rgc->controls.length () > 1)
+        {
+          init_ctrl = gimple_build (
+              preheader_seq, IFN_WHILE_LEN, compare_type, this_test_limit,
+              build_int_cst (iv_type, GET_MODE_BITSIZE (GET_MODE_INNER (
+                                          TYPE_MODE (ctrl_type)))),
+              build_int_cst (iv_type, final_vf));
+        }
+      gimple_seq stmts = NULL;
+  
+      gimple *stmt = gimple_build_assign (next_ctrl, index_after_incr);
+      gimple_seq_add_stmt (&stmts, stmt);
+      gsi_insert_seq_before (test_gsi, stmts, GSI_NEW_STMT);
+      vect_set_loop_control (loop, ctrl, init_ctrl, next_ctrl);
+    }
   return next_ctrl;
 }
 
@@ -552,7 +552,7 @@ vect_set_loop_controls_directly (class loop *loop, loop_vec_info loop_vinfo,
   if (!use_masks_p)
     length_limit = build_int_cst (compare_type, nitems_per_ctrl);
 
-  if (!use_masks_p && !niters_skip &&
+  if (!use_masks_p && !niters_skip && rgc->controls.length () == 1 &&
       direct_internal_fn_supported_p (IFN_WHILE_LEN, compare_type, iv_type,
                                       OPTIMIZE_FOR_SPEED))
     return vect_set_loop_controls_for_while_len (

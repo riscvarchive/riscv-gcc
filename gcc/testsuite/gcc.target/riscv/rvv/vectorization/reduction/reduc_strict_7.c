@@ -17,6 +17,6 @@ double_reduc (float (*i)[16])
   return l;
 }
 
-/* { dg-final { scan-assembler-times {vfredosum\.vs} 1 } } */
+/* { dg-final { scan-assembler-times {vfredosum\.vs} 3 } } */
 /* { dg-final { scan-tree-dump "Detected double reduction" "vect" } } */
 /* { dg-final { scan-tree-dump-not "OUTER LOOP VECTORIZED" "vect" } } */

@@ -28,6 +28,3 @@
   T (double, uint32_t)
 
 TEST_ALL (TEST_LOOP)
-
-
-/* { dg-final { scan-tree-dump-times "operating on partial vectors." 12 "vect" } } */

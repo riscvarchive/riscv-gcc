@@ -19,3 +19,4 @@
 
 INSERT_PASS_AFTER (pass_rtl_store_motion, 1, pass_shorten_memrefs);
 INSERT_PASS_AFTER (pass_split_all_insns, 1, pass_insert_vsetvli);
+INSERT_PASS_BEFORE (pass_sched2, 1, pass_insert_vsetvli2);

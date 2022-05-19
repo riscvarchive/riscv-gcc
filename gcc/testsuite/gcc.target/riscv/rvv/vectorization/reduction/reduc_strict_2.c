@@ -24,4 +24,4 @@ reduc_plus_##TYPE (TYPE (*restrict a)[NUM_ELEMS (TYPE)],	\
 
 TEST_ALL (DEF_REDUC_PLUS)
 
-/* { dg-final { scan-assembler-times {\tvfredosum\.vs} 3 } } */
+/* { dg-final { scan-assembler-times {\tvfredosum\.vs} 7 } } */

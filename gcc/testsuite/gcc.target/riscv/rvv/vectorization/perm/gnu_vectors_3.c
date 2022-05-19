@@ -22,10 +22,6 @@ void store (int8x4_t *x0, int8x4_t x1) { *x0 = x1; }
 
 /*
 ** stack_callee:
-**	ptrue	p[0-7], vl32
-**	ld1b	(z[0-9]+\.d), \1/z, \[sp\]
-**	st1b	\2, \1, \[x0\]
-**	ret
 */
 __attribute__((noipa))
 void stack_callee (int8x4_t *x0, int8x4_t x1, int8x4_t x2, int8x4_t x3,
@@ -37,14 +33,6 @@ void stack_callee (int8x4_t *x0, int8x4_t x1, int8x4_t x2, int8x4_t x3,
 
 /*
 ** stack_callee:
-**	\.\.\.
-**	ptrue	p[0-7], vl32
-**	\.\.\.
-**	ld1b	(z[0-9]+\.d), \1/z, \[x0\]
-**	\.\.\.
-**	st1b	\2, \1, \[sp\]
-**	\.\.\.
-**	ret
 */
 void stack_caller (int8x4_t *x0, int8x4_t x1)
 {

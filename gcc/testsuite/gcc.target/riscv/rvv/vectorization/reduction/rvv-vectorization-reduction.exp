@@ -33,7 +33,7 @@ if [istarget riscv32-*-*] then {
 dg-init
 
 # Main loop.
-set CFLAGS "-march=$gcc_march -mrvv"
+set CFLAGS "-march=$gcc_march"
 set files [glob -nocomplain $srcdir/$subdir/*.\[cS\]]
 
 dg-runtest [lsort $files] "" $CFLAGS

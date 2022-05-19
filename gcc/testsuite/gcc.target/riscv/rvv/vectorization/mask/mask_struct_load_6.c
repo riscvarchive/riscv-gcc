@@ -43,4 +43,4 @@
 
 TEST (test)
 
-/* { dg-final { scan-tree-dump-times "\.LEN_MASK_LOAD_LANES" 76 "optimized" } } */
+/* { dg-final { scan-tree-dump-times "\.MASK_LOAD_LANES" 142 "optimized" } } */

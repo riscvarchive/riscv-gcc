@@ -5,6 +5,6 @@
 #define TYPE double
 #include "extract_last_6.c"
 
-/* { dg-final { scan-tree-dump "operating on partial vectors." "vect" } } */
+
 /* { dg-final { scan-assembler {\tvcpop.m} } } */
 /* { dg-final { scan-assembler {\tvcompress.vm} } } */

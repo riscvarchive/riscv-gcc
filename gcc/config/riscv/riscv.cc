@@ -905,7 +905,7 @@ riscv_valid_base_register_p (rtx x, machine_mode mode, bool strict_p)
 
 static bool
 riscv_valid_offset_p (rtx x, machine_mode mode)
-{
+{  
   /* Check that X is a signed 12-bit number.  */
   if (!const_arith_operand (x, Pmode))
     return false;
@@ -1799,6 +1799,19 @@ riscv_legitimize_const_move (machine_mode mode, rtx dest, rtx src)
     {
       base = riscv_force_temporary (dest, base, FALSE);
       riscv_emit_move (dest, riscv_add_offset (NULL, base, INTVAL (offset)));
+      return;
+    }
+  
+  /* Handle const:SI (plus:SI (symbol_ref:SI)
+        (const_poly_int:SI [16, 16]))) */
+  if (GET_CODE (src) == CONST && GET_CODE (XEXP (src, 0)) == PLUS &&
+      CONST_POLY_INT_P (XEXP (XEXP (src, 0), 1)))
+    {
+      rtx reg = gen_reg_rtx (mode);
+      rtx clobber = gen_reg_rtx (mode);
+      riscv_emit_move (dest, XEXP (XEXP (src, 0), 0));
+      riscv_vector_expand_poly_move (mode, reg, clobber, XEXP (XEXP (src, 0), 1));
+      emit_insn (gen_rtx_SET (dest, gen_rtx_PLUS (mode, dest, reg)));
       return;
     }
 
@@ -5750,7 +5763,7 @@ riscv_option_override (void)
   /* Convert -mriscv-vector-bits to a chunks count.  */
   riscv_vector_chunks = riscv_convert_riscv_vector_bits (riscv_vector_bits);
 
-  if (TARGET_VECTOR && TARGET_RVV)
+  if (TARGET_VECTOR)
     riscv_vectorization_factor = riscv_vector_lmul;
 }
 
@@ -6136,10 +6149,6 @@ riscv_reorg (void)
   /* Do nothing unless we have -msave-restore */
   if (TARGET_SAVE_RESTORE)
     riscv_remove_unneeded_save_restore_calls ();
-  
-  /* Insert vsetvli for vector spilling after reload. */
-  if (TARGET_VECTOR && reload_completed)
-    riscv_vector_insert_vsetvli_after_reload (cfun);
 }
 
 /* Return nonzero if register FROM_REGNO can be renamed to register
@@ -6467,7 +6476,7 @@ static opt_machine_mode
 riscv_array_mode (machine_mode mode, unsigned HOST_WIDE_INT nelems)
 {
   machine_mode vmode;
-  if (TARGET_VECTOR && TARGET_RVV
+  if (TARGET_VECTOR
     && riscv_vector_tuple_mode (mode, nelems).exists (&vmode)
     && VECTOR_MODE_P (vmode))
     return vmode;
@@ -6617,7 +6626,7 @@ static opt_machine_mode
 riscv_get_mask_mode (machine_mode mode)
 {
   machine_mode mask_mode = VOIDmode;
-  if (TARGET_VECTOR && TARGET_RVV &&
+  if (TARGET_VECTOR &&
       riscv_vector_get_mask_mode (mode).exists (&mask_mode))
     return mask_mode;
 

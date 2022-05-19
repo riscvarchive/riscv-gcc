@@ -6,6 +6,6 @@
 
 #include "extract_last_2.c"
 
-/* { dg-final { scan-tree-dump "operating on partial vectors." "vect" } } */
+
 /* { dg-final { scan-assembler {\tvcpop.m} } } */
 /* { dg-final { scan-assembler {\tvcompress.vm} } } */

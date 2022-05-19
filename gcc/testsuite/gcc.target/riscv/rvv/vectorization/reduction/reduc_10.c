@@ -56,9 +56,9 @@ eor_loop (unsigned short *x, int n)
   return res;
 }
 
-/* { dg-final { scan-assembler-times {\tvredsum\.vs} 1 } } */
-/* { dg-final { scan-assembler-times {\tvredmaxu\.vs} 1 } } */
-/* { dg-final { scan-assembler-times {\tvredminu\.vs} 1 } } */
-/* { dg-final { scan-assembler-times {\tvredand\.vs} 1 } } */
-/* { dg-final { scan-assembler-times {\tvredor\.vs} 1 } } */
-/* { dg-final { scan-assembler-times {\tvredxor\.vs} 1 } } */
+/* { dg-final { scan-assembler-times {\tvredsum\.vs} 2 } } */
+/* { dg-final { scan-assembler-times {\tvredmaxu\.vs} 2 } } */
+/* { dg-final { scan-assembler-times {\tvredminu\.vs} 2 } } */
+/* { dg-final { scan-assembler-times {\tvredand\.vs} 2 } } */
+/* { dg-final { scan-assembler-times {\tvredor\.vs} 2 } } */
+/* { dg-final { scan-assembler-times {\tvredxor\.vs} 2 } } */

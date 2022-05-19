@@ -34,5 +34,5 @@ REDUC_PTR (int16_t, _Float16)
 REDUC_PTR (int32_t, float)
 REDUC_PTR (int64_t, double)
 
-/* { dg-final { scan-assembler-times {\tvredsum\.vs} 4 } } */
-/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 6 } } */
+/* { dg-final { scan-assembler-times {\tvredsum\.vs} 7 } } */
+/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 10 } } */

@@ -8414,50 +8414,27 @@ vectorizable_store (vec_info *vinfo,
 					   final_mask, vec_mask, gsi);
 
 	  gcall *call;
-          if (final_mask)
-            {
-              /* Emit:
-                   MASK_STORE_LANES (DATAREF_PTR, ALIAS_PTR, VEC_MASK,
-                                     VEC_ARRAY).  */
-              unsigned int align = TYPE_ALIGN (TREE_TYPE (vectype));
-              tree alias_ptr = build_int_cst (ref_type, align);
-              if (loop_lens && direct_internal_fn_supported_p (
-                                   IFN_LEN_MASK_STORE_LANES,
-                                   tree_pair (TREE_TYPE (vec_array), vectype),
-                                   OPTIMIZE_FOR_SPEED))
-                {
-                  tree final_len =
-                      vect_get_loop_len (loop_vinfo, loop_lens, ncopies, j);
-                  call = gimple_build_call_internal (
-                      IFN_LEN_MASK_STORE_LANES, 5, dataref_ptr, alias_ptr,
-                      final_mask, vec_array, final_len);
-                }
-              else
-                call = gimple_build_call_internal (IFN_MASK_STORE_LANES, 4,
-                                                   dataref_ptr, alias_ptr,
-                                                   final_mask, vec_array);
-            }
-          else
-            {
-              /* Emit:
-                   MEM_REF[...all elements...] = STORE_LANES (VEC_ARRAY).  */
-              data_ref = create_array_ref (aggr_type, dataref_ptr, ref_type);
-              if (loop_lens && direct_internal_fn_supported_p (
-                                   IFN_LEN_STORE_LANES,
-                                   tree_pair (TREE_TYPE (vec_array), vectype),
-                                   OPTIMIZE_FOR_SPEED))
-                {
-                  tree final_len =
-                      vect_get_loop_len (loop_vinfo, loop_lens, ncopies, j);
-                  call = gimple_build_call_internal (IFN_LEN_STORE_LANES, 2,
-                                                     vec_array, final_len);
-                }
-              else
-                call =
-                    gimple_build_call_internal (IFN_STORE_LANES, 1, vec_array);
-              gimple_call_set_lhs (call, data_ref);
-            }
-          gimple_call_set_nothrow (call, true);
+	  if (final_mask)
+	    {
+	      /* Emit:
+		   MASK_STORE_LANES (DATAREF_PTR, ALIAS_PTR, VEC_MASK,
+				     VEC_ARRAY).  */
+	      unsigned int align = TYPE_ALIGN (TREE_TYPE (vectype));
+	      tree alias_ptr = build_int_cst (ref_type, align);
+	      call = gimple_build_call_internal (IFN_MASK_STORE_LANES, 4,
+						 dataref_ptr, alias_ptr,
+						 final_mask, vec_array);
+	    }
+	  else
+	    {
+	      /* Emit:
+		   MEM_REF[...all elements...] = STORE_LANES (VEC_ARRAY).  */
+	      data_ref = create_array_ref (aggr_type, dataref_ptr, ref_type);
+	      call = gimple_build_call_internal (IFN_STORE_LANES, 1,
+						 vec_array);
+	      gimple_call_set_lhs (call, data_ref);
+	    }
+	  gimple_call_set_nothrow (call, true);
 	  vect_finish_stmt_generation (vinfo, stmt_info, call, gsi);
 	  new_stmt = call;
 
@@ -8491,55 +8468,55 @@ vectorizable_store (vec_info *vinfo,
 		final_mask = prepare_vec_mask (loop_vinfo, mask_vectype,
 					       final_mask, vec_mask, gsi);
 
-              if (memory_access_type == VMAT_GATHER_SCATTER)
-                {
-                  tree scale = size_int (gs_info.scale);
-                  gcall *call;
-                  if (final_mask)
-                    {
-                      if (loop_lens &&
-                          direct_internal_fn_supported_p (
-                              IFN_LEN_MASK_SCATTER_STORE,
-                              tree_pair (vectype, TREE_TYPE (vec_offset)),
-                              OPTIMIZE_FOR_SPEED))
-                        {
-                          tree final_len = vect_get_loop_len (
-                              loop_vinfo, loop_lens, vec_num * ncopies,
-                              vec_num * j + i);
-                          call = gimple_build_call_internal (
-                              IFN_LEN_MASK_SCATTER_STORE, 6, dataref_ptr,
-                              vec_offset, scale, vec_oprnd, final_mask,
-                              final_len);
-                        }
-                      else
-                        call = gimple_build_call_internal (
-                            IFN_MASK_SCATTER_STORE, 5, dataref_ptr, vec_offset,
-                            scale, vec_oprnd, final_mask);
-                    }
-                  else if (loop_lens &&
-                           direct_internal_fn_supported_p (
-                               IFN_LEN_SCATTER_STORE,
-                               tree_pair (vectype, TREE_TYPE (vec_offset)),
-                               OPTIMIZE_FOR_SPEED))
-                    {
-                      tree final_len = vect_get_loop_len (loop_vinfo, loop_lens,
-                                                          vec_num * ncopies,
-                                                          vec_num * j + i);
-                      call = gimple_build_call_internal (
-                          IFN_LEN_SCATTER_STORE, 5, dataref_ptr, vec_offset,
-                          scale, vec_oprnd, final_len);
-                    }
-                  else
-                    call = gimple_build_call_internal (IFN_SCATTER_STORE, 4,
-                                                       dataref_ptr, vec_offset,
-                                                       scale, vec_oprnd);
-                  gimple_call_set_nothrow (call, true);
-                  vect_finish_stmt_generation (vinfo, stmt_info, call, gsi);
-                  new_stmt = call;
-                  break;
-                }
+        if (memory_access_type == VMAT_GATHER_SCATTER)
+          {
+            tree scale = size_int (gs_info.scale);
+            gcall *call;
+            if (final_mask)
+              {
+                if (loop_lens &&
+                    direct_internal_fn_supported_p (
+                        IFN_LEN_MASK_SCATTER_STORE,
+                        tree_pair (vectype, TREE_TYPE (vec_offset)),
+                        OPTIMIZE_FOR_SPEED))
+                  {
+                    tree final_len = vect_get_loop_len (
+                        loop_vinfo, loop_lens, vec_num * ncopies,
+                        vec_num * j + i);
+                    call = gimple_build_call_internal (
+                        IFN_LEN_MASK_SCATTER_STORE, 6, dataref_ptr,
+                        vec_offset, scale, vec_oprnd, final_mask,
+                        final_len);
+                  }
+                else
+                  call = gimple_build_call_internal (
+                      IFN_MASK_SCATTER_STORE, 5, dataref_ptr, vec_offset,
+                      scale, vec_oprnd, final_mask);
+              }
+            else if (loop_lens &&
+                     direct_internal_fn_supported_p (
+                         IFN_LEN_SCATTER_STORE,
+                         tree_pair (vectype, TREE_TYPE (vec_offset)),
+                         OPTIMIZE_FOR_SPEED))
+              {
+                tree final_len = vect_get_loop_len (loop_vinfo, loop_lens,
+                                                    vec_num * ncopies,
+                                                    vec_num * j + i);
+                call = gimple_build_call_internal (
+                    IFN_LEN_SCATTER_STORE, 5, dataref_ptr, vec_offset,
+                    scale, vec_oprnd, final_len);
+              }
+            else
+              call = gimple_build_call_internal (IFN_SCATTER_STORE, 4,
+                                                 dataref_ptr, vec_offset,
+                                                 scale, vec_oprnd);
+            gimple_call_set_nothrow (call, true);
+            vect_finish_stmt_generation (vinfo, stmt_info, call, gsi);
+            new_stmt = call;
+            break;
+          }
 
-              if (i > 0)
+        if (i > 0)
 		/* Bump the vector pointer.  */
 		dataref_ptr = bump_vector_ptr (vinfo, dataref_ptr, ptr_incr,
 					       gsi, stmt_info, bump);
@@ -9773,47 +9750,25 @@ vectorizable_load (vec_info *vinfo,
 					   final_mask, vec_mask, gsi);
 
 	  gcall *call;
-          if (final_mask)
-            {
-              /* Emit:
-                   VEC_ARRAY = MASK_LOAD_LANES (DATAREF_PTR, ALIAS_PTR,
-                                                VEC_MASK).  */
-              unsigned int align = TYPE_ALIGN (TREE_TYPE (vectype));
-              tree alias_ptr = build_int_cst (ref_type, align);
-              if (loop_lens && direct_internal_fn_supported_p (
-                                   IFN_LEN_MASK_LOAD_LANES,
-                                   tree_pair (TREE_TYPE (vec_array), vectype),
-                                   OPTIMIZE_FOR_SPEED))
-                {
-                  tree final_len =
-                      vect_get_loop_len (loop_vinfo, loop_lens, ncopies, j);
-                  call = gimple_build_call_internal (IFN_LEN_MASK_LOAD_LANES, 4,
-                                                     dataref_ptr, alias_ptr,
-                                                     final_mask, final_len);
-                }
-              else
-                call = gimple_build_call_internal (
-                    IFN_MASK_LOAD_LANES, 3, dataref_ptr, alias_ptr, final_mask);
-            }
-          else
-            {
-              /* Emit:
-                   VEC_ARRAY = LOAD_LANES (MEM_REF[...all elements...]).  */
-              data_ref = create_array_ref (aggr_type, dataref_ptr, ref_type);
-              if (loop_lens && direct_internal_fn_supported_p (
-                                   IFN_LEN_LOAD_LANES,
-                                   tree_pair (TREE_TYPE (vec_array), vectype),
-                                   OPTIMIZE_FOR_SPEED))
-                {
-                  tree final_len =
-                      vect_get_loop_len (loop_vinfo, loop_lens, ncopies, j);
-                  call = gimple_build_call_internal (IFN_LEN_LOAD_LANES, 2,
-                                                     data_ref, final_len);
-                }
-              else
-                call = gimple_build_call_internal (IFN_LOAD_LANES, 1, data_ref);
-            }
-          gimple_call_set_lhs (call, vec_array);
+	  if (final_mask)
+	    {
+	      /* Emit:
+		   VEC_ARRAY = MASK_LOAD_LANES (DATAREF_PTR, ALIAS_PTR,
+		                                VEC_MASK).  */
+	      unsigned int align = TYPE_ALIGN (TREE_TYPE (vectype));
+	      tree alias_ptr = build_int_cst (ref_type, align);
+	      call = gimple_build_call_internal (IFN_MASK_LOAD_LANES, 3,
+						 dataref_ptr, alias_ptr,
+						 final_mask);
+	    }
+	  else
+	    {
+	      /* Emit:
+		   VEC_ARRAY = LOAD_LANES (MEM_REF[...all elements...]).  */
+	      data_ref = create_array_ref (aggr_type, dataref_ptr, ref_type);
+	      call = gimple_build_call_internal (IFN_LOAD_LANES, 1, data_ref);
+	    }
+    gimple_call_set_lhs (call, vec_array);
 	  gimple_call_set_nothrow (call, true);
 	  vect_finish_stmt_generation (vinfo, stmt_info, call, gsi);
 	  new_stmt = call;
@@ -9859,59 +9814,59 @@ vectorizable_load (vec_info *vinfo,
 		    unsigned int misalign;
 		    unsigned HOST_WIDE_INT align;
 
-                    if (memory_access_type == VMAT_GATHER_SCATTER &&
-                        gs_info.ifn != IFN_LAST)
-                      {
-                        if (STMT_VINFO_GATHER_SCATTER_P (stmt_info))
-                          vec_offset = vec_offsets[vec_num * j + i];
-                        tree zero = build_zero_cst (vectype);
-                        tree scale = size_int (gs_info.scale);
-                        gcall *call;
-                        if (final_mask)
-                          {
-                            if (loop_lens &&
-                                direct_internal_fn_supported_p (
-                                    IFN_LEN_MASK_GATHER_LOAD,
-                                    tree_pair (vectype, TREE_TYPE (vec_offset)),
-                                    OPTIMIZE_FOR_SPEED))
-                              {
-                                tree final_len = vect_get_loop_len (
-                                    loop_vinfo, loop_lens, vec_num * ncopies,
-                                    vec_num * j + i);
-                                call = gimple_build_call_internal (
-                                    IFN_LEN_MASK_GATHER_LOAD, 6, dataref_ptr,
-                                    vec_offset, scale, zero, final_mask,
-                                    final_len);
-                              }
-                            else
-                              call = gimple_build_call_internal (
-                                  IFN_MASK_GATHER_LOAD, 5, dataref_ptr,
-                                  vec_offset, scale, zero, final_mask);
-                          }
-                        else if (loop_lens &&
-                                 direct_internal_fn_supported_p (
-                                     IFN_LEN_GATHER_LOAD,
-                                     tree_pair (vectype,
-                                                TREE_TYPE (vec_offset)),
-                                     OPTIMIZE_FOR_SPEED))
-                          {
-                            tree final_len = vect_get_loop_len (
-                                loop_vinfo, loop_lens, vec_num * ncopies,
-                                vec_num * j + i);
-                            call = gimple_build_call_internal (
-                                IFN_LEN_GATHER_LOAD, 5, dataref_ptr, vec_offset,
-                                scale, zero, final_len);
-                          }
-                        else
-                          call = gimple_build_call_internal (
-                              IFN_GATHER_LOAD, 4, dataref_ptr, vec_offset,
-                              scale, zero);
-                        gimple_call_set_nothrow (call, true);
-                        new_stmt = call;
-                        data_ref = NULL_TREE;
-                        break;
-                      }
-                    else if (memory_access_type == VMAT_GATHER_SCATTER)
+        if (memory_access_type == VMAT_GATHER_SCATTER &&
+            gs_info.ifn != IFN_LAST)
+          {
+            if (STMT_VINFO_GATHER_SCATTER_P (stmt_info))
+              vec_offset = vec_offsets[vec_num * j + i];
+            tree zero = build_zero_cst (vectype);
+            tree scale = size_int (gs_info.scale);
+            gcall *call;
+            if (final_mask)
+              {
+                if (loop_lens &&
+                    direct_internal_fn_supported_p (
+                        IFN_LEN_MASK_GATHER_LOAD,
+                        tree_pair (vectype, TREE_TYPE (vec_offset)),
+                        OPTIMIZE_FOR_SPEED))
+                  {
+                    tree final_len = vect_get_loop_len (
+                        loop_vinfo, loop_lens, vec_num * ncopies,
+                        vec_num * j + i);
+                    call = gimple_build_call_internal (
+                        IFN_LEN_MASK_GATHER_LOAD, 6, dataref_ptr,
+                        vec_offset, scale, zero, final_mask,
+                        final_len);
+                  }
+                else
+                  call = gimple_build_call_internal (
+                      IFN_MASK_GATHER_LOAD, 5, dataref_ptr,
+                      vec_offset, scale, zero, final_mask);
+              }
+            else if (loop_lens &&
+                     direct_internal_fn_supported_p (
+                         IFN_LEN_GATHER_LOAD,
+                         tree_pair (vectype,
+                                    TREE_TYPE (vec_offset)),
+                         OPTIMIZE_FOR_SPEED))
+              {
+                tree final_len = vect_get_loop_len (
+                    loop_vinfo, loop_lens, vec_num * ncopies,
+                    vec_num * j + i);
+                call = gimple_build_call_internal (
+                    IFN_LEN_GATHER_LOAD, 5, dataref_ptr, vec_offset,
+                    scale, zero, final_len);
+              }
+            else
+              call = gimple_build_call_internal (
+                  IFN_GATHER_LOAD, 4, dataref_ptr, vec_offset,
+                  scale, zero);
+            gimple_call_set_nothrow (call, true);
+            new_stmt = call;
+            data_ref = NULL_TREE;
+            break;
+          }
+        else if (memory_access_type == VMAT_GATHER_SCATTER)
 		      {
 			/* Emulated gather-scatter.  */
 			gcc_assert (!final_mask);

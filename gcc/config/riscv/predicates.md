@@ -239,12 +239,6 @@
   return VECTOR_MODE_P (GET_MODE (op));
 })
 
-(define_special_predicate "p_reg"
-  (match_code "reg, subreg")
-{
-  return GET_MODE (op) == Pmode;
-})
-
 (define_special_predicate "p_reg_or_const_csr_operand"
   (match_code "reg, subreg, const_int")
 {
@@ -269,6 +263,9 @@
   return GET_MODE (op) == Pmode;
 })
 
+(define_special_predicate "vector_equality_operator"
+  (match_code "eq,ne"))
+  
 (define_predicate "reg_or_mem_operand"
   (ior (match_operand 0 "register_operand")
        (match_operand 0 "memory_operand")))
@@ -306,11 +303,11 @@
   (and (match_code "const_vector")
        (match_test "const_vec_duplicate_p (op) 
          && CONST_VECTOR_ELT (op, 0) == CONST0_RTX (GET_MODE (CONST_VECTOR_ELT (op, 0)))")))
-       
-(define_predicate "vector_const_int_1_operand"
-  (and (match_code "const_vector")
-       (match_test "riscv_const_vec_all_same_in_range_p (op, 1, 1)")))
 
+(define_predicate "vector_reg_or_const_vector_0_operand"
+  (ior (match_operand 0 "const_vector_0_operand")
+       (match_operand 0 "register_operand")))       
+       
 (define_predicate "vector_move_operand"
   (ior (match_operand 0 "nonimmediate_operand")
       (match_code "const_vector")))

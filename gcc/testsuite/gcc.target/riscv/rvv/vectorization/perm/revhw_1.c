@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -mriscv-vector-bits=2048 -mrvv --save-temps" } */
+/* { dg-options "-O -mriscv-vector-bits=2048  --save-temps" } */
 
 typedef unsigned char v128qi __attribute__((vector_size(128)));
 typedef unsigned char v64qi __attribute__((vector_size(64)));
@@ -16,11 +16,6 @@ typedef _Float16 v64hf __attribute__((vector_size(128)));
 
 /*
 ** qi_revh_s:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	revh	(z[0-9]+)\.s, \1/m, \2\.s
-**	st1b	\3\.h, \1, \[x8\]
-**	ret
 */
 v128qi
 qi_revh_s (v128qi x)
@@ -30,11 +25,6 @@ qi_revh_s (v128qi x)
 
 /*
 ** qi_revw_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.s, \1/z, \[x0\]
-**	revw	(z[0-9]+)\.d, \1/m, \2\.d
-**	st1b	\3\.s, \1, \[x8\]
-**	ret
 */
 v64qi
 qi_revw_d (v64qi x)
@@ -44,11 +34,6 @@ qi_revw_d (v64qi x)
 
 /*
 ** hi_revw_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	revw	(z[0-9]+)\.d, \1/m, \2\.d
-**	st1h	\3\.s, \1, \[x8\]
-**	ret
 */
 v64hi
 hi_revw_d (v64hi x)
@@ -58,11 +43,6 @@ hi_revw_d (v64hi x)
 
 /*
 ** hf_revw_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	revw	(z[0-9]+)\.d, \1/m, \2\.d
-**	st1h	\3\.s, \1, \[x8\]
-**	ret
 */
 v64hf
 hf_revw_d (v64hf x)
@@ -75,11 +55,6 @@ hf_revw_d (v64hf x)
 
 /*
 ** qi_revh_d:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	revh	(z[0-9]+)\.d, \1/m, \2\.d
-**	st1b	\3\.h, \1, \[x8\]
-**	ret
 */
 v128qi
 qi_revh_d (v128qi x)

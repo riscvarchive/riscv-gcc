@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -mriscv-vector-bits=256 -mrvv --save-temps" } */
+/* { dg-options "-O2 -mriscv-vector-bits=256  --save-temps" } */
 
 #include <stdint.h>
 
@@ -27,9 +27,6 @@ typedef float vnx4sf __attribute__((vector_size (32)));
 
 /*
 ** permute_vnx16qi:
-**	ptrue	(p[0-7])\.d, vl4
-**	sel	z0\.b, \1, z0\.b, z1\.b
-**	ret
 */
 __rvv_int8m1_t
 permute_vnx16qi (__rvv_int8m1_t x, __rvv_int8m1_t y)
@@ -39,9 +36,6 @@ permute_vnx16qi (__rvv_int8m1_t x, __rvv_int8m1_t y)
 
 /*
 ** permute_vnx8hi:
-**	ptrue	(p[0-7])\.d, vl4
-**	sel	z0\.h, \1, z0\.h, z1\.h
-**	ret
 */
 __rvv_int16m1_t
 permute_vnx8hi (__rvv_int16m1_t x, __rvv_int16m1_t y)
@@ -51,9 +45,6 @@ permute_vnx8hi (__rvv_int16m1_t x, __rvv_int16m1_t y)
 
 /*
 ** permute_vnx4si:
-**	ptrue	(p[0-7])\.d, vl4
-**	sel	z0\.s, \1, z0\.s, z1\.s
-**	ret
 */
 __rvv_int32m1_t
 permute_vnx4si (__rvv_int32m1_t x, __rvv_int32m1_t y)
@@ -63,9 +54,6 @@ permute_vnx4si (__rvv_int32m1_t x, __rvv_int32m1_t y)
 
 /*
 ** permute_vnx8hf:
-**	ptrue	(p[0-7])\.d, vl4
-**	sel	z0\.h, \1, z0\.h, z1\.h
-**	ret
 */
 __rvv_float16m1_t
 permute_vnx8hf (__rvv_float16m1_t x, __rvv_float16m1_t y)
@@ -76,9 +64,6 @@ permute_vnx8hf (__rvv_float16m1_t x, __rvv_float16m1_t y)
 
 /*
 ** permute_vnx4sf:
-**	ptrue	(p[0-7])\.d, vl4
-**	sel	z0\.s, \1, z0\.s, z1\.s
-**	ret
 */
 __rvv_float32m1_t
 permute_vnx4sf (__rvv_float32m1_t x, __rvv_float32m1_t y)

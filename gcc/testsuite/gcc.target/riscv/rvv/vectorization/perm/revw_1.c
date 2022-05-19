@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -mriscv-vector-bits=256 -mrvv --save-temps" } */
+/* { dg-options "-O -mriscv-vector-bits=256  --save-temps" } */
 
 typedef __UINT32_TYPE__ vnx4si __attribute__((vector_size (32)));
 typedef float vnx4sf __attribute__((vector_size (32)));

@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -mriscv-vector-bits=2048 -mrvv --save-temps" } */
+/* { dg-options "-O -mriscv-vector-bits=2048  --save-temps" } */
 
 typedef unsigned char v128qi __attribute__((vector_size(128)));
 typedef unsigned char v64qi __attribute__((vector_size(64)));
@@ -21,11 +21,6 @@ typedef float v32sf __attribute__((vector_size(128)));
 
 /*
 ** qi_dup_h_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.h, \2\.h\[1\]
-**	st1b	\3\.h, \1, \[x8\]
-**	ret
 */
 v128qi
 qi_dup_h_1 (v128qi x)
@@ -35,11 +30,6 @@ qi_dup_h_1 (v128qi x)
 
 /*
 ** qi_dup_h_31:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.h, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.h, \2\.h\[31\]
-**	st1b	\3\.h, \1, \[x8\]
-**	ret
 */
 v128qi
 qi_dup_h_31 (v128qi x)
@@ -49,11 +39,6 @@ qi_dup_h_31 (v128qi x)
 
 /*
 ** qi_dup_s_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.s, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.s, \2\.s\[1\]
-**	st1b	\3\.s, \1, \[x8\]
-**	ret
 */
 v64qi
 qi_dup_s_1 (v64qi x)
@@ -63,11 +48,6 @@ qi_dup_s_1 (v64qi x)
 
 /*
 ** qi_dup_s_15:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.s, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.s, \2\.s\[15\]
-**	st1b	\3\.s, \1, \[x8\]
-**	ret
 */
 v64qi
 qi_dup_s_15 (v64qi x)
@@ -77,11 +57,6 @@ qi_dup_s_15 (v64qi x)
 
 /*
 ** qi_dup_d_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[1\]
-**	st1b	\3\.d, \1, \[x8\]
-**	ret
 */
 v32qi
 qi_dup_d_1 (v32qi x)
@@ -91,11 +66,6 @@ qi_dup_d_1 (v32qi x)
 
 /*
 ** qi_dup_d_7:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1b	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[7\]
-**	st1b	\3\.d, \1, \[x8\]
-**	ret
 */
 v32qi
 qi_dup_d_7 (v32qi x)
@@ -105,11 +75,6 @@ qi_dup_d_7 (v32qi x)
 
 /*
 ** hi_dup_s_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.s, \2\.s\[1\]
-**	st1h	\3\.s, \1, \[x8\]
-**	ret
 */
 v64hi
 hi_dup_s_1 (v64hi x)
@@ -119,11 +84,6 @@ hi_dup_s_1 (v64hi x)
 
 /*
 ** hi_dup_s_15:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.s, \2\.s\[15\]
-**	st1h	\3\.s, \1, \[x8\]
-**	ret
 */
 v64hi
 hi_dup_s_15 (v64hi x)
@@ -133,11 +93,6 @@ hi_dup_s_15 (v64hi x)
 
 /*
 ** hf_dup_s_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.s, \2\.s\[1\]
-**	st1h	\3\.s, \1, \[x8\]
-**	ret
 */
 v64hf
 hf_dup_s_1 (v64hf x)
@@ -147,11 +102,6 @@ hf_dup_s_1 (v64hf x)
 
 /*
 ** hf_dup_s_11:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.s, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.s, \2\.s\[11\]
-**	st1h	\3\.s, \1, \[x8\]
-**	ret
 */
 v64hf
 hf_dup_s_11 (v64hf x)
@@ -161,11 +111,6 @@ hf_dup_s_11 (v64hf x)
 
 /*
 ** hi_dup_d_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[1\]
-**	st1h	\3\.d, \1, \[x8\]
-**	ret
 */
 v32hi
 hi_dup_d_1 (v32hi x)
@@ -175,11 +120,6 @@ hi_dup_d_1 (v32hi x)
 
 /*
 ** hi_dup_d_7:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[7\]
-**	st1h	\3\.d, \1, \[x8\]
-**	ret
 */
 v32hi
 hi_dup_d_7 (v32hi x)
@@ -189,11 +129,6 @@ hi_dup_d_7 (v32hi x)
 
 /*
 ** hf_dup_d_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[1\]
-**	st1h	\3\.d, \1, \[x8\]
-**	ret
 */
 v32hf
 hf_dup_d_1 (v32hf x)
@@ -203,11 +138,6 @@ hf_dup_d_1 (v32hf x)
 
 /*
 ** hf_dup_d_5:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1h	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[5\]
-**	st1h	\3\.d, \1, \[x8\]
-**	ret
 */
 v32hf
 hf_dup_d_5 (v32hf x)
@@ -217,11 +147,6 @@ hf_dup_d_5 (v32hf x)
 
 /*
 ** si_dup_d_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1w	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[1\]
-**	st1w	\3\.d, \1, \[x8\]
-**	ret
 */
 v32si
 si_dup_d_1 (v32si x)
@@ -231,11 +156,6 @@ si_dup_d_1 (v32si x)
 
 /*
 ** si_dup_d_7:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1w	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[7\]
-**	st1w	\3\.d, \1, \[x8\]
-**	ret
 */
 v32si
 si_dup_d_7 (v32si x)
@@ -245,11 +165,6 @@ si_dup_d_7 (v32si x)
 
 /*
 ** sf_dup_d_1:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1w	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[1\]
-**	st1w	\3\.d, \1, \[x8\]
-**	ret
 */
 v32sf
 sf_dup_d_1 (v32sf x)
@@ -259,11 +174,6 @@ sf_dup_d_1 (v32sf x)
 
 /*
 ** sf_dup_d_7:
-**	ptrue	(p[0-7])\.b, vl256
-**	ld1w	(z[0-9]+)\.d, \1/z, \[x0\]
-**	dup	(z[0-9]+)\.d, \2\.d\[7\]
-**	st1w	\3\.d, \1, \[x8\]
-**	ret
 */
 v32sf
 sf_dup_d_7 (v32sf x)

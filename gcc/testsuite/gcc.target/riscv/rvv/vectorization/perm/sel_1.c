@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O2 -mriscv-vector-bits=256 -mrvv --save-temps" } */
+/* { dg-options "-O2 -mriscv-vector-bits=256  --save-temps" } */
 
 #include <stdint.h>
 
@@ -13,12 +13,7 @@ typedef int8_t vnx16qi __attribute__((vector_size (32)));
 
 #define INDEX_32 vnx16qi
 
-/*
-** permute:
-**	ptrue	(p[0-7])\.h, vl16
-**	sel	z0\.b, \1, z0\.b, z1\.b
-**	ret
-*/
+
 __rvv_int8m1_t
 permute (__rvv_int8m1_t x, __rvv_int8m1_t y)
 {

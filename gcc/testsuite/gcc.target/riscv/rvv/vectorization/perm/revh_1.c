@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-options "-O -mriscv-vector-bits=256 -mrvv --save-temps" } */
+/* { dg-options "-O -mriscv-vector-bits=256  --save-temps" } */
 
 typedef __UINT16_TYPE__ vnx8hi __attribute__((vector_size (32)));
 typedef _Float16 vnx8hf __attribute__((vector_size (32)));

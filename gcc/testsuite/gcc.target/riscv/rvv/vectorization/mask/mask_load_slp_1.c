@@ -84,5 +84,3 @@ MASK_SLP_8(int64_t, 2)
 MASK_SLP_FAIL(int8_t)
 MASK_SLP_FAIL(int)
 MASK_SLP_FAIL(int64_t)
-
-/* { dg-final { scan-tree-dump-times "operating on partial vectors." 18 "vect" } } */

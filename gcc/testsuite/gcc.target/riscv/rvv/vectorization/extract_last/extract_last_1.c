@@ -18,6 +18,6 @@ condition_reduction (int *a, int min_v)
   return last;
 }
 
-/* { dg-final { scan-tree-dump "operating on partial vectors." "vect" } } */
+
 /* { dg-final { scan-assembler {\tvcpop.m} } } */
 /* { dg-final { scan-assembler {\tvcompress.vm} } } */

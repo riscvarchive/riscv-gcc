@@ -24,4 +24,4 @@
 
 TEST_ALL (DEF_REDUC_PLUS)
 
-/* { dg-final { scan-assembler-times {\tvfredosum\.vs} 6 } } */
+/* { dg-final { scan-assembler-times {\tvfredosum\.vs} 14 } } */

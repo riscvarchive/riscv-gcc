@@ -132,6 +132,9 @@
             }
           DONE;
         }
+      
+      if (riscv_vector_expand_const_vector (operands[0], operands[1]))
+        DONE;
     }
 })
 
@@ -226,6 +229,9 @@
             }
           DONE;
         }
+      
+      if (riscv_vector_expand_const_vector (operands[0], operands[1]))
+        DONE;
     }
 })
 
@@ -312,27 +318,10 @@
   /* Need to force register if mem <- !reg.  */
   if (MEM_P (operands[0]) && !REG_P (operands[1]))
     operands[1] = force_reg (<MODE>mode, operands[1]);
-
-  rtx ele;
-  if (const_vec_duplicate_p (operands[1], &ele))
-    {
-      gcc_assert (CONST_SCALAR_INT_P (ele));
-      rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
-      switch (INTVAL (ele))
-        {
-        case 0:
-          emit_insn (gen_vmclr<mode>_m (operands[0], zero,
-                                         riscv_vector_gen_policy ()));
-          break;
-        case 1:
-          emit_insn (gen_vmset<mode>_m (operands[0], zero,
-                                         riscv_vector_gen_policy ()));
-          break;
-        default:
-          gcc_unreachable ();
-        }
-      DONE;
-    }
+  
+  if (GET_CODE (operands[1]) == CONST_VECTOR 
+    && riscv_vector_expand_const_mask (operands[0], operands[1]))
+    DONE;
 })
 
 ;; mask load/store/move.
@@ -5634,6 +5623,10 @@
       emit_insn (gen_vm_mm (AND, <VM>mode, operands[0], operands[0], mask,
                  operands[5], operands[6]));
       
+      rtx all_ones = gen_reg_rtx (<VM>mode);            
+      emit_insn (gen_vmset<vm>_m (all_ones, operands[5],
+                                  riscv_vector_gen_policy ()));
+
       if (strcmp ("<optab>", "ordered") != 0)
         {
           if (strcmp ("<optab>", "unordered") == 0)
@@ -5643,9 +5636,9 @@
               enum rtx_code code = strcmp ("<optab>", "unlt") == 0 ? LT :
                     strcmp ("<optab>", "unle") == 0 ? LE : 
                     strcmp ("<optab>", "unge") == 0 ? GE :
-                    strcmp ("<optab>", "ungt") == 0 ? GT : EQ;
+                    strcmp ("<optab>", "ungt") == 0 ? GT : EQ; 
               emit_insn (gen_vmf_vv (code, <MODE>mode, operands[0],
-                    operands[0], operands[0], operands[3], operands[4],
+                    operands[0], all_ones, operands[3], operands[4],
                     operands[5], operands[6]));
             }
         }
@@ -6243,7 +6236,7 @@
   [(set (match_operand:X 0 "register_operand"                 "=r,r")
     (unspec:X
       [(unspec:VB
-         [(match_operand:VB 1 "vector_reg_or_const0_operand"  "vr,J")
+         [(match_operand:VB 1 "vector_reg_or_const0_operand"  "vm,J")
           (match_operand:VB 2 "register_operand"              "vr,vr")
           ] UNSPEC_VCPOP)
        (match_operand 3 "p_reg_or_const_csr_operand"          "rK,rK")
@@ -6262,7 +6255,7 @@
   [(set (match_operand:X 0 "register_operand"               "=r,r")
     (unspec:X
       [(unspec:VB
-        [(match_operand:VB 1 "vector_reg_or_const0_operand" "vr,J")
+        [(match_operand:VB 1 "vector_reg_or_const0_operand" "vm,J")
          (match_operand:VB 2 "register_operand"             "vr,vr")] UNSPEC_FIRST)
        (match_operand 3 "p_reg_or_const_csr_operand"        "rK,rK")
        (match_operand 4 "const_int_operand")
