@@ -153,6 +153,7 @@ extern void riscv_expand_vec_cmp_float (rtx, enum rtx_code, rtx, rtx, rtx);
 extern bool riscv_vector_check_supported_mode_p (machine_mode);
 extern bool riscv_vector_expand_const_vector (rtx, rtx);
 extern bool riscv_vector_expand_const_mask (rtx, rtx);
+extern void riscv_vector_expand_tuple (machine_mode, rtx *);
 /* Routines implemented in riscv-c.cc.  */
 void riscv_cpu_cpp_builtins (cpp_reader *);
 

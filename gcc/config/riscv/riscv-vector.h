@@ -49,4 +49,5 @@ opt_machine_mode riscv_vector_get_mask_mode (machine_mode);
 bool riscv_vector_check_supported_mode_p (machine_mode);
 bool riscv_vector_expand_const_vector (rtx, rtx);
 bool riscv_vector_expand_const_mask (rtx, rtx);
+void riscv_vector_expand_tuple (machine_mode, rtx *);
 #endif // GCC_RISCV_VECTOR_H

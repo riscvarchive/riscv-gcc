@@ -3908,6 +3908,143 @@ riscv_vector_expand_const_mask (rtx target, rtx src)
   return true;
 }
 
+/* Expand RVV tuple mode. */
+void
+riscv_vector_expand_tuple (machine_mode submode, rtx *ops)
+{
+  machine_mode mode = GET_MODE (ops[0]);
+  if (!reload_completed)
+    {
+      /* Need to force register if mem <- !reg.  */
+      if (MEM_P (ops[0]) && !REG_P (ops[1]))
+        ops[1] = force_reg (mode, ops[1]);
+    }
+
+  int i;
+  if (MEM_P (ops[0]) || MEM_P (ops[1]))
+    {
+      if (reload_completed)
+        PUT_MODE (ops[2], Pmode);
+      else
+        ops[2] = gen_reg_rtx (Pmode);
+
+      if (!GET_MODE_SIZE (submode).is_constant ())
+        {
+          emit_insn (gen_rtx_SET (
+              ops[2],
+              gen_int_mode (poly_int64 (BYTES_PER_RISCV_VECTOR.coeffs[0],
+                                        BYTES_PER_RISCV_VECTOR.coeffs[1]),
+                            Pmode)));
+
+          if (known_lt (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR))
+            {
+              unsigned int factor =
+                  exact_div (BYTES_PER_RISCV_VECTOR, GET_MODE_SIZE (submode))
+                      .to_constant ();
+              emit_insn (gen_rtx_SET (
+                  ops[2], gen_rtx_ASHIFTRT (Pmode, ops[2],
+                                            GEN_INT (exact_log2 (factor)))));
+            }
+          if (known_gt (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR))
+            {
+              unsigned int factor =
+                  exact_div (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR)
+                      .to_constant ();
+              emit_insn (gen_rtx_SET (
+                  ops[2], gen_rtx_ASHIFT (Pmode, ops[2],
+                                          GEN_INT (exact_log2 (factor)))));
+            }
+        }
+    }
+
+  if (REG_P (ops[0]) && REG_P (ops[1]))
+    {
+      for (i = 0; i < riscv_classify_nf (mode); ++i)
+        {
+          poly_int64 offset = i * GET_MODE_SIZE (submode);
+          rtx dst_subreg = simplify_gen_subreg (submode, ops[0], mode, offset);
+          rtx src_subreg = simplify_gen_subreg (submode, ops[1], mode, offset);
+          emit_insn (gen_rtx_SET (dst_subreg, src_subreg));
+        }
+    }
+  else if (REG_P (ops[0]) && MEM_P (ops[1]))
+    {
+      if (reload_completed)
+        PUT_MODE (ops[3], Pmode);
+      else
+        ops[3] = gen_reg_rtx (Pmode);
+      emit_move_insn (ops[3], XEXP (ops[1], 0));
+      rtx offset = GET_MODE_SIZE (mode).is_constant ()
+                       ? GEN_INT (GET_MODE_SIZE (submode).to_constant ())
+                       : ops[2];
+
+      for (i = 0; i < riscv_classify_nf (mode); ++i)
+        {
+          rtx dst = simplify_gen_subreg (submode, ops[0], mode,
+                                         i * GET_MODE_SIZE (submode));
+          if (i != 0)
+            emit_insn (
+                gen_rtx_SET (ops[3], gen_rtx_PLUS (Pmode, ops[3], offset)));
+          rtx src = gen_rtx_MEM (submode, ops[3]);
+
+          if (reload_completed &&
+              known_lt (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR))
+            emit_insn (gen_mov_internal (submode, dst, src, ops[4]));
+          else
+            emit_move_insn (dst, src);
+        }
+    }
+  else if (REG_P (ops[0]) && GET_CODE (ops[1]) == CONST_VECTOR)
+    {
+      gcc_assert (!reload_completed);
+      rtx val;
+      rtx x = gen_reg_rtx (GET_MODE_INNER (mode));    
+      if (!const_vec_duplicate_p (ops[1], &val))
+        gcc_unreachable ();
+      
+      if (!FLOAT_MODE_P (mode) && IN_RANGE (INTVAL (val), -16, 15))
+        x = val;
+      else
+        emit_move_insn (x, val);
+
+      for (i = 0; i < riscv_classify_nf (mode); ++i)
+        {
+          poly_int64 offset = i * GET_MODE_SIZE (submode);
+          rtx dst_subreg = simplify_gen_subreg (submode, ops[0], mode, offset);
+          emit_insn (gen_vec_duplicate (submode, dst_subreg, x));
+        }
+    }
+  else if (MEM_P (ops[0]) && REG_P (ops[1]))
+    {
+      if (reload_completed)
+        PUT_MODE (ops[3], Pmode);
+      else
+        ops[3] = gen_reg_rtx (Pmode);
+      emit_move_insn (ops[3], XEXP (ops[0], 0));
+      rtx offset = GET_MODE_SIZE (mode).is_constant ()
+                       ? GEN_INT (GET_MODE_SIZE (submode).to_constant ())
+                       : ops[2];
+      for (i = 0; i < riscv_classify_nf (mode); ++i)
+        {
+          rtx src = simplify_gen_subreg (submode, ops[1], mode,
+                                         i * GET_MODE_SIZE (submode));
+          if (i != 0)
+            emit_insn (
+                gen_rtx_SET (ops[3], gen_rtx_PLUS (Pmode, ops[3], offset)));
+          rtx dst = gen_rtx_MEM (submode, ops[3]);
+
+          if (reload_completed &&
+              known_lt (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR))
+            emit_insn (gen_mov_internal (submode, gen_rtx_MEM (submode, ops[3]),
+                                         src, ops[4]));
+          else
+            emit_move_insn (dst, src);
+        }
+    }
+  else
+    gcc_unreachable ();
+}
+
 /* Implement TARGET_VECTORIZE_VEC_PERM_CONST using RVV instructions.  */
 
 bool
