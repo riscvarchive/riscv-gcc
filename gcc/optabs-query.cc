@@ -597,41 +597,6 @@ can_vec_mask_load_store_p (machine_mode mode,
   return false;
 }
 
-/* Return true if target supports vector length load/store for mode.  */
-
-bool
-can_vec_len_load_store_p (machine_mode mode, bool is_load)
-{
-  optab op = is_load ? len_load_optab : len_store_optab;
-  machine_mode vmode;
-
-  /* If mode is vector mode, check it directly.  */
-  if (VECTOR_MODE_P (mode))
-    return direct_optab_handler (op, mode) != CODE_FOR_nothing;
-
-  /* Otherwise, return true if there is some vector mode with
-     the len load/store supported.  */
-
-  /* See if there is any chance the len load or store might be
-     vectorized.  If not, punt.  */
-  scalar_mode smode;
-  if (!is_a <scalar_mode> (mode, &smode))
-    return false;
-
-  vmode = targetm.vectorize.preferred_simd_mode (smode);
-  if (VECTOR_MODE_P (vmode)
-      && direct_optab_handler (op, vmode) != CODE_FOR_nothing)
-    return true;
-
-  auto_vector_modes vector_modes;
-  targetm.vectorize.autovectorize_vector_modes (&vector_modes, true);
-  for (machine_mode base_mode : vector_modes)
-    if (related_vector_mode (base_mode, smode).exists (&vmode)
-	&& direct_optab_handler (op, vmode) != CODE_FOR_nothing)
-      return true;
-  return false;
-}
-
 /* If target supports vector load/store with length for vector mode MODE,
    return the corresponding vector mode, otherwise return opt_machine_mode ().
    There are two flavors for vector load/store with length, one is to measure

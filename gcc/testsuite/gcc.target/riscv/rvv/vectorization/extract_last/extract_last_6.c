@@ -22,6 +22,5 @@ condition_reduction (TYPE *a, TYPE min_v)
   return last;
 }
 
-
 /* { dg-final { scan-assembler {\tvcpop.m} } } */
 /* { dg-final { scan-assembler {\tvcompress.vm} } } */

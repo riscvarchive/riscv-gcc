@@ -6253,6 +6253,30 @@ get_masked_reduction_fn (internal_fn reduc_fn, tree vectype_in)
   return IFN_LAST;
 }
 
+/* Get a len internal function equivalent to REDUC_FN.  VECTYPE_IN is the
+   type of the vector input.  */
+
+static internal_fn
+get_len_reduction_fn (internal_fn reduc_fn, tree vectype_in)
+{
+  internal_fn len_reduc_fn;
+
+  switch (reduc_fn)
+    {
+    case IFN_FOLD_LEFT_PLUS:
+      len_reduc_fn = IFN_LEN_FOLD_LEFT_PLUS;
+      break;
+
+    default:
+      return IFN_LAST;
+    }
+
+  if (direct_internal_fn_supported_p (len_reduc_fn, vectype_in,
+				      OPTIMIZE_FOR_SPEED))
+    return len_reduc_fn;
+  return IFN_LAST;
+}
+
 /* Perform an in-order reduction (FOLD_LEFT_REDUCTION).  STMT_INFO is the
    statement that sets the live-out value.  REDUC_DEF_STMT is the phi
    statement.  CODE is the operation performed by STMT_INFO and OPS are
@@ -6275,6 +6299,7 @@ vectorize_fold_left_reduction (loop_vec_info loop_vinfo,
   class loop *loop = LOOP_VINFO_LOOP (loop_vinfo);
   tree vectype_out = STMT_VINFO_VECTYPE (stmt_info);
   internal_fn mask_reduc_fn = get_masked_reduction_fn (reduc_fn, vectype_in);
+  internal_fn len_reduc_fn = get_len_reduction_fn (reduc_fn, vectype_in);
 
   int ncopies;
   if (slp_node)
@@ -6332,14 +6357,25 @@ vectorize_fold_left_reduction (loop_vec_info loop_vinfo,
     {
       gimple *new_stmt;
       tree mask = NULL_TREE;
+      tree len = NULL_TREE;
       if (LOOP_VINFO_FULLY_MASKED_P (loop_vinfo))
 	mask = vect_get_loop_mask (gsi, masks, vec_num, vectype_in, i);
+      if (LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo))
+	len = vect_get_loop_len (loop_vinfo, &LOOP_VINFO_LENS (loop_vinfo), vec_num, i);
 
       /* Handle MINUS by adding the negative.  */
       if (reduc_fn != IFN_LAST && code == MINUS_EXPR)
 	{
 	  tree negated = make_ssa_name (vectype_out);
-	  new_stmt = gimple_build_assign (negated, NEGATE_EXPR, def0);
+    if (len && direct_internal_fn_supported_p (IFN_LEN_NEG, vectype_in,
+                                               OPTIMIZE_FOR_SPEED))
+      {
+        new_stmt = gimple_build_call_internal (IFN_LEN_NEG, 2,
+                                               def0, len);
+        gimple_call_set_lhs (new_stmt, negated);
+      }
+    else
+      new_stmt = gimple_build_assign (negated, NEGATE_EXPR, def0);
 	  gsi_insert_before (gsi, new_stmt, GSI_SAME_STMT);
 	  def0 = negated;
 	}
@@ -6353,7 +6389,10 @@ vectorize_fold_left_reduction (loop_vec_info loop_vinfo,
 	 the preceding operation.  */
       if (reduc_fn != IFN_LAST || (mask && mask_reduc_fn != IFN_LAST))
 	{
-	  if (mask && mask_reduc_fn != IFN_LAST)
+    if (len && len_reduc_fn != IFN_LAST)
+	    new_stmt = gimple_build_call_internal (len_reduc_fn, 3, reduc_var,
+						   def0, len);
+	  else if (mask && mask_reduc_fn != IFN_LAST)
 	    new_stmt = gimple_build_call_internal (mask_reduc_fn, 3, reduc_var,
 						   def0, mask);
 	  else
@@ -7395,6 +7434,7 @@ vectorizable_reduction (loop_vec_info loop_vinfo,
   else if (loop_vinfo && LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo))
     {
       vec_loop_masks *masks = &LOOP_VINFO_MASKS (loop_vinfo);
+      vec_loop_lens *lens = &LOOP_VINFO_LENS (loop_vinfo);
       internal_fn cond_fn = get_conditional_internal_fn (op.code, op.type);
 
       if (reduction_type != FOLD_LEFT_REDUCTION
@@ -7422,8 +7462,17 @@ vectorizable_reduction (loop_vec_info loop_vinfo,
 	  LOOP_VINFO_CAN_USE_PARTIAL_VECTORS_P (loop_vinfo) = false;
 	}
       else
-	vect_record_loop_mask (loop_vinfo, masks, ncopies * vec_num,
+	{
+    /* We prefer to use len_fold_left_plus if it is defined. */
+    if (tree_code (op.code) == PLUS_EXPR && 
+        direct_internal_fn_supported_p (IFN_LEN_FOLD_LEFT_PLUS, vectype_in,
+						      OPTIMIZE_FOR_SPEED))
+      vect_record_loop_len (loop_vinfo, lens, ncopies * vec_num, 
+			       vectype_in, 1);
+    else
+	    vect_record_loop_mask (loop_vinfo, masks, ncopies * vec_num,
 			       vectype_in, NULL);
+	}
     }
   return true;
 }

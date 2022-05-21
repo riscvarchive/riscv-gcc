@@ -18,6 +18,5 @@ condition_reduction (int *a, int min_v)
   return last;
 }
 
-
 /* { dg-final { scan-assembler {\tvcpop.m} } } */
 /* { dg-final { scan-assembler {\tvcompress.vm} } } */

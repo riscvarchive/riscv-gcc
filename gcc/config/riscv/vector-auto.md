@@ -4565,10 +4565,9 @@
 ;; -------------------------------------------------------------------------
 
 (define_expand "fold_left_plus_<mode>"
-  [(set (match_operand:<VSUB> 0 "register_operand")
-	(unspec:<VSUB> [(match_operand:<VSUB> 1 "register_operand")
-		       (match_operand:VF 2 "register_operand")]
-		      UNSPEC_REDUC_ORDERED_SUM))]
+  [(match_operand:<VSUB> 0 "register_operand")
+   (match_operand:<VSUB> 1 "register_operand")
+   (match_operand:VF 2 "register_operand")]
   "TARGET_VECTOR"
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
@@ -4582,11 +4581,10 @@
 })
 
 (define_expand "mask_fold_left_plus_<mode>"
-  [(set (match_operand:<VSUB> 0 "register_operand")
-	(unspec:<VSUB> [(match_operand:<VSUB> 1 "register_operand")
-		       (match_operand:VF 2 "register_operand")
-           (match_operand:<VM> 3 "register_operand")]
-		      UNSPEC_REDUC_ORDERED_SUM))]
+  [(match_operand:<VSUB> 0 "register_operand")
+	 (match_operand:<VSUB> 1 "register_operand")
+	 (match_operand:VF 2 "register_operand")
+   (match_operand:<VM> 3 "register_operand")]
   "TARGET_VECTOR"
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
@@ -4595,6 +4593,22 @@
              const0_rtx, operands[1], zero, riscv_vector_gen_policy ()));
   emit_insn (gen_vfredosum<mode>_vs (accum, operands[3], const0_rtx,
         operands[2], accum, zero, riscv_vector_gen_policy ()));
+  emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
+  DONE;
+})
+
+(define_expand "len_fold_left_plus_<mode>"
+  [(match_operand:<VSUB> 0 "register_operand")
+	 (match_operand:<VSUB> 1 "register_operand")
+	 (match_operand:VF 2 "register_operand")
+   (match_operand 3 "pmode_register_operand")]
+  "TARGET_VECTOR"
+{
+  rtx accum = gen_reg_rtx (<VLMUL1>mode);
+  emit_insn (gen_vfmv_s_f (<VLMUL1>mode, accum, 
+             const0_rtx, operands[1], operands[3], riscv_vector_gen_policy ()));
+  emit_insn (gen_vfredosum<mode>_vs (accum, const0_rtx, const0_rtx,
+        operands[2], accum, operands[3], riscv_vector_gen_policy ()));
   emit_insn (gen_vfmv_f_s (<VLMUL1>mode, operands[0], accum));
   DONE;
 })

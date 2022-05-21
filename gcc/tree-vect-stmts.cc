@@ -1757,12 +1757,12 @@ check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
       if (get_len_gather_scatter_mode (
               vecmode, TYPE_MODE (gs_info->offset_vectype), is_load)
               .exists (&vmode))
-        len_p = true;
+	len_p = true;
 
       if (len_p)
-        ifn = (is_load ? IFN_LEN_GATHER_LOAD : IFN_LEN_SCATTER_STORE);
+	ifn = (is_load ? IFN_LEN_GATHER_LOAD : IFN_LEN_SCATTER_STORE);
       else
-        ifn = (is_load ? IFN_MASK_GATHER_LOAD : IFN_MASK_SCATTER_STORE);
+	ifn = (is_load ? IFN_MASK_GATHER_LOAD : IFN_MASK_SCATTER_STORE);
 
       if (!internal_gather_scatter_fn_supported_p (ifn, vectype,
 						   gs_info->memory_type,
@@ -1778,15 +1778,15 @@ check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
 	  return;
 	}
       if (len_p)
-        {
-          vec_loop_lens *lens = &LOOP_VINFO_LENS (loop_vinfo);
-          unsigned factor =
-              (vecmode == vmode) ? 1 : GET_MODE_UNIT_SIZE (vecmode);
-          vect_record_loop_len (loop_vinfo, lens, nvectors, vectype, factor);
-        }
+	{
+	  vec_loop_lens *lens = &LOOP_VINFO_LENS (loop_vinfo);
+	  unsigned factor =
+	      (vecmode == vmode) ? 1 : GET_MODE_UNIT_SIZE (vecmode);
+	  vect_record_loop_len (loop_vinfo, lens, nvectors, vectype, factor);
+	}
       else
-        vect_record_loop_mask (loop_vinfo, masks, nvectors, vectype,
-                               scalar_mask);
+	vect_record_loop_mask (loop_vinfo, masks, nvectors, vectype,
+                         scalar_mask);
       return;
     }
 
@@ -1828,23 +1828,22 @@ check_load_store_for_partial_vectors (loop_vec_info loop_vinfo, tree vectype,
   poly_uint64 vf = LOOP_VINFO_VECT_FACTOR (loop_vinfo);
   machine_mode mask_mode;
   bool using_partial_vectors_p = false;
-
+  
   machine_mode vmode;
-  if (get_len_load_store_mode (vecmode, is_load).exists (&vmode)
-      && can_vec_len_load_store_p (vecmode, is_load))
+  if (get_len_load_store_mode (vecmode, is_load).exists (&vmode))
     {
       nvectors = group_memory_nvectors (group_size * vf, nunits);
       vec_loop_lens *lens = &LOOP_VINFO_LENS (loop_vinfo);
       unsigned factor = (vecmode == vmode) ? 1 : GET_MODE_UNIT_SIZE (vecmode);
       vect_record_loop_len (loop_vinfo, lens, nvectors, vectype, factor);
       using_partial_vectors_p = true;
+      return;
     }
-
-  if (!using_partial_vectors_p
-      && targetm.vectorize.get_mask_mode (vecmode).exists (&mask_mode)
+    
+  if (targetm.vectorize.get_mask_mode (vecmode).exists (&mask_mode)
       && can_vec_mask_load_store_p (vecmode, mask_mode, is_load))
     {
-      unsigned int nvectors = group_memory_nvectors (group_size * vf, nunits);
+      nvectors = group_memory_nvectors (group_size * vf, nunits);
       vect_record_loop_mask (loop_vinfo, masks, nvectors, vectype, scalar_mask);
       using_partial_vectors_p = true;
     }
@@ -6304,6 +6303,8 @@ vectorizable_operation (vec_info *vinfo,
   int reduc_idx = STMT_VINFO_REDUC_IDX (stmt_info);
   vec_loop_masks *masks = (loop_vinfo ? &LOOP_VINFO_MASKS (loop_vinfo) : NULL);
   vec_loop_lens *lens = (loop_vinfo ? &LOOP_VINFO_LENS (loop_vinfo) : NULL);
+  bool masked_loop_p = loop_vinfo && LOOP_VINFO_FULLY_MASKED_P (loop_vinfo);
+  bool with_len_loop_p = loop_vinfo && LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo);
   internal_fn cond_fn = get_conditional_internal_fn (code);
   internal_fn len_fn = get_with_length_internal_fn (code);
 
@@ -6328,7 +6329,7 @@ vectorizable_operation (vec_info *vinfo,
 	    }
 	  else
 	    vect_record_loop_mask (loop_vinfo, masks, ncopies * vec_num,
-				   vectype, NULL);
+	            vectype, NULL);
 	}
 
       /* Put types on constant and invariant SLP children.  */
@@ -6378,9 +6379,6 @@ vectorizable_operation (vec_info *vinfo,
   if (dump_enabled_p ())
     dump_printf_loc (MSG_NOTE, vect_location,
                      "transform binary/unary operation.\n");
-
-  bool masked_loop_p = loop_vinfo && LOOP_VINFO_FULLY_MASKED_P (loop_vinfo);
-  bool with_len_loop_p = loop_vinfo && LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo);
 
   /* POINTER_DIFF_EXPR has pointer arguments which are vectorized as
      vectors with unsigned elements, but the result is signed.  So, we
@@ -6505,42 +6503,42 @@ vectorizable_operation (vec_info *vinfo,
 		}
 	    }
 
-          /* FIXME: For fully control with length vector and unconditional
-             operation, we change it into IFN_LEN_* version of arithmetic
-             operations so that they explicitly ignore the inactive elements. In
-             RISC-V 'V' Extension, we prefer agnostic value for tailed elements
-             meaning we don't care about the value for tailed elements in most
-             cases, so don't need to bring the 'DEST' into the argument. But we
-             are not sure about other targets like MVE or PowerPc. */
-          if (!masked_loop_p && lens && with_len_loop_p && len_fn != IFN_LAST &&
-              direct_internal_fn_supported_p (len_fn, vectype,
-                                              OPTIMIZE_FOR_SPEED) &&
-              ((int)lens->length () == (vec_num * ncopies)))
-            {
-              tree len =
-                  vect_get_loop_len (loop_vinfo, lens, vec_num * ncopies, i);
-              gcall *call;
-              /* Unary Operation. */
-              if (!vop1)
-                call = gimple_build_call_internal (len_fn, 2, vop0, len);
-              /* Binary Operation. */
-              else if (!vop2)
-                call = gimple_build_call_internal (len_fn, 3, vop0, vop1, len);
-              /* Ternary Operation. */
-              else
-                call = gimple_build_call_internal (len_fn, 4, vop0, vop1, vop2,
-                                                   len);
-              new_stmt = call;
-              new_temp = make_ssa_name (vec_dest, new_stmt);
-              gimple_call_set_lhs (new_stmt, new_temp);
-            }
-          else
+	      /* FIXME: For fully control with length vector and unconditional
+	         operation, we change it into IFN_LEN_* version of arithmetic
+	         operations so that they explicitly ignore the inactive elements. In
+	         RISC-V 'V' Extension, we prefer agnostic value for tailed elements
+	         meaning we don't care about the value for tailed elements in most
+	         cases, so don't need to bring the 'DEST' into the argument. But we
+	         are not sure about other targets like MVE or PowerPc. */
+	      if (!masked_loop_p && lens && with_len_loop_p && len_fn != IFN_LAST &&
+	          direct_internal_fn_supported_p (len_fn, vectype,
+	                                          OPTIMIZE_FOR_SPEED) &&
+	          ((int)lens->length () == (vec_num * ncopies)))
 	    {
-              new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1, vop2);
+	      tree len =
+	          vect_get_loop_len (loop_vinfo, lens, vec_num * ncopies, i);
+	      gcall *call;
+	      /* Unary Operation. */
+	      if (!vop1)
+	        call = gimple_build_call_internal (len_fn, 2, vop0, len);
+	      /* Binary Operation. */
+	      else if (!vop2)
+	        call = gimple_build_call_internal (len_fn, 3, vop0, vop1, len);
+	      /* Ternary Operation. */
+	      else
+	        call = gimple_build_call_internal (len_fn, 4, vop0, vop1, vop2,
+	                                           len);
+	      new_stmt = call;
+	      new_temp = make_ssa_name (vec_dest, new_stmt);
+	      gimple_call_set_lhs (new_stmt, new_temp);
+	    }
+	      else
+	    {
+	      new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1, vop2);
 	      new_temp = make_ssa_name (vec_dest, new_stmt);
 	      gimple_assign_set_lhs (new_stmt, new_temp);
 	    }
-          vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
+        vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 	  if (using_emulated_vectors_p)
 	    suppress_warning (new_stmt, OPT_Wvector_operation_performance);
 
