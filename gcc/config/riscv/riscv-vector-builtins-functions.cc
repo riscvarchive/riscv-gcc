@@ -513,7 +513,12 @@ static void
 add_input_operand (struct expand_operand *op, tree exp, unsigned argno)
 {
   tree arg = CALL_EXPR_ARG (exp, argno);
-  create_input_operand (op, expand_normal (arg), TYPE_MODE (TREE_TYPE (arg)));
+  rtx x = expand_normal (arg);
+  //if (TREE_CODE (arg) == INTEGER_CST && TYPE_UNSIGNED (TREE_TYPE (arg)))
+  //  {
+  //    x = GEN_INT ()
+  //  }
+  create_input_operand (op, x, TYPE_MODE (TREE_TYPE (arg)));
 }
 
 /* Expand instruction ICODE as part of a built-in function sequence.
@@ -1365,7 +1370,7 @@ function_builder::register_function ()
 unsigned int
 config::call_properties () const
 {
-  return CP_READ_CSR;
+  return CP_READ_CSR | CP_WRITE_CSR;
 }
 
 char *

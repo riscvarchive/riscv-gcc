@@ -62,7 +62,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "riscv-vector-builtins.h"
 
 using namespace riscv_vector;
-
 using namespace rtl_ssa;
 
 /*  This pass is to insert vsetvli instructions for RVV instructions that depend on vtype or vl.
@@ -93,6 +92,8 @@ enum replace_enum
   REPLACE_VL,
   REPLACE_VTYPE
 };
+
+/* Helper functions. */
 
 static bool
 recog_need_insert_vsetvli_after_reload_p (rtx_insn *insn, rtx *clobber)
@@ -278,6 +279,7 @@ update_vlvtyp_p (rtx_insn *insn)
       if (CALL_P (insn))
         return true;
       if (PATTERN (insn) && (GET_CODE (PATTERN (insn)) == ASM_INPUT ||
+                             GET_CODE (PATTERN (insn)) == ASM_OPERANDS ||
                              asm_noperands (PATTERN (insn)) >= 0))
         return true;
     }
@@ -418,7 +420,7 @@ public:
   bool
   avl_reg_p () const
   {
-    return get_avl () && (REG_P (get_avl ()) || SUBREG_P (get_avl ()));
+    return get_avl () && REG_P (get_avl ());
   }
 
   rtx
@@ -431,6 +433,10 @@ public:
   bool
   has_zero_avl () const
   {
+    if (!known_p ())
+      return false;
+    if (get_avl () == NULL_RTX)
+      return false;
     if (avl_const_p ())
       return INTVAL (get_avl ()) == 0; 
     return false;
@@ -439,9 +445,13 @@ public:
   bool
   has_nonzero_avl () const
   {
+    if (!known_p ())
+      return false;
+    if (get_avl () == NULL_RTX)
+      return false;
     if (avl_const_p ())
       return INTVAL (get_avl ()) > 0; 
-    if (REG_P (get_avl ()))
+    if (avl_reg_p ())
       return rtx_equal_p (get_avl (), gen_rtx_REG (Pmode, X0_REGNUM));
     return false;
   }
@@ -509,7 +519,7 @@ public:
               return true;
           }
 
-        if (REG_P (info.get_avl ()) || SUBREG_P (info.get_avl ()))
+        if (REG_P (info.get_avl ()))
           {
             if (info.get_avl_source ())
               {
@@ -750,14 +760,11 @@ public:
   }
 
   bool
-  compatible_vtype_p (const vinfo &info, bool strict) const
+  compatible_vtype_p (const vinfo &info) const
   {
     // Simple case, see if full VTYPE matches.
     if (vtype_equal_p (info))
       return true;
-
-    if (strict)
-      return false;
 
     // If this is a mask reg operation, it only cares about VLMAX.
     // FIXME: Mask reg operations are probably ok if "this" VLMAX is larger
@@ -774,15 +781,15 @@ public:
   // InstrInfo are compatible with the previous vsetvli instruction represented
   // by this.
   bool
-  compatible_p (const vinfo &info, bool strict) const
+  compatible_p (const vinfo &require) const
   {
-    gcc_assert (valid_p () && info.valid_p () &&
+    gcc_assert (valid_p () && require.valid_p () &&
                 "Can't compare invalid VSETVLI Infos.");
-    gcc_assert (!info.sew_lmul_ratio_only_p &&
+    gcc_assert (!require.sew_lmul_ratio_only_p &&
                 "Expected a valid VTYPE for instruction.");
 
     // Nothing is compatible with Unknown.
-    if (unknown_p () || info.unknown_p ())
+    if (unknown_p () || require.unknown_p ())
       return false;
 
     // If only our VLMAX ratio is valid, then this isn't compatible.
@@ -791,34 +798,30 @@ public:
 
     // If the instruction doesn't need an AVLReg and the SEW matches, consider
     // it compatible.
-    if (!strict && info.known_p () && info.avl == NULL_RTX
-      && vsew == info.vsew)
+    if (require.known_p () && require.avl == NULL_RTX
+      && vsew == require.vsew)
       return true;
     
     // For vmv.s.x and vfmv.s.f, there is only two behaviors, VL = 0 and VL > 0.
     // So it's compatible when we could make sure that both VL be the same
     // situation.
-    if (!strict && info.scalar_move_p && info.get_avl () &&
-        CONST_SCALAR_INT_P (info.get_avl ()) &&
-        ((has_nonzero_avl () && info.has_nonzero_avl ()) ||
-         (has_zero_avl () && info.has_zero_avl ())) &&
-        sew_equal_p (info) && policy_equal_p (info))
+    if (require.scalar_move_p && require.get_avl () &&
+        CONST_SCALAR_INT_P (require.get_avl ()) &&
+        ((has_nonzero_avl () && require.has_nonzero_avl ()) ||
+         (has_zero_avl () && require.has_zero_avl ())) &&
+        sew_equal_p (require) && policy_equal_p (require))
       return true;
     
     // The AVL must match.
-    if (!avl_equal_p (info))
+    if (!avl_equal_p (require))
       return false;
     
-    if (compatible_vtype_p (info, strict))
+    if (compatible_vtype_p (require))
       return true;
       
-    // Strict matches must ensure a full VTYPE match.
-    if (strict)
-      return false;
-    
     // Store instructions don't use the policy fields.
     // TODO: Move into hasCompatibleVTYPE?
-    if (info.store_p && vlmul == info.vlmul && vsew == info.vsew)
+    if (require.store_p && vlmul == require.vlmul && vsew == require.vsew)
       return true;
       
     // Anything else is not compatible.
@@ -933,7 +936,7 @@ public:
     // otherwise the result is unknown.
     return vinfo::get_unknown ();
   }
-
+  
   // Calculate the vinfo visible at the end of the block assuming this
   // is the predecessor value, and other is change for this block.
   vinfo
@@ -948,11 +951,48 @@ public:
 
     // If the change is compatible with the input, we won't create a VSETVLI
     // and should keep the predecessor.
-    if (compatible_p (other, /*strict*/ true))
+    if (compatible_p (other))
       return *this;
 
     // otherwise just use whatever is in this block.
     return other;
+  }
+  
+  // Print debug info into rtl dump file. */
+  void
+  print () const
+  {
+    fprintf (dump_file, "{\n");
+    if (known_p ())
+      fprintf (dump_file, "  Known\n");
+    else if (unknown_p ())
+      fprintf (dump_file, "  Unknown\n");
+    else
+      fprintf (dump_file, "  Uninitialized\n");
+    
+    if (known_p () && get_avl ())
+      {
+        fprintf (dump_file, "  Avl=");
+        print_rtl_single (dump_file, get_avl ());
+        if (get_avl_source ())
+          {
+            fprintf (dump_file, "  Avl Source=");
+            print_rtl_single (dump_file, get_avl_source ());
+          }
+        else
+          fprintf (dump_file, "  Avl Source=(nil)\n");
+      }
+    else
+      fprintf (dump_file, "  Avl=(nil)\n  Avl Source=(nil)\n");
+    fprintf (dump_file, "  Vsew=%d\n", (unsigned int)vsew);
+    fprintf (dump_file, "  Vlmul=%d\n", (unsigned int)vlmul);
+    fprintf (dump_file, "  TailAgnostic=%d\n", (unsigned int)vta);
+    fprintf (dump_file, "  MaskAgnostic=%d\n", (unsigned int)vma);
+    fprintf (dump_file, "  MaskOp=%d\n", (unsigned int)all_maskop_p);
+    fprintf (dump_file, "  Store_p=%d\n", (unsigned int)store_p);
+    fprintf (dump_file, "  Scalar_move_p=%d\n", (unsigned int)scalar_move_p);
+    fprintf (dump_file, "  Sew_lmul_ratio_only_p=%d\n", (unsigned int)sew_lmul_ratio_only_p);
+    fprintf (dump_file, "}\n");
   }
 };
 
@@ -978,6 +1018,59 @@ struct bb_vinfo
 
 static std::map<unsigned int, bb_vinfo> bb_vinfo_map;
 static std::deque<basic_block> bb_queue;
+
+static rtx_insn *
+fetch_def_insn (rtx_insn *rtl, const vinfo info)
+{
+  /* We need use rtl ssa def_info to optimize which needs
+     optimization to large than or equal to 2. */
+  if (optimize < 2)
+    return NULL;
+  
+  // We didn't find a compatible value. If our AVL is a virtual register,
+  // it might be defined by a VSET(I)VLI. If it has the same VTYPE we need
+  // and the last VL/VTYPE we observed is the same, we don't need a
+  // VSETVLI here.
+  if (!info.known_p ())
+    return NULL;
+  if (!info.get_avl ())
+    return NULL;
+
+  rtx avl = info.get_avl ();
+
+  if (!REG_P (avl))
+    return NULL;
+
+  insn_info *next;
+  for (insn_info *insn = crtl->ssa->first_insn (); insn; insn = next)
+    {
+      next = insn->next_any_insn ();
+      if (insn->rtl () == rtl)
+        {
+          resource_info resource{GET_MODE (avl), REGNO (avl)};
+          def_lookup dl = crtl->ssa->find_def (resource, insn);
+          def_info *def = dl.prev_def (insn);
+
+          if (!def)
+            return NULL;
+
+          if (!is_a<set_info *> (def))
+            return NULL;
+
+          insn_info *def_insn = def->insn ();
+          rtx_insn *def_rtl = def_insn->rtl ();
+
+          if (!def_rtl)
+            return NULL;
+          if (!INSN_P (def_rtl))
+            return NULL;
+            
+          return def_rtl;
+        }
+    }
+
+  return NULL;
+}
 
 static void
 emit_vsetvl_insn (rtx op0, rtx op1, rtx op2, rtx_insn *insn)
@@ -1016,7 +1109,7 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
           new_info.set_vtype (INTVAL (recog_data.operand[0]));
           /* if this X0, X0 vsetvli is redundant,
              remove it. */
-          if (curr_info.compatible_vtype_p (new_info, true))
+          if (curr_info.compatible_vtype_p (new_info))
             remove_insn (insn);
         }
       return new_info;
@@ -1172,7 +1265,7 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
 }
 
 static bool
-can_skip_vsetvli_for_load_store_p (rtx_insn *insn, vinfo &new_info, vinfo &curr_info)
+can_skip_vsetvli_for_load_store_p (rtx_insn *insn, const vinfo &new_info, const vinfo &curr_info)
 {
   gcc_assert (recog_memoized (insn) >= 0);
   if (!can_skip_load_store_insn_p (insn))
@@ -1184,19 +1277,41 @@ can_skip_vsetvli_for_load_store_p (rtx_insn *insn, vinfo &new_info, vinfo &curr_
 }
 
 static bool
-need_vsetvli (rtx_insn *insn, vinfo &new_info, vinfo &curr_info)
+need_vsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
 {
-  if (curr_info.compatible_p (new_info, /*strict*/ false))
-    return false;
-
   if (!need_vsetvli_p (insn))
     return false;
+    
+  if (curr_info.compatible_p (require))
+    return false;
+
+  // We didn't find a compatible value. If our AVL is a virtual register,
+  // it might be defined by a VSET(I)VLI. If it has the same VTYPE we need
+  // and the last VL/VTYPE we observed is the same, we don't need a
+  // VSETVLI here.
+  if (!curr_info.unknown_p () && require.avl_reg_p () &&
+      REGNO (require.get_avl ()) >= FIRST_PSEUDO_REGISTER && 
+      !curr_info.get_sew_lmul_ratio_only_p () &&
+      curr_info.compatible_vtype_p (require))
+    {
+      rtx_insn *def_rtl = fetch_def_insn (insn, require);
+      if (def_rtl != NULL)
+        {
+          if (vsetvli_insn_p (def_rtl))
+            {
+              vinfo def_info = get_info_for_vsetvli (def_rtl, curr_info);
+              if (def_info.avl_equal_p (curr_info) &&
+                  def_info.vlmax_equal_p (curr_info))
+                return false;
+            }
+        }
+    }
 
   return true;
 }
 
 static bool
-need_vsetvli_phi (vinfo &new_info, rtx_insn *rtl)
+need_vsetvli_phi (const vinfo &new_info, rtx_insn *rtl)
 {
   /* Optimize the case as follows:
   void foo (int8_t *base, int8_t* out, size_t vl, unsigned int m)
@@ -1315,60 +1430,22 @@ compare_avl_from_source (vinfo &new_info, rtx_insn *vsetvl, rtx_insn *rtl)
         }
     }
   */
-  /* We need use rtl ssa def_info to optimize which needs
-     optimization to large than or equal to 2. */
-  if (optimize < 2)
+  rtx_insn *def_rtl = fetch_def_insn (rtl, new_info);
+  if (def_rtl == NULL)
     return false;
+  if (def_rtl == vsetvl)
+    return true;
   
-  // We didn't find a compatible value. If our AVL is a virtual register,
-  // it might be defined by a VSET(I)VLI. If it has the same VTYPE we need
-  // and the last VL/VTYPE we observed is the same, we don't need a
-  // VSETVLI here.
-  if (!(new_info.known_p () && new_info.get_avl ()))
-    return false;
-
-  rtx avl = new_info.get_avl ();
-
-  if (!REG_P (avl))
-    return false;
-
-  insn_info *next;
-  for (insn_info *insn = crtl->ssa->first_insn (); insn; insn = next)
-    {
-      next = insn->next_any_insn ();
-      if (insn->rtl () == rtl)
-        {
-          resource_info resource{GET_MODE (avl), REGNO (avl)};
-          def_lookup dl = crtl->ssa->find_def (resource, insn);
-          def_info *def = dl.prev_def (insn);
-
-          if (!def)
-            return false;
-
-          if (!is_a<set_info *> (def))
-            return false;
-
-          insn_info *def_insn = def->insn ();
-          rtx_insn *def_rtl = def_insn->rtl ();
-
-          if (!def_rtl)
-            return false;
-          if (!INSN_P (def_rtl))
-            return false;
-          if (def_rtl == vsetvl)
-            return true;
-        }
-    }
-
   return false;
 }
 
 static bool
-vl_vtype_changes_p (basic_block bb)
+compute_vl_vtype_changes (basic_block bb)
 {
   bool vector_p = false;
 
   bb_vinfo &info = bb_vinfo_map[bb->index];
+  info.change = info.pred;
   rtx_insn *insn = NULL;
   vinfo curr_info;
 
@@ -1394,9 +1471,7 @@ vl_vtype_changes_p (basic_block bb)
         vinfo new_info = compute_info_for_instr (insn, curr_info);
         curr_info = new_info;
         if (!info.change.valid_p ())
-          {
-            info.change = new_info;
-          }
+          info.change = new_info;
         else
           {
             // If this instruction isn't compatible with the previous VL/VTYPE
@@ -1420,9 +1495,6 @@ vl_vtype_changes_p (basic_block bb)
       }
   }
 
-  // Initial exit state is whatever change we found in the block.
-  info.exit = info.change;
-
   return vector_p;
 }
 
@@ -1435,6 +1507,7 @@ compute_incoming_vlvtype (const basic_block bb)
   vinfo in_info;
   if (EDGE_COUNT (bb->preds) == 0)
     {
+      // There are no predecessors, so use the default starting status.
       in_info.set_unknown ();
     }
   else
@@ -1451,18 +1524,38 @@ compute_incoming_vlvtype (const basic_block bb)
   // If we don't have any valid predecessor value, wait until we do.
   if (!in_info.valid_p ())
     return;
+  
+  // If no change, no need to rerun block
+  if (in_info == info.pred)
+    return;
 
   info.pred = in_info;
-
-  vinfo merge_info = info.pred.merge (info.change);
+  if (dump_file)
+    {
+      fprintf (dump_file, "Entry state of bb %d changed to\n", bb->index);
+      info.pred.print ();
+    }
+  
+  // Note: It's tempting to cache the state changes here, but due to the
+  // compatibility checks performed a blocks output state can change based on
+  // the input state.  To cache, we'd have to add logic for finding
+  // never-compatible state changes.
+  // compute_vlvtype_changes (bb);
+  // vinfo tmpstatus = info.change;
+  vinfo tmpstatus = info.pred.merge (info.change);
 
   // If the new exit value matches the old exit value, we don't need to revisit
   // any blocks.
-  if (info.exit == merge_info)
+  if (info.exit == tmpstatus)
     return;
 
-  info.exit = merge_info;
-
+  info.exit = tmpstatus;
+  
+  if (dump_file)
+    {
+      fprintf (dump_file, "Exit state of bb %d changed to\n", bb->index);
+      info.exit.print ();
+    }
   // Add the successors to the work list so we can propagate the changed exit
   // status.
   edge e;
@@ -1529,6 +1622,46 @@ insert_vsetvli (rtx_insn *insn, const vinfo &curr_info, const vinfo &prev_info,
 }
 
 static void
+cleanup_insn_op (rtx_insn *insn, rtx clobber)
+{
+  if (!reload_completed)
+    return;
+    
+  /* 1.Remove the vl operand for every rvv instruction.
+     2.Replace every reload register spilling rvv instruction. */
+  if (clobber)
+    {
+      rtx pat;
+      extract_insn_cached (insn);
+      machine_mode mode = riscv_translate_attr_mode (insn);
+      if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
+        {
+          if (get_attr_type (insn) == TYPE_VLE_RELOAD)
+            pat = gen_vlm (mode, recog_data.operand[0],
+                           XEXP (recog_data.operand[1], 0), const0_rtx,
+                           const0_rtx);
+          else
+            pat = gen_vsm (mode, XEXP (recog_data.operand[0], 0),
+                           recog_data.operand[1], const0_rtx, const0_rtx);
+        }
+      else
+        {
+          if (get_attr_type (insn) == TYPE_VLE_RELOAD)
+            pat = gen_vle (mode, recog_data.operand[0], const0_rtx, const0_rtx,
+                           XEXP (recog_data.operand[1], 0), const0_rtx,
+                           const0_rtx);
+          else
+            pat = gen_vse (mode, const0_rtx, XEXP (recog_data.operand[0], 0),
+                           recog_data.operand[1], const0_rtx, const0_rtx);
+        }
+
+      validate_change (insn, &PATTERN (insn), pat, false);
+    }
+  else
+    replace_op (insn, const0_rtx, REPLACE_VL);
+}
+
+static void
 emit_vsetvlis (const basic_block bb)
 {
   vinfo curr_info;
@@ -1554,12 +1687,20 @@ emit_vsetvlis (const basic_block bb)
           {
             // We haven't found any vector instructions or VL/VTYPE changes
             // yet, use the predecessor information.
+            curr_info = bb_vinfo_map[bb->index].pred;
             gcc_assert (bb_vinfo_map[bb->index].pred.valid_p () &&
                         "Expected a valid predecessor state.");
-            if (need_vsetvli (insn, new_info, bb_vinfo_map[bb->index].pred) &&
-                need_vsetvli_phi (new_info, insn))
+            if (need_vsetvli (insn, new_info, curr_info))
               {
-                insert_vsetvli (insn, new_info, bb_vinfo_map[bb->index].pred, clobber);
+                // If this is the first implicit state change, and the state change
+                // requested can be proven to produce the same register contents, we
+                // can skip emitting the actual state change and continue as if we
+                // had since we know the GPR result of the implicit state change
+                // wouldn't be used and VL/VTYPE registers are correct.  Note that
+                // we *do* need to model the state as if it changed as while the
+                // register contents are unchanged, the abstract model can change.
+                if (need_vsetvli_phi (new_info, insn))
+                  insert_vsetvli (insn, new_info, curr_info, clobber);
                 curr_info = new_info;
               }
           }
@@ -1582,31 +1723,13 @@ emit_vsetvlis (const basic_block bb)
                 if (prev_insn)
                   {
                     extract_insn_cached (prev_insn);
-                    bool sameavl_p =
-                        curr_info.avl_equal_p (new_info) ||
-                        (new_info.unknown_p () && new_info.get_avl () &&
-                         rtx_equal_p (new_info.get_avl (),
-                                      recog_data.operand[0]));
-                    if (!sameavl_p)
-                      sameavl_p =
-                          compare_avl_from_source (new_info, prev_insn, insn);
                     // If these two VSETVLI have the same AVL and the same
                     // VLMAX, we could merge these two VSETVLI.
-                    if (sameavl_p && curr_info.calc_sew_lmul_ratio () ==
-                                         new_info.calc_sew_lmul_ratio ())
+                    if ((curr_info.avl_equal_p (new_info) ||
+                         compare_avl_from_source (new_info, prev_insn, insn)) &&
+                        curr_info.vlmax_equal_p (new_info))
                       {
                         extract_insn_cached (prev_insn);
-                        replace_op (prev_insn,
-                                    GEN_INT (new_info.encode_vtype ()),
-                                    REPLACE_VTYPE);
-                        need_insert_vsetvli_p = false;
-                      }
-                    if (scalar_move_insn_p (insn) &&
-                        ((curr_info.has_nonzero_avl () &&
-                          new_info.has_nonzero_avl ()) ||
-                         (curr_info.has_zero_avl () && new_info.has_zero_avl ())) &&
-                        new_info.vlmax_equal_p (curr_info))
-                      {
                         replace_op (prev_insn,
                                     GEN_INT (new_info.encode_vtype ()),
                                     REPLACE_VTYPE);
@@ -1620,44 +1743,7 @@ emit_vsetvlis (const basic_block bb)
               }
           }
         prev_insn = NULL;
-
-        if (reload_completed)
-          {
-            if (clobber)
-              {
-                rtx pat;
-                extract_insn_cached (insn);
-                machine_mode mode = riscv_translate_attr_mode (insn);
-                if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
-                  {
-                    if (get_attr_type (insn) == TYPE_VLE_RELOAD)
-                      pat = gen_vlm (mode, recog_data.operand[0],
-                                     XEXP (recog_data.operand[1], 0),
-                                     const0_rtx, const0_rtx);
-                    else
-                      pat = gen_vsm (mode, XEXP (recog_data.operand[0], 0),
-                                     recog_data.operand[1], const0_rtx,
-                                     const0_rtx);
-                  }
-                else
-                  {
-                    if (get_attr_type (insn) == TYPE_VLE_RELOAD)
-                      pat =
-                          gen_vle (mode, recog_data.operand[0], const0_rtx,
-                                   const0_rtx, XEXP (recog_data.operand[1], 0),
-                                   const0_rtx, const0_rtx);
-                    else
-                      pat = gen_vse (
-                          mode, const0_rtx, XEXP (recog_data.operand[0], 0),
-                          recog_data.operand[1], const0_rtx, const0_rtx);
-                  }
-
-                validate_change (insn, &PATTERN (insn), pat, false);
-                continue;
-              }
-            else
-              replace_op (insn, const0_rtx, REPLACE_VL);
-          }
+        cleanup_insn_op (insn, clobber);
       }
     // If this is something updates VL/VTYPE that we don't know about, set
     // the state to unknown.
@@ -1682,10 +1768,119 @@ emit_vsetvlis (const basic_block bb)
   }
 }
 
+static void
+dolocalprepass (const basic_block bb)
+{
+  rtx_insn *insn = NULL;
+  rtx clobber = NULL_RTX;
+  vinfo curr_info = vinfo::get_unknown ();
+  FOR_BB_INSNS (bb, insn)
+  {
+    // If this is an explicit VSETVLI or VSETIVLI, update our state.
+    if (vsetvli_insn_p (insn))
+      {
+        curr_info = get_info_for_vsetvli (insn, curr_info);
+        continue;
+      }
+
+    if (scalar_move_insn_p (insn))
+      {
+        gcc_assert (use_vtype_p (insn, &clobber) && use_vl_p (insn, &clobber));
+        const vinfo new_info = compute_info_for_instr (insn, curr_info);
+
+        // For vmv.s.x and vfmv.s.f, there are only two behaviors, VL = 0 and
+        // VL > 0. We can discard the user requested AVL and just use the last
+        // one if we can prove it equally zero.  This removes a vsetvli entirely
+        // if the types match or allows use of cheaper avl preserving variant
+        // if VLMAX doesn't change.  If VLMAX might change, we couldn't use
+        // the 'vsetvli x0, x0, vtype" variant, so we avoid the transform to
+        // prevent extending live range of an avl register operand.
+        // TODO: We can probably relax this for immediates.
+        if (((curr_info.has_nonzero_avl () && new_info.has_nonzero_avl ()) ||
+             (curr_info.has_zero_avl () && new_info.has_zero_avl ())) &&
+            new_info.vlmax_equal_p (curr_info))
+          {
+            replace_op (insn, curr_info.get_avl (), REPLACE_VL);
+            curr_info = compute_info_for_instr (insn, curr_info);
+            continue;
+          }
+      }
+
+    if (use_vtype_p (insn, &clobber))
+      {
+        if (use_vl_p (insn, &clobber))
+          {
+            const auto require = compute_info_for_instr (insn, curr_info);
+            // If the AVL is the result of a previous vsetvli which has the
+            // same AVL and VLMAX as our current state, we can reuse the AVL
+            // from the current state for the new one.  This allows us to
+            // generate 'vsetvli x0, x0, vtype" or possible skip the transition
+            // entirely.
+            if (!curr_info.unknown_p () && require.get_avl () &&
+                REG_P (require.get_avl ()) &&
+                REGNO (require.get_avl ()) >= FIRST_PSEUDO_REGISTER)
+              {
+                rtx_insn *def_rtl = fetch_def_insn (insn, require);
+                
+                if (def_rtl != NULL)
+                  {
+                    if (vsetvli_insn_p (def_rtl))
+                      {
+                        vinfo def_info = get_info_for_vsetvli (def_rtl, curr_info);
+                        if (def_info.avl_equal_p (curr_info) &&
+                            def_info.vlmax_equal_p (curr_info))
+                          {
+                            replace_op (insn, curr_info.get_avl (), REPLACE_VL);
+                            curr_info = compute_info_for_instr (insn, curr_info);
+                            continue;
+                          }
+                      }
+                  }
+              }
+
+            // If AVL is defined by a vsetvli with the same vtype, we can
+            // replace the AVL operand with the AVL of the defining vsetvli.
+            // We avoid general register AVLs to avoid extending live ranges
+            // without being sure we can kill the original source reg entirely.
+            // TODO: We can ignore policy bits here, we only need VL to be the
+            // same.
+            if (!curr_info.unknown_p () && require.get_avl () &&
+                REG_P (require.get_avl ()) &&
+                REGNO (require.get_avl ()) >= FIRST_PSEUDO_REGISTER)
+              {
+                rtx_insn *def_rtl = fetch_def_insn (insn, require);
+                if (def_rtl != NULL)
+                  {
+                    if (vsetvli_insn_p (def_rtl))
+                      {
+                        vinfo def_info = get_info_for_vsetvli (def_rtl, curr_info);
+                        if (def_info.vtype_equal_p (require) &&
+                            (def_info.avl_const_p () ||
+                            (def_info.avl_reg_p () &&
+                            rtx_equal_p (def_info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM)))))
+                          {
+                            replace_op (insn, def_info.get_avl (), REPLACE_VL);
+                            curr_info = compute_info_for_instr (insn, curr_info);
+                            continue;
+                          }
+                      }
+                  }
+              }
+          }
+        curr_info = compute_info_for_instr (insn, curr_info);
+        continue;
+      }
+
+    // If this is something that updates VL/VTYPE that we don't know about,
+    // set the state to unknown.
+    if (update_vlvtyp_p (insn))
+      curr_info = vinfo::get_unknown ();
+  }
+}
+
 static unsigned int
 rest_of_handle_insert_vsetvli (function *fn)
 {
-  bool vector_p = false;
   basic_block bb;
 
   if (n_basic_blocks_for_fn (fn) <= 0)
@@ -1702,7 +1897,8 @@ rest_of_handle_insert_vsetvli (function *fn)
     }
 
   if (dump_file)
-    fprintf (dump_file, "Initialize Basic Block Map\n\n");
+    fprintf (dump_file, "\nEntering InsertVSETVLI for %s\n\n",
+             current_function_name ());
 
   /* Initialize Basic Block Map */
   FOR_ALL_BB_FN (bb, fn)
@@ -1711,39 +1907,97 @@ rest_of_handle_insert_vsetvli (function *fn)
     bb_vinfo_map.insert (std::pair<uint8_t, bb_vinfo> (bb->index, bb_init));
   }
 
+  // Scan the block locally for cases where we can mutate the operands
+  // of the instructions to reduce state transitions.  Critically, this
+  // must be done before we start propagating data flow states as these
+  // transforms are allowed to change the contents of VTYPE and VL so
+  // long as the semantics of the program stays the same.
+  FOR_ALL_BB_FN (bb, fn)
+    dolocalprepass (bb);
+
+  bool vector_p = false;
+
   if (dump_file)
-    fprintf (dump_file, "Phase 1 determine how VL/VTYPE are affected by the each block\n\n");
+    fprintf (
+        dump_file,
+        "Phase 1 determine how VL/VTYPE are affected by the each block:\n");
 
   // Phase 1 - determine how VL/VTYPE are affected by the each block.
   FOR_ALL_BB_FN (bb, fn)
-    vector_p |= vl_vtype_changes_p (bb);
-  
-  if (vector_p)
+  {
+    vector_p |= compute_vl_vtype_changes (bb);
+    bb_vinfo &info = bb_vinfo_map[bb->index];
+    info.exit = info.change;
+    if (dump_file)
+      {
+        fprintf (dump_file, "Initial exit state of bb %d\n", bb->index);
+        info.exit.print ();
+      }
+  }
+
+  if (!vector_p)
     {
-      if (dump_file)
-        fprintf (dump_file, "Phase 2 determine the exit VL/VTYPE from each block\n\n");
-      // Phase 2 - determine the exit VL/VTYPE from each block. We add all
-      // blocks to the list here, but will also add any that need to be
-      // revisited during Phase 2 processing.
+      bb_vinfo_map.clear ();
+      bb_queue.clear ();
+      return 0;
+    }
+
+  if (dump_file)
+    fprintf (dump_file,
+             "Phase 2 determine the exit VL/VTYPE from each block:\n");
+  // Phase 2 - determine the exit VL/VTYPE from each block. We add all
+  // blocks to the list here, but will also add any that need to be
+  // revisited during Phase 2 processing.
+  FOR_ALL_BB_FN (bb, fn)
+  {
+    bb_queue.push_back (bb);
+    bb_vinfo_map[bb->index].inqueue = true;
+  }
+  while (!bb_queue.empty ())
+    {
+      bb = bb_queue.front ();
+      bb_queue.pop_front ();
+      compute_incoming_vlvtype (bb);
+    }
+
+  if (dump_file)
+    fprintf (dump_file,
+             "Phase 3 add any vsetvli instructions needed in the block:\n");
+  // Phase 3 - add any vsetvli instructions needed in the block. Use the
+  // Phase 2 information to avoid adding vsetvlis before the first vector
+  // instruction in the block if the VL/VTYPE is satisfied by its
+  // predecessors.
+  FOR_ALL_BB_FN (bb, fn) { emit_vsetvlis (bb); }
+
+  // Once we're fully done rewriting all the instructions, do a final pass
+  // through to check for VSETVLIs which write to an unused destination.
+  // For the non X0, X0 variant, we can replace the destination register
+  // with X0 to reduce register pressure.  This is really a generic
+  // optimization which can be applied to any dead def (TODO: generalize).
+  if (!reload_completed)
+    {
       FOR_ALL_BB_FN (bb, fn)
       {
-        bb_queue.push_back (bb);
-        bb_vinfo_map[bb->index].inqueue = true;
-      }
-      while (!bb_queue.empty ())
+        rtx_insn *insn = NULL;
+        FOR_BB_INSNS (bb, insn)
         {
-          bb = bb_queue.front ();
-          bb_queue.pop_front ();
-          compute_incoming_vlvtype (bb);
+          if (vsetvli_insn_p (insn))
+            {
+              extract_insn_cached (insn);
+              if (recog_data.n_operands == 3 &&
+                  !rtx_equal_p (recog_data.operand[0],
+                                gen_rtx_REG (Pmode, X0_REGNUM)) &&
+                  !rtx_equal_p (recog_data.operand[1],
+                                gen_rtx_REG (Pmode, X0_REGNUM)) &&
+                  find_reg_note (insn, REG_UNUSED, recog_data.operand[0]))
+                {
+                  rtx pat = gen_vsetvl_zero (Pmode, recog_data.operand[1],
+                                             recog_data.operand[2]);
+                  validate_change (insn, &PATTERN (insn), pat, false);
+                }
+            }
         }
-
-      if (dump_file)
-        fprintf (dump_file, "Phase 3 add any vsetvli instructions needed in the block\n\n");
-      // Phase 3 - add any vsetvli instructions needed in the block. Use the
-      // Phase 2 information to avoid adding vsetvlis before the first vector
-      // instruction in the block if the VL/VTYPE is satisfied by its
-      // predecessors.
-      FOR_ALL_BB_FN (bb, fn) { emit_vsetvlis (bb); }
+      }
     }
 
   bb_vinfo_map.clear ();
@@ -1759,7 +2013,7 @@ rest_of_handle_insert_vsetvli (function *fn)
       delete crtl->ssa;
       crtl->ssa = nullptr;
     }
-    
+
   return 0;
 }
 

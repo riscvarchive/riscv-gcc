@@ -1,10 +1,17 @@
 /* { dg-do compile } */
-/* { dg-additional-options "-fdump-tree-optimized" } */
 /* { dg-skip-if "test vector intrinsic" { *-*-* } { "*" } { "-march=rv*v*" } } */
+/* { dg-additional-options "-O3" } */
+/* { dg-final { check-function-bodies "**" "" } } */
 #include <riscv_vector.h>
 
-
-void vsetvli_loop (int8_t * a, int8_t * b, size_t m)
+/*
+** test_vsetvli_loop:
+**  ...
+**	addi	a0,a0,8
+**	vadd\.vv\s+(?:v[0-9]|v[1-2][0-9]|v3[0-1]),\s*(?:v[0-9]|v[1-2][0-9]|v3[0-1]),\s*(?:v[0-9]|v[1-2][0-9]|v3[0-1])
+**  ...
+*/
+void test_vsetvli_loop (int8_t * a, int8_t * b, size_t m)
 {
   vint8m1_t v_init = *(vint8m1_t*)b;
   size_t vl = vsetvl_e8m1 (6);
@@ -16,4 +23,4 @@ void vsetvli_loop (int8_t * a, int8_t * b, size_t m)
   *(vint8m1_t*)b = v_init;
 }
 
-/* { dg-final { scan-tree-dump-times "vsetvl_e8m1" 1 "optimized" } } */
+/* { dg-final { scan-assembler-times {\tvsetivli\s+zero,6,\s*e8,\s*m1,\s*t[au],\s*mu} 1 } } */
