@@ -93,28 +93,62 @@ enum replace_enum
   REPLACE_VTYPE
 };
 
+enum clobber_pat_enum
+{
+  MOV_CLOBBER_MEM_REG,
+  MOV_CLOBBER_REG_MEM,
+  MOV_CLOBBER_REG_REG,
+  MOV_CLOBBER_REG_CONST,
+  OTHERS
+};
+
 /* Helper functions. */
 
-static bool
-recog_need_insert_vsetvli_after_reload_p (rtx_insn *insn, rtx *clobber)
+static enum clobber_pat_enum
+recog_clobber_vl_vtype (rtx_insn *insn)
 {
   /*
    [(set (match_operand 0 "reg_or_mem_operand" "=vr,m,vr")
          (match_operand 1 "reg_or_mem_operand" "m,vr,vr"))
-         (clobber (match_scratch:SI 2 "=&r,&r,X"))] */
-  if (get_attr_type (insn) != TYPE_VLE_RELOAD &&
-      get_attr_type (insn) != TYPE_VSE_RELOAD)
-    {
-      *clobber = NULL_RTX;
-      return false;
-    }
-  
-  gcc_assert (reload_completed);
-  extract_insn_cached (insn);
+         (clobber (match_scratch:SI 2 "=&r,&r,X"))
+         (clobber (reg:SI VL_REGNUM))
+         (clobber (reg:SI VTYPE_REGNUM))]
+  */
+  rtx pat = PATTERN (insn);
+  if (GET_CODE (pat) != PARALLEL)
+    return OTHERS;
 
-  *clobber = recog_data.operand[2];
-  PUT_MODE (*clobber, Pmode);
-  return true;
+  unsigned int len = XVECLEN (pat, 0);
+  if (len < 3)
+    return OTHERS;
+
+  if (!rtx_equal_p (
+          XVECEXP (pat, 0, len - 1),
+          gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (SImode, VTYPE_REGNUM))))
+    return OTHERS;
+
+  if (!rtx_equal_p (XVECEXP (pat, 0, len - 2),
+                    gen_rtx_CLOBBER (VOIDmode, gen_rtx_REG (SImode, VL_REGNUM))))
+    return OTHERS;
+
+  extract_insn_cached (insn);
+  rtx mov_pat = gen_rtx_SET (recog_data.operand[0], recog_data.operand[1]);
+  if (!rtx_equal_p (XVECEXP (pat, 0, 0), mov_pat))
+    return OTHERS;
+  
+  if (MEM_P (recog_data.operand[0]))
+    return MOV_CLOBBER_MEM_REG;
+ 
+  if (MEM_P (recog_data.operand[1]))
+    return MOV_CLOBBER_REG_MEM;
+  
+  if (REG_P (recog_data.operand[0]))
+    return MOV_CLOBBER_REG_REG;
+  
+  if (CONST_VECTOR_P (recog_data.operand[0]))
+    return MOV_CLOBBER_REG_CONST;
+      
+  return OTHERS;
 }
 
 static bool
@@ -125,7 +159,7 @@ vsetvli_insn_p (rtx_insn *insn)
 }
 
 static bool
-rvv_insn_p (rtx_insn *insn, rtx *src, rtx *clobber)
+rvv_insn_p (rtx_insn *insn, rtx *src)
 {
   *src = NULL_RTX;
   if (!insn)
@@ -140,10 +174,15 @@ rvv_insn_p (rtx_insn *insn, rtx *src, rtx *clobber)
   if (!riscv_vector_mode_p (riscv_translate_attr_mode (insn)))
     return false;
   
-  if (recog_need_insert_vsetvli_after_reload_p (insn, clobber))
+  if (recog_clobber_vl_vtype (insn) != OTHERS)
     {
-      *src = SET_SRC (XVECEXP (PATTERN (insn), 0, 0));
-      return true;
+      if (reload_completed)
+        {
+          *src = SET_SRC (XVECEXP (PATTERN (insn), 0, 0));
+          return true;
+        }
+      else
+        return false;
     }
   
   if (GET_CODE (PATTERN (insn)) == PARALLEL)
@@ -165,13 +204,13 @@ rvv_insn_p (rtx_insn *insn, rtx *src, rtx *clobber)
 }
 
 static bool
-use_vl_p (rtx_insn *insn, rtx *clobber)
+use_vl_p (rtx_insn *insn)
 {
   rtx src = NULL_RTX;
-  if (!rvv_insn_p (insn, &src, clobber))
+  if (!rvv_insn_p (insn, &src))
     return false;
   
-  if (*clobber != NULL_RTX)
+  if (recog_clobber_vl_vtype (insn) != OTHERS)
     return true;
 
   if (rtx_equal_p (XVECEXP (src, 0, XVECLEN (src, 0) - 1),
@@ -187,13 +226,13 @@ use_vl_p (rtx_insn *insn, rtx *clobber)
 }
 
 static bool
-use_vtype_p (rtx_insn *insn, rtx *clobber)
+use_vtype_p (rtx_insn *insn)
 { 
   rtx src = NULL_RTX;
-  if (!rvv_insn_p (insn, &src, clobber))
+  if (!rvv_insn_p (insn, &src))
     return false;
   
-  if (*clobber)
+  if (recog_clobber_vl_vtype (insn) != OTHERS)
     return true;
     
   if (rtx_equal_p (XVECEXP (src, 0, XVECLEN (src, 0) - 1),
@@ -207,14 +246,14 @@ static bool
 use_vlmax_p (rtx_insn *insn)
 {
   rtx src = NULL_RTX;
-  rtx clobber = NULL_RTX;
   unsigned int length = 0;
-  if (rvv_insn_p (insn, &src, &clobber) && !clobber)
-    length = XVECLEN (src, 0);
   
-  if (clobber)
+  if (recog_clobber_vl_vtype (insn) != OTHERS)
     return true;
     
+  if (rvv_insn_p (insn, &src))
+    length = XVECLEN (src, 0);
+  
   if (length < 2)
     return false;
 
@@ -234,8 +273,7 @@ static bool
 need_vsetvli_p (rtx_insn *insn)
 {
   rtx src = NULL_RTX;
-  rtx clobber = NULL_RTX;
-  if (!rvv_insn_p (insn, &src, &clobber))
+  if (!rvv_insn_p (insn, &src))
     return false;
   return true;
 }
@@ -1140,11 +1178,11 @@ analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
 {
   vector_policy vma_default = vector_policy::undisturbed;
   vector_policy vta_default = vector_policy::agnostic;
-  rtx clobber = NULL_RTX;
-  if (!use_vl_p (insn, &clobber))
+
+  if (!use_vl_p (insn))
     return get_vma_vta (vma_default, vta_default);
   
-  if (clobber)
+  if (recog_clobber_vl_vtype (insn) != OTHERS)
     return get_vma_vta (vma_default, vta_default);
     
   if (use_vlmax_p (insn))
@@ -1192,7 +1230,6 @@ store_insn_p (rtx_insn *insn)
 {
   return insn && INSN_P (insn) && recog_memoized (insn) >= 0 &&
          (get_attr_type (insn) == TYPE_VSE ||
-          get_attr_type (insn) == TYPE_VSE_RELOAD ||
           get_attr_type (insn) == TYPE_VSSE ||
           get_attr_type (insn) == TYPE_VSUXEI ||
           get_attr_type (insn) == TYPE_VSOXEI ||
@@ -1207,10 +1244,8 @@ can_skip_load_store_insn_p (rtx_insn *insn)
 {
   return insn && INSN_P (insn) && recog_memoized (insn) >= 0 &&
          (get_attr_type (insn) == TYPE_VSE ||
-          get_attr_type (insn) == TYPE_VSE_RELOAD ||
           get_attr_type (insn) == TYPE_VSSE ||
           get_attr_type (insn) == TYPE_VLE ||
-          get_attr_type (insn) == TYPE_VLE_RELOAD ||
           get_attr_type (insn) == TYPE_VLSE);
 }
 
@@ -1223,10 +1258,9 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
 
   extract_insn_cached (insn);
   
-  rtx clobber;
-  if (use_vl_p (insn, &clobber))
+  if (use_vl_p (insn))
     {
-      if (clobber)
+      if (recog_clobber_vl_vtype (insn) != OTHERS)
         info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
       else if (use_vlmax_p (insn))
         info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
@@ -1463,8 +1497,7 @@ compute_vl_vtype_changes (basic_block bb)
     /*  According to vector.md, each instruction pattern parallel.
         It should have at least 2 side effects.
         The last 2 side effects are use vl && use vtype  */
-    rtx clobber;
-    if (use_vtype_p (insn, &clobber))
+    if (use_vtype_p (insn))
       {
         vector_p = true;
 
@@ -1499,7 +1532,7 @@ compute_vl_vtype_changes (basic_block bb)
 }
 
 static void
-compute_incoming_vlvtype (const basic_block bb)
+compute_incoming_vl_vtype (const basic_block bb)
 {
   bb_vinfo &info = bb_vinfo_map[bb->index];
   info.inqueue = false;
@@ -1540,8 +1573,8 @@ compute_incoming_vlvtype (const basic_block bb)
   // compatibility checks performed a blocks output state can change based on
   // the input state.  To cache, we'd have to add logic for finding
   // never-compatible state changes.
-  // compute_vlvtype_changes (bb);
-  // vinfo tmpstatus = info.change;
+  //compute_vl_vtype_changes (bb);
+  //vinfo tmpstatus = info.change;
   vinfo tmpstatus = info.pred.merge (info.change);
 
   // If the new exit value matches the old exit value, we don't need to revisit
@@ -1569,20 +1602,22 @@ compute_incoming_vlvtype (const basic_block bb)
 }
 
 static void
-insert_vsetvli (rtx_insn *insn, const vinfo &curr_info, const vinfo &prev_info,
-                rtx clobber)
+insert_vsetvli (rtx_insn *insn, const vinfo &curr_info, const vinfo &prev_info)
 {
   extract_insn_cached (insn);
   rtx avl = curr_info.get_avl ();
   rtx vtype = GEN_INT (curr_info.encode_vtype ());
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
 
-  if (clobber)
+  if (recog_clobber_vl_vtype (insn) == MOV_CLOBBER_REG_MEM
+    || recog_clobber_vl_vtype (insn) == MOV_CLOBBER_MEM_REG)
     {
       gcc_assert (
           reload_completed &&
           rtx_equal_p (curr_info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM)));
-      emit_vsetvl_insn (clobber, gen_rtx_REG (Pmode, X0_REGNUM), vtype, insn);
+      avl = recog_data.operand[2];
+      PUT_MODE (avl, Pmode);
+      emit_vsetvl_insn (avl, gen_rtx_REG (Pmode, X0_REGNUM), vtype, insn);
       return;
     }
 
@@ -1622,38 +1657,36 @@ insert_vsetvli (rtx_insn *insn, const vinfo &curr_info, const vinfo &prev_info,
 }
 
 static void
-cleanup_insn_op (rtx_insn *insn, rtx clobber)
+cleanup_insn_op (rtx_insn *insn)
 {
   if (!reload_completed)
     return;
-    
+
   /* 1.Remove the vl operand for every rvv instruction.
      2.Replace every reload register spilling rvv instruction. */
-  if (clobber)
+  rtx pat;
+  extract_insn_cached (insn);
+  machine_mode mode = riscv_translate_attr_mode (insn);
+  if (recog_clobber_vl_vtype (insn) == MOV_CLOBBER_REG_MEM)
     {
-      rtx pat;
-      extract_insn_cached (insn);
-      machine_mode mode = riscv_translate_attr_mode (insn);
       if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
-        {
-          if (get_attr_type (insn) == TYPE_VLE_RELOAD)
-            pat = gen_vlm (mode, recog_data.operand[0],
-                           XEXP (recog_data.operand[1], 0), const0_rtx,
-                           const0_rtx);
-          else
-            pat = gen_vsm (mode, XEXP (recog_data.operand[0], 0),
-                           recog_data.operand[1], const0_rtx, const0_rtx);
-        }
+        pat =
+              gen_vlm (mode, recog_data.operand[0],
+                       XEXP (recog_data.operand[1], 0), const0_rtx, const0_rtx);
       else
-        {
-          if (get_attr_type (insn) == TYPE_VLE_RELOAD)
-            pat = gen_vle (mode, recog_data.operand[0], const0_rtx, const0_rtx,
-                           XEXP (recog_data.operand[1], 0), const0_rtx,
-                           const0_rtx);
-          else
-            pat = gen_vse (mode, const0_rtx, XEXP (recog_data.operand[0], 0),
-                           recog_data.operand[1], const0_rtx, const0_rtx);
-        }
+        pat = gen_vle (mode, recog_data.operand[0], const0_rtx, const0_rtx,
+                       XEXP (recog_data.operand[1], 0), const0_rtx, const0_rtx);
+
+      validate_change (insn, &PATTERN (insn), pat, false);
+    }
+  else if (recog_clobber_vl_vtype (insn) == MOV_CLOBBER_MEM_REG)
+    {
+      if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
+        pat = gen_vsm (mode, XEXP (recog_data.operand[0], 0),
+                       recog_data.operand[1], const0_rtx, const0_rtx);
+      else
+        pat = gen_vse (mode, const0_rtx, XEXP (recog_data.operand[0], 0),
+                       recog_data.operand[1], const0_rtx, const0_rtx);
 
       validate_change (insn, &PATTERN (insn), pat, false);
     }
@@ -1678,8 +1711,8 @@ emit_vsetvlis (const basic_block bb)
         prev_insn = insn;
         continue;
       }
-    rtx clobber;
-    if (use_vtype_p (insn, &clobber))
+
+    if (use_vtype_p (insn))
       {
         vinfo new_info = compute_info_for_instr (insn, curr_info);
 
@@ -1700,7 +1733,7 @@ emit_vsetvlis (const basic_block bb)
                 // we *do* need to model the state as if it changed as while the
                 // register contents are unchanged, the abstract model can change.
                 if (need_vsetvli_phi (new_info, insn))
-                  insert_vsetvli (insn, new_info, curr_info, clobber);
+                  insert_vsetvli (insn, new_info, curr_info);
                 curr_info = new_info;
               }
           }
@@ -1738,12 +1771,12 @@ emit_vsetvlis (const basic_block bb)
                   }
 
                 if (need_insert_vsetvli_p)
-                  insert_vsetvli (insn, new_info, curr_info, clobber);
+                  insert_vsetvli (insn, new_info, curr_info);
                 curr_info = new_info;
               }
           }
         prev_insn = NULL;
-        cleanup_insn_op (insn, clobber);
+        cleanup_insn_op (insn);
       }
     // If this is something updates VL/VTYPE that we don't know about, set
     // the state to unknown.
@@ -1761,7 +1794,7 @@ emit_vsetvlis (const basic_block bb)
         if (curr_info.valid_p () && exit_info.valid_p () &&
             !exit_info.unknown_p () && curr_info != exit_info)
           {
-            insert_vsetvli (insn, exit_info, curr_info, clobber);
+            insert_vsetvli (insn, exit_info, curr_info);
             curr_info = exit_info;
           }
       }
@@ -1772,7 +1805,6 @@ static void
 dolocalprepass (const basic_block bb)
 {
   rtx_insn *insn = NULL;
-  rtx clobber = NULL_RTX;
   vinfo curr_info = vinfo::get_unknown ();
   FOR_BB_INSNS (bb, insn)
   {
@@ -1785,7 +1817,7 @@ dolocalprepass (const basic_block bb)
 
     if (scalar_move_insn_p (insn))
       {
-        gcc_assert (use_vtype_p (insn, &clobber) && use_vl_p (insn, &clobber));
+        gcc_assert (use_vtype_p (insn) && use_vl_p (insn));
         const vinfo new_info = compute_info_for_instr (insn, curr_info);
 
         // For vmv.s.x and vfmv.s.f, there are only two behaviors, VL = 0 and
@@ -1806,9 +1838,9 @@ dolocalprepass (const basic_block bb)
           }
       }
 
-    if (use_vtype_p (insn, &clobber))
+    if (use_vtype_p (insn))
       {
-        if (use_vl_p (insn, &clobber))
+        if (use_vl_p (insn))
           {
             const auto require = compute_info_for_instr (insn, curr_info);
             // If the AVL is the result of a previous vsetvli which has the
@@ -1957,7 +1989,7 @@ rest_of_handle_insert_vsetvli (function *fn)
     {
       bb = bb_queue.front ();
       bb_queue.pop_front ();
-      compute_incoming_vlvtype (bb);
+      compute_incoming_vl_vtype (bb);
     }
 
   if (dump_file)

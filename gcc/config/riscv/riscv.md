@@ -321,7 +321,7 @@
    mtc,mfc,const,arith,logical,shift,slt,imul,idiv,move,fmove,fadd,fmul,
    fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost,bitmanip,rotate,
    csr,vload,vstore,vcopy,vsetvl,
-   vle,vle_reload,vse,vse_reload,vlse,vsse,vluxei,vloxei,vsuxei,vsoxei,vleff,
+   vle,vse,vlse,vsse,vluxei,vloxei,vsuxei,vsoxei,vleff,
    vlseg,vsseg,vlsegff,vlsseg,vssseg,vluxsegei,vloxsegei,vsuxsegei,vsoxsegei,
    varith,vadc,vmadc,vwarith,vlogical,vshift,vcmp,vmul,vmulh,vdiv,vwmul,vmadd,vwmadd,
    vmerge,vmove,vsarith,vsmul,vscaleshift,vclip,vfsqrt,vfsgnj,vfclass,vfcvt,vfwcvt,vfncvt,

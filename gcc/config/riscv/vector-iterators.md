@@ -1998,9 +1998,6 @@
 ;; Saturating add.
 (define_code_iterator any_satplus [ss_plus us_plus])
 
-;; Saturating sub.
-(define_code_iterator any_satminus [ss_minus us_minus])
-
 ;; sub and div.
 (define_code_iterator minus_div [minus div])
 
@@ -2075,9 +2072,6 @@
 ;; <sz> expand to the name of the wcvt and wcvtu that implements a
 ;; particular code.
 (define_code_attr sz [(sign_extend "s") (zero_extend "z")])
-
-;; map neg insn for specific code
-(define_code_attr neginsn [(ss_minus "sadd") (us_minus "saddu")])
 
 ;; map code to type.
 (define_code_attr rvv_type [(plus "varith") (minus "varith") 

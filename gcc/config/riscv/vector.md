@@ -137,7 +137,7 @@
     emit_insn (gen_rtx_SET (operands[0], operands[1]));
     DONE;
   }
-  [(set_attr "type" "vle_reload,vse_reload,vcopy")
+  [(set_attr "type" "vle,vse,vcopy")
    (set_attr "mode" "<MODE>")])
 
 (define_insn_and_split "@mov<mode>_internal"
@@ -160,7 +160,7 @@
     emit_insn (gen_rtx_SET (operands[0], operands[1]));
     DONE;
   }
-  [(set_attr "type" "vle_reload,vse_reload,vcopy")
+  [(set_attr "type" "vle,vse,vcopy")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*mov<mode>_reg"
@@ -227,7 +227,7 @@
     emit_insn (gen_rtx_SET (operands[0], operands[1]));
     DONE;
   }
-  [(set_attr "type" "vle_reload,vse_reload,vcopy")
+  [(set_attr "type" "vle,vse,vcopy")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*mov<mode>_reg"
@@ -248,16 +248,14 @@
    (clobber (reg:SI VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "#"
-  "&& !(!reload_completed 
-   && REG_P (operands[0])
-   && REG_P (operands[1]))"
+  "&& reload_completed"
   [(const_int 0)]
-{
-  riscv_vector_expand_tuple (<VTSUB>mode, operands);
-  DONE;
-}
-[(set_attr "type" "vcopy,vle,vse,vmove")
- (set_attr "mode" "<MODE>")])
+  {
+    riscv_vector_expand_tuple (<VTSUB>mode, operands);
+    DONE;
+  }
+  [(set_attr "type" "vcopy,vle,vse,vmove")
+   (set_attr "mode" "<VTSUB>")])
  
 (define_insn_and_split "mov<mode>"
   [(set (match_operand:VTF 0 "reg_or_mem_operand" "=vr,vr, m,vr")
@@ -270,16 +268,14 @@
    (clobber (reg:SI VTYPE_REGNUM))]
   "TARGET_VECTOR"
   "#"
-  "&& !(!reload_completed 
-   && REG_P (operands[0])
-   && REG_P (operands[1]))"
+  "&& reload_completed"
   [(const_int 0)]
-{
-  riscv_vector_expand_tuple (<VTSUB>mode, operands);
-  DONE;
-}
-[(set_attr "type" "vcopy,vle,vse,vmove")
- (set_attr "mode" "<MODE>")])
+  {
+    riscv_vector_expand_tuple (<VTSUB>mode, operands);
+    DONE;
+  }
+  [(set_attr "type" "vcopy,vle,vse,vmove")
+   (set_attr "mode" "<VTSUB>")])
 
 ;; Misalign move patterns for all vector modes.
 (define_expand "movmisalign<mode>"
@@ -4107,12 +4103,12 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Vector Single-Width Saturating Sub.
-(define_insn "@v<optab><mode>_vv"
+(define_insn "@vsssub<mode>_vv"
   [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
       [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
-       (any_satminus:VI
+       (ss_minus:VI
          (match_operand:VI 3 "register_operand"             "vr,vr,vr,vr,vr,vr,vr,vr")
          (match_operand:VI 4 "vector_neg_arith_operand"     "vr,vj,vr,vj,vr,vj,vr,vj"))
        (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,0,J,J,0,0,J,J")] UNSPEC_SELECT)
@@ -4128,18 +4124,40 @@
       {
         rtx elt;
         const_vec_duplicate_p (operands[4], &elt);
-        const char *insn = "v<neginsn>.vi\t%0,%3";
+        const char *insn = "vsadd.vi\t%0,%3";
         const char *tail = "%1.t";
         snprintf (buf, sizeof (buf), "%s,%d,%s", insn, (int)(-INTVAL (elt)), tail);
       }
     else
       {
-        const char *insn = "v<insn>.vv\t%0,%3,%4";
+        const char *insn = "vssub.vv\t%0,%3,%4";
         snprintf (buf, sizeof (buf), "%s%s", insn, tail);
       }
     output_asm_insn (buf, operands);
     return "";
   }
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<MODE>")])
+   
+(define_insn "@vussub<mode>_vv"
+  [(set (match_operand:VI 0 "register_operand"   "=vd,vd,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (us_minus:VI
+         (match_operand:VI 3 "register_operand"     "vr,vr,vr,vr")
+         (match_operand:VI 4 "register_operand"     "vr,vr,vr,vr"))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vssubu.vv\t%0,%3,%4,%1.t
+   vssubu.vv\t%0,%3,%4,%1.t
+   vssubu.vv\t%0,%3,%4
+   vssubu.vv\t%0,%3,%4"
   [(set_attr "type" "vsarith")
    (set_attr "mode" "<MODE>")])
 
@@ -4200,12 +4218,12 @@
    (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Single-Width Saturating Sub.
-(define_insn "@v<optab><mode>_vx_internal"
+(define_insn "@vsssub<mode>_vx_internal"
   [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vd,vd,vr,vr,vr,vr")
   (unspec:VI
     [(unspec:VI
       [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,vm,vm,J,J,J,J")
-       (any_satminus:VI
+       (ss_minus:VI
         (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr,vr,vr,vr,vr")
         (vec_duplicate:VI
          (match_operand:<VSUB> 4 "reg_or_neg_simm5_operand" "r,Wn5,r,Wn5,r,Wn5,r,Wn5")))
@@ -4220,12 +4238,12 @@
     char buf[64] = {0};
     if (satisfies_constraint_Wn5 (operands[4]))
       {
-        const char *insn = "v<neginsn>.vi\t%0,%3";
+        const char *insn = "vsadd.vi\t%0,%3";
         snprintf (buf, sizeof (buf), "%s,%d%s", insn, (int)(-INTVAL (operands[4])), tail);
       }
     else
       {
-        const char *insn = "v<insn>.vx\t%0,%3,%4";
+        const char *insn = "vssub.vx\t%0,%3,%4";
         snprintf (buf, sizeof (buf), "%s%s", insn, tail);
       }
     output_asm_insn (buf, operands);
@@ -4234,12 +4252,35 @@
   [(set_attr "type" "vsarith")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "@v<optab><mode>_vx_32bit"
+(define_insn "@vussub<mode>_vx_internal"
+  [(set (match_operand:VI 0 "register_operand"              "=vd,vd,vr,vr")
+  (unspec:VI
+    [(unspec:VI
+      [(match_operand:<VM> 1 "vector_reg_or_const0_operand" "vm,vm,J,J")
+       (us_minus:VI
+        (match_operand:VI 3 "register_operand"              "vr,vr,vr,vr")
+        (vec_duplicate:VI
+         (match_operand:<VSUB> 4 "register_operand" "r,r,r,r")))
+       (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
+     (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
+     (match_operand 6 "const_int_operand")
+     (reg:SI VL_REGNUM)
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vssubu.vx\t%0,%3,%4,%1.t
+   vssubu.vx\t%0,%3,%4,%1.t
+   vssubu.vx\t%0,%3,%4
+   vssubu.vx\t%0,%3,%4"
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@vsssub<mode>_vx_32bit"
   [(set (match_operand:V64BITI 0 "register_operand"               "=vd,vd,vd,vd,vr,vr,vr,vr")
     (unspec:V64BITI
       [(unspec:V64BITI
         [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,vm,vm,J,J,J,J")
-         (any_satminus:V64BITI
+         (ss_minus:V64BITI
            (match_operand:V64BITI 3 "register_operand"            "vr,vr,vr,vr,vr,vr,vr,vr")
            (vec_duplicate:V64BITI
              (sign_extend:<VSUB>
@@ -4255,17 +4296,41 @@
     char buf[64] = {0};
     if (satisfies_constraint_Wn5 (operands[4]))
       {
-        const char *insn = "v<neginsn>.vi\t%0,%3";
+        const char *insn = "vsadd.vi\t%0,%3";
         snprintf (buf, sizeof (buf), "%s,%d%s", insn, (int)(-INTVAL (operands[4])), tail);
       }
     else
       {
-        const char *insn = "v<insn>.vx\t%0,%3,%4";
+        const char *insn = "vssub.vx\t%0,%3,%4";
         snprintf (buf, sizeof (buf), "%s%s", insn, tail);
       }
     output_asm_insn (buf, operands);
     return "";
   }
+  [(set_attr "type" "vsarith")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "@vussub<mode>_vx_32bit"
+  [(set (match_operand:V64BITI 0 "register_operand"               "=vd,vd,vr,vr")
+    (unspec:V64BITI
+      [(unspec:V64BITI
+        [(match_operand:<VM> 1 "vector_reg_or_const0_operand"     "vm,vm,J,J")
+         (us_minus:V64BITI
+           (match_operand:V64BITI 3 "register_operand"            "vr,vr,vr,vr")
+           (vec_duplicate:V64BITI
+             (sign_extend:<VSUB>
+              (match_operand:SI 4 "register_operand"      "r,r,r,r"))))
+         (match_operand:V64BITI 2 "vector_reg_or_const0_operand"  "0,J,0,J")] UNSPEC_SELECT)
+        (match_operand:SI 5 "csr_operand"                         "rK,rK,rK,rK")
+        (match_operand:SI 6 "const_int_operand")
+        (reg:SI VL_REGNUM)
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+  "TARGET_VECTOR"
+  "@
+   vssubu.vx\t%0,%3,%4,%1.t
+   vssubu.vx\t%0,%3,%4,%1.t
+   vssubu.vx\t%0,%3,%4
+   vssubu.vx\t%0,%3,%4"
   [(set_attr "type" "vsarith")
    (set_attr "mode" "<MODE>")])
 

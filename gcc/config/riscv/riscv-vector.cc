@@ -1962,13 +1962,13 @@ enum GEN_CLASS
 enum GEN_CLASS
 modify_operands (machine_mode Vmode, machine_mode VSImode,
                  machine_mode VMSImode, machine_mode VSUBmode, rtx *operands,
-                 bool (*imm5_p) (rtx), int i, bool reverse)
+                 bool (*imm5_p) (rtx), int i, bool reverse, unsigned int unspec)
 {
   if (!TARGET_64BIT && VSUBmode == DImode)
     {
       if (imm32_p (operands[i]))
         {
-          if (!imm5_p (operands[i]))
+          if (!imm5_p (operands[i]) || unspec == UNSPEC_VSSUBU)
             operands[i] = force_reg (SImode, operands[i]);
           return GEN_VX_32BIT;
         }
@@ -1994,7 +1994,7 @@ modify_operands (machine_mode Vmode, machine_mode VSImode,
     }
   else
     {
-      if (!imm5_p (operands[i]))
+      if (!imm5_p (operands[i]) || unspec == UNSPEC_VSSUBU)
         operands[i] = force_reg (VSUBmode, operands[i]);
       return GEN_VX;
     }
@@ -2093,7 +2093,7 @@ emit_op5 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
     }
 
   enum GEN_CLASS gen_class = modify_operands (
-      Vmode, VSImode, VMSImode, VSUBmode, operands, imm5_p, i, reverse);
+      Vmode, VSImode, VMSImode, VSUBmode, operands, imm5_p, i, reverse, unspec);
 
   gen_5 *gen = gen_class == GEN_VX   ? gen_vx
                : gen_class == GEN_VV ? gen_vv
@@ -2111,7 +2111,7 @@ emit_op6 (unsigned int unspec ATTRIBUTE_UNUSED, machine_mode Vmode,
           imm_p *imm5_p, int i, bool reverse)
 {
   enum GEN_CLASS gen_class = modify_operands (
-      Vmode, VSImode, VMSImode, VSUBmode, operands, imm5_p, i, reverse);
+      Vmode, VSImode, VMSImode, VSUBmode, operands, imm5_p, i, reverse, unspec);
 
   gen_6 *gen = gen_class == GEN_VX   ? gen_vx
                : gen_class == GEN_VV ? gen_vv
@@ -2217,7 +2217,7 @@ emit_op7 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
     }
 
   enum GEN_CLASS gen_class = modify_operands (
-      Vmode, VSImode, VMSImode, VSUBmode, operands, imm5_p, i, reverse);
+      Vmode, VSImode, VMSImode, VSUBmode, operands, imm5_p, i, reverse, unspec);
 
   gen_7 *gen = gen_class == GEN_VX   ? gen_vx
                : gen_class == GEN_VV ? gen_vv
@@ -3912,22 +3912,11 @@ riscv_vector_expand_const_mask (rtx target, rtx src)
 void
 riscv_vector_expand_tuple (machine_mode submode, rtx *ops)
 {
-  machine_mode mode = GET_MODE (ops[0]);
-  if (!reload_completed)
-    {
-      /* Need to force register if mem <- !reg.  */
-      if (MEM_P (ops[0]) && !REG_P (ops[1]))
-        ops[1] = force_reg (mode, ops[1]);
-    }
-
   int i;
+  machine_mode mode = GET_MODE (ops[0]);
   if (MEM_P (ops[0]) || MEM_P (ops[1]))
     {
-      if (reload_completed)
-        PUT_MODE (ops[2], Pmode);
-      else
-        ops[2] = gen_reg_rtx (Pmode);
-
+      PUT_MODE (ops[2], Pmode);
       if (!GET_MODE_SIZE (submode).is_constant ())
         {
           emit_insn (gen_rtx_SET (
@@ -3969,10 +3958,7 @@ riscv_vector_expand_tuple (machine_mode submode, rtx *ops)
     }
   else if (REG_P (ops[0]) && MEM_P (ops[1]))
     {
-      if (reload_completed)
-        PUT_MODE (ops[3], Pmode);
-      else
-        ops[3] = gen_reg_rtx (Pmode);
+      PUT_MODE (ops[3], Pmode);
       emit_move_insn (ops[3], XEXP (ops[1], 0));
       rtx offset = GET_MODE_SIZE (mode).is_constant ()
                        ? GEN_INT (GET_MODE_SIZE (submode).to_constant ())
@@ -3987,8 +3973,7 @@ riscv_vector_expand_tuple (machine_mode submode, rtx *ops)
                 gen_rtx_SET (ops[3], gen_rtx_PLUS (Pmode, ops[3], offset)));
           rtx src = gen_rtx_MEM (submode, ops[3]);
 
-          if (reload_completed &&
-              known_lt (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR))
+          if (known_lt (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR))
             emit_insn (gen_mov_internal (submode, dst, src, ops[4]));
           else
             emit_move_insn (dst, src);
@@ -3996,9 +3981,8 @@ riscv_vector_expand_tuple (machine_mode submode, rtx *ops)
     }
   else if (REG_P (ops[0]) && GET_CODE (ops[1]) == CONST_VECTOR)
     {
-      gcc_assert (!reload_completed);
       rtx val;
-      rtx x = gen_reg_rtx (GET_MODE_INNER (mode));    
+      rtx x = FLOAT_MODE_P (mode) ? ops[5] : ops[2];    
       if (!const_vec_duplicate_p (ops[1], &val))
         gcc_unreachable ();
       
@@ -4016,10 +4000,7 @@ riscv_vector_expand_tuple (machine_mode submode, rtx *ops)
     }
   else if (MEM_P (ops[0]) && REG_P (ops[1]))
     {
-      if (reload_completed)
-        PUT_MODE (ops[3], Pmode);
-      else
-        ops[3] = gen_reg_rtx (Pmode);
+      PUT_MODE (ops[3], Pmode);
       emit_move_insn (ops[3], XEXP (ops[0], 0));
       rtx offset = GET_MODE_SIZE (mode).is_constant ()
                        ? GEN_INT (GET_MODE_SIZE (submode).to_constant ())
@@ -4033,8 +4014,7 @@ riscv_vector_expand_tuple (machine_mode submode, rtx *ops)
                 gen_rtx_SET (ops[3], gen_rtx_PLUS (Pmode, ops[3], offset)));
           rtx dst = gen_rtx_MEM (submode, ops[3]);
 
-          if (reload_completed &&
-              known_lt (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR))
+          if (known_lt (GET_MODE_SIZE (submode), BYTES_PER_RISCV_VECTOR))
             emit_insn (gen_mov_internal (submode, gen_rtx_MEM (submode, ops[3]),
                                          src, ops[4]));
           else

@@ -514,10 +514,6 @@ add_input_operand (struct expand_operand *op, tree exp, unsigned argno)
 {
   tree arg = CALL_EXPR_ARG (exp, argno);
   rtx x = expand_normal (arg);
-  //if (TREE_CODE (arg) == INTEGER_CST && TYPE_UNSIGNED (TREE_TYPE (arg)))
-  //  {
-  //    x = GEN_INT ()
-  //  }
   create_input_operand (op, x, TYPE_MODE (TREE_TYPE (arg)));
 }
 
@@ -3515,7 +3511,7 @@ vssub::expand (const function_instance &instance, tree exp, rtx target) const
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (SS_MINUS, mode);
+    icode = code_for_vsssub_vv (mode);
   else
     icode = code_for_v_vx (UNSPEC_VSSUB, mode);
   return expand_builtin_insn (icode, exp, target, instance);
@@ -3528,7 +3524,7 @@ vssubu::expand (const function_instance &instance, tree exp, rtx target) const
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
   if (instance.get_operation () == OP_vv)
-    icode = code_for_v_vv (US_MINUS, mode);
+    icode = code_for_vussub_vv (mode);
   else
     icode = code_for_v_vx (UNSPEC_VSSUBU, mode);
   return expand_builtin_insn (icode, exp, target, instance);
