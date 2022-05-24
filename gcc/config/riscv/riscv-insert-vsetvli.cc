@@ -142,10 +142,10 @@ recog_clobber_vl_vtype (rtx_insn *insn)
   if (MEM_P (recog_data.operand[1]))
     return MOV_CLOBBER_REG_MEM;
   
-  if (REG_P (recog_data.operand[0]))
+  if (REG_P (recog_data.operand[1]))
     return MOV_CLOBBER_REG_REG;
   
-  if (CONST_VECTOR_P (recog_data.operand[0]))
+  if (CONST_VECTOR_P (recog_data.operand[1]))
     return MOV_CLOBBER_REG_CONST;
       
   return OTHERS;
@@ -975,27 +975,6 @@ public:
     return vinfo::get_unknown ();
   }
   
-  // Calculate the vinfo visible at the end of the block assuming this
-  // is the predecessor value, and other is change for this block.
-  vinfo
-  merge (const vinfo &other) const
-  {
-    gcc_assert (valid_p () &&
-                "Can only merge with a valid VSETVLInfo.");
-
-    // Nothing changed from the predecessor, keep it.
-    if (!other.valid_p ())
-      return *this;
-
-    // If the change is compatible with the input, we won't create a VSETVLI
-    // and should keep the predecessor.
-    if (compatible_p (other))
-      return *this;
-
-    // otherwise just use whatever is in this block.
-    return other;
-  }
-  
   // Print debug info into rtl dump file. */
   void
   print () const
@@ -1128,6 +1107,9 @@ emit_vsetvl_insn (rtx op0, rtx op1, rtx op2, rtx_insn *insn)
     emit_insn_before (gen_vsetvl (Pmode, op0, op1, op2), insn);
 }
 
+static vinfo 
+compute_info_for_instr (rtx_insn *, vinfo);
+
 // Return a vinfo representing the changes made by this VSETVLI or
 // VSETIVLI instruction.
 static vinfo
@@ -1150,9 +1132,36 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
           if (curr_info.compatible_vtype_p (new_info))
             remove_insn (insn);
         }
+      else
+        {
+          /* vsetvli X0, X0 means that the following instruction
+             use the same vl as before. */
+          basic_block bb = BLOCK_FOR_INSN (insn);
+          rtx_insn *next_insn;
+          bool find_vl_p = false;
+          for (next_insn = NEXT_INSN (insn); insn != NEXT_INSN (BB_END (bb));
+               next_insn = NEXT_INSN (next_insn))
+            {
+              if (use_vtype_p (next_insn))
+                {
+                  vinfo next_info = compute_info_for_instr (next_insn, curr_info);
+                  new_info.set_avl (next_info.get_avl ());
+                  new_info.set_avl_source (next_info.get_avl_source ());
+                  extract_insn_cached (insn);
+                  new_info.set_vtype (INTVAL (recog_data.operand[0]));
+                  
+                  if (recog_clobber_vl_vtype (next_insn) != MOV_CLOBBER_REG_REG &&
+                      recog_clobber_vl_vtype (next_insn) != OTHERS)
+                    new_info = vinfo::get_unknown ();
+                    
+                  find_vl_p = true;
+                  break;
+                }
+            }
+          gcc_assert (find_vl_p);
+        }
       return new_info;
     }
-
   if (recog_data.n_operands == 2)
     {
       gcc_assert (CONST_INT_P (recog_data.operand[1]) &&
@@ -1573,9 +1582,8 @@ compute_incoming_vl_vtype (const basic_block bb)
   // compatibility checks performed a blocks output state can change based on
   // the input state.  To cache, we'd have to add logic for finding
   // never-compatible state changes.
-  //compute_vl_vtype_changes (bb);
-  //vinfo tmpstatus = info.change;
-  vinfo tmpstatus = info.pred.merge (info.change);
+  compute_vl_vtype_changes (bb);
+  vinfo tmpstatus = info.change;
 
   // If the new exit value matches the old exit value, we don't need to revisit
   // any blocks.
@@ -1721,7 +1729,7 @@ emit_vsetvlis (const basic_block bb)
             // We haven't found any vector instructions or VL/VTYPE changes
             // yet, use the predecessor information.
             curr_info = bb_vinfo_map[bb->index].pred;
-            gcc_assert (bb_vinfo_map[bb->index].pred.valid_p () &&
+            gcc_assert (curr_info.valid_p () &&
                         "Expected a valid predecessor state.");
             if (need_vsetvli (insn, new_info, curr_info))
               {
