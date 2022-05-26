@@ -306,6 +306,33 @@ DEF_INTERNAL_OPTAB_FN (LEN_VSHL, ECF_CONST | ECF_NOTHROW,
 DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_VSHR, ECF_CONST | ECF_NOTHROW, first,
 			      len_vashr, len_vlshr, len_binary)
 
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_ADD, ECF_CONST, len_tail_add, len_tail_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_SUB, ECF_CONST, len_tail_sub, len_tail_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_MUL, ECF_CONST, len_tail_smul, len_tail_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_TAIL_DIV, ECF_CONST, first,
+			      len_tail_sdiv, len_tail_udiv, len_tail_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_TAIL_MOD, ECF_CONST, first,
+			      len_tail_smod, len_tail_umod, len_tail_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_RDIV, ECF_CONST, len_tail_sdiv, len_tail_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_TAIL_MIN, ECF_CONST, first,
+			      len_tail_smin, len_tail_umin, len_tail_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_TAIL_MAX, ECF_CONST, first,
+			      len_tail_smax, len_tail_umax, len_tail_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_AND, ECF_CONST | ECF_NOTHROW,
+		       len_tail_and, len_tail_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_IOR, ECF_CONST | ECF_NOTHROW,
+		       len_tail_ior, len_tail_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_XOR, ECF_CONST | ECF_NOTHROW,
+		       len_tail_xor, len_tail_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_SHL, ECF_CONST | ECF_NOTHROW,
+		       len_tail_ashl, len_tail_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_TAIL_SHR, ECF_CONST | ECF_NOTHROW, first,
+			      len_tail_ashr, len_tail_lshr, len_tail_binary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_VSHL, ECF_CONST | ECF_NOTHROW,
+		       len_tail_vashl, len_tail_binary)
+DEF_INTERNAL_SIGNED_OPTAB_FN (LEN_TAIL_VSHR, ECF_CONST | ECF_NOTHROW, first,
+			      len_tail_vashr, len_tail_vlshr, len_tail_binary)
+
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VADDV, ECF_CONST | ECF_NOTHROW, first, second,
 			      vec_convert_vsaddv, vec_convert_vuaddv, vec_convert_binary_v)
 DEF_INTERNAL_SIGNED_CONVERT_OPTAB_FN (VEC_CONVERT_VADDW, ECF_CONST | ECF_NOTHROW, first, second,
@@ -404,8 +431,15 @@ DEF_INTERNAL_OPTAB_FN (LEN_FMS, ECF_CONST, len_fms, len_ternary)
 DEF_INTERNAL_OPTAB_FN (LEN_FNMA, ECF_CONST, len_fnma, len_ternary)
 DEF_INTERNAL_OPTAB_FN (LEN_FNMS, ECF_CONST, len_fnms, len_ternary)
 
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_FMA, ECF_CONST, len_tail_fma, len_tail_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_FMS, ECF_CONST, len_tail_fms, len_tail_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_FNMA, ECF_CONST, len_tail_fnma, len_tail_ternary)
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_FNMS, ECF_CONST, len_tail_fnms, len_tail_ternary)
+
 DEF_INTERNAL_OPTAB_FN (LEN_NEG, ECF_CONST, len_neg, len_unary)
 DEF_INTERNAL_OPTAB_FN (LEN_NOT, ECF_CONST, len_not, len_unary)
+
+DEF_INTERNAL_OPTAB_FN (LEN_TAIL_NEG, ECF_CONST, len_tail_neg, len_tail_unary)
 
 DEF_INTERNAL_OPTAB_FN (LEN_ADD_VS, ECF_CONST, len_add_vs, len_binary)
 DEF_INTERNAL_OPTAB_FN (LEN_SUB_VS, ECF_CONST, len_sub_vs, len_binary)

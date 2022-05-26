@@ -11,5 +11,4 @@ f (double *restrict a, double *restrict b, int *lookup)
   return res;
 }
 
-/* { dg-final { scan-assembler-times {\tvfmacc.v} 1 } } */
 /* { dg-final { scan-assembler-times {\tvfredusum\.vs} 1 } } */

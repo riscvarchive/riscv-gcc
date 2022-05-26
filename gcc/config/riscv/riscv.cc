@@ -6643,6 +6643,14 @@ riscv_empty_mask_is_expensive (unsigned)
   return false;
 }
 
+/* Implement TARGET_VECTORIZE_LOOP_LEN_OVERRIDE_MASK. */
+
+static bool
+riscv_loop_len_override_mask (void)
+{
+  return true;
+}
+
 /* Vectorizer cost model target hooks.  */
 
 /* Implement targetm.vectorize.builtin_vectorization_cost.  */
@@ -7016,6 +7024,9 @@ riscv_vectorize_create_costs (vec_info *vinfo, bool costing_for_scalar)
 
 #undef TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE
 #define TARGET_VECTORIZE_EMPTY_MASK_IS_EXPENSIVE riscv_empty_mask_is_expensive
+
+#undef TARGET_VECTORIZE_LOOP_LEN_OVERRIDE_MASK
+#define TARGET_VECTORIZE_LOOP_LEN_OVERRIDE_MASK riscv_loop_len_override_mask
 
 #undef TARGET_VECTORIZE_BUILTIN_VECTORIZATION_COST
 #define TARGET_VECTORIZE_BUILTIN_VECTORIZATION_COST riscv_builtin_vectorization_cost

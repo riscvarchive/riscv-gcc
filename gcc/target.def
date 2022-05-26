@@ -2025,6 +2025,14 @@ all zeros.  GCC can then try to branch around the instruction instead.",
  (unsigned ifn),
  default_empty_mask_is_expensive)
 
+/* Function to say prefer loop len to loop mask.  */
+DEFHOOK
+(loop_len_override_mask,
+ "This hook returns true if target prefers loop len to loop mask in vectorization.",
+ bool,
+ (void), 
+ default_loop_len_override_mask)
+
 /* Target builtin that implements vector gather operation.  */
 DEFHOOK
 (builtin_gather,

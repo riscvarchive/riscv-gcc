@@ -13,4 +13,4 @@ add_loop (int *x, int n, int res)
   return res;
 }
 
-/* { dg-final { scan-assembler-times {\tvredsum\.vs} 2 } } */
+/* { dg-final { scan-assembler-times {\tvredsum\.vs} 1 } } */

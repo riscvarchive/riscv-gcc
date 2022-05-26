@@ -6218,6 +6218,10 @@ type @code{internal_fn}) should be considered expensive when the mask is
 all zeros.  GCC can then try to branch around the instruction instead.
 @end deftypefn
 
+@deftypefn {Target Hook} bool TARGET_VECTORIZE_LOOP_LEN_OVERRIDE_MASK (void)
+This hook returns true if target prefers loop len to loop mask in vectorization.
+@end deftypefn
+
 @deftypefn {Target Hook} {class vector_costs *} TARGET_VECTORIZE_CREATE_COSTS (vec_info *@var{vinfo}, bool @var{costing_for_scalar})
 This hook should initialize target-specific data structures in preparation
 for modeling the costs of vectorizing a loop or basic block.  The default

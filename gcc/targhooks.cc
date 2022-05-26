@@ -1535,6 +1535,14 @@ default_empty_mask_is_expensive (unsigned ifn)
   return ifn == IFN_MASK_STORE;
 }
 
+/* By default consider masked stores to be expensive.  */
+
+bool
+default_loop_len_override_mask (void)
+{
+  return false;
+}
+
 /* By default, the cost model accumulates three separate costs (prologue,
    loop body, and epilogue) for a vectorized loop or block.  So allocate an
    array of three unsigned ints, set it to zero, and return its address.  */

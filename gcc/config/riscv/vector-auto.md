@@ -1428,6 +1428,19 @@
   DONE;
 })
 
+(define_expand "len_tail_neg<mode>"
+  [(match_operand:VI 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (match_operand:VI 2 "register_operand")
+   (match_operand:VI 3 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_vneg_v (<MODE>mode, operands[0],
+      const0_rtx, operands[3], operands[2],
+      operands[1], riscv_vector_gen_policy (RVV_POLICY_TU)));
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [FP] General unary arithmetic corresponding to rtx codes
 ;; -------------------------------------------------------------------------
@@ -1493,6 +1506,19 @@
   emit_insn (gen_vfneg_v (<MODE>mode, operands[0], const0_rtx, const0_rtx,
       operands[1], operands[2],
       riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_tail_neg<mode>"
+  [(match_operand:VF 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (match_operand:VF 2 "register_operand")
+   (match_operand:VF 3 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_vfneg_v (<MODE>mode, operands[0],
+      const0_rtx, operands[3], operands[2],
+      operands[1], riscv_vector_gen_policy (RVV_POLICY_TU)));
   DONE;
 })
 
@@ -2731,6 +2757,21 @@
   DONE;
 })
 
+(define_expand "len_tail_<optab><mode>"
+  [(match_operand:VI 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (int_binary:VI
+    (match_operand:VI 2 "register_operand")
+    (match_operand:VI 3 "register_operand"))
+   (match_operand:VI 4 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_v<optab><mode>_vv (operands[0],
+            const0_rtx, operands[4], operands[2],
+            operands[3], operands[1], riscv_vector_gen_policy (RVV_POLICY_TU)));
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT] Addition
 ;; -------------------------------------------------------------------------
@@ -2830,6 +2871,31 @@
   DONE;
 })
 
+(define_expand "len_tail_add<mode>"
+  [(match_operand:VI 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (match_operand:VI 2 "register_operand")
+   (match_operand:VI 3 "vector_reg_or_const_dup_operand")
+   (match_operand:VI 4 "register_operand")]
+  "TARGET_VECTOR"
+{
+  if (register_operand (operands[3], <MODE>mode))
+    emit_insn (gen_vadd_vv (<MODE>mode,
+        operands[0], const0_rtx, operands[4],
+        operands[2], operands[3], operands[1],
+        riscv_vector_gen_policy (RVV_POLICY_TU)));
+  else
+    {
+      rtx x;
+      gcc_assert (const_vec_duplicate_p(operands[3], &x));
+      emit_insn (gen_v_vx (UNSPEC_VADD, <MODE>mode,
+          operands[0], const0_rtx, operands[4],
+          operands[2], x, operands[1],
+          riscv_vector_gen_policy (RVV_POLICY_TU)));
+    }
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT] Subtraction
 ;; -------------------------------------------------------------------------
@@ -2898,6 +2964,21 @@
         operands[0], operands[1], operands[4],
         operands[2], operands[3], operands[5],
         riscv_vector_gen_policy (RVV_POLICY_MU)));
+  DONE;
+})
+
+(define_expand "len_tail_sub<mode>"
+  [(match_operand:VI 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (match_operand:VI 2 "register_operand")
+   (match_operand:VI 3 "register_operand")
+   (match_operand:VI 4 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_vsub_vv (<MODE>mode,
+        operands[0], const0_rtx, operands[4],
+        operands[2], operands[3], operands[1],
+        riscv_vector_gen_policy (RVV_POLICY_TU)));
   DONE;
 })
 
@@ -3045,6 +3126,35 @@
   DONE;
 })
 
+(define_expand "len_tail_<optab><mode>"
+  [(match_operand:VI 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (any_shift:VI
+    (match_operand:VI 2 "register_operand")
+    (match_operand:<VSUB> 3 "reg_or_uimm5_operand"))
+   (match_operand:VI 4 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_v<optab><mode>_vx (operands[0], const0_rtx, operands[4],
+          operands[2], operands[3], operands[1], riscv_vector_gen_policy (RVV_POLICY_TU)));
+  DONE;
+})
+
+(define_expand "len_tail_v<optab><mode>"
+  [(match_operand:VI 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (any_shift:VI
+    (match_operand:VI 2 "register_operand")
+    (match_operand:VI 3 "register_operand"))
+   (match_operand:VI 4 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_v<optab><mode>_vv (operands[0], const0_rtx,
+            operands[4], operands[2], operands[3],
+            operands[1], riscv_vector_gen_policy (RVV_POLICY_TU)));
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT] Highpart multiplication
 ;; -------------------------------------------------------------------------
@@ -3189,6 +3299,30 @@
   DONE;
 })
 
+(define_expand "len_tail_<optab><mode>"
+  [(match_operand:VF 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (fp_binary:VF
+    (match_operand:VF 2 "register_operand")
+    (match_operand:VF 3 "vector_reg_or_const_dup_operand"))
+   (match_operand:VF 4 "register_operand")]
+  "TARGET_VECTOR"
+{
+  if (register_operand (operands[3], <MODE>mode))
+    emit_insn (gen_vf<optab><mode>_vv (operands[0], const0_rtx,
+            operands[4], operands[2], operands[3],
+            operands[1], riscv_vector_gen_policy (RVV_POLICY_TU)));
+  else
+    {
+      rtx f;
+      gcc_assert (const_vec_duplicate_p(operands[3], &f));
+      emit_insn (gen_vf<optab><mode>_vf (operands[0], const0_rtx, operands[4],
+          operands[2], force_reg (<VSUB>mode, f), operands[1],
+          riscv_vector_gen_policy (RVV_POLICY_TU)));
+    }
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [FP] Subtraction & Division
 ;; -------------------------------------------------------------------------
@@ -3263,6 +3397,21 @@
   emit_insn (gen_vf<optab><mode>_vv (operands[0], operands[1],
             operands[4], operands[2], operands[3],
             operands[5], riscv_vector_gen_policy (RVV_POLICY_MU)));
+  DONE;
+})
+
+(define_expand "len_tail_<optab><mode>"
+  [(match_operand:VF 0 "register_operand")
+   (match_operand 1 "p_reg_or_const_csr_operand")
+   (minus_div:VF
+    (match_operand:VF 2 "register_operand")
+    (match_operand:VF 3 "register_operand"))
+   (match_operand:VF 4 "register_operand")]
+  "TARGET_VECTOR"
+{
+  emit_insn (gen_vf<optab><mode>_vv (operands[0], const0_rtx,
+            operands[4], operands[2], operands[3],
+            operands[1], riscv_vector_gen_policy (RVV_POLICY_TU)));
   DONE;
 })
 
@@ -4601,7 +4750,7 @@
   [(match_operand:<VSUB> 0 "register_operand")
 	 (match_operand:<VSUB> 1 "register_operand")
 	 (match_operand:VF 2 "register_operand")
-   (match_operand 3 "pmode_register_operand")]
+   (match_operand 3 "p_reg_or_const_csr_operand")]
   "TARGET_VECTOR"
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);

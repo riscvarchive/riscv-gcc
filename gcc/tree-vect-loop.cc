@@ -7464,9 +7464,7 @@ vectorizable_reduction (loop_vec_info loop_vinfo,
       else
 	{
     /* We prefer to use len_fold_left_plus if it is defined. */
-    if (tree_code (op.code) == PLUS_EXPR && 
-        direct_internal_fn_supported_p (IFN_LEN_FOLD_LEFT_PLUS, vectype_in,
-						      OPTIMIZE_FOR_SPEED))
+    if (targetm.vectorize.loop_len_override_mask ())
       vect_record_loop_len (loop_vinfo, lens, ncopies * vec_num, 
 			       vectype_in, 1);
     else

@@ -132,6 +132,9 @@ init_internal_fns ()
 #define len_unary_direct { 0, 0, true }
 #define len_binary_direct { 0, 0, true }
 #define len_ternary_direct { 0, 0, true }
+#define len_tail_unary_direct { 1, 1, true }
+#define len_tail_binary_direct { 1, 1, true }
+#define len_tail_ternary_direct { 1, 1, true }
 #define len_cond_unary_direct { 1, 1, true }
 #define len_cond_binary_direct { 1, 1, true }
 #define len_cond_ternary_direct { 1, 1, true }
@@ -4033,6 +4036,15 @@ expand_while_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 #define expand_len_ternary_optab_fn(FN, STMT, OPTAB) \
   expand_direct_optab_fn (FN, STMT, OPTAB, 4)
 
+#define expand_len_tail_unary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 3)
+
+#define expand_len_tail_binary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 4)
+
+#define expand_len_tail_ternary_optab_fn(FN, STMT, OPTAB) \
+  expand_direct_optab_fn (FN, STMT, OPTAB, 5)
+
 #define expand_len_cond_unary_optab_fn(FN, STMT, OPTAB) \
   expand_direct_optab_fn (FN, STMT, OPTAB, 4)
   
@@ -4137,6 +4149,9 @@ multi_vector_optab_supported_p (convert_optab optab, tree_pair types,
 #define direct_len_unary_optab_supported_p direct_optab_supported_p
 #define direct_len_binary_optab_supported_p direct_optab_supported_p
 #define direct_len_ternary_optab_supported_p direct_optab_supported_p
+#define direct_len_tail_unary_optab_supported_p direct_optab_supported_p
+#define direct_len_tail_binary_optab_supported_p direct_optab_supported_p
+#define direct_len_tail_ternary_optab_supported_p direct_optab_supported_p
 #define direct_len_cond_unary_optab_supported_p direct_optab_supported_p
 #define direct_len_cond_binary_optab_supported_p direct_optab_supported_p
 #define direct_len_cond_ternary_optab_supported_p direct_optab_supported_p
@@ -4515,6 +4530,51 @@ get_with_length_internal_fn (tree_code code)
     {
 #define CASE(CODE, IFN) case CODE: return IFN;
       FOR_EACH_CODE_MAPPING_WTIH_LENGTH(CASE)
+#undef CASE
+    default:
+      return IFN_LAST;
+    }
+}
+
+/* Invoke T(CODE, IFN) for each length control function IFN that maps to a
+   tree code CODE.  */
+#define FOR_EACH_CODE_MAPPING_WTIH_LENGTH_TAIL(T) \
+  T (PLUS_EXPR, IFN_LEN_TAIL_ADD) \
+  T (MINUS_EXPR, IFN_LEN_TAIL_SUB) \
+  T (MULT_EXPR, IFN_LEN_TAIL_MUL) \
+  T (TRUNC_DIV_EXPR, IFN_LEN_TAIL_DIV) \
+  T (TRUNC_MOD_EXPR, IFN_LEN_TAIL_MOD) \
+  T (RDIV_EXPR, IFN_LEN_TAIL_RDIV) \
+  T (MIN_EXPR, IFN_LEN_TAIL_MIN) \
+  T (MAX_EXPR, IFN_LEN_TAIL_MAX) \
+  T (BIT_AND_EXPR, IFN_LEN_TAIL_AND) \
+  T (BIT_IOR_EXPR, IFN_LEN_TAIL_IOR) \
+  T (BIT_XOR_EXPR, IFN_LEN_TAIL_XOR) \
+  T (LSHIFT_EXPR, IFN_LEN_TAIL_SHL) \
+  T (RSHIFT_EXPR, IFN_LEN_TAIL_SHR) \
+  T (NEGATE_EXPR, IFN_LEN_TAIL_NEG)
+
+/* Return a function that only performs CODE when a certain condition is met
+   and that uses a given fallback value otherwise.  For example, if CODE is
+   a binary operation associated with conditional function FN:
+
+     LHS = FN (LEN, A, B, ELSE)
+
+   is equivalent to the C expression:
+
+     LHS = LEN ? A CODE B : ELSE;
+
+   operating elementwise if the operands are vectors.
+
+   Return IFN_LAST if no such function exists.  */
+
+internal_fn
+get_with_length_tail_internal_fn (tree_code code)
+{
+  switch (code)
+    {
+#define CASE(CODE, IFN) case CODE: return IFN;
+      FOR_EACH_CODE_MAPPING_WTIH_LENGTH_TAIL(CASE)
 #undef CASE
     default:
       return IFN_LAST;

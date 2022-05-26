@@ -7871,6 +7871,10 @@ and,
  (IFN_LEN_ADD (IFN_LEN_NEG @0 @1) @2 @1)
   (IFN_LEN_SUB @2 @0 @1))
 
+(simplify
+ (IFN_LEN_TAIL_ADD @1 (IFN_LEN_NEG @0 @1) @2 @3)
+  (IFN_LEN_TAIL_SUB @1 @2 @0 @3))
+
 /* Simplify:
      a = vec_duplicate a1 or CONSTRUCTOR a1
      r = b op a

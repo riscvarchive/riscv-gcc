@@ -14,5 +14,4 @@
 REDUC (float)
 REDUC (double)
 
-/* { dg-final { scan-assembler-times {\tvfnmsac.v} 2 } } */
-/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 3 } } */
+/* { dg-final { scan-assembler-times {\tvfredusum\.vs} 2 } } */

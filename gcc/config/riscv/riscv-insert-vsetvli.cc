@@ -104,6 +104,30 @@ enum clobber_pat_enum
 
 /* Helper functions. */
 
+static unsigned int
+get_policy_offset (rtx_insn *insn)
+{
+  unsigned int offset = 1;
+  if (GET_CODE (PATTERN (insn)) == PARALLEL)
+    {
+      if (get_attr_type (insn) == TYPE_VCMP)
+        offset = 2;
+    }
+  return offset;
+}
+
+static unsigned int
+get_vl_offset (rtx_insn *insn)
+{
+  unsigned int offset = 2;
+  if (GET_CODE (PATTERN (insn)) == PARALLEL)
+    {
+      if (get_attr_type (insn) == TYPE_VCMP)
+        offset = 3;
+    }
+  return offset;
+}
+
 static enum clobber_pat_enum
 recog_clobber_vl_vtype (rtx_insn *insn)
 {
@@ -287,12 +311,7 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 
   if (replace == REPLACE_VL && !use_vlmax_p (insn))
     {
-      unsigned int offset = 2;
-      if (GET_CODE (PATTERN (insn)) == PARALLEL)
-        {
-          if (get_attr_type (insn) == TYPE_VCMP)
-            offset = 3;
-        }
+      unsigned int offset = get_vl_offset (insn);
       validate_change (insn,
                        recog_data.operand_loc[recog_data.n_operands - offset],
                        x, false);
@@ -512,25 +531,25 @@ public:
   {
     return (enum vlmul_field_enum) vlmul;
   }
-
-  enum vector_policy
-  get_vma () const
-  {
-    return vma ? vector_policy::agnostic : vector_policy::undisturbed;
-  }
-
-  enum vector_policy
+  
+  unsigned int
   get_vta () const
   {
-    return vta ? vector_policy::agnostic : vector_policy::undisturbed;
+    return vta;
   }
   
+  unsigned int
+  get_vma () const
+  {
+    return vma;
+  }
+
   uint8_t
   get_store_p () const
   {
     return store_p;
   }
-
+  
   bool
   compare_vl (const vinfo &info) const
   {
@@ -607,7 +626,23 @@ public:
 
     return rtx_equal_p (get_avl_source (), other.get_avl_source ());
   }
-
+  
+  void
+  set_vma (unsigned int vma)
+  {
+    gcc_assert (valid_p () && !unknown_p () &&
+                "Can't set VTYPE for uninitialized or unknown.");
+    vma = vma;
+  }
+  
+  void
+  set_vta (unsigned int vta)
+  {
+    gcc_assert (valid_p () && !unknown_p () &&
+                "Can't set VTYPE for uninitialized or unknown.");
+    vta = vta;
+  }
+  
   void
   set_vtype (unsigned int vtype)
   {
@@ -1185,45 +1220,48 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
 static unsigned int
 analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
 {
-  vector_policy vma_default = vector_policy::undisturbed;
-  vector_policy vta_default = vector_policy::agnostic;
-
   if (!use_vl_p (insn))
-    return get_vma_vta (vma_default, vta_default);
+    return 1;
   
   if (recog_clobber_vl_vtype (insn) != OTHERS)
-    return get_vma_vta (vma_default, vta_default);
+    return 1;
     
   if (use_vlmax_p (insn))
-    return get_vma_vta (vma_default, vta_default);
-  unsigned int offset = 1;
-  if (GET_CODE (PATTERN (insn)) == PARALLEL)
-    {
-      if (get_attr_type (insn) == TYPE_VCMP)
-        offset = 2;
-    }
+    return 1;
+  unsigned int offset = get_policy_offset (insn);
   extract_insn_cached (insn);
   vector_policy vma =
       riscv_vector::get_vma (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
   vector_policy vta =
       riscv_vector::get_vta (INTVAL (recog_data.operand[recog_data.n_operands - offset]));
-  if (vma == vector_policy::any)
+  unsigned int vma_p = 0;
+  unsigned int vta_p = 0;
+  if (vma == vector_policy::agnostic)
+    vma_p = 1;
+  else if (vma == vector_policy::undisturbed)
+    vma_p = 0;
+  else
     {
       /* For N/A vma we remain the last vma if it valid. */
       if (curr_info.valid_p () && !curr_info.unknown_p ())
-        vma = curr_info.get_vma ();
+        vma_p = curr_info.get_vma ();
       else
-        vma = vma_default;
+        vma_p = 0;
     }
-  if (vta == vector_policy::any)
+  
+  if (vta == vector_policy::agnostic)
+    vta_p = 1;
+  else if (vta == vector_policy::undisturbed)
+    vta_p = 0;
+  else
     {
       /* For N/A vta we remain the last vta if it valid. */
       if (curr_info.valid_p () && !curr_info.unknown_p ())
-        vta = curr_info.get_vta ();
+        vta_p = curr_info.get_vta ();
       else
-        vta = vta_default;
+        vta_p = 1;
     }
-  return get_vma_vta (vma, vta);
+  return (vma_p << 1) | vta_p;
 }
 
 static bool
@@ -1263,8 +1301,6 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
 {
   vinfo info;
 
-  unsigned int vma_vta = analyze_vma_vta (insn, curr_info);
-
   extract_insn_cached (insn);
   
   if (use_vl_p (insn))
@@ -1275,12 +1311,7 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
         info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
       else
         {
-          unsigned int offset = 2;
-          if (GET_CODE (PATTERN (insn)) == PARALLEL)
-            {
-              if (get_attr_type (insn) == TYPE_VCMP)
-                offset = 3;
-            }
+          unsigned int offset = get_vl_offset (insn);
           info.set_avl_source (get_avl_source (
               recog_data.operand[recog_data.n_operands - offset], insn));
           info.set_avl (recog_data.operand[recog_data.n_operands - offset]);
@@ -1293,17 +1324,14 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
   bool st_p = store_insn_p (insn);
   bool scalar_move_p = scalar_move_insn_p (insn);
 
-  unsigned int vta =
-      riscv_vector::get_vta (vma_vta) == vector_policy::agnostic ||
-              riscv_vector::get_vta (vma_vta) == vector_policy::any
-          ? 1
-          : 0;
-  unsigned int vma = get_vma (vma_vta) == vector_policy::agnostic ? 1 : 0;
+  unsigned int vma_vta = analyze_vma_vta (insn, curr_info);
+  unsigned int vta = vma_vta & 0x1;
+  unsigned int vma = (vma_vta >> 1) & 0x1;
   info.set_vtype (riscv_classify_vlmul_field (mode),
                   riscv_classify_vsew_field (mode),
                   /*TailAgnostic*/ vta, /*MaskAgnostic*/ vma,
                   riscv_vector_mask_mode_p (mode), st_p, scalar_move_p);
-
+  
   return info;
 }
 
@@ -1723,7 +1751,7 @@ emit_vsetvlis (const basic_block bb)
     if (use_vtype_p (insn))
       {
         vinfo new_info = compute_info_for_instr (insn, curr_info);
-
+        
         if (!curr_info.valid_p ())
           {
             // We haven't found any vector instructions or VL/VTYPE changes
