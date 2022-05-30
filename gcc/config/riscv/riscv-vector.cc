@@ -1649,7 +1649,7 @@ riscv_vector_expand_while_len (rtx *operands)
     }
   unsigned int vlmul = riscv_classify_vlmul_field (mode);
   unsigned int vsew = riscv_classify_vsew_field (mode);
-  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+  unsigned vtype = (vsew << 3) | (vlmul & 0x7);
   emit_insn (gen_vsetvl (Pmode, operands[0], operands[1], GEN_INT (vtype)));
 }
 

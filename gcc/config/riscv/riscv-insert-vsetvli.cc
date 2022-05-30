@@ -2135,6 +2135,16 @@ rest_of_handle_insert_vsetvli (function *fn)
     {
       bb_vinfo_map.clear ();
       bb_queue.clear ();
+      if (optimize >= 2)
+        {
+          // Finalization.
+          free_dominance_info (CDI_DOMINATORS);
+          if (crtl->ssa->perform_pending_updates ())
+            cleanup_cfg (0);
+    
+          delete crtl->ssa;
+          crtl->ssa = nullptr;
+        }
       return 0;
     }
 
