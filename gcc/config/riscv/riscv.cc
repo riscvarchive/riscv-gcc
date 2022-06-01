@@ -3482,7 +3482,13 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
               use 1 vector to pass. */
           int nvecs;
           if (riscv_tuple_mode_p (mode))
-            nvecs = riscv_classify_nf (mode);
+            {
+              int nf = riscv_classify_nf (mode);
+              poly_int64 poly_offset (GET_MODE_SIZE (mode).coeffs[0] / nf, GET_MODE_SIZE (mode).coeffs[1] / nf);
+              nvecs = known_le (poly_offset, BYTES_PER_RISCV_VECTOR) ? 1 :
+                exact_div (poly_offset, BYTES_PER_RISCV_VECTOR).to_constant ();
+              nvecs = nvecs * nf;
+            }
           else
             nvecs = known_le (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR) ? 1 :
                 exact_div (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR).to_constant ();
@@ -5096,8 +5102,11 @@ riscv_expand_epilogue (int style)
     }
 
   /* Restore the registers.  */
-  riscv_for_each_saved_reg (restore_offset, riscv_restore_reg,
+  if ((frame->mask | frame->fmask) != 0)
+    {
+      riscv_for_each_saved_reg (restore_offset, riscv_restore_reg,
 			    true, style == EXCEPTION_RETURN);
+    }
 
   if (need_barrier_p)
     riscv_emit_stack_tie ();

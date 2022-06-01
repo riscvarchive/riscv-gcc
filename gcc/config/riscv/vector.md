@@ -1814,24 +1814,15 @@
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
-  {
-    const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
-    char buf[64] = {0};
-    if (satisfies_constraint_vj (operands[4]))
-      {
-        rtx elt;
-        const_vec_duplicate_p (operands[4], &elt);
-        const char *insn = "vadd.vi\t%0,%3";
-        snprintf (buf, sizeof (buf), "%s,%d%s", insn, (int)(-INTVAL (elt)), tail);
-      }
-    else
-      {
-        const char *insn = "vsub.vv\t%0,%3,%4";
-        snprintf (buf, sizeof (buf), "%s%s", insn, tail);
-      }
-    output_asm_insn (buf, operands);
-    return "";
-  }
+  "@
+   vsub.vv\t%0,%3,%4,%1.t
+   vadd.vi\t%0,%3,%V4,%1.t
+   vsub.vv\t%0,%3,%4,%1.t
+   vadd.vi\t%0,%3,%V4,%1.t
+   vsub.vv\t%0,%3,%4
+   vadd.vi\t%0,%3,%V4
+   vsub.vv\t%0,%3,%4
+   vadd.vi\t%0,%3,%V4"
   [(set_attr "type" "varith")
    (set_attr "mode" "<MODE>")])
 
@@ -4145,25 +4136,15 @@
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
-  {
-    const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
-    char buf[64] = {0};
-    if (satisfies_constraint_vj (operands[4]))
-      {
-        rtx elt;
-        const_vec_duplicate_p (operands[4], &elt);
-        const char *insn = "vsadd.vi\t%0,%3";
-        const char *tail = "%1.t";
-        snprintf (buf, sizeof (buf), "%s,%d,%s", insn, (int)(-INTVAL (elt)), tail);
-      }
-    else
-      {
-        const char *insn = "vssub.vv\t%0,%3,%4";
-        snprintf (buf, sizeof (buf), "%s%s", insn, tail);
-      }
-    output_asm_insn (buf, operands);
-    return "";
-  }
+  "@
+   vssub.vv\t%0,%3,%4,%1.t
+   vsadd.vi\t%0,%3,%V4,%1.t
+   vssub.vv\t%0,%3,%4,%1.t
+   vsadd.vi\t%0,%3,%V4,%1.t
+   vssub.vv\t%0,%3,%4
+   vsadd.vi\t%0,%3,%V4
+   vssub.vv\t%0,%3,%4
+   vsadd.vi\t%0,%3,%V4"
   [(set_attr "type" "vsarith")
    (set_attr "mode" "<MODE>")])
    
