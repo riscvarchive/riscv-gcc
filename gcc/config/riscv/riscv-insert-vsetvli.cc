@@ -835,6 +835,9 @@ public:
   }
 
   // Check if the VTYPE for these two VSETVLI Infos produce the same VLMAX.
+  // Note that having the same VLMAX ensures that both share the same
+  // function from AVL to VL; that is, they must produce the same VL value
+  // for any given AVL value.
   bool
   vlmax_equal_p (const vinfo &other) const
   {
@@ -1395,6 +1398,19 @@ need_vsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
 }
 
 static bool
+needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
+{
+  if (!need_vsetvli (insn, require, curr_info))
+    return false;
+  // If this is a unit-stride or strided load/store, we may be able to use the
+  // EMUL=(EEW/SEW)*LMUL relationship to avoid changing VTYPE.
+  return !can_skip_vsetvli_for_load_store_p (insn, require, curr_info);
+}
+
+// If we weren't able to prove a vsetvli was directly unneeded, it might still
+// be unneeded if the AVL is a phi node where all incoming values are VL
+// outputs from the last VSETVLI in their respective basic blocks.
+static bool
 need_vsetvli_phi (const vinfo &new_info, rtx_insn *rtl)
 {
   /* Optimize the case as follows:
@@ -1537,8 +1553,7 @@ compute_vl_vtype_changes (basic_block bb)
             // vtype. NOTE: We only do this if the vtype we're comparing
             // against was created in this block. We need the first and third
             // phase to treat the store the same way.
-            if (!can_skip_vsetvli_for_load_store_p (insn, new_info, info.change) &&
-                need_vsetvli (insn, new_info, info.change))
+            if (needvsetvli (insn, new_info, info.change))
               info.change = new_info;
           }
       }
@@ -1760,14 +1775,10 @@ emit_vsetvlis (const basic_block bb)
           {
             // If this instruction isn't compatible with the previous VL/VTYPE
             // we need to insert a VSETVLI.
-            // If this is a unit-stride or strided load/store, we may be able
-            // to use the EMUL=(EEW/SEW)*LMUL relationship to avoid changing
             // vtype. NOTE: We can't use predecessor information for the store.
             // We must treat it the same as the first phase so that we produce
             // the correct vl/vtype for succesor blocks.
-            if (!can_skip_vsetvli_for_load_store_p (insn, new_info,
-                                                    curr_info) &&
-                need_vsetvli (insn, new_info, curr_info))
+            if (needvsetvli (insn, new_info, curr_info))
               {
                 insert_vsetvli (insn, new_info, curr_info);
                 curr_info = new_info;
@@ -1864,7 +1875,7 @@ dolocalprepass (const basic_block bb)
                   }
               }
 
-            // If AVL is defined by a vsetvli with the same vtype, we can
+            // If AVL is defined by a vsetvli with the same VLMAX, we can
             // replace the AVL operand with the AVL of the defining vsetvli.
             // We avoid general register AVLs to avoid extending live ranges
             // without being sure we can kill the original source reg entirely.
@@ -1880,7 +1891,7 @@ dolocalprepass (const basic_block bb)
                     if (is_vector_config_instr (def_rtl))
                       {
                         vinfo def_info = get_info_for_vsetvli (def_rtl, curr_info);
-                        if (def_info.vtype_equal_p (require) &&
+                        if (def_info.vlmax_equal_p (require) &&
                             (def_info.avl_const_p () ||
                             (def_info.avl_reg_p () &&
                             rtx_equal_p (def_info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM)))))
@@ -1969,17 +1980,10 @@ has_fixed_result (const vinfo &info)
 {
   if (!info.avl_const_p ())
     // VLMAX is always the same value.
-    // TODO: Could extend to other registers by looking at the associated
-    // vreg def placement.
+    // TODO: Could extend to other registers by looking at the associated vreg
+    // def placement.
     return rtx_equal_p (info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM));
-
-  if (VLMUL_FIELD_000 != info.get_vlmul ())
-    // TODO: Generalize the code below to account for LMUL
-    return false;
-  
-  if (!BYTES_PER_RISCV_VECTOR.is_constant ())
-    return false;
-    
+ 
   unsigned int avl = INTVAL (info.get_avl ());
   unsigned int vsew = info.get_vsew ();
   machine_mode inner = vsew_to_int_mode (vsew);
@@ -1987,6 +1991,10 @@ has_fixed_result (const vinfo &info)
   unsigned avl_in_bits = avl * sew;
   machine_mode mode = riscv_vector::vector_builtin_mode (
             as_a<scalar_mode> (inner), info.get_vlmul ());
+  
+  if (!BYTES_PER_RISCV_VECTOR.is_constant ())
+    return GET_MODE_BITSIZE (mode).to_constant () >= 128;
+    
   return GET_MODE_BITSIZE (mode).to_constant () >= avl_in_bits;
 }
 
@@ -2022,12 +2030,12 @@ dopre (const basic_block bb)
       return;
   }
       
-  // unreachable, single pred, or full redundancy.  Note that FRE
-  // is handled by phase 3.
+  // Unreachable, single pred, or full redundancy. Note that FRE is handled by
+  // phase 3.
   if (!unavailable_pred || !available_info.valid_p ())
     return;
 
-  // critical edge - TODO: consider splitting?
+  // Critical edge - TODO: consider splitting?
   if (EDGE_COUNT (unavailable_pred->succs) != 1)
     return;
 
