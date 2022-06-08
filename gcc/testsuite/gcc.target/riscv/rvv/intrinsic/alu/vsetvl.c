@@ -5,14 +5,6 @@
 #include <stddef.h>
 #include <riscv_vector.h>
 
-
-/* { dg-do compile } */
-/* { dg-skip-if "test vector intrinsic" { *-*-* } { "*" } { "-march=rv*v*" } } */
-
-#include <stddef.h>
-#include <riscv_vector.h>
-
-
 size_t test_vsetvl_e8mf8_imm0()
 {
   size_t vl = vsetvl_e8mf8(0);
@@ -44,7 +36,7 @@ size_t test_vsetvlmax_e8mf8()
   size_t vl = vsetvlmax_e8mf8();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*mf8,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*mf8,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e8mf4_imm0()
 {
@@ -77,7 +69,7 @@ size_t test_vsetvlmax_e8mf4()
   size_t vl = vsetvlmax_e8mf4();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*mf4,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*mf4,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e8mf2_imm0()
 {
@@ -110,7 +102,7 @@ size_t test_vsetvlmax_e8mf2()
   size_t vl = vsetvlmax_e8mf2();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*mf2,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*mf2,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e8m1_imm0()
 {
@@ -143,7 +135,7 @@ size_t test_vsetvlmax_e8m1()
   size_t vl = vsetvlmax_e8m1();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*m1,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*m1,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e8m2_imm0()
 {
@@ -176,7 +168,7 @@ size_t test_vsetvlmax_e8m2()
   size_t vl = vsetvlmax_e8m2();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*m2,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*m2,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e8m4_imm0()
 {
@@ -209,7 +201,7 @@ size_t test_vsetvlmax_e8m4()
   size_t vl = vsetvlmax_e8m4();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*m4,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*m4,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e8m8_imm0()
 {
@@ -242,7 +234,7 @@ size_t test_vsetvlmax_e8m8()
   size_t vl = vsetvlmax_e8m8();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*m8,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e8,\s*m8,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e16mf4_imm0()
 {
@@ -275,7 +267,7 @@ size_t test_vsetvlmax_e16mf4()
   size_t vl = vsetvlmax_e16mf4();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*mf4,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*mf4,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e16mf2_imm0()
 {
@@ -308,7 +300,7 @@ size_t test_vsetvlmax_e16mf2()
   size_t vl = vsetvlmax_e16mf2();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*mf2,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*mf2,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e16m1_imm0()
 {
@@ -341,7 +333,7 @@ size_t test_vsetvlmax_e16m1()
   size_t vl = vsetvlmax_e16m1();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*m1,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*m1,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e16m2_imm0()
 {
@@ -374,7 +366,7 @@ size_t test_vsetvlmax_e16m2()
   size_t vl = vsetvlmax_e16m2();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*m2,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*m2,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e16m4_imm0()
 {
@@ -407,7 +399,7 @@ size_t test_vsetvlmax_e16m4()
   size_t vl = vsetvlmax_e16m4();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*m4,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*m4,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e16m8_imm0()
 {
@@ -440,7 +432,7 @@ size_t test_vsetvlmax_e16m8()
   size_t vl = vsetvlmax_e16m8();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*m8,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e16,\s*m8,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e32mf2_imm0()
 {
@@ -473,7 +465,7 @@ size_t test_vsetvlmax_e32mf2()
   size_t vl = vsetvlmax_e32mf2();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*mf2,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*mf2,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e32m1_imm0()
 {
@@ -506,7 +498,7 @@ size_t test_vsetvlmax_e32m1()
   size_t vl = vsetvlmax_e32m1();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*m1,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*m1,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e32m2_imm0()
 {
@@ -539,7 +531,7 @@ size_t test_vsetvlmax_e32m2()
   size_t vl = vsetvlmax_e32m2();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*m2,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*m2,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e32m4_imm0()
 {
@@ -572,7 +564,7 @@ size_t test_vsetvlmax_e32m4()
   size_t vl = vsetvlmax_e32m4();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*m4,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*m4,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e32m8_imm0()
 {
@@ -605,7 +597,7 @@ size_t test_vsetvlmax_e32m8()
   size_t vl = vsetvlmax_e32m8();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*m8,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e32,\s*m8,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e64m1_imm0()
 {
@@ -638,7 +630,7 @@ size_t test_vsetvlmax_e64m1()
   size_t vl = vsetvlmax_e64m1();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e64,\s*m1,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e64,\s*m1,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e64m2_imm0()
 {
@@ -671,7 +663,7 @@ size_t test_vsetvlmax_e64m2()
   size_t vl = vsetvlmax_e64m2();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e64,\s*m2,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e64,\s*m2,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e64m4_imm0()
 {
@@ -704,7 +696,7 @@ size_t test_vsetvlmax_e64m4()
   size_t vl = vsetvlmax_e64m4();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e64,\s*m4,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e64,\s*m4,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */
 
 size_t test_vsetvl_e64m8_imm0()
 {
@@ -737,4 +729,4 @@ size_t test_vsetvlmax_e64m8()
   size_t vl = vsetvlmax_e64m8();
   return vl;
 }
-/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e64,\s*m8,\s*ta,\s*mu} 1 } } */
+/* { dg-final { scan-assembler-times {vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),\s*zero,\s*e64,\s*m8,\s*ta,\s*mu} 1 { target { no-opts "-mriscv-vector-bits=*" } } } } */

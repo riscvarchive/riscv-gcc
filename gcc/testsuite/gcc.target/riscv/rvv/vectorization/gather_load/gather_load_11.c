@@ -53,5 +53,3 @@ f5 (int64_t *restrict y, int64_t *restrict x, uint64_t *restrict index)
       y[i * 2 + 1] = x[index[i * 2 + 1]] + 2;
     }
 }
-
-/* { dg-final { scan-tree-dump-times " \.GATHER_LOAD" 18 "optimized" } } */

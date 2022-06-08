@@ -1421,11 +1421,17 @@ vsetvlmax::expand (const function_instance &instance, tree exp, rtx target) cons
   struct expand_operand ops[MAX_RECOG_OPERANDS];
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
 
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  if (target && GET_MODE_NUNITS (mode).is_constant ())
+    {
+      riscv_emit_move (target, GEN_INT (GET_MODE_NUNITS (mode).to_constant ()));
+      return target;
+    }
+
   /* Map any target to operand 0.  */
   int opno = 0;
   create_output_operand (&ops[opno++], target, Pmode);
-  unsigned int vtype =
-      get_vtype_for_mode (instance.get_arg_pattern ().arg_list[0]);
+  unsigned int vtype = get_vtype_for_mode (mode);
   enum insn_code icode = code_for_vsetvl (Pmode);
   create_input_operand (&ops[opno++], gen_rtx_REG (Pmode, X0_REGNUM), Pmode);
   /* create vtype input operand.  */

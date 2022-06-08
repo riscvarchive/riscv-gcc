@@ -87,8 +87,8 @@ eor_loop (unsigned int *x, int n, unsigned int *res)
 }
 
 /* { dg-final { scan-assembler-times {\tvredsum\.vs} 2 } } */
-/* { dg-final { scan-assembler-times {\tvredmaxu\.vs} 4 } } */
-/* { dg-final { scan-assembler-times {\tvredminu\.vs} 4 } } */
+/* { dg-final { scan-assembler-times {\tvredmaxu\.vs} 2 } } */
+/* { dg-final { scan-assembler-times {\tvredminu\.vs} 2 } } */
 /* { dg-final { scan-assembler-times {\tvredand\.vs} 2 } } */
 /* { dg-final { scan-assembler-times {\tvredor\.vs} 2 } } */
 /* { dg-final { scan-assembler-times {\tvredxor\.vs} 2 } } */

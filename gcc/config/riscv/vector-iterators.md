@@ -169,6 +169,8 @@
   UNSPEC_VMERGE
   UNSPEC_VMV
   UNSPEC_VMVS
+  
+  UNSPEC_WHILE_LEN
 ])
 
 ;; All vector modes supported.

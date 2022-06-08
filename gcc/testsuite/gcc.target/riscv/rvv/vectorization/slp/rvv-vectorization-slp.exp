@@ -24,26 +24,19 @@ if ![istarget riscv*-*-*] then {
 # Load support procs.
 load_lib gcc-dg.exp
 
-set gcc_march_list [list "-march=rv64gcv" "-march=rv64gv"]
+set gcc_march "rv64gcv_zfh"
 if [istarget riscv32-*-*] then {
-  set gcc_march_list [list "-march=rv32gcv" "-march=rv32gv"]
-}
-
-# If a testcase doesn't have special options, use these.
-global DEFAULT_CFLAGS
-if ![info exists DEFAULT_CFLAGS] then {
-    set DEFAULT_CFLAGS " -ansi -pedantic-errors"
+  set gcc_march "rv32gcv_zfh"
 }
 
 # Initialize `dg'.
 dg-init
 
 # Main loop.
-set CFLAGS "$DEFAULT_CFLAGS -std=c99 -pedantic-errors -Wno-pointer-sign -Wno-pointer-arith"
-set dg-do-what-default "run"
-foreach march $gcc_march_list {
-        gcc-dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/*.\[cS\]]] \
-                $march $CFLAGS
-}
+set CFLAGS "-march=$gcc_march"
+set files [glob -nocomplain $srcdir/$subdir/*.\[cS\]]
+
+dg-runtest [lsort $files] "" $CFLAGS
+
 # All done.
 dg-finish

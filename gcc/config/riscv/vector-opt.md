@@ -75,6 +75,29 @@
   [(set_attr "type" "vsetvl")
    (set_attr "mode" "none")])
 
+(define_insn_and_rewrite "*vsetvl_<mode>_3"
+  [(parallel
+    [(set (match_operand:X 0 "register_operand" "=&r")
+      (unspec:X
+        [(match_operand 1 "const_csr_operand" "K")] UNSPEC_VSETVLI))
+     (set (reg:SI VL_REGNUM)
+      (unspec:SI
+        [(match_dup 1)] UNSPEC_VSETVLI))
+     (set (reg:SI VTYPE_REGNUM)
+       (unspec:SI
+        [(match_operand 2 "const_int_operand")] UNSPEC_VSETVLI))
+     (set (match_operand:X 3 "register_operand" "=&r") (match_dup 1))])]
+  "TARGET_VECTOR"
+  "#"
+  "&& 1"
+  {
+    emit_insn (gen_vsetvl (Pmode, operands[0], operands[1], operands[2]));
+    riscv_emit_move (operands[3], operands[1]);
+    DONE;
+  }
+  [(set_attr "type" "vsetvl")
+   (set_attr "mode" "none")])
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Canonicalization of Instructions
 ;; -------------------------------------------------------------------------

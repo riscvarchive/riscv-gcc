@@ -5,7 +5,7 @@
 #include <riscv_vector.h>
 
 /*
-** test_vslide1up_vx_1: { target { { any-opts "-mriscv-vector-bits=512" } || { no-opts "-mriscv-vector-bits=*" } } }
+** test_vslide1up_vx_1: { target { { no-opts "-mriscv-vector-bits=*" } } }
 **  vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),zero,e64,m1,t[au],m[au]
 **  slli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),1
 **  vsetvli\s+zero,(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),e32,m1,t[au],m[au]
@@ -20,7 +20,7 @@ test_vslide1up_vx_1 (vint64m1_t v, int64_t x, size_t vl)
 }
 
 /*
-** test_vslide1up_vx_2: { target { { any-opts "-mriscv-vector-bits=512" } || { no-opts "-mriscv-vector-bits=*" } } }
+** test_vslide1up_vx_2: { target { { no-opts "-mriscv-vector-bits=*" } } }
 **  vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),zero,e64,m1,t[au],m[au]
 **  slli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),1
 **  vsetvli\s+zero,(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),e32,m1,t[au],m[au]
@@ -39,7 +39,7 @@ test_vslide1up_vx_2 (vint64m1_t v, int64_t x, size_t vl)
 }
 
 /*
-** test_vslide1up_vx_3: { target { { any-opts "-mriscv-vector-bits=512" } || { no-opts "-mriscv-vector-bits=*" } } }
+** test_vslide1up_vx_3: { target { { no-opts "-mriscv-vector-bits=*" } } }
 **  vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),zero,e64,m1,t[au],m[au]
 **  slli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),1
 **  vsetvli\s+zero,(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),e32,m1,t[au],m[au]
@@ -60,7 +60,7 @@ test_vslide1up_vx_3 (vint64m1_t v, int64_t x, size_t vl)
 }
 
 /*
-** test_vslide1up_vx_4: { target { { any-opts "-mriscv-vector-bits=512" } || { no-opts "-mriscv-vector-bits=*" } } }
+** test_vslide1up_vx_4: { target { { no-opts "-mriscv-vector-bits=*" } } }
 **  vsetvli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),zero,e64,m1,t[au],m[au]
 **  slli\s+(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),1
 **  vsetvli\s+zero,(?:ra|[sgtf]p|t[0-6]|s[0-9]|s10|s11|a[0-7]),e32,m1,t[au],m[au]

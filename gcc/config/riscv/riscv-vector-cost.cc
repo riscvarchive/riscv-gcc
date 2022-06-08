@@ -96,7 +96,7 @@ bool vector_insn_cost_table::get_cost(rtx x, machine_mode mode, int *cost,
         *cost += store->cost(x, mode);
       }
 
-      *cost += rtx_cost(op1, mode, SET, 1, speed);
+      //*cost += rtx_cost(op1, mode, SET, 1, speed);
       return true;
 
     case SUBREG:

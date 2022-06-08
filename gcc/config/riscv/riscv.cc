@@ -2032,7 +2032,10 @@ riscv_rtx_costs (rtx x, machine_mode mode, int outer_code, int opno ATTRIBUTE_UN
 		 int *total, bool speed)
 {
   /* FIXME: adjust vector cost. */
-  if (riscv_vector_mode_p (mode))
+  if (riscv_vector_mode_p (mode) ||
+      (GET_CODE (x) == SET &&
+       GET_CODE (SET_SRC (x)) == UNSPEC &&
+       XINT (SET_SRC (x), 1) == UNSPEC_RVV))
     {
       return vector_tune_param->rvv_insn_costs_table->get_cost (x, mode, total, speed);
     }
@@ -5421,7 +5424,8 @@ riscv_modes_tieable_p (machine_mode mode1, machine_mode mode2)
   if (riscv_vector_mode_p (mode1) && riscv_vector_mode_p (mode2))
     {
       /* Only allow normal vector modes to be tied. */
-      return (!riscv_tuple_mode_p (mode1) && !riscv_tuple_mode_p (mode2));
+      return (!riscv_tuple_mode_p (mode1) && !riscv_tuple_mode_p (mode2))
+        && known_eq (GET_MODE_SIZE (mode1), GET_MODE_SIZE (mode2));
     }
   else if (riscv_vector_mode_p (mode1) || riscv_vector_mode_p (mode2))
     {
@@ -5453,13 +5457,13 @@ riscv_class_max_nregs (reg_class_t rclass, machine_mode mode)
   if (reg_class_subset_p (rclass, GR_REGS))
     return riscv_hard_regno_nregs (GP_REG_FIRST, mode);
 
-  if (reg_class_subset_p (V_REGS, rclass))
+  if (reg_class_subset_p (rclass, V_REGS))
     return riscv_hard_regno_nregs (V_REG_FIRST, mode);
 
-  if (reg_class_subset_p (VL_REGS, rclass))
+  if (reg_class_subset_p (rclass, VL_REGS))
     return 1;
 
-  if (reg_class_subset_p (VTYPE_REGS, rclass))
+  if (reg_class_subset_p (rclass, VTYPE_REGS))
     return 1;
 
   return 0;

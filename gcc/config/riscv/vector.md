@@ -481,7 +481,7 @@
         [(match_dup 1)] UNSPEC_VSETVLI))
      (set (reg:SI VTYPE_REGNUM)
        (unspec:SI
-        [(match_operand 2 "const_int_operand")] UNSPEC_VSETVLI))])]
+        [(match_operand 2 "const_int_operand" "i")] UNSPEC_VSETVLI))])]
   "TARGET_VECTOR"
   {
     char buf[64];
@@ -509,7 +509,7 @@
 (define_insn "vsetvl_zero_zero"
   [(set (reg:SI VTYPE_REGNUM)
     (unspec:SI
-      [(match_operand 0 "const_int_operand")] UNSPEC_VSETVLI))]
+      [(match_operand 0 "const_int_operand" "i")] UNSPEC_VSETVLI))]
   "TARGET_VECTOR"
   {
     char buf[64];
@@ -540,7 +540,7 @@
         [(match_operand:X 0 "csr_operand" "rK")] UNSPEC_VSETVLI))
      (set (reg:SI VTYPE_REGNUM)
        (unspec:SI
-        [(match_operand 1 "const_int_operand")] UNSPEC_VSETVLI))])]
+        [(match_operand 1 "const_int_operand" "i")] UNSPEC_VSETVLI))])]
   "TARGET_VECTOR"
   {
     char buf[64];
