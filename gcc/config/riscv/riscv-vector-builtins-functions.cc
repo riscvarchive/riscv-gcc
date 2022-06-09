@@ -1679,7 +1679,7 @@ vundefined::get_argument_types (const function_instance &,
 rtx
 vundefined::expand (const function_instance &, tree, rtx target) const
 {
-  emit_clobber (copy_rtx (target));
+  emit_insn (gen_rtx_SET (target, const0_rtx));
   return target;
 }
 

@@ -316,6 +316,15 @@
   DONE;
 })
 
+;; This pattern means the value of operands[0] is unpredictable.
+;; We don't want to use clobber to match undefine pattern.
+;; Because it has bad performance.
+(define_insn "vundefined<mode>"
+  [(set (match_operand:V 0 "register_operand" "=vr")
+        (const_int 0))]
+  "TARGET_VECTOR"
+  "")
+   
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Vector Transformation
 ;; -------------------------------------------------------------------------
