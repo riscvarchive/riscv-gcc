@@ -79,7 +79,7 @@
   [(parallel
     [(set (match_operand:X 0 "register_operand" "=&r")
       (unspec:X
-        [(match_operand 1 "const_csr_operand" "K")] UNSPEC_VSETVLI))
+        [(match_operand:X 1 "const_csr_operand" "K")] UNSPEC_VSETVLI))
      (set (reg:SI VL_REGNUM)
       (unspec:SI
         [(match_dup 1)] UNSPEC_VSETVLI))

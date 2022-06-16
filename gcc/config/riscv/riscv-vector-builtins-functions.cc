@@ -598,6 +598,160 @@ add_attribute (const char *name, tree attrs)
   return tree_cons (get_identifier (name), NULL_TREE, attrs);
 }
 
+/* Subroutine of handle_sew64_on_rv32 function which helps to
+   get index of scalar operand. */
+   
+static unsigned int
+parse_scalar_index (const function_instance &instance)
+{
+  switch (instance.get_pred ())
+    {
+    case PRED_void:
+    case PRED_ta:
+      return 1;
+    
+    case PRED_tu:
+    case PRED_tama:
+      return 2;
+      
+    case PRED_m:
+    case PRED_ma:
+    case PRED_mu:
+    case PRED_tamu:
+    case PRED_tuma:
+    case PRED_tumu:
+      return 3;
+
+    default:
+      break;
+    }
+  return 1;
+}
+
+/* Handle SEW=64 vector-scalar instruction on RV32 system. */
+/* Fold GCC IR for the following cases on RV32 system. 
+   vint64m8_t foo (vint64m8_t v, int64_t s) {
+    v = vadd_vx_i64m8 (v,s,128);
+    v = vadd_vx_i64m8 (v,s,128);
+    v = vadd_vx_i64m8 (v,s,128);
+    v = vadd_vx_i64m8 (v,s,128);
+    v = vadd_vx_i64m8 (v,s,128);
+    return vadd_vx_i64m8 (v,s,128);
+   }
+                ||
+                ||
+                ||
+                \/
+   vint64m8_t foo (vint64m8_t v, int64_t s) {
+      vint64m8_t _1;
+      vint64m8_t _9;
+    
+      <bb 2> [local count: 1073741824]:
+      _1 = vmv_v_x_i64m8 (s, 128);
+      v_4 = vadd_vv_i64m8 (v_3(D), _1, 128);
+      v_5 = vadd_vv_i64m8 (v_4, _1, 128);
+      v_6 = vadd_vv_i64m8 (v_5, _1, 128);
+      v_7 = vadd_vv_i64m8 (v_6, _1, 128);
+      v_8 = vadd_vv_i64m8 (v_7, _1, 128);
+      _9 = vadd_vv_i64m8 (v_8, _1, 128);
+      return _9;
+    } 
+*/
+
+static gimple *
+handle_sew64_on_rv32 (const function_instance &instance,
+                      gimple_stmt_iterator *gsi_in,
+                      gcall *call_in, int offset, bool reverse_p=false)
+{
+  /* Don't fold GCC IR on RV64 system. */
+  if (TARGET_64BIT)
+    return NULL;
+  
+  enum operation_index operation = instance.get_operation ();
+  /* Only fold GCC IR for vector-scalar instructions. */
+  if (operation != OP_vx && operation != OP_vxm)
+    return NULL;
+  
+  unsigned int i;
+  unsigned int index = parse_scalar_index (instance) + offset;
+  unsigned int nargs = gimple_call_num_args (call_in);
+  tree scalar = gimple_call_arg (call_in, index);
+  tree lhs = gimple_call_lhs (call_in);
+  tree vectype = TREE_TYPE (lhs);
+  const char *dt2 = "";
+  if (GET_MODE_CLASS (TYPE_MODE (vectype)) == MODE_VECTOR_BOOL)
+    {
+      dt2 = mode2data_type_str (TYPE_MODE (vectype), false, false);
+      vectype = get_dt_t_with_index (instance, 1);
+    }
+  
+  if (GET_MODE_BITSIZE (as_a <scalar_mode> (TYPE_MODE (TREE_TYPE (scalar)))) < DOUBLE_TYPE_SIZE)
+    return NULL;
+    
+  tree min = TYPE_MIN_VALUE (intSI_type_node);
+  tree max = TYPE_MAX_VALUE (intSI_type_node);
+  if (TREE_CODE (scalar) == INTEGER_CST)
+    {
+      if (TYPE_UNSIGNED (TREE_TYPE (scalar)))
+        {
+          if (tree_fits_uhwi_p (scalar))
+            {
+              unsigned HOST_WIDE_INT val = tree_to_uhwi (scalar);
+              if (val <= 0x7FFFFFFFULL || val >= 0xFFFFFFFF80000000ULL)
+                return NULL;
+            }
+        }
+      else
+        {
+          bool overflow_down = tree_int_cst_compare (scalar, min) == -1;
+          bool overflow_up = tree_int_cst_compare (scalar, max) == 1;
+          if (!overflow_down && !overflow_up)
+            return NULL;
+        }
+    }
+  
+  tree vector = create_tmp_var (vectype);
+  vector = make_ssa_name (vector);
+  auto_vec<tree, 8> vargs;
+  char resolver[NAME_MAXLEN];
+  const char *op = get_operation_str (operation == OP_vxm ? OP_vvm : OP_vv);
+  bool unsigned_p = TYPE_UNSIGNED (vectype);
+  const char *dt1 = mode2data_type_str (TYPE_MODE (vectype), unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (resolver, NAME_MAXLEN, "vmv_v_x%s", dt1);
+  vargs.quick_push (scalar);
+  vargs.quick_push (gimple_call_arg (call_in, nargs - 1));
+  function_instance fn_instance (resolver);
+  hashval_t hashval = fn_instance.hash ();
+  registered_function *rfn_slot =
+      function_table->find_with_hash (fn_instance, hashval);
+  tree decl = rfn_slot->decl;
+  gimple *call = gimple_build_call_vec (decl, vargs);
+  gimple_call_set_lhs (call, vector);
+  gsi_insert_before (gsi_in, call, GSI_SAME_STMT);
+  
+  vargs.release ();
+  for (i = 0; i < nargs; i++)
+    {
+      if (i == index)
+        vargs.quick_push (vector);
+      else
+        vargs.quick_push (gimple_call_arg (call_in, i));
+    }
+  
+  if (reverse_p)
+    std::swap (vargs[index], vargs[index - 1]);
+    
+  snprintf (resolver, NAME_MAXLEN, "%s%s%s%s%s", instance.get_base_name (), op, dt1, dt2, pred);
+  function_instance fn_instance2 (resolver);
+  hashval = fn_instance2.hash ();
+  rfn_slot = function_table->find_with_hash (fn_instance2, hashval);
+  decl = rfn_slot->decl;
+  gimple *repl = gimple_build_call_vec (decl, vargs);
+  gimple_call_set_lhs (repl, lhs);
+  return repl;
+}
+
 inline hashval_t
 registered_function_hasher::hash (value_type value)
 {
@@ -1785,6 +1939,13 @@ unop::can_be_overloaded_p (const function_instance &instance) const
 }
 
 /* A function implementation for binary functions.  */
+gimple *
+binop::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+            gcall *call_in) const
+{
+  return handle_sew64_on_rv32 (instance, gsi_in, call_in, 0);
+}
+
 void
 binop::get_argument_types (const function_instance &instance,
                            vec<tree> &argument_types) const
@@ -1840,6 +2001,20 @@ bool
 ternop::can_be_overloaded_p (const function_instance &) const
 {
   return true;
+}
+
+gimple *
+ternop::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+              gcall *call_in) const
+{
+  int offset = -1;
+  enum predication_index pred = instance.get_pred ();
+  
+  if (pred == PRED_void || pred == PRED_ta
+      || pred == PRED_tama)
+    offset = 0;
+  
+  return handle_sew64_on_rv32 (instance, gsi_in, call_in, offset);
 }
 
 /* A function implementation for reduction functions.  */
@@ -2582,6 +2757,7 @@ vadd::expand (const function_instance &instance, tree exp, rtx target) const
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
+/* A function implementation for vsub functions.  */
 rtx
 vsub::expand (const function_instance &instance, tree exp, rtx target) const
 {
@@ -2595,6 +2771,28 @@ vsub::expand (const function_instance &instance, tree exp, rtx target) const
 }
 
 /* A function implementation for vrsub functions.  */
+char *
+vrsub::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
+  const char *name = "vrsub";
+  const char *op = get_operation_str (instance.get_operation ());
+  const char *dt = mode2data_type_str (mode, unsigned_p, false);
+  const char *pred = get_pred_str (instance.get_pred ());
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  append_name (name);
+  append_name (get_pred_str (instance.get_pred (), true));
+  return finish_name ();
+}
+
+gimple *
+vrsub::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+            gcall *call_in) const
+{
+  return handle_sew64_on_rv32 (instance, gsi_in, call_in, 0, true);
+}
+
 rtx
 vrsub::expand (const function_instance &instance, tree exp, rtx target) const
 {
@@ -2889,6 +3087,13 @@ vshift::get_argument_types (const function_instance &instance,
     argument_types.quick_push (size_type_node);
   else
     argument_types.quick_push (get_dt_t_with_index (instance, 2));
+}
+
+gimple *
+vshift::fold (const function_instance &, gimple_stmt_iterator *,
+              gcall *) const
+{
+  return NULL;
 }
 
 /* A function implementation for vsll functions.  */
@@ -3405,6 +3610,13 @@ vwmaccus::expand (const function_instance &instance, tree exp, rtx target) const
 }
 
 /* A function implementation for vmerge functions.  */
+gimple *
+vmerge::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+              gcall *call_in) const
+{
+  return handle_sew64_on_rv32 (instance, gsi_in, call_in, 1);
+}
+
 size_t
 vmerge::get_position_of_dest_arg (enum predication_index) const
 {
@@ -3452,7 +3664,7 @@ vmv::expand (const function_instance &instance, tree exp, rtx target) const
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
   if (instance.get_operation () == OP_v_x)
-    icode = code_for_v_v_x (UNSPEC_VMV, mode);
+    icode = code_for_vmv_v_x (mode);
   else
     icode = code_for_vmv_v_v (mode);
   return expand_builtin_insn (icode, exp, target, instance);
@@ -5060,6 +5272,13 @@ vslidedown::expand (const function_instance &instance, tree exp, rtx target) con
 }
 
 /* A function implementation for vslide1up functions.  */
+gimple *
+vslide1up::fold (const function_instance &, gimple_stmt_iterator *,
+                 gcall *) const
+{
+  return NULL;
+}
+
 rtx
 vslide1up::expand (const function_instance &instance, tree exp, rtx target) const
 {
@@ -5069,6 +5288,13 @@ vslide1up::expand (const function_instance &instance, tree exp, rtx target) cons
 }
 
 /* A function implementation for vslide1down functions.  */
+gimple *
+vslide1down::fold (const function_instance &, gimple_stmt_iterator *,
+                   gcall *) const
+{
+  return NULL;
+}
+
 rtx
 vslide1down::expand (const function_instance &instance, tree exp, rtx target) const
 {

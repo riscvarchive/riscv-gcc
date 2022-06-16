@@ -1656,32 +1656,6 @@
   }
 )
 
-;; vmv.v.x
-(define_expand "@v<vxoptab><mode>_v_x"
-  [(unspec [
-    (match_operand:VI 0 "register_operand")
-    (match_operand:VI 1 "vector_reg_or_const0_operand")
-    (match_operand:<VSUB> 2 "reg_or_const_int_operand")
-    (match_operand 3 "p_reg_or_const_csr_operand")
-    (match_operand 4 "const_int_operand")
-   ] VMVOP)]
-  "TARGET_VECTOR"
-  {
-    emit_op5 (
-      <VXOPTAB>,
-      <MODE>mode, <VDI_TO_VSI>mode, <VDI_TO_VSI_VM>mode,
-      <VSUB>mode,
-      operands,
-      gen_v<vxoptab><mode>_v_x_internal,
-      gen_v<vxoptab><vi_to_v64biti>_v_x_32bit,
-      NULL,
-      satisfies_constraint_<immptab>,
-      2, false
-    );
-    DONE;
-  }
-)
-
 ;; vmv.s.x
 (define_expand "@v<vxoptab><mode>_s_x"
   [(unspec [
@@ -2253,7 +2227,7 @@
 ;; vector register is v0.
 ;; Vector-Vector Produce sum with carry.
 (define_insn "@vadc<mode>_vvm"
-  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd,&vd,&vd")
+  [(set (match_operand:VI 0 "register_operand"          "=vd,vd,vd,vd")
   (unspec:VI
     [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J")
      (plus:VI
@@ -2279,7 +2253,7 @@
 
 ;; Vector-Vector Produce difference with borrow.
 (define_insn "@vsbc<mode>_vvm"
-  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd")
+  [(set (match_operand:VI 0 "register_operand"          "=vd,vd")
   (unspec:VI
     [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,J")
      (minus:VI
@@ -2301,7 +2275,7 @@
 
 ;; Vector-Scalar Produce sum with carry.
 (define_insn "@vadc<mode>_vxm_internal"
-  [(set (match_operand:VI 0 "register_operand"            "=&vd,&vd,&vd,&vd")
+  [(set (match_operand:VI 0 "register_operand"            "=vd,vd,vd,vd")
   (unspec:VI
     [(match_operand:VI 1 "vector_reg_or_const0_operand"   "0,0,J,J")
       (plus:VI
@@ -2327,7 +2301,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vadc<mode>_vxm_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"           "=&vd,&vd,&vd,&vd")
+  [(set (match_operand:V64BITI 0 "register_operand"           "=vd,vd,vd,vd")
   (unspec:V64BITI
     [(match_operand:V64BITI 1 "vector_reg_or_const0_operand"  "0,0,J,J")
       (plus:V64BITI
@@ -2355,7 +2329,7 @@
 
 ;; Vector-Vector Scalar difference with borrow.
 (define_insn "@vsbc<mode>_vxm_internal"
-  [(set (match_operand:VI 0 "register_operand"          "=&vd,&vd,&vd,&vd")
+  [(set (match_operand:VI 0 "register_operand"          "=vd,vd,vd,vd")
   (unspec:VI
     [(match_operand:VI 1 "vector_reg_or_const0_operand" "0,0,J,J")
      (minus:VI
@@ -2381,7 +2355,7 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vsbc<mode>_vxm_32bit"
-  [(set (match_operand:V64BITI 0 "register_operand"                   "=&vd,&vd,&vd,&vd")
+  [(set (match_operand:V64BITI 0 "register_operand"                   "=vd,vd,vd,vd")
   (unspec:V64BITI
     [(match_operand:V64BITI 1 "vector_reg_or_const0_operand"          "0,0,J,J")
      (minus:V64BITI
@@ -4054,6 +4028,18 @@
   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Integer Move.
+(define_expand "@vmv<mode>_v_x"
+  [(match_operand:VI 0 "register_operand")
+   (match_operand:VI 1 "vector_reg_or_const0_operand")
+   (match_operand:<VSUB> 2 "general_operand")
+   (match_operand 3 "p_reg_or_const_csr_operand")
+   (match_operand 4 "const_int_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_splat_vector (operands);
+  DONE;
+})
+
 (define_insn "@vmv<mode>_v_x_internal"
   [(set (match_operand:VI 0 "register_operand"          "=vr,vr,vr,vr")
   (unspec:VI
@@ -5370,18 +5356,34 @@
   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Floating-Point Move.
-(define_insn "@vfmv<mode>_v_f"
-  [(set (match_operand:VF 0 "register_operand"          "=vr,vr")
+(define_expand "@vfmv<mode>_v_f"
+  [(match_operand:VF 0 "register_operand")
+   (match_operand:VF 1 "vector_reg_or_const0_operand")
+   (match_operand:<VSUB> 2 "general_operand")
+   (match_operand 3 "p_reg_or_const_csr_operand")
+   (match_operand 4 "const_int_operand")]
+  "TARGET_VECTOR"
+{
+  riscv_vector_expand_splat_vector (operands);
+  DONE;
+})
+
+(define_insn "@vfmv<mode>_v_f_internal"
+  [(set (match_operand:VF 0 "register_operand"          "=vr,vr,vr,vr")
   (unspec:VF
-    [(match_operand:VF 1 "vector_reg_or_const0_operand" "0,J")
+    [(match_operand:VF 1 "vector_reg_or_const0_operand" "0,J,0,J")
      (vec_duplicate:VF
-       (match_operand:<VSUB> 2 "register_operand"       "f,f"))
-     (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK")
+       (match_operand:<VSUB> 2 "reg_or_0_operand"       "G,G,f,f"))
+     (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
- "vfmv.v.f\t%0,%2"
+ "@
+  vmv.v.i\t%0,0
+  vmv.v.i\t%0,0
+  vfmv.v.f\t%0,%2
+  vfmv.v.f\t%0,%2"
  [(set_attr "type" "vmove")
   (set_attr "mode" "<MODE>")])
 

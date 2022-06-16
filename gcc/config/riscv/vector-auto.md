@@ -33,24 +33,26 @@
 ;; vector integer modes vec_duplicate.
 (define_expand "@vec_duplicate<mode>"
   [(match_operand:VI 0 "register_operand")
-   (match_operand:<VSUB> 1 "reg_or_const_int_operand")]
+   (match_operand:<VSUB> 1 "general_operand")]
   "TARGET_VECTOR"
 {
-  emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, 
-      operands[0], const0_rtx, operands[1],
-      gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  emit_insn (gen_vmv_v_x (<MODE>mode, 
+        operands[0], const0_rtx, operands[1],
+        gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+
   DONE;
 })
 
 ;; vector floating-point modes vec_duplicate.
 (define_expand "@vec_duplicate<mode>"
   [(match_operand:VF 0 "register_operand")
-   (match_operand:<VSUB> 1 "register_operand")]
+   (match_operand:<VSUB> 1 "general_operand")]
   "TARGET_VECTOR"
 {
   emit_insn (gen_vfmv_v_f (<MODE>mode, operands[0], const0_rtx, 
       operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
       riscv_vector_gen_policy ()));
+
   DONE;
 })
 
@@ -4613,7 +4615,7 @@
 {
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
-  emit_insn (gen_v_v_x (UNSPEC_VMV, <VLMUL1>mode, 
+  emit_insn (gen_vmv_v_x (<VLMUL1>mode, 
       accum, const0_rtx, GEN_INT (-1),
       gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
   emit_insn (gen_vredand<mode>_vs (accum, const0_rtx, const0_rtx,
@@ -8246,7 +8248,7 @@
     if (!TARGET_64BIT && <VSUB>mode == DImode && !imm32_p (operands[2]))
       {
         rtx reg = gen_reg_rtx (<MODE>mode);
-        emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, reg, const0_rtx, operands[2],
+        emit_insn (gen_vmv_v_x (<MODE>mode, reg, const0_rtx, operands[2],
                    gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
         emit_insn (gen_fma<mode>4 (operands[0], operands[1], reg, operands[3]));
         DONE;
@@ -8277,7 +8279,7 @@
     if (!TARGET_64BIT && <VSUB>mode == DImode && !imm32_p (operands[2]))
       {
         rtx reg = gen_reg_rtx (<MODE>mode);
-        emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, reg, const0_rtx, operands[2],
+        emit_insn (gen_vmv_v_x (<MODE>mode, reg, const0_rtx, operands[2],
                    gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
         emit_insn (gen_fnma<mode>4 (operands[0], operands[1], reg, operands[3]));
         DONE;
@@ -8402,10 +8404,11 @@
   {
     if (!CONST_SCALAR_INT_P (operands[3]))
       operands[3] = gen_lowpart (Pmode, operands[3]);
+    
     emit_insn (gen_v_vx (UNSPEC_VADD, <MODE>mode,
-          operands[0], const0_rtx, const0_rtx,
-          operands[1], operands[2], operands[3],
-          riscv_vector_gen_policy ()));
+            operands[0], const0_rtx, const0_rtx,
+            operands[1], operands[2], operands[3],
+            riscv_vector_gen_policy ()));
     DONE;
   })
 
@@ -8519,7 +8522,7 @@
     if (!TARGET_64BIT && <VSUB>mode == DImode && !imm32_p (operands[2]))
       {
         rtx reg = gen_reg_rtx (<MODE>mode);
-        emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, reg, const0_rtx, operands[2],
+        emit_insn (gen_vmv_v_x (<MODE>mode, reg, const0_rtx, operands[2],
                    gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
         emit_insn (gen_len_fma<mode> (operands[0], operands[1], reg, operands[3], operands[4]));
         DONE;
@@ -8549,7 +8552,7 @@
     if (!TARGET_64BIT && <VSUB>mode == DImode && !imm32_p (operands[2]))
       {
         rtx reg = gen_reg_rtx (<MODE>mode);
-        emit_insn (gen_v_v_x (UNSPEC_VMV, <MODE>mode, reg, const0_rtx, operands[2],
+        emit_insn (gen_vmv_v_x (<MODE>mode, reg, const0_rtx, operands[2],
                    gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
         emit_insn (gen_len_fnma<mode> (operands[0], operands[1], reg, operands[3], operands[4]));
         DONE;

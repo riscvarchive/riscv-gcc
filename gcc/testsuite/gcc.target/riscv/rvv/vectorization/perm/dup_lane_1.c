@@ -55,4 +55,4 @@ typedef _Float16 vnx8hf __attribute__((vector_size (32)));
 TEST_ALL (DUP_LANE)
 
 /* { dg-final { scan-assembler-times {\tvmv.v.x} 12 {target riscv64-*-*} } } */
-/* { dg-final { scan-assembler-times {\tvmv.v.x} 15 {target riscv32-*-*} } } */
+/* { dg-final { scan-assembler-times {\tvmv.v.x} 9 {target riscv32-*-*} } } */

@@ -47,5 +47,4 @@ TEST_ALL (TEST_LOOP)
 /* { dg-final { scan-assembler-times "\tvmacc\.vx" 72 {target riscv64-*-*} } } */
 /* { dg-final { scan-assembler-not "\tvmacc\.vv" {target riscv64-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvmacc\.vx" 54 {target riscv32-*-*} } } */
-/* { dg-final { scan-assembler-times "\tvmacc\.vv" 16 {target riscv32-*-*} } } */
 /* { dg-final { scan-assembler-times "\tvfmacc\.vf" 27 } } */

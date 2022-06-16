@@ -4079,7 +4079,10 @@ riscv_memmodel_needs_release_fence (enum memmodel model)
    'z'	Print x0 if OP is zero, otherwise print OP normally.
    'i'	Print i if the operand is not a register.
    'S'	Print shift-index of single-bit mask OP.
-   'T'	Print shift-index of inverted single-bit mask OP.  */
+   'T'	Print shift-index of inverted single-bit mask OP.  
+   'v'  Print the sole immediate value of a const vec duplicate.
+   'V'  Print the negated sole immediate value of a const vec duplicate.
+   'B'  Print a branch condition.*/
 
 static void
 riscv_print_operand (FILE *file, rtx op, int letter)
@@ -5388,6 +5391,9 @@ riscv_hard_regno_mode_ok (unsigned int regno, machine_mode mode)
     }
   else if (V_REG_P (regno))
     {
+      if (!V_REG_P (regno + nregs - 1))
+        return false;
+        
       if (!riscv_vector_mode_p (mode))
         return false;
 

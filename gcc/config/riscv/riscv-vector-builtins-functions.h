@@ -61,6 +61,7 @@
 #include "langhooks-def.h"
 #include "riscv-vector.h"
 #include <string>
+#include <vector>
 
 namespace riscv_vector
 {
@@ -683,6 +684,9 @@ class binop : public basic_alu
 public:
   // use the same construction function as the basic_alu
   using basic_alu::basic_alu;
+  
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
   
@@ -709,6 +713,9 @@ public:
   virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
   
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
+  
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 };
 
 /* A function_base for reduction functions.  */
@@ -1057,7 +1064,7 @@ class vadd : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-
+     
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1077,7 +1084,12 @@ class vrsub : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-
+  
+  virtual char * assemble_name (function_instance &) OVERRIDE;
+  
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
+  
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1265,8 +1277,11 @@ class vshift : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+        
   virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 };
 
 /* A function_base for vsll functions.  */
@@ -1676,6 +1691,9 @@ public:
   // use the same construction function as the binop
   using binop::binop;
   
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
+        
   virtual size_t get_position_of_dest_arg (enum predication_index) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2983,6 +3001,9 @@ class vslide1up : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
+  
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -2993,6 +3014,9 @@ class vslide1down : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
+  
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };

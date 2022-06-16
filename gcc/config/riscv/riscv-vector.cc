@@ -2002,31 +2002,6 @@ modify_operands (machine_mode Vmode, machine_mode VSImode,
 
 /* Helper functions for handling sew=64 on RV32 system. */
 bool
-emit_op5_vmv_v_x (machine_mode Vmode, machine_mode VSImode,
-                  machine_mode VMSImode, machine_mode VSUBmode, rtx *operands,
-                  int i)
-{
-  if (!TARGET_64BIT && VSUBmode == DImode)
-    {
-      if (!imm32_p (operands[i]))
-        {
-          rtx vd = operands[1];
-          if (rtx_equal_p (vd, const0_rtx))
-            {
-              vd = operands[0];
-            }
-          emit_int64_to_vector_32bit (Vmode, VSImode, VMSImode, vd, operands[i],
-                                      operands[3], operands[4]);
-
-          emit_insn (gen_rtx_SET (operands[0], vd));
-          return true;
-        }
-    }
-  return false;
-}
-
-/* Helper functions for handling sew=64 on RV32 system. */
-bool
 emit_op5_vmv_s_x (machine_mode Vmode, machine_mode VSImode,
                   machine_mode VSUBmode, rtx *operands, int i)
 {
@@ -2077,14 +2052,7 @@ emit_op5 (unsigned int unspec, machine_mode Vmode, machine_mode VSImode,
           gen_5 *gen_vx, gen_5 *gen_vx_32bit, gen_5 *gen_vv, imm_p *imm5_p,
           int i, bool reverse)
 {
-  if (unspec == UNSPEC_VMV)
-    {
-      if (emit_op5_vmv_v_x (Vmode, VSImode, VMSImode, VSUBmode, operands, i))
-        {
-          return;
-        }
-    }
-  else if (unspec == UNSPEC_VMVS)
+  if (unspec == UNSPEC_VMVS)
     {
       if (emit_op5_vmv_s_x (Vmode, VSImode, VSUBmode, operands, i))
         {
@@ -3583,31 +3551,18 @@ riscv_vector_vrgather (struct expand_vec_perm_d *d)
                  const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM),
                  riscv_vector_gen_policy ()));
       if (GET_MODE_BITSIZE (inner_mode) == 64 && !TARGET_64BIT)
-        {
-          emit_insn (gen_vmul_vx_32bit (sel_mode, sel_reg, const0_rtx, const0_rtx,
-                     sel_reg, force_reg (Pmode, GEN_INT (-1)), gen_rtx_REG (Pmode, X0_REGNUM), 
-                     riscv_vector_gen_policy ()));
-          emit_insn (gen_vadd_vx_32bit (sel_mode, sel_reg, const0_rtx, const0_rtx,
-                     sel_reg, base, gen_rtx_REG (Pmode, X0_REGNUM), 
-                     riscv_vector_gen_policy ()));
-        }
+        emit_insn (gen_vrsub_vx_32bit (sel_mode,
+                sel_reg, const0_rtx, const0_rtx,
+                sel_reg, base,
+                gen_rtx_REG (Pmode, X0_REGNUM),
+                riscv_vector_gen_policy ()));
       else
-        {
-          emit_insn (gen_v_vx (UNSPEC_VMUL, sel_mode, sel_reg, const0_rtx, const0_rtx,
-                     sel_reg, GEN_INT (-1), gen_rtx_REG (Pmode, X0_REGNUM), 
-                     riscv_vector_gen_policy ()));
-          emit_insn (gen_v_vx (UNSPEC_VADD, sel_mode, sel_reg, const0_rtx, const0_rtx,
-                     sel_reg, base, gen_rtx_REG (Pmode, X0_REGNUM), 
-                     riscv_vector_gen_policy ()));
-        }
+        emit_insn (gen_v_vx (UNSPEC_VRSUB, sel_mode,
+                sel_reg, const0_rtx, const0_rtx,
+                sel_reg, base,
+                gen_rtx_REG (Pmode, X0_REGNUM),
+                riscv_vector_gen_policy ()));
     }
-
-  /* step1: fetch vlmax for specific mode. */
-  unsigned int vlmul = riscv_classify_vlmul_field (d->vmode);
-  unsigned int vsew = riscv_classify_vsew_field (d->vmode);
-  unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
-  rtx vl = gen_reg_rtx (Pmode);
-  emit_insn (gen_vsetvl (Pmode, vl, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
 
   if (!d->perm.length ().is_constant ())
     {
@@ -3638,6 +3593,12 @@ riscv_vector_vrgather (struct expand_vec_perm_d *d)
         }
       else
         {
+          /* step1: fetch vlmax for specific mode. */
+          unsigned int vlmul = riscv_classify_vlmul_field (d->vmode);
+          unsigned int vsew = riscv_classify_vsew_field (d->vmode);
+          unsigned vtype = (vsew << 3) | (vlmul & 0x7) | 0x40;
+          rtx vl = gen_reg_rtx (Pmode);
+          emit_insn (gen_vsetvl (Pmode, vl, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
           /* step2: generate a mask that should select second vector. */
           if (Pmode == SImode && GET_MODE_INNER (sel_mode) == DImode)
             emit_insn (gen_vms_vx_32bit (GEU, sel_mode, mask, const0_rtx, const0_rtx, sel_reg,
@@ -3746,24 +3707,13 @@ riscv_vector_expand_const_vector (rtx target, rtx src)
   scalar_mode element_mode = GET_MODE_INNER (mode);
   unsigned int nbits = GET_MODE_BITSIZE (element_mode);
   machine_mode sel_mode = related_int_vector_mode (mode).require ();
-  if (!GET_MODE_SIZE (mode).is_constant ())
-    {
-      if (GET_MODE_BITSIZE (element_mode) > 16 &&
-          known_gt (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR))
-        gcc_assert (riscv_vector_data_mode (HImode, GET_MODE_NUNITS (mode))
-                        .exists (&sel_mode));
-      if (GET_MODE_BITSIZE (element_mode) < 16 &&
-          !riscv_vector_data_mode (HImode, GET_MODE_NUNITS (mode))
-               .exists (&sel_mode))
-        return false;
-    }
   rtx_vector_builder builder;
   auto_vec<rtx, 16> vectors (npatterns);
   
   /* Case 1: Handle const duplicate vector. */
   if (const_vec_duplicate_p (src, &x))
     {
-      if (FLOAT_MODE_P (mode))
+      if (FLOAT_MODE_P (mode) && !rtx_equal_p (x, CONST0_RTX (inner_mode)))
         x = force_reg (inner_mode, x);
       emit_insn (gen_vec_duplicate (mode, target, x));
       return true;
@@ -3799,6 +3749,17 @@ riscv_vector_expand_const_vector (rtx target, rtx src)
       return true;
     }
   
+  if (!GET_MODE_SIZE (mode).is_constant ())
+    {
+      if (GET_MODE_BITSIZE (element_mode) > 16 &&
+          known_gt (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR))
+        gcc_assert (riscv_vector_data_mode (HImode, GET_MODE_NUNITS (mode))
+                        .exists (&sel_mode));
+      if (GET_MODE_BITSIZE (element_mode) < 16 &&
+          !riscv_vector_data_mode (HImode, GET_MODE_NUNITS (mode))
+               .exists (&sel_mode))
+        return false;
+    }
   /* Case 4: Handle scalable partial const duplicate vector. */
   if (CONST_VECTOR_DUPLICATE_P (src))
     {
@@ -4047,7 +4008,7 @@ riscv_vector_expand_const_vector (rtx target, rtx src)
       for (unsigned int j = 0; j < iter_num; j++)
         mask_sum += base_mask << j;
 
-      emit_insn (gen_v_v_x (UNSPEC_VMV, m1_mode, mask, const0_rtx,
+      emit_insn (gen_vmv_v_x (m1_mode, mask, const0_rtx,
                             GEN_INT (mask_sum), vl,
                             riscv_vector_gen_policy ()));
       emit_insn (gen_v_vx (UNSPEC_VADD, sel_mode, pat_idx2, const0_rtx,
@@ -4225,6 +4186,67 @@ riscv_vector_expand_tuple (machine_mode submode, rtx *ops)
     }
   else
     gcc_unreachable ();
+}
+
+/* Expand the vmv_v_x intrinsic for different situation. */
+
+void
+riscv_vector_expand_splat_vector (rtx *ops)
+{
+  machine_mode mode = GET_MODE (ops[0]);
+  scalar_mode inner_mode = GET_MODE_INNER (mode);
+  
+  if (MEM_P (ops[2]))
+    {
+      rtx addr = force_reg (Pmode, XEXP (ops[2], 0));
+      rtx mem = gen_rtx_MEM (inner_mode, addr);
+      set_mem_size (mem, 8);
+      set_mem_align (mem, BITS_PER_WORD * 2);
+      mem = replace_equiv_address (mem, addr);
+      emit_insn (gen_vlse (mode, ops[0], const0_rtx, ops[1], XEXP (mem, 0),
+                           const0_rtx, ops[3], ops[4]));
+    }
+  else if (FLOAT_MODE_P (mode))
+    {
+      if (rtx_equal_p (ops[2], CONST0_RTX (inner_mode))
+          || REG_P (ops[2]) || SUBREG_P (ops[2]))
+        emit_insn (gen_vfmv_v_f_internal (mode, ops[0], ops[1], ops[2], ops[3], ops[4]));
+      else
+        emit_insn (gen_vfmv_v_f_internal (mode, ops[0], ops[1], force_reg (inner_mode, ops[2]), ops[3], ops[4]));
+    }
+  else if (TARGET_64BIT || GET_MODE_BITSIZE (inner_mode) < DOUBLE_TYPE_SIZE)
+    {
+      if (CONST_SCALAR_INT_P (ops[2]) && IN_RANGE (INTVAL (ops[2]), -16, 15))
+        ;
+      else
+        ops[2] = force_reg (inner_mode, ops[2]);
+      
+      emit_insn (gen_vmv_v_x_internal (mode, ops[0], ops[1], ops[2], ops[3], ops[4]));
+    }
+  else if (imm32_p (ops[2]))
+    {
+      if (!IN_RANGE (INTVAL (ops[2]), -16, 15))
+        ops[2] = force_reg (Pmode, ops[2]);
+      
+      emit_insn (gen_vmv_v_x_32bit (mode, ops[0], ops[1], ops[2], ops[3], ops[4]));
+    }
+  else
+    {
+      rtx mem;
+      if (CONST_SCALAR_INT_P (ops[2]))
+        mem = force_const_mem (DImode, ops[2]);
+      else
+        {
+          mem = assign_stack_local (DImode, UNITS_PER_WORD * 2, BITS_PER_WORD * 2);
+          mem = validize_mem (mem);
+          emit_move_insn (mem, ops[2]);
+        }
+      
+      rtx addr = force_reg (Pmode, XEXP (mem, 0));
+      mem = replace_equiv_address (mem, addr);
+      emit_insn (gen_vlse (mode, ops[0], const0_rtx, ops[1], XEXP (mem, 0),
+                           const0_rtx, ops[3], ops[4]));
+    }
 }
 
 /* Implement TARGET_VECTORIZE_VEC_PERM_CONST using RVV instructions.  */
