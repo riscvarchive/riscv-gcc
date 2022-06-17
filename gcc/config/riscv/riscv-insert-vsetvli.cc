@@ -1241,7 +1241,8 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
     {
       gcc_assert (CONST_INT_P (recog_data.operand[0]) &&
                   "Invalid vtype in vsetvli instruction.");
-      if (curr_info.valid_p () && !curr_info.unknown_p ())
+      if (curr_info.valid_p () && !curr_info.unknown_p ()
+          && !curr_info.get_sew_lmul_ratio_only_p ())
         {
           new_info.set_avl (curr_info.get_avl ());
           new_info.set_avl_source (curr_info.get_avl_source ());
@@ -1409,8 +1410,7 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
   if (!need_vsetvli_p (insn))
     return false;
   
-  vinfo require_new_info = compute_info_for_instr (insn, curr_info);
-  gcc_assert (require == require_new_info);
+  gcc_assert (require == compute_info_for_instr (insn, curr_info));
     
   if (curr_info.compatible_p (insn, require))
     return false;
@@ -1770,7 +1770,10 @@ cleanup_insn_op (rtx_insn *insn)
 static void
 emit_vsetvlis (const basic_block bb)
 {
-  vinfo curr_info;
+  vinfo curr_info = bb_vinfo_map[bb->index].pred;
+  // Track whether the prefix of the block we've scanned is transparent
+  // (meaning has not yet changed the abstract state).
+  bool prefix_transparent = true;
   rtx_insn *insn = NULL;
 
   FOR_BB_INSNS (bb, insn)
@@ -1779,6 +1782,7 @@ emit_vsetvlis (const basic_block bb)
     if (vector_config_instr_p (insn))
       {
         curr_info = get_info_for_vsetvli (insn, curr_info);
+        prefix_transparent = false;
         continue;
       }
 
@@ -1788,12 +1792,8 @@ emit_vsetvlis (const basic_block bb)
         
         if (!curr_info.valid_p ())
           {
-            // We haven't found any vector instructions or VL/VTYPE changes
-            // yet, use the predecessor information.
-            curr_info = bb_vinfo_map[bb->index].pred;
-            gcc_assert (curr_info.valid_p () &&
-                        "Expected a valid predecessor state.");
-            new_info = compute_info_for_instr (insn, curr_info);
+            //// We haven't found any vector instructions or VL/VTYPE changes
+            //// yet, use the predecessor information.
             if (needvsetvli (insn, new_info, curr_info))
               {
                 // If this is the first implicit state change, and the state change
@@ -1803,8 +1803,9 @@ emit_vsetvlis (const basic_block bb)
                 // wouldn't be used and VL/VTYPE registers are correct.  Note that
                 // we *do* need to model the state as if it changed as while the
                 // register contents are unchanged, the abstract model can change.
-                if (need_vsetvli_phi (new_info, insn))
+                if (!prefix_transparent || need_vsetvli_phi (new_info, insn))
                   insert_vsetvli (insn, new_info, curr_info);
+                prefix_transparent = false;
                 curr_info = new_info;
               }
           }
@@ -1826,7 +1827,10 @@ emit_vsetvlis (const basic_block bb)
     // If this is something updates VL/VTYPE that we don't know about, set
     // the state to unknown.
     if (update_vl_vtype_p (insn))
-      curr_info = vinfo::get_unknown ();
+      {
+        prefix_transparent = false;
+        curr_info = vinfo::get_unknown ();
+      }
 
     // If we reach the end of the block and our current info doesn't match the
     // expected info, insert a vsetvli to correct.
