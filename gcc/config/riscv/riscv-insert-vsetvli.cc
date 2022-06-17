@@ -364,6 +364,19 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 }
 
 static bool
+asm_insn_p (rtx_insn *insn)
+{
+  rtx pat = PATTERN (insn);
+  
+  if (!pat)
+    return false;
+    
+  return GET_CODE (PATTERN (insn)) == ASM_INPUT 
+    || GET_CODE (PATTERN (insn)) == ASM_OPERANDS 
+    || asm_noperands (PATTERN (insn)) >= 0;
+}
+
+static bool
 update_vl_vtype_p (rtx_insn *insn)
 {
   if (insn && NONDEBUG_INSN_P (insn))
@@ -380,9 +393,7 @@ update_vl_vtype_p (rtx_insn *insn)
         }
       if (CALL_P (insn))
         return true;
-      if (PATTERN (insn) && (GET_CODE (PATTERN (insn)) == ASM_INPUT ||
-                             GET_CODE (PATTERN (insn)) == ASM_OPERANDS ||
-                             asm_noperands (PATTERN (insn)) >= 0))
+      if (asm_insn_p (insn))
         return true;
     }
   return false;
@@ -482,6 +493,53 @@ static machine_mode
 vsew_to_int_mode (unsigned vsew)
 {
   return vsew == 0 ? QImode : vsew == 1 ? HImode : vsew == 2 ? SImode : DImode;
+}
+
+/// Which subfields of vl or VTYPE have values we need to preserve?
+struct demanded_fields
+{
+  bool vl = false;
+  bool sew = false;
+  bool lmul = false;
+  bool sew_lmul_ratio = false;
+  bool tail_policy = false;
+  bool mask_policy = false;
+
+  // Return true if any part of VTYPE was used
+  bool used_vtype () 
+  {
+    return sew || lmul || sew_lmul_ratio || tail_policy || mask_policy;
+  }
+};
+
+static void do_union (demanded_fields &a, demanded_fields b) 
+{
+  a.vl |= b.vl;
+  a.sew |= b.sew;
+  a.lmul |= b.lmul;
+  a.sew_lmul_ratio |= b.sew_lmul_ratio;
+  a.tail_policy |= b.tail_policy;
+  a.mask_policy |= b.mask_policy;
+}
+
+// Return which fields are demanded by the given instruction.
+static demanded_fields get_demanded (rtx_insn *insn) 
+{
+  // Most instructions don't use any of these subfeilds.
+  demanded_fields res;
+  // Start conservative if registers are used
+  if (CALL_P (insn) || asm_insn_p (insn) || use_vtype_p (insn))
+    res.vl = true;
+  if (CALL_P (insn) || asm_insn_p (insn) || use_vl_p (insn)) 
+  {
+    res.sew = true;
+    res.lmul = true;
+    res.sew_lmul_ratio = true;
+    res.tail_policy = true;
+    res.mask_policy = true;
+  }
+
+  return res;
 }
 
 class vinfo
@@ -1961,16 +2019,13 @@ dolocalpostpass (const basic_block bb)
 {
   rtx_insn *prev_insn = nullptr;
   rtx_insn *insn = nullptr;
-  bool used_vl = false, used_vtype = false;
+  demanded_fields used;
   std::vector<rtx_insn *> to_delete;
   FOR_BB_INSNS (bb, insn)
   {
     // Note: Must be *before* vsetvli handling to account for config cases
     // which only change some subfields.
-    if (update_vl_vtype_p (insn) || use_vl_p (insn))
-      used_vl = true;
-    if (update_vl_vtype_p (insn) || use_vtype_p (insn))
-      used_vtype = true;
+    do_union (used, get_demanded (insn));
 
     if (!vector_config_instr_p (insn))
       continue;
@@ -1978,12 +2033,12 @@ dolocalpostpass (const basic_block bb)
     extract_insn_cached (insn);
     if (prev_insn)
       {
-        if (!used_vl && !used_vtype)
+        if (!used.vl && !used.used_vtype ())
           {
             to_delete.push_back (prev_insn);
             // fallthrough
           }
-        else if (!used_vtype && vl_preserving_config_p (insn))
+        else if (!used.used_vtype () && vl_preserving_config_p (insn))
           {
             // Note: `vsetvli x0, x0, vtype' is the canonical instruction
             // for this case.  If you find yourself wanting to add other forms
@@ -2000,15 +2055,14 @@ dolocalpostpass (const basic_block bb)
           }
       }
     prev_insn = insn;
-    used_vl = false;
-    used_vtype = false;
+    used = get_demanded (insn);
     
     rtx vdef = recog_data.operand[0];
     if (!rtx_equal_p (vdef, gen_rtx_REG (Pmode, X0_REGNUM)) &&
         !(REGNO (vdef) >= FIRST_PSEUDO_REGISTER &&
           (find_reg_note (insn, REG_UNUSED, vdef) ||
            find_reg_note (insn, REG_DEAD, vdef))))
-      used_vl = true;
+      used.vl = true;
   }
 
   for (auto *to_remove : to_delete)
