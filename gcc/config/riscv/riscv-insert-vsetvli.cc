@@ -1385,7 +1385,7 @@ can_skip_vsetvli_for_load_store_p (rtx_insn *insn, const vinfo &require, const v
 }
 
 static bool
-need_vsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
+needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
 {
   if (!need_vsetvli_p (insn))
     return false;
@@ -1415,14 +1415,6 @@ need_vsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
         }
     }
 
-  return true;
-}
-
-static bool
-needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
-{
-  if (!need_vsetvli (insn, require, curr_info))
-    return false;
   // If this is a unit-stride or strided load/store, we may be able to use the
   // EMUL=(EEW/SEW)*LMUL relationship to avoid changing VTYPE.
   return curr_info.unknown_p () || !can_skip_vsetvli_for_load_store_p (insn, require, curr_info);
@@ -1779,7 +1771,7 @@ emit_vsetvlis (const basic_block bb)
             curr_info = bb_vinfo_map[bb->index].pred;
             gcc_assert (curr_info.valid_p () &&
                         "Expected a valid predecessor state.");
-            if (need_vsetvli (insn, new_info, curr_info))
+            if (needvsetvli (insn, new_info, curr_info))
               {
                 // If this is the first implicit state change, and the state change
                 // requested can be proven to produce the same register contents, we
