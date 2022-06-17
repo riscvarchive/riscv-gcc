@@ -1010,10 +1010,27 @@ public:
 
     if (other.unknown_p ())
       return unknown_p ();
-
-    if (!avl_equal_p (other))
+    
+    if (get_avl () && !other.get_avl ())
       return false;
-
+    
+    if (!get_avl () && other.get_avl ())
+      return false;
+    
+    if (get_avl () && other.get_avl ()
+        && !rtx_equal_p (get_avl (), other.get_avl ()))
+      return false;
+      
+    if (get_avl_source () && !other.get_avl_source ())
+      return false;
+    
+    if (!get_avl_source () && other.get_avl_source ())
+      return false;
+      
+    if (get_avl_source () && other.get_avl_source ()
+        && !rtx_equal_p (get_avl_source (), other.get_avl_source ()))
+      return false;
+      
     // If only the VLMAX is valid, check that it is the same.
     if (sew_lmul_ratio_only_p && other.sew_lmul_ratio_only_p)
       return vlmax_equal_p (other);
@@ -1384,11 +1401,16 @@ can_skip_vsetvli_for_load_store_p (rtx_insn *insn, const vinfo &require, const v
   return curr_info.load_store_compatible_p (vsew, require);
 }
 
+/// Return true if a VSETVLI is required to transition from CurInfo to Require
+/// before MI.
 static bool
 needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
 {
   if (!need_vsetvli_p (insn))
     return false;
+  
+  vinfo require_new_info = compute_info_for_instr (insn, curr_info);
+  gcc_assert (require == require_new_info);
     
   if (curr_info.compatible_p (insn, require))
     return false;
@@ -1553,7 +1575,7 @@ compute_vl_vtype_changes (basic_block bb)
       {
         vector_p = true;
 
-        vinfo new_info = compute_info_for_instr (insn, curr_info);
+        vinfo new_info = compute_info_for_instr (insn, info.change);
         curr_info = new_info;
         if (!info.change.valid_p ())
           info.change = new_info;
@@ -1771,6 +1793,7 @@ emit_vsetvlis (const basic_block bb)
             curr_info = bb_vinfo_map[bb->index].pred;
             gcc_assert (curr_info.valid_p () &&
                         "Expected a valid predecessor state.");
+            new_info = compute_info_for_instr (insn, curr_info);
             if (needvsetvli (insn, new_info, curr_info))
               {
                 // If this is the first implicit state change, and the state change
