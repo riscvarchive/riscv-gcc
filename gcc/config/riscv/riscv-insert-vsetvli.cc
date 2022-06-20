@@ -1939,14 +1939,17 @@ dolocalprepass (const basic_block bb)
         if (use_vl_p (insn))
           {
             const auto require = compute_info_for_instr (insn, curr_info);
-            // If the AVL is the result of a previous vsetvli which has the
-            // same AVL and VLMAX as our current state, we can reuse the AVL
-            // from the current state for the new one.  This allows us to
-            // generate 'vsetvli x0, x0, vtype" or possible skip the transition
-            // entirely.
-            if (!curr_info.unknown_p () && require.get_avl () &&
-                REG_P (require.get_avl ()) &&
-                REGNO (require.get_avl ()) >= FIRST_PSEUDO_REGISTER)
+            // Two cases involving an AVL resulting from a previous vsetvli.
+            // 1) If the AVL is the result of a previous vsetvli which has the
+            //    same AVL and VLMAX as our current state, we can reuse the AVL
+            //    from the current state for the new one.  This allows us to
+            //    generate 'vsetvli x0, x0, vtype" or possible skip the transition
+            //    entirely.
+            // 2) If AVL is defined by a vsetvli with the same VLMAX, we can
+            //    replace the AVL operand with the AVL of the defining vsetvli.
+            //    We avoid general register AVLs to avoid extending live ranges
+            //    without being sure we can kill the original source reg entirely.
+            if (require.avl_reg_p () && REGNO (require.get_avl ()) >= FIRST_PSEUDO_REGISTER)
               {
                 rtx_insn *def_rtl = fetch_def_insn (insn, require);
                 
@@ -1955,37 +1958,18 @@ dolocalprepass (const basic_block bb)
                     if (vector_config_instr_p (def_rtl))
                       {
                         vinfo def_info = get_info_for_vsetvli (def_rtl, curr_info);
-                        if (def_info.avl_equal_p (curr_info) &&
+                        // case 1
+                        if (!curr_info.unknown_p () && def_info.avl_equal_p (curr_info) &&
                             def_info.vlmax_equal_p (curr_info))
                           {
                             replace_op (insn, curr_info.get_avl (), REPLACE_VL);
                             curr_info = compute_info_for_instr (insn, curr_info);
                             continue;
                           }
-                      }
-                  }
-              }
-
-            // If AVL is defined by a vsetvli with the same VLMAX, we can
-            // replace the AVL operand with the AVL of the defining vsetvli.
-            // We avoid general register AVLs to avoid extending live ranges
-            // without being sure we can kill the original source reg entirely.
-            // TODO: We can ignore policy bits here, we only need VL to be the
-            // same.
-            if (!curr_info.unknown_p () && require.get_avl () &&
-                REG_P (require.get_avl ()) &&
-                REGNO (require.get_avl ()) >= FIRST_PSEUDO_REGISTER)
-              {
-                rtx_insn *def_rtl = fetch_def_insn (insn, require);
-                if (def_rtl != NULL)
-                  {
-                    if (vector_config_instr_p (def_rtl))
-                      {
-                        vinfo def_info = get_info_for_vsetvli (def_rtl, curr_info);
-                        if (def_info.vlmax_equal_p (require) &&
-                            (def_info.avl_const_p () ||
-                            (def_info.avl_reg_p () &&
-                            rtx_equal_p (def_info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM)))))
+                        
+                        // case 2
+                        if (def_info.vlmax_equal_p (require) && def_info.get_avl () &&
+                            (def_info.avl_const_p () || rtx_equal_p (def_info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM))))
                           {
                             replace_op (insn, def_info.get_avl (), REPLACE_VL);
                             curr_info = compute_info_for_instr (insn, curr_info);
