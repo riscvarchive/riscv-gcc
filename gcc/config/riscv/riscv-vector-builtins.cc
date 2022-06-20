@@ -460,7 +460,7 @@ register_builtin_types ()
           machine_mode mode =
               vector_builtin_mode (elmode, vector_vlmuls[j].vlmul);
           
-          /* mask type in RVV.  */
+          /* vector && mask type in RVV.  */
           vectype = build_vector_type_for_mode (eltype, mode);
 
           /* NOTE: Reference to 'omp_clause_aligned_alignment' function in

@@ -1605,58 +1605,71 @@ need_vsetvli_phi (const vinfo &new_info, rtx_insn *rtl)
   return false;
 }
 
+// Given an incoming state reaching MI, modifies that state so that it is minimally
+// compatible with MI.  The resulting state is guaranteed to be semantically legal
+// for MI, but may not be the state requested by MI.
+void
+transfer_before (vinfo &info, rtx_insn *insn)
+{
+  if (!use_vtype_p (insn))
+    return;
+    
+  vinfo new_info = compute_info_for_instr (insn, info);
+
+  if (!info.valid_p ())
+    {
+      info = new_info;
+    }
+  else
+    {
+      // If this instruction isn't compatible with the previous VL/VTYPE
+      // we need to insert a VSETVLI.
+      // NOTE: We only do this if the vtype we're comparing against was
+      // created in this block. We need the first and third phase to treat
+      // the store the same way.
+      if (needvsetvli (insn, new_info, info))
+        info = new_info;
+    }
+}
+
+// Given a state with which we evaluated insn (see transferBefore above for why
+// this might be different that the state insn requested), modify the state to
+// reflect the changes insn might make.
+void
+transfer_after (vinfo &info, rtx_insn *insn)
+{
+  if (vector_config_instr_p (insn))
+    {
+      info = get_info_for_vsetvli (insn, info);
+      return;
+    }
+
+  // If this is something that updates VL/VTYPE that we don't know about, set
+  // the state to unknown.
+  if (update_vl_vtype_p (insn))
+    info = vinfo::get_unknown ();
+}
+
 static bool
 compute_vl_vtype_changes (basic_block bb)
 {
   bool vector_p = false;
 
-  bb_vinfo &info = bb_vinfo_map[bb->index];
+  bb_vinfo& info = bb_vinfo_map[bb->index];
   info.change = info.pred;
   rtx_insn *insn = NULL;
-  vinfo curr_info;
 
   FOR_BB_INSNS (bb, insn)
   {
-    // If this is an explicit VSETVLI or VSETIVLI, update our state.
-    if (vector_config_instr_p (insn))
-      {
-        vector_p = true;
-        info.change = get_info_for_vsetvli (insn, curr_info);
-        curr_info = info.change;
-        continue;
-      }
-    
+    transfer_before (info.change, insn);
     /*  According to vector.md, each instruction pattern parallel.
         It should have at least 2 side effects.
         The last 2 side effects are use vl && use vtype  */
-    if (use_vtype_p (insn))
-      {
-        vector_p = true;
+    
+    if (vector_config_instr_p (insn) || use_vtype_p (insn))
+      vector_p = true;
 
-        vinfo new_info = compute_info_for_instr (insn, info.change);
-        curr_info = new_info;
-        if (!info.change.valid_p ())
-          info.change = new_info;
-        else
-          {
-            // If this instruction isn't compatible with the previous VL/VTYPE
-            // we need to insert a VSETVLI.
-            // If this is a unit-stride or strided load/store, we may be able
-            // to use the EMUL=(EEW/SEW)*LMUL relationship to avoid changing
-            // vtype. NOTE: We only do this if the vtype we're comparing
-            // against was created in this block. We need the first and third
-            // phase to treat the store the same way.
-            if (needvsetvli (insn, new_info, info.change))
-              info.change = new_info;
-          }
-      }
-    // If this is something that updates VL/VTYPE that we don't know about, set
-    // the state to unknown.
-    if (update_vl_vtype_p (insn))
-      {
-        curr_info = vinfo::get_unknown ();
-        info.change = vinfo::get_unknown ();
-      }
+    transfer_after (info.change, insn);
   }
 
   return vector_p;
@@ -1665,7 +1678,7 @@ compute_vl_vtype_changes (basic_block bb)
 static void
 compute_incoming_vl_vtype (const basic_block bb)
 {
-  bb_vinfo &info = bb_vinfo_map[bb->index];
+  bb_vinfo& info = bb_vinfo_map[bb->index];
   info.inqueue = false;
 
   vinfo in_info;
@@ -1836,60 +1849,39 @@ emit_vsetvlis (const basic_block bb)
 
   FOR_BB_INSNS (bb, insn)
   {
+    const vinfo prev_info = curr_info;
+    transfer_before (curr_info, insn);
+    
     // If this is an explicit VSETVLI or VSETIVLI, update our state.
     if (vector_config_instr_p (insn))
-      {
-        curr_info = get_info_for_vsetvli (insn, curr_info);
-        prefix_transparent = false;
-        continue;
-      }
+      prefix_transparent = false;
 
     if (use_vtype_p (insn))
       {
-        vinfo new_info = compute_info_for_instr (insn, curr_info);
+        if (prev_info != curr_info)
+          {
+            // If this is the first implicit state change, and the state change
+            // requested can be proven to produce the same register contents, we
+            // can skip emitting the actual state change and continue as if we
+            // had since we know the GPR result of the implicit state change
+            // wouldn't be used and VL/VTYPE registers are correct.  Note that
+            // we *do* need to model the state as if it changed as while the
+            // register contents are unchanged, the abstract model can change.
+            if (!prefix_transparent || need_vsetvli_phi (curr_info, insn))
+              insert_vsetvli (insn, curr_info, prev_info);
+            prefix_transparent = false;
+          }
         
-        if (!curr_info.valid_p ())
-          {
-            //// We haven't found any vector instructions or VL/VTYPE changes
-            //// yet, use the predecessor information.
-            if (needvsetvli (insn, new_info, curr_info))
-              {
-                // If this is the first implicit state change, and the state change
-                // requested can be proven to produce the same register contents, we
-                // can skip emitting the actual state change and continue as if we
-                // had since we know the GPR result of the implicit state change
-                // wouldn't be used and VL/VTYPE registers are correct.  Note that
-                // we *do* need to model the state as if it changed as while the
-                // register contents are unchanged, the abstract model can change.
-                if (!prefix_transparent || need_vsetvli_phi (new_info, insn))
-                  insert_vsetvli (insn, new_info, curr_info);
-                prefix_transparent = false;
-                curr_info = new_info;
-              }
-          }
-        else
-          {
-            // If this instruction isn't compatible with the previous VL/VTYPE
-            // we need to insert a VSETVLI.
-            // vtype. NOTE: We can't use predecessor information for the store.
-            // We must treat it the same as the first phase so that we produce
-            // the correct vl/vtype for succesor blocks.
-            if (needvsetvli (insn, new_info, curr_info))
-              {
-                insert_vsetvli (insn, new_info, curr_info);
-                curr_info = new_info;
-              }
-          }
         cleanup_insn_op (insn);
       }
+      
     // If this is something updates VL/VTYPE that we don't know about, set
     // the state to unknown.
     if (update_vl_vtype_p (insn))
-      {
-        prefix_transparent = false;
-        curr_info = vinfo::get_unknown ();
-      }
-
+      prefix_transparent = false;
+    
+    transfer_after (curr_info, insn);
+    
     // If we reach the end of the block and our current info doesn't match the
     // expected info, insert a vsetvli to correct.
     if (insn == BB_END (bb))
@@ -2225,7 +2217,7 @@ rest_of_handle_insert_vsetvli (function *fn)
   FOR_ALL_BB_FN (bb, fn)
   {
     vector_p |= compute_vl_vtype_changes (bb);
-    bb_vinfo &info = bb_vinfo_map[bb->index];
+    bb_vinfo& info = bb_vinfo_map[bb->index];
     info.exit = info.change;
     if (dump_file)
       {
