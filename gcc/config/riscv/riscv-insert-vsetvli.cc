@@ -366,6 +366,9 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 static bool
 asm_insn_p (rtx_insn *insn)
 {
+  if (!insn)
+    return false;
+    
   rtx pat = PATTERN (insn);
   
   if (!pat)
@@ -377,25 +380,48 @@ asm_insn_p (rtx_insn *insn)
 }
 
 static bool
+fault_first_load_p (rtx_insn *insn)
+{
+  if (!insn)
+    return false;
+  
+  if (!INSN_P (insn))
+    return false;
+  
+  if (recog_memoized (insn) < 0)
+    return false;
+  
+  return get_attr_type (insn) == TYPE_VLEFF
+    || get_attr_type (insn) == TYPE_VLSEGFF;
+}
+
+static bool
+readvl_p (rtx_insn *insn)
+{
+  if (!insn)
+    return false;
+  
+  if (!INSN_P (insn))
+    return false;
+  
+  if (recog_memoized (insn) < 0)
+    return false;
+  
+  return get_attr_type (insn) == TYPE_READVL;
+}
+
+static bool
 update_vl_vtype_p (rtx_insn *insn)
 {
-  if (insn && NONDEBUG_INSN_P (insn))
-    {
-      if (recog_memoized (insn) >= 0 &&
-          (get_attr_type (insn) == TYPE_VLEFF ||
-           get_attr_type (insn) == TYPE_VLSEGFF))
-        {
-          extract_insn_cached (insn);
-          if (INTVAL (recog_data.operand[recog_data.n_operands - 1]) ==
-              DO_NOT_UPDATE_VL_VTYPE)
-            return false;
-          return true;
-        }
-      if (CALL_P (insn))
-        return true;
-      if (asm_insn_p (insn))
-        return true;
-    }
+  if (fault_first_load_p (insn))
+    return true;
+  
+  if (CALL_P (insn))
+    return true;
+  
+  if (asm_insn_p (insn))
+    return true;
+    
   return false;
 }
 
@@ -495,6 +521,83 @@ vsew_to_int_mode (unsigned vsew)
   return vsew == 0 ? QImode : vsew == 1 ? HImode : vsew == 2 ? SImode : DImode;
 }
 
+static unsigned
+calc_sew_lmul_ratio (unsigned int vsew_arg, unsigned int vlmul_arg)
+{
+  unsigned lmul;
+  unsigned sew;
+  bool fractional;
+
+  switch (vsew_arg)
+    {
+    default:
+      gcc_unreachable ();
+    case 0:
+      sew = 8;
+      break;
+    case 1:
+      sew = 16;
+      break;
+    case 2:
+      sew = 32;
+      break;
+    case 3:
+      sew = 64;
+      break;
+    case 4:
+      sew = 128;
+      break;
+    case 5:
+      sew = 256;
+      break;
+    case 6:
+      sew = 512;
+      break;
+    case 7:
+      sew = 1024;
+      break;
+    }
+
+  switch (vlmul_arg)
+    {
+    default:
+      gcc_unreachable ();
+    case 0:
+      lmul = 1;
+      fractional = false;
+      break;
+    case 1:
+      lmul = 2;
+      fractional = false;
+      break;
+    case 2:
+      lmul = 4;
+      fractional = false;
+      break;
+    case 3:
+      lmul = 8;
+      fractional = false;
+      break;
+    case 5:
+      lmul = 8;
+      fractional = true;
+      break;
+    case 6:
+      lmul = 4;
+      fractional = true;
+      break;
+    case 7:
+      lmul = 2;
+      fractional = true;
+      break;
+    }
+
+  gcc_assert (sew >= 8 && "Unexpected SEW value.");
+  unsigned int sew_mul_ratio = fractional ? sew * lmul : sew / lmul;
+
+  return sew_mul_ratio;
+}
+
 /// Which subfields of vl or VTYPE have values we need to preserve?
 struct demanded_fields
 {
@@ -531,14 +634,24 @@ static demanded_fields get_demanded (rtx_insn *insn)
   if (CALL_P (insn) || asm_insn_p (insn) || use_vtype_p (insn))
     res.vl = true;
   if (CALL_P (insn) || asm_insn_p (insn) || use_vl_p (insn)) 
-  {
-    res.sew = true;
-    res.lmul = true;
-    res.sew_lmul_ratio = true;
-    res.tail_policy = true;
-    res.mask_policy = true;
-  }
-
+    {
+      res.sew = true;
+      res.lmul = true;
+      res.sew_lmul_ratio = true;
+      res.tail_policy = true;
+      res.mask_policy = true;
+    }
+  
+  // Loads and stores with implicit EEW do not demand SEW or LMUL directly.
+  // They instead demand the ratio of the two which is used in computing
+  // EMUL, but which allows us the flexibility to change SEW and LMUL
+  // provided we don't change the ratio.
+  if (can_skip_load_store_insn_p (insn)) 
+    {
+      res.sew = false;
+      res.lmul = false;
+    }
+  
   return res;
 }
 
@@ -865,89 +978,11 @@ public:
   }
 
   unsigned
-  calc_sew_lmul_ratio (unsigned int vsew_arg, unsigned int vlmul_arg) const
-  {
-    gcc_assert (valid_p () && !unknown_p () &&
-                "Can't use VTYPE for uninitialized or unknown.");
-
-    unsigned lmul;
-    unsigned sew;
-    bool fractional;
-
-    switch (vsew_arg)
-      {
-      default:
-        gcc_unreachable ();
-      case 0:
-        sew = 8;
-        break;
-      case 1:
-        sew = 16;
-        break;
-      case 2:
-        sew = 32;
-        break;
-      case 3:
-        sew = 64;
-        break;
-      case 4:
-        sew = 128;
-        break;
-      case 5:
-        sew = 256;
-        break;
-      case 6:
-        sew = 512;
-        break;
-      case 7:
-        sew = 1024;
-        break;
-      }
-
-    switch (vlmul_arg)
-      {
-      default:
-        gcc_unreachable ();
-      case 0:
-        lmul = 1;
-        fractional = false;
-        break;
-      case 1:
-        lmul = 2;
-        fractional = false;
-        break;
-      case 2:
-        lmul = 4;
-        fractional = false;
-        break;
-      case 3:
-        lmul = 8;
-        fractional = false;
-        break;
-      case 5:
-        lmul = 8;
-        fractional = true;
-        break;
-      case 6:
-        lmul = 4;
-        fractional = true;
-        break;
-      case 7:
-        lmul = 2;
-        fractional = true;
-        break;
-      }
-
-    gcc_assert (sew >= 8 && "Unexpected SEW value.");
-    unsigned int sew_mul_ratio = fractional ? sew * lmul : sew / lmul;
-
-    return sew_mul_ratio;
-  }
-
-  unsigned
   calc_sew_lmul_ratio () const
   {
-    return calc_sew_lmul_ratio (vsew, vlmul);
+    gcc_assert (valid_p () && !unknown_p () &&
+               "Can't use VTYPE for uninitialized or unknown.");
+    return ::calc_sew_lmul_ratio (vsew, vlmul);
   }
 
   // Check if the VTYPE for these two VSETVLI Infos produce the same VLMAX.
@@ -1049,7 +1084,7 @@ public:
     if (!avl_equal_p (info))
       return false;
 
-    return calc_sew_lmul_ratio () == calc_sew_lmul_ratio (vsew_arg, info.vlmul);
+    return calc_sew_lmul_ratio () == ::calc_sew_lmul_ratio (vsew_arg, info.vlmul);
   }
 
   bool
@@ -1312,31 +1347,32 @@ get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
         }
       else
         {
+          if (optimize < 2)
+            return vinfo::get_unknown ();
           /* vsetvli X0, X0 means that the following instruction
              use the same vl as before. */
-          basic_block bb = BLOCK_FOR_INSN (insn);
-          rtx_insn *next_insn;
+          insn_info *next;
           bool find_vl_p = false;
-          for (next_insn = NEXT_INSN (insn); insn != NEXT_INSN (BB_END (bb));
-               next_insn = NEXT_INSN (next_insn))
+          for (insn_info *curr = crtl->ssa->first_insn (); curr; curr = next)
             {
-              if (use_vtype_p (next_insn))
+              next = curr->next_any_insn ();
+              if (curr->rtl () == insn)
                 {
-                  vinfo next_info = compute_info_for_instr (next_insn, curr_info);
-                  new_info.set_avl (next_info.get_avl ());
-                  new_info.set_avl_source (next_info.get_avl_source ());
-                  extract_insn_cached (insn);
-                  new_info.set_vtype (INTVAL (recog_data.operand[0]));
-                  
-                  if (recog_clobber_vl_vtype (next_insn) != MOV_CLOBBER_REG_REG &&
-                      recog_clobber_vl_vtype (next_insn) != OTHERS)
-                    new_info = vinfo::get_unknown ();
-                    
+                  gcc_assert (curr->num_defs () == 1);
+                  def_info *def = curr->defs ()[0];
+                  gcc_assert (def->regno () == VTYPE_REGNUM);
+                  set_info *set = as_a<set_info *> (def);
+                  use_info *use = set->first_use ();
+                  rtx_insn *rtl = use->insn ()->rtl ();
+                  extract_insn_cached (rtl);
+                  unsigned int offset = get_vl_offset (rtl);
+                  new_info.set_avl (recog_data.operand[recog_data.n_operands - offset]);
+                  new_info.set_avl_source (get_avl_source (
+                      recog_data.operand[recog_data.n_operands - offset], insn));
                   find_vl_p = true;
-                  break;
                 }
             }
-          gcc_assert (find_vl_p);
+          gcc_assert (find_vl_p);  
         }
       return new_info;
     }
@@ -1641,6 +1677,30 @@ transfer_after (vinfo &info, rtx_insn *insn)
   if (vector_config_instr_p (insn))
     {
       info = get_info_for_vsetvli (insn, info);
+      return;
+    }
+
+  if (fault_first_load_p (insn))
+    {
+      // Update AVL to vl-output of the fault first load.
+      rtx_insn *next_insn;
+      rtx new_vl = NULL_RTX;
+      extract_insn_cached (insn);
+      rtx dest = recog_data.operand[0];
+      basic_block bb = BLOCK_FOR_INSN (insn);
+      for (next_insn = NEXT_INSN (insn); next_insn != NEXT_INSN (BB_END (bb));
+           next_insn = NEXT_INSN (next_insn))
+        {
+          if (readvl_p (next_insn))
+            {
+              extract_insn_cached (next_insn);
+              rtx source = recog_data.operand[1];
+              if (rtx_equal_p (source, dest))
+                new_vl = recog_data.operand[0];
+            }
+        }
+      if (new_vl)
+        info.set_avl (recog_data.operand[recog_data.n_operands - 2]);
       return;
     }
 
@@ -1983,11 +2043,58 @@ dolocalprepass (const basic_block bb)
         continue;
       }
 
-    // If this is something that updates VL/VTYPE that we don't know about,
-    // set the state to unknown.
-    if (update_vl_vtype_p (insn))
-      curr_info = vinfo::get_unknown ();
+    transfer_after (curr_info, insn);
   }
+}
+
+// Return true if we can mutate PrevMI's VTYPE to match MI's
+// without changing any the fields which have been used.
+// TODO: Restructure code to allow code reuse between this and isCompatible
+// above.
+static bool
+can_mutate_prior_config (rtx_insn *prev_insn, rtx_insn *insn,
+                         const demanded_fields &used)
+{
+  // TODO: Extend this to handle cases where VL does change, but VL
+  // has not been used.  (e.g. over a vmv.x.s)
+  if (!vl_preserving_config_p (insn))
+    // Note: `vsetvli x0, x0, vtype' is the canonical instruction
+    // for this case.  If you find yourself wanting to add other forms
+    // to this "unused VTYPE" case, we're probably missing a
+    // canonicalization earlier.
+    return false;
+    
+  extract_insn_cached (prev_insn);
+  auto prior_vtype = recog_data.operand[recog_data.n_operands - 1];
+  extract_insn_cached (insn);
+  auto vtype = recog_data.operand[recog_data.n_operands - 1];
+  
+  if (!CONST_INT_P (prior_vtype) || !CONST_INT_P (vtype))
+    return false;
+
+  unsigned int prior_vsew = riscv_parse_vsew_field (INTVAL (prior_vtype));
+  unsigned int prior_vlmul = riscv_parse_vlmul_field (INTVAL (prior_vtype));
+  unsigned int vsew = riscv_parse_vsew_field (INTVAL (vtype));
+  unsigned int vlmul = riscv_parse_vlmul_field (INTVAL (vtype));
+  if (used.sew && vsew != prior_vsew)
+    return false;
+
+  if (used.lmul && vlmul != prior_vlmul)
+    return false;
+
+  if (used.sew_lmul_ratio)
+    {
+      auto prior_ratio = calc_sew_lmul_ratio (prior_vsew, prior_vlmul);
+      auto ratio = calc_sew_lmul_ratio (vsew, vlmul);
+      if (prior_ratio != ratio)
+        return false;
+    }
+
+  if (used.tail_policy && riscv_parse_vta_field (INTVAL (vtype)) != riscv_parse_vta_field (INTVAL (prior_vtype)))
+    return false;
+  if (used.mask_policy && riscv_parse_vma_field (INTVAL (vtype)) != riscv_parse_vma_field (INTVAL (prior_vtype)))
+    return false;
+  return true;
 }
 
 static void
@@ -2014,15 +2121,8 @@ dolocalpostpass (const basic_block bb)
             to_delete.push_back (prev_insn);
             // fallthrough
           }
-        else if (!used.used_vtype () && vl_preserving_config_p (insn))
+        else if (can_mutate_prior_config (prev_insn, insn, used))
           {
-            // Note: `vsetvli x0, x0, vtype' is the canonical instruction
-            // for this case.  If you find yourself wanting to add other forms
-            // to this "unused VTYPE" case, we're probably missing a
-            // canonicalization earlier.
-            // Note: We don't need to explicitly check vtype compatibility
-            // here because this form is only legal (per ISA) when not
-            // changing VL.
             rtx new_vtype = recog_data.operand[recog_data.n_operands - 1];
             replace_op (prev_insn, new_vtype, REPLACE_VTYPE);
             to_delete.push_back (insn);
@@ -2299,7 +2399,7 @@ rest_of_handle_insert_vsetvli (function *fn)
         }
       }
     }
-
+  
   bb_vinfo_map.clear ();
   bb_queue.clear ();
 

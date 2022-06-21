@@ -1,5 +1,5 @@
 /* { dg-do run } */
-/* { dg-additional-options "-O2 -ftree-vectorize" } */
+/* { dg-additional-options "-O2 -ftree-vectorize -fno-schedule-insns -fno-schedule-insns2" } */
 /* { dg-skip-if "test vectorization using rvv" { *-*-* } { "*" } { "-march=rv*gc*v*zfh*" } } */
     
     

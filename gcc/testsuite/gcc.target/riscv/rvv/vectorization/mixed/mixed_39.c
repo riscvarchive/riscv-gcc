@@ -1,5 +1,5 @@
 /* { dg-do compile } */
-/* { dg-additional-options "-O2 -ftree-vectorize" } */
+/* { dg-additional-options "-O2 -ftree-vectorize -fno-schedule-insns -fno-schedule-insns2" } */
 /* { dg-skip-if "test vectorization using rvv" { *-*-* } { "*" } { "-march=rv*v*zfh*" } } */
 
 #include <stddef.h>

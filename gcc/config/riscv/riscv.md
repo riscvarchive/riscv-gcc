@@ -107,7 +107,6 @@
    (RVV_POLICY_TU			1)
    (RVV_POLICY_MU			2)
    (RVV_POLICY_TAMA	  3)
-   (DO_NOT_UPDATE_VL_VTYPE	21)
 
    (RVV_GATHER_LOAD	0)
    (RVV_LEN_GATHER_LOAD	2)
@@ -320,7 +319,7 @@
   "unknown,branch,jump,call,load,fpload,store,fpstore,
    mtc,mfc,const,arith,logical,shift,slt,imul,idiv,move,fmove,fadd,fmul,
    fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost,bitmanip,rotate,
-   csr,vload,vstore,vcopy,vsetvl,
+   readvl,vload,vstore,vcopy,vsetvl,
    vle,vse,vlse,vsse,vluxei,vloxei,vsuxei,vsoxei,vleff,
    vlseg,vsseg,vlsegff,vlsseg,vssseg,vluxsegei,vloxsegei,vsuxsegei,vsoxsegei,
    varith,vadc,vmadc,vwarith,vlogical,vshift,vcmp,vmul,vmulh,vdiv,vwmul,vmadd,vwmadd,

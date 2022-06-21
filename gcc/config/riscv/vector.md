@@ -41,7 +41,7 @@
       [(match_operand 1 "vector_any_register_operand" "vr")] UNSPEC_READVL))]
   "TARGET_VECTOR"
   "csrr\t%0,vl"
-  [(set_attr "type" "csr")
+  [(set_attr "type" "readvl")
    (set_attr "mode" "<X:MODE>")])
 
 ;; -------------------------------------------------------------------------

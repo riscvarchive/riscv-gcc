@@ -1415,13 +1415,13 @@ riscv_vector_expand_strlen (rtx *operands)
       gen_vsetvl (Pmode, cnt, gen_rtx_REG (Pmode, X0_REGNUM), GEN_INT (vtype)));
   emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, save,
                         gen_rtx_REG (Pmode, X0_REGNUM),
-                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+                        riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_readvl (Pmode, cnt, vec));
   emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec,
-                         const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM),
-                         riscv_vector::gen_any_policy ()));
+                         const0_rtx, cnt,
+                         riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask,
-                           gen_rtx_REG (Pmode, X0_REGNUM),
+                           cnt,
                            riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_rtx_SET (save, gen_rtx_PLUS (Pmode, save, cnt)));
 
@@ -1490,10 +1490,10 @@ riscv_vector_expand_strcpy (rtx *operands)
   emit_insn (gen_vsetvl (Pmode, gen_rtx_REG (Pmode, X0_REGNUM), init,
                          GEN_INT (vtype)));
   emit_insn (gen_vleff (cur_mode, vec, const0_rtx, const0_rtx, src, init,
-                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+                        riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_readvl (Pmode, cnt, vec));
   emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec,
-                         const0_rtx, init, riscv_vector::gen_any_policy ()));
+                         const0_rtx, init, riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_vfirst_m (mask_mode, Pmode, end, const0_rtx, mask, init,
                            riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_rtx_SET (src, gen_rtx_PLUS (Pmode, src, cnt)));
@@ -1581,11 +1581,11 @@ riscv_vector_expand_strcmp (rtx *operands)
   emit_insn (gen_rtx_SET (src1, gen_rtx_PLUS (Pmode, src1, offset)));
   emit_insn (gen_vleff (cur_mode, vec1, const0_rtx, const0_rtx, src1,
                         gen_rtx_REG (Pmode, X0_REGNUM),
-                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+                        riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_rtx_SET (src2, gen_rtx_PLUS (Pmode, src2, offset)));
   emit_insn (gen_vleff (cur_mode, vec2, const0_rtx, const0_rtx, src2,
                         gen_rtx_REG (Pmode, X0_REGNUM),
-                        GEN_INT (DO_NOT_UPDATE_VL_VTYPE)));
+                        riscv_vector_gen_policy (RVV_POLICY_TAMA)));
   emit_insn (gen_vms_vx (EQ, cur_mode, mask, const0_rtx, const0_rtx, vec1,
                          const0_rtx, gen_rtx_REG (Pmode, X0_REGNUM),
                          riscv_vector_gen_policy (RVV_POLICY_TAMA)));
