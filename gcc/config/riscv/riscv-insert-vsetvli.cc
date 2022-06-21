@@ -613,6 +613,15 @@ struct demanded_fields
   {
     return sew || lmul || sew_lmul_ratio || tail_policy || mask_policy;
   }
+  
+  // Mark all VTYPE subfields and properties as demanded
+  void demand_vtype () {
+    sew = true;
+    lmul = true;
+    sew_lmul_ratio = true;
+    tail_policy = true;
+    mask_policy = true;
+  }
 };
 
 static void 
@@ -630,20 +639,27 @@ do_union (demanded_fields &a, demanded_fields b)
 static demanded_fields 
 get_demanded (rtx_insn *insn) 
 {
+  // Warning: This function has to work on both the lowered (i.e. post
+  // emitVSETVLIs) and pre-lowering forms.  The main implication of this is
+  // that it can't use the value of a SEW, VL, or Policy operand as they might
+  // be stale after lowering.
+  
   // Most instructions don't use any of these subfeilds.
   demanded_fields res;
   // Start conservative if registers are used
   if (CALL_P (insn) || asm_insn_p (insn) || use_vtype_p (insn))
     res.vl = true;
   if (CALL_P (insn) || asm_insn_p (insn) || use_vl_p (insn)) 
-    {
-      res.sew = true;
-      res.lmul = true;
-      res.sew_lmul_ratio = true;
-      res.tail_policy = true;
-      res.mask_policy = true;
-    }
+    res.demand_vtype ();
   
+  // Start conservative on the unlowered form too
+  if (use_vtype_p (insn))
+    {
+      res.demand_vtype ();
+      if (use_vl_p (insn))
+        res.vl = true;
+    }
+
   // Loads and stores with implicit EEW do not demand SEW or LMUL directly.
   // They instead demand the ratio of the two which is used in computing
   // EMUL, but which allows us the flexibility to change SEW and LMUL
@@ -1037,10 +1053,10 @@ public:
   }
 
   bool
-  compatible_vtype_p (rtx_insn *insn, const vinfo &info) const
+  compatible_vtype_p (rtx_insn *insn, const vinfo &require) const
   {
     // Simple case, see if full VTYPE matches.
-    if (vtype_equal_p (info))
+    if (vtype_equal_p (require))
       return true;
 
     // If this is a mask reg operation, it only cares about VLMAX.
@@ -1049,11 +1065,20 @@ public:
     // FIXME: The policy bits can probably be ignored for mask reg operations.
     machine_mode mode = riscv_translate_attr_mode (insn);
     if (riscv_vector_mask_mode_p (mode) 
-        && vlmax_equal_p (info) && vta == info.vta 
-        && vma == info.vma)
+        && vlmax_equal_p (require) && vta == require.vta 
+        && vma == require.vma)
       return true;
 
-    return false;
+    demanded_fields used = get_demanded (insn);
+    // Store instructions don't use the policy fields.
+    // TODO: Move this into getDemanded; it is here only to avoid changing
+    // behavior of the post pass in an otherwise NFC code restructure.
+    if (use_vtype_p (insn) && store_insn_p (insn))
+      {
+        used.tail_policy = false;
+        used.mask_policy = false;
+      }
+    return are_compatible_vtypes (encode_vtype (), require.encode_vtype (), used);
   }
 
   // Determine whether the vector instructions requirements represented by
@@ -1075,43 +1100,8 @@ public:
     if (sew_lmul_ratio_only_p)
       return false;
 
-    // If the instruction doesn't need an AVLReg and the SEW matches, consider
-    // it compatible.
-    if (require.known_p () && require.avl == NULL_RTX
-      && vsew == require.vsew)
-      return true;
-    
-    // The AVL must match.
-    if (!avl_equal_p (require))
-      return false;
-    
-    if (compatible_vtype_p (insn, require))
-      return true;
-      
-    // Store instructions don't use the policy fields.
-    if (store_insn_p (insn) && vlmul == require.vlmul && vsew == require.vsew)
-      return true;
-      
     // Anything else is not compatible.
-    return false;
-  }
-
-  bool
-  load_store_compatible_p (unsigned vsew_arg, const vinfo &info) const
-  {
-    gcc_assert (valid_p () && info.valid_p () &&
-                "Can't compare invalid VSETVLI Infos.");
-    gcc_assert (!info.sew_lmul_ratio_only_p &&
-                "Expected a valid VTYPE for instruction.");
-    gcc_assert (vsew_arg == info.vsew && "Mismatched EEW/SEW for store.");
-    
-    if (unknown_p () || get_sew_lmul_ratio_only_p ())
-      return false;
-
-    if (!avl_equal_p (info))
-      return false;
-
-    return calc_sew_lmul_ratio () == ::calc_sew_lmul_ratio (vsew_arg, info.vlmul);
+    return avl_equal_p (require) && compatible_vtype_p (insn, require);
   }
 
   bool
@@ -1506,23 +1496,6 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
   return info;
 }
 
-static bool
-can_skip_vsetvli_for_load_store_p (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
-{
-  gcc_assert (recog_memoized (insn) >= 0);
-  if (!can_skip_load_store_insn_p (insn))
-    return false;
-    
-  machine_mode mode = riscv_translate_attr_mode (insn);
-  unsigned vsew = riscv_classify_vsew_field (mode);
-
-  // Stores can ignore the tail and mask policies.
-  if (!store_insn_p (insn) && !curr_info.policy_equal_p (require))
-    return false;
-    
-  return curr_info.load_store_compatible_p (vsew, require);
-}
-
 /// Return true if a VSETVLI is required to transition from CurInfo to Require
 /// before MI.
 static bool
@@ -1575,9 +1548,7 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
         }
     }
 
-  // If this is a unit-stride or strided load/store, we may be able to use the
-  // EMUL=(EEW/SEW)*LMUL relationship to avoid changing VTYPE.
-  return curr_info.unknown_p () || !can_skip_vsetvli_for_load_store_p (insn, require, curr_info);
+  return true;
 }
 
 // If we weren't able to prove a vsetvli was directly unneeded, it might still
