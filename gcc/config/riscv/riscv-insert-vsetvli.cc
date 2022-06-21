@@ -615,7 +615,8 @@ struct demanded_fields
   }
 };
 
-static void do_union (demanded_fields &a, demanded_fields b) 
+static void 
+do_union (demanded_fields &a, demanded_fields b) 
 {
   a.vl |= b.vl;
   a.sew |= b.sew;
@@ -626,7 +627,8 @@ static void do_union (demanded_fields &a, demanded_fields b)
 }
 
 // Return which fields are demanded by the given instruction.
-static demanded_fields get_demanded (rtx_insn *insn) 
+static demanded_fields 
+get_demanded (rtx_insn *insn) 
 {
   // Most instructions don't use any of these subfeilds.
   demanded_fields res;
@@ -655,6 +657,34 @@ static demanded_fields get_demanded (rtx_insn *insn)
   return res;
 }
 
+static bool
+are_compatible_vtypes (uint64_t vtype1, uint64_t vtype2, const demanded_fields &used)
+{
+  unsigned int prior_vsew = riscv_parse_vsew_field (vtype1);
+  unsigned int prior_vlmul = riscv_parse_vlmul_field (vtype1);
+  unsigned int vsew = riscv_parse_vsew_field (vtype2);
+  unsigned int vlmul = riscv_parse_vlmul_field (vtype2);
+  if (used.sew && vsew != prior_vsew)
+    return false;
+
+  if (used.lmul && vlmul != prior_vlmul)
+    return false;
+
+  if (used.sew_lmul_ratio)
+    {
+      auto prior_ratio = calc_sew_lmul_ratio (prior_vsew, prior_vlmul);
+      auto ratio = calc_sew_lmul_ratio (vsew, vlmul);
+      if (prior_ratio != ratio)
+        return false;
+    }
+
+  if (used.tail_policy && riscv_parse_vta_field (vtype2) != riscv_parse_vta_field (vtype1))
+    return false;
+  if (used.mask_policy && riscv_parse_vma_field (vtype2) != riscv_parse_vma_field (vtype1))
+    return false;
+  return true;
+}
+ 
 class vinfo
 {
 private:
@@ -777,6 +807,13 @@ public:
   {
     return vsew;
   }
+  
+  unsigned int
+  get_sew () const
+  {
+    machine_mode inner = vsew_to_int_mode (vsew);
+    return GET_MODE_BITSIZE (as_a<scalar_mode> (inner));
+  };
   
   enum vlmul_field_enum
   get_vlmul () const
@@ -1042,16 +1079,6 @@ public:
     // it compatible.
     if (require.known_p () && require.avl == NULL_RTX
       && vsew == require.vsew)
-      return true;
-    
-    // For vmv.s.x and vfmv.s.f, there is only two behaviors, VL = 0 and VL > 0.
-    // So it's compatible when we could make sure that both VL be the same
-    // situation.
-    if (scalar_move_insn_p (insn) && require.get_avl () &&
-        CONST_SCALAR_INT_P (require.get_avl ()) &&
-        ((has_nonzero_avl () && require.has_nonzero_avl ()) ||
-         (has_zero_avl () && require.has_zero_avl ())) &&
-        sew_equal_p (require) && policy_equal_p (require))
       return true;
     
     // The AVL must match.
@@ -1508,6 +1535,23 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
     
   if (curr_info.compatible_p (insn, require))
     return false;
+  
+  // For vmv.s.x and vfmv.s.f, there is only two behaviors, VL = 0 and VL > 0.
+  // So it's compatible when we could make sure that both VL be the same
+  // situation.  Additionally, if writing to an implicit_def operand, we
+  // don't need to preserve any other bits and are thus compatible with any
+  // larger etype, and can disregard policy bits.
+  if (scalar_move_insn_p (insn) &&
+      ((curr_info.has_nonzero_avl () && require.has_nonzero_avl ()) ||
+       (curr_info.has_zero_avl () && require.has_zero_avl ())))
+    {
+      extract_insn_cached (insn);
+      if (rtx_equal_p (recog_data.operand[1], const0_rtx) && 
+          curr_info.get_sew () >= require.get_sew ())
+        return false;
+      if (curr_info.sew_equal_p (require) && curr_info.policy_equal_p (require))
+        return false;
+    }
 
   // We didn't find a compatible value. If our AVL is a virtual register,
   // it might be defined by a VSET(I)VLI. If it has the same VTYPE we need
@@ -2071,30 +2115,8 @@ can_mutate_prior_config (rtx_insn *prev_insn, rtx_insn *insn,
   
   if (!CONST_INT_P (prior_vtype) || !CONST_INT_P (vtype))
     return false;
-
-  unsigned int prior_vsew = riscv_parse_vsew_field (INTVAL (prior_vtype));
-  unsigned int prior_vlmul = riscv_parse_vlmul_field (INTVAL (prior_vtype));
-  unsigned int vsew = riscv_parse_vsew_field (INTVAL (vtype));
-  unsigned int vlmul = riscv_parse_vlmul_field (INTVAL (vtype));
-  if (used.sew && vsew != prior_vsew)
-    return false;
-
-  if (used.lmul && vlmul != prior_vlmul)
-    return false;
-
-  if (used.sew_lmul_ratio)
-    {
-      auto prior_ratio = calc_sew_lmul_ratio (prior_vsew, prior_vlmul);
-      auto ratio = calc_sew_lmul_ratio (vsew, vlmul);
-      if (prior_ratio != ratio)
-        return false;
-    }
-
-  if (used.tail_policy && riscv_parse_vta_field (INTVAL (vtype)) != riscv_parse_vta_field (INTVAL (prior_vtype)))
-    return false;
-  if (used.mask_policy && riscv_parse_vma_field (INTVAL (vtype)) != riscv_parse_vma_field (INTVAL (prior_vtype)))
-    return false;
-  return true;
+  
+  return are_compatible_vtypes (INTVAL (prior_vtype), INTVAL (vtype), used);
 }
 
 static void
