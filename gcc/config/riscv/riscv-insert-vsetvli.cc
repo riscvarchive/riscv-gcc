@@ -204,6 +204,13 @@ scalar_move_insn_p (rtx_insn *insn)
 }
 
 static bool
+splat_move_insn_p (rtx_insn *insn)
+{
+  return insn && INSN_P (insn) && recog_memoized (insn) >= 0 &&
+         get_attr_type (insn) == TYPE_VMV_V_X;
+}
+
+static bool
 store_insn_p (rtx_insn *insn)
 {
   return insn && INSN_P (insn) && recog_memoized (insn) >= 0 &&
@@ -225,6 +232,23 @@ can_skip_load_store_insn_p (rtx_insn *insn)
           get_attr_type (insn) == TYPE_VSSE ||
           get_attr_type (insn) == TYPE_VLE ||
           get_attr_type (insn) == TYPE_VLSE);
+}
+
+static bool
+splat_of_zero_or_minus_one_p (rtx_insn *insn)
+{
+  if (!splat_move_insn_p (insn))
+    return false;
+
+  extract_insn_cached (insn);
+  
+  if (!rtx_equal_p (recog_data.operand[1], const0_rtx))
+    return false;
+  rtx x = recog_data.operand[2];
+  machine_mode mode = GET_MODE (x);
+  if (rtx_equal_p (x, CONST0_RTX (mode)) || rtx_equal_p (x, CONSTM1_RTX (mode)))
+    return true;
+  return rtx_equal_p (x, gen_rtx_REG (mode, X0_REGNUM));
 }
 
 static bool
@@ -522,7 +546,7 @@ vsew_to_int_mode (unsigned vsew)
 }
 
 static unsigned
-calc_sew_lmul_ratio (unsigned int vsew_arg, unsigned int vlmul_arg)
+get_sew_lmul_ratio (unsigned int vsew_arg, unsigned int vlmul_arg)
 {
   unsigned lmul;
   unsigned sew;
@@ -598,6 +622,24 @@ calc_sew_lmul_ratio (unsigned int vsew_arg, unsigned int vlmul_arg)
   return sew_mul_ratio;
 }
 
+/// Return true if this is an operation on mask registers.  Note that
+/// this includes both arithmetic/logical ops and load/store (vlm/vsm).
+static bool
+mask_reg_op_p (rtx_insn *insn)
+{
+  if (!insn)
+    return false;
+  
+  if (!INSN_P (insn))
+    return false;
+  
+  if (recog_memoized (insn) < 0)
+    return false;
+
+  machine_mode mode = riscv_translate_attr_mode (insn);
+  return riscv_vector_mask_mode_p (mode);
+}
+
 /// Which subfields of vl or VTYPE have values we need to preserve?
 struct demanded_fields
 {
@@ -670,6 +712,32 @@ get_demanded (rtx_insn *insn)
       res.lmul = false;
     }
   
+  // Store instructions don't use the policy fields.
+  if (store_insn_p (insn))
+    {
+      res.tail_policy = false;
+      res.mask_policy = false;
+    }
+
+  // A splat of 0/-1 is always a splat of 0/-1, regardless of etype.
+  // TODO: We're currently demanding VL + SEWLMULRatio which is sufficient
+  // but not neccessary.  What we really need is VLInBytes.
+  if (splat_of_zero_or_minus_one_p (insn)) 
+    {
+      res.sew = false;
+      res.lmul = false;
+    }
+  
+  // If this is a mask reg operation, it only cares about VLMAX.
+  // TODO: Possible extensions to this logic
+  // * Probably ok if available VLMax is larger than demanded
+  // * The policy bits can probably be ignored..
+  if (mask_reg_op_p (insn))
+    {
+      res.sew = false;
+      res.lmul = false;
+    }
+
   return res;
 }
 
@@ -688,8 +756,8 @@ are_compatible_vtypes (uint64_t vtype1, uint64_t vtype2, const demanded_fields &
 
   if (used.sew_lmul_ratio)
     {
-      auto prior_ratio = calc_sew_lmul_ratio (prior_vsew, prior_vlmul);
-      auto ratio = calc_sew_lmul_ratio (vsew, vlmul);
+      auto prior_ratio = get_sew_lmul_ratio (prior_vsew, prior_vlmul);
+      auto ratio = get_sew_lmul_ratio (vsew, vlmul);
       if (prior_ratio != ratio)
         return false;
     }
@@ -1035,7 +1103,7 @@ public:
   {
     gcc_assert (valid_p () && !unknown_p () &&
                "Can't use VTYPE for uninitialized or unknown.");
-    return ::calc_sew_lmul_ratio (vsew, vlmul);
+    return get_sew_lmul_ratio (vsew, vlmul);
   }
 
   // Check if the VTYPE for these two VSETVLI Infos produce the same VLMAX.
@@ -1055,29 +1123,7 @@ public:
   bool
   compatible_vtype_p (rtx_insn *insn, const vinfo &require) const
   {
-    // Simple case, see if full VTYPE matches.
-    if (vtype_equal_p (require))
-      return true;
-
-    // If this is a mask reg operation, it only cares about VLMAX.
-    // FIXME: Mask reg operations are probably ok if "this" VLMAX is larger
-    // than "InstrInfo".
-    // FIXME: The policy bits can probably be ignored for mask reg operations.
-    machine_mode mode = riscv_translate_attr_mode (insn);
-    if (riscv_vector_mask_mode_p (mode) 
-        && vlmax_equal_p (require) && vta == require.vta 
-        && vma == require.vma)
-      return true;
-
     demanded_fields used = get_demanded (insn);
-    // Store instructions don't use the policy fields.
-    // TODO: Move this into getDemanded; it is here only to avoid changing
-    // behavior of the post pass in an otherwise NFC code restructure.
-    if (use_vtype_p (insn) && store_insn_p (insn))
-      {
-        used.tail_policy = false;
-        used.mask_policy = false;
-      }
     return are_compatible_vtypes (encode_vtype (), require.encode_vtype (), used);
   }
 

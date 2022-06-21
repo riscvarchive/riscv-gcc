@@ -252,7 +252,7 @@
 ;; single-width instruction.
 ;; 2. Use <MODE> attribute to define different scheduling
 ;; between integer and floating-point.
-;; csr csr instructions
+;; readvl readvl instructions
 ;; vload vector whole register load
 ;; vstore vector whole register store
 ;; vcopy vector whole register copy
@@ -289,7 +289,8 @@
 ;; vmadd vector single-width integer and floating-point multiply-add/sub
 ;; vwmadd vector widening integer and floating-point multiply-add/sub
 ;; vmerge vector element data selection
-;; vmove vector register move
+;; vmv_v_v vector register move
+;; vmv_v_x vector register splat move
 ;; vsarith vector saturating single-width arithmetic instructions
 ;; vsmul vector saturating single-width multiply instructions
 ;; vscaleshift vector scaling single-width shift instructions
@@ -323,7 +324,7 @@
    vle,vse,vlse,vsse,vluxei,vloxei,vsuxei,vsoxei,vleff,
    vlseg,vsseg,vlsegff,vlsseg,vssseg,vluxsegei,vloxsegei,vsuxsegei,vsoxsegei,
    varith,vadc,vmadc,vwarith,vlogical,vshift,vcmp,vmul,vmulh,vdiv,vwmul,vmadd,vwmadd,
-   vmerge,vmove,vsarith,vsmul,vscaleshift,vclip,vfsqrt,vfsgnj,vfclass,vfcvt,vfwcvt,vfncvt,
+   vmerge,vmv_v_v,vmv_v_x,vsarith,vsmul,vscaleshift,vclip,vfsqrt,vfsgnj,vfclass,vfcvt,vfwcvt,vfncvt,
    vwcvt,vncvt,vreduc,vwreduc,vmask,vcpop,vmsetbit,viota,vid,vmv_x_s,vmv_s_x,vfmv_f_s,vfmv_s_f,
    vslide,vgather,vcompress"
   (cond [(eq_attr "got" "load") (const_string "load")

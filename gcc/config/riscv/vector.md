@@ -261,7 +261,7 @@
     riscv_vector_expand_tuple (<VTSUB>mode, operands);
     DONE;
   }
-  [(set_attr "type" "vcopy,vle,vse,vmove")
+  [(set_attr "type" "vcopy,vle,vse,vmv_v_x")
    (set_attr "mode" "<VTSUB>")])
 
 (define_insn_and_split "mov<mode>"
@@ -288,7 +288,7 @@
     riscv_vector_expand_tuple (<VTSUB>mode, operands);
     DONE;
   }
-  [(set_attr "type" "vcopy,vle,vse,vmove")
+  [(set_attr "type" "vcopy,vle,vse,vmv_v_x")
    (set_attr "mode" "<VTSUB>")])
 
 (define_insn_and_split "*mov<mode>"
@@ -4024,7 +4024,7 @@
        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
  "TARGET_VECTOR"
  "vmv.v.v\t%0,%2"
- [(set_attr "type" "vmove")
+ [(set_attr "type" "vmv_v_v")
   (set_attr "mode" "<MODE>")])
 
 ;; Vector-Scalar Integer Move.
@@ -4056,7 +4056,7 @@
   vmv.v.i\t%0,%2
   vmv.v.x\t%0,%2
   vmv.v.i\t%0,%2"
- [(set_attr "type" "vmove")
+ [(set_attr "type" "vmv_v_x")
   (set_attr "mode" "<MODE>")])
 
 (define_insn "@vmv<mode>_v_x_32bit"
@@ -4075,7 +4075,7 @@
   vmv.v.i\t%0,%2
   vmv.v.x\t%0,%2
   vmv.v.i\t%0,%2"
- [(set_attr "type" "vmove")
+ [(set_attr "type" "vmv_v_x")
   (set_attr "mode" "<MODE>")])
 
 ;; -------------------------------------------------------------------------------
@@ -5384,7 +5384,7 @@
   vmv.v.i\t%0,0
   vfmv.v.f\t%0,%2
   vfmv.v.f\t%0,%2"
- [(set_attr "type" "vmove")
+ [(set_attr "type" "vmv_v_x")
   (set_attr "mode" "<MODE>")])
 
 ;; Convert float to unsigned integer.
