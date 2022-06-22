@@ -599,6 +599,9 @@ public:
   
   virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -612,6 +615,9 @@ public:
   virtual char * assemble_name (function_instance &) OVERRIDE;
   
   virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+
+  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
+        gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };

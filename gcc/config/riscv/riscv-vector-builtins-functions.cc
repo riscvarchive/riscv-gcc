@@ -499,6 +499,21 @@ segment_skip_p (const char *base_name, machine_mode mode)
   return false;
 }
 
+/* Helper for GCC IR fold, to get lhs. */
+static tree
+get_lhs (const function_instance &instance, gcall *call_in)
+{
+  tree lhs;
+  if (gimple_has_lhs (call_in))
+    lhs = gimple_call_lhs (call_in);
+  else
+    {
+      tree type = get_dt_t_with_index (instance, 0);
+      lhs = make_ssa_name (type);
+    }
+  return lhs;
+}
+
 /* Return true if the function has no return value.  */
 static bool
 function_returns_void_p (tree fndecl)
@@ -676,7 +691,7 @@ handle_sew64_on_rv32 (const function_instance &instance,
   unsigned int index = parse_scalar_index (instance) + offset;
   unsigned int nargs = gimple_call_num_args (call_in);
   tree scalar = gimple_call_arg (call_in, index);
-  tree lhs = gimple_call_lhs (call_in);
+  tree lhs = get_lhs (instance, call_in);
   tree vectype = TREE_TYPE (lhs);
   const char *dt2 = "";
   if (GET_MODE_CLASS (TYPE_MODE (vectype)) == MODE_VECTOR_BOOL)
@@ -1768,11 +1783,34 @@ vset::get_argument_types (const function_instance &instance,
   argument_types.quick_push (get_dt_t_with_index (instance, 2));
 }
 
-rtx
-vset::expand (const function_instance &instance, tree exp, rtx target) const
+gimple *
+vset::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  enum insn_code icode = code_for_vset (instance.get_arg_pattern ().arg_list[0]);
-  return expand_builtin_insn (icode, exp, target, instance);
+  tree lhs = get_lhs (instance, call_in);
+  tree arg0 = gimple_call_arg (call_in, 0);
+  tree arg1 = gimple_call_arg (call_in, 1);
+  tree arg2 = gimple_call_arg (call_in, 2);
+  machine_mode base_mode = TYPE_MODE (TREE_TYPE (arg2));
+  machine_mode full_mode = TYPE_MODE (TREE_TYPE (arg0));
+  int index = int_cst_value (arg1);
+  unsigned int num_vectors = exact_div (GET_MODE_SIZE (full_mode), GET_MODE_SIZE (base_mode)).to_constant ();
+  tree array_type = build_array_type_nelts (TREE_TYPE (arg2), num_vectors);
+  SET_TYPE_MODE (array_type, full_mode);
+  tree array = create_tmp_var (array_type, "rvv_array");
+  gassign *assign = gimple_build_assign (array, fold_build1 (VIEW_CONVERT_EXPR, TREE_TYPE (array), arg0));
+  gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
+  tree vector = build4 (ARRAY_REF, TREE_TYPE (arg2), array, size_int (index), NULL_TREE, NULL_TREE);
+  assign = gimple_build_assign (vector, arg2);
+  gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
+  assign = gimple_build_assign (lhs, array);
+  return assign;
+}
+
+rtx
+vset::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+  return NULL_RTX;
 }
 
 /* A function implementation for vget functions.  */
@@ -1805,11 +1843,31 @@ vget::get_argument_types (const function_instance &instance,
   argument_types.quick_push (size_type_node);
 }
 
-rtx
-vget::expand (const function_instance &instance, tree exp, rtx target) const
+gimple *
+vget::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  enum insn_code icode = code_for_vget (instance.get_arg_pattern ().arg_list[0]);
-  return expand_builtin_insn (icode, exp, target, instance);
+  tree lhs = get_lhs (instance, call_in);
+  tree arg0 = gimple_call_arg (call_in, 0);
+  tree arg1 = gimple_call_arg (call_in, 1);
+  machine_mode base_mode = TYPE_MODE (TREE_TYPE (lhs));
+  machine_mode full_mode = TYPE_MODE (TREE_TYPE (arg0));
+  int index = int_cst_value (arg1);
+  unsigned int num_vectors = exact_div (GET_MODE_SIZE (full_mode), GET_MODE_SIZE (base_mode)).to_constant ();
+  tree array_type = build_array_type_nelts (TREE_TYPE (lhs), num_vectors);
+  SET_TYPE_MODE (array_type, full_mode);
+  tree array = create_tmp_var (array_type, "rvv_array");
+  gassign *assign = gimple_build_assign (array, fold_build1 (VIEW_CONVERT_EXPR, TREE_TYPE (array), arg0));
+  gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
+  tree vector = build4 (ARRAY_REF, TREE_TYPE (lhs), array, size_int (index), NULL_TREE, NULL_TREE);
+  assign = gimple_build_assign (lhs, vector);
+  return assign;
+}
+
+rtx
+vget::expand (const function_instance &, tree, rtx) const
+{
+  gcc_unreachable ();
+  return NULL_RTX;
 }
 
 /* A function implementation for vundefined functions.  */
@@ -2370,7 +2428,8 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
     }
 
   gimple *repl = gimple_build_call_vec (gimple_call_fn (call_in), vargs);
-  gimple_call_set_lhs (repl, gimple_call_lhs (call_in));
+  tree lhs = get_lhs (instance, call_in);
+  gimple_call_set_lhs (repl, lhs);
 
   tree var = create_tmp_var (size_type_node, "new_vl");
   tree tem = make_ssa_name (size_type_node);
@@ -2384,7 +2443,7 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
       function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   
-  gimple *g = gimple_build_call (decl, 1, gimple_call_lhs (call_in));
+  gimple *g = gimple_build_call (decl, 1, lhs);
   gimple_call_set_lhs (g, var);
   tree indirect = fold_build2 (
       MEM_REF, size_type_node,
@@ -2519,7 +2578,8 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
     }
 
   gimple *repl = gimple_build_call_vec (gimple_call_fn (call_in), vargs);
-  gimple_call_set_lhs (repl, gimple_call_lhs (call_in));
+  tree lhs = get_lhs (instance, call_in);
+  gimple_call_set_lhs (repl, lhs);
 
   tree var = create_tmp_var (size_type_node, "new_vl");
   tree tem = make_ssa_name (size_type_node);
@@ -2534,7 +2594,7 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
       function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   
-  gimple *g = gimple_build_call (decl, 1, gimple_call_lhs (call_in));
+  gimple *g = gimple_build_call (decl, 1, lhs);
   gimple_call_set_lhs (g, var);
   tree indirect = fold_build2 (
       MEM_REF, size_type_node,
