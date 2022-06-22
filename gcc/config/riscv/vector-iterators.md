@@ -172,6 +172,9 @@
   UNSPEC_WHILE_LEN
 ])
 
+;; Define modes that are used by handle_pointer.
+(define_mode_iterator VL [SI DI])
+
 ;; All vector modes supported.
 (define_mode_iterator V [
   VNx2QI VNx4QI VNx8QI VNx16QI VNx32QI VNx64QI VNx128QI

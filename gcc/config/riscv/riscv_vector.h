@@ -25,6 +25,10 @@ along with GCC; see the file COPYING3.  If not see
 #include <stdint.h>
 #include <stddef.h>
 
+#ifndef __riscv_vector
+#error "Vector intrinsics require the vector extension."
+#else
+
 enum RVV_CSR {
   RVV_VSTART = 0,
   RVV_VXSAT,
@@ -40,6 +44,50 @@ typedef __fp16 __float16_t;
 typedef float __float32_t;
 typedef double __float64_t;
 
+__extension__ extern __inline unsigned long
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
+vread_csr(enum RVV_CSR csr)
+{
+  unsigned long rv = 0;
+  switch (csr)
+    {
+    case RVV_VSTART:
+      __asm__ __volatile__ ("csrr\t%0,vstart" : "=r"(rv) : : "memory");
+      break;
+    case RVV_VXSAT:
+      __asm__ __volatile__ ("csrr\t%0,vxsat" : "=r"(rv) : : "memory");
+      break;
+    case RVV_VXRM:
+      __asm__ __volatile__ ("csrr\t%0,vxrm" : "=r"(rv) : : "memory");
+      break;
+    case RVV_VCSR:
+      __asm__ __volatile__ ("csrr\t%0,vcsr" : "=r"(rv) : : "memory");
+      break;
+    }
+  return rv;
+}
+
+__extension__ extern __inline void
+__attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
+vwrite_csr(enum RVV_CSR csr, unsigned long value)
+{
+  switch (csr)
+    {
+    case RVV_VSTART:
+      __asm__ __volatile__ ("csrw\tvstart,%z0" : : "rJ"(value) : "memory");
+      break;
+    case RVV_VXSAT:
+      __asm__ __volatile__ ("csrw\tvxsat,%z0" : : "rJ"(value) : "memory");
+      break;
+    case RVV_VXRM:
+      __asm__ __volatile__ ("csrw\tvxrm,%z0" : : "rJ"(value) : "memory");
+      break;
+    case RVV_VCSR:
+      __asm__ __volatile__ ("csrw\tvcsr,%z0" : : "rJ"(value) : "memory");
+      break;
+    }
+}
+
 /* NOTE: This implementation of riscv_vector.h is intentionally short.  It does
    not define the RVV types and intrinsic functions directly in C and C++
    code, but instead uses the following pragma to tell GCC to insert the
@@ -47,4 +95,5 @@ typedef double __float64_t;
    same, and the file is a complete implementation of riscv_vector.h.  */
 #pragma riscv intrinsic "vector"
 
+#endif
 #endif // __RISCV_VECTOR_H

@@ -540,6 +540,22 @@ public:
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
+/* A function_base for handle_store_pointer functions.  */
+class handle_store_pointer : public function_builder
+{
+public:
+  // use the same construction function as the function_builder
+  using function_builder::function_builder;
+
+  virtual unsigned int call_properties () const OVERRIDE;
+
+  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+
+  virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
+};
+
 /* A function_base for Miscellaneous functions.  */
 class misc : public function_builder
 {

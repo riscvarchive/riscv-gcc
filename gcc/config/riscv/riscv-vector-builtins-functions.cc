@@ -1663,6 +1663,46 @@ readvl::expand (const function_instance &, tree exp, rtx target) const
                                 !function_returns_void_p (fndecl));
 }
 
+/* A function implementation for handle_store_pointer functions.  */
+unsigned int
+handle_store_pointer::call_properties () const
+{
+  return CP_WRITE_MEMORY;
+}
+
+char *
+handle_store_pointer::assemble_name (function_instance &instance)
+{
+  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
+  const char *name = instance.get_base_name ();
+  const char *dt = mode2data_type_str (mode, true, false);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s", name, dt);
+  return nullptr;
+}
+
+void
+handle_store_pointer::get_argument_types (const function_instance &,
+                            vec<tree> &argument_types) const
+{
+  argument_types.quick_push (build_pointer_type (size_type_node));
+  argument_types.quick_push (size_type_node);
+}
+
+rtx
+handle_store_pointer::expand (const function_instance &, tree exp, rtx) const
+{
+  tree arg0 = CALL_EXPR_ARG (exp, 0);
+  tree arg1 = CALL_EXPR_ARG (exp, 1);
+  rtx op0 = expand_normal (arg0);
+  rtx op1 = expand_normal (arg1);
+  /* If the pointer is const0_rtx meaning that user is passing a NULL pointer to
+     the argument. In this case, we discard the argument and to nothing. Otherwise,
+     we store the pointer.*/
+  if (!rtx_equal_p (op0, const0_rtx))
+    riscv_emit_move (gen_rtx_MEM (GET_MODE (op1), op0), op1);
+  return const0_rtx;
+}
+
 /* A function implementation for Miscellaneous functions.  */
 char *
 misc::assemble_name (function_instance &instance)
@@ -2414,7 +2454,7 @@ gimple *
 vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
              gcall *call_in) const
 {
-  /* split vleff (a, b, c) -> d = vleff (a, c) + b = readvl (d). */
+  /* split vleff (a, b, c) -> d = vleff (a, c) + readvl (d). */
   auto_vec<tree, 8> vargs;
 
   unsigned int offset = 2;
@@ -2430,9 +2470,17 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   gimple *repl = gimple_build_call_vec (gimple_call_fn (call_in), vargs);
   tree lhs = get_lhs (instance, call_in);
   gimple_call_set_lhs (repl, lhs);
-
+  
+  tree new_vl_arg = gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset);
+  if (integer_zerop (new_vl_arg))
+    {
+      /* This case happens when user passes the nullptr to new_vl argument. 
+         In this case, we just need to ignore the new_vl argument and return
+         vleff instruction directly. */
+      return repl;
+    }
+  
   tree var = create_tmp_var (size_type_node, "new_vl");
-  tree tem = make_ssa_name (size_type_node);
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
   char resolver[NAME_MAXLEN];
@@ -2445,13 +2493,15 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   
   gimple *g = gimple_build_call (decl, 1, lhs);
   gimple_call_set_lhs (g, var);
-  tree indirect = fold_build2 (
-      MEM_REF, size_type_node,
-      gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset),
-      build_int_cst (build_pointer_type (size_type_node), 0));
-  gassign *assign = gimple_build_assign (indirect, tem);
-  gsi_insert_after (gsi_in, assign, GSI_SAME_STMT);
-  gsi_insert_after (gsi_in, gimple_build_assign (tem, var), GSI_SAME_STMT);
+  snprintf (resolver, NAME_MAXLEN, "handle_store_pointer%s", mode2data_type_str (Pmode, true, false));
+  function_instance fn_instance2 (resolver);
+  hashval_t hashval2 = fn_instance2.hash ();
+  registered_function *rfn_slot2 =
+      function_table->find_with_hash (fn_instance2, hashval2);
+  tree decl2 = rfn_slot2->decl;
+  gimple *g2 = gimple_build_call (decl2, 2, gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset), var);
+
+  gsi_insert_after (gsi_in, g2, GSI_SAME_STMT);
   gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
 
   return repl;
@@ -2582,7 +2632,6 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   gimple_call_set_lhs (repl, lhs);
 
   tree var = create_tmp_var (size_type_node, "new_vl");
-  tree tem = make_ssa_name (size_type_node);
 
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_uptr;
@@ -2593,16 +2642,17 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   registered_function *rfn_slot =
       function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
-  
   gimple *g = gimple_build_call (decl, 1, lhs);
-  gimple_call_set_lhs (g, var);
-  tree indirect = fold_build2 (
-      MEM_REF, size_type_node,
-      gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset),
-      build_int_cst (build_pointer_type (size_type_node), 0));
-  gassign *assign = gimple_build_assign (indirect, tem);
-  gsi_insert_after (gsi_in, assign, GSI_SAME_STMT);
-  gsi_insert_after (gsi_in, gimple_build_assign (tem, var), GSI_SAME_STMT);
+  
+  snprintf (resolver, NAME_MAXLEN, "handle_store_pointer%s", mode2data_type_str (Pmode, true, false));
+  function_instance fn_instance2 (resolver);
+  hashval_t hashval2 = fn_instance2.hash ();
+  registered_function *rfn_slot2 =
+      function_table->find_with_hash (fn_instance2, hashval2);
+  tree decl2 = rfn_slot2->decl;
+  gimple *g2 = gimple_build_call (decl2, 2, gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset), var);
+  
+  gsi_insert_after (gsi_in, g2, GSI_SAME_STMT);
   gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
 
   return repl;
