@@ -63,16 +63,15 @@
 #include <string>
 #include <vector>
 
-namespace riscv_vector
-{
-  
+namespace riscv_vector {
+
 /* The macro defines the maximum length of name string. */
 static const unsigned int NAME_MAXLEN = 32;
-/* The macro defines the maxmum number of tuple. For 
+/* The macro defines the maxmum number of tuple. For
    RISC-V 'V' Extension, the maxmum tuple number is 8. */
 static const unsigned int MAX_TUPLE_NUM = 8;
 
-/* Describes the various of data_type. 
+/* Describes the various of data_type.
    Used by riscv-vector-builtins-iterators.def. */
 enum data_type_index
 {
@@ -257,24 +256,33 @@ get_vma_vta (vector_policy vma, vector_policy vta)
 constexpr vector_policy
 get_vma (unsigned int vma_vta)
 {
-  return (vector_policy)((vma_vta >> 2) & 0b11);
+  return (vector_policy) ((vma_vta >> 2) & 0b11);
 }
 
 constexpr vector_policy
 get_vta (unsigned int vma_vta)
 {
-  return (vector_policy)(vma_vta & 0b11);
+  return (vector_policy) (vma_vta & 0b11);
 }
 
-const unsigned int tama_policy = get_vma_vta(vector_policy::agnostic, vector_policy::agnostic);
-const unsigned int tamu_policy = get_vma_vta(vector_policy::undisturbed, vector_policy::agnostic);
-const unsigned int tuma_policy = get_vma_vta(vector_policy::agnostic, vector_policy::undisturbed);
-const unsigned int tumu_policy = get_vma_vta(vector_policy::undisturbed, vector_policy::undisturbed);
-const unsigned int ta_policy = get_vma_vta(vector_policy::any, vector_policy::agnostic);
-const unsigned int tu_policy = get_vma_vta(vector_policy::any, vector_policy::undisturbed);
-const unsigned int ma_policy = get_vma_vta(vector_policy::agnostic, vector_policy::any);
-const unsigned int mu_policy = get_vma_vta(vector_policy::undisturbed, vector_policy::any);
-const unsigned int any_policy = get_vma_vta(vector_policy::any, vector_policy::any);
+const unsigned int tama_policy
+  = get_vma_vta (vector_policy::agnostic, vector_policy::agnostic);
+const unsigned int tamu_policy
+  = get_vma_vta (vector_policy::undisturbed, vector_policy::agnostic);
+const unsigned int tuma_policy
+  = get_vma_vta (vector_policy::agnostic, vector_policy::undisturbed);
+const unsigned int tumu_policy
+  = get_vma_vta (vector_policy::undisturbed, vector_policy::undisturbed);
+const unsigned int ta_policy
+  = get_vma_vta (vector_policy::any, vector_policy::agnostic);
+const unsigned int tu_policy
+  = get_vma_vta (vector_policy::any, vector_policy::undisturbed);
+const unsigned int ma_policy
+  = get_vma_vta (vector_policy::agnostic, vector_policy::any);
+const unsigned int mu_policy
+  = get_vma_vta (vector_policy::undisturbed, vector_policy::any);
+const unsigned int any_policy
+  = get_vma_vta (vector_policy::any, vector_policy::any);
 
 inline rtx
 gen_tama_policy ()
@@ -336,7 +344,7 @@ class GTY ((user)) function_instance
 {
 public:
   function_instance (function_builder *, const char *, vector_arg_modes &,
-                     enum predication_index, enum operation_index);
+		     enum predication_index, enum operation_index);
   function_instance (const char *__name);
   ~function_instance ();
 
@@ -357,7 +365,7 @@ public:
   enum operation_index get_operation () const;
   enum data_type_index *get_data_type_list () const;
   function_builder *builder () const;
-  
+
   char function_name[NAME_MAXLEN];
 
 private:
@@ -380,7 +388,7 @@ public:
   /* The architecture extensions that the function requires, as a set of
      RISCV_TARGET_* flags.  */
   uint64_t required_extensions;
-  
+
   /* True if the decl represents an overloaded function that needs to be
      resolved.  */
   bool overloaded_p;
@@ -390,8 +398,8 @@ public:
 class function_builder
 {
 public:
-  function_builder (const char *, vector_arg_all_modes &, uint64_t,
-                    uint64_t, uint64_t, const unsigned int);
+  function_builder (const char *, vector_arg_all_modes &, uint64_t, uint64_t,
+		    uint64_t, const unsigned int);
 
   virtual ~function_builder ();
 
@@ -399,25 +407,26 @@ public:
 
   /* Try to fold the given gimple call.  Return the new gimple statement
      on success, otherwise return null.  */
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *, gcall *) const;
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const;
 
   /* Expand the given call into rtl.  Return the result of the function,
      or an arbitrary value if the function doesn't return a result.  */
   virtual rtx expand (const function_instance &, tree, rtx) const = 0;
 
-  rtx
-  expand_builtin_insn (enum insn_code, tree, rtx,
-                       const function_instance &) const;
+  rtx expand_builtin_insn (enum insn_code, tree, rtx,
+			   const function_instance &) const;
 
   virtual tree get_return_type (const function_instance &) const;
 
-  virtual tree get_mask_type (tree, const function_instance &, const vec<tree> &) const;
+  virtual tree get_mask_type (tree, const function_instance &,
+			      const vec<tree> &) const;
 
   virtual void get_argument_types (const function_instance &,
-                                   vec<tree> &) const;
+				   vec<tree> &) const;
 
   virtual size_t get_dest_arguments_length () const;
-  
+
   uint64_t get_pattern () const;
   /* check if need add mask operand for corresponding rtl */
   bool need_mask_operand_p () const;
@@ -442,20 +451,20 @@ public:
   enum data_type_index *get_data_type_list () const;
 
   bool check_required_extensions (location_t, tree, uint64_t) const;
-  virtual char * assemble_name (function_instance &);
+  virtual char *assemble_name (function_instance &);
   void append_name (const char *);
   char *finish_name ();
-  
-  /* Return true if the function can be overloaded. */ 
+
+  /* Return true if the function can be overloaded. */
   virtual bool can_be_overloaded_p (const function_instance &) const;
-  
+
 private:
   void add_unique_function (function_instance &, tree, vec<tree> &);
   void build_one (function_instance &);
   tree get_attributes (const function_instance &) const;
 
   registered_function &add_function (const function_instance &, const char *,
-                                     tree, tree, bool, bool) const;
+				     tree, tree, bool, bool) const;
 
   /* The base name, as a string.  */
   const char *m_base_name;
@@ -472,7 +481,7 @@ private:
   /* True if we should create a separate decl for each instance of an
      overloaded function, instead of using function_builder.  */
   bool m_direct_overloads;
-  
+
   /* Used for building up function names.  */
   obstack m_string_obstack;
 };
@@ -494,9 +503,9 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 };
 
@@ -506,9 +515,10 @@ class vsetvl : public config
 public:
   // use the same construction function as the config
   using config::config;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -518,7 +528,7 @@ class vsetvlmax : public config
 public:
   // use the same construction function as the config
   using config::config;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -531,11 +541,12 @@ public:
 
   virtual unsigned int call_properties () const OVERRIDE;
 
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -549,9 +560,10 @@ public:
 
   virtual unsigned int call_properties () const OVERRIDE;
 
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -563,9 +575,10 @@ public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
 
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 };
@@ -576,7 +589,7 @@ class vreinterpret : public misc
 public:
   // use the same construction function as the misc
   using misc::misc;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -586,9 +599,9 @@ class vlmul_ext : public misc
 public:
   // use the same construction function as the misc
   using misc::misc;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -598,9 +611,9 @@ class vlmul_trunc : public misc
 public:
   // use the same construction function as the misc
   using misc::misc;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -611,12 +624,13 @@ public:
   // use the same construction function as the misc
   using misc::misc;
 
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -627,13 +641,14 @@ class vget : public misc
 public:
   // use the same construction function as the misc
   using misc::misc;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -645,10 +660,11 @@ public:
   // use the same construction function as the misc
   using misc::misc;
 
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -658,10 +674,11 @@ class loadstore : public function_builder
 public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for indexed loadstore functions.  */
@@ -670,10 +687,11 @@ class indexedloadstore : public function_builder
 public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for basic_alu functions.  */
@@ -682,9 +700,9 @@ class basic_alu : public function_builder
 public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 };
 
@@ -694,9 +712,10 @@ class unop : public basic_alu
 public:
   // use the same construction function as the basic_alu
   using basic_alu::basic_alu;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 };
 
@@ -706,12 +725,13 @@ class binop : public basic_alu
 public:
   // use the same construction function as the basic_alu
   using basic_alu::basic_alu;
-  
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 };
 
@@ -721,8 +741,8 @@ class wbinop : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 };
 
 /* A function_base for ternary functions.  */
@@ -732,12 +752,13 @@ public:
   // use the same construction function as the function_builder
   using basic_alu::basic_alu;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
-  
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 };
 
 /* A function_base for reduction functions.  */
@@ -746,12 +767,14 @@ class reduceop : public basic_alu
 public:
   // use the same construction function as the basic_alu
   using basic_alu::basic_alu;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual tree get_mask_type (tree, const function_instance &, const vec<tree> &) const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual tree get_mask_type (tree, const function_instance &,
+			      const vec<tree> &) const OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for vle functions.  */
@@ -760,11 +783,11 @@ class vle : public loadstore
 public:
   // use the same construction function as the loadstore
   using loadstore::loadstore;
-  
+
   virtual unsigned int call_properties () const OVERRIDE;
 
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
-  
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -778,7 +801,7 @@ public:
   using loadstore::loadstore;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -795,8 +818,9 @@ public:
 
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -811,8 +835,9 @@ public:
 
   virtual unsigned int call_properties () const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -824,14 +849,15 @@ class vlm : public loadstore
 public:
   // use the same construction function as the loadstore
   using loadstore::loadstore;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual unsigned int call_properties () const OVERRIDE;
 
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -842,13 +868,14 @@ class vsm : public loadstore
 public:
   // use the same construction function as the loadstore
   using loadstore::loadstore;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-    
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -890,9 +917,9 @@ class vsuxei : public indexedloadstore
 public:
   // use the same construction function as the indexedloadstore
   using indexedloadstore::indexedloadstore;
-  
+
   virtual unsigned int call_properties () const OVERRIDE;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -902,9 +929,9 @@ class vsoxei : public indexedloadstore
 public:
   // use the same construction function as the indexedloadstore
   using indexedloadstore::indexedloadstore;
-  
+
   virtual unsigned int call_properties () const OVERRIDE;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -917,16 +944,17 @@ public:
 
   virtual unsigned int call_properties () const OVERRIDE;
 
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -939,13 +967,14 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -959,13 +988,14 @@ public:
   using vlseg::vlseg;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -978,10 +1008,11 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -992,8 +1023,9 @@ class vlsseg : public vlseg
 public:
   // use the same construction function as the vlseg
   using vlseg::vlseg;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -1004,8 +1036,9 @@ class vssseg : public vsseg
 public:
   // use the same construction function as the vlseg
   using vsseg::vsseg;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -1018,12 +1051,13 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for vluxseg functions.  */
@@ -1052,12 +1086,13 @@ class vsxseg : public function_builder
 public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
-  
+
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 };
 
 /* A function_base for vsuxseg functions.  */
@@ -1086,7 +1121,7 @@ class vadd : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-     
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1106,12 +1141,12 @@ class vrsub : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1121,7 +1156,7 @@ class vneg : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1131,7 +1166,7 @@ class vwadd : public wbinop
 public:
   // use the same construction function as the wbinop
   using wbinop::wbinop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1141,7 +1176,7 @@ class vwsub : public wbinop
 public:
   // use the same construction function as the wbinop
   using wbinop::wbinop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1151,7 +1186,7 @@ class vwaddu : public wbinop
 public:
   // use the same construction function as the wbinop
   using wbinop::wbinop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1161,7 +1196,7 @@ class vwsubu : public wbinop
 public:
   // use the same construction function as the wbinop
   using wbinop::wbinop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1171,7 +1206,7 @@ class vwcvt : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1181,7 +1216,7 @@ class vwcvtu : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1191,9 +1226,9 @@ class vsext : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1203,9 +1238,9 @@ class vzext : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1235,8 +1270,8 @@ class vmadc : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -1247,8 +1282,8 @@ class vmsbc : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -1289,7 +1324,7 @@ class vnot : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1299,11 +1334,12 @@ class vshift : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-        
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 };
 
 /* A function_base for vsll functions.  */
@@ -1332,7 +1368,7 @@ class vsra : public vshift
 public:
   // use the same construction function as the vshift
   using vshift::vshift;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1362,7 +1398,7 @@ class vncvt : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1372,8 +1408,8 @@ class vcmp : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 };
 
 /* A function_base for vmseq functions.  */
@@ -1382,7 +1418,7 @@ class vmseq : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1392,7 +1428,7 @@ class vmsne : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1402,7 +1438,7 @@ class vmslt : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1412,7 +1448,7 @@ class vmsltu : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1422,7 +1458,7 @@ class vmsgt : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1432,7 +1468,7 @@ class vmsgtu : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1442,7 +1478,7 @@ class vmsle : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1452,7 +1488,7 @@ class vmsleu : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1462,7 +1498,7 @@ class vmsge : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1472,7 +1508,7 @@ class vmsgeu : public vcmp
 public:
   // use the same construction function as the binop
   using vcmp::vcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1602,7 +1638,7 @@ class vwmul : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1612,7 +1648,7 @@ class vwmulu : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1622,7 +1658,7 @@ class vwmulsu : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1672,7 +1708,7 @@ class vwmacc : public ternop
 public:
   // use the same construction function as the ternop
   using ternop::ternop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1682,7 +1718,7 @@ class vwmaccu : public ternop
 public:
   // use the same construction function as the ternop
   using ternop::ternop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1692,7 +1728,7 @@ class vwmaccsu : public ternop
 public:
   // use the same construction function as the ternop
   using ternop::ternop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1702,7 +1738,7 @@ class vwmaccus : public ternop
 public:
   // use the same construction function as the ternop
   using ternop::ternop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1712,11 +1748,12 @@ class vmerge : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
-        
-  virtual size_t get_position_of_dest_arg (enum predication_index) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
+
+  virtual size_t
+    get_position_of_dest_arg (enum predication_index) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -1727,9 +1764,10 @@ class vmv : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -1821,7 +1859,7 @@ class vssrl : public vshift
 public:
   // use the same construction function as the vshift
   using vshift::vshift;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -1831,7 +1869,7 @@ class vssra : public vshift
 public:
   // use the same construction function as the vshift
   using vshift::vshift;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2221,8 +2259,8 @@ class vfcmp : public fbinop
 public:
   // use the same construction function as the fbinop
   using fbinop::fbinop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 };
 
 /* A function_base for vmfeq functions.  */
@@ -2231,7 +2269,7 @@ class vmfeq : public vfcmp
 public:
   // use the same construction function as the vfcmp
   using vfcmp::vfcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2241,7 +2279,7 @@ class vmfne : public vfcmp
 public:
   // use the same construction function as the vfcmp
   using vfcmp::vfcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2251,7 +2289,7 @@ class vmflt : public vfcmp
 public:
   // use the same construction function as the vfcmp
   using vfcmp::vfcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2261,7 +2299,7 @@ class vmfle : public vfcmp
 public:
   // use the same construction function as the vfcmp
   using vfcmp::vfcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2271,7 +2309,7 @@ class vmfgt : public vfcmp
 public:
   // use the same construction function as the vfcmp
   using vfcmp::vfcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2281,7 +2319,7 @@ class vmfge : public vfcmp
 public:
   // use the same construction function as the vfcmp
   using vfcmp::vfcmp;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2302,7 +2340,8 @@ public:
   // use the same construction function as the binop
   using binop::binop;
 
-  virtual size_t get_position_of_dest_arg (enum predication_index) const OVERRIDE;
+  virtual size_t
+    get_position_of_dest_arg (enum predication_index) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -2313,9 +2352,9 @@ class vfmv : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2325,9 +2364,9 @@ class vfcvt_f2i : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2337,9 +2376,9 @@ class vfcvt_f2u : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2349,9 +2388,9 @@ class vfcvt_rtz_f2i : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2361,9 +2400,9 @@ class vfcvt_rtz_f2u : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2373,9 +2412,9 @@ class vfcvt_i2f : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2385,9 +2424,9 @@ class vfcvt_u2f : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2397,9 +2436,9 @@ class vfwcvt_f2i : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2409,9 +2448,9 @@ class vfwcvt_f2u : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2421,9 +2460,9 @@ class vfwcvt_rtz_f2i : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2433,9 +2472,9 @@ class vfwcvt_rtz_f2u : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2445,9 +2484,9 @@ class vfwcvt_i2f : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2457,9 +2496,9 @@ class vfwcvt_u2f : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2469,9 +2508,9 @@ class vfwcvt_f2f : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2481,9 +2520,9 @@ class vfncvt_f2i : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2493,9 +2532,9 @@ class vfncvt_f2u : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2505,9 +2544,9 @@ class vfncvt_rtz_f2i : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2517,9 +2556,9 @@ class vfncvt_rtz_f2u : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2529,9 +2568,9 @@ class vfncvt_i2f : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2541,9 +2580,9 @@ class vfncvt_u2f : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2553,9 +2592,9 @@ class vfncvt_f2f : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2565,9 +2604,9 @@ class vfncvt_f2rodf : public funop
 public:
   // use the same construction function as the funop
   using funop::funop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2577,7 +2616,7 @@ class vredsum : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2587,7 +2626,7 @@ class vredmax : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2597,7 +2636,7 @@ class vredmaxu : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2607,7 +2646,7 @@ class vredmin : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2617,7 +2656,7 @@ class vredminu : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2627,7 +2666,7 @@ class vredand : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2637,7 +2676,7 @@ class vredor : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2647,7 +2686,7 @@ class vredxor : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2657,7 +2696,7 @@ class vwredsum : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2667,7 +2706,7 @@ class vwredsumu : public reduceop
 public:
   // use the same construction function as the reduceop
   using reduceop::reduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2687,7 +2726,7 @@ class vfredosum : public freduceop
 public:
   // use the same construction function as the freduceop
   using freduceop::freduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2697,7 +2736,7 @@ class vfredusum : public freduceop
 public:
   // use the same construction function as the freduceop
   using freduceop::freduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2707,7 +2746,7 @@ class vfredmax : public freduceop
 public:
   // use the same construction function as the freduceop
   using freduceop::freduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2717,7 +2756,7 @@ class vfredmin : public freduceop
 public:
   // use the same construction function as the freduceop
   using freduceop::freduceop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2747,7 +2786,7 @@ class vmand : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2757,7 +2796,7 @@ class vmor : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2767,7 +2806,7 @@ class vmxor : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2777,7 +2816,7 @@ class vmnand : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2787,7 +2826,7 @@ class vmnor : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2797,7 +2836,7 @@ class vmxnor : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2807,7 +2846,7 @@ class vmandn : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2817,17 +2856,17 @@ class vmorn : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
- 
+
 /* A function_base for vmmv functions.  */
 class vmmv : public unop
 {
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2837,7 +2876,7 @@ class vmnot : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2847,11 +2886,12 @@ class vmclr : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2861,11 +2901,12 @@ class vmset : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2875,7 +2916,7 @@ class vcpop : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2887,7 +2928,7 @@ class vfirst : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual tree get_return_type (const function_instance &) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
@@ -2899,7 +2940,7 @@ class vmsbf : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2909,7 +2950,7 @@ class vmsif : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2919,7 +2960,7 @@ class vmsof : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2929,9 +2970,9 @@ class viota : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2941,11 +2982,12 @@ class vid : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
-  
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
   virtual bool can_be_overloaded_p (const function_instance &) const OVERRIDE;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2955,8 +2997,8 @@ class vmv_x_s : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -2967,9 +3009,9 @@ class vmv_s_x : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -2979,8 +3021,8 @@ class vfmv_f_s : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -2991,9 +3033,9 @@ class vfmv_s_f : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -3003,7 +3045,7 @@ class vslideup : public vshift
 public:
   // use the same construction function as the vshift
   using vshift::vshift;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -3013,7 +3055,7 @@ class vslidedown : public vshift
 public:
   // use the same construction function as the vshift
   using vshift::vshift;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -3023,9 +3065,9 @@ class vslide1up : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3036,9 +3078,9 @@ class vslide1down : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3049,7 +3091,7 @@ class vfslide1up : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -3059,7 +3101,7 @@ class vfslide1down : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -3079,7 +3121,7 @@ class vrgatherei16 : public binop
 public:
   // use the same construction function as the binop
   using binop::binop;
-  
+
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
 
@@ -3088,8 +3130,9 @@ class vcompress : public unop
 public:
   // use the same construction function as the unop
   using unop::unop;
-  
-  virtual size_t get_position_of_dest_arg (enum predication_index) const OVERRIDE;
+
+  virtual size_t
+    get_position_of_dest_arg (enum predication_index) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3104,17 +3147,18 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   bool has_dest_arg_p (enum predication_index) const OVERRIDE;
 
   size_t get_position_of_mask_arg (enum predication_index) const OVERRIDE;
-   
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3135,17 +3179,18 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   bool has_dest_arg_p (enum predication_index) const OVERRIDE;
 
   size_t get_position_of_mask_arg (enum predication_index) const OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3166,13 +3211,14 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3191,19 +3237,20 @@ template <unsigned int NF> class vlsseg_template : public function_builder
 public:
   // use the same construction function as the function_builder
   using function_builder::function_builder;
-  
+
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
-  
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   bool has_dest_arg_p (enum predication_index) const OVERRIDE;
 
   size_t get_position_of_mask_arg (enum predication_index) const OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3224,13 +3271,14 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3252,17 +3300,18 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
+
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
 
   bool has_dest_arg_p (enum predication_index) const OVERRIDE;
 
   size_t get_position_of_mask_arg (enum predication_index) const OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };
@@ -3291,13 +3340,14 @@ public:
   using function_builder::function_builder;
 
   virtual unsigned int call_properties () const OVERRIDE;
-  
-  virtual char * assemble_name (function_instance &) OVERRIDE;
 
-  virtual void get_argument_types (const function_instance &, vec<tree> &) const OVERRIDE;
+  virtual char *assemble_name (function_instance &) OVERRIDE;
 
-  virtual gimple * fold (const function_instance &, gimple_stmt_iterator *,
-        gcall *) const OVERRIDE;
+  virtual void get_argument_types (const function_instance &,
+				   vec<tree> &) const OVERRIDE;
+
+  virtual gimple *fold (const function_instance &, gimple_stmt_iterator *,
+			gcall *) const OVERRIDE;
 
   virtual rtx expand (const function_instance &, tree, rtx) const OVERRIDE;
 };

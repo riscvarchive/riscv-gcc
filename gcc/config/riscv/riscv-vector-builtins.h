@@ -24,9 +24,8 @@
 #include <vector>
 #include "riscv-vector-builtins-functions.h"
 
-namespace riscv_vector
-{
-  
+namespace riscv_vector {
+
 /* global share variables */
 
 static const unsigned int RISCV_TARGET_ANY = 0;
@@ -35,10 +34,11 @@ static const unsigned int RISCV_TARGET_FP16 = 1 << 3;
 static const unsigned int RISCV_TARGET_HARD_FLOAT = 1 << 4;
 static const unsigned int RISCV_TARGET_DOUBLE_FLOAT = 1 << 5;
 
-enum vector_arg_mode_category {
+enum vector_arg_mode_category
+{
 #define VVAR(NAME) vector_mode_attr_##NAME
-#define DEF_RISCV_ARG_MODE_ATTR_VARIABLE(VARIABLE_NAME, ELEM_CNT) \
-  VVAR(VARIABLE_NAME),
+#define DEF_RISCV_ARG_MODE_ATTR_VARIABLE(VARIABLE_NAME, ELEM_CNT)              \
+  VVAR (VARIABLE_NAME),
 #include "riscv-vector-builtins-iterators.def"
 #undef DEF_RISCV_ARG_MODE_ATTR_VARIABLE
 #undef VVAR
@@ -46,17 +46,24 @@ enum vector_arg_mode_category {
   vector_arg_mode_category_num
 };
 
-void init_builtins ();
-void handle_pragma_vector ();
-tree builtin_decl (unsigned, bool);
-gimple *gimple_fold_builtin (unsigned int, gimple_stmt_iterator *, gcall *);
-rtx expand_builtin (unsigned int, tree, rtx);
-bool check_builtin_call (location_t, vec<location_t>, unsigned int,
-			 tree, unsigned int, tree *);
+void
+init_builtins ();
+void
+handle_pragma_vector ();
+tree
+builtin_decl (unsigned, bool);
+gimple *
+gimple_fold_builtin (unsigned int, gimple_stmt_iterator *, gcall *);
+rtx
+expand_builtin (unsigned int, tree, rtx);
+bool
+check_builtin_call (location_t, vec<location_t>, unsigned int, tree,
+		    unsigned int, tree *);
 bool builtin_type_p (const_tree);
-const char * mangle_builtin_type (const_tree);
+const char *mangle_builtin_type (const_tree);
 machine_mode vector_builtin_mode (scalar_mode, enum vlmul_field_enum);
-bool verify_type_context (location_t, type_context_kind, const_tree, bool);
+bool
+verify_type_context (location_t, type_context_kind, const_tree, bool);
 
 } // end namespace riscv_vector
 

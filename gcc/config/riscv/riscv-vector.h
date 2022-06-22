@@ -34,20 +34,29 @@ struct expand_vec_perm_d
 
 bool riscv_partial_tuple_vector_mode_p (machine_mode);
 poly_uint64 riscv_vector_natural_size (machine_mode);
-unsigned int riscv_offset_temporaries (bool, poly_int64);
-void riscv_report_vector_required (void);
+unsigned int
+riscv_offset_temporaries (bool, poly_int64);
+void
+riscv_report_vector_required (void);
 void riscv_vector_expand_poly_move (machine_mode, rtx, rtx, rtx);
-void riscv_vector_adjust_frame (rtx, poly_int64, bool);
-bool riscv_vector_expand_vectorize_vec_perm_const (machine_mode, rtx, rtx, rtx,
-                                              const vec_perm_indices &);
-opt_machine_mode riscv_vector_array_mode (machine_mode, unsigned HOST_WIDE_INT);
-machine_mode riscv_vector_preferred_simd_mode (scalar_mode, unsigned);
-opt_machine_mode riscv_vector_vectorize_related_mode (machine_mode, scalar_mode, poly_uint64,
-                                     unsigned);
-void riscv_vector_autovectorize_vector_modes (vector_modes *, unsigned, bool);
+void
+riscv_vector_adjust_frame (rtx, poly_int64, bool);
+bool
+riscv_vector_expand_vectorize_vec_perm_const (machine_mode, rtx, rtx, rtx,
+					      const vec_perm_indices &);
+opt_machine_mode
+riscv_vector_array_mode (machine_mode, unsigned HOST_WIDE_INT);
+machine_mode
+riscv_vector_preferred_simd_mode (scalar_mode, unsigned);
+opt_machine_mode
+riscv_vector_vectorize_related_mode (machine_mode, scalar_mode, poly_uint64,
+				     unsigned);
+void
+riscv_vector_autovectorize_vector_modes (vector_modes *, unsigned, bool);
 opt_machine_mode riscv_vector_get_mask_mode (machine_mode);
 bool riscv_vector_check_supported_mode_p (machine_mode);
 bool riscv_vector_expand_const_vector (rtx, rtx);
 bool riscv_vector_expand_const_mask (rtx, rtx);
-void riscv_vector_expand_tuple (machine_mode, rtx *);
+void
+riscv_vector_expand_tuple (machine_mode, rtx *);
 #endif // GCC_RISCV_VECTOR_H

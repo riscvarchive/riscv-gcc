@@ -21,17 +21,16 @@ along with GCC; see the file COPYING3. If not see
 #define IN_TARGET_CODE 1
 
 #include "riscv-vector-builtins-functions.h"
-namespace riscv_vector
-{
+namespace riscv_vector {
 
 extern hash_table<registered_function_hasher> *function_table;
 extern GTY (()) tree
-    vector_types[MAX_TUPLE_NUM][NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
+  vector_types[MAX_TUPLE_NUM][NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
 extern GTY (()) tree
-    vector_pointer_types[NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
-extern GTY(()) tree scalar_types[NUM_VECTOR_TYPES];
-extern GTY(()) tree scalar_pointer_types[NUM_VECTOR_TYPES];
-extern GTY(()) tree const_scalar_pointer_types[NUM_VECTOR_TYPES];
+  vector_pointer_types[NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
+extern GTY (()) tree scalar_types[NUM_VECTOR_TYPES];
+extern GTY (()) tree scalar_pointer_types[NUM_VECTOR_TYPES];
+extern GTY (()) tree const_scalar_pointer_types[NUM_VECTOR_TYPES];
 
 extern GTY (()) vec<registered_function *, va_gc> *registered_functions;
 
@@ -179,133 +178,155 @@ mode2data_type_str (machine_mode mode, bool u, bool ie)
 {
   switch (mode)
     {
-  #define MODE2DATA_TYPE_STR_TUPLE8(MODE, NBITS, LMUL) \
-    case VNx##MODE##mode: \
-      return ie ? "_e"#NBITS""#LMUL"" : u ? "_u"#NBITS""#LMUL"" : "_i"#NBITS""#LMUL""; \
-    case VNx2x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x2" : "_i"#NBITS""#LMUL"x2"; \
-    case VNx3x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x3" : "_i"#NBITS""#LMUL"x3"; \
-    case VNx4x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x4" : "_i"#NBITS""#LMUL"x4"; \
-    case VNx5x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x5" : "_i"#NBITS""#LMUL"x5"; \
-    case VNx6x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x6" : "_i"#NBITS""#LMUL"x6"; \
-    case VNx7x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x7" : "_i"#NBITS""#LMUL"x7"; \
-    case VNx8x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x8" : "_i"#NBITS""#LMUL"x8";
-  #define MODE2DATA_TYPE_STR_TUPLE4(MODE, NBITS, LMUL) \
-    case VNx##MODE##mode: \
-      return ie ? "_e"#NBITS""#LMUL"" : u ? "_u"#NBITS""#LMUL"" : "_i"#NBITS""#LMUL""; \
-    case VNx2x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x2" : "_i"#NBITS""#LMUL"x2"; \
-    case VNx3x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x3" : "_i"#NBITS""#LMUL"x3"; \
-    case VNx4x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x4" : "_i"#NBITS""#LMUL"x4";
-  #define MODE2DATA_TYPE_STR_TUPLE2(MODE, NBITS, LMUL) \
-    case VNx##MODE##mode: \
-      return ie ? "_e"#NBITS""#LMUL"" : u ? "_u"#NBITS""#LMUL"" : "_i"#NBITS""#LMUL""; \
-    case VNx2x##MODE##mode: \
-      return u ? "_u"#NBITS""#LMUL"x2" : "_i"#NBITS""#LMUL"x2";
-  #define MODE2DATA_TYPE_STR_TUPLE1(MODE, NBITS, LMUL) \
-    case VNx##MODE##mode: \
-      return ie ? "_e"#NBITS""#LMUL"" : u ? "_u"#NBITS""#LMUL"" : "_i"#NBITS""#LMUL"";
-    MODE2DATA_TYPE_STR_TUPLE8 (2QI, 8, mf8)
-    MODE2DATA_TYPE_STR_TUPLE8 (4QI, 8, mf4)
-    MODE2DATA_TYPE_STR_TUPLE8 (8QI, 8, mf2)
-    MODE2DATA_TYPE_STR_TUPLE8 (16QI, 8, m1)
-    MODE2DATA_TYPE_STR_TUPLE4 (32QI, 8, m2)
-    MODE2DATA_TYPE_STR_TUPLE2 (64QI, 8, m4)
-    MODE2DATA_TYPE_STR_TUPLE1 (128QI, 8, m8)
-    MODE2DATA_TYPE_STR_TUPLE8 (2HI, 16, mf4)
-    MODE2DATA_TYPE_STR_TUPLE8 (4HI, 16, mf2)
-    MODE2DATA_TYPE_STR_TUPLE8 (8HI, 16, m1)
-    MODE2DATA_TYPE_STR_TUPLE4 (16HI, 16, m2)
-    MODE2DATA_TYPE_STR_TUPLE2 (32HI, 16, m4)
-    MODE2DATA_TYPE_STR_TUPLE1 (64HI, 16, m8)
-    MODE2DATA_TYPE_STR_TUPLE8 (2SI, 32, mf2)
-    MODE2DATA_TYPE_STR_TUPLE8 (4SI, 32, m1)
-    MODE2DATA_TYPE_STR_TUPLE4 (8SI, 32, m2)
-    MODE2DATA_TYPE_STR_TUPLE2 (16SI, 32, m4)
-    MODE2DATA_TYPE_STR_TUPLE1 (32SI, 32, m8)
-    MODE2DATA_TYPE_STR_TUPLE8 (2DI, 64, m1)
-    MODE2DATA_TYPE_STR_TUPLE4 (4DI, 64, m2)
-    MODE2DATA_TYPE_STR_TUPLE2 (8DI, 64, m4)
-    MODE2DATA_TYPE_STR_TUPLE1 (16DI, 64, m8)
-  #undef MODE2DATA_TYPE_STR_TUPLE8
-  #undef MODE2DATA_TYPE_STR_TUPLE4
-  #undef MODE2DATA_TYPE_STR_TUPLE2
-  #undef MODE2DATA_TYPE_STR_TUPLE1
-  #define MODE2DATA_TYPE_STR_TUPLE8(MODE, NBITS, LMUL) \
-    case VNx##MODE##mode: \
-      return "_f"#NBITS""#LMUL""; \
-    case VNx2x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x2"; \
-    case VNx3x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x3"; \
-    case VNx4x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x4"; \
-    case VNx5x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x5"; \
-    case VNx6x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x6"; \
-    case VNx7x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x7"; \
-    case VNx8x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x8";
-  #define MODE2DATA_TYPE_STR_TUPLE4(MODE, NBITS, LMUL) \
-    case VNx##MODE##mode: \
-      return "_f"#NBITS""#LMUL""; \
-    case VNx2x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x2"; \
-    case VNx3x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x3"; \
-    case VNx4x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x4";
-  #define MODE2DATA_TYPE_STR_TUPLE2(MODE, NBITS, LMUL) \
-    case VNx##MODE##mode: \
-      return "_f"#NBITS""#LMUL""; \
-    case VNx2x##MODE##mode: \
-      return "_f"#NBITS""#LMUL"x2";
-  #define MODE2DATA_TYPE_STR_TUPLE1(MODE, NBITS, LMUL) \
-    case VNx##MODE##mode: \
-      return "_f"#NBITS""#LMUL""; 
-    MODE2DATA_TYPE_STR_TUPLE8 (2HF, 16, mf4)
-    MODE2DATA_TYPE_STR_TUPLE8 (4HF, 16, mf2)
-    MODE2DATA_TYPE_STR_TUPLE8 (8HF, 16, m1)
-    MODE2DATA_TYPE_STR_TUPLE4 (16HF, 16, m2)
-    MODE2DATA_TYPE_STR_TUPLE2 (32HF, 16, m4)
-    MODE2DATA_TYPE_STR_TUPLE1 (64HF, 16, m8)
-    MODE2DATA_TYPE_STR_TUPLE8 (2SF, 32, mf2)
-    MODE2DATA_TYPE_STR_TUPLE8 (4SF, 32, m1)
-    MODE2DATA_TYPE_STR_TUPLE4 (8SF, 32, m2)
-    MODE2DATA_TYPE_STR_TUPLE2 (16SF, 32, m4)
-    MODE2DATA_TYPE_STR_TUPLE1 (32SF, 32, m8)
-    MODE2DATA_TYPE_STR_TUPLE8 (2DF, 64, m1)
-    MODE2DATA_TYPE_STR_TUPLE4 (4DF, 64, m2)
-    MODE2DATA_TYPE_STR_TUPLE2 (8DF, 64, m4)
-    MODE2DATA_TYPE_STR_TUPLE1 (16DF, 64, m8)
-  #undef MODE2DATA_TYPE_STR_TUPLE8
-  #undef MODE2DATA_TYPE_STR_TUPLE4
-  #undef MODE2DATA_TYPE_STR_TUPLE2
-  #undef MODE2DATA_TYPE_STR_TUPLE1
-  case VNx2BImode: return "_b64";
-  case VNx4BImode: return "_b32";
-  case VNx8BImode: return "_b16";
-  case VNx16BImode: return "_b8"; 
-  case VNx32BImode: return "_b4"; 
-  case VNx64BImode: return "_b2"; 
-  case VNx128BImode: return "_b1";
-  case QImode: return u ? "_u8" : "_i8";
-  case HImode: return u ? "_u16" : "_i16";
-  case SImode: return u ? "_u32" : "_i32";
-  case DImode: return u ? "_u64" : "_i64";
-  case HFmode: return "_f16";
-  case SFmode: return "_f32";
-  case DFmode: return "_f64";
+#define MODE2DATA_TYPE_STR_TUPLE8(MODE, NBITS, LMUL)                           \
+  case VNx##MODE##mode:                                                        \
+    return ie  ? "_e" #NBITS "" #LMUL ""                                       \
+	   : u ? "_u" #NBITS "" #LMUL ""                                       \
+	       : "_i" #NBITS "" #LMUL "";                                      \
+  case VNx2x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x2" : "_i" #NBITS "" #LMUL "x2";          \
+  case VNx3x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x3" : "_i" #NBITS "" #LMUL "x3";          \
+  case VNx4x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x4" : "_i" #NBITS "" #LMUL "x4";          \
+  case VNx5x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x5" : "_i" #NBITS "" #LMUL "x5";          \
+  case VNx6x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x6" : "_i" #NBITS "" #LMUL "x6";          \
+  case VNx7x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x7" : "_i" #NBITS "" #LMUL "x7";          \
+  case VNx8x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x8" : "_i" #NBITS "" #LMUL "x8";
+#define MODE2DATA_TYPE_STR_TUPLE4(MODE, NBITS, LMUL)                           \
+  case VNx##MODE##mode:                                                        \
+    return ie  ? "_e" #NBITS "" #LMUL ""                                       \
+	   : u ? "_u" #NBITS "" #LMUL ""                                       \
+	       : "_i" #NBITS "" #LMUL "";                                      \
+  case VNx2x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x2" : "_i" #NBITS "" #LMUL "x2";          \
+  case VNx3x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x3" : "_i" #NBITS "" #LMUL "x3";          \
+  case VNx4x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x4" : "_i" #NBITS "" #LMUL "x4";
+#define MODE2DATA_TYPE_STR_TUPLE2(MODE, NBITS, LMUL)                           \
+  case VNx##MODE##mode:                                                        \
+    return ie  ? "_e" #NBITS "" #LMUL ""                                       \
+	   : u ? "_u" #NBITS "" #LMUL ""                                       \
+	       : "_i" #NBITS "" #LMUL "";                                      \
+  case VNx2x##MODE##mode:                                                      \
+    return u ? "_u" #NBITS "" #LMUL "x2" : "_i" #NBITS "" #LMUL "x2";
+#define MODE2DATA_TYPE_STR_TUPLE1(MODE, NBITS, LMUL)                           \
+  case VNx##MODE##mode:                                                        \
+    return ie  ? "_e" #NBITS "" #LMUL ""                                       \
+	   : u ? "_u" #NBITS "" #LMUL ""                                       \
+	       : "_i" #NBITS "" #LMUL "";
+      MODE2DATA_TYPE_STR_TUPLE8 (2QI, 8, mf8)
+      MODE2DATA_TYPE_STR_TUPLE8 (4QI, 8, mf4)
+      MODE2DATA_TYPE_STR_TUPLE8 (8QI, 8, mf2)
+      MODE2DATA_TYPE_STR_TUPLE8 (16QI, 8, m1)
+      MODE2DATA_TYPE_STR_TUPLE4 (32QI, 8, m2)
+      MODE2DATA_TYPE_STR_TUPLE2 (64QI, 8, m4)
+      MODE2DATA_TYPE_STR_TUPLE1 (128QI, 8, m8)
+      MODE2DATA_TYPE_STR_TUPLE8 (2HI, 16, mf4)
+      MODE2DATA_TYPE_STR_TUPLE8 (4HI, 16, mf2)
+      MODE2DATA_TYPE_STR_TUPLE8 (8HI, 16, m1)
+      MODE2DATA_TYPE_STR_TUPLE4 (16HI, 16, m2)
+      MODE2DATA_TYPE_STR_TUPLE2 (32HI, 16, m4)
+      MODE2DATA_TYPE_STR_TUPLE1 (64HI, 16, m8)
+      MODE2DATA_TYPE_STR_TUPLE8 (2SI, 32, mf2)
+      MODE2DATA_TYPE_STR_TUPLE8 (4SI, 32, m1)
+      MODE2DATA_TYPE_STR_TUPLE4 (8SI, 32, m2)
+      MODE2DATA_TYPE_STR_TUPLE2 (16SI, 32, m4)
+      MODE2DATA_TYPE_STR_TUPLE1 (32SI, 32, m8)
+      MODE2DATA_TYPE_STR_TUPLE8 (2DI, 64, m1)
+      MODE2DATA_TYPE_STR_TUPLE4 (4DI, 64, m2)
+      MODE2DATA_TYPE_STR_TUPLE2 (8DI, 64, m4)
+      MODE2DATA_TYPE_STR_TUPLE1 (16DI, 64, m8)
+#undef MODE2DATA_TYPE_STR_TUPLE8
+#undef MODE2DATA_TYPE_STR_TUPLE4
+#undef MODE2DATA_TYPE_STR_TUPLE2
+#undef MODE2DATA_TYPE_STR_TUPLE1
+#define MODE2DATA_TYPE_STR_TUPLE8(MODE, NBITS, LMUL)                           \
+  case VNx##MODE##mode:                                                        \
+    return "_f" #NBITS "" #LMUL "";                                            \
+  case VNx2x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x2";                                          \
+  case VNx3x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x3";                                          \
+  case VNx4x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x4";                                          \
+  case VNx5x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x5";                                          \
+  case VNx6x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x6";                                          \
+  case VNx7x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x7";                                          \
+  case VNx8x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x8";
+#define MODE2DATA_TYPE_STR_TUPLE4(MODE, NBITS, LMUL)                           \
+  case VNx##MODE##mode:                                                        \
+    return "_f" #NBITS "" #LMUL "";                                            \
+  case VNx2x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x2";                                          \
+  case VNx3x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x3";                                          \
+  case VNx4x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x4";
+#define MODE2DATA_TYPE_STR_TUPLE2(MODE, NBITS, LMUL)                           \
+  case VNx##MODE##mode:                                                        \
+    return "_f" #NBITS "" #LMUL "";                                            \
+  case VNx2x##MODE##mode:                                                      \
+    return "_f" #NBITS "" #LMUL "x2";
+#define MODE2DATA_TYPE_STR_TUPLE1(MODE, NBITS, LMUL)                           \
+  case VNx##MODE##mode:                                                        \
+    return "_f" #NBITS "" #LMUL "";
+      MODE2DATA_TYPE_STR_TUPLE8 (2HF, 16, mf4)
+      MODE2DATA_TYPE_STR_TUPLE8 (4HF, 16, mf2)
+      MODE2DATA_TYPE_STR_TUPLE8 (8HF, 16, m1)
+      MODE2DATA_TYPE_STR_TUPLE4 (16HF, 16, m2)
+      MODE2DATA_TYPE_STR_TUPLE2 (32HF, 16, m4)
+      MODE2DATA_TYPE_STR_TUPLE1 (64HF, 16, m8)
+      MODE2DATA_TYPE_STR_TUPLE8 (2SF, 32, mf2)
+      MODE2DATA_TYPE_STR_TUPLE8 (4SF, 32, m1)
+      MODE2DATA_TYPE_STR_TUPLE4 (8SF, 32, m2)
+      MODE2DATA_TYPE_STR_TUPLE2 (16SF, 32, m4)
+      MODE2DATA_TYPE_STR_TUPLE1 (32SF, 32, m8)
+      MODE2DATA_TYPE_STR_TUPLE8 (2DF, 64, m1)
+      MODE2DATA_TYPE_STR_TUPLE4 (4DF, 64, m2)
+      MODE2DATA_TYPE_STR_TUPLE2 (8DF, 64, m4)
+      MODE2DATA_TYPE_STR_TUPLE1 (16DF, 64, m8)
+#undef MODE2DATA_TYPE_STR_TUPLE8
+#undef MODE2DATA_TYPE_STR_TUPLE4
+#undef MODE2DATA_TYPE_STR_TUPLE2
+#undef MODE2DATA_TYPE_STR_TUPLE1
+    case VNx2BImode:
+      return "_b64";
+    case VNx4BImode:
+      return "_b32";
+    case VNx8BImode:
+      return "_b16";
+    case VNx16BImode:
+      return "_b8";
+    case VNx32BImode:
+      return "_b4";
+    case VNx64BImode:
+      return "_b2";
+    case VNx128BImode:
+      return "_b1";
+    case QImode:
+      return u ? "_u8" : "_i8";
+    case HImode:
+      return u ? "_u16" : "_i16";
+    case SImode:
+      return u ? "_u32" : "_i32";
+    case DImode:
+      return u ? "_u64" : "_i64";
+    case HFmode:
+      return "_f16";
+    case SFmode:
+      return "_f32";
+    case DFmode:
+      return "_f64";
     default:
       break;
     }
@@ -317,7 +338,7 @@ static tree
 mode2mask_t (machine_mode mode)
 {
   int factor = exact_div (GET_MODE_NUNITS (mode), GET_MODE_NUNITS (VNx2BImode))
-                   .to_constant ();
+		 .to_constant ();
   factor = exact_log2 (factor);
   return vector_types[0][VECTOR_TYPE_bool][factor];
 }
@@ -325,30 +346,30 @@ mode2mask_t (machine_mode mode)
 static enum vector_type_index
 get_type_idx (machine_mode mode, bool u)
 {
-  #define RVV_INT_TYPE(MODE, TYPE, SEW) \
-    case MODE: \
-      return u ? VECTOR_TYPE_u##TYPE##SEW : VECTOR_TYPE_##TYPE##SEW; \
-      break;
-  #define RVV_FLOAT_TYPE(MODE, TYPE, SEW) \
-    case MODE: \
-      return VECTOR_TYPE_##TYPE##SEW; \
-      break;
-  
+#define RVV_INT_TYPE(MODE, TYPE, SEW)                                          \
+  case MODE:                                                                   \
+    return u ? VECTOR_TYPE_u##TYPE##SEW : VECTOR_TYPE_##TYPE##SEW;             \
+    break;
+#define RVV_FLOAT_TYPE(MODE, TYPE, SEW)                                        \
+  case MODE:                                                                   \
+    return VECTOR_TYPE_##TYPE##SEW;                                            \
+    break;
+
   switch (mode)
     {
     case BImode:
       return VECTOR_TYPE_bool;
-    RVV_INT_TYPE (QImode, int, 8)
-    RVV_INT_TYPE (HImode, int, 16)
-    RVV_INT_TYPE (SImode, int, 32)
-    RVV_INT_TYPE (DImode, int, 64)
-    RVV_FLOAT_TYPE (HFmode, float, 16)
-    RVV_FLOAT_TYPE (SFmode, float, 32)
-    RVV_FLOAT_TYPE (DFmode, float, 64)
+      RVV_INT_TYPE (QImode, int, 8)
+      RVV_INT_TYPE (HImode, int, 16)
+      RVV_INT_TYPE (SImode, int, 32)
+      RVV_INT_TYPE (DImode, int, 64)
+      RVV_FLOAT_TYPE (HFmode, float, 16)
+      RVV_FLOAT_TYPE (SFmode, float, 32)
+      RVV_FLOAT_TYPE (DFmode, float, 64)
     default:
       gcc_unreachable ();
     }
-  
+
   return (enum vector_type_index) 0;
 }
 
@@ -359,15 +380,15 @@ get_lmul_idx (machine_mode mode)
   bool is_bool_p = GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL ? true : false;
   machine_mode base_mode = is_bool_p ? VNx2QImode : VNx2BImode;
   int offset = exact_div (GET_MODE_NUNITS (mode), GET_MODE_NUNITS (base_mode))
-                   .to_constant ();
+		 .to_constant ();
   if (is_bool_p)
     return exact_log2 (offset);
   else
     {
       int nf = riscv_classify_nf (mode);
       offset = exact_log2 (offset / nf);
-      int factor = exact_log2 (GET_MODE_BITSIZE (innermode).to_constant () /
-                               GET_MODE_BITSIZE (QImode));
+      int factor = exact_log2 (GET_MODE_BITSIZE (innermode).to_constant ()
+			       / GET_MODE_BITSIZE (QImode));
       return offset + factor;
     }
 }
@@ -390,35 +411,35 @@ get_dt_t (machine_mode mode, bool u, bool ptr = false, bool c = false)
 {
   if (riscv_tuple_mode_p (mode))
     return get_tuple_t (mode, u);
-  
+
   if (mode == VOIDmode)
     return void_type_node;
-    
+
   machine_mode innermode = GET_MODE_INNER (mode);
   enum vector_type_index base = get_type_idx (innermode, u);
   tree type = NULL_TREE;
   if (VECTOR_MODE_P (mode))
     {
-      int offset = get_lmul_idx (mode);      
+      int offset = get_lmul_idx (mode);
       if (ptr)
-        type = vector_pointer_types[base][offset];
+	type = vector_pointer_types[base][offset];
       else
-        type = vector_types[0][base][offset];
-      
+	type = vector_types[0][base][offset];
+
       gcc_assert (type);
       return type;
     }
-  
+
   if (ptr)
     {
       if (c)
-        type = const_scalar_pointer_types[base];
+	type = const_scalar_pointer_types[base];
       else
-        type = scalar_pointer_types[base];
+	type = scalar_pointer_types[base];
     }
   else
     type = scalar_types[base];
-  
+
   gcc_assert (type);
   return type;
 }
@@ -453,7 +474,8 @@ intrinsic_naming_rule_1 (function_instance &instance, int index)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
 }
 
 static void
@@ -468,7 +490,8 @@ intrinsic_naming_rule_2 (function_instance &instance, int index1, int index2)
   const char *src_suffix = mode2data_type_str (src_mode, src_unsigned_p, false);
   const char *dst_suffix = mode2data_type_str (dst_mode, dst_unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s%s", name, op, src_suffix, dst_suffix, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s%s", name, op,
+	    src_suffix, dst_suffix, pred);
 }
 
 static tree
@@ -484,8 +507,8 @@ get_dt_t_with_index (const function_instance &instance, int index)
 static bool
 vector_scalar_operation_p (enum operation_index op)
 {
-  return op == OP_vx || op == OP_wx || op == OP_vxm || op == OP_vf ||
-         op == OP_wf || op == OP_vfm;
+  return op == OP_vx || op == OP_wx || op == OP_vxm || op == OP_vf
+	 || op == OP_wf || op == OP_vfm;
 }
 
 static bool
@@ -493,7 +516,7 @@ segment_skip_p (const char *base_name, machine_mode mode)
 {
   unsigned int nf = riscv_classify_nf (mode);
   std::string str = base_name;
-  str = str.substr (str.length() - 1, str.length() - 1);
+  str = str.substr (str.length () - 1, str.length () - 1);
   if (strcmp (std::to_string (nf).c_str (), str.c_str ()) != 0)
     return true;
   return false;
@@ -541,7 +564,7 @@ add_input_operand (struct expand_operand *op, tree exp, unsigned argno)
 
 static rtx
 generate_builtin_insn (enum insn_code icode, unsigned int n_ops,
-                       struct expand_operand *ops, bool has_target_p)
+		       struct expand_operand *ops, bool has_target_p)
 {
   if (!maybe_expand_insn (icode, n_ops, ops))
     {
@@ -565,7 +588,7 @@ tuple_type_field (tree type)
 
 /* Return a hash code for a function_instance.  */
 static hashval_t
-get_string_hash (const char * input_string)
+get_string_hash (const char *input_string)
 {
   if (!input_string || strlen (input_string) == 0)
     return 0;
@@ -577,9 +600,9 @@ get_string_hash (const char * input_string)
       unsigned int four_chars = 0;
 
       for (unsigned int j = i; j < strlen (input_string) && j < i + 4; j++)
-        {
-          four_chars |= input_string[j] << (8 * (j - i));
-        }
+	{
+	  four_chars |= input_string[j] << (8 * (j - i));
+	}
 
       h.add_int (four_chars);
     }
@@ -591,18 +614,18 @@ get_string_hash (const char * input_string)
    function FNDECL when extension EXTENSION is disabled.  */
 static void
 report_missing_extension (location_t location, tree fndecl,
-                          const char *extension)
+			  const char *extension)
 {
   /* Avoid reporting a slew of messages for a single oversight.  */
   if (reported_missing_extension_p)
     return;
 
   error_at (location, "rvv function %qD requires ISA extension %qs", fndecl,
-            extension);
+	    extension);
   inform (location,
-          "you can enable %qs using the command-line"
-          " option %<-march%>",
-          extension);
+	  "you can enable %qs using the command-line"
+	  " option %<-march%>",
+	  extension);
   reported_missing_extension_p = true;
 }
 
@@ -615,7 +638,7 @@ add_attribute (const char *name, tree attrs)
 
 /* Subroutine of handle_sew64_on_rv32 function which helps to
    get index of scalar operand. */
-   
+
 static unsigned int
 parse_scalar_index (const function_instance &instance)
 {
@@ -624,11 +647,11 @@ parse_scalar_index (const function_instance &instance)
     case PRED_void:
     case PRED_ta:
       return 1;
-    
+
     case PRED_tu:
     case PRED_tama:
       return 2;
-      
+
     case PRED_m:
     case PRED_ma:
     case PRED_mu:
@@ -644,7 +667,7 @@ parse_scalar_index (const function_instance &instance)
 }
 
 /* Handle SEW=64 vector-scalar instruction on RV32 system. */
-/* Fold GCC IR for the following cases on RV32 system. 
+/* Fold GCC IR for the following cases on RV32 system.
    vint64m8_t foo (vint64m8_t v, int64_t s) {
     v = vadd_vx_i64m8 (v,s,128);
     v = vadd_vx_i64m8 (v,s,128);
@@ -653,14 +676,14 @@ parse_scalar_index (const function_instance &instance)
     v = vadd_vx_i64m8 (v,s,128);
     return vadd_vx_i64m8 (v,s,128);
    }
-                ||
-                ||
-                ||
-                \/
+		||
+		||
+		||
+		\/
    vint64m8_t foo (vint64m8_t v, int64_t s) {
       vint64m8_t _1;
       vint64m8_t _9;
-    
+
       <bb 2> [local count: 1073741824]:
       _1 = vmv_v_x_i64m8 (s, 128);
       v_4 = vadd_vv_i64m8 (v_3(D), _1, 128);
@@ -670,23 +693,23 @@ parse_scalar_index (const function_instance &instance)
       v_8 = vadd_vv_i64m8 (v_7, _1, 128);
       _9 = vadd_vv_i64m8 (v_8, _1, 128);
       return _9;
-    } 
+    }
 */
 
 static gimple *
 handle_sew64_on_rv32 (const function_instance &instance,
-                      gimple_stmt_iterator *gsi_in,
-                      gcall *call_in, int offset, bool reverse_p=false)
+		      gimple_stmt_iterator *gsi_in, gcall *call_in, int offset,
+		      bool reverse_p = false)
 {
   /* Don't fold GCC IR on RV64 system. */
   if (TARGET_64BIT)
     return NULL;
-  
+
   enum operation_index operation = instance.get_operation ();
   /* Only fold GCC IR for vector-scalar instructions. */
   if (operation != OP_vx && operation != OP_vxm)
     return NULL;
-  
+
   unsigned int i;
   unsigned int index = parse_scalar_index (instance) + offset;
   unsigned int nargs = gimple_call_num_args (call_in);
@@ -699,32 +722,33 @@ handle_sew64_on_rv32 (const function_instance &instance,
       dt2 = mode2data_type_str (TYPE_MODE (vectype), false, false);
       vectype = get_dt_t_with_index (instance, 1);
     }
-  
-  if (GET_MODE_BITSIZE (as_a <scalar_mode> (TYPE_MODE (TREE_TYPE (scalar)))) < DOUBLE_TYPE_SIZE)
+
+  if (GET_MODE_BITSIZE (as_a<scalar_mode> (TYPE_MODE (TREE_TYPE (scalar))))
+      < DOUBLE_TYPE_SIZE)
     return NULL;
-    
+
   tree min = TYPE_MIN_VALUE (intSI_type_node);
   tree max = TYPE_MAX_VALUE (intSI_type_node);
   if (TREE_CODE (scalar) == INTEGER_CST)
     {
       if (TYPE_UNSIGNED (TREE_TYPE (scalar)))
-        {
-          if (tree_fits_uhwi_p (scalar))
-            {
-              unsigned HOST_WIDE_INT val = tree_to_uhwi (scalar);
-              if (val <= 0x7FFFFFFFULL || val >= 0xFFFFFFFF80000000ULL)
-                return NULL;
-            }
-        }
+	{
+	  if (tree_fits_uhwi_p (scalar))
+	    {
+	      unsigned HOST_WIDE_INT val = tree_to_uhwi (scalar);
+	      if (val <= 0x7FFFFFFFULL || val >= 0xFFFFFFFF80000000ULL)
+		return NULL;
+	    }
+	}
       else
-        {
-          bool overflow_down = tree_int_cst_compare (scalar, min) == -1;
-          bool overflow_up = tree_int_cst_compare (scalar, max) == 1;
-          if (!overflow_down && !overflow_up)
-            return NULL;
-        }
+	{
+	  bool overflow_down = tree_int_cst_compare (scalar, min) == -1;
+	  bool overflow_up = tree_int_cst_compare (scalar, max) == 1;
+	  if (!overflow_down && !overflow_up)
+	    return NULL;
+	}
     }
-  
+
   tree vector = create_tmp_var (vectype);
   vector = make_ssa_name (vector);
   auto_vec<tree, 8> vargs;
@@ -738,26 +762,27 @@ handle_sew64_on_rv32 (const function_instance &instance,
   vargs.quick_push (gimple_call_arg (call_in, nargs - 1));
   function_instance fn_instance (resolver);
   hashval_t hashval = fn_instance.hash ();
-  registered_function *rfn_slot =
-      function_table->find_with_hash (fn_instance, hashval);
+  registered_function *rfn_slot
+    = function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *call = gimple_build_call_vec (decl, vargs);
   gimple_call_set_lhs (call, vector);
   gsi_insert_before (gsi_in, call, GSI_SAME_STMT);
-  
+
   vargs.release ();
   for (i = 0; i < nargs; i++)
     {
       if (i == index)
-        vargs.quick_push (vector);
+	vargs.quick_push (vector);
       else
-        vargs.quick_push (gimple_call_arg (call_in, i));
+	vargs.quick_push (gimple_call_arg (call_in, i));
     }
-  
+
   if (reverse_p)
     std::swap (vargs[index], vargs[index - 1]);
-    
-  snprintf (resolver, NAME_MAXLEN, "%s%s%s%s%s", instance.get_base_name (), op, dt1, dt2, pred);
+
+  snprintf (resolver, NAME_MAXLEN, "%s%s%s%s%s", instance.get_base_name (), op,
+	    dt1, dt2, pred);
   function_instance fn_instance2 (resolver);
   hashval = fn_instance2.hash ();
   rfn_slot = function_table->find_with_hash (fn_instance2, hashval);
@@ -782,13 +807,13 @@ registered_function_hasher::equal (value_type value, const compare_type &key)
 /* function_instance class implemention */
 
 function_instance::function_instance (function_builder *__builder,
-                                      const char *__base_name,
-                                      vector_arg_modes &__arg_pattern,
-                                      enum predication_index __pred,
-                                      enum operation_index __operation)
-    : m_builder (__builder), m_base_name (__base_name),
-      m_target_arg_pattern (__arg_pattern), m_target_pred (__pred),
-      m_target_operation (__operation)
+				      const char *__base_name,
+				      vector_arg_modes &__arg_pattern,
+				      enum predication_index __pred,
+				      enum operation_index __operation)
+  : m_builder (__builder), m_base_name (__base_name),
+    m_target_arg_pattern (__arg_pattern), m_target_pred (__pred),
+    m_target_operation (__operation)
 {
   function_name[0] = '\0';
 }
@@ -798,9 +823,7 @@ function_instance::function_instance (const char *__name)
   memcpy (function_name, __name, NAME_MAXLEN);
 }
 
-function_instance::~function_instance ()
-{
-}
+function_instance::~function_instance () {}
 
 inline bool
 function_instance::operator== (const function_instance &other) const
@@ -939,39 +962,37 @@ function_instance::builder () const
 /* function_builder class implemention */
 
 function_builder::function_builder (const char *__base_name,
-                                    vector_arg_all_modes &__arg_patterns,
-                                    uint64_t __pattern,
-                                    uint64_t __preds,
-                                    uint64_t __op_types,
-                                    const unsigned int __extensions)
-    : m_base_name (__base_name), m_target_arg_patterns (__arg_patterns),
-      m_target_pattern (__pattern), m_target_preds (__preds),
-      m_target_op_types (__op_types), m_required_extensions (__extensions)
+				    vector_arg_all_modes &__arg_patterns,
+				    uint64_t __pattern, uint64_t __preds,
+				    uint64_t __op_types,
+				    const unsigned int __extensions)
+  : m_base_name (__base_name), m_target_arg_patterns (__arg_patterns),
+    m_target_pattern (__pattern), m_target_preds (__preds),
+    m_target_op_types (__op_types), m_required_extensions (__extensions)
 {
   m_iter_idx_cnt = 0;
   m_iter_arg_cnt = 0;
-  m_iter_arg_idx_list = (unsigned int *)xmalloc (m_target_arg_patterns.arg_len *
-                                                 sizeof (unsigned int));
+  m_iter_arg_idx_list = (unsigned int *) xmalloc (m_target_arg_patterns.arg_len
+						  * sizeof (unsigned int));
 
   for (unsigned int i = 0; i < m_target_arg_patterns.arg_len; i++)
     {
       // use mode iterator as mode iter
       if (m_target_arg_patterns.target_op_list[i] < 0)
-        {
-          m_iter_idx_cnt =
-              (m_iter_idx_cnt == 0)
-                  ? m_target_arg_patterns.arg_list[i]->attr_len
-                  : m_iter_idx_cnt *
-                        m_target_arg_patterns.arg_list[i]->attr_len;
-          m_iter_arg_idx_list[m_iter_arg_cnt++] = i;
-        }
+	{
+	  m_iter_idx_cnt
+	    = (m_iter_idx_cnt == 0)
+		? m_target_arg_patterns.arg_list[i]->attr_len
+		: m_iter_idx_cnt * m_target_arg_patterns.arg_list[i]->attr_len;
+	  m_iter_arg_idx_list[m_iter_arg_cnt++] = i;
+	}
     }
 
   m_direct_overloads = lang_GNU_CXX ();
 
   gcc_assert (m_iter_arg_cnt > 0);
   gcc_assert (m_iter_idx_cnt > 0);
-  
+
   gcc_obstack_init (&m_string_obstack);
 }
 
@@ -998,8 +1019,8 @@ function_builder::finish_name ()
 
 rtx
 function_builder::expand_builtin_insn (enum insn_code icode, tree exp,
-                                       rtx target,
-                                       const function_instance &instance) const
+				       rtx target,
+				       const function_instance &instance) const
 {
   gcc_assert (call_expr_nargs (exp) > 0);
   struct expand_operand ops[MAX_RECOG_OPERANDS];
@@ -1017,17 +1038,17 @@ function_builder::expand_builtin_insn (enum insn_code icode, tree exp,
   if (need_mask_operand_p ())
     {
       if (has_mask_arg_p (pred))
-        add_input_operand (&ops[opno++], exp, offset++);
+	add_input_operand (&ops[opno++], exp, offset++);
       else
-        create_input_operand (&ops[opno++], const0_rtx, Pmode);
+	create_input_operand (&ops[opno++], const0_rtx, Pmode);
     }
 
   if (need_dest_operand_p ())
     {
       if (has_dest_arg_p (pred))
-        add_input_operand (&ops[opno++], exp, offset++);
+	add_input_operand (&ops[opno++], exp, offset++);
       else
-        create_input_operand (&ops[opno++], const0_rtx, Pmode);
+	create_input_operand (&ops[opno++], const0_rtx, Pmode);
     }
 
   for (int argno = offset; argno < call_expr_nargs (exp); argno++)
@@ -1039,12 +1060,12 @@ function_builder::expand_builtin_insn (enum insn_code icode, tree exp,
   /* Map the arguments to the other operands.  */
   gcc_assert (opno == insn_data[icode].n_generator_args);
   return generate_builtin_insn (icode, opno, ops,
-                                !function_returns_void_p (fndecl));
+				!function_returns_void_p (fndecl));
 }
 
 gimple *
 function_builder::fold (const function_instance &, gimple_stmt_iterator *,
-                        gcall *) const
+			gcall *) const
 {
   return NULL;
 }
@@ -1063,23 +1084,23 @@ function_builder::get_dest_arguments_length () const
 
 tree
 function_builder::get_mask_type (tree return_type,
-                                 const function_instance &instance,
-                                 const vec<tree> &) const
+				 const function_instance &instance,
+				 const vec<tree> &) const
 {
   tree type = return_type;
   if (!VECTOR_MODE_P (TYPE_MODE (type)))
     {
       /* Fetch the vector mode start from arg[0]. */
       for (unsigned int i = 0; i < instance.get_arg_pattern ().arg_len; i++)
-        {
-          if (VECTOR_MODE_P (instance.get_arg_pattern ().arg_list[i]))
-            {
-              type =
-                  get_dt_t (instance.get_arg_pattern ().arg_list[i],
-                            instance.get_data_type_list ()[i] == DT_unsigned);
-              break;
-            }
-        }
+	{
+	  if (VECTOR_MODE_P (instance.get_arg_pattern ().arg_list[i]))
+	    {
+	      type
+		= get_dt_t (instance.get_arg_pattern ().arg_list[i],
+			    instance.get_data_type_list ()[i] == DT_unsigned);
+	      break;
+	    }
+	}
     }
   gcc_assert (VECTOR_MODE_P (TYPE_MODE (type)));
   if (GET_MODE_CLASS (TYPE_MODE (type)) == MODE_VECTOR_BOOL)
@@ -1088,16 +1109,15 @@ function_builder::get_mask_type (tree return_type,
     {
       machine_mode mask_mode;
       gcc_assert (
-          riscv_vector_get_mask_mode (TYPE_MODE (type)).exists (&mask_mode));
+	riscv_vector_get_mask_mode (TYPE_MODE (type)).exists (&mask_mode));
       return mode2mask_t (mask_mode);
     }
 }
 
 void
 function_builder::get_argument_types (const function_instance &,
-                                      vec<tree> &) const
-{
-}
+				      vec<tree> &) const
+{}
 
 char *
 function_builder::assemble_name (function_instance &)
@@ -1132,10 +1152,10 @@ function_builder::has_mask_arg_p (enum predication_index pred) const
 {
   uint64_t pat = get_pattern ();
 
-  return pred == PRED_m || pred == PRED_tam || pred == PRED_tum ||
-         pred == PRED_tama || pred == PRED_tamu || pred == PRED_tuma ||
-         pred == PRED_tumu || pred == PRED_ma || pred == PRED_mu ||
-         (pat & PAT_merge);
+  return pred == PRED_m || pred == PRED_tam || pred == PRED_tum
+	 || pred == PRED_tama || pred == PRED_tamu || pred == PRED_tuma
+	 || pred == PRED_tumu || pred == PRED_ma || pred == PRED_mu
+	 || (pat & PAT_merge);
 }
 
 bool
@@ -1181,13 +1201,13 @@ function_builder::get_policy (enum predication_index pred) const
       return (pat & PAT_void_dest || pat & PAT_dest) ? tu_policy : ta_policy;
     case PRED_m:
       if (pat & PAT_ignore_policy)
-        return any_policy;
+	return any_policy;
       else if (pat & PAT_ignore_mask_policy)
-        return tu_policy;
+	return tu_policy;
       else if (pat & PAT_ignore_tail_policy)
-        return mu_policy;
+	return mu_policy;
       else
-        return tumu_policy;
+	return tumu_policy;
     case PRED_ta:
     case PRED_tam:
       return ta_policy;
@@ -1211,8 +1231,7 @@ function_builder::get_policy (enum predication_index pred) const
     }
 }
 
-size_t
-function_builder::get_position_of_mask_arg (enum predication_index) const
+size_t function_builder::get_position_of_mask_arg (enum predication_index) const
 {
   return 0;
 }
@@ -1221,9 +1240,9 @@ size_t
 function_builder::get_position_of_dest_arg (enum predication_index pred) const
 {
   uint64_t pat = get_pattern ();
-  if (pred == PRED_tu ||
-      (pred == PRED_void && (pat & PAT_void_dest || pat & PAT_dest)) ||
-      (pred == PRED_ta && pat & PAT_dest))
+  if (pred == PRED_tu
+      || (pred == PRED_void && (pat & PAT_void_dest || pat & PAT_dest))
+      || (pred == PRED_ta && pat & PAT_dest))
     return 0;
   else
     return 1;
@@ -1250,9 +1269,9 @@ function_builder::get_attributes (const function_instance &instance) const
   if (!instance.modifies_global_state_p ())
     {
       if (instance.reads_global_state_p ())
-        attrs = add_attribute ("pure", attrs);
+	attrs = add_attribute ("pure", attrs);
       else
-        attrs = add_attribute ("const", attrs);
+	attrs = add_attribute ("const", attrs);
     }
 
   if (!flag_non_call_exceptions || !instance.could_trap_p ())
@@ -1267,13 +1286,12 @@ function_builder::get_attributes (const function_instance &instance) const
    architecture extensions that the function requires.  */
 registered_function &
 function_builder::add_function (const function_instance &instance,
-                                const char *name, tree fntype, tree attrs,
-                                bool overloaded_p,
-                                bool placeholder_p) const
+				const char *name, tree fntype, tree attrs,
+				bool overloaded_p, bool placeholder_p) const
 {
   unsigned int code = vec_safe_length (registered_functions);
   code = (code << RISCV_BUILTIN_SHIFT) + RISCV_BUILTIN_VECTOR;
-  
+
   /* We need to be able to generate placeholders to enusre that we have a
      consistent numbering scheme for function codes between the C and C++
      frontends, so that everything ties up in LTO.
@@ -1288,9 +1306,9 @@ function_builder::add_function (const function_instance &instance,
      validation and return a non-NULL, non-error_mark_node node, so we
      arbitrarily choose integer_zero_node.  */
   tree decl = placeholder_p
-                  ? integer_zero_node
-                  : simulate_builtin_function_decl (input_location, name,
-                                                    fntype, code, NULL, attrs);
+		? integer_zero_node
+		: simulate_builtin_function_decl (input_location, name, fntype,
+						  code, NULL, attrs);
 
   registered_function &rfn = *ggc_alloc<registered_function> ();
   rfn.instance = instance;
@@ -1310,25 +1328,26 @@ function_builder::add_function (const function_instance &instance,
    overload resolution therefore isn't necessary.  */
 void
 function_builder::add_unique_function (function_instance &instance,
-                                       tree return_type,
-                                       vec<tree> &argument_types)
+				       tree return_type,
+				       vec<tree> &argument_types)
 {
   /* Add the function under its full (unique) name.  */
   char *overloaded_name = this->assemble_name (instance);
   if (instance.function_name[0] == '\0')
     return;
-    
-  tree fntype = build_function_type_array (
-      return_type, argument_types.length (), argument_types.address ());
+
+  tree fntype
+    = build_function_type_array (return_type, argument_types.length (),
+				 argument_types.address ());
   tree attrs = get_attributes (instance);
-  registered_function &rfn =
-      add_function (instance, instance.function_name, fntype, attrs, false, false);
+  registered_function &rfn = add_function (instance, instance.function_name,
+					   fntype, attrs, false, false);
 
   /* Enter the function into the hash table.  */
   hashval_t hashval = instance.hash ();
-  registered_function **rfn_slot =
-      function_table->find_slot_with_hash (instance, hashval, INSERT);
-  
+  registered_function **rfn_slot
+    = function_table->find_slot_with_hash (instance, hashval, INSERT);
+
   if (*rfn_slot)
     {
       error ("duplicate function name: %s", instance.function_name);
@@ -1342,8 +1361,8 @@ function_builder::add_unique_function (function_instance &instance,
       /* Attribute lists shouldn't be shared.  */
       tree attrs = get_attributes (instance);
       bool placeholder_p = !m_direct_overloads;
-        add_function (instance, overloaded_name, fntype, attrs,
-                      false, placeholder_p);
+      add_function (instance, overloaded_name, fntype, attrs, false,
+		    placeholder_p);
       obstack_free (&m_string_obstack, overloaded_name);
     }
 }
@@ -1353,7 +1372,7 @@ function_builder::add_unique_function (function_instance &instance,
    Report an error against LOCATION if not.  */
 bool
 function_builder::check_required_extensions (location_t location, tree fndecl,
-                                             uint64_t required_extensions) const
+					     uint64_t required_extensions) const
 {
   /* For the instructions doesn't need any extension, we return true.  */
   if (required_extensions == 0)
@@ -1383,15 +1402,15 @@ function_builder::check_required_extensions (location_t location, tree fndecl,
    function.  */
 void
 function_builder::apply_predication (const function_instance &instance,
-                                     tree return_type,
-                                     vec<tree> &argument_types) const
+				     tree return_type,
+				     vec<tree> &argument_types) const
 {
   /* check if mask parameter need. */
   if (has_mask_arg_p (instance.get_pred ()))
     {
       argument_types.quick_insert (
-          get_position_of_mask_arg (instance.get_pred ()),
-          get_mask_type (return_type, instance, argument_types));
+	get_position_of_mask_arg (instance.get_pred ()),
+	get_mask_type (return_type, instance, argument_types));
     }
 
   /* check if dest parameter need. */
@@ -1399,12 +1418,12 @@ function_builder::apply_predication (const function_instance &instance,
     {
       size_t size = get_dest_arguments_length ();
       if (argument_types.is_empty ())
-        for (size_t i = 0; i < size; i += 1)
-          argument_types.quick_push (return_type);
+	for (size_t i = 0; i < size; i += 1)
+	  argument_types.quick_push (return_type);
       else
-        for (size_t i = 0; i < size; i += 1)
-          argument_types.quick_insert (get_position_of_dest_arg (instance.get_pred ()) + i,
-                                       return_type);
+	for (size_t i = 0; i < size; i += 1)
+	  argument_types.quick_insert (
+	    get_position_of_dest_arg (instance.get_pred ()) + i, return_type);
     }
 
   /* check if vl parameter need  */
@@ -1432,10 +1451,10 @@ function_builder::get_arg_modes_by_iter_idx (unsigned int iter_idx) const
     }
 
   unsigned int coefficient = 1;
-  machine_mode *arg_modes = (machine_mode *)xmalloc (
-      sizeof (machine_mode) * m_target_arg_patterns.arg_len);
-  vector_arg_modes &arg_modes_info =
-      *(vector_arg_modes *)xmalloc (sizeof (vector_arg_modes));
+  machine_mode *arg_modes = (machine_mode *) xmalloc (
+    sizeof (machine_mode) * m_target_arg_patterns.arg_len);
+  vector_arg_modes &arg_modes_info
+    = *(vector_arg_modes *) xmalloc (sizeof (vector_arg_modes));
   arg_modes_info.arg_len = m_target_arg_patterns.arg_len;
   arg_modes_info.arg_list = arg_modes;
   arg_modes_info.arg_extensions = m_required_extensions;
@@ -1444,11 +1463,11 @@ function_builder::get_arg_modes_by_iter_idx (unsigned int iter_idx) const
   for (unsigned int i = 0; i < m_iter_arg_cnt; i++)
     {
       // get the iter arg's attribute length
-      unsigned int arg_attr_len =
-          m_target_arg_patterns.arg_list[m_iter_arg_idx_list[i]]->attr_len;
-      vector_mode_attr target_mode_attr =
-          m_target_arg_patterns.arg_list[m_iter_arg_idx_list[i]]
-              ->attr_list[(iter_idx / coefficient) % arg_attr_len];
+      unsigned int arg_attr_len
+	= m_target_arg_patterns.arg_list[m_iter_arg_idx_list[i]]->attr_len;
+      vector_mode_attr target_mode_attr
+	= m_target_arg_patterns.arg_list[m_iter_arg_idx_list[i]]
+	    ->attr_list[(iter_idx / coefficient) % arg_attr_len];
       arg_modes[m_iter_arg_idx_list[i]] = target_mode_attr.mode;
       arg_modes_info.arg_extensions |= target_mode_attr.extension;
       coefficient *= arg_attr_len;
@@ -1459,32 +1478,32 @@ function_builder::get_arg_modes_by_iter_idx (unsigned int iter_idx) const
     {
       // skip iter args
       if (m_target_arg_patterns.target_op_list[i] < 0)
-        continue;
+	continue;
 
-      machine_mode iter_mode =
-          arg_modes[m_target_arg_patterns.target_op_list[i]];
+      machine_mode iter_mode
+	= arg_modes[m_target_arg_patterns.target_op_list[i]];
       vector_mode_attr_list *arg_attr_list = m_target_arg_patterns.arg_list[i];
       bool attr_mode_hit = false;
 
       for (unsigned int j = 0; j < arg_attr_list->attr_len; j++)
-        {
-          if (iter_mode == arg_attr_list->attr_list[j].mode)
-            {
-              attr_mode_hit = true;
-              arg_modes[i] = arg_attr_list->attr_list[j].attr;
-              arg_modes_info.arg_extensions |=
-                  arg_attr_list->attr_list[j].extension;
-            }
-        }
+	{
+	  if (iter_mode == arg_attr_list->attr_list[j].mode)
+	    {
+	      attr_mode_hit = true;
+	      arg_modes[i] = arg_attr_list->attr_list[j].attr;
+	      arg_modes_info.arg_extensions
+		|= arg_attr_list->attr_list[j].extension;
+	    }
+	}
 
       // one argment mode NOT hit, that means maybe NO mode is valid for
       // iter_idx
       if (!attr_mode_hit)
-        {
-          // set arg_len to 0 to skip this arg pattern
-          arg_modes_info.arg_len = 0;
-          break;
-        }
+	{
+	  // set arg_len to 0 to skip this arg pattern
+	  arg_modes_info.arg_len = 0;
+	  break;
+	}
     }
 
   return arg_modes_info;
@@ -1496,38 +1515,38 @@ function_builder::register_function ()
   for (unsigned iter_idx = 0; iter_idx < m_iter_idx_cnt; iter_idx++)
     {
       vector_arg_modes &arg_modes = get_arg_modes_by_iter_idx (iter_idx);
-      
+
       bool skip_p = false;
       if (arg_modes.arg_len == 0)
-        skip_p = true;
-        
-      if (FLOAT_MODE_P (arg_modes.arg_list[0]) && 
-        get_data_type_list ()[0] == DT_unsigned)
-        skip_p = true;
+	skip_p = true;
+
+      if (FLOAT_MODE_P (arg_modes.arg_list[0])
+	  && get_data_type_list ()[0] == DT_unsigned)
+	skip_p = true;
 
       if (skip_p)
-        {
-          free (arg_modes.arg_list);
-          free (&arg_modes);
-          continue;
-        }
+	{
+	  free (arg_modes.arg_list);
+	  free (&arg_modes);
+	  continue;
+	}
       for (unsigned pred = 1; pred < NUM_PREDS; pred <<= 1)
-        {
-          if ((m_target_preds & pred) == 0)
-            continue;
+	{
+	  if ((m_target_preds & pred) == 0)
+	    continue;
 
-          for (unsigned op_type = 1; op_type < NUM_OP; op_type <<= 1)
-            {
-              if ((m_target_op_types & op_type) == 0)
-                continue;
+	  for (unsigned op_type = 1; op_type < NUM_OP; op_type <<= 1)
+	    {
+	      if ((m_target_op_types & op_type) == 0)
+		continue;
 
-              function_instance instance (
-                  this, m_base_name, arg_modes,
-                  (enum predication_index) (m_target_preds & pred),
-                  (enum operation_index) (m_target_op_types & op_type));
-              build_one (instance);
-            }
-        }
+	      function_instance instance (
+		this, m_base_name, arg_modes,
+		(enum predication_index) (m_target_preds & pred),
+		(enum operation_index) (m_target_op_types & op_type));
+	      build_one (instance);
+	    }
+	}
     }
 }
 
@@ -1557,7 +1576,7 @@ config::get_return_type (const function_instance &) const
 /* A function implementation for vsetvl builder */
 void
 vsetvl::get_argument_types (const function_instance &,
-                            vec<tree> &argument_types) const
+			    vec<tree> &argument_types) const
 {
   argument_types.quick_push (size_type_node);
 }
@@ -1571,8 +1590,8 @@ vsetvl::expand (const function_instance &instance, tree exp, rtx target) const
   /* Map any target to operand 0.  */
   int opno = 0;
   create_output_operand (&ops[opno++], target, Pmode);
-  unsigned int vtype =
-      get_vtype_for_mode (instance.get_arg_pattern ().arg_list[0]);
+  unsigned int vtype
+    = get_vtype_for_mode (instance.get_arg_pattern ().arg_list[0]);
   enum insn_code icode = code_for_vsetvl (Pmode);
   add_input_operand (&ops[opno++], exp, 0);
   /* create vtype input operand.  */
@@ -1580,12 +1599,13 @@ vsetvl::expand (const function_instance &instance, tree exp, rtx target) const
   /* Map the arguments to the other operands.  */
   gcc_assert (opno == insn_data[icode].n_generator_args);
   return generate_builtin_insn (icode, opno, ops,
-                                !function_returns_void_p (fndecl));
+				!function_returns_void_p (fndecl));
 }
 
 /* A function implementation for vsetvlmax builder */
 rtx
-vsetvlmax::expand (const function_instance &instance, tree exp, rtx target) const
+vsetvlmax::expand (const function_instance &instance, tree exp,
+		   rtx target) const
 {
   struct expand_operand ops[MAX_RECOG_OPERANDS];
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
@@ -1608,7 +1628,7 @@ vsetvlmax::expand (const function_instance &instance, tree exp, rtx target) cons
   /* Map the arguments to the other operands.  */
   gcc_assert (opno == insn_data[icode].n_generator_args);
   return generate_builtin_insn (icode, opno, ops,
-                                !function_returns_void_p (fndecl));
+				!function_returns_void_p (fndecl));
 }
 
 /* A function implementation for readvl functions.  */
@@ -1637,7 +1657,7 @@ readvl::get_return_type (const function_instance &) const
 
 void
 readvl::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
+			    vec<tree> &argument_types) const
 {
   argument_types.quick_push (get_dt_t_with_index (instance, 0));
 }
@@ -1660,7 +1680,7 @@ readvl::expand (const function_instance &, tree exp, rtx target) const
   /* Map the arguments to the other operands.  */
   gcc_assert (opno == insn_data[icode].n_generator_args);
   return generate_builtin_insn (icode, opno, ops,
-                                !function_returns_void_p (fndecl));
+				!function_returns_void_p (fndecl));
 }
 
 /* A function implementation for handle_store_pointer functions.  */
@@ -1682,7 +1702,7 @@ handle_store_pointer::assemble_name (function_instance &instance)
 
 void
 handle_store_pointer::get_argument_types (const function_instance &,
-                            vec<tree> &argument_types) const
+					  vec<tree> &argument_types) const
 {
   argument_types.quick_push (build_pointer_type (size_type_node));
   argument_types.quick_push (size_type_node);
@@ -1696,8 +1716,8 @@ handle_store_pointer::expand (const function_instance &, tree exp, rtx) const
   rtx op0 = expand_normal (arg0);
   rtx op1 = expand_normal (arg1);
   /* If the pointer is const0_rtx meaning that user is passing a NULL pointer to
-     the argument. In this case, we discard the argument and to nothing. Otherwise,
-     we store the pointer.*/
+     the argument. In this case, we discard the argument and to nothing.
+     Otherwise, we store the pointer.*/
   if (!rtx_equal_p (op0, const0_rtx))
     riscv_emit_move (gen_rtx_MEM (GET_MODE (op1), op0), op1);
   return const0_rtx;
@@ -1723,16 +1743,18 @@ misc::get_return_type (const function_instance &instance) const
 
 void
 misc::get_argument_types (const function_instance &instance,
-                          vec<tree> &argument_types) const
+			  vec<tree> &argument_types) const
 {
   argument_types.quick_push (get_dt_t_with_index (instance, 1));
 }
 
 /* A function implementation for vreinterpret functions.  */
 rtx
-vreinterpret::expand (const function_instance &instance, tree exp, rtx target) const
+vreinterpret::expand (const function_instance &instance, tree exp,
+		      rtx target) const
 {
-  enum insn_code icode = code_for_vreinterpret (instance.get_arg_pattern ().arg_list[0]);
+  enum insn_code icode
+    = code_for_vreinterpret (instance.get_arg_pattern ().arg_list[0]);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -1747,7 +1769,7 @@ vlmul_ext::assemble_name (function_instance &instance)
 
   if (tmode == smode)
     return nullptr;
-  
+
   if (known_lt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode)))
     return nullptr;
 
@@ -1759,9 +1781,11 @@ vlmul_ext::assemble_name (function_instance &instance)
 }
 
 rtx
-vlmul_ext::expand (const function_instance &instance, tree exp, rtx target) const
+vlmul_ext::expand (const function_instance &instance, tree exp,
+		   rtx target) const
 {
-  enum insn_code icode = code_for_vlmul_ext (instance.get_arg_pattern ().arg_list[0]);
+  enum insn_code icode
+    = code_for_vlmul_ext (instance.get_arg_pattern ().arg_list[0]);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -1776,7 +1800,7 @@ vlmul_trunc::assemble_name (function_instance &instance)
 
   if (tmode == smode)
     return nullptr;
-  
+
   if (known_gt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode)))
     return nullptr;
 
@@ -1788,9 +1812,11 @@ vlmul_trunc::assemble_name (function_instance &instance)
 }
 
 rtx
-vlmul_trunc::expand (const function_instance &instance, tree exp, rtx target) const
+vlmul_trunc::expand (const function_instance &instance, tree exp,
+		     rtx target) const
 {
-  enum insn_code icode = code_for_vlmul_trunc (instance.get_arg_pattern ().arg_list[0]);
+  enum insn_code icode
+    = code_for_vlmul_trunc (instance.get_arg_pattern ().arg_list[0]);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -1805,10 +1831,10 @@ vset::assemble_name (function_instance &instance)
 
   if (tmode == smode)
     return nullptr;
-  
+
   if (known_lt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode)))
     return nullptr;
-    
+
   intrinsic_naming_rule_2 (instance, 0, 2);
   append_name (instance.get_base_name ());
   return finish_name ();
@@ -1816,7 +1842,7 @@ vset::assemble_name (function_instance &instance)
 
 void
 vset::get_argument_types (const function_instance &instance,
-                          vec<tree> &argument_types) const
+			  vec<tree> &argument_types) const
 {
   misc::get_argument_types (instance, argument_types);
   argument_types.quick_push (size_type_node);
@@ -1824,7 +1850,8 @@ vset::get_argument_types (const function_instance &instance,
 }
 
 gimple *
-vset::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in, gcall *call_in) const
+vset::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+	    gcall *call_in) const
 {
   tree lhs = get_lhs (instance, call_in);
   tree arg0 = gimple_call_arg (call_in, 0);
@@ -1833,13 +1860,18 @@ vset::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in, gca
   machine_mode base_mode = TYPE_MODE (TREE_TYPE (arg2));
   machine_mode full_mode = TYPE_MODE (TREE_TYPE (arg0));
   int index = int_cst_value (arg1);
-  unsigned int num_vectors = exact_div (GET_MODE_SIZE (full_mode), GET_MODE_SIZE (base_mode)).to_constant ();
+  unsigned int num_vectors
+    = exact_div (GET_MODE_SIZE (full_mode), GET_MODE_SIZE (base_mode))
+	.to_constant ();
   tree array_type = build_array_type_nelts (TREE_TYPE (arg2), num_vectors);
   SET_TYPE_MODE (array_type, full_mode);
   tree array = create_tmp_var (array_type, "rvv_array");
-  gassign *assign = gimple_build_assign (array, fold_build1 (VIEW_CONVERT_EXPR, TREE_TYPE (array), arg0));
+  gassign *assign
+    = gimple_build_assign (array, fold_build1 (VIEW_CONVERT_EXPR,
+					       TREE_TYPE (array), arg0));
   gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
-  tree vector = build4 (ARRAY_REF, TREE_TYPE (arg2), array, size_int (index), NULL_TREE, NULL_TREE);
+  tree vector = build4 (ARRAY_REF, TREE_TYPE (arg2), array, size_int (index),
+			NULL_TREE, NULL_TREE);
   assign = gimple_build_assign (vector, arg2);
   gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
   assign = gimple_build_assign (lhs, array);
@@ -1864,10 +1896,10 @@ vget::assemble_name (function_instance &instance)
 
   if (tmode == smode)
     return nullptr;
-  
+
   if (known_gt (GET_MODE_SIZE (tmode), GET_MODE_SIZE (smode)))
     return nullptr;
-  
+
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
   intrinsic_naming_rule_2 (instance, 0, 1);
   append_name (instance.get_base_name ());
@@ -1877,14 +1909,15 @@ vget::assemble_name (function_instance &instance)
 
 void
 vget::get_argument_types (const function_instance &instance,
-                          vec<tree> &argument_types) const
+			  vec<tree> &argument_types) const
 {
   misc::get_argument_types (instance, argument_types);
   argument_types.quick_push (size_type_node);
 }
 
 gimple *
-vget::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in, gcall *call_in) const
+vget::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
+	    gcall *call_in) const
 {
   tree lhs = get_lhs (instance, call_in);
   tree arg0 = gimple_call_arg (call_in, 0);
@@ -1892,13 +1925,18 @@ vget::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in, gca
   machine_mode base_mode = TYPE_MODE (TREE_TYPE (lhs));
   machine_mode full_mode = TYPE_MODE (TREE_TYPE (arg0));
   int index = int_cst_value (arg1);
-  unsigned int num_vectors = exact_div (GET_MODE_SIZE (full_mode), GET_MODE_SIZE (base_mode)).to_constant ();
+  unsigned int num_vectors
+    = exact_div (GET_MODE_SIZE (full_mode), GET_MODE_SIZE (base_mode))
+	.to_constant ();
   tree array_type = build_array_type_nelts (TREE_TYPE (lhs), num_vectors);
   SET_TYPE_MODE (array_type, full_mode);
   tree array = create_tmp_var (array_type, "rvv_array");
-  gassign *assign = gimple_build_assign (array, fold_build1 (VIEW_CONVERT_EXPR, TREE_TYPE (array), arg0));
+  gassign *assign
+    = gimple_build_assign (array, fold_build1 (VIEW_CONVERT_EXPR,
+					       TREE_TYPE (array), arg0));
   gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
-  tree vector = build4 (ARRAY_REF, TREE_TYPE (lhs), array, size_int (index), NULL_TREE, NULL_TREE);
+  tree vector = build4 (ARRAY_REF, TREE_TYPE (lhs), array, size_int (index),
+			NULL_TREE, NULL_TREE);
   assign = gimple_build_assign (lhs, vector);
   return assign;
 }
@@ -1923,10 +1961,8 @@ vundefined::assemble_name (function_instance &instance)
 }
 
 void
-vundefined::get_argument_types (const function_instance &,
-                          vec<tree> &) const
-{
-}
+vundefined::get_argument_types (const function_instance &, vec<tree> &) const
+{}
 
 rtx
 vundefined::expand (const function_instance &, tree, rtx target) const
@@ -1947,7 +1983,8 @@ loadstore::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   if (this->can_be_overloaded_p (instance))
     {
       append_name (name);
@@ -1959,7 +1996,7 @@ loadstore::assemble_name (function_instance &instance)
 
 void
 loadstore::get_argument_types (const function_instance &instance,
-                               vec<tree> &argument_types) const
+			       vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     argument_types.quick_push (get_dt_t_with_index (instance, i));
@@ -1978,7 +2015,8 @@ indexedloadstore::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (data_mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   append_name (name);
   append_name (get_pred_str (instance.get_pred (), true));
   return finish_name ();
@@ -1986,7 +2024,7 @@ indexedloadstore::assemble_name (function_instance &instance)
 
 void
 indexedloadstore::get_argument_types (const function_instance &instance,
-                                      vec<tree> &argument_types) const
+				      vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     argument_types.quick_push (get_dt_t_with_index (instance, i));
@@ -2000,13 +2038,13 @@ basic_alu::assemble_name (function_instance &instance)
   if (this->can_be_overloaded_p (instance))
     {
       append_name (instance.get_base_name ());
-      if (instance.get_operation () == OP_v_x ||
-          instance.get_operation () == OP_v_v ||
-          instance.get_operation () == OP_v_f)
-        append_name ("_v");
-      if (instance.get_operation () == OP_x_x_v ||
-          instance.get_operation () == OP_x_x_w)
-        append_name ("_x");
+      if (instance.get_operation () == OP_v_x
+	  || instance.get_operation () == OP_v_v
+	  || instance.get_operation () == OP_v_f)
+	append_name ("_v");
+      if (instance.get_operation () == OP_x_x_v
+	  || instance.get_operation () == OP_x_x_w)
+	append_name ("_x");
       append_name (get_pred_str (instance.get_pred (), true));
       return finish_name ();
     }
@@ -2022,7 +2060,7 @@ basic_alu::get_return_type (const function_instance &instance) const
 /* A function implementation for unary functions.  */
 void
 unop::get_argument_types (const function_instance &instance,
-                          vec<tree> &argument_types) const
+			  vec<tree> &argument_types) const
 {
   argument_types.quick_push (get_dt_t_with_index (instance, 1));
 }
@@ -2032,32 +2070,33 @@ unop::can_be_overloaded_p (const function_instance &instance) const
 {
   if (instance.get_pred () == PRED_none)
     return false;
-    
+
   return true;
 }
 
 /* A function implementation for binary functions.  */
 gimple *
 binop::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-            gcall *call_in) const
+	     gcall *call_in) const
 {
   return handle_sew64_on_rv32 (instance, gsi_in, call_in, 0);
 }
 
 void
 binop::get_argument_types (const function_instance &instance,
-                           vec<tree> &argument_types) const
+			   vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     {
       if (i == 2 && vector_scalar_operation_p (instance.get_operation ()))
-        {
-          machine_mode mode = GET_MODE_INNER (instance.get_arg_pattern ().arg_list[i]);
-          bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
-          argument_types.quick_push (get_dt_t (mode, unsigned_p));
-        }
+	{
+	  machine_mode mode
+	    = GET_MODE_INNER (instance.get_arg_pattern ().arg_list[i]);
+	  bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[i]);
+	  argument_types.quick_push (get_dt_t (mode, unsigned_p));
+	}
       else
-        argument_types.quick_push (get_dt_t_with_index (instance, i));
+	argument_types.quick_push (get_dt_t_with_index (instance, i));
     }
 }
 
@@ -2081,11 +2120,12 @@ wbinop::assemble_name (function_instance &instance)
 /* A function implementation for ternary functions.  */
 void
 ternop::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
+			    vec<tree> &argument_types) const
 {
   if (vector_scalar_operation_p (instance.get_operation ()))
     {
-      machine_mode mode = GET_MODE_INNER (instance.get_arg_pattern ().arg_list[1]);
+      machine_mode mode
+	= GET_MODE_INNER (instance.get_arg_pattern ().arg_list[1]);
       bool unsigned_p = is_dt_unsigned (instance.get_data_type_list ()[1]);
       argument_types.quick_push (get_dt_t (mode, unsigned_p));
     }
@@ -2103,15 +2143,14 @@ ternop::can_be_overloaded_p (const function_instance &) const
 
 gimple *
 ternop::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-              gcall *call_in) const
+	      gcall *call_in) const
 {
   int offset = -1;
   enum predication_index pred = instance.get_pred ();
-  
-  if (pred == PRED_void || pred == PRED_ta
-      || pred == PRED_tama)
+
+  if (pred == PRED_void || pred == PRED_ta || pred == PRED_tama)
     offset = 0;
-  
+
   return handle_sew64_on_rv32 (instance, gsi_in, call_in, offset);
 }
 
@@ -2127,7 +2166,7 @@ reduceop::assemble_name (function_instance &instance)
 
 void
 reduceop::get_argument_types (const function_instance &instance,
-                              vec<tree> &argument_types) const
+			      vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     argument_types.quick_push (get_dt_t_with_index (instance, i));
@@ -2135,10 +2174,11 @@ reduceop::get_argument_types (const function_instance &instance,
 
 tree
 reduceop::get_mask_type (tree, const function_instance &,
-                         const vec<tree> &argument_types) const
+			 const vec<tree> &argument_types) const
 {
   machine_mode mask_mode;
-  gcc_assert (riscv_vector_get_mask_mode (TYPE_MODE (argument_types[0])).exists (&mask_mode));
+  gcc_assert (riscv_vector_get_mask_mode (TYPE_MODE (argument_types[0]))
+		.exists (&mask_mode));
   return mode2mask_t (mask_mode);
 }
 
@@ -2158,9 +2198,10 @@ vle::get_return_type (const function_instance &instance) const
 bool
 vle::can_be_overloaded_p (const function_instance &instance) const
 {
-  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu ||
-         instance.get_pred () == PRED_tamu ||
-         instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu;
+  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu
+	 || instance.get_pred () == PRED_tamu
+	 || instance.get_pred () == PRED_tuma
+	 || instance.get_pred () == PRED_tumu;
 }
 
 rtx
@@ -2207,7 +2248,7 @@ vlse::get_return_type (const function_instance &instance) const
 
 void
 vlse::get_argument_types (const function_instance &instance,
-                          vec<tree> &argument_types) const
+			  vec<tree> &argument_types) const
 {
   loadstore::get_argument_types (instance, argument_types);
   argument_types.quick_push (ptrdiff_type_node);
@@ -2216,9 +2257,10 @@ vlse::get_argument_types (const function_instance &instance,
 bool
 vlse::can_be_overloaded_p (const function_instance &instance) const
 {
-  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu ||
-         instance.get_pred () == PRED_tamu ||
-         instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu;
+  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu
+	 || instance.get_pred () == PRED_tamu
+	 || instance.get_pred () == PRED_tuma
+	 || instance.get_pred () == PRED_tumu;
 }
 
 rtx
@@ -2238,7 +2280,7 @@ vsse::call_properties () const
 
 void
 vsse::get_argument_types (const function_instance &instance,
-                          vec<tree> &argument_types) const
+			  vec<tree> &argument_types) const
 {
   loadstore::get_argument_types (instance, argument_types);
   argument_types.quick_insert (1, ptrdiff_type_node);
@@ -2285,7 +2327,7 @@ vlm::get_return_type (const function_instance &instance) const
 
 void
 vlm::get_argument_types (const function_instance &,
-                         vec<tree> &argument_types) const
+			 vec<tree> &argument_types) const
 {
   argument_types.quick_push (const_scalar_pointer_types[VECTOR_TYPE_uint8]);
 }
@@ -2320,7 +2362,7 @@ vsm::call_properties () const
 
 void
 vsm::get_argument_types (const function_instance &instance,
-                         vec<tree> &argument_types) const
+			 vec<tree> &argument_types) const
 {
   argument_types.quick_push (scalar_pointer_types[VECTOR_TYPE_uint8]);
   argument_types.quick_push (get_dt_t_with_index (instance, 0));
@@ -2353,7 +2395,8 @@ vluxei::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  enum insn_code icode = code_for_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, mode1, mode2);
+  enum insn_code icode
+    = code_for_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -2363,7 +2406,8 @@ vloxei::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  enum insn_code icode = code_for_vlxei (UNSPEC_ORDER_INDEXED_LOAD, mode1, mode2);
+  enum insn_code icode
+    = code_for_vlxei (UNSPEC_ORDER_INDEXED_LOAD, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -2379,7 +2423,8 @@ vsuxei::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  enum insn_code icode = code_for_vsxei (UNSPEC_UNORDER_INDEXED_STORE, mode1, mode2);
+  enum insn_code icode
+    = code_for_vsxei (UNSPEC_UNORDER_INDEXED_STORE, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -2395,7 +2440,8 @@ vsoxei::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  enum insn_code icode = code_for_vsxei (UNSPEC_ORDER_INDEXED_STORE, mode1, mode2);
+  enum insn_code icode
+    = code_for_vsxei (UNSPEC_ORDER_INDEXED_STORE, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -2417,7 +2463,8 @@ vleff::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   if (this->can_be_overloaded_p (instance))
     {
       append_name (name);
@@ -2435,24 +2482,25 @@ vleff::get_return_type (const function_instance &instance) const
 
 void
 vleff::get_argument_types (const function_instance &instance,
-                           vec<tree> &argument_types) const
+			   vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     argument_types.quick_push (get_dt_t_with_index (instance, i));
   argument_types.quick_push (build_pointer_type (size_type_node));
 }
 
-bool 
+bool
 vleff::can_be_overloaded_p (const function_instance &instance) const
 {
-  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu ||
-         instance.get_pred () == PRED_tamu ||
-         instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu;
+  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu
+	 || instance.get_pred () == PRED_tamu
+	 || instance.get_pred () == PRED_tuma
+	 || instance.get_pred () == PRED_tumu;
 }
 
 gimple *
 vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-             gcall *call_in) const
+	     gcall *call_in) const
 {
   /* split vleff (a, b, c) -> d = vleff (a, c) + readvl (d). */
   auto_vec<tree, 8> vargs;
@@ -2462,7 +2510,7 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   for (unsigned int i = 0; i < gimple_call_num_args (call_in); i++)
     {
       if (i == gimple_call_num_args (call_in) - offset)
-        continue;
+	continue;
 
       vargs.quick_push (gimple_call_arg (call_in, i));
     }
@@ -2470,36 +2518,41 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   gimple *repl = gimple_build_call_vec (gimple_call_fn (call_in), vargs);
   tree lhs = get_lhs (instance, call_in);
   gimple_call_set_lhs (repl, lhs);
-  
-  tree new_vl_arg = gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset);
+
+  tree new_vl_arg
+    = gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset);
   if (integer_zerop (new_vl_arg))
     {
-      /* This case happens when user passes the nullptr to new_vl argument. 
-         In this case, we just need to ignore the new_vl argument and return
-         vleff instruction directly. */
+      /* This case happens when user passes the nullptr to new_vl argument.
+	 In this case, we just need to ignore the new_vl argument and return
+	 vleff instruction directly. */
       return repl;
     }
-  
+
   tree var = create_tmp_var (size_type_node, "new_vl");
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
   char resolver[NAME_MAXLEN];
-  snprintf (resolver, NAME_MAXLEN, "readvl%s", mode2data_type_str (mode, unsigned_p, false));
+  snprintf (resolver, NAME_MAXLEN, "readvl%s",
+	    mode2data_type_str (mode, unsigned_p, false));
   function_instance fn_instance (resolver);
   hashval_t hashval = fn_instance.hash ();
-  registered_function *rfn_slot =
-      function_table->find_with_hash (fn_instance, hashval);
+  registered_function *rfn_slot
+    = function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
-  
+
   gimple *g = gimple_build_call (decl, 1, lhs);
   gimple_call_set_lhs (g, var);
-  snprintf (resolver, NAME_MAXLEN, "handle_store_pointer%s", mode2data_type_str (Pmode, true, false));
+  snprintf (resolver, NAME_MAXLEN, "handle_store_pointer%s",
+	    mode2data_type_str (Pmode, true, false));
   function_instance fn_instance2 (resolver);
   hashval_t hashval2 = fn_instance2.hash ();
-  registered_function *rfn_slot2 =
-      function_table->find_with_hash (fn_instance2, hashval2);
+  registered_function *rfn_slot2
+    = function_table->find_with_hash (fn_instance2, hashval2);
   tree decl2 = rfn_slot2->decl;
-  gimple *g2 = gimple_build_call (decl2, 2, gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset), var);
+  gimple *g2 = gimple_build_call (
+    decl2, 2,
+    gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset), var);
 
   gsi_insert_after (gsi_in, g2, GSI_SAME_STMT);
   gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
@@ -2534,7 +2587,8 @@ vlseg::assemble_name (function_instance &instance)
   const char *pred = get_pred_str (instance.get_pred ());
   char name[NAME_MAXLEN];
   snprintf (name, NAME_MAXLEN, "%s%de%d", instance.get_base_name (), nf, sew);
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   if (this->can_be_overloaded_p (instance))
     {
       append_name (name);
@@ -2552,18 +2606,19 @@ vlseg::get_return_type (const function_instance &instance) const
 
 void
 vlseg::get_argument_types (const function_instance &instance,
-                           vec<tree> &argument_types) const
+			   vec<tree> &argument_types) const
 {
   for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
     argument_types.quick_push (get_dt_t_with_index (instance, i));
 }
 
-bool 
+bool
 vlseg::can_be_overloaded_p (const function_instance &instance) const
 {
-  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu ||
-         instance.get_pred () == PRED_tamu ||
-         instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu;
+  return instance.get_pred () == PRED_m || instance.get_pred () == PRED_tu
+	 || instance.get_pred () == PRED_tamu
+	 || instance.get_pred () == PRED_tuma
+	 || instance.get_pred () == PRED_tumu;
 }
 
 rtx
@@ -2593,7 +2648,8 @@ vlsegff::assemble_name (function_instance &instance)
   const char *pred = get_pred_str (instance.get_pred ());
   char name[NAME_MAXLEN];
   snprintf (name, NAME_MAXLEN, "vlseg%de%dff", nf, sew);
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   if (can_be_overloaded_p (instance))
     {
       append_name (name);
@@ -2605,7 +2661,7 @@ vlsegff::assemble_name (function_instance &instance)
 
 void
 vlsegff::get_argument_types (const function_instance &instance,
-                             vec<tree> &argument_types) const
+			     vec<tree> &argument_types) const
 {
   vlseg::get_argument_types (instance, argument_types);
   argument_types.quick_push (build_pointer_type (size_type_node));
@@ -2613,7 +2669,7 @@ vlsegff::get_argument_types (const function_instance &instance,
 
 gimple *
 vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-               gcall *call_in) const
+	       gcall *call_in) const
 {
   /* split vlsegff (a, b, c) -> d = vlsegff (a, c) + b = readvl (d). */
   auto_vec<tree, 8> vargs;
@@ -2622,7 +2678,7 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   for (unsigned int i = 0; i < gimple_call_num_args (call_in); i++)
     {
       if (i == gimple_call_num_args (call_in) - offset)
-        continue;
+	continue;
 
       vargs.quick_push (gimple_call_arg (call_in, i));
     }
@@ -2636,22 +2692,26 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_uptr;
   char resolver[NAME_MAXLEN];
-  snprintf (resolver, NAME_MAXLEN, "readvl%s", mode2data_type_str (mode, unsigned_p, false));
+  snprintf (resolver, NAME_MAXLEN, "readvl%s",
+	    mode2data_type_str (mode, unsigned_p, false));
   function_instance fn_instance (resolver);
   hashval_t hashval = fn_instance.hash ();
-  registered_function *rfn_slot =
-      function_table->find_with_hash (fn_instance, hashval);
+  registered_function *rfn_slot
+    = function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *g = gimple_build_call (decl, 1, lhs);
-  
-  snprintf (resolver, NAME_MAXLEN, "handle_store_pointer%s", mode2data_type_str (Pmode, true, false));
+
+  snprintf (resolver, NAME_MAXLEN, "handle_store_pointer%s",
+	    mode2data_type_str (Pmode, true, false));
   function_instance fn_instance2 (resolver);
   hashval_t hashval2 = fn_instance2.hash ();
-  registered_function *rfn_slot2 =
-      function_table->find_with_hash (fn_instance2, hashval2);
+  registered_function *rfn_slot2
+    = function_table->find_with_hash (fn_instance2, hashval2);
   tree decl2 = rfn_slot2->decl;
-  gimple *g2 = gimple_build_call (decl2, 2, gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset), var);
-  
+  gimple *g2 = gimple_build_call (
+    decl2, 2,
+    gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset), var);
+
   gsi_insert_after (gsi_in, g2, GSI_SAME_STMT);
   gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
 
@@ -2685,14 +2745,15 @@ vsseg::assemble_name (function_instance &instance)
   const char *pred = get_pred_str (instance.get_pred ());
   char name[NAME_MAXLEN];
   snprintf (name, NAME_MAXLEN, "%s%de%d", instance.get_base_name (), nf, sew);
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   append_name (name);
   return finish_name ();
 }
-  
+
 void
 vsseg::get_argument_types (const function_instance &instance,
-                           vec<tree> &argument_types) const
+			   vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     argument_types.quick_push (get_dt_t_with_index (instance, i));
@@ -2709,7 +2770,7 @@ vsseg::expand (const function_instance &instance, tree exp, rtx target) const
 /* A function implementation for vlsseg functions.  */
 void
 vlsseg::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
+			    vec<tree> &argument_types) const
 {
   vlseg::get_argument_types (instance, argument_types);
   argument_types.quick_push (ptrdiff_type_node);
@@ -2726,7 +2787,7 @@ vlsseg::expand (const function_instance &instance, tree exp, rtx target) const
 /* A function implementation for vssseg functions.  */
 void
 vssseg::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
+			    vec<tree> &argument_types) const
 {
   vsseg::get_argument_types (instance, argument_types);
   argument_types.quick_insert (1, ptrdiff_type_node);
@@ -2760,7 +2821,8 @@ vlxseg::assemble_name (function_instance &instance)
   const char *pred = get_pred_str (instance.get_pred ());
   char name[NAME_MAXLEN];
   snprintf (name, NAME_MAXLEN, "%s%dei%d", instance.get_base_name (), nf, sew);
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   append_name (name);
   append_name (get_pred_str (instance.get_pred (), true));
   return finish_name ();
@@ -2774,7 +2836,7 @@ vlxseg::get_return_type (const function_instance &instance) const
 
 void
 vlxseg::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
+			    vec<tree> &argument_types) const
 {
   for (unsigned int i = 2; i < instance.get_arg_pattern ().arg_len; i++)
     argument_types.quick_push (get_dt_t_with_index (instance, i));
@@ -2786,7 +2848,8 @@ vluxseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[3];
-  enum insn_code icode = code_for_vlxsegei (UNSPEC_UNORDER_INDEXED_LOAD, mode1, mode2);
+  enum insn_code icode
+    = code_for_vlxsegei (UNSPEC_UNORDER_INDEXED_LOAD, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -2796,7 +2859,8 @@ vloxseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = TYPE_MODE (TREE_TYPE (exp));
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[3];
-  enum insn_code icode = code_for_vlxsegei (UNSPEC_ORDER_INDEXED_LOAD, mode1, mode2);
+  enum insn_code icode
+    = code_for_vlxsegei (UNSPEC_ORDER_INDEXED_LOAD, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -2820,7 +2884,8 @@ vsxseg::assemble_name (function_instance &instance)
   const char *pred = get_pred_str (instance.get_pred ());
   char name[NAME_MAXLEN];
   snprintf (name, NAME_MAXLEN, "%s%dei%d", instance.get_base_name (), nf, sew);
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   append_name (name);
   append_name (get_pred_str (instance.get_pred (), true));
   return finish_name ();
@@ -2828,7 +2893,7 @@ vsxseg::assemble_name (function_instance &instance)
 
 void
 vsxseg::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
+			    vec<tree> &argument_types) const
 {
   for (unsigned int i = 1; i < instance.get_arg_pattern ().arg_len; i++)
     argument_types.quick_push (get_dt_t_with_index (instance, i));
@@ -2840,7 +2905,8 @@ vsuxseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  enum insn_code icode = code_for_vsxsegei (UNSPEC_UNORDER_INDEXED_STORE, mode1, mode2);
+  enum insn_code icode
+    = code_for_vsxsegei (UNSPEC_UNORDER_INDEXED_STORE, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -2850,7 +2916,8 @@ vsoxseg::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode1 = instance.get_arg_pattern ().arg_list[3];
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
-  enum insn_code icode = code_for_vsxsegei (UNSPEC_ORDER_INDEXED_STORE, mode1, mode2);
+  enum insn_code icode
+    = code_for_vsxsegei (UNSPEC_ORDER_INDEXED_STORE, mode1, mode2);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -2890,7 +2957,8 @@ vrsub::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   append_name (name);
   append_name (get_pred_str (instance.get_pred (), true));
   return finish_name ();
@@ -2898,7 +2966,7 @@ vrsub::assemble_name (function_instance &instance)
 
 gimple *
 vrsub::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-            gcall *call_in) const
+	     gcall *call_in) const
 {
   return handle_sew64_on_rv32 (instance, gsi_in, call_in, 0, true);
 }
@@ -2922,8 +2990,7 @@ vneg::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vwadd functions.  */
 rtx
-vwadd::expand (const function_instance &instance, tree exp,
-                     rtx target) const
+vwadd::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
   enum insn_code icode;
@@ -2940,8 +3007,7 @@ vwadd::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vwsub functions.  */
 rtx
-vwsub::expand (const function_instance &instance, tree exp,
-                     rtx target) const
+vwsub::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
   enum insn_code icode;
@@ -2958,8 +3024,7 @@ vwsub::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vwaddu functions.  */
 rtx
-vwaddu::expand (const function_instance &instance, tree exp,
-                     rtx target) const
+vwaddu::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
   enum insn_code icode;
@@ -2976,8 +3041,7 @@ vwaddu::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vwsubu functions.  */
 rtx
-vwsubu::expand (const function_instance &instance, tree exp,
-                     rtx target) const
+vwsubu::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
   enum insn_code icode;
@@ -3190,7 +3254,7 @@ vnot::expand (const function_instance &instance, tree exp, rtx target) const
 /* A function implementation for vshift functions.  */
 void
 vshift::get_argument_types (const function_instance &instance,
-                            vec<tree> &argument_types) const
+			    vec<tree> &argument_types) const
 {
   argument_types.quick_push (get_dt_t_with_index (instance, 1));
   if (instance.get_operation () == OP_vx || instance.get_operation () == OP_wx)
@@ -3200,8 +3264,7 @@ vshift::get_argument_types (const function_instance &instance,
 }
 
 gimple *
-vshift::fold (const function_instance &, gimple_stmt_iterator *,
-              gcall *) const
+vshift::fold (const function_instance &, gimple_stmt_iterator *, gcall *) const
 {
   return NULL;
 }
@@ -3422,8 +3485,7 @@ vmsgeu::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vmin functions.  */
 rtx
-vmin::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+vmin::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
@@ -3436,8 +3498,7 @@ vmin::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vminu functions.  */
 rtx
-vminu::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+vminu::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
@@ -3450,8 +3511,7 @@ vminu::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vmax functions.  */
 rtx
-vmax::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+vmax::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
@@ -3464,8 +3524,7 @@ vmax::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vmaxu functions.  */
 rtx
-vmaxu::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+vmaxu::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
@@ -3579,7 +3638,7 @@ vremu::expand (const function_instance &instance, tree exp, rtx target) const
     icode = code_for_v_vx (UNSPEC_VREMU, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
-                               
+
 /* A function implementation for vwmul functions.  */
 rtx
 vwmul::expand (const function_instance &instance, tree exp, rtx target) const
@@ -3722,13 +3781,12 @@ vwmaccus::expand (const function_instance &instance, tree exp, rtx target) const
 /* A function implementation for vmerge functions.  */
 gimple *
 vmerge::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-              gcall *call_in) const
+	      gcall *call_in) const
 {
   return handle_sew64_on_rv32 (instance, gsi_in, call_in, 1);
 }
 
-size_t
-vmerge::get_position_of_dest_arg (enum predication_index) const
+size_t vmerge::get_position_of_dest_arg (enum predication_index) const
 {
   return 1;
 }
@@ -3741,14 +3799,14 @@ vmerge::expand (const function_instance &instance, tree exp, rtx target) const
   if (instance.get_operation () == OP_vvm)
     icode = code_for_vmerge_vvm (mode);
   else
-   icode = code_for_v_vxm (UNSPEC_VMERGE, mode);
+    icode = code_for_v_vxm (UNSPEC_VMERGE, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
 /* A function implementation for vmv functions.  */
 void
 vmv::get_argument_types (const function_instance &instance,
-                         vec<tree> &argument_types) const
+			 vec<tree> &argument_types) const
 {
   if (instance.get_operation () == OP_v_x)
     argument_types.quick_push (get_dt_t_with_index (instance, 1));
@@ -3761,10 +3819,10 @@ vmv::can_be_overloaded_p (const function_instance &instance) const
 {
   if (instance.get_operation () == OP_v_v)
     return true;
-  
+
   if (instance.get_pred () == PRED_tu)
     return true;
-  
+
   return false;
 }
 
@@ -4028,11 +4086,10 @@ vfdiv::expand (const function_instance &instance, tree exp, rtx target) const
     icode = code_for_vf_vf (DIV, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
-                                                         
+
 /* A function implementation for vfrsub and vfrdiv functions.  */
 rtx
-vfrsub::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+vfrsub::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vfr_vf (MINUS, mode);
@@ -4041,8 +4098,7 @@ vfrsub::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vfrdiv functions.  */
 rtx
-vfrdiv::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+vfrdiv::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vfr_vf (DIV, mode);
@@ -4060,8 +4116,7 @@ vfneg::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vfwadd functions.  */
 rtx
-vfwadd::expand (const function_instance &instance, tree exp,
-                      rtx target) const
+vfwadd::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
   enum insn_code icode;
@@ -4078,8 +4133,7 @@ vfwadd::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vfwsub functions.  */
 rtx
-vfwsub::expand (const function_instance &instance, tree exp,
-                      rtx target) const
+vfwsub::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[2];
   enum insn_code icode;
@@ -4274,8 +4328,7 @@ vfsqrt::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vfrsqrt7 functions.  */
 rtx
-vfrsqrt7::expand (const function_instance &instance, tree exp,
-                      rtx target) const
+vfrsqrt7::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vf_v (UNSPEC_RSQRT7, mode);
@@ -4284,8 +4337,7 @@ vfrsqrt7::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vfrec7 functions.  */
 rtx
-vfrec7::expand (const function_instance &instance, tree exp,
-                      rtx target) const
+vfrec7::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vf_v (UNSPEC_REC7, mode);
@@ -4320,8 +4372,7 @@ vfmin::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vfsgnj functions.  */
 rtx
-vfsgnj::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+vfsgnj::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
@@ -4334,8 +4385,7 @@ vfsgnj::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vfsgnjn functions.  */
 rtx
-vfsgnjn::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+vfsgnjn::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
@@ -4348,8 +4398,7 @@ vfsgnjn::expand (const function_instance &instance, tree exp,
 
 /* A function implementation for vfsgnjx functions.  */
 rtx
-vfsgnjx::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+vfsgnjx::expand (const function_instance &instance, tree exp, rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode;
@@ -4467,8 +4516,7 @@ vfclass::expand (const function_instance &instance, tree exp, rtx target) const
 }
 
 /* A function implementation for vfmerge functions.  */
-size_t
-vfmerge::get_position_of_dest_arg (enum predication_index) const
+size_t vfmerge::get_position_of_dest_arg (enum predication_index) const
 {
   return 1;
 }
@@ -4487,7 +4535,7 @@ vfmv::can_be_overloaded_p (const function_instance &instance) const
 {
   if (instance.get_pred () == PRED_tu)
     return true;
-  
+
   return false;
 }
 
@@ -4515,10 +4563,11 @@ vfcvt_f2i::assemble_name (function_instance &instance)
 
 rtx
 vfcvt_f2i::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+		   rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum insn_code icode = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  enum insn_code icode
+    = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -4534,10 +4583,11 @@ vfcvt_f2u::assemble_name (function_instance &instance)
 
 rtx
 vfcvt_f2u::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+		   rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum insn_code icode = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  enum insn_code icode
+    = code_for_vfcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -4553,7 +4603,7 @@ vfcvt_rtz_f2i::assemble_name (function_instance &instance)
 
 rtx
 vfcvt_rtz_f2i::expand (const function_instance &instance, tree exp,
-                       rtx target) const
+		       rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfcvt_rtz_x_f_v (mode, FIX);
@@ -4572,7 +4622,7 @@ vfcvt_rtz_f2u::assemble_name (function_instance &instance)
 
 rtx
 vfcvt_rtz_f2u::expand (const function_instance &instance, tree exp,
-                       rtx target) const
+		       rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfcvt_rtz_x_f_v (mode, UNSIGNED_FIX);
@@ -4591,7 +4641,7 @@ vfcvt_i2f::assemble_name (function_instance &instance)
 
 rtx
 vfcvt_i2f::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+		   rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   enum insn_code icode = code_for_vfcvt_f_x_v (mode, FLOAT);
@@ -4610,7 +4660,7 @@ vfcvt_u2f::assemble_name (function_instance &instance)
 
 rtx
 vfcvt_u2f::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+		   rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   enum insn_code icode = code_for_vfcvt_f_x_v (mode, UNSIGNED_FLOAT);
@@ -4629,10 +4679,11 @@ vfwcvt_f2i::assemble_name (function_instance &instance)
 
 rtx
 vfwcvt_f2i::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum insn_code icode = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  enum insn_code icode
+    = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -4648,10 +4699,11 @@ vfwcvt_f2u::assemble_name (function_instance &instance)
 
 rtx
 vfwcvt_f2u::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
-  enum insn_code icode = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  enum insn_code icode
+    = code_for_vfwcvt_x_f_v (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -4667,7 +4719,7 @@ vfwcvt_rtz_f2i::assemble_name (function_instance &instance)
 
 rtx
 vfwcvt_rtz_f2i::expand (const function_instance &instance, tree exp,
-                        rtx target) const
+			rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfwcvt_rtz_x_f_v (mode, FIX);
@@ -4686,7 +4738,7 @@ vfwcvt_rtz_f2u::assemble_name (function_instance &instance)
 
 rtx
 vfwcvt_rtz_f2u::expand (const function_instance &instance, tree exp,
-                        rtx target) const
+			rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfwcvt_rtz_x_f_v (mode, UNSIGNED_FIX);
@@ -4705,7 +4757,7 @@ vfwcvt_i2f::assemble_name (function_instance &instance)
 
 rtx
 vfwcvt_i2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfwcvt_f_x_v (mode, FLOAT);
@@ -4724,7 +4776,7 @@ vfwcvt_u2f::assemble_name (function_instance &instance)
 
 rtx
 vfwcvt_u2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfwcvt_f_x_v (mode, UNSIGNED_FLOAT);
@@ -4743,7 +4795,7 @@ vfwcvt_f2f::assemble_name (function_instance &instance)
 
 rtx
 vfwcvt_f2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfwcvt_f_f_v (mode);
@@ -4762,10 +4814,11 @@ vfncvt_f2i::assemble_name (function_instance &instance)
 
 rtx
 vfncvt_f2i::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  enum insn_code icode = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
+  enum insn_code icode
+    = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_SIGNED_INT);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -4781,10 +4834,11 @@ vfncvt_f2u::assemble_name (function_instance &instance)
 
 rtx
 vfncvt_f2u::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  enum insn_code icode = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
+  enum insn_code icode
+    = code_for_vfncvt_x_f_w (mode, UNSPEC_FLOAT_TO_UNSIGNED_INT);
   return expand_builtin_insn (icode, exp, target, instance);
 }
 
@@ -4800,7 +4854,7 @@ vfncvt_rtz_f2i::assemble_name (function_instance &instance)
 
 rtx
 vfncvt_rtz_f2i::expand (const function_instance &instance, tree exp,
-                        rtx target) const
+			rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   enum insn_code icode = code_for_vfncvt_rtz_x_f_w (mode, FIX);
@@ -4819,7 +4873,7 @@ vfncvt_rtz_f2u::assemble_name (function_instance &instance)
 
 rtx
 vfncvt_rtz_f2u::expand (const function_instance &instance, tree exp,
-                        rtx target) const
+			rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   enum insn_code icode = code_for_vfncvt_rtz_x_f_w (mode, UNSIGNED_FIX);
@@ -4838,7 +4892,7 @@ vfncvt_i2f::assemble_name (function_instance &instance)
 
 rtx
 vfncvt_i2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   enum insn_code icode = code_for_vfncvt_f_x_w (mode, FLOAT);
@@ -4857,7 +4911,7 @@ vfncvt_u2f::assemble_name (function_instance &instance)
 
 rtx
 vfncvt_u2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[0];
   enum insn_code icode = code_for_vfncvt_f_x_w (mode, UNSIGNED_FLOAT);
@@ -4876,7 +4930,7 @@ vfncvt_f2f::assemble_name (function_instance &instance)
 
 rtx
 vfncvt_f2f::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vfncvt_f_f_w (mode);
@@ -4895,7 +4949,7 @@ vfncvt_f2rodf::assemble_name (function_instance &instance)
 
 rtx
 vfncvt_f2rodf::expand (const function_instance &instance, tree exp,
-                       rtx target) const
+		       rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vfncvt_rod_f_f_w (mode);
@@ -4985,7 +5039,8 @@ vwredsum::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vwredsumu functions.  */
 rtx
-vwredsumu::expand (const function_instance &instance, tree exp, rtx target) const
+vwredsumu::expand (const function_instance &instance, tree exp,
+		   rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vwredsum_vs (ZERO_EXTEND, mode);
@@ -5001,7 +5056,8 @@ freduceop::call_properties () const
 
 /* A function implementation for vfredosum functions.  */
 rtx
-vfredosum::expand (const function_instance &instance, tree exp, rtx target) const
+vfredosum::expand (const function_instance &instance, tree exp,
+		   rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfred_vs (UNSPEC_REDUC_ORDERED_SUM, mode);
@@ -5010,7 +5066,8 @@ vfredosum::expand (const function_instance &instance, tree exp, rtx target) cons
 
 /* A function implementation for vfredusum functions.  */
 rtx
-vfredusum::expand (const function_instance &instance, tree exp, rtx target) const
+vfredusum::expand (const function_instance &instance, tree exp,
+		   rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfred_vs (UNSPEC_REDUC_UNORDERED_SUM, mode);
@@ -5038,7 +5095,7 @@ vfredmin::expand (const function_instance &instance, tree exp, rtx target) const
 /* A function implementation for vfwredosum functions.  */
 rtx
 vfwredosum::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfwredosum_vs (mode);
@@ -5048,7 +5105,7 @@ vfwredosum::expand (const function_instance &instance, tree exp,
 /* A function implementation for vfwredusum functions.  */
 rtx
 vfwredusum::expand (const function_instance &instance, tree exp,
-                    rtx target) const
+		    rtx target) const
 {
   machine_mode mode = instance.get_arg_pattern ().arg_list[1];
   enum insn_code icode = code_for_vfwredusum_vs (mode);
@@ -5108,7 +5165,7 @@ vmxnor::expand (const function_instance &instance, tree exp, rtx target) const
   enum insn_code icode = code_for_vmn_mm (XOR, mode);
   return expand_builtin_insn (icode, exp, target, instance);
 }
- 
+
 /* A function implementation for vmlogicn functions.  */
 rtx
 vmandn::expand (const function_instance &instance, tree exp, rtx target) const
@@ -5147,10 +5204,8 @@ vmnot::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vmclr functions.  */
 void
-vmclr::get_argument_types (const function_instance &,
-                          vec<tree> &) const
-{
-}
+vmclr::get_argument_types (const function_instance &, vec<tree> &) const
+{}
 
 bool
 vmclr::can_be_overloaded_p (const function_instance &) const
@@ -5168,10 +5223,8 @@ vmclr::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vmset functions.  */
 void
-vmset::get_argument_types (const function_instance &,
-                          vec<tree> &) const
-{
-}
+vmset::get_argument_types (const function_instance &, vec<tree> &) const
+{}
 
 bool
 vmset::can_be_overloaded_p (const function_instance &) const
@@ -5248,8 +5301,8 @@ vmsof::expand (const function_instance &instance, tree exp, rtx target) const
 bool
 viota::can_be_overloaded_p (const function_instance &instance) const
 {
-  if (instance.get_pred () == PRED_void || instance.get_pred () == PRED_ta ||
-      instance.get_pred () == PRED_tama)
+  if (instance.get_pred () == PRED_void || instance.get_pred () == PRED_ta
+      || instance.get_pred () == PRED_tama)
     return false;
 
   return true;
@@ -5265,16 +5318,14 @@ viota::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vid functions.  */
 void
-vid::get_argument_types (const function_instance &,
-                          vec<tree> &) const
-{
-}
+vid::get_argument_types (const function_instance &, vec<tree> &) const
+{}
 
 bool
 vid::can_be_overloaded_p (const function_instance &instance) const
 {
-  if (instance.get_pred () == PRED_void || instance.get_pred () == PRED_ta ||
-      instance.get_pred () == PRED_tama)
+  if (instance.get_pred () == PRED_void || instance.get_pred () == PRED_ta
+      || instance.get_pred () == PRED_tama)
     return false;
 
   return true;
@@ -5320,7 +5371,6 @@ vmv_s_x::assemble_name (function_instance &instance)
 rtx
 vmv_s_x::expand (const function_instance &instance, tree exp, rtx target) const
 {
-
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_v_s_x (UNSPEC_VMVS, mode);
   return expand_builtin_insn (icode, exp, target, instance);
@@ -5374,7 +5424,8 @@ vslideup::expand (const function_instance &instance, tree exp, rtx target) const
 
 /* A function implementation for vslidedown functions.  */
 rtx
-vslidedown::expand (const function_instance &instance, tree exp, rtx target) const
+vslidedown::expand (const function_instance &instance, tree exp,
+		    rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vslide_vx (UNSPEC_SLIDEDOWN, mode);
@@ -5384,13 +5435,14 @@ vslidedown::expand (const function_instance &instance, tree exp, rtx target) con
 /* A function implementation for vslide1up functions.  */
 gimple *
 vslide1up::fold (const function_instance &, gimple_stmt_iterator *,
-                 gcall *) const
+		 gcall *) const
 {
   return NULL;
 }
 
 rtx
-vslide1up::expand (const function_instance &instance, tree exp, rtx target) const
+vslide1up::expand (const function_instance &instance, tree exp,
+		   rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vslide1_vx (UNSPEC_SLIDE1UP, mode);
@@ -5400,13 +5452,14 @@ vslide1up::expand (const function_instance &instance, tree exp, rtx target) cons
 /* A function implementation for vslide1down functions.  */
 gimple *
 vslide1down::fold (const function_instance &, gimple_stmt_iterator *,
-                   gcall *) const
+		   gcall *) const
 {
   return NULL;
 }
 
 rtx
-vslide1down::expand (const function_instance &instance, tree exp, rtx target) const
+vslide1down::expand (const function_instance &instance, tree exp,
+		     rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vslide1_vx (UNSPEC_SLIDE1DOWN, mode);
@@ -5415,7 +5468,8 @@ vslide1down::expand (const function_instance &instance, tree exp, rtx target) co
 
 /* A function implementation for vfslide1up functions.  */
 rtx
-vfslide1up::expand (const function_instance &instance, tree exp, rtx target) const
+vfslide1up::expand (const function_instance &instance, tree exp,
+		    rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vfslide1_vf (UNSPEC_SLIDE1UP, mode);
@@ -5424,7 +5478,8 @@ vfslide1up::expand (const function_instance &instance, tree exp, rtx target) con
 
 /* A function implementation for vfslide1down functions.  */
 rtx
-vfslide1down::expand (const function_instance &instance, tree exp, rtx target) const
+vfslide1down::expand (const function_instance &instance, tree exp,
+		      rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vfslide1_vf (UNSPEC_SLIDE1DOWN, mode);
@@ -5447,7 +5502,7 @@ vrgather::expand (const function_instance &instance, tree exp, rtx target) const
 /* A function implementation for vrgather functions.  */
 rtx
 vrgatherei16::expand (const function_instance &instance, tree exp,
-                      rtx target) const
+		      rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vrgatherei16_vv (mode);
@@ -5455,15 +5510,14 @@ vrgatherei16::expand (const function_instance &instance, tree exp,
 }
 
 /* A function implementation for vcompress functions.  */
-size_t
-vcompress::get_position_of_dest_arg (enum predication_index) const
+size_t vcompress::get_position_of_dest_arg (enum predication_index) const
 {
   return 1;
 }
 
 rtx
 vcompress::expand (const function_instance &instance, tree exp,
-                   rtx target) const
+		   rtx target) const
 {
   machine_mode mode = TYPE_MODE (TREE_TYPE (exp));
   enum insn_code icode = code_for_vcompress_vm (mode);
@@ -5474,8 +5528,8 @@ vcompress::expand (const function_instance &instance, tree exp,
 
 static void
 push_argment_for_segment_load (const function_instance &instance,
-                               vec<tree> &argument_types, unsigned int nf,
-                               bool indexed_p)
+			       vec<tree> &argument_types, unsigned int nf,
+			       bool indexed_p)
 {
   unsigned int offset = indexed_p ? 1 : 0;
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
@@ -5485,11 +5539,11 @@ push_argment_for_segment_load (const function_instance &instance,
   for (unsigned int i = 0; i < nf; i++)
     argument_types.quick_push (get_dt_t (mode0, unsigned_p, true, false));
 
-  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_ta &&
-      instance.get_pred () != PRED_tama)
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_ta
+      && instance.get_pred () != PRED_tama)
     {
       for (unsigned int i = 0; i < nf; i++)
-        argument_types.quick_push (get_dt_t (mode0, unsigned_p, false, false));
+	argument_types.quick_push (get_dt_t (mode0, unsigned_p, false, false));
     }
   argument_types.quick_push (get_dt_t (mode1, unsigned_p, true, true));
   if (indexed_p)
@@ -5498,38 +5552,40 @@ push_argment_for_segment_load (const function_instance &instance,
 
 static gimple *
 fold_non_tuple_segment_load (const function_instance &instance,
-                             gimple_stmt_iterator *gsi_in, gcall *call_in,
-                             unsigned int nf, bool ff, bool indexed_p, bool strided_p)
+			     gimple_stmt_iterator *gsi_in, gcall *call_in,
+			     unsigned int nf, bool ff, bool indexed_p,
+			     bool strided_p)
 {
   bool unsigned_p = instance.get_data_type_list ()[0] == DT_unsigned;
   int offset = indexed_p ? 1 : 0;
   machine_mode mode = instance.get_arg_pattern ().arg_list[offset];
   tree vector_type = get_dt_t (mode, unsigned_p, false, false);
   machine_mode tuple_mode;
-  gcc_assert (riscv_vector_tuple_mode (TYPE_MODE (vector_type), nf).exists (&tuple_mode)); 
+  gcc_assert (
+    riscv_vector_tuple_mode (TYPE_MODE (vector_type), nf).exists (&tuple_mode));
   tree tuple_type = get_tuple_t (tuple_mode, unsigned_p);
   tree tuple = create_tmp_var (tuple_type, "tuple");
   auto_vec<tree, 16> vargs;
 
-  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama &&
-      instance.get_pred () != PRED_ta)
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama
+      && instance.get_pred () != PRED_ta)
     {
       for (unsigned int i = 0; i < nf; i++)
-        {
-          tree rhs_vector;
-          if (instance.get_pred () == PRED_tu)
-            rhs_vector = gimple_call_arg (call_in, i + nf);
-          else
-            rhs_vector = gimple_call_arg (call_in, i + nf + 1);
-          tree field = tuple_type_field (TREE_TYPE (tuple));
-          tree lhs_array = build3 (COMPONENT_REF, TREE_TYPE (field), tuple,
-                                   field, NULL_TREE);
-          tree lhs_vector =
-              build4 (ARRAY_REF, TREE_TYPE (rhs_vector), lhs_array,
-                      size_int (i), NULL_TREE, NULL_TREE);
-          gassign *assign = gimple_build_assign (lhs_vector, rhs_vector);
-          gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
-        }
+	{
+	  tree rhs_vector;
+	  if (instance.get_pred () == PRED_tu)
+	    rhs_vector = gimple_call_arg (call_in, i + nf);
+	  else
+	    rhs_vector = gimple_call_arg (call_in, i + nf + 1);
+	  tree field = tuple_type_field (TREE_TYPE (tuple));
+	  tree lhs_array = build3 (COMPONENT_REF, TREE_TYPE (field), tuple,
+				   field, NULL_TREE);
+	  tree lhs_vector
+	    = build4 (ARRAY_REF, TREE_TYPE (rhs_vector), lhs_array,
+		      size_int (i), NULL_TREE, NULL_TREE);
+	  gassign *assign = gimple_build_assign (lhs_vector, rhs_vector);
+	  gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
+	}
     }
 
   if (instance.get_pred () == PRED_tama)
@@ -5537,8 +5593,8 @@ fold_non_tuple_segment_load (const function_instance &instance,
       /* push a mask. */
       vargs.quick_push (gimple_call_arg (call_in, nf));
     }
-  if (instance.get_pred () == PRED_m || instance.get_pred () == PRED_tamu ||
-      instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu)
+  if (instance.get_pred () == PRED_m || instance.get_pred () == PRED_tamu
+      || instance.get_pred () == PRED_tuma || instance.get_pred () == PRED_tumu)
     {
       /* push a mask. */
       vargs.quick_push (gimple_call_arg (call_in, nf));
@@ -5553,48 +5609,49 @@ fold_non_tuple_segment_load (const function_instance &instance,
 
   if (!strided_p && !ff && !indexed_p)
     vargs.quick_push (
-        gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
+      gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
   else
     {
       vargs.quick_push (
-          gimple_call_arg (call_in, gimple_call_num_args (call_in) - 3));
+	gimple_call_arg (call_in, gimple_call_num_args (call_in) - 3));
       vargs.quick_push (
-          gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
+	gimple_call_arg (call_in, gimple_call_num_args (call_in) - 2));
     }
   /* push the vl. */
   vargs.quick_push (
-      gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
+    gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
 
   char name[16];
-  
+
   if (indexed_p)
     {
-      machine_mode indexed_mode =
-          instance.get_arg_pattern ()
-              .arg_list[instance.get_arg_pattern ().arg_len - 1];
+      machine_mode indexed_mode
+	= instance.get_arg_pattern ()
+	    .arg_list[instance.get_arg_pattern ().arg_len - 1];
       snprintf (name, 16, "%sei%d", instance.get_base_name (),
-                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+		GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
     }
   else
     {
       if (ff)
-        snprintf (name, 16, "vlseg%de%dff", nf, GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+	snprintf (name, 16, "vlseg%de%dff", nf,
+		  GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
       else
-        snprintf (name, 16, "%se%d", instance.get_base_name (),
-                  GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+	snprintf (name, 16, "%se%d", instance.get_base_name (),
+		  GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
     }
-  
+
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (tuple_mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  
+
   char resolver[NAME_MAXLEN];
   snprintf (resolver, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
-              
+
   function_instance fn_instance (resolver);
   hashval_t hashval = fn_instance.hash ();
-  registered_function *rfn_slot =
-      function_table->find_with_hash (fn_instance, hashval);
+  registered_function *rfn_slot
+    = function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *repl = gimple_build_call_vec (decl, vargs);
   gimple_call_set_lhs (repl, tuple);
@@ -5602,20 +5659,20 @@ fold_non_tuple_segment_load (const function_instance &instance,
   for (unsigned int i = nf; i-- > 0;)
     {
       tree field = tuple_type_field (TREE_TYPE (tuple));
-      tree tuple_array =
-          build3 (COMPONENT_REF, TREE_TYPE (field), tuple, field, NULL_TREE);
+      tree tuple_array
+	= build3 (COMPONENT_REF, TREE_TYPE (field), tuple, field, NULL_TREE);
       tree tuple_vector = build4 (ARRAY_REF, vector_type, tuple_array,
-                                  size_int (i), NULL_TREE, NULL_TREE);
+				  size_int (i), NULL_TREE, NULL_TREE);
 
       tree tem = make_ssa_name (vector_type);
 
-      tree indirect =
-          fold_build2 (MEM_REF, vector_type, gimple_call_arg (call_in, i),
-                       build_int_cst (build_pointer_type (vector_type), 0));
+      tree indirect
+	= fold_build2 (MEM_REF, vector_type, gimple_call_arg (call_in, i),
+		       build_int_cst (build_pointer_type (vector_type), 0));
       gassign *assign = gimple_build_assign (indirect, tem);
       gsi_insert_after (gsi_in, assign, GSI_SAME_STMT);
       gsi_insert_after (gsi_in, gimple_build_assign (tem, tuple_vector),
-                        GSI_SAME_STMT);
+			GSI_SAME_STMT);
     }
 
   return repl;
@@ -5623,8 +5680,8 @@ fold_non_tuple_segment_load (const function_instance &instance,
 
 static void
 push_argment_for_segment_store (const function_instance &instance,
-                                vec<tree> &argument_types, unsigned int nf,
-                                bool indexed_p)
+				vec<tree> &argument_types, unsigned int nf,
+				bool indexed_p)
 {
   unsigned int offset = indexed_p ? 3 : 1;
   bool unsigned_p = instance.get_data_type_list ()[offset] == DT_unsigned;
@@ -5632,7 +5689,7 @@ push_argment_for_segment_store (const function_instance &instance,
   machine_mode mode1 = instance.get_arg_pattern ().arg_list[1];
   machine_mode mode2 = instance.get_arg_pattern ().arg_list[2];
   machine_mode mode3 = instance.get_arg_pattern ().arg_list[offset];
-  
+
   if (indexed_p)
     {
       argument_types.quick_push (get_dt_t (mode1, unsigned_p, true, false));
@@ -5647,18 +5704,20 @@ push_argment_for_segment_store (const function_instance &instance,
 
 static gimple *
 fold_non_tuple_segment_store (const function_instance &instance,
-                              gimple_stmt_iterator *gsi_in, gcall *call_in,
-                              unsigned int nf, bool indexed_p, bool unit_stride_p)
+			      gimple_stmt_iterator *gsi_in, gcall *call_in,
+			      unsigned int nf, bool indexed_p,
+			      bool unit_stride_p)
 {
-  bool unsigned_p =
-      instance.get_data_type_list ()[instance.get_arg_pattern ().arg_len - 1] ==
-      DT_unsigned;
-  tree vector_type =
-      get_dt_t (instance.get_arg_pattern ()
-                    .arg_list[instance.get_arg_pattern ().arg_len - 1],
-                unsigned_p, false, false);
+  bool unsigned_p
+    = instance.get_data_type_list ()[instance.get_arg_pattern ().arg_len - 1]
+      == DT_unsigned;
+  tree vector_type
+    = get_dt_t (instance.get_arg_pattern ()
+		  .arg_list[instance.get_arg_pattern ().arg_len - 1],
+		unsigned_p, false, false);
   machine_mode tuple_mode;
-  gcc_assert (riscv_vector_tuple_mode (TYPE_MODE (vector_type), nf).exists (&tuple_mode)); 
+  gcc_assert (
+    riscv_vector_tuple_mode (TYPE_MODE (vector_type), nf).exists (&tuple_mode));
   tree tuple_type = get_tuple_t (tuple_mode, unsigned_p);
   tree tuple = create_tmp_var (tuple_type, "tuple");
   auto_vec<tree, 16> vargs;
@@ -5677,10 +5736,10 @@ fold_non_tuple_segment_store (const function_instance &instance,
     {
       tree rhs_vector = gimple_call_arg (call_in, i + offset);
       tree field = tuple_type_field (TREE_TYPE (tuple));
-      tree lhs_array =
-          build3 (COMPONENT_REF, TREE_TYPE (field), tuple, field, NULL_TREE);
+      tree lhs_array
+	= build3 (COMPONENT_REF, TREE_TYPE (field), tuple, field, NULL_TREE);
       tree lhs_vector = build4 (ARRAY_REF, TREE_TYPE (rhs_vector), lhs_array,
-                                size_int (i), NULL_TREE, NULL_TREE);
+				size_int (i), NULL_TREE, NULL_TREE);
       gassign *assign = gimple_build_assign (lhs_vector, rhs_vector);
       gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
     }
@@ -5688,34 +5747,34 @@ fold_non_tuple_segment_store (const function_instance &instance,
   vargs.quick_push (tuple);
   /* push the vl. */
   vargs.quick_push (
-      gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
-  
+    gimple_call_arg (call_in, gimple_call_num_args (call_in) - 1));
+
   char name[16];
-  
+
   if (indexed_p)
     {
       machine_mode indexed_mode = instance.get_arg_pattern ().arg_list[2];
       snprintf (name, 16, "%sei%d", instance.get_base_name (),
-                GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
+		GET_MODE_BITSIZE (GET_MODE_INNER (indexed_mode)));
     }
   else
     snprintf (name, 16, "%se%d", instance.get_base_name (),
-                  GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
-    
+	      GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type))));
+
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (tuple_mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  
+
   char resolver[NAME_MAXLEN];
   snprintf (resolver, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
-              
+
   function_instance fn_instance (resolver);
   hashval_t hashval = fn_instance.hash ();
-  registered_function *rfn_slot =
-      function_table->find_with_hash (fn_instance, hashval);
+  registered_function *rfn_slot
+    = function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *repl = gimple_build_call_vec (decl, vargs);
-  
+
   return repl;
 }
 
@@ -5739,35 +5798,35 @@ vlseg_template<NF>::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
-  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama &&
-      instance.get_pred () != PRED_ta)
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama
+      && instance.get_pred () != PRED_ta)
     {
       append_name (name);
       append_name (get_pred_str (instance.get_pred (), true));
       return finish_name ();
-    } 
+    }
   return nullptr;
 }
 
 template <unsigned int NF>
 void
 vlseg_template<NF>::get_argument_types (const function_instance &instance,
-                                        vec<tree> &argument_types) const
+					vec<tree> &argument_types) const
 {
   push_argment_for_segment_load (instance, argument_types, NF, false);
 }
 
 template <unsigned int NF>
-bool
-vlseg_template<NF>::has_dest_arg_p (enum predication_index) const
+bool vlseg_template<NF>::has_dest_arg_p (enum predication_index) const
 {
   return false;
 }
 
 template <unsigned int NF>
 size_t
-vlseg_template<NF>::get_position_of_mask_arg (enum predication_index) const
+  vlseg_template<NF>::get_position_of_mask_arg (enum predication_index) const
 {
   return NF;
 }
@@ -5775,9 +5834,10 @@ vlseg_template<NF>::get_position_of_mask_arg (enum predication_index) const
 template <unsigned int NF>
 gimple *
 vlseg_template<NF>::fold (const function_instance &instance,
-                          gimple_stmt_iterator *gsi_in, gcall *call_in) const
+			  gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false, false, false);
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false,
+				      false, false);
 }
 
 template <unsigned int NF>
@@ -5815,36 +5875,36 @@ vlsegff_template<NF>::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
-  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama &&
-      instance.get_pred () != PRED_ta)
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama
+      && instance.get_pred () != PRED_ta)
     {
       append_name (name);
       append_name (get_pred_str (instance.get_pred (), true));
       return finish_name ();
-    } 
+    }
   return nullptr;
 }
 
 template <unsigned int NF>
 void
 vlsegff_template<NF>::get_argument_types (const function_instance &instance,
-                                          vec<tree> &argument_types) const
+					  vec<tree> &argument_types) const
 {
   push_argment_for_segment_load (instance, argument_types, NF, false);
   argument_types.quick_push (build_pointer_type (size_type_node));
 }
 
 template <unsigned int NF>
-bool
-vlsegff_template<NF>::has_dest_arg_p (enum predication_index) const
+bool vlsegff_template<NF>::has_dest_arg_p (enum predication_index) const
 {
   return false;
 }
 
 template <unsigned int NF>
 size_t
-vlsegff_template<NF>::get_position_of_mask_arg (enum predication_index) const
+  vlsegff_template<NF>::get_position_of_mask_arg (enum predication_index) const
 {
   return NF;
 }
@@ -5852,9 +5912,10 @@ vlsegff_template<NF>::get_position_of_mask_arg (enum predication_index) const
 template <unsigned int NF>
 gimple *
 vlsegff_template<NF>::fold (const function_instance &instance,
-                            gimple_stmt_iterator *gsi_in, gcall *call_in) const
+			    gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, true, false, false);
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, true,
+				      false, false);
 }
 
 template <unsigned int NF>
@@ -5892,7 +5953,8 @@ vsseg_template<NF>::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   append_name (name);
   return finish_name ();
 }
@@ -5900,7 +5962,7 @@ vsseg_template<NF>::assemble_name (function_instance &instance)
 template <unsigned int NF>
 void
 vsseg_template<NF>::get_argument_types (const function_instance &instance,
-                                        vec<tree> &argument_types) const
+					vec<tree> &argument_types) const
 {
   push_argment_for_segment_store (instance, argument_types, NF, false);
 }
@@ -5908,9 +5970,10 @@ vsseg_template<NF>::get_argument_types (const function_instance &instance,
 template <unsigned int NF>
 gimple *
 vsseg_template<NF>::fold (const function_instance &instance,
-                          gimple_stmt_iterator *gsi_in, gcall *call_in) const
+			  gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, false, true);
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, false,
+				       true);
 }
 
 template <unsigned int NF>
@@ -5948,36 +6011,36 @@ vlsseg_template<NF>::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
-  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama &&
-      instance.get_pred () != PRED_ta)
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
+  if (instance.get_pred () != PRED_void && instance.get_pred () != PRED_tama
+      && instance.get_pred () != PRED_ta)
     {
       append_name (name);
       append_name (get_pred_str (instance.get_pred (), true));
       return finish_name ();
-    } 
+    }
   return nullptr;
 }
 
 template <unsigned int NF>
 void
 vlsseg_template<NF>::get_argument_types (const function_instance &instance,
-                                         vec<tree> &argument_types) const
+					 vec<tree> &argument_types) const
 {
   push_argment_for_segment_load (instance, argument_types, NF, false);
   argument_types.quick_push (ptrdiff_type_node);
 }
 
 template <unsigned int NF>
-bool
-vlsseg_template<NF>::has_dest_arg_p (enum predication_index) const
+bool vlsseg_template<NF>::has_dest_arg_p (enum predication_index) const
 {
   return false;
 }
 
 template <unsigned int NF>
 size_t
-vlsseg_template<NF>::get_position_of_mask_arg (enum predication_index) const
+  vlsseg_template<NF>::get_position_of_mask_arg (enum predication_index) const
 {
   return NF;
 }
@@ -5985,9 +6048,10 @@ vlsseg_template<NF>::get_position_of_mask_arg (enum predication_index) const
 template <unsigned int NF>
 gimple *
 vlsseg_template<NF>::fold (const function_instance &instance,
-                           gimple_stmt_iterator *gsi_in, gcall *call_in) const
+			   gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false, false, true);
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false,
+				      false, true);
 }
 
 template <unsigned int NF>
@@ -6025,7 +6089,8 @@ vssseg_template<NF>::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   append_name (name);
   return finish_name ();
 }
@@ -6033,7 +6098,7 @@ vssseg_template<NF>::assemble_name (function_instance &instance)
 template <unsigned int NF>
 void
 vssseg_template<NF>::get_argument_types (const function_instance &instance,
-                                         vec<tree> &argument_types) const
+					 vec<tree> &argument_types) const
 {
   push_argment_for_segment_store (instance, argument_types, NF, false);
   argument_types.quick_insert (1, ptrdiff_type_node);
@@ -6042,9 +6107,10 @@ vssseg_template<NF>::get_argument_types (const function_instance &instance,
 template <unsigned int NF>
 gimple *
 vssseg_template<NF>::fold (const function_instance &instance,
-                           gimple_stmt_iterator *gsi_in, gcall *call_in) const
+			   gimple_stmt_iterator *gsi_in, gcall *call_in) const
 {
-  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, false, false);
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, false,
+				       false);
 }
 
 template <unsigned int NF>
@@ -6075,7 +6141,7 @@ char *
 vlxseg_template<NF, uo>::assemble_name (function_instance &instance)
 {
   if (segment_skip_p (instance.get_base_name (),
-                      instance.get_arg_pattern ().arg_list[0]))
+		      instance.get_arg_pattern ().arg_list[0]))
     return nullptr;
   machine_mode data_mode = instance.get_arg_pattern ().arg_list[1];
   machine_mode index_mode = instance.get_arg_pattern ().arg_list[3];
@@ -6087,7 +6153,7 @@ vlxseg_template<NF, uo>::assemble_name (function_instance &instance)
   const char *dt = mode2data_type_str (data_mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
   snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
-            pred);
+	    pred);
   append_name (name);
   append_name (get_pred_str (instance.get_pred (), true));
   return finish_name ();
@@ -6096,21 +6162,20 @@ vlxseg_template<NF, uo>::assemble_name (function_instance &instance)
 template <unsigned int NF, indexed_mode uo>
 void
 vlxseg_template<NF, uo>::get_argument_types (const function_instance &instance,
-                                             vec<tree> &argument_types) const
+					     vec<tree> &argument_types) const
 {
   push_argment_for_segment_load (instance, argument_types, NF, true);
 }
 
 template <unsigned int NF, indexed_mode uo>
-bool
-vlxseg_template<NF, uo>::has_dest_arg_p (enum predication_index) const
+bool vlxseg_template<NF, uo>::has_dest_arg_p (enum predication_index) const
 {
   return false;
 }
 
 template <unsigned int NF, indexed_mode uo>
-size_t
-vlxseg_template<NF, uo>::get_position_of_mask_arg (enum predication_index) const
+size_t vlxseg_template<NF, uo>::get_position_of_mask_arg (
+  enum predication_index) const
 {
   return NF;
 }
@@ -6118,10 +6183,11 @@ vlxseg_template<NF, uo>::get_position_of_mask_arg (enum predication_index) const
 template <unsigned int NF, indexed_mode uo>
 gimple *
 vlxseg_template<NF, uo>::fold (const function_instance &instance,
-                               gimple_stmt_iterator *gsi_in,
-                               gcall *call_in) const
+			       gimple_stmt_iterator *gsi_in,
+			       gcall *call_in) const
 {
-  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false, true, false);
+  return fold_non_tuple_segment_load (instance, gsi_in, call_in, NF, false,
+				      true, false);
 }
 
 template <unsigned int NF, indexed_mode uo>
@@ -6159,7 +6225,7 @@ char *
 vsxseg_template<NF, uo>::assemble_name (function_instance &instance)
 {
   if (segment_skip_p (instance.get_base_name (),
-                      instance.get_arg_pattern ().arg_list[0]))
+		      instance.get_arg_pattern ().arg_list[0]))
     return nullptr;
   machine_mode data_mode = instance.get_arg_pattern ().arg_list[3];
   machine_mode index_mode = instance.get_arg_pattern ().arg_list[2];
@@ -6170,7 +6236,8 @@ vsxseg_template<NF, uo>::assemble_name (function_instance &instance)
   const char *op = get_operation_str (instance.get_operation ());
   const char *dt = mode2data_type_str (data_mode, unsigned_p, false);
   const char *pred = get_pred_str (instance.get_pred ());
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt, pred);
+  snprintf (instance.function_name, NAME_MAXLEN, "%s%s%s%s", name, op, dt,
+	    pred);
   append_name (name);
   return finish_name ();
 }
@@ -6178,7 +6245,7 @@ vsxseg_template<NF, uo>::assemble_name (function_instance &instance)
 template <unsigned int NF, indexed_mode uo>
 void
 vsxseg_template<NF, uo>::get_argument_types (const function_instance &instance,
-                                             vec<tree> &argument_types) const
+					     vec<tree> &argument_types) const
 {
   push_argment_for_segment_store (instance, argument_types, NF, true);
 }
@@ -6186,10 +6253,11 @@ vsxseg_template<NF, uo>::get_argument_types (const function_instance &instance,
 template <unsigned int NF, indexed_mode uo>
 gimple *
 vsxseg_template<NF, uo>::fold (const function_instance &instance,
-                               gimple_stmt_iterator *gsi_in,
-                               gcall *call_in) const
+			       gimple_stmt_iterator *gsi_in,
+			       gcall *call_in) const
 {
-  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, true, false);
+  return fold_non_tuple_segment_store (instance, gsi_in, call_in, NF, true,
+				       false);
 }
 
 template <unsigned int NF, indexed_mode uo>
@@ -6220,17 +6288,14 @@ using namespace riscv_vector;
 
 inline void
 gt_ggc_mx (function_instance *)
-{
-}
+{}
 
 inline void
 gt_pch_nx (function_instance *)
-{
-}
+{}
 
 inline void
 gt_pch_nx (function_instance *, gt_pointer_operator, void *)
-{
-}
+{}
 
 #include "gt-riscv-vector-builtins-functions.h"
