@@ -2286,6 +2286,8 @@ riscv_output_move (rtx dest, rtx src)
 	switch (width)
 	  {
 	  case 2:
+	    if (TARGET_ZFHMIN)
+	      return "fmv.x.h\t%0,%1";
 	    /* Using fmv.x.s + sign-extend to emulate fmv.x.h.  */
 	    return "fmv.x.s\t%0,%1;slli\t%0,%0,16;srai\t%0,%0,16";
 	  case 4:
@@ -2340,6 +2342,8 @@ riscv_output_move (rtx dest, rtx src)
 	    switch (width)
 	      {
 	      case 2:
+		if (TARGET_ZFHMIN)
+		  return "fmv.h.x\t%0,%z1";
 		/* High 16 bits should be all-1, otherwise HW will treated
 		   as a n-bit canonical NaN, but isn't matter for softfloat.  */
 		return "fmv.s.x\t%0,%1";
@@ -2368,6 +2372,8 @@ riscv_output_move (rtx dest, rtx src)
 	switch (width)
 	  {
 	  case 2:
+	    if (TARGET_ZFH)
+	      return "fmv.h\t%0,%1";
 	    return "fmv.s\t%0,%1";
 	  case 4:
 	    return "fmv.s\t%0,%1";
@@ -2375,13 +2381,30 @@ riscv_output_move (rtx dest, rtx src)
 	    return "fmv.d\t%0,%1";
 	  }
 
+
       if (dest_code == MEM)
-	return dbl_p ? "fsd\t%1,%0" : "fsw\t%1,%0";
+	switch (width)
+	  {
+	  case 2:
+	    return "fsh\t%1,%0";
+	  case 4:
+	    return "fsw\t%1,%0";
+	  case 8:
+	    return "fsd\t%1,%0";
+	  }
     }
   if (dest_code == REG && FP_REG_P (REGNO (dest)))
     {
       if (src_code == MEM)
-	return dbl_p ? "fld\t%0,%1" : "flw\t%0,%1";
+	switch (width)
+	  {
+	  case 2:
+	    return "flh\t%0,%1";
+	  case 4:
+	    return "flw\t%0,%1";
+	  case 8:
+	    return "fld\t%0,%1";
+	  }
     }
   gcc_unreachable ();
 }
@@ -2658,6 +2681,10 @@ riscv_emit_float_compare (enum rtx_code *code, rtx *op0, rtx *op1)
 	emit_insn (gen_f##CMP##_quietdfdi4 (*op0, cmp_op0, cmp_op1));	\
       else if (GET_MODE (cmp_op0) == DFmode)				\
 	emit_insn (gen_f##CMP##_quietdfsi4 (*op0, cmp_op0, cmp_op1));	\
+      else if (GET_MODE (cmp_op0) == HFmode && TARGET_64BIT)		\
+	emit_insn (gen_f##CMP##_quiethfdi4 (*op0, cmp_op0, cmp_op1));	\
+      else if (GET_MODE (cmp_op0) == HFmode)				\
+	emit_insn (gen_f##CMP##_quiethfsi4 (*op0, cmp_op0, cmp_op1));	\
       else								\
 	gcc_unreachable ();						\
       *op1 = const0_rtx;						\
@@ -5695,7 +5722,8 @@ riscv_excess_precision (enum excess_precision_type type)
     {
     case EXCESS_PRECISION_TYPE_FAST:
     case EXCESS_PRECISION_TYPE_STANDARD:
-      return FLT_EVAL_METHOD_PROMOTE_TO_FLOAT;
+      return (TARGET_ZFH ? FLT_EVAL_METHOD_PROMOTE_TO_FLOAT16
+			 : FLT_EVAL_METHOD_PROMOTE_TO_FLOAT);
     case EXCESS_PRECISION_TYPE_IMPLICIT:
       return FLT_EVAL_METHOD_PROMOTE_TO_FLOAT16;
     default:
