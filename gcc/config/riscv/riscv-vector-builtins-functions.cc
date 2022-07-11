@@ -1849,40 +1849,24 @@ vset::get_argument_types (const function_instance &instance,
   argument_types.quick_push (get_dt_t_with_index (instance, 2));
 }
 
-gimple *
-vset::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-	    gcall *call_in) const
-{
-  tree lhs = get_lhs (instance, call_in);
-  tree arg0 = gimple_call_arg (call_in, 0);
-  tree arg1 = gimple_call_arg (call_in, 1);
-  tree arg2 = gimple_call_arg (call_in, 2);
-  machine_mode base_mode = TYPE_MODE (TREE_TYPE (arg2));
-  machine_mode full_mode = TYPE_MODE (TREE_TYPE (arg0));
-  int index = int_cst_value (arg1);
-  unsigned int num_vectors
-    = exact_div (GET_MODE_SIZE (full_mode), GET_MODE_SIZE (base_mode))
-	.to_constant ();
-  tree array_type = build_array_type_nelts (TREE_TYPE (arg2), num_vectors);
-  SET_TYPE_MODE (array_type, full_mode);
-  tree array = create_tmp_var (array_type, "rvv_array");
-  gassign *assign
-    = gimple_build_assign (array, fold_build1 (VIEW_CONVERT_EXPR,
-					       TREE_TYPE (array), arg0));
-  gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
-  tree vector = build4 (ARRAY_REF, TREE_TYPE (arg2), array, size_int (index),
-			NULL_TREE, NULL_TREE);
-  assign = gimple_build_assign (vector, arg2);
-  gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
-  assign = gimple_build_assign (lhs, array);
-  return assign;
-}
-
 rtx
-vset::expand (const function_instance &, tree, rtx) const
+vset::expand (const function_instance &, tree exp, rtx target) const
 {
-  gcc_unreachable ();
-  return NULL_RTX;
+  tree arg0 = CALL_EXPR_ARG (exp, 0);
+  tree arg1 = CALL_EXPR_ARG (exp, 1);
+  tree arg2 = CALL_EXPR_ARG (exp, 2);
+	rtx op0 = expand_normal (arg0);
+  rtx op1 = expand_normal (arg1);
+  rtx op2 = expand_normal (arg2);
+  target = force_reg (GET_MODE (target), target);
+  unsigned int nvecs = exact_div (GET_MODE_SIZE (GET_MODE (target)),
+        GET_MODE_SIZE (GET_MODE (op2))).to_constant ();
+  poly_int64 offset = (INTVAL (op1) & (nvecs - 1))
+        * GET_MODE_SIZE (GET_MODE (op2));
+  riscv_emit_move (target, op0);
+  rtx subreg = simplify_gen_subreg (GET_MODE (op2), target, GET_MODE (target), offset);
+  riscv_emit_move (subreg, op2);
+  return target;
 }
 
 /* A function implementation for vget functions.  */
@@ -1915,37 +1899,18 @@ vget::get_argument_types (const function_instance &instance,
   argument_types.quick_push (size_type_node);
 }
 
-gimple *
-vget::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
-	    gcall *call_in) const
-{
-  tree lhs = get_lhs (instance, call_in);
-  tree arg0 = gimple_call_arg (call_in, 0);
-  tree arg1 = gimple_call_arg (call_in, 1);
-  machine_mode base_mode = TYPE_MODE (TREE_TYPE (lhs));
-  machine_mode full_mode = TYPE_MODE (TREE_TYPE (arg0));
-  int index = int_cst_value (arg1);
-  unsigned int num_vectors
-    = exact_div (GET_MODE_SIZE (full_mode), GET_MODE_SIZE (base_mode))
-	.to_constant ();
-  tree array_type = build_array_type_nelts (TREE_TYPE (lhs), num_vectors);
-  SET_TYPE_MODE (array_type, full_mode);
-  tree array = create_tmp_var (array_type, "rvv_array");
-  gassign *assign
-    = gimple_build_assign (array, fold_build1 (VIEW_CONVERT_EXPR,
-					       TREE_TYPE (array), arg0));
-  gsi_insert_before (gsi_in, assign, GSI_SAME_STMT);
-  tree vector = build4 (ARRAY_REF, TREE_TYPE (lhs), array, size_int (index),
-			NULL_TREE, NULL_TREE);
-  assign = gimple_build_assign (lhs, vector);
-  return assign;
-}
-
 rtx
-vget::expand (const function_instance &, tree, rtx) const
+vget::expand (const function_instance &, tree exp, rtx target) const
 {
-  gcc_unreachable ();
-  return NULL_RTX;
+  tree arg0 = CALL_EXPR_ARG (exp, 0);
+  tree arg1 = CALL_EXPR_ARG (exp, 1);
+	rtx op0 = expand_normal (arg0);
+  rtx op1 = expand_normal (arg1);
+  unsigned int nvecs = exact_div (GET_MODE_SIZE (GET_MODE (op0)),
+        GET_MODE_SIZE (GET_MODE (target))).to_constant ();
+  poly_int64 offset = (INTVAL (op1) & (nvecs - 1))
+        * GET_MODE_SIZE (GET_MODE (target));      
+  return simplify_gen_subreg (GET_MODE (target), op0, GET_MODE (op0), offset);
 }
 
 /* A function implementation for vundefined functions.  */
@@ -1967,6 +1932,7 @@ vundefined::get_argument_types (const function_instance &, vec<tree> &) const
 rtx
 vundefined::expand (const function_instance &, tree, rtx target) const
 {
+  target = force_reg (GET_MODE (target), target);
   emit_insn (gen_rtx_SET (target, const0_rtx));
   return target;
 }

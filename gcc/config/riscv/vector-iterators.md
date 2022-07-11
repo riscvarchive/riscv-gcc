@@ -31,10 +31,6 @@
   UNSPEC_LMUL_EXT
   ;; lmul_trunc
   UNSPEC_LMUL_TRUNC
-  ;; set a vector
-  UNSPEC_SET_VECTOR
-  ;; get a vector
-  UNSPEC_GET_VECTOR
   ;; vec_duplicate
   UNSPEC_VEC_DUPLICATE
   ;; vector select

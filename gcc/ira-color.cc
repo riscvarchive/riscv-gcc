@@ -2237,7 +2237,7 @@ get_cap_member (ira_allocno_t a)
 /* Return TRUE if live ranges of allocnos A1 and A2 intersect.  It is
    used to find a conflict for new allocnos or allocnos with the
    different allocno classes.  */
-static bool
+bool
 allocnos_conflict_by_live_ranges_p (ira_allocno_t a1, ira_allocno_t a2)
 {
   rtx reg1, reg2;

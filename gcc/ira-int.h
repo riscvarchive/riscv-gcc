@@ -1039,7 +1039,7 @@ extern int *ira_allocate_cost_vector (reg_class_t);
 extern void ira_free_cost_vector (int *, reg_class_t);
 
 extern void ira_flattening (int, int);
-extern bool ira_build (void);
+extern bool ira_build (bool);
 extern void ira_destroy (void);
 
 /* ira-costs.cc */
@@ -1075,12 +1075,15 @@ extern void ira_reassign_conflict_allocnos (int);
 extern void ira_initiate_assign (void);
 extern void ira_finish_assign (void);
 extern void ira_color (void);
+extern bool allocnos_conflict_by_live_ranges_p (ira_allocno_t, ira_allocno_t);
 
 /* ira-emit.cc */
 extern void ira_initiate_emit_data (void);
 extern void ira_finish_emit_data (void);
 extern void ira_emit (bool);
 
+/* ira-coalesce.cc */
+extern void ira_explicit_coalesce (void);
 
 
 /* Return true if equivalence of pseudo REGNO is not a lvalue.  */

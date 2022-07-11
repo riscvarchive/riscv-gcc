@@ -1094,7 +1094,7 @@ regions corresponding to all loops.
 
 Source files of the allocator are @file{ira.cc}, @file{ira-build.cc},
 @file{ira-costs.cc}, @file{ira-conflicts.cc}, @file{ira-color.cc},
-@file{ira-emit.cc}, @file{ira-lives}, plus header files @file{ira.h}
+@file{ira-emit.cc}, @file{ira-lives}, @file{ira-coalesce.cc}, plus header files @file{ira.h}
 and @file{ira-int.h} used for the communication between the allocator
 and the rest of the compiler and between the IRA files.
 

@@ -12612,3 +12612,8 @@ type.
 This value is true if the target platform supports
 @option{-fsanitize=shadow-call-stack}.  The default value is false.
 @end deftypevr
+
+@deftypevr {Target Hook} bool TARGET_EXPLICIT_COALESCE_P
+A target hook which returns true if we do the explicit coalescing in IRA.
+The default value is false.
+@end deftypevr

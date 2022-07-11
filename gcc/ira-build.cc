@@ -3466,8 +3466,10 @@ update_conflict_hard_reg_costs (void)
    blocks) for regional allocation.  A true return means that we
    really need to flatten IR before the reload.  */
 bool
-ira_build (void)
+ira_build (bool coalesce_p)
 {
+  if (!coalesce_p && targetm.explicit_coalesce_p)
+    ira_explicit_coalesce ();
   bool loops_p;
 
   df_analyze ();
@@ -3481,7 +3483,8 @@ ira_build (void)
   ira_costs ();
   create_allocno_objects ();
   ira_create_allocno_live_ranges ();
-  remove_unnecessary_regions (false);
+  if (!coalesce_p)
+    remove_unnecessary_regions (false);
   ira_compress_allocno_live_ranges ();
   update_bad_spill_attribute ();
   loops_p = more_one_region_p ();

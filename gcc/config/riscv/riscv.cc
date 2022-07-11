@@ -7056,6 +7056,9 @@ riscv_vectorize_create_costs (vec_info *vinfo, bool costing_for_scalar)
 #undef TARGET_VECTORIZE_VEC_PERM_CONST
 #define TARGET_VECTORIZE_VEC_PERM_CONST riscv_vectorize_vec_perm_const
 
+#undef TARGET_EXPLICIT_COALESCE_P
+#define TARGET_EXPLICIT_COALESCE_P true
+
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 #include "gt-riscv.h"

@@ -3335,12 +3335,12 @@ riscv_vector_vmerge (struct expand_vec_perm_d *d)
 {
   machine_mode vmode = d->vmode;
   int unit_size = GET_MODE_UNIT_SIZE (vmode);
+  poly_int64 vec_len = d->perm.length ();
 
-  if (unit_size > 8)
+  if (unit_size > 8 || !vec_len.is_constant ())
     return false;
 
   int n_patterns = d->perm.encoding ().npatterns ();
-  poly_int64 vec_len = d->perm.length ();
 
   for (int i = 0; i < n_patterns; ++i)
     {

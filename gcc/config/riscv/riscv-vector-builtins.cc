@@ -61,6 +61,7 @@
 #include "riscv-vector-builtins.h"
 #include "riscv-vector-builtins-functions.h"
 #include "riscv-vector.h"
+
 namespace riscv_vector {
 
 /* The same vlmul doesn't mean use the same mask,
@@ -79,7 +80,8 @@ static CONSTEXPR const vector_type_info vector_type_infos[] = {
 #undef DEF_RVV_TYPE
 };
 
-static GTY (()) tree abi_vector_types[NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
+static GTY (()) tree
+  builtin_vector_types[NUM_VECTOR_TYPES + 1][MAX_VLMUL_FIELD];
 
 /* Same, but with the riscv_vector.h "v..._t" name.  */
 GTY (())
@@ -515,7 +517,7 @@ register_builtin_types ()
 	  add_vector_type_attribute (vectype, 1, sew, vector_vlmuls[j].vlmul,
 				     is_bool, mangled_name);
 	  make_type_sizeless (vectype);
-	  abi_vector_types[i][j] = vectype;
+	  builtin_vector_types[i][j] = vectype;
 	  lang_hooks.types.register_builtin_type (vectype, abi_name);
 	}
     }
@@ -541,7 +543,7 @@ init_builtins ()
 static void
 register_vector_type (unsigned int type, unsigned int lmul)
 {
-  tree vectype = abi_vector_types[type][lmul];
+  tree vectype = builtin_vector_types[type][lmul];
   char rvv_name[NAME_MAXLEN] = {0};
   snprintf (rvv_name, NAME_MAXLEN, "v%s%s_t", vector_type_infos[type].elem_name,
 	    strcmp (vector_type_infos[type].elem_name, "bool") == 0
@@ -594,7 +596,7 @@ register_tuple_type (unsigned int num_vectors, unsigned int type,
   unsigned int sew
     = GET_MODE_BITSIZE (GET_MODE_INNER (TYPE_MODE (vector_type)));
 
-  tree field = build_decl (input_location, FIELD_DECL, get_identifier ("val"),
+  tree field = build_decl (input_location, FIELD_DECL, get_identifier ("__val"),
 			   array_type);
   DECL_FIELD_CONTEXT (field) = tuple_type;
   TYPE_FIELDS (tuple_type) = field;
@@ -626,7 +628,6 @@ register_tuple_type (unsigned int num_vectors, unsigned int type,
      the TYPE_DECLs as "typedef struct foo foo;" without creating
      "struct foo" would lead to confusing error messages.  */
   DECL_ORIGINAL_TYPE (decl) = NULL_TREE;
-
   vector_types[num_vectors - 1][type][lmul] = tuple_type;
 }
 

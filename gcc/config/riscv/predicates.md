@@ -236,6 +236,8 @@
 (define_special_predicate "vector_any_register_operand"
   (match_code "reg, subreg")
 {
+  if (SUBREG_P (op) && !REG_P (SUBREG_REG (op)))
+    return false;
   return VECTOR_MODE_P (GET_MODE (op));
 })
 

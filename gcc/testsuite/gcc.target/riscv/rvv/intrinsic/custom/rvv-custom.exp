@@ -44,6 +44,8 @@ dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/*.c]] \
 	"" $CFLAGS
 dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/register-overlap/*.c]] \
 	"" $CFLAGS
+dg-runtest [lsort [glob -nocomplain $srcdir/$subdir/coalesce/*.c]] \
+	"" $CFLAGS
 
 # All done.
 dg-finish

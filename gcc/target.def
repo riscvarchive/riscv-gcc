@@ -7119,6 +7119,13 @@ DEFHOOKPOD
 @option{-fsanitize=shadow-call-stack}.  The default value is false.",
  bool, false)
 
+/* Return true if we do the explicit coalescing in IRA.  */
+DEFHOOKPOD
+(explicit_coalesce_p,
+ "A target hook which returns true if we do the explicit coalescing in IRA.\n\
+The default value is false.",
+ bool, false)
+
 /* Close the 'struct gcc_target' definition.  */
 HOOK_VECTOR_END (C90_EMPTY_HACK)
 

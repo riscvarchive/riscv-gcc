@@ -65,7 +65,7 @@ riscv-vector.o: $(srcdir)/config/riscv/riscv-vector.cc
 riscv-d.o: $(srcdir)/config/riscv/riscv-d.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)
-
+  
 riscv-shorten-memrefs.o: $(srcdir)/config/riscv/riscv-shorten-memrefs.cc
 	$(COMPILE) $<
 	$(POSTCOMPILE)

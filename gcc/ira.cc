@@ -5757,7 +5757,7 @@ ira (FILE *f)
 
   if (internal_flag_ira_verbose > 0 && ira_dump_file != NULL)
     fprintf (ira_dump_file, "Building IRA IR\n");
-  loops_p = ira_build ();
+  loops_p = ira_build (false);
 
   ira_assert (ira_conflicts_p || !loops_p);
 
