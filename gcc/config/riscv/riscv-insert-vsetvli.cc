@@ -206,13 +206,6 @@ scalar_move_insn_p (rtx_insn *insn)
 }
 
 static bool
-splat_move_insn_p (rtx_insn *insn)
-{
-  return insn && INSN_P (insn) && recog_memoized (insn) >= 0
-	 && get_attr_type (insn) == TYPE_VMV_V_X;
-}
-
-static bool
 store_insn_p (rtx_insn *insn)
 {
   return insn && INSN_P (insn) && recog_memoized (insn) >= 0
@@ -234,23 +227,6 @@ can_skip_load_store_insn_p (rtx_insn *insn)
 	     || get_attr_type (insn) == TYPE_VSSE
 	     || get_attr_type (insn) == TYPE_VLE
 	     || get_attr_type (insn) == TYPE_VLSE);
-}
-
-static bool
-splat_of_zero_or_minus_one_p (rtx_insn *insn)
-{
-  if (!splat_move_insn_p (insn))
-    return false;
-
-  extract_insn_cached (insn);
-
-  if (!rtx_equal_p (recog_data.operand[1], const0_rtx))
-    return false;
-  rtx x = recog_data.operand[2];
-  machine_mode mode = GET_MODE (x);
-  if (rtx_equal_p (x, CONST0_RTX (mode)) || rtx_equal_p (x, CONSTM1_RTX (mode)))
-    return true;
-  return rtx_equal_p (x, gen_rtx_REG (mode, X0_REGNUM));
 }
 
 static bool
@@ -712,6 +688,8 @@ get_demanded (rtx_insn *insn)
   // They instead demand the ratio of the two which is used in computing
   // EMUL, but which allows us the flexibility to change SEW and LMUL
   // provided we don't change the ratio.
+  // Note: We assume that the instructions initial SEW is the EEW encoded
+  // in the opcode.  This is asserted when constructing the VSETVLIInfo.
   if (can_skip_load_store_insn_p (insn))
     {
       res.sew = false;
@@ -723,15 +701,6 @@ get_demanded (rtx_insn *insn)
     {
       res.tail_policy = false;
       res.mask_policy = false;
-    }
-
-  // A splat of 0/-1 is always a splat of 0/-1, regardless of etype.
-  // TODO: We're currently demanding VL + SEWLMULRatio which is sufficient
-  // but not neccessary.  What we really need is VLInBytes.
-  if (splat_of_zero_or_minus_one_p (insn))
-    {
-      res.sew = false;
-      res.lmul = false;
     }
 
   // If this is a mask reg operation, it only cares about VLMAX.
@@ -832,17 +801,6 @@ public:
   {
     gcc_assert (known_p ());
     return avl;
-  }
-
-  bool has_zero_avl () const
-  {
-    if (!known_p ())
-      return false;
-    if (get_avl () == NULL_RTX)
-      return false;
-    if (avl_const_p ())
-      return INTVAL (get_avl ()) == 0;
-    return false;
   }
 
   bool has_nonzero_avl () const
@@ -1498,14 +1456,17 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
   if (curr_info.compatible_p (insn, require))
     return false;
 
+  if (!curr_info.valid_p () || curr_info.unknown_p ()
+      || curr_info.get_sew_lmul_ratio_only_p ())
+    return true;
+
   // For vmv.s.x and vfmv.s.f, there is only two behaviors, VL = 0 and VL > 0.
-  // So it's compatible when we could make sure that both VL be the same
-  // situation.  Additionally, if writing to an implicit_def operand, we
-  // don't need to preserve any other bits and are thus compatible with any
-  // larger etype, and can disregard policy bits.
-  if (scalar_move_insn_p (insn)
-      && ((curr_info.has_nonzero_avl () && require.has_nonzero_avl ())
-	  || (curr_info.has_zero_avl () && require.has_zero_avl ())))
+  // VL=0 is uninteresting (as it should have been deleted already), so it is
+  // compatible if we can prove both are non-zero.  Additionally, if writing
+  // to an implicit_def operand, we don't need to preserve any other bits and
+  // are thus compatible with any larger etype, and can disregard policy bits.
+  if (scalar_move_insn_p (insn) && curr_info.has_nonzero_avl ()
+      && require.has_nonzero_avl ())
     {
       extract_insn_cached (insn);
       if (rtx_equal_p (recog_data.operand[1], const0_rtx)
@@ -1519,9 +1480,10 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
   // it might be defined by a VSET(I)VLI. If it has the same VTYPE we need
   // and the last VL/VTYPE we observed is the same, we don't need a
   // VSETVLI here.
-  if (!curr_info.unknown_p () && require.avl_reg_p ()
-      && REGNO (require.get_avl ()) >= FIRST_PSEUDO_REGISTER
-      && !curr_info.get_sew_lmul_ratio_only_p ()
+  if (require.avl_reg_p ()
+      && ((!reload_completed
+	   && !HARD_REGISTER_NUM_P (REGNO (require.get_avl ())))
+	  || reload_completed)
       && curr_info.compatible_vtype_p (insn, require))
     {
       rtx_insn *def_rtl = fetch_def_insn (insn, require);
@@ -1655,20 +1617,65 @@ transfer_before (vinfo &info, rtx_insn *insn)
     return;
 
   vinfo new_info = compute_info_for_instr (insn, info);
+  if (info.valid_p () && !needvsetvli (insn, new_info, info))
+    return;
 
-  if (!info.valid_p ())
+  const vinfo prev_info = info;
+  info = new_info;
+
+  if (!use_vl_p (insn))
+    return;
+
+  // For vmv.s.x and vfmv.s.f, there are only two behaviors, VL = 0 and
+  // VL > 0. We can discard the user requested AVL and just use the last
+  // one if we can prove it equally zero.  This removes a vsetvli entirely
+  // if the types match or allows use of cheaper avl preserving variant
+  // if VLMAX doesn't change.  If VLMAX might change, we couldn't use
+  // the 'vsetvli x0, x0, vtype" variant, so we avoid the transform to
+  // prevent extending live range of an avl register operand.
+  // TODO: We can probably relax this for immediates.
+  if (scalar_move_insn_p (insn) && prev_info.valid_p ()
+      && prev_info.has_nonzero_avl () && info.has_nonzero_avl ()
+      && info.vlmax_equal_p (prev_info))
     {
-      info = new_info;
+      info.set_avl (prev_info.get_avl ());
+      return;
     }
-  else
+
+  // Two cases involving an AVL resulting from a previous vsetvli.
+  // 1) If the AVL is the result of a previous vsetvli which has the
+  //    same AVL and VLMAX as our current state, we can reuse the AVL
+  //    from the current state for the new one.  This allows us to
+  //    generate 'vsetvli x0, x0, vtype" or possible skip the transition
+  //    entirely.
+  // 2) If AVL is defined by a vsetvli with the same VLMAX, we can
+  //    replace the AVL operand with the AVL of the defining vsetvli.
+  //    We avoid general register AVLs to avoid extending live ranges
+  //    without being sure we can kill the original source reg entirely.
+  if (!info.avl_reg_p ()
+      || (!reload_completed && HARD_REGISTER_NUM_P (REGNO (info.get_avl ()))))
+    return;
+  rtx_insn *def_insn = fetch_def_insn (insn, info);
+  if (!def_insn || !vector_config_instr_p (def_insn))
+    return;
+
+  vinfo def_info = get_info_for_vsetvli (def_insn, vinfo::get_unknown ());
+  // case 1
+  if (prev_info.valid_p () && !prev_info.unknown_p ()
+      && def_info.avl_equal_p (prev_info) && def_info.vlmax_equal_p (prev_info))
     {
-      // If this instruction isn't compatible with the previous VL/VTYPE
-      // we need to insert a VSETVLI.
-      // NOTE: We only do this if the vtype we're comparing against was
-      // created in this block. We need the first and third phase to treat
-      // the store the same way.
-      if (needvsetvli (insn, new_info, info))
-	info = new_info;
+      info.set_avl (prev_info.get_avl ());
+      return;
+    }
+  // case 2
+  if (def_info.vlmax_equal_p (info)
+      && (def_info.avl_const_p ()
+	  || (def_info.avl_reg_p ()
+	      && rtx_equal_p (def_info.get_avl (),
+			      gen_rtx_REG (Pmode, X0_REGNUM)))))
+    {
+      info.set_avl (def_info.get_avl ());
+      return;
     }
 }
 
@@ -1962,109 +1969,6 @@ emit_vsetvlis (const basic_block bb)
     }
 }
 
-static void
-dolocalprepass (const basic_block bb)
-{
-  rtx_insn *insn = NULL;
-  vinfo curr_info = vinfo::get_unknown ();
-  FOR_BB_INSNS (bb, insn)
-    {
-      // If this is an explicit VSETVLI or VSETIVLI, update our state.
-      if (vector_config_instr_p (insn))
-	{
-	  curr_info = get_info_for_vsetvli (insn, curr_info);
-	  continue;
-	}
-
-      if (scalar_move_insn_p (insn))
-	{
-	  gcc_assert (use_vtype_p (insn) && use_vl_p (insn));
-	  const vinfo new_info = compute_info_for_instr (insn, curr_info);
-
-	  // For vmv.s.x and vfmv.s.f, there are only two behaviors, VL = 0 and
-	  // VL > 0. We can discard the user requested AVL and just use the last
-	  // one if we can prove it equally zero.  This removes a vsetvli
-	  // entirely if the types match or allows use of cheaper avl preserving
-	  // variant if VLMAX doesn't change.  If VLMAX might change, we
-	  // couldn't use the 'vsetvli x0, x0, vtype" variant, so we avoid the
-	  // transform to prevent extending live range of an avl register
-	  // operand.
-	  // TODO: We can probably relax this for immediates.
-	  if (((curr_info.has_nonzero_avl () && new_info.has_nonzero_avl ())
-	       || (curr_info.has_zero_avl () && new_info.has_zero_avl ()))
-	      && new_info.vlmax_equal_p (curr_info))
-	    {
-	      replace_op (insn, curr_info.get_avl (), REPLACE_VL);
-	      curr_info = compute_info_for_instr (insn, curr_info);
-	      continue;
-	    }
-	}
-
-      if (use_vtype_p (insn))
-	{
-	  if (use_vl_p (insn))
-	    {
-	      const auto require = compute_info_for_instr (insn, curr_info);
-	      // Two cases involving an AVL resulting from a previous vsetvli.
-	      // 1) If the AVL is the result of a previous vsetvli which has the
-	      //    same AVL and VLMAX as our current state, we can reuse the
-	      //    AVL from the current state for the new one.  This allows us
-	      //    to generate 'vsetvli x0, x0, vtype" or possible skip the
-	      //    transition entirely.
-	      // 2) If AVL is defined by a vsetvli with the same VLMAX, we can
-	      //    replace the AVL operand with the AVL of the defining
-	      //    vsetvli. We avoid general register AVLs to avoid extending
-	      //    live ranges without being sure we can kill the original
-	      //    source reg entirely.
-	      if (require.avl_reg_p ()
-		  && REGNO (require.get_avl ()) >= FIRST_PSEUDO_REGISTER)
-		{
-		  rtx_insn *def_rtl = fetch_def_insn (insn, require);
-
-		  if (def_rtl != NULL)
-		    {
-		      if (vector_config_instr_p (def_rtl))
-			{
-			  vinfo def_info
-			    = get_info_for_vsetvli (def_rtl, curr_info);
-			  // case 1
-			  if (!curr_info.unknown_p ()
-			      && def_info.avl_equal_p (curr_info)
-			      && def_info.vlmax_equal_p (curr_info))
-			    {
-			      replace_op (insn, curr_info.get_avl (),
-					  REPLACE_VL);
-			      curr_info
-				= compute_info_for_instr (insn, curr_info);
-			      continue;
-			    }
-
-			  // case 2
-			  if (def_info.vlmax_equal_p (require)
-			      && def_info.get_avl ()
-			      && (def_info.avl_const_p ()
-				  || rtx_equal_p (def_info.get_avl (),
-						  gen_rtx_REG (Pmode,
-							       X0_REGNUM))))
-			    {
-			      replace_op (insn, def_info.get_avl (),
-					  REPLACE_VL);
-			      curr_info
-				= compute_info_for_instr (insn, curr_info);
-			      continue;
-			    }
-			}
-		    }
-		}
-	    }
-	  curr_info = compute_info_for_instr (insn, curr_info);
-	  continue;
-	}
-
-      transfer_after (curr_info, insn);
-    }
-}
-
 // Return true if we can mutate PrevMI's VTYPE to match MI's
 // without changing any the fields which have been used.
 // TODO: Restructure code to allow code reuse between this and isCompatible
@@ -2131,9 +2035,7 @@ dolocalpostpass (const basic_block bb)
 
       rtx vdef = recog_data.operand[0];
       if (!rtx_equal_p (vdef, gen_rtx_REG (Pmode, X0_REGNUM))
-	  && !(REGNO (vdef) >= FIRST_PSEUDO_REGISTER
-	       && (find_reg_note (insn, REG_UNUSED, vdef)
-		   || find_reg_note (insn, REG_DEAD, vdef))))
+	  && !find_reg_note (insn, REG_UNUSED, vdef))
 	used.vl = true;
     }
 
@@ -2280,14 +2182,6 @@ rest_of_handle_insert_vsetvli (function *fn)
       bb_vinfo_map.insert (std::pair<uint8_t, bb_vinfo> (bb->index, bb_init));
     }
 
-  // Scan the block locally for cases where we can mutate the operands
-  // of the instructions to reduce state transitions.  Critically, this
-  // must be done before we start propagating data flow states as these
-  // transforms are allowed to change the contents of VTYPE and VL so
-  // long as the semantics of the program stays the same.
-  FOR_ALL_BB_FN (bb, fn)
-    dolocalprepass (bb);
-
   bool vector_p = false;
 
   if (dump_file)
@@ -2386,10 +2280,8 @@ rest_of_handle_insert_vsetvli (function *fn)
 				       gen_rtx_REG (Pmode, X0_REGNUM))
 		      && !rtx_equal_p (recog_data.operand[1],
 				       gen_rtx_REG (Pmode, X0_REGNUM))
-		      && (find_reg_note (insn, REG_UNUSED,
-					 recog_data.operand[0])
-			  || find_reg_note (insn, REG_DEAD,
-					    recog_data.operand[0])))
+		      && find_reg_note (insn, REG_UNUSED,
+					recog_data.operand[0]))
 		    {
 		      rtx pat = gen_vsetvl_zero (Pmode, recog_data.operand[1],
 						 recog_data.operand[2]);
