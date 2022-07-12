@@ -487,6 +487,36 @@
   DONE;
 })
 
+(define_expand "len_vec_load_lanes<mode><vtsub>"
+  [(match_operand:VT 0 "register_operand")
+	 (match_operand:VT 1 "memory_operand")
+   (match_operand 2 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+  emit_insn (gen_vlseg (<MODE>mode,
+      operands[0], const0_rtx, const0_rtx, XEXP (operands[1], 0),
+      operands[2], riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_mask_load_lanes<mode><vtsub>"
+  [(match_operand:VT 0 "register_operand")
+	 (match_operand:VT 1 "memory_operand")
+   (match_operand:<VM> 2 "register_operand")
+   (match_operand 3 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vlseg (<MODE>mode,
+      operands[0], operands[2], operands[0],
+      XEXP (operands[1], 0), operands[3],
+      riscv_vector_gen_policy (RVV_POLICY_MU)));
+  DONE;
+})
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Normal gather loads
 ;; -------------------------------------------------------------------------
@@ -972,6 +1002,35 @@
   emit_insn (gen_vsseg (<MODE>mode,
       operands[2], XEXP (operands[0], 0),
       operands[1], gen_rtx_REG (Pmode, X0_REGNUM), riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_store_lanes<mode><vtsub>"
+  [(match_operand:VT 0 "memory_operand")
+	 (match_operand:VT 1 "register_operand")
+   (match_operand 2 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  if (!CONST_SCALAR_INT_P (operands[2]) && GET_MODE (operands[2]) != Pmode)
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+  emit_insn (gen_vsseg (<MODE>mode, const0_rtx,
+      XEXP (operands[0], 0), operands[1],
+      operands[2], riscv_vector_gen_policy ()));
+  DONE;
+})
+
+(define_expand "len_vec_mask_store_lanes<mode><vtsub>"
+  [(match_operand:VT 0 "memory_operand")
+	 (match_operand:VT 1 "register_operand")
+   (match_operand:<VM> 2 "register_operand")
+   (match_operand 3 "p_reg_or_const_csr_operand")]
+  "TARGET_VECTOR"
+{
+  if (!CONST_SCALAR_INT_P (operands[3]) && GET_MODE (operands[3]) != Pmode)
+    operands[3] = gen_lowpart (Pmode, operands[3]);
+  emit_insn (gen_vsseg (<MODE>mode,
+      operands[2], XEXP (operands[0], 0),
+      operands[1], operands[3], riscv_vector_gen_policy ()));
   DONE;
 })
 

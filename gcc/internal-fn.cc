@@ -110,12 +110,14 @@ init_internal_fns ()
 #define len_mask_load_direct { -1, 2, false }
 #define load_lanes_direct { -1, -1, false }
 #define mask_load_lanes_direct { -1, -1, false }
+#define len_load_lanes_direct { -1, -1, false }
 #define gather_load_direct { 3, 1, false }
 #define len_load_direct { -1, -1, false }
 #define mask_store_direct { 3, 2, false }
 #define len_mask_store_direct { 3, 2, false }
 #define store_lanes_direct { 0, 0, false }
 #define mask_store_lanes_direct { 0, 0, false }
+#define len_store_lanes_direct { 0, 0, false }
 #define vec_cond_mask_direct { 1, 0, false }
 #define vec_cond_direct { 2, 0, false }
 #define vec_cmp_direct { 2, 0, false }
@@ -2727,7 +2729,7 @@ expand_call_mem_ref (tree type, gcall *stmt, int index)
   return fold_build2 (MEM_REF, type, addr, build_int_cst (alias_ptr_type, 0));
 }
 
-/* Expand MASK_LOAD{,_LANES} or LEN_LOAD call STMT using optab OPTAB.  */
+/* Expand {MASK_,LEN_}LOAD{,_LANES} call STMT using optab OPTAB.  */
 
 static void
 expand_partial_load_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
@@ -2793,7 +2795,7 @@ expand_partial_load_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
 #define expand_len_load_optab_fn expand_partial_load_optab_fn
 #define expand_len_mask_load_optab_fn expand_partial_load_optab_fn
 
-/* Expand MASK_STORE{,_LANES} or LEN_STORE call STMT using optab OPTAB.  */
+/* Expand {MASK_,LEN_}STORE{,_LANES} call STMT using optab OPTAB.  */
 
 static void
 expand_partial_store_optab_fn (internal_fn, gcall *stmt, convert_optab optab)
@@ -4862,6 +4864,7 @@ internal_load_fn_p (internal_fn fn)
     case IFN_LEN_MASK_LOAD:
     case IFN_LOAD_LANES:
     case IFN_MASK_LOAD_LANES:
+    case IFN_LEN_LOAD_LANES:
     case IFN_GATHER_LOAD:
     case IFN_MASK_GATHER_LOAD:
     case IFN_LEN_LOAD:
