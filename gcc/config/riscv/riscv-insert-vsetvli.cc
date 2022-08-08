@@ -94,25 +94,16 @@ enum replace_enum
   REPLACE_VTYPE
 };
 
-enum clobber_pat_enum
-{
-  MOV_CLOBBER_MEM_REG,
-  MOV_CLOBBER_REG_MEM,
-  MOV_CLOBBER_REG_REG,
-  MOV_CLOBBER_REG_CONST,
-  OTHERS
-};
-
 /* Helper functions. */
 
 static unsigned int
 get_policy_offset (rtx_insn *insn)
 {
-  unsigned int offset = 1;
+  unsigned int offset = 2;
   if (GET_CODE (PATTERN (insn)) == PARALLEL)
     {
-      if (get_attr_type (insn) == TYPE_VCMP)
-	offset = 2;
+      if (get_attr_type (insn) == TYPE_VCMP && recog_data.n_operands == 9)
+	offset = 3;
     }
   return offset;
 }
@@ -120,67 +111,20 @@ get_policy_offset (rtx_insn *insn)
 static unsigned int
 get_vl_offset (rtx_insn *insn)
 {
-  unsigned int offset = 2;
+  extract_insn_cached (insn);
+  unsigned int offset = 3;
   if (GET_CODE (PATTERN (insn)) == PARALLEL)
     {
-      if (get_attr_type (insn) == TYPE_VCMP)
-	offset = 3;
+      if (get_attr_type (insn) == TYPE_VCMP && recog_data.n_operands == 9)
+	offset = 4;
     }
   return offset;
-}
-
-static enum clobber_pat_enum
-recog_clobber_vl_vtype (rtx_insn *insn)
-{
-  /*
-   [(set (match_operand 0 "reg_or_mem_operand" "=vr,m,vr")
-	 (match_operand 1 "reg_or_mem_operand" "m,vr,vr"))
-	 (clobber (match_scratch:SI 2 "=&r,&r,X"))
-	 (clobber (reg:SI VL_REGNUM))
-	 (clobber (reg:SI VTYPE_REGNUM))]
-  */
-  rtx pat = PATTERN (insn);
-  if (GET_CODE (pat) != PARALLEL)
-    return OTHERS;
-
-  unsigned int len = XVECLEN (pat, 0);
-  if (len < 3)
-    return OTHERS;
-
-  if (!rtx_equal_p (XVECEXP (pat, 0, len - 1),
-		    gen_rtx_CLOBBER (VOIDmode,
-				     gen_rtx_REG (SImode, VTYPE_REGNUM))))
-    return OTHERS;
-
-  if (!rtx_equal_p (XVECEXP (pat, 0, len - 2),
-		    gen_rtx_CLOBBER (VOIDmode,
-				     gen_rtx_REG (SImode, VL_REGNUM))))
-    return OTHERS;
-
-  extract_insn_cached (insn);
-  rtx mov_pat = gen_rtx_SET (recog_data.operand[0], recog_data.operand[1]);
-  if (!rtx_equal_p (XVECEXP (pat, 0, 0), mov_pat))
-    return OTHERS;
-
-  if (MEM_P (recog_data.operand[0]))
-    return MOV_CLOBBER_MEM_REG;
-
-  if (MEM_P (recog_data.operand[1]))
-    return MOV_CLOBBER_REG_MEM;
-
-  if (REG_P (recog_data.operand[1]))
-    return MOV_CLOBBER_REG_REG;
-
-  if (CONST_VECTOR_P (recog_data.operand[1]))
-    return MOV_CLOBBER_REG_CONST;
-
-  return OTHERS;
 }
 
 static bool
 vector_config_instr_p (rtx_insn *insn)
 {
-  return insn && INSN_P (insn) && recog_memoized (insn) >= 0
+  return insn && NONDEBUG_INSN_P (insn) && recog_memoized (insn) >= 0
 	 && get_attr_type (insn) == TYPE_VSETVL;
 }
 
@@ -192,7 +136,7 @@ vl_preserving_config_p (rtx_insn *insn)
   if (vector_config_instr_p (insn))
     {
       extract_insn_cached (insn);
-      return recog_data.n_operands == 1;
+      return recog_data.n_operands == 2 && GET_CODE (PATTERN (insn)) == SET;
     }
   return false;
 }
@@ -200,7 +144,7 @@ vl_preserving_config_p (rtx_insn *insn)
 static bool
 scalar_move_insn_p (rtx_insn *insn)
 {
-  return insn && INSN_P (insn) && recog_memoized (insn) >= 0
+  return insn && NONDEBUG_INSN_P (insn) && recog_memoized (insn) >= 0
 	 && (get_attr_type (insn) == TYPE_VMV_S_X
 	     || get_attr_type (insn) == TYPE_VFMV_S_F);
 }
@@ -208,7 +152,7 @@ scalar_move_insn_p (rtx_insn *insn)
 static bool
 store_insn_p (rtx_insn *insn)
 {
-  return insn && INSN_P (insn) && recog_memoized (insn) >= 0
+  return insn && NONDEBUG_INSN_P (insn) && recog_memoized (insn) >= 0
 	 && (get_attr_type (insn) == TYPE_VSE
 	     || get_attr_type (insn) == TYPE_VSSE
 	     || get_attr_type (insn) == TYPE_VSUXEI
@@ -222,7 +166,7 @@ store_insn_p (rtx_insn *insn)
 static bool
 can_skip_load_store_insn_p (rtx_insn *insn)
 {
-  return insn && INSN_P (insn) && recog_memoized (insn) >= 0
+  return insn && NONDEBUG_INSN_P (insn) && recog_memoized (insn) >= 0
 	 && (get_attr_type (insn) == TYPE_VSE
 	     || get_attr_type (insn) == TYPE_VSSE
 	     || get_attr_type (insn) == TYPE_VLE
@@ -230,13 +174,12 @@ can_skip_load_store_insn_p (rtx_insn *insn)
 }
 
 static bool
-rvv_insn_p (rtx_insn *insn, rtx *src)
+vector_insn_p (rtx_insn *insn)
 {
-  *src = NULL_RTX;
   if (!insn)
     return false;
 
-  if (!INSN_P (insn))
+  if (!NONDEBUG_INSN_P (insn))
     return false;
 
   if (recog_memoized (insn) < 0)
@@ -245,51 +188,24 @@ rvv_insn_p (rtx_insn *insn, rtx *src)
   if (!riscv_vector_mode_p (riscv_translate_attr_mode (insn)))
     return false;
 
-  if (recog_clobber_vl_vtype (insn) != OTHERS)
-    {
-      if (reload_completed)
-	{
-	  *src = SET_SRC (XVECEXP (PATTERN (insn), 0, 0));
-	  return true;
-	}
-      else
-	return false;
-    }
-
-  if (GET_CODE (PATTERN (insn)) == PARALLEL)
-    *src = SET_SRC (XVECEXP (PATTERN (insn), 0, 0));
-
-  if (GET_CODE (PATTERN (insn)) == SET)
-    *src = SET_SRC (PATTERN (insn));
-
-  if (!*src)
-    return false;
-
-  if (GET_CODE (*src) != UNSPEC)
-    return false;
-
-  if (XINT (*src, 1) != UNSPEC_RVV)
-    return false;
-
   return true;
 }
 
 static bool
 use_vl_p (rtx_insn *insn)
 {
-  rtx src = NULL_RTX;
-  if (!rvv_insn_p (insn, &src))
+  if (!vector_insn_p (insn))
     return false;
 
-  if (recog_clobber_vl_vtype (insn) != OTHERS)
-    return true;
+  if (GET_CODE (SET_SRC (single_set (insn))) != UNSPEC)
+    return false;
 
-  if (rtx_equal_p (XVECEXP (src, 0, XVECLEN (src, 0) - 1),
-		   gen_rtx_REG (SImode, VL_REGNUM)))
-    return true;
+  if (XINT (SET_SRC (single_set (insn)), 1) != UNSPEC_RVV)
+    return false;
 
-  if (XVECLEN (src, 0) > 1
-      && rtx_equal_p (XVECEXP (src, 0, XVECLEN (src, 0) - 2),
+  rtx pat = SET_SRC (single_set (insn));
+  if (XVECLEN (pat, 0) > 1
+      && rtx_equal_p (XVECEXP (pat, 0, XVECLEN (pat, 0) - 2),
 		      gen_rtx_REG (SImode, VL_REGNUM)))
     return true;
 
@@ -299,14 +215,17 @@ use_vl_p (rtx_insn *insn)
 static bool
 use_vtype_p (rtx_insn *insn)
 {
-  rtx src = NULL_RTX;
-  if (!rvv_insn_p (insn, &src))
+  if (!vector_insn_p (insn))
     return false;
 
-  if (recog_clobber_vl_vtype (insn) != OTHERS)
-    return true;
+  if (GET_CODE (SET_SRC (single_set (insn))) != UNSPEC)
+    return false;
 
-  if (rtx_equal_p (XVECEXP (src, 0, XVECLEN (src, 0) - 1),
+  if (XINT (SET_SRC (single_set (insn)), 1) != UNSPEC_RVV)
+    return false;
+
+  rtx pat = SET_SRC (single_set (insn));
+  if (rtx_equal_p (XVECEXP (pat, 0, XVECLEN (pat, 0) - 1),
 		   gen_rtx_REG (SImode, VTYPE_REGNUM)))
     return true;
 
@@ -316,35 +235,20 @@ use_vtype_p (rtx_insn *insn)
 static bool
 use_vlmax_p (rtx_insn *insn)
 {
-  rtx src = NULL_RTX;
-  unsigned int length = 0;
-
-  if (recog_clobber_vl_vtype (insn) != OTHERS)
-    return true;
-
-  if (rvv_insn_p (insn, &src))
-    length = XVECLEN (src, 0);
-
-  if (length < 2)
+  if (!vector_insn_p (insn))
     return false;
-
-  if (rtx_equal_p (XVECEXP (src, 0, length - 1),
-		   gen_rtx_REG (SImode, VL_REGNUM)))
-    return rtx_equal_p (XVECEXP (src, 0, length - 2),
-			gen_rtx_REG (Pmode, X0_REGNUM));
-
-  if (length < 3)
+  if (!use_vl_p (insn))
     return false;
-
-  return rtx_equal_p (XVECEXP (src, 0, length - 3),
+  extract_insn_cached (insn);
+  unsigned int offset = get_vl_offset (insn);
+  return rtx_equal_p (recog_data.operand[recog_data.n_operands - offset],
 		      gen_rtx_REG (Pmode, X0_REGNUM));
 }
 
 static bool
 need_vsetvli_p (rtx_insn *insn)
 {
-  rtx src = NULL_RTX;
-  if (!rvv_insn_p (insn, &src))
+  if (!vector_insn_p (insn))
     return false;
   return true;
 }
@@ -354,15 +258,23 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 {
   extract_insn_cached (insn);
   if (replace == REPLACE_VTYPE)
-    validate_change (insn, recog_data.operand_loc[recog_data.n_operands - 1], x,
-		     false);
+    validate_change (insn,
+		     recog_data.operand_loc[vl_preserving_config_p (insn)
+					      ? 0
+					      : recog_data.n_operands - 1],
+		     x, false);
 
-  if (replace == REPLACE_VL && !use_vlmax_p (insn))
+  if (replace == REPLACE_VL && use_vl_p (insn))
     {
       unsigned int offset = get_vl_offset (insn);
-      validate_change (insn,
-		       recog_data.operand_loc[recog_data.n_operands - offset],
-		       x, false);
+      if (reload_completed)
+	validate_change (insn,
+			 recog_data.operand_loc[recog_data.n_operands - offset],
+			 x, false);
+      else
+	validate_change (insn,
+			 recog_data.operand_loc[recog_data.n_operands - 1], x,
+			 false);
     }
 }
 
@@ -370,6 +282,9 @@ static bool
 asm_insn_p (rtx_insn *insn)
 {
   if (!insn)
+    return false;
+
+  if (!NONDEBUG_INSN_P (insn))
     return false;
 
   rtx pat = PATTERN (insn);
@@ -388,7 +303,7 @@ fault_first_load_p (rtx_insn *insn)
   if (!insn)
     return false;
 
-  if (!INSN_P (insn))
+  if (!NONDEBUG_INSN_P (insn))
     return false;
 
   if (recog_memoized (insn) < 0)
@@ -404,7 +319,7 @@ readvl_p (rtx_insn *insn)
   if (!insn)
     return false;
 
-  if (!INSN_P (insn))
+  if (!NONDEBUG_INSN_P (insn))
     return false;
 
   if (recog_memoized (insn) < 0)
@@ -480,7 +395,7 @@ get_avl_source (rtx avl, rtx_insn *rtl)
 		      rtx_insn *phi_def_rtl = phi_def_insn->rtl ();
 		      if (!phi_def_rtl)
 			break;
-		      if (!INSN_P (phi_def_rtl))
+		      if (!NONDEBUG_INSN_P (phi_def_rtl))
 			break;
 
 		      // So far we only check single set.
@@ -509,7 +424,7 @@ get_avl_source (rtx avl, rtx_insn *rtl)
 	      return NULL_RTX;
 	    }
 
-	  if (INSN_P (def_rtl) && single_set (def_rtl))
+	  if (NONDEBUG_INSN_P (def_rtl) && single_set (def_rtl))
 	    {
 	      avl_source = SET_SRC (single_set (def_rtl));
 	      break;
@@ -611,7 +526,7 @@ mask_reg_op_p (rtx_insn *insn)
   if (!insn)
     return false;
 
-  if (!INSN_P (insn))
+  if (!NONDEBUG_INSN_P (insn))
     return false;
 
   if (recog_memoized (insn) < 0)
@@ -718,7 +633,7 @@ get_demanded (rtx_insn *insn)
 
 static bool
 are_compatible_vtypes (uint64_t vtype1, uint64_t vtype2,
-		       const demanded_fields &used)
+		       const demanded_fields &used, bool relax_p = false)
 {
   unsigned int prior_vsew = riscv_parse_vsew_field (vtype1);
   unsigned int prior_vlmul = riscv_parse_vlmul_field (vtype1);
@@ -740,10 +655,26 @@ are_compatible_vtypes (uint64_t vtype1, uint64_t vtype2,
 
   if (used.tail_policy
       && riscv_parse_vta_field (vtype2) != riscv_parse_vta_field (vtype1))
-    return false;
+    {
+      if (relax_p)
+	{
+	  if (((vtype1 >> 30) & 0x1) == 0)
+	    return false;
+	}
+      else
+	return false;
+    }
   if (used.mask_policy
       && riscv_parse_vma_field (vtype2) != riscv_parse_vma_field (vtype1))
-    return false;
+    {
+      if (relax_p)
+	{
+	  if (((vtype1 >> 31) & 0x1) == 0)
+	    return false;
+	}
+      else
+	return false;
+    }
   return true;
 }
 
@@ -759,12 +690,14 @@ private:
   uint8_t sew_lmul_ratio_only_p : 1;
   rtx avl;
   rtx avl_source;
+  uint8_t vma_mutate_p : 1;
+  uint8_t vta_mutate_p : 1;
 
 public:
   vinfo ()
     : state (STATE_UNINITIALIZED), vma (false), vta (false), vsew (0),
       vlmul (0), sew_lmul_ratio_only_p (false), avl (NULL_RTX),
-      avl_source (NULL_RTX)
+      avl_source (NULL_RTX), vma_mutate_p (false), vta_mutate_p (false)
   {}
 
   ~vinfo () {}
@@ -915,20 +848,6 @@ public:
     return rtx_equal_p (get_avl_source (), other.get_avl_source ());
   }
 
-  void set_vma (unsigned int vma)
-  {
-    gcc_assert (valid_p () && !unknown_p ()
-		&& "Can't set VTYPE for uninitialized or unknown.");
-    vma = vma;
-  }
-
-  void set_vta (unsigned int vta)
-  {
-    gcc_assert (valid_p () && !unknown_p ()
-		&& "Can't set VTYPE for uninitialized or unknown.");
-    vta = vta;
-  }
-
   void set_vtype (unsigned int vtype)
   {
     gcc_assert (valid_p () && !unknown_p ()
@@ -937,9 +856,12 @@ public:
     vta = riscv_parse_vta_field (vtype);
     vsew = riscv_parse_vsew_field (vtype);
     vlmul = riscv_parse_vlmul_field (vtype);
+    vma_mutate_p = (vtype >> 31) & 0x1;
+    vta_mutate_p = (vtype >> 30) & 0x1;
   }
 
-  void set_vtype (unsigned vl, unsigned vs, bool vt, bool vm)
+  void set_vtype (unsigned vl, unsigned vs, bool vt, bool vm, bool vt_m_p,
+		  bool vm_m_p)
   {
     gcc_assert (valid_p () && !unknown_p ()
 		&& "Can't set VTYPE for uninitialized or unknown.");
@@ -947,17 +869,21 @@ public:
     vta = vt;
     vsew = vs;
     vlmul = vl;
+    vma_mutate_p = vm_m_p;
+    vta_mutate_p = vt_m_p;
   }
 
   // Encode VTYPE into the binary format used by the the VSETVLI instruction
   // which is used by our MC layer representation.
   //
-  // Bits | Name       | Description
-  // -----+------------+------------------------------------------------
-  // 7    | vma        | Vector mask agnostic
-  // 6    | vta        | Vector tail agnostic
-  // 5:3  | vsew[2:0]  | Standard element width(SEW) setting
-  // 2:0  | vlmul[2:0] | Vector register group multiplier(LMUL) setting
+  // Bits | Name                | Description
+  // -----+---------------------+------------------------------------------------
+  // 7    | vma_mutate_p        | Vector mask agnostic
+  // 6    | vta_mutate_p        | Vector tail agnostic
+  // 7    | vma                 | Vector mask agnostic
+  // 6    | vta                 | Vector tail agnostic
+  // 5:3  | vsew[2:0]           | Standard element width(SEW) setting
+  // 2:0  | vlmul[2:0]          | Vector register group multiplier(LMUL) setting
   unsigned encode_vtype () const
   {
     gcc_assert (valid_p () && !unknown_p () && !sew_lmul_ratio_only_p
@@ -968,7 +894,10 @@ public:
       vtype |= 0x40;
     if (vma)
       vtype |= 0x80;
-
+    if (vta_mutate_p)
+      vtype |= 0x40000000;
+    if (vma_mutate_p)
+      vtype |= 0x80000000;
     return vtype;
   }
 
@@ -1116,6 +1045,8 @@ public:
     sew_lmul_ratio_only_p = other.sew_lmul_ratio_only_p;
     avl = other.avl;
     avl_source = other.avl_source;
+    vma_mutate_p = other.vma_mutate_p;
+    vta_mutate_p = other.vta_mutate_p;
     return *this;
   }
 
@@ -1253,7 +1184,7 @@ fetch_def_insn (rtx_insn *rtl, const vinfo info)
 
 	  if (!def_rtl)
 	    return NULL;
-	  if (!INSN_P (def_rtl))
+	  if (!NONDEBUG_INSN_P (def_rtl))
 	    return NULL;
 
 	  return def_rtl;
@@ -1268,17 +1199,19 @@ emit_vsetvl_insn (rtx op0, rtx op1, rtx op2, rtx_insn *insn)
 {
   if (dump_file)
     {
-      fprintf (dump_file, "insert vsetvli for insn %d\n\n", INSN_UID (insn));
+      fprintf (dump_file, "insert vsetvli before insn %d\n\n", INSN_UID (insn));
       print_rtl_single (dump_file, insn);
     }
 
-  if (rtx_equal_p (op0, gen_rtx_REG (Pmode, X0_REGNUM))
-      && rtx_equal_p (op1, gen_rtx_REG (Pmode, X0_REGNUM)))
-    emit_insn_before (gen_vsetvl_zero_zero (op2), insn);
-  else if (rtx_equal_p (op0, gen_rtx_REG (Pmode, X0_REGNUM)))
-    emit_insn_before (gen_vsetvl_zero (Pmode, op1, op2), insn);
-  else
-    emit_insn_before (gen_vsetvl (Pmode, op0, op1, op2), insn);
+  rtx pat = rtx_equal_p (op0, gen_rtx_REG (Pmode, X0_REGNUM))
+	      ? gen_vsetvl_zero (Pmode, op1, op2)
+	      : gen_vsetvl (Pmode, op0, op1, op2);
+  emit_insn_before (pat, insn);
+  if (dump_file)
+    {
+      fprintf (dump_file, "the vsetvli insn pattern\n\n");
+      print_rtl_single (dump_file, pat);
+    }
 }
 
 static vinfo
@@ -1287,58 +1220,22 @@ compute_info_for_instr (rtx_insn *, vinfo);
 // Return a vinfo representing the changes made by this VSETVLI or
 // VSETIVLI instruction.
 static vinfo
-get_info_for_vsetvli (rtx_insn *insn, vinfo curr_info)
+get_info_for_vsetvli (rtx_insn *insn)
 {
   vinfo new_info;
   extract_insn_cached (insn);
-
-  if (recog_data.n_operands == 1)
+  if (vl_preserving_config_p (insn))
     {
+      if (optimize < 2)
+	return vinfo::get_unknown ();
       gcc_assert (CONST_INT_P (recog_data.operand[0])
 		  && "Invalid vtype in vsetvli instruction.");
-      if (curr_info.valid_p () && !curr_info.unknown_p ()
-	  && !curr_info.get_sew_lmul_ratio_only_p ())
-	{
-	  new_info.set_avl (curr_info.get_avl ());
-	  new_info.set_avl_source (curr_info.get_avl_source ());
-	  new_info.set_vtype (INTVAL (recog_data.operand[0]));
-	  /* if this X0, X0 vsetvli is redundant,
-	     remove it. */
-	  if (curr_info.compatible_vtype_p (insn, new_info))
-	    remove_insn (insn);
-	}
-      else
-	{
-	  if (optimize < 2)
-	    return vinfo::get_unknown ();
-	  /* vsetvli X0, X0 means that the following instruction
-	     use the same vl as before. */
-	  insn_info *next;
-	  bool find_vl_p = false;
-	  for (insn_info *curr = crtl->ssa->first_insn (); curr; curr = next)
-	    {
-	      next = curr->next_any_insn ();
-	      if (curr->rtl () == insn)
-		{
-		  gcc_assert (curr->num_defs () == 1);
-		  def_info *def = curr->defs ()[0];
-		  gcc_assert (def->regno () == VTYPE_REGNUM);
-		  set_info *set = as_a<set_info *> (def);
-		  use_info *use = set->first_use ();
-		  rtx_insn *rtl = use->insn ()->rtl ();
-		  extract_insn_cached (rtl);
-		  unsigned int offset = get_vl_offset (rtl);
-		  new_info.set_avl (
-		    recog_data.operand[recog_data.n_operands - offset]);
-		  new_info.set_avl_source (get_avl_source (
-		    recog_data.operand[recog_data.n_operands - offset], insn));
-		  find_vl_p = true;
-		}
-	    }
-	  gcc_assert (find_vl_p);
-	}
+      new_info.set_avl (recog_data.operand[1]);
+      new_info.set_avl_source (get_avl_source (recog_data.operand[1], insn));
+      new_info.set_vtype (INTVAL (recog_data.operand[0]));
       return new_info;
     }
+
   if (recog_data.n_operands == 2)
     {
       gcc_assert (CONST_INT_P (recog_data.operand[1])
@@ -1365,9 +1262,6 @@ analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
   if (!use_vl_p (insn))
     return 1;
 
-  if (recog_clobber_vl_vtype (insn) != OTHERS)
-    return 1;
-
   if (use_vlmax_p (insn))
     return 1;
   unsigned int offset = get_policy_offset (insn);
@@ -1378,6 +1272,11 @@ analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
     INTVAL (recog_data.operand[recog_data.n_operands - offset]));
   unsigned int vma_p = 0;
   unsigned int vta_p = 0;
+  unsigned int mutate_p = 0;
+  if (vma == vector_policy::any)
+    mutate_p |= 0x80000000;
+  if (vta == vector_policy::any)
+    mutate_p |= 0x40000000;
   if (vma == vector_policy::agnostic)
     vma_p = 1;
   else if (vma == vector_policy::undisturbed)
@@ -1403,7 +1302,11 @@ analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
       else
 	vta_p = 1;
     }
-  return (vma_p << 1) | vta_p;
+
+  /* Field:      31     |     30      | ......... |   1  |   0  |
+		 vma_mutate_p | vta_muate_p | ......... |  vma |  vta |
+  */
+  return (vma_p << 1) | vta_p | mutate_p;
 }
 
 static vinfo
@@ -1412,12 +1315,9 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
   vinfo info;
 
   extract_insn_cached (insn);
-
   if (use_vl_p (insn))
     {
-      if (recog_clobber_vl_vtype (insn) != OTHERS)
-	info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
-      else if (use_vlmax_p (insn))
+      if (use_vlmax_p (insn))
 	info.set_avl (gen_rtx_REG (Pmode, X0_REGNUM));
       else
 	{
@@ -1438,7 +1338,9 @@ compute_info_for_instr (rtx_insn *insn, vinfo curr_info)
   unsigned int vma = (vma_vta >> 1) & 0x1;
   info.set_vtype (riscv_classify_vlmul_field (mode),
 		  riscv_classify_vsew_field (mode),
-		  /*TailAgnostic*/ vta, /*MaskAgnostic*/ vma);
+		  /*TailAgnostic*/ vta, /*MaskAgnostic*/ vma,
+		  /*TailAgnostic can muate*/ false,
+		  /*MaskAgnostic can muate*/ false);
 
   return info;
 }
@@ -1469,7 +1371,8 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
       && require.has_nonzero_avl ())
     {
       extract_insn_cached (insn);
-      if (rtx_equal_p (recog_data.operand[1], const0_rtx)
+      if (rtx_equal_p (recog_data.operand[1],
+		       CONST0_RTX (GET_MODE (recog_data.operand[1])))
 	  && curr_info.get_sew () >= require.get_sew ())
 	return false;
       if (curr_info.sew_equal_p (require) && curr_info.policy_equal_p (require))
@@ -1491,7 +1394,7 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
 	{
 	  if (vector_config_instr_p (def_rtl))
 	    {
-	      vinfo def_info = get_info_for_vsetvli (def_rtl, curr_info);
+	      vinfo def_info = get_info_for_vsetvli (def_rtl);
 	      if (def_info.avl_equal_p (curr_info)
 		  && def_info.vlmax_equal_p (curr_info))
 		return false;
@@ -1569,7 +1472,7 @@ need_vsetvli_phi (const vinfo &new_info, rtx_insn *rtl)
 
 	      if (!def_rtl)
 		return true;
-	      if (!INSN_P (def_rtl))
+	      if (!NONDEBUG_INSN_P (def_rtl))
 		return true;
 	      extract_insn_cached (def_rtl);
 	      if (recog_data.n_operands > 0
@@ -1589,8 +1492,7 @@ need_vsetvli_phi (const vinfo &new_info, rtx_insn *rtl)
 		      // We found a VSET(I)VLI make sure it matches the
 		      // output of the predecessor block.
 		      vinfo curr_info;
-		      vinfo avl_def_info
-			= get_info_for_vsetvli (def_rtl, curr_info);
+		      vinfo avl_def_info = get_info_for_vsetvli (def_rtl);
 		      if (!avl_def_info.vtype_equal_p (info.exit)
 			  || !avl_def_info.avl_equal_p (info.exit))
 			return true;
@@ -1642,16 +1544,10 @@ transfer_before (vinfo &info, rtx_insn *insn)
       return;
     }
 
-  // Two cases involving an AVL resulting from a previous vsetvli.
-  // 1) If the AVL is the result of a previous vsetvli which has the
-  //    same AVL and VLMAX as our current state, we can reuse the AVL
-  //    from the current state for the new one.  This allows us to
-  //    generate 'vsetvli x0, x0, vtype" or possible skip the transition
-  //    entirely.
-  // 2) If AVL is defined by a vsetvli with the same VLMAX, we can
-  //    replace the AVL operand with the AVL of the defining vsetvli.
-  //    We avoid general register AVLs to avoid extending live ranges
-  //    without being sure we can kill the original source reg entirely.
+  // If AVL is defined by a vsetvli with the same VLMAX, we can
+  // replace the AVL operand with the AVL of the defining vsetvli.
+  // We avoid general register AVLs to avoid extending live ranges
+  // without being sure we can kill the original source reg entirely.
   if (!info.avl_reg_p ()
       || (!reload_completed && HARD_REGISTER_NUM_P (REGNO (info.get_avl ()))))
     return;
@@ -1659,15 +1555,7 @@ transfer_before (vinfo &info, rtx_insn *insn)
   if (!def_insn || !vector_config_instr_p (def_insn))
     return;
 
-  vinfo def_info = get_info_for_vsetvli (def_insn, vinfo::get_unknown ());
-  // case 1
-  if (prev_info.valid_p () && !prev_info.unknown_p ()
-      && def_info.avl_equal_p (prev_info) && def_info.vlmax_equal_p (prev_info))
-    {
-      info.set_avl (prev_info.get_avl ());
-      return;
-    }
-  // case 2
+  vinfo def_info = get_info_for_vsetvli (def_insn);
   if (def_info.vlmax_equal_p (info)
       && (def_info.avl_const_p ()
 	  || (def_info.avl_reg_p ()
@@ -1687,19 +1575,19 @@ transfer_after (vinfo &info, rtx_insn *insn)
 {
   if (vector_config_instr_p (insn))
     {
-      info = get_info_for_vsetvli (insn, info);
+      info = get_info_for_vsetvli (insn);
       return;
     }
 
   if (fault_first_load_p (insn))
     {
       // Update AVL to vl-output of the fault first load.
-      rtx_insn *next_insn;
+      rtx_insn *next_insn = NEXT_INSN (insn);
       rtx new_vl = NULL_RTX;
       extract_insn_cached (insn);
       rtx dest = recog_data.operand[0];
       basic_block bb = BLOCK_FOR_INSN (insn);
-      for (next_insn = NEXT_INSN (insn); next_insn != NEXT_INSN (BB_END (bb));
+      for (; next_insn && next_insn != NEXT_INSN (BB_END (bb));
 	   next_insn = NEXT_INSN (next_insn))
 	{
 	  if (readvl_p (next_insn))
@@ -1707,11 +1595,14 @@ transfer_after (vinfo &info, rtx_insn *insn)
 	      extract_insn_cached (next_insn);
 	      rtx source = recog_data.operand[1];
 	      if (rtx_equal_p (source, dest))
-		new_vl = recog_data.operand[0];
+		{
+		  new_vl = recog_data.operand[0];
+		  break;
+		}
 	    }
 	}
       if (new_vl)
-	info.set_avl (recog_data.operand[recog_data.n_operands - 2]);
+	info.set_avl (new_vl);
       return;
     }
 
@@ -1824,25 +1715,18 @@ insert_vsetvli (rtx_insn *insn, const vinfo &curr_info, const vinfo &prev_info)
   rtx vtype = GEN_INT (curr_info.encode_vtype ());
   rtx zero = gen_rtx_REG (Pmode, X0_REGNUM);
 
-  if (recog_clobber_vl_vtype (insn) == MOV_CLOBBER_REG_MEM
-      || recog_clobber_vl_vtype (insn) == MOV_CLOBBER_MEM_REG)
-    {
-      gcc_assert (
-	reload_completed
-	&& rtx_equal_p (curr_info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM)));
-      avl = recog_data.operand[2];
-      PUT_MODE (avl, Pmode);
-      emit_vsetvl_insn (avl, gen_rtx_REG (Pmode, X0_REGNUM), vtype, insn);
-      return;
-    }
-
   // Use X0, X0 form if the AVL is the same and the SEW+LMUL gives the same
   // VLMAX
   if (prev_info.valid_p () && !prev_info.unknown_p ()
       && curr_info.avl_equal_p (prev_info)
       && curr_info.vlmax_equal_p (prev_info))
     {
-      emit_vsetvl_insn (zero, zero, vtype, insn);
+      if (curr_info.get_avl () != NULL_RTX)
+	emit_insn_before (gen_vsetvl_zero_zero (Pmode, vtype,
+						curr_info.get_avl ()),
+			  insn);
+      else
+	emit_vsetvl_insn (zero, GEN_INT (0), vtype, insn);
       return;
     }
 
@@ -1850,63 +1734,40 @@ insert_vsetvli (rtx_insn *insn, const vinfo &curr_info, const vinfo &prev_info)
     {
       if (prev_info.valid_p () && !prev_info.unknown_p ()
 	  && curr_info.vlmax_equal_p (prev_info))
-	{
-	  emit_vsetvl_insn (zero, zero, vtype, insn);
-	  return;
-	}
+	emit_insn_before (gen_vsetvl_zero_zero (Pmode, vtype,
+						prev_info.get_avl ()),
+			  insn);
       // Otherwise use an AVL of 0 to avoid depending on previous vl.
       emit_vsetvl_insn (zero, GEN_INT (0), vtype, insn);
       return;
     }
 
-  if (rtx_equal_p (curr_info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM)))
+  if (rtx_equal_p (curr_info.get_avl (), zero))
     {
       if (reload_completed)
-	avl = gen_rtx_REG (Pmode, X0_REGNUM);
+	{
+	  /* If ratio is the same, it's safe to use vsetvli x0,x0. */
+	  if (prev_info.valid_p () && !prev_info.unknown_p ()
+	      && curr_info.avl_equal_p (prev_info)
+	      && curr_info.vlmax_equal_p (prev_info))
+	    emit_insn_before (gen_vsetvl_zero_zero (Pmode, vtype, const0_rtx),
+			      insn);
+	  else
+	    {
+	      avl = recog_data.operand[recog_data.n_operands - 1];
+	      PUT_MODE (avl, Pmode);
+	      gcc_assert (
+		HARD_REGISTER_P (avl)
+		&& !rtx_equal_p (avl, gen_rtx_REG (Pmode, X0_REGNUM)));
+	    }
+	}
       else
 	avl = gen_reg_rtx (Pmode);
-      emit_vsetvl_insn (avl, gen_rtx_REG (Pmode, X0_REGNUM), vtype, insn);
+      emit_vsetvl_insn (avl, zero, vtype, insn);
       return;
     }
 
   emit_vsetvl_insn (zero, avl, vtype, insn);
-}
-
-static void
-cleanup_insn_op (rtx_insn *insn)
-{
-  if (!reload_completed)
-    return;
-
-  /* 1.Remove the vl operand for every rvv instruction.
-     2.Replace every reload register spilling rvv instruction. */
-  rtx pat;
-  extract_insn_cached (insn);
-  machine_mode mode = riscv_translate_attr_mode (insn);
-  if (recog_clobber_vl_vtype (insn) == MOV_CLOBBER_REG_MEM)
-    {
-      if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
-	pat = gen_vlm (mode, recog_data.operand[0],
-		       XEXP (recog_data.operand[1], 0), const0_rtx, const0_rtx);
-      else
-	pat = gen_vle (mode, recog_data.operand[0], const0_rtx, const0_rtx,
-		       XEXP (recog_data.operand[1], 0), const0_rtx, const0_rtx);
-
-      validate_change (insn, &PATTERN (insn), pat, false);
-    }
-  else if (recog_clobber_vl_vtype (insn) == MOV_CLOBBER_MEM_REG)
-    {
-      if (GET_MODE_CLASS (mode) == MODE_VECTOR_BOOL)
-	pat = gen_vsm (mode, XEXP (recog_data.operand[0], 0),
-		       recog_data.operand[1], const0_rtx, const0_rtx);
-      else
-	pat = gen_vse (mode, const0_rtx, XEXP (recog_data.operand[0], 0),
-		       recog_data.operand[1], const0_rtx, const0_rtx);
-
-      validate_change (insn, &PATTERN (insn), pat, false);
-    }
-  else
-    replace_op (insn, const0_rtx, REPLACE_VL);
 }
 
 static void
@@ -1939,14 +1800,11 @@ emit_vsetvlis (const basic_block bb)
 	      // are correct.  Note that we *do* need to model the state as if
 	      // it changed as while the register contents are unchanged, the
 	      // abstract model can change.
-	      if (!prefix_transparent || need_vsetvli_phi (curr_info, insn))
+	      if ((!prefix_transparent || need_vsetvli_phi (curr_info, insn)))
 		insert_vsetvli (insn, curr_info, prev_info);
 	      prefix_transparent = false;
 	    }
-
-	  cleanup_insn_op (insn);
 	}
-
       // If this is something updates VL/VTYPE that we don't know about, set
       // the state to unknown.
       if (update_vl_vtype_p (insn))
@@ -1956,7 +1814,7 @@ emit_vsetvlis (const basic_block bb)
 
       // If we reach the end of the block and our current info doesn't match the
       // expected info, insert a vsetvli to correct.
-      if (insn == BB_END (bb))
+      if (!reload_completed && insn == BB_END (bb))
 	{
 	  const vinfo exit_info = bb_vinfo_map.at (bb->index).exit;
 	  if (curr_info.valid_p () && exit_info.valid_p ()
@@ -1977,9 +1835,11 @@ static bool
 can_mutate_prior_config (rtx_insn *prev_insn, rtx_insn *insn,
 			 const demanded_fields &used)
 {
+  bool preserve_insn_p = vl_preserving_config_p (insn);
+  bool preserve_prev_insn_p = vl_preserving_config_p (prev_insn);
   // TODO: Extend this to handle cases where VL does change, but VL
   // has not been used.  (e.g. over a vmv.x.s)
-  if (!vl_preserving_config_p (insn))
+  if (!preserve_insn_p)
     // Note: `vsetvli x0, x0, vtype' is the canonical instruction
     // for this case.  If you find yourself wanting to add other forms
     // to this "unused VTYPE" case, we're probably missing a
@@ -1987,14 +1847,18 @@ can_mutate_prior_config (rtx_insn *prev_insn, rtx_insn *insn,
     return false;
 
   extract_insn_cached (prev_insn);
-  auto prior_vtype = recog_data.operand[recog_data.n_operands - 1];
+  auto prior_vtype = preserve_prev_insn_p
+		       ? recog_data.operand[0]
+		       : recog_data.operand[recog_data.n_operands - 1];
   extract_insn_cached (insn);
-  auto vtype = recog_data.operand[recog_data.n_operands - 1];
+  auto vtype = preserve_insn_p ? recog_data.operand[0]
+			       : recog_data.operand[recog_data.n_operands - 1];
 
   if (!CONST_INT_P (prior_vtype) || !CONST_INT_P (vtype))
     return false;
 
-  return are_compatible_vtypes (INTVAL (prior_vtype), INTVAL (vtype), used);
+  return are_compatible_vtypes (INTVAL (prior_vtype), INTVAL (vtype), used,
+				true);
 }
 
 static void
@@ -2016,14 +1880,18 @@ dolocalpostpass (const basic_block bb)
       extract_insn_cached (insn);
       if (prev_insn)
 	{
-	  if (!used.vl && !used.used_vtype ())
+	  if (!used.vl && !used.used_vtype ()
+	      && !(vl_preserving_config_p (insn)
+		   && !vl_preserving_config_p (prev_insn)))
 	    {
 	      to_delete.push_back (prev_insn);
 	      // fallthrough
 	    }
 	  else if (can_mutate_prior_config (prev_insn, insn, used))
 	    {
-	      rtx new_vtype = recog_data.operand[recog_data.n_operands - 1];
+	      rtx new_vtype = vl_preserving_config_p (insn)
+				? recog_data.operand[0]
+				: recog_data.operand[recog_data.n_operands - 1];
 	      replace_op (prev_insn, new_vtype, REPLACE_VTYPE);
 	      to_delete.push_back (insn);
 	      // Leave prev_insn unchanged
@@ -2032,7 +1900,6 @@ dolocalpostpass (const basic_block bb)
 	}
       prev_insn = insn;
       used = get_demanded (insn);
-
       rtx vdef = recog_data.operand[0];
       if (!rtx_equal_p (vdef, gen_rtx_REG (Pmode, X0_REGNUM))
 	  && !find_reg_note (insn, REG_UNUSED, vdef))
@@ -2076,6 +1943,9 @@ has_fixed_result (const vinfo &info)
 static void
 dopre (const basic_block bb)
 {
+  if (reload_completed)
+    return;
+
   if (!bb_vinfo_map[bb->index].pred.unknown_p ())
     return;
 
@@ -2153,6 +2023,138 @@ dopre (const basic_block bb)
   insert_vsetvli (insert_pt, available_info, old_info);
 }
 
+/* Combine subreg instruction move. */
+static void
+combine_subreg (insn_info *insn)
+{
+  if (insn->is_artificial ())
+    return;
+
+  rtx_insn *rtl = insn->rtl ();
+
+  if (!vector_insn_p (rtl))
+    return;
+
+  if (GET_CODE (PATTERN (rtl)) != PARALLEL)
+    return;
+
+  if (insn->defs ().size () > 2)
+    return;
+
+  set_info *set = is_a<set_info *> (insn->defs ()[0])
+		    ? as_a<set_info *> (insn->defs ()[0])
+		    : as_a<set_info *> (insn->defs ()[1]);
+
+  int num = 0;
+  use_info *use;
+  for (use_info *u : set->all_uses ())
+    {
+      if (u->is_live_out_use ())
+	return;
+      if (!u->is_reg ())
+	return;
+      if (!u->is_in_any_insn ())
+	return;
+      if (u->insn ()->is_artificial ())
+	return;
+      if (!vector_insn_p (u->insn ()->rtl ()))
+	return;
+      use = u;
+      num++;
+    }
+
+  if (num != 1)
+    return;
+  extract_insn_cached (use->insn ()->rtl ());
+  if (recog_data.n_operands != 2)
+    return;
+  rtx pat = PATTERN (use->insn ()->rtl ());
+  if (GET_CODE (pat) != SET)
+    return;
+  rtx dest = SET_DEST (pat);
+  rtx src = SET_SRC (pat);
+  if (!rtx_equal_p (dest, recog_data.operand[0]))
+    return;
+  if (!rtx_equal_p (src, recog_data.operand[1]))
+    return;
+  if (!SUBREG_P (recog_data.operand[0]))
+    return;
+  if (!REG_P (SUBREG_REG (recog_data.operand[0])))
+    return;
+  if (set->regno () != REGNO (recog_data.operand[1]))
+    return;
+
+  unsigned int regno = REGNO (SUBREG_REG (recog_data.operand[0]));
+  auto attempt = crtl->ssa->new_change_attempt ();
+  insn_change change (insn);
+  // The instruction initially defines just two registers.  recog can add
+  // extra clobbers if necessary.
+  auto_vec<access_info *> new_defs;
+  auto_vec<access_info *> new_uses;
+  for (def_info *d : insn->defs ())
+    if (!is_a<set_info *> (d))
+      new_defs.safe_push (d);
+  for (use_info *u : use->insn ()->uses ())
+    if (u->regno () == regno)
+      new_uses.safe_push (u);
+  new_defs.safe_push (use->insn ()->defs ()[0]);
+  sort_accesses (new_defs);
+  change.new_defs = def_array (access_array (new_defs));
+  change.new_uses = merge_access_arrays (
+    attempt,
+    remove_note_accesses (attempt, use_array (access_array (new_uses))),
+    remove_note_accesses (attempt, insn->uses ()));
+  change.move_range = insn->ebb ()->insn_range ();
+  if (!change.new_defs.is_valid ())
+    return;
+  if (!change.new_uses.is_valid ())
+    return;
+  auto other_change = insn_change::delete_insn (use->insn ());
+  insn_change *changes[] = {&other_change, &change};
+  if (!restrict_movement_ignoring (change, insn_is_changing (changes)))
+    return;
+
+  insn_change_watermark watermark;
+  if (dump_file)
+    {
+      fprintf (dump_file, "Change\n\n");
+      print_rtl_single (dump_file, PATTERN (rtl));
+    }
+  rtx replacement = recog_data.operand[0];
+  extract_insn (rtl);
+  validate_change (rtl, recog_data.operand_loc[0], replacement, true);
+  if (dump_file)
+    {
+      fprintf (dump_file, "into\n\n");
+      print_rtl_single (dump_file, rtl);
+    }
+  if (!recog (attempt, change) || !change_is_worthwhile (change))
+    return;
+
+  remove_reg_equal_equiv_notes (rtl);
+  confirm_change_group ();
+  crtl->ssa->change_insns (changes);
+}
+
+/* Because RVV patterns contain a clobber value which makes
+   combine fails in the combine pass. This function combine
+   rvv instructions for optimization. */
+static void
+combine_instructions (void)
+{
+  if (dump_file)
+    fprintf (dump_file, "\nEntering Combine RVV instructions for %s\n\n",
+	     current_function_name ());
+
+  insn_info *next;
+  for (insn_info *insn = crtl->ssa->first_insn (); insn; insn = next)
+    {
+      next = insn->next_any_insn ();
+      if (insn->can_be_optimized ())
+	combine_subreg (insn);
+    }
+}
+
 static unsigned int
 rest_of_handle_insert_vsetvli (function *fn)
 {
@@ -2219,6 +2221,9 @@ rest_of_handle_insert_vsetvli (function *fn)
       return 0;
     }
 
+  if (!reload_completed && optimize >= 2)
+    combine_instructions ();
+
   if (dump_file)
     fprintf (dump_file,
 	     "Phase 2 determine the exit VL/VTYPE from each block:\n");
@@ -2265,16 +2270,30 @@ rest_of_handle_insert_vsetvli (function *fn)
   // For the non X0, X0 variant, we can replace the destination register
   // with X0 to reduce register pressure.  This is really a generic
   // optimization which can be applied to any dead def (TODO: generalize).
-  if (!reload_completed)
+  FOR_ALL_BB_FN (bb, fn)
     {
-      FOR_ALL_BB_FN (bb, fn)
+      rtx_insn *insn = NULL;
+      vinfo curr_info;
+      rtx x = reload_completed ? const0_rtx : gen_reg_rtx (Pmode);
+      FOR_BB_INSNS (bb, insn)
 	{
-	  rtx_insn *insn = NULL;
-	  FOR_BB_INSNS (bb, insn)
+	  if (vector_config_instr_p (insn))
 	    {
-	      if (vector_config_instr_p (insn))
+	      extract_insn_cached (insn);
+	      vinfo new_info = get_info_for_vsetvli (insn);
+	      if (curr_info == new_info && recog_data.n_operands != 3)
 		{
-		  extract_insn_cached (insn);
+		  rtx_insn *next_insn = NEXT_INSN (insn);
+		  remove_insn (insn);
+		  insn = next_insn;
+		}
+	      else
+		{
+		  curr_info = new_info;
+		  if (reload_completed && recog_data.n_operands == 2
+		      && GET_CODE (PATTERN (insn)) == SET)
+		    validate_change (insn, recog_data.operand_loc[1],
+				     CONST0_RTX (Pmode), false);
 		  if (recog_data.n_operands == 3
 		      && !rtx_equal_p (recog_data.operand[0],
 				       gen_rtx_REG (Pmode, X0_REGNUM))
@@ -2288,7 +2307,14 @@ rest_of_handle_insert_vsetvli (function *fn)
 		      validate_change (insn, &PATTERN (insn), pat, false);
 		    }
 		}
+	      continue;
 	    }
+	  // If this is something that updates VL/VTYPE that we don't know
+	  // about, set the state to unknown.
+	  if (update_vl_vtype_p (insn))
+	    curr_info = vinfo::get_unknown ();
+	  if (use_vtype_p (insn))
+	    replace_op (insn, x, REPLACE_VL);
 	}
     }
 
@@ -2363,9 +2389,11 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return TARGET_VECTOR; }
+  virtual bool gate (function *) { return TARGET_VECTOR && reload_completed; }
   virtual unsigned int execute (function *fn)
   {
+    compute_bb_for_insn ();
+    split_all_insns ();
     return rest_of_handle_insert_vsetvli (fn);
   }
 

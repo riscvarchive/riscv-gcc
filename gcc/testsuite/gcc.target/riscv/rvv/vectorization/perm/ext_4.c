@@ -191,9 +191,9 @@ sf_ext_d_31 (v32sf x)
 }
 
 /* { dg-final { scan-assembler-times {\tvslide1down.vx} 7 } } */
-/* { dg-final { scan-assembler-times {\tvslidedown.vx} 4 } } */
+/* { dg-final { scan-assembler-times {\tvslidedown.vx} 3 } } */
 /* { dg-final { scan-assembler-times {\tvslide1up.vx} 6 } } */
 /* { dg-final { scan-assembler-times {\tvfslide1down.vf} 3 } } */
-/* { dg-final { scan-assembler-times {\tvslideup.vx} 2 } } */
+/* { dg-final { scan-assembler-times {\tvslideup.vx} 0 } } */
 /* { dg-final { scan-assembler-times {\tvcompress.vm} 2 } } */
 /* { dg-final { scan-assembler-times {\tvfslide1up.vf} 1 } } */

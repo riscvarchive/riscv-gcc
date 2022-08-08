@@ -305,11 +305,7 @@
   (and (match_code "const_vector")
        (match_test "const_vec_duplicate_p (op) 
          && CONST_VECTOR_ELT (op, 0) == CONST0_RTX (GET_MODE (CONST_VECTOR_ELT (op, 0)))")))
-
-(define_predicate "vector_reg_or_const_vector_0_operand"
-  (ior (match_operand 0 "const_vector_0_operand")
-       (match_operand 0 "register_operand")))       
-       
+   
 (define_predicate "vector_move_operand"
   (ior (match_operand 0 "nonimmediate_operand")
       (match_code "const_vector")))

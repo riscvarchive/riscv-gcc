@@ -1057,6 +1057,12 @@ function_builder::expand_builtin_insn (enum insn_code icode, tree exp,
   if (pred != PRED_none)
     create_input_operand (&ops[opno++], GEN_INT (get_policy (pred)), Pmode);
 
+  /* Clobber a scalar for vsetvli use. We know that for intrinsic use, we
+     can never have "zero" as vl, so we don't need to clobber a true scalar
+     register. */
+  if (this->has_vl_arg_p ())
+    create_output_operand (&ops[opno++], gen_reg_rtx (Pmode), Pmode);
+
   /* Map the arguments to the other operands.  */
   gcc_assert (opno == insn_data[icode].n_generator_args);
   return generate_builtin_insn (icode, opno, ops,
@@ -1156,6 +1162,12 @@ function_builder::has_mask_arg_p (enum predication_index pred) const
 	 || pred == PRED_tama || pred == PRED_tamu || pred == PRED_tuma
 	 || pred == PRED_tumu || pred == PRED_ma || pred == PRED_mu
 	 || (pat & PAT_merge);
+}
+
+bool
+function_builder::has_vl_arg_p () const
+{
+  return true;
 }
 
 bool
@@ -1573,6 +1585,12 @@ config::get_return_type (const function_instance &) const
   return size_type_node;
 }
 
+bool
+config::has_vl_arg_p () const
+{
+  return false;
+}
+
 /* A function implementation for vsetvl builder */
 void
 vsetvl::get_argument_types (const function_instance &,
@@ -1662,6 +1680,12 @@ readvl::get_argument_types (const function_instance &instance,
   argument_types.quick_push (get_dt_t_with_index (instance, 0));
 }
 
+bool
+readvl::has_vl_arg_p () const
+{
+  return false;
+}
+
 rtx
 readvl::expand (const function_instance &, tree exp, rtx target) const
 {
@@ -1681,46 +1705,6 @@ readvl::expand (const function_instance &, tree exp, rtx target) const
   gcc_assert (opno == insn_data[icode].n_generator_args);
   return generate_builtin_insn (icode, opno, ops,
 				!function_returns_void_p (fndecl));
-}
-
-/* A function implementation for handle_store_pointer functions.  */
-unsigned int
-handle_store_pointer::call_properties () const
-{
-  return CP_WRITE_MEMORY;
-}
-
-char *
-handle_store_pointer::assemble_name (function_instance &instance)
-{
-  machine_mode mode = instance.get_arg_pattern ().arg_list[0];
-  const char *name = instance.get_base_name ();
-  const char *dt = mode2data_type_str (mode, true, false);
-  snprintf (instance.function_name, NAME_MAXLEN, "%s%s", name, dt);
-  return nullptr;
-}
-
-void
-handle_store_pointer::get_argument_types (const function_instance &,
-					  vec<tree> &argument_types) const
-{
-  argument_types.quick_push (build_pointer_type (size_type_node));
-  argument_types.quick_push (size_type_node);
-}
-
-rtx
-handle_store_pointer::expand (const function_instance &, tree exp, rtx) const
-{
-  tree arg0 = CALL_EXPR_ARG (exp, 0);
-  tree arg1 = CALL_EXPR_ARG (exp, 1);
-  rtx op0 = expand_normal (arg0);
-  rtx op1 = expand_normal (arg1);
-  /* If the pointer is const0_rtx meaning that user is passing a NULL pointer to
-     the argument. In this case, we discard the argument and to nothing.
-     Otherwise, we store the pointer.*/
-  if (!rtx_equal_p (op0, const0_rtx))
-    riscv_emit_move (gen_rtx_MEM (GET_MODE (op1), op0), op1);
-  return const0_rtx;
 }
 
 /* A function implementation for Miscellaneous functions.  */
@@ -1746,6 +1730,12 @@ misc::get_argument_types (const function_instance &instance,
 			  vec<tree> &argument_types) const
 {
   argument_types.quick_push (get_dt_t_with_index (instance, 1));
+}
+
+bool
+misc::has_vl_arg_p () const
+{
+  return false;
 }
 
 /* A function implementation for vreinterpret functions.  */
@@ -1855,16 +1845,18 @@ vset::expand (const function_instance &, tree exp, rtx target) const
   tree arg0 = CALL_EXPR_ARG (exp, 0);
   tree arg1 = CALL_EXPR_ARG (exp, 1);
   tree arg2 = CALL_EXPR_ARG (exp, 2);
-	rtx op0 = expand_normal (arg0);
+  rtx op0 = expand_normal (arg0);
   rtx op1 = expand_normal (arg1);
   rtx op2 = expand_normal (arg2);
   target = force_reg (GET_MODE (target), target);
   unsigned int nvecs = exact_div (GET_MODE_SIZE (GET_MODE (target)),
-        GET_MODE_SIZE (GET_MODE (op2))).to_constant ();
-  poly_int64 offset = (INTVAL (op1) & (nvecs - 1))
-        * GET_MODE_SIZE (GET_MODE (op2));
+				  GET_MODE_SIZE (GET_MODE (op2)))
+			 .to_constant ();
+  poly_int64 offset
+    = (INTVAL (op1) & (nvecs - 1)) * GET_MODE_SIZE (GET_MODE (op2));
   riscv_emit_move (target, op0);
-  rtx subreg = simplify_gen_subreg (GET_MODE (op2), target, GET_MODE (target), offset);
+  rtx subreg
+    = simplify_gen_subreg (GET_MODE (op2), target, GET_MODE (target), offset);
   riscv_emit_move (subreg, op2);
   return target;
 }
@@ -1904,12 +1896,13 @@ vget::expand (const function_instance &, tree exp, rtx target) const
 {
   tree arg0 = CALL_EXPR_ARG (exp, 0);
   tree arg1 = CALL_EXPR_ARG (exp, 1);
-	rtx op0 = expand_normal (arg0);
+  rtx op0 = expand_normal (arg0);
   rtx op1 = expand_normal (arg1);
   unsigned int nvecs = exact_div (GET_MODE_SIZE (GET_MODE (op0)),
-        GET_MODE_SIZE (GET_MODE (target))).to_constant ();
-  poly_int64 offset = (INTVAL (op1) & (nvecs - 1))
-        * GET_MODE_SIZE (GET_MODE (target));      
+				  GET_MODE_SIZE (GET_MODE (target)))
+			 .to_constant ();
+  poly_int64 offset
+    = (INTVAL (op1) & (nvecs - 1)) * GET_MODE_SIZE (GET_MODE (target));
   return simplify_gen_subreg (GET_MODE (target), op0, GET_MODE (op0), offset);
 }
 
@@ -2509,18 +2502,15 @@ vleff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
 
   gimple *g = gimple_build_call (decl, 1, lhs);
   gimple_call_set_lhs (g, var);
-  snprintf (resolver, NAME_MAXLEN, "handle_store_pointer%s",
-	    mode2data_type_str (Pmode, true, false));
-  function_instance fn_instance2 (resolver);
-  hashval_t hashval2 = fn_instance2.hash ();
-  registered_function *rfn_slot2
-    = function_table->find_with_hash (fn_instance2, hashval2);
-  tree decl2 = rfn_slot2->decl;
-  gimple *g2 = gimple_build_call (
-    decl2, 2,
-    gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset), var);
 
-  gsi_insert_after (gsi_in, g2, GSI_SAME_STMT);
+  tree indirect
+    = fold_build2 (MEM_REF, size_type_node,
+		   gimple_call_arg (call_in,
+				    gimple_call_num_args (call_in) - offset),
+		   build_int_cst (build_pointer_type (size_type_node), 0));
+  gassign *assign = gimple_build_assign (indirect, var);
+
+  gsi_insert_after (gsi_in, assign, GSI_SAME_STMT);
   gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
 
   return repl;
@@ -2666,19 +2656,16 @@ vlsegff::fold (const function_instance &instance, gimple_stmt_iterator *gsi_in,
     = function_table->find_with_hash (fn_instance, hashval);
   tree decl = rfn_slot->decl;
   gimple *g = gimple_build_call (decl, 1, lhs);
+  gimple_call_set_lhs (g, var);
 
-  snprintf (resolver, NAME_MAXLEN, "handle_store_pointer%s",
-	    mode2data_type_str (Pmode, true, false));
-  function_instance fn_instance2 (resolver);
-  hashval_t hashval2 = fn_instance2.hash ();
-  registered_function *rfn_slot2
-    = function_table->find_with_hash (fn_instance2, hashval2);
-  tree decl2 = rfn_slot2->decl;
-  gimple *g2 = gimple_build_call (
-    decl2, 2,
-    gimple_call_arg (call_in, gimple_call_num_args (call_in) - offset), var);
+  tree indirect
+    = fold_build2 (MEM_REF, size_type_node,
+		   gimple_call_arg (call_in,
+				    gimple_call_num_args (call_in) - offset),
+		   build_int_cst (build_pointer_type (size_type_node), 0));
+  gassign *assign = gimple_build_assign (indirect, var);
 
-  gsi_insert_after (gsi_in, g2, GSI_SAME_STMT);
+  gsi_insert_after (gsi_in, assign, GSI_SAME_STMT);
   gsi_insert_after (gsi_in, g, GSI_SAME_STMT);
 
   return repl;
@@ -5314,6 +5301,12 @@ vmv_x_s::assemble_name (function_instance &instance)
   return finish_name ();
 }
 
+bool
+vmv_x_s::has_vl_arg_p () const
+{
+  return false;
+}
+
 rtx
 vmv_x_s::expand (const function_instance &instance, tree exp, rtx target) const
 {
@@ -5349,6 +5342,12 @@ vfmv_f_s::assemble_name (function_instance &instance)
   intrinsic_naming_rule_2 (instance, 0, 1);
   append_name ("vfmv_f");
   return finish_name ();
+}
+
+bool
+vfmv_f_s::has_vl_arg_p () const
+{
+  return false;
 }
 
 rtx

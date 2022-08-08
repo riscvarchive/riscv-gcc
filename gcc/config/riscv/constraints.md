@@ -110,7 +110,7 @@
 (define_constraint "vc"
   "Any vector duplicate constant."
   (and (match_code "const_vector")
-       (match_test "const_vec_duplicate_p (op)")))
+       (match_test "rtx_equal_p (op, CONST0_RTX (GET_MODE (op)))")))
 
 (define_constraint "vp"
   "POLY_INT"

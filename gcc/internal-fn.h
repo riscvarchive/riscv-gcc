@@ -216,6 +216,7 @@ extern bool set_edom_supported_p (void);
 extern internal_fn get_conditional_internal_fn (tree_code);
 extern internal_fn get_conditional_internal_fn (internal_fn);
 extern internal_fn get_with_length_internal_fn (tree_code);
+extern internal_fn get_with_length_internal_fn (internal_fn);
 extern internal_fn get_with_length_tail_internal_fn (tree_code);
 extern internal_fn get_with_length_shift_internal_fn (tree_code, bool);
 extern internal_fn get_length_conversion_internal_fn (tree_code, tree, tree);

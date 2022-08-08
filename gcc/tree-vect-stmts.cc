@@ -3505,6 +3505,7 @@ vectorizable_call (vec_info *vinfo,
   int reduc_idx = STMT_VINFO_REDUC_IDX (stmt_info);
   internal_fn cond_fn = get_conditional_internal_fn (ifn);
   vec_loop_masks *masks = (loop_vinfo ? &LOOP_VINFO_MASKS (loop_vinfo) : NULL);
+  vec_loop_lens *lens = (loop_vinfo ? &LOOP_VINFO_LENS (loop_vinfo) : NULL);
   if (!vec_stmt) /* transformation not required.  */
     {
       if (slp_node)
@@ -3550,8 +3551,11 @@ vectorizable_call (vec_info *vinfo,
 	      tree scalar_mask = NULL_TREE;
 	      if (mask_opno >= 0)
 		scalar_mask = gimple_call_arg (stmt_info->stmt, mask_opno);
-	      vect_record_loop_mask (loop_vinfo, masks, nvectors,
-				     vectype_out, scalar_mask);
+        if (targetm.vectorize.loop_len_override_mask ())
+          vect_record_loop_len (loop_vinfo, lens, nvectors, vectype_out, 1);
+        else
+	        vect_record_loop_mask (loop_vinfo, masks, nvectors,
+				       vectype_out, scalar_mask);
 	    }
 	}
       return true;
@@ -3567,6 +3571,7 @@ vectorizable_call (vec_info *vinfo,
   vec_dest = vect_create_destination_var (scalar_dest, vectype_out);
 
   bool masked_loop_p = loop_vinfo && LOOP_VINFO_FULLY_MASKED_P (loop_vinfo);
+  bool len_loop_p = loop_vinfo && LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo);
   unsigned int vect_nargs = nargs;
   if (masked_loop_p && reduc_idx >= 0)
     {
@@ -3601,6 +3606,16 @@ vectorizable_call (vec_info *vinfo,
 		      vargs[varg++] = vect_get_loop_mask (gsi, masks, vec_num,
 							  vectype_out, i);
 		    }
+      if (len_loop_p
+			  && get_with_length_internal_fn (ifn) != IFN_LAST)
+			{
+        unsigned int vec_num = vec_oprnds0.length ();
+			  tree len
+			    = vect_get_loop_len (gsi, loop_vinfo, lens,
+						 vec_num, vectype_out, i);
+			  vargs.safe_push (len);
+        ifn = get_with_length_internal_fn (ifn);
+			}
 		  size_t k;
 		  for (k = 0; k < nargs; k++)
 		    {
@@ -3645,7 +3660,7 @@ vectorizable_call (vec_info *vinfo,
 			    (loop_vinfo, TREE_TYPE (mask), mask,
 			     vargs[mask_opno], gsi);
 			}
-
+		  
 		      gcall *call;
 		      if (ifn != IFN_LAST)
 			call = gimple_build_call_internal_vec (ifn, vargs);
@@ -3666,6 +3681,16 @@ vectorizable_call (vec_info *vinfo,
 	  if (masked_loop_p && reduc_idx >= 0)
 	    vargs[varg++] = vect_get_loop_mask (gsi, masks, ncopies,
 						vectype_out, j);
+    
+    if (len_loop_p
+			  && get_with_length_internal_fn (ifn) != IFN_LAST)
+			{
+			  tree len
+			    = vect_get_loop_len (gsi, loop_vinfo, lens,
+						 ncopies, vectype_out, j);
+			  vargs.safe_push (len);
+        ifn = get_with_length_internal_fn (ifn);
+			}
 	  for (i = 0; i < nargs; i++)
 	    {
 	      op = gimple_call_arg (stmt, i);
@@ -3689,7 +3714,15 @@ vectorizable_call (vec_info *vinfo,
 		= prepare_vec_mask (loop_vinfo, TREE_TYPE (mask), mask,
 				    vargs[mask_opno], gsi);
 	    }
-
+    if (len_loop_p
+			  && get_with_length_internal_fn (ifn) != IFN_LAST)
+			{
+			  tree len
+			    = vect_get_loop_len (gsi, loop_vinfo, lens,
+						 ncopies, vectype_out, j);
+			  vargs.safe_push (len);
+        ifn = get_with_length_internal_fn (ifn);
+			}
 	  gimple *new_stmt;
 	  if (cfn == CFN_GOMP_SIMD_LANE)
 	    {
@@ -3726,7 +3759,14 @@ vectorizable_call (vec_info *vinfo,
 	    {
 	      gcall *call;
 	      if (ifn != IFN_LAST)
-		call = gimple_build_call_internal_vec (ifn, vargs);
+		{
+		  if (len_loop_p
+		      && get_with_length_internal_fn (ifn) != IFN_LAST)
+		    call = gimple_build_call_internal_vec (
+		      get_with_length_internal_fn (ifn), vargs);
+		  else
+		    call = gimple_build_call_internal_vec (ifn, vargs);
+		}
 	      else
 		call = gimple_build_call_vec (fndecl, vargs);
 	      new_temp = make_ssa_name (vec_dest, call);
@@ -6525,43 +6565,50 @@ vectorizable_operation (vec_info *vinfo,
 		}
 	    }
 
-	      /* FIXME: For fully control with length vector and unconditional
-	         operation, we change it into IFN_LEN_* version of arithmetic
-	         operations so that they explicitly ignore the inactive elements. In
-	         RISC-V 'V' Extension, we prefer agnostic value for tailed elements
-	         meaning we don't care about the value for tailed elements in most
-	         cases, so don't need to bring the 'DEST' into the argument. But we
-	         are not sure about other targets like MVE or PowerPc. */
-	      if (!masked_loop_p && lens && with_len_loop_p && len_fn != IFN_LAST &&
-	          direct_internal_fn_supported_p (len_fn, vectype,
-	                                          OPTIMIZE_FOR_SPEED) &&
-	          ((int)lens->length () == (vec_num * ncopies)) &&
-            LOOP_VINFO_REDUCTIONS (loop_vinfo).length () == 0)
+	  /* FIXME: For fully control with length vector and unconditional
+	     operation, we change it into IFN_LEN_* version of arithmetic
+	     operations so that they explicitly ignore the inactive elements. In
+	     RISC-V 'V' Extension, we prefer agnostic value for tailed elements
+	     meaning we don't care about the value for tailed elements in most
+	     cases, so don't need to bring the 'DEST' into the argument. But we
+	     are not sure about other targets like MVE or PowerPc. */
+	  if (!masked_loop_p && lens && with_len_loop_p && len_fn != IFN_LAST
+	      && direct_internal_fn_supported_p (len_fn, vectype,
+						 OPTIMIZE_FOR_SPEED)
+	      && ((int) lens->length () == (vec_num * ncopies))
+	      && LOOP_VINFO_REDUCTIONS (loop_vinfo).length () == 0)
 	    {
-	      tree len =
-	          vect_get_loop_len (gsi, loop_vinfo, lens, vec_num * ncopies, vectype, i);
+	      tree len = vect_get_loop_len (gsi, loop_vinfo, lens,
+					    vec_num * ncopies, vectype, i);
 	      gcall *call;
 	      /* Unary Operation. */
 	      if (!vop1)
-	        call = gimple_build_call_internal (len_fn, 2, vop0, len);
+		call = gimple_build_call_internal (len_fn, 2, vop0, len);
 	      /* Binary Operation. */
 	      else if (!vop2)
-	        call = gimple_build_call_internal (len_fn, 3, vop0, vop1, len);
+		call = gimple_build_call_internal (len_fn, 3, vop0, vop1, len);
 	      /* Ternary Operation. */
 	      else
-	        call = gimple_build_call_internal (len_fn, 4, vop0, vop1, vop2,
-	                                           len);
+		call = gimple_build_call_internal (len_fn, 4, vop0, vop1, vop2,
+						   len);
 	      new_stmt = call;
 	      new_temp = make_ssa_name (vec_dest, new_stmt);
 	      gimple_call_set_lhs (new_stmt, new_temp);
+	      vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
+	      if (gimple_bb (new_stmt) != gimple_bb (stmt_info->stmt))
+		{
+      gimple_stmt_iterator curr_gsi = gsi_for_stmt (new_stmt);
+		  gsi_remove (&curr_gsi, true);
+		  new_stmt = NULL;
+		}
 	    }
-	      else
+	  if (!new_stmt)
 	    {
 	      new_stmt = gimple_build_assign (vec_dest, code, vop0, vop1, vop2);
 	      new_temp = make_ssa_name (vec_dest, new_stmt);
 	      gimple_assign_set_lhs (new_stmt, new_temp);
+	      vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 	    }
-        vect_finish_stmt_generation (vinfo, stmt_info, new_stmt, gsi);
 	  if (using_emulated_vectors_p)
 	    suppress_warning (new_stmt, OPT_Wvector_operation_performance);
 

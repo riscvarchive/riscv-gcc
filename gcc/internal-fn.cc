@@ -4511,6 +4511,13 @@ get_conditional_internal_fn (tree_code code)
   T (NEGATE_EXPR, IFN_LEN_NEG) \
   T (BIT_NOT_EXPR, IFN_LEN_NOT)
 
+/* Invoke T(IFN, IFN) for each length control function IFN that maps to a
+   tree code CODE.  */
+#define FOR_EACH_IFN_MAPPING_WTIH_LENGTH(T) \
+  T (IFN_COND_DIV, IFN_LEN_COND_DIV) \
+  T (IFN_COND_MOD, IFN_LEN_COND_MOD) \
+  T (IFN_COND_RDIV, IFN_LEN_COND_RDIV)
+
 /* Return a function that only performs CODE when a certain condition is met
    and that uses a given fallback value otherwise.  For example, if CODE is
    a binary operation associated with conditional function FN:
@@ -4532,6 +4539,33 @@ get_with_length_internal_fn (tree_code code)
     {
 #define CASE(CODE, IFN) case CODE: return IFN;
       FOR_EACH_CODE_MAPPING_WTIH_LENGTH(CASE)
+#undef CASE
+    default:
+      return IFN_LAST;
+    }
+}
+
+/* Return a function that only performs CODE when a certain condition is met
+   and that uses a given fallback value otherwise.  For example, if CODE is
+   a binary operation associated with conditional function FN:
+
+     LHS = FN (LEN, A, B, ELSE)
+
+   is equivalent to the C expression:
+
+     LHS = LEN ? A CODE B : ELSE;
+
+   operating elementwise if the operands are vectors.
+
+   Return IFN_LAST if no such function exists.  */
+
+internal_fn
+get_with_length_internal_fn (internal_fn ifn)
+{
+  switch (ifn)
+    {
+#define CASE(CODE, IFN) case CODE: return IFN;
+      FOR_EACH_IFN_MAPPING_WTIH_LENGTH(CASE)
 #undef CASE
     default:
       return IFN_LAST;

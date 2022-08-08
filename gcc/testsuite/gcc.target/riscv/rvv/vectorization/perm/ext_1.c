@@ -55,7 +55,7 @@ typedef _Float16 vnx8hf __attribute__((vector_size (32)));
 
 TEST_ALL (DUP_LANE)
 
-/* { dg-final { scan-assembler-times {\tvslidedown.vi} 13 } } */
+/* { dg-final { scan-assembler-times {\tvslidedown.vi} 7 } } */
 /* { dg-final { scan-assembler-times {\tvslide1down.vx} 5 {target riscv32-*-*} } } */
 /* { dg-final { scan-assembler-times {\tvslide1down.vx} 4 {target riscv64-*-*} } } */
 /* { dg-final { scan-assembler-times {\tvslideup.vi} 7 } } */

@@ -41,7 +41,6 @@ DEF_RVV_FUNCTION(readvl, readvl, (1, VITER(VF, signed)), PAT_none, PRED_none, OP
 DEF_RVV_FUNCTION(readvl, readvl, (1, VITER(VTI, signed)), PAT_none, PRED_none, OP_none)
 DEF_RVV_FUNCTION(readvl, readvl, (1, VITER(VTI, unsigned)), PAT_none, PRED_none, OP_none)
 DEF_RVV_FUNCTION(readvl, readvl, (1, VITER(VTF, signed)), PAT_none, PRED_none, OP_none)
-DEF_RVV_FUNCTION(handle_store_pointer, handle_store_pointer, (1, VITER(VL, unsigned)), PAT_none, PRED_none, OP_none)
 DEF_RVV_FUNCTION(vreinterpret, vreinterpret, (2, VITER(VI, unsigned), VATTR(0, VI, signed)), PAT_none, PRED_none, OP_v)
 DEF_RVV_FUNCTION(vreinterpret, vreinterpret, (2, VITER(VI, signed), VATTR(0, VI, unsigned)), PAT_none, PRED_none, OP_v)
 DEF_RVV_FUNCTION(vreinterpret, vreinterpret, (2, VATTR(1, VCONVERFI, signed), VITER(VCONVERF, signed)), PAT_none, PRED_none, OP_v)

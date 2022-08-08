@@ -85,9 +85,7 @@
 (define_expand "mov<mode>"
   [(parallel [(set (match_operand:VPARTIAL 0 "reg_or_mem_operand")
                    (match_operand:VPARTIAL 1 "vector_move_operand"))
-              (clobber (scratch:SI))
-              (clobber (reg:SI VL_REGNUM))
-              (clobber (reg:SI VTYPE_REGNUM))])]
+              (clobber (scratch:QI))])]
   "TARGET_VECTOR"
 {
   /* Need to force register if mem <- !reg.  */
@@ -103,81 +101,39 @@
 (define_insn_and_split "*mov<mode>"
   [(set (match_operand:VPARTIAL 0 "reg_or_mem_operand" "=vr,m,vr")
         (match_operand:VPARTIAL 1 "reg_or_mem_operand" "m,vr,vr"))
-        (clobber (match_scratch:SI 2 "=&r,&r,X"))
-        (clobber (reg:SI VL_REGNUM))
-        (clobber (reg:SI VTYPE_REGNUM))]
+        (clobber (match_scratch:QI 2 "=&r,&r,X"))]
   "TARGET_VECTOR"
-  "@
-   vle<sew>.v\t%0,%1
-   vse<sew>.v\t%1,%0
-   #"
-  "&& (!reload_completed || (REG_P (operands[0])
-   && REG_P (operands[1])))"
+  "#"
+  "&& 1"
   [(const_int 0)]
   {
     /* Need to force register if mem <- !reg.  */
-    if (MEM_P (operands[0]) && !REG_P (operands[1]))
+    if (can_create_pseudo_p () && MEM_P (operands[0]) && !REG_P (operands[1]))
       operands[1] = force_reg (<MODE>mode, operands[1]);
-      
+    
+    if (!can_create_pseudo_p ())
+      PUT_MODE (operands[2], Pmode);
+    operands[2] = can_create_pseudo_p () ? gen_reg_rtx (Pmode) : operands[2];
     if (MEM_P (operands[0]))
-      {
-        emit_insn (gen_vse (<MODE>mode, const0_rtx, XEXP (operands[0], 0),
-                            operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
-                            riscv_vector_gen_policy ()));
-        DONE;
-      }
+      emit_insn (gen_vse (<MODE>mode, const0_rtx, XEXP (operands[0], 0),
+                          operands[1], gen_rtx_REG (Pmode, X0_REGNUM),
+                          riscv_vector_gen_policy (), operands[2]));
     if (MEM_P (operands[1]))
-      {
-        emit_insn (gen_vle (<MODE>mode, operands[0], const0_rtx, const0_rtx,
-                            XEXP (operands[1], 0), gen_rtx_REG (Pmode, X0_REGNUM),
-                            riscv_vector_gen_policy ()));
-        DONE;
-      }
-
-    emit_insn (gen_rtx_SET (operands[0], operands[1]));
+      emit_insn (gen_vle (<MODE>mode, operands[0], const0_rtx, const0_rtx,
+                          XEXP (operands[1], 0), gen_rtx_REG (Pmode, X0_REGNUM),
+                          riscv_vector_gen_policy (), operands[2]));
+    if (register_operand (operands[0], <MODE>mode) && register_operand (operands[1], <MODE>mode))
+      emit_insn (gen_rtx_SET (operands[0], operands[1]));
     DONE;
   }
   [(set_attr "type" "vle,vse,vcopy")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn_and_split "@mov<mode>_internal"
-  [(parallel [
-    (set (match_operand:VPARTIAL 0 "reg_or_mem_operand" "=vr,m,vr")
-      (match_operand:VPARTIAL 1 "reg_or_mem_operand" "m,vr,vr"))
-    (set (match_operand:SI 2 "register_operand" "=&r,&r,&r")
-      (reg:SI X0_REGNUM))
-    (clobber (reg:SI VL_REGNUM))
-    (clobber (reg:SI VTYPE_REGNUM))])]
-  "TARGET_VECTOR && reload_completed"
-  "@
-   vle<sew>.v\t%0,%1
-   vse<sew>.v\t%1,%0
-   #"
-  "&& REG_P (operands[0])
-   && REG_P (operands[1])"
-  [(const_int 0)]
-  {
-    emit_insn (gen_rtx_SET (operands[0], operands[1]));
-    DONE;
-  }
-  [(set_attr "type" "vle,vse,vcopy")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "*mov<mode>_reg"
-  [(set (match_operand:VPARTIAL 0 "register_operand" "=vr")
-        (match_operand:VPARTIAL 1 "register_operand" "vr"))]
-  "TARGET_VECTOR"
-  "vmv1r.v\t%0,%1"
-  [(set_attr "type" "vcopy")
    (set_attr "mode" "<MODE>")])
 
 ;; Move pattern for mask modes.
 (define_expand "mov<mode>"
   [(parallel [(set (match_operand:VB 0 "reg_or_mem_operand")
                    (match_operand:VB 1 "vector_move_operand"))
-	      (clobber (scratch:SI))
-        (clobber (reg:SI VL_REGNUM))
-        (clobber (reg:SI VTYPE_REGNUM))])]
+	      (clobber (scratch:QI))])]
   "TARGET_VECTOR"
 {
   /* Need to force register if mem <- !reg.  */
@@ -193,41 +149,40 @@
 (define_insn_and_split "*mov<mode>"
   [(set (match_operand:VB 0 "reg_or_mem_operand" "=vr,m,vr")
         (match_operand:VB 1 "reg_or_mem_operand" "m,vr,vr"))
-        (clobber (match_scratch:SI 2 "=&r,&r,X"))
-        (clobber (reg:SI VL_REGNUM))
-        (clobber (reg:SI VTYPE_REGNUM))]
+        (clobber (match_scratch:QI 2 "=&r,&r,X"))]
   "TARGET_VECTOR"
-  "@
-   vlm.v\t%0,%1
-   vsm.v\t%1,%0
-   #"
-  "&& (!reload_completed || (REG_P (operands[0])
-   && REG_P (operands[1])))"
+  "#"
+  "&& 1"
   [(const_int 0)]
   {
     /* Need to force register if mem <- !reg.  */
-    if (MEM_P (operands[0]) && !REG_P (operands[1]))
+    if (can_create_pseudo_p () && MEM_P (operands[0]) && !REG_P (operands[1]))
       operands[1] = force_reg (<MODE>mode, operands[1]);
-      
+    
+    if (!can_create_pseudo_p ())
+      PUT_MODE (operands[2], Pmode);
+    operands[2] = can_create_pseudo_p () ? gen_reg_rtx (Pmode) : operands[2];
     if (MEM_P (operands[0]))
-      {
-        emit_insn (gen_vsm (<MODE>mode, XEXP (operands[0], 0), operands[1],
-                            gen_rtx_REG (Pmode, X0_REGNUM),
-                            riscv_vector_gen_policy ()));
-        DONE;
-      }
+      emit_insn (gen_vsm (<MODE>mode, XEXP (operands[0], 0), operands[1],
+                          gen_rtx_REG (Pmode, X0_REGNUM),
+                          riscv_vector_gen_policy (), operands[2]));
     if (MEM_P (operands[1]))
-      {
-        emit_insn (gen_vlm (<MODE>mode, operands[0], XEXP (operands[1], 0),
-                            gen_rtx_REG (Pmode, X0_REGNUM),
-                            riscv_vector_gen_policy ()));
-        DONE;
-      }
-
-    emit_insn (gen_rtx_SET (operands[0], operands[1]));
+      emit_insn (gen_vlm (<MODE>mode, operands[0], XEXP (operands[1], 0),
+                          gen_rtx_REG (Pmode, X0_REGNUM),
+                          riscv_vector_gen_policy (), operands[2]));
+    if (register_operand (operands[0], <MODE>mode) && register_operand (operands[1], <MODE>mode))
+      emit_insn (gen_rtx_SET (operands[0], operands[1]));
     DONE;
   }
   [(set_attr "type" "vle,vse,vcopy")
+   (set_attr "mode" "<MODE>")])
+
+(define_insn "*mov<mode>_reg"
+  [(set (match_operand:V 0 "register_operand" "=vr")
+        (match_operand:V 1 "register_operand" "vr"))]
+  "TARGET_VECTOR"
+  "vmv<lmul>r.v\t%0,%1"
+  [(set_attr "type" "vcopy")
    (set_attr "mode" "<MODE>")])
 
 (define_insn "*mov<mode>_reg"
@@ -238,62 +193,31 @@
   [(set_attr "type" "vcopy")
    (set_attr "mode" "<MODE>")])
 
-(define_insn_and_split "mov<mode>"
-  [(set (match_operand:VTI 0 "reg_or_mem_operand" "=vr,vr, m,vr")
-        (match_operand:VTI 1 "vector_move_operand"  " vr, m,vr,vc"))
-   (clobber (match_scratch:<VSUB> 2 "=X,&r,&r,&r"))
-   (clobber (match_scratch:<VSUB> 3 "=X,&r,&r,X"))
-   (clobber (match_scratch:SI 4 "=X,&r,&r,X"))
-   (clobber (reg:SI VL_REGNUM))
-   (clobber (reg:SI VTYPE_REGNUM))]
+(define_expand "mov<mode>"
+  [(parallel [(set (match_operand:VT 0 "reg_or_mem_operand")
+                   (match_operand:VT 1 "vector_move_operand"))
+     (clobber (match_scratch:QI 2))
+     (clobber (match_scratch:QI 3))
+     (clobber (match_scratch:QI 4))])]
   "TARGET_VECTOR"
-  "#"
-  "&& (reload_completed || (REG_P (operands[0])
-   && REG_P (operands[1])))"
-  [(const_int 0)]
   {
-    if (!reload_completed)
+    /* Need to force register if mem <- !reg.  */
+    if (MEM_P (operands[0]) && !REG_P (operands[1]))
+      operands[1] = force_reg (<MODE>mode, operands[1]);
+    
+    if (GET_CODE (operands[1]) == CONST_VECTOR)
       {
-        gcc_assert (REG_P (operands[0]) && REG_P (operands[1]));
-        emit_insn (gen_rtx_SET (operands[0], operands[1]));
+        riscv_vector_expand_tuple (<VTSUB>mode, operands);
         DONE;
       }
-    riscv_vector_expand_tuple (<VTSUB>mode, operands);
-    DONE;
-  }
-  [(set_attr "type" "vcopy,vle,vse,vmv_v_x")
-   (set_attr "mode" "<VTSUB>")])
-
-(define_insn_and_split "mov<mode>"
-  [(set (match_operand:VTF 0 "reg_or_mem_operand" "=vr,vr, m,vr")
-        (match_operand:VTF 1 "vector_move_operand"  " vr, m,vr,vc"))
-   (clobber (match_scratch:SI 2 "=X,&r,&r,&r"))
-   (clobber (match_scratch:SI 3 "=X,&r,&r,X"))
-   (clobber (match_scratch:SI 4 "=X,&r,&r,X"))
-   (clobber (match_scratch:<VSUB> 5 "=X,X,X,f"))
-   (clobber (reg:SI VL_REGNUM))
-   (clobber (reg:SI VTYPE_REGNUM))]
-  "TARGET_VECTOR"
-  "#"
-  "&& (reload_completed || (REG_P (operands[0])
-   && REG_P (operands[1])))"
-  [(const_int 0)]
-  {
-    if (!reload_completed)
-      {
-        gcc_assert (REG_P (operands[0]) && REG_P (operands[1]));
-        emit_insn (gen_rtx_SET (operands[0], operands[1]));
-        DONE;
-      }
-    riscv_vector_expand_tuple (<VTSUB>mode, operands);
-    DONE;
-  }
-  [(set_attr "type" "vcopy,vle,vse,vmv_v_x")
-   (set_attr "mode" "<VTSUB>")])
-
+  }) 
+   
 (define_insn_and_split "*mov<mode>"
-  [(set (match_operand:VT 0 "register_operand" "=vr")
-        (match_operand:VT 1 "register_operand" "vr"))]
+  [(set (match_operand:VT 0 "reg_or_mem_operand" "=vr,vr, m")
+        (match_operand:VT 1 "reg_or_mem_operand"  " vr, m,vr"))
+   (clobber (match_scratch:QI 2 "=X,&r,&r"))
+   (clobber (match_scratch:QI 3 "=X,&r,&r"))
+   (clobber (match_scratch:QI 4 "=X,&r,&r"))]
   "TARGET_VECTOR"
   "#"
   "&& reload_completed"
@@ -302,7 +226,7 @@
     riscv_vector_expand_tuple (<VTSUB>mode, operands);
     DONE;
   }
-  [(set_attr "type" "vcopy")
+  [(set_attr "type" "vcopy,vle,vse")
    (set_attr "mode" "<VTSUB>")])
    
 ;; Misalign move patterns for all vector modes.
@@ -324,7 +248,7 @@
         (const_int 0))]
   "TARGET_VECTOR"
   "")
-   
+
 ;; -------------------------------------------------------------------------
 ;; ---- [INT,FP] Vector Transformation
 ;; -------------------------------------------------------------------------
@@ -445,10 +369,11 @@
   [(set_attr "type" "vsetvl")
    (set_attr "mode" "none")])
 
-(define_insn "vsetvl_zero_zero"
+(define_insn "@vsetvl_zero_zero_<mode>"
   [(set (reg:SI VTYPE_REGNUM)
     (unspec:SI
-      [(match_operand 0 "const_int_operand" "i")] UNSPEC_VSETVLI))]
+      [(match_operand 0 "const_int_operand" "i")
+       (match_operand:X 1 "csr_operand" "rK")] UNSPEC_VSETVLI))]
   "TARGET_VECTOR"
   {
     char buf[64];
@@ -531,7 +456,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"           "rK,rK,   rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vle<sew>.v\t%0,(%3),%1.t
@@ -555,7 +481,8 @@
       (match_operand 3 "p_reg_or_const_csr_operand"           "rK,rK")
       (match_operand 4 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vse<sew>.v\t%2,(%1),%0.t
@@ -573,7 +500,8 @@
     (match_operand 2 "p_reg_or_const_csr_operand" "rK")
     (match_operand 3 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 4 "pmode_register_operand" "=&r"))]
   "TARGET_VECTOR"
   "vlm.v\t%0,(%1)"
   [(set_attr "type" "vle")
@@ -590,7 +518,8 @@
     (match_operand 2 "p_reg_or_const_csr_operand" "rK")
     (match_operand 3 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 4 "pmode_register_operand" "=&r"))]
   "TARGET_VECTOR"
   "vsm.v\t%1,(%0)"
   [(set_attr "type" "vse")
@@ -613,7 +542,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vlse<sew>.v\t%0,(%3),%4,%1.t
@@ -641,7 +571,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vsse<sew>.v\t%3,(%1),%2,%0.t
@@ -669,7 +600,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"                     "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xei<V2UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -692,7 +624,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"                   "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xei<V4UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -715,7 +648,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"                   "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xei<V8UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -738,7 +672,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"                     "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xei<V16UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -761,7 +696,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"                     "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xei<V32UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -784,7 +720,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"                     "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xei<V64UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -807,7 +744,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"                       "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+      (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xei<V128UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -831,7 +769,8 @@
     (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xei<V2UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -851,7 +790,8 @@
     (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xei<V4UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -871,7 +811,8 @@
     (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xei<V8UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -891,7 +832,8 @@
     (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xei<V16UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -911,7 +853,8 @@
     (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xei<V32UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -931,7 +874,8 @@
     (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xei<V64UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -951,7 +895,8 @@
     (match_operand 4 "p_reg_or_const_csr_operand"                         "rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xei<V128UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -973,7 +918,8 @@
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
-  (clobber (reg:SI VL_REGNUM))]
+  (clobber (reg:SI VL_REGNUM))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vle<sew>ff.v\t%0,(%3),%1.t
@@ -996,7 +942,8 @@
     (match_operand 4 "p_reg_or_const_csr_operand"             "rK,rK,rK,rK")
     (match_operand 5 "const_int_operand")
     (reg:SI VL_REGNUM)
-    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+    (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vlseg<nf>e<sew>.v\t%0,(%3),%1.t
@@ -1020,7 +967,8 @@
       (match_operand 3 "p_reg_or_const_csr_operand"           "rK,rK")
       (match_operand 4 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vsseg<nf>e<sew>.v\t%2,(%1),%0.t
@@ -1042,7 +990,8 @@
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
-    (clobber (reg:SI VL_REGNUM))]
+    (clobber (reg:SI VL_REGNUM))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vlseg<nf>e<sew>ff.v\t%0,(%3),%1.t
@@ -1066,7 +1015,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vlsseg<nf>e<sew>.v\t%0,(%3),%4,%1.t
@@ -1094,7 +1044,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vssseg<nf>e<sew>.v\t%3,(%1),%2,%0.t
@@ -1118,7 +1069,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xseg<nf>ei<V2UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -1141,7 +1093,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xseg<nf>ei<V4UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -1164,7 +1117,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xseg<nf>ei<V8UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -1187,7 +1141,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xseg<nf>ei<V16UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -1210,7 +1165,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xseg<nf>ei<V32UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -1233,7 +1189,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"                    "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vl<uo>xseg<nf>ei<V64UNITSI:sew>.v\t%0,(%3),%4,%1.t
@@ -1256,7 +1213,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"                     "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xseg<nf>ei<V2UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -1276,7 +1234,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"                     "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xseg<nf>ei<V4UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -1296,7 +1255,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xseg<nf>ei<V8UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -1316,7 +1276,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xseg<nf>ei<V16UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -1336,7 +1297,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xseg<nf>ei<V32UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -1356,7 +1318,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"                       "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vs<uo>xseg<nf>ei<V64UNITSI:sew>.v\t%3,(%1),%2,%0.t
@@ -1376,6 +1339,7 @@
     (match_operand:<VSUB> 4 "reg_or_const_int_operand")
     (match_operand 5 "p_reg_or_const_csr_operand")
     (match_operand 6 "const_int_operand")
+    (clobber (match_operand 7 "pmode_register_operand"))
    ] VXOP)]
   "TARGET_VECTOR"
   {
@@ -1404,6 +1368,7 @@
     (match_operand:<VSUB> 4 "reg_or_const_int_operand")
     (match_operand 5 "p_reg_or_const_csr_operand")
     (match_operand 6 "const_int_operand")
+    (clobber (match_operand 7 "pmode_register_operand"))
    ] VXROP)]
   "TARGET_VECTOR"
   {
@@ -1430,6 +1395,7 @@
     (match_operand:<VSUB> 2 "reg_or_const_int_operand")
     (match_operand 3 "p_reg_or_const_csr_operand")
     (match_operand 4 "const_int_operand")
+    (clobber (match_operand 5 "pmode_register_operand"))
    ] MVXOP)]
   "TARGET_VECTOR"
   {
@@ -1457,6 +1423,7 @@
     (match_operand:<VM> 3 "register_operand")
     (match_operand 4 "p_reg_or_const_csr_operand")
     (match_operand 5 "const_int_operand")
+    (clobber (match_operand 6 "pmode_register_operand"))
    ] VXMOP_NO_POLICY)]
   "TARGET_VECTOR"
   {
@@ -1484,6 +1451,7 @@
     (vec_duplicate:VI (match_operand:<VSUB> 4 "reg_or_const_int_operand")))
    (match_operand 5 "p_reg_or_const_csr_operand")
    (match_operand 6 "const_int_operand")
+   (clobber (match_operand 7 "pmode_register_operand"))
   ]
   "TARGET_VECTOR"
   {
@@ -1512,6 +1480,7 @@
     (match_operand:<VM> 4 "register_operand")
     (match_operand 5 "p_reg_or_const_csr_operand")
     (match_operand 6 "const_int_operand")
+    (clobber (match_operand 7 "pmode_register_operand"))
    ] VXMOP)]
   "TARGET_VECTOR"
   {
@@ -1540,6 +1509,7 @@
     (match_operand:VI 4 "register_operand")
     (match_operand 5 "p_reg_or_const_csr_operand")
     (match_operand 6 "const_int_operand")
+    (clobber (match_operand 7 "pmode_register_operand"))
    ] MACOP)]
   "TARGET_VECTOR"
   {
@@ -1568,6 +1538,7 @@
     (match_operand:<VSUB> 4 "reg_or_const_int_operand")
     (match_operand 5 "p_reg_or_const_csr_operand")
     (match_operand 6 "const_int_operand")
+    (clobber (match_operand 7 "pmode_register_operand"))
    ] VMERGEOP)]
   "TARGET_VECTOR"
   {
@@ -1594,6 +1565,7 @@
     (match_operand:<VSUB> 2 "reg_or_const_int_operand")
     (match_operand 3 "p_reg_or_const_csr_operand")
     (match_operand 4 "const_int_operand")
+    (clobber (match_operand 5 "pmode_register_operand"))
    ] VMVSOP)]
   "TARGET_VECTOR"
   {
@@ -1622,6 +1594,7 @@
     (match_operand:<VSUB> 4 "reg_or_const_int_operand")
     (match_operand 5 "reg_or_const_int_operand")
     (match_operand 6 "const_int_operand")
+    (clobber (match_operand 7 "pmode_register_operand"))
    ] VSLIDE1)]
   "TARGET_VECTOR"
   {
@@ -1695,7 +1668,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,   rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+     (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vadd.vv\t%0,%3,%4,%1.t
@@ -1725,7 +1699,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vsub.vv\t%0,%3,%4,%1.t
@@ -1757,7 +1732,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,   rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vadd.vx\t%0,%3,%4,%1.t
@@ -1786,7 +1762,8 @@
      (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vadd.vx\t%0,%3,%4,%1.t
@@ -1819,7 +1796,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   {
     const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
@@ -1854,7 +1832,8 @@
      (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   {
     const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
@@ -1890,7 +1869,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vrsub.vx\t%0,%3,%4,%1.t
@@ -1918,7 +1898,8 @@
      (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vrsub.vx\t%0,%3,%4,%1.t
@@ -1944,7 +1925,8 @@
        (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
        (match_operand 5 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vneg.v\t%0,%3,%1.t
@@ -1969,7 +1951,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vw<insn><u>.vv\t%0,%3,%4,%1.t
@@ -1995,7 +1978,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vw<insn><u>.vx\t%0,%3,%4,%1.t
@@ -2023,7 +2007,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vw<insn><u>.wv\t%0,%3,%4,%1.t
@@ -2049,7 +2034,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vw<insn><u>.wx\t%0,%3,%4,%1.t
@@ -2076,7 +2062,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwcvt<u>.x.x.v\t%0,%3,%1.t
@@ -2098,7 +2085,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<sz>ext.vf2\t%0,%3,%1.t
@@ -2120,7 +2108,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<sz>ext.vf4\t%0,%3,%1.t
@@ -2142,7 +2131,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<sz>ext.vf8\t%0,%3,%1.t
@@ -2171,7 +2161,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vadc.vvm\t%0,%2,%3,%4
@@ -2197,7 +2188,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "vsbc.vvm\t%0,%2,%3,%4"
   [(set_attr "type" "vadc")
@@ -2220,7 +2212,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"        "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vadc.vxm\t%0,%2,%3,%4
@@ -2247,7 +2240,8 @@
      (match_operand:SI 5 "csr_operand"                        "rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vadc.vxm\t%0,%2,%3,%4
@@ -2274,7 +2268,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vsbc.vxm\t%0,%2,%3,%4
@@ -2300,7 +2295,8 @@
      (match_operand:SI 5 "csr_operand"                                "rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vsbc.vxm \t%0,%2,%3,%4
@@ -2325,7 +2321,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"  "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmadc.vvm\t%0,%1,%2,%3
@@ -2348,7 +2345,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"  "rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r"))]
   "TARGET_VECTOR"
   "vmsbc.vvm\t%0,%1,%2,%3"
   [(set_attr "type" "vmadc")
@@ -2370,7 +2368,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"        "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmadc.vxm\t%0,%1,%2,%3
@@ -2394,7 +2393,8 @@
      (match_operand:SI 4 "csr_operand"                  "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmadc.vxm\t%0,%1,%2,%3
@@ -2418,7 +2418,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"    "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmsbc.vxm\t%0,%1,%2,%3
@@ -2442,7 +2443,8 @@
      (match_operand:SI 4 "csr_operand"              "rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmsbc.vxm\t%0,%1,%2,%3
@@ -2460,7 +2462,8 @@
       (match_operand 3 "p_reg_or_const_csr_operand" "rK,rK")
       (match_operand 4 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmadc.vv\t%0,%1,%2
@@ -2478,7 +2481,8 @@
      (match_operand 3 "p_reg_or_const_csr_operand"  "rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r"))]
   "TARGET_VECTOR"
   "vmsbc.vv\t%0,%1,%2"
   [(set_attr "type" "vmadc")
@@ -2495,7 +2499,8 @@
        (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmadc.vx\t%0,%1,%2
@@ -2514,7 +2519,8 @@
        (match_operand:SI 3 "csr_operand"                "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmadc.vx \t%0,%1,%2
@@ -2533,7 +2539,8 @@
        (match_operand 3 "p_reg_or_const_csr_operand"  "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmsbc.vx\t%0,%1,%2
@@ -2552,7 +2559,8 @@
        (match_operand:SI 3 "csr_operand"            "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmsbc.vx \t%0,%1,%2
@@ -2573,7 +2581,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vv\t%0,%3,%4,%1.t
@@ -2602,7 +2611,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -2630,7 +2640,8 @@
      (match_operand:SI 5 "csr_operand"                                    "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -2656,7 +2667,8 @@
        (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
        (match_operand 5 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vnot.v\t%0,%3,%1.t
@@ -2679,7 +2691,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vv\t%0,%3,%4,%1.t
@@ -2707,7 +2720,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -2735,7 +2749,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,      rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,   &r,&r,&r,&r,&r,   &r,&r,&r,&r,&r,   &r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vn<insn>.wv\t%0,%3,%4,%1.t
@@ -2776,7 +2791,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,     rK,rK,rK,rK,    rK,rK,rK,rK,    rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,   &r,&r,&r,&r,   &r,&r,&r,&r,   &r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vn<insn>.wx\t%0,%3,%4,%1.t
@@ -2811,7 +2827,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,     rK,rK,    rK,rK,    rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vncvt.x.x.w\t%0,%3,%1.t
@@ -2839,7 +2856,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,      rK,rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vms<insn>.vv\t%0,%3,%4,%1.t
@@ -2877,7 +2895,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK,rK,rK,rK,      rK,rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vms<insn>.vv\t%0,%3,%4,%1.t
@@ -2917,7 +2936,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,rK,    rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -2953,7 +2973,8 @@
        (match_operand:SI 5 "csr_operand"                                    "rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,rK,    rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,  &r,&r,&r,&r,&r,&r,  &r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -2989,7 +3010,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"              "rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,rK,    rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,  &r,&r,rr,&r,&r,&r,  &r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -3025,7 +3047,8 @@
        (match_operand:SI 5 "csr_operand"                                        "rK,rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,rK,    rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,  &r,&r,&r,&r,&r,&r,  &r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vms<insn>.vx\t%0,%3,%4,%1.t
@@ -3062,7 +3085,8 @@
           (match_operand 6 "const_int_operand")
           (reg:SI VL_REGNUM)
           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
-     (clobber (scratch:<VM>))])]
+     (clobber (scratch:<VM>))
+     (clobber (match_operand 7 "pmode_register_operand"))])]
   "TARGET_VECTOR"
   {
   })
@@ -3082,7 +3106,8 @@
           (match_operand 6 "const_int_operand")
           (reg:SI VL_REGNUM)
           (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
-     (clobber (scratch:<VM>))])]
+     (clobber (scratch:<VM>))
+     (clobber (match_operand 7 "pmode_register_operand"))])]
   "TARGET_VECTOR"
   {
   })
@@ -3110,7 +3135,8 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
-   (clobber (match_scratch:<VM> 7                               "=&vr,X,X,X,X,        X,X,X,X,        X,X,X,X"))]
+   (clobber (match_scratch:<VM> 7                               "=&vr,X,X,X,X,        X,X,X,X,        X,X,X,X"))
+   (clobber (match_operand 8 "pmode_register_operand" "=&r,&r,&r,&r,&r,        &r,&r,&r,&r,        &r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vms<insn>.vx\t%0,%3,%4,%1.t,%7
@@ -3144,7 +3170,8 @@
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
-   (clobber (match_scratch:<VM> 7                                               "=&vr,X,X,X,X,        X,X,X,X,        X,X,X,X"))]
+   (clobber (match_scratch:<VM> 7                                               "=&vr,X,X,X,X,        X,X,X,X,        X,X,X,X"))
+   (clobber (match_operand 8 "pmode_register_operand" "=&r,&r,&r,&r,&r,        &r,&r,&r,&r,        &r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vms<insn>.vx\t%0,%3,%4,%1.t,%7
@@ -3177,7 +3204,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vv\t%0,%3,%4,%1.t
@@ -3201,7 +3229,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -3228,7 +3257,8 @@
      (match_operand:SI 5 "csr_operand"                                "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -3255,7 +3285,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmul.vv\t%0,%3,%4,%1.t
@@ -3279,7 +3310,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmul.vx\t%0,%3,%4,%1.t
@@ -3306,7 +3338,8 @@
      (match_operand:SI 5 "csr_operand"                                "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmul.vx\t%0,%3,%4,%1.t
@@ -3334,7 +3367,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmulh<u>.vv\t%0,%3,%4,%1.t
@@ -3358,7 +3392,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmulh<u>.vx\t%0,%3,%4,%1.t
@@ -3385,7 +3420,8 @@
      (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmulh<u>.vx\t%0,%3,%4,%1.t
@@ -3412,7 +3448,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmulhsu.vv\t%0,%3,%4,%1.t
@@ -3436,7 +3473,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmulhsu.vx\t%0,%3,%4,%1.t
@@ -3463,7 +3501,8 @@
      (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmulhsu.vx\t%0,%3,%4,%1.t
@@ -3490,7 +3529,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vv\t%0,%3,%4,%1.t
@@ -3514,7 +3554,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -3542,7 +3583,8 @@
      (match_operand:SI 5 "csr_operand"                              "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -3571,7 +3613,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmul<u>.vv\t%0,%3,%4,%1.t
@@ -3597,7 +3640,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmul<u>.vx\t%0,%3,%4,%1.t
@@ -3626,7 +3670,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmulsu.vv\t%0,%3,%4,%1.t
@@ -3652,7 +3697,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmulsu.vx\t%0,%3,%4,%1.t
@@ -3680,7 +3726,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<imac>.vv\t%0,%3,%4,%1.t
@@ -3703,7 +3750,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<imac>.vx\t%0,%3,%4,%1.t
@@ -3727,7 +3775,8 @@
      (match_operand:SI 5 "csr_operand"                                  "rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<imac>.vx\t%0,%3,%4,%1.t
@@ -3755,7 +3804,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmacc<u>.vv\t%0,%3,%4,%1.t
@@ -3782,7 +3832,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmacc<u>.vx\t%0,%3,%4,%1.t
@@ -3809,7 +3860,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmaccsu.vv\t%0,%3,%4,%1.t
@@ -3835,7 +3887,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmaccsu.vx\t%0,%3,%4,%1.t
@@ -3863,7 +3916,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwmaccus.vx\t%0,%3,%4,%1.t
@@ -3885,7 +3939,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
  "TARGET_VECTOR"
  "@
   vmerge.vvm\t%0,%3,%4,%1
@@ -3908,7 +3963,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"        "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
  "TARGET_VECTOR"
  "@
   vmerge.vxm\t%0,%3,%4,%1
@@ -3931,7 +3987,8 @@
        (match_operand:SI 5 "csr_operand"                        "rK,rK,rK,rK")
        (match_operand:SI 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
  "TARGET_VECTOR"
  "@
   vmerge.vxm\t%0,%3,%4,%1
@@ -3951,7 +4008,8 @@
        (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
  "TARGET_VECTOR"
  "vmv.v.v\t%0,%2"
  [(set_attr "type" "vmv_v_v")
@@ -3963,7 +4021,8 @@
    (match_operand:VI 1 "vector_reg_or_const0_operand")
    (match_operand:<VSUB> 2 "general_operand")
    (match_operand 3 "p_reg_or_const_csr_operand")
-   (match_operand 4 "const_int_operand")]
+   (match_operand 4 "const_int_operand")
+   (clobber (match_operand 5 "pmode_register_operand"))]
   "TARGET_VECTOR"
 {
   riscv_vector_expand_splat_vector (operands);
@@ -3979,7 +4038,8 @@
      (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r,&r,&r"))]
  "TARGET_VECTOR"
  "@
   vmv.v.x\t%0,%2
@@ -3998,7 +4058,8 @@
      (match_operand:SI 3 "csr_operand"                                  "rK,rK,rK,rK")
      (match_operand:SI 4 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r,&r,&r"))]
  "TARGET_VECTOR"
  "@
   vmv.v.x\t%0,%2
@@ -4032,7 +4093,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vv\t%0,%3,%4,%1.t
@@ -4059,7 +4121,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vssub.vv\t%0,%3,%4,%1.t
@@ -4085,7 +4148,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vssubu.vv\t%0,%3,%4,%1.t
@@ -4109,7 +4173,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -4137,7 +4202,8 @@
      (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<insn>.vx\t%0,%3,%4,%1.t
@@ -4165,7 +4231,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   {
     const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
@@ -4199,7 +4266,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vssubu.vx\t%0,%3,%4,%1.t
@@ -4223,7 +4291,8 @@
         (match_operand:SI 5 "csr_operand"                         "rK,rK,rK,rK,rK,rK,rK,rK")
         (match_operand:SI 6 "const_int_operand")
         (reg:SI VL_REGNUM)
-        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   {
     const char *tail = satisfies_constraint_J (operands[1]) ? "" : ",%1.t";
@@ -4258,7 +4327,8 @@
         (match_operand:SI 5 "csr_operand"                         "rK,rK,rK,rK")
         (match_operand:SI 6 "const_int_operand")
         (reg:SI VL_REGNUM)
-        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+        (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vssubu.vx\t%0,%3,%4,%1.t
@@ -4282,7 +4352,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<sat_op>.vv\t%0,%3,%4,%1.t
@@ -4307,7 +4378,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<sat_op>.vx\t%0,%3,%4,%1.t
@@ -4335,7 +4407,8 @@
      (match_operand:SI 5 "csr_operand"                          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand:SI 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<sat_op>.vx\t%0,%3,%4,%1.t
@@ -4362,7 +4435,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<sshift>.vv\t%0,%3,%4,%1.t
@@ -4389,7 +4463,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    v<sshift>.vx\t%0,%3,%4,%1.t
@@ -4417,7 +4492,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,      rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK,     rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,      &r,&r,&r,&r,&r,     &r,&r,&r,&r,&r,     &r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vn<clip>.wv\t%0,%3,%4,%1.t
@@ -4457,7 +4533,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,     rK,rK,rK,rK,    rK,rK,rK,rK,    rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,     &r,&r,&r,&r,    &r,&r,&r,&r,    &r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vn<clip>.wx\t%0,%3,%4,%1.t
@@ -4518,7 +4595,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vf<insn>.vv\t%0,%3,%4,%1.t
@@ -4544,7 +4622,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vf<insn>.vf\t%0,%3,%4,%1.t
@@ -4568,7 +4647,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfr<insn>.vf\t%0,%3,%4,%1.t
@@ -4593,7 +4673,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfw<insn>.vv\t%0,%3,%4,%1.t
@@ -4619,7 +4700,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfw<insn>.vf\t%0,%3,%4,%1.t
@@ -4643,7 +4725,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfw<insn>.wv\t%0,%3,%4,%1.t
@@ -4668,7 +4751,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfw<insn>.wf\t%0,%3,%4,%1.t
@@ -4693,7 +4777,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwmul.vv\t%0,%3,%4,%1.t
@@ -4719,7 +4804,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwmul.vf\t%0,%3,%4,%1.t
@@ -4743,7 +4829,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vf<fmac>.vv\t%0,%3,%4,%1.t
@@ -4766,7 +4853,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vf<fmac>.vf\t%0,%3,%4,%1.t
@@ -4792,7 +4880,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwmacc.vv\t%0,%3,%4,%1.t
@@ -4816,7 +4905,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwmsac.vv\t%0,%3,%4,%1.t
@@ -4843,7 +4933,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwmacc.vf\t%0,%3,%4,%1.t
@@ -4868,7 +4959,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwmsac.vf\t%0,%3,%4,%1.t
@@ -4895,7 +4987,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwnmacc.vv\t%0,%3,%4,%1.t
@@ -4920,7 +5013,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwnmsac.vv\t%0,%3,%4,%1.t
@@ -4948,7 +5042,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwnmacc.vf\t%0,%3,%4,%1.t
@@ -4974,7 +5069,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwnmsac.vf\t%0,%3,%4,%1.t
@@ -4994,7 +5090,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfsqrt.v\t%0,%3,%1.t
@@ -5017,7 +5114,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vf<reciprocal>.v\t%0,%3,%1.t
@@ -5040,7 +5138,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfsgnj<nx>.vv\t%0,%3,%4,%1.t
@@ -5064,7 +5163,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfsgnj<nx>.vf\t%0,%3,%4,%1.t
@@ -5086,7 +5186,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfneg.v\t%0,%3,%1.t
@@ -5108,7 +5209,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfabs.v\t%0,%3,%1.t
@@ -5131,7 +5233,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,    rK,rK,rK,rK,   rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmf<insn>.vv\t%0,%3,%4,%1.t
@@ -5162,7 +5265,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,     rK,rK,rK,    rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmf<insn>.vf\t%0,%3,%4,%1.t
@@ -5188,7 +5292,8 @@
           (match_operand:VF 4 "register_operand"))
          (match_operand:<VM> 2 "vector_reg_or_const0_operand")] UNSPEC_SELECT)
        (match_operand 5 "p_reg_or_const_csr_operand")
-       (match_operand 6 "const_int_operand")] UNSPEC_RVV))]
+       (match_operand 6 "const_int_operand")] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand"))]
   "TARGET_VECTOR"
 {
   rtx mask = gen_reg_rtx (<VM>mode);
@@ -5196,46 +5301,61 @@
     {
       emit_insn (gen_vmf_vv (GT, <MODE>mode, operands[0],
                  operands[1], operands[2], operands[3], operands[4],
-                 operands[5], operands[6]));
+                 operands[5], operands[6], operands[7]));
       emit_insn (gen_vmf_vv (GT, <MODE>mode, mask,
                  operands[1], operands[2], operands[4], operands[3],
-                 operands[5], operands[6]));
+                 operands[5], operands[6], operands[7]));
       emit_insn (gen_vm_mm (IOR, <VM>mode, operands[0], operands[0], mask,
-                 operands[5], operands[6]));
+                 operands[5], operands[6], operands[7]));
     }
   else
     {
-      /* Example of implementing isgreater()
-         vmfeq.vv v0, va, va ;; Only set where A is not NaN.
-         vmfeq.vv v1, vb, vb ;; Only set where B is not NaN.
-         vmand.mm v0, v0, v1 ;; Only set where A and B are ordered,
-         vmfgt.vv v0, va, vb, v0.t ;; so only set flags on ordered values. */
+      /* It suffices to implement a u>= b as !(a < b) but with the NaNs masked off:
+      
+        vmfeq.vv    v0, va, va
+        vmfeq.vv    v1, vb, vb
+        vmand.mm    v0, v0, v1
+        vmflt.vv    v0, va, vb, v0.t
+        vmnot.m     v0, v0
+        
+        And, if !HONOR_SNANS, then you can remove the vmand.mm by masking the second vmfeq.vv:
+        
+        vmfeq.vv    v0, va, va
+        vmfeq.vv    v0, vb, vb, v0.t
+        vmflt.vv    v0, va, vb, v0.t
+        vmnot.m     v0, v0 */
+        
       emit_insn (gen_vmf_vv (EQ, <MODE>mode, operands[0],
                  operands[1], operands[2], operands[3], operands[3],
-                 operands[5], operands[6]));
-      emit_insn (gen_vmf_vv (EQ, <MODE>mode, mask,
-                 operands[1], operands[2], operands[4], operands[4],
-                 operands[5], operands[6]));
-      emit_insn (gen_vm_mm (AND, <VM>mode, operands[0], operands[0], mask,
-                 operands[5], operands[6]));
+                 operands[5], operands[6], operands[7]));
       
-      rtx all_ones = gen_reg_rtx (<VM>mode);            
-      emit_insn (gen_vmset<vm>_m (all_ones, operands[5],
-                                  riscv_vector_gen_policy ()));
+      if (HONOR_SNANS (<MODE>mode))
+        {
+          emit_insn (gen_vmf_vv (EQ, <MODE>mode, mask,
+                 operands[1], operands[2], operands[4], operands[4],
+                 operands[5], operands[6], operands[7]));
+          emit_insn (gen_vm_mm (AND, <VM>mode, operands[0], operands[0], mask,
+                     operands[5], operands[6], operands[7]));
+        }
+      else
+        emit_insn (gen_vmf_vv (EQ, <MODE>mode, operands[0],
+                 operands[0], operands[0], operands[4], operands[4],
+                 operands[5], operands[6], operands[7]));
 
       if (strcmp ("<optab>", "ordered") != 0)
         {
           if (strcmp ("<optab>", "unordered") == 0)
-            emit_insn (gen_vmnot_m (<VM>mode, operands[0], operands[0], operands[5], operands[6]));
+            emit_insn (gen_vmnot_m (<VM>mode, operands[0], operands[0], operands[5], operands[6], operands[7]));
           else
             {
-              enum rtx_code code = strcmp ("<optab>", "unlt") == 0 ? LT :
-                    strcmp ("<optab>", "unle") == 0 ? LE : 
-                    strcmp ("<optab>", "unge") == 0 ? GE :
-                    strcmp ("<optab>", "ungt") == 0 ? GT : EQ; 
+              enum rtx_code code = strcmp ("<optab>", "unlt") == 0 ? GE :
+                    strcmp ("<optab>", "unle") == 0 ? GT : 
+                    strcmp ("<optab>", "unge") == 0 ? LT :
+                    strcmp ("<optab>", "ungt") == 0 ? LE : NE; 
               emit_insn (gen_vmf_vv (code, <MODE>mode, operands[0],
-                    operands[0], all_ones, operands[3], operands[4],
-                    operands[5], operands[6]));
+                    operands[0], operands[0], operands[3], operands[4],
+                    operands[5], operands[6], operands[7]));
+              emit_insn (gen_vmnot_m (<VM>mode, operands[0], operands[0], operands[5], operands[6], operands[7]));
             }
         }
     }
@@ -5254,7 +5374,8 @@
        (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
        (match_operand 5 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfclass.v\t%0,%3,%1.t
@@ -5277,7 +5398,8 @@
      (match_operand 5 "p_reg_or_const_csr_operand"      "rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r"))]
  "TARGET_VECTOR"
  "@
   vfmerge.vfm\t%0,%3,%4,%1
@@ -5291,7 +5413,8 @@
    (match_operand:VF 1 "vector_reg_or_const0_operand")
    (match_operand:<VSUB> 2 "general_operand")
    (match_operand 3 "p_reg_or_const_csr_operand")
-   (match_operand 4 "const_int_operand")]
+   (match_operand 4 "const_int_operand")
+   (clobber (match_operand 5 "pmode_register_operand"))]
   "TARGET_VECTOR"
 {
   riscv_vector_expand_splat_vector (operands);
@@ -5307,7 +5430,8 @@
      (match_operand 3 "p_reg_or_const_csr_operand"      "rK,rK,rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+   (clobber (match_operand 5 "pmode_register_operand" "=&r,&r,&r,&r"))]
  "TARGET_VECTOR"
  "@
   vmv.v.i\t%0,0
@@ -5330,7 +5454,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfcvt.x<fu>.f.v\t%0,%3,%1.t
@@ -5353,7 +5478,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"            "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfcvt.rtz.x<u>.f.v\t%0,%3,%1.t
@@ -5376,7 +5502,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfcvt.f.x<u>.v\t%0,%3,%1.t
@@ -5399,7 +5526,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"              "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwcvt.x<fu>.f.v\t%0,%3,%1.t
@@ -5422,7 +5550,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"              "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwcvt.rtz.x<u>.f.v\t%0,%3,%1.t
@@ -5445,7 +5574,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"              "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwcvt.f.x<u>.v\t%0,%3,%1.t
@@ -5467,7 +5597,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwcvt.f.f.v\t%0,%3,%1.t
@@ -5490,7 +5621,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfncvt.x<fu>.f.w\t%0,%3,%1.t
@@ -5513,7 +5645,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfncvt.rtz.x<u>.f.w\t%0,%3,%1.t
@@ -5536,7 +5669,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfncvt.f.x<u>.w\t%0,%3,%1.t
@@ -5558,7 +5692,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfncvt.f.f.w\t%0,%3,%1.t
@@ -5581,7 +5716,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfncvt.rod.f.f.w\t%0,%3,%1.t
@@ -5605,17 +5741,18 @@
 (define_insn "@vred<reduc><mode>_vs"
   [(set (match_operand:<VLMUL1> 0 "register_operand"                "=vr,vr,vr,vr")
   (unspec:<VLMUL1>
-    [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
-       (unspec:<VLMUL1>
-         [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand"  "0,J,0,J")
-          (match_operand:VI 3 "register_operand"                    "vr,vr,vr,vr")
-          (match_operand:<VLMUL1> 4 "register_operand"              "vr,vr,vr,vr")] REDUC)
+    [(unspec:<VLMUL1>
+      [(unspec:<VLMUL1>
+        [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand"  "0,J,0,J")
+         (match_operand:VI 3 "register_operand"                    "vr,vr,vr,vr")
+         (match_operand:<VLMUL1> 4 "register_operand"              "vr,vr,vr,vr")] REDUC)
+       (match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (match_dup 2)] UNSPEC_SELECT)
      (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vred<reduc>.vs\t%0,%3,%4,%1.t
@@ -5629,18 +5766,19 @@
 (define_insn "@vwredsum<u><mode>_vs"
   [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
-    [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
-       (unspec:<VWLMUL1>
+    [(unspec:<VLMUL1>
+      [(unspec:<VWLMUL1>
          [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
           (any_extend:<VWLMUL1>
            (match_operand:VWREDI 3 "register_operand"               "vr,vr,vr,vr"))
           (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr")] UNSPEC_REDUC_SUM)
+       (match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (match_dup 2)] UNSPEC_SELECT)
      (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+     (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vwredsum<u>.vs\t%0,%3,%4,%1.t
@@ -5654,17 +5792,18 @@
 (define_insn "@vfred<reduc><mode>_vs"
   [(set (match_operand:<VLMUL1> 0 "register_operand"                "=vr,vr,vr,vr")
   (unspec:<VLMUL1>
-    [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
-       (unspec:<VLMUL1>
+    [(unspec:<VLMUL1>
+      [(unspec:<VLMUL1>
          [(match_operand:<VLMUL1> 2 "vector_reg_or_const0_operand"  "0,J,0,J")
           (match_operand:VF 3 "register_operand"                    "vr,vr,vr,vr")
           (match_operand:<VLMUL1> 4 "register_operand"              "vr,vr,vr,vr")] FREDUC)
+       (match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (match_dup 2)] UNSPEC_SELECT)
      (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfred<reduc>.vs\t%0,%3,%4,%1.t
@@ -5678,18 +5817,19 @@
 (define_insn "@vfwredusum<mode>_vs"
   [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
-    [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
-       (unspec:<VWLMUL1>
+    [(unspec:<VWLMUL1>
+      [(unspec:<VWLMUL1>
          [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
           (float_extend:<VWLMUL1>
            (match_operand:VWREDF 3 "register_operand"               "vr,vr,vr,vr"))
           (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr")] UNSPEC_REDUC_UNORDERED_SUM)
+       (match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (match_dup 2)] UNSPEC_SELECT)
      (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwredusum.vs\t%0,%3,%4,%1.t
@@ -5703,18 +5843,19 @@
 (define_insn "@vfwredosum<mode>_vs"
   [(set (match_operand:<VWLMUL1> 0 "register_operand"               "=&vr,&vr,&vr,&vr")
   (unspec:<VWLMUL1>
-    [(unspec:<VM>
-      [(match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
-       (unspec:<VWLMUL1>
+    [(unspec:<VWLMUL1>
+      [(unspec:<VWLMUL1>
          [(match_operand:<VWLMUL1> 2 "vector_reg_or_const0_operand" "0,J,0,J")
           (float_extend:<VWLMUL1>
            (match_operand:VWREDF 3 "register_operand"               "vr,vr,vr,vr"))
           (match_operand:<VWLMUL1> 4 "register_operand"             "vr,vr,vr,vr")] UNSPEC_REDUC_ORDERED_SUM)
+       (match_operand:<VM> 1 "vector_reg_or_const0_operand"         "vm,vm,J,J")
        (match_dup 2)] UNSPEC_SELECT)
      (match_operand 5 "p_reg_or_const_csr_operand"                  "rK,rK,rK,rK")
      (match_operand 6 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfwredosum.vs\t%0,%3,%4,%1.t
@@ -5748,7 +5889,8 @@
        (match_operand 3 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r"))]
  "TARGET_VECTOR"
  "vm<insn>.mm\t%0,%1,%2"
  [(set_attr "type" "vmask")
@@ -5764,7 +5906,8 @@
        (match_operand 3 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r"))]
  "TARGET_VECTOR"
  "vm<ninsn>.mm\t%0,%1,%2"
  [(set_attr "type" "vmask")
@@ -5780,7 +5923,8 @@
        (match_operand 3 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r"))]
  "TARGET_VECTOR"
  "vm<insn>n.mm\t%0,%1,%2"
  [(set_attr "type" "vmask")
@@ -5794,7 +5938,8 @@
        (match_operand 2 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 3 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 4 "pmode_register_operand" "=&r"))]
  "TARGET_VECTOR"
  "vmmv.m\t%0,%1"
  [(set_attr "type" "vmask")
@@ -5808,7 +5953,8 @@
        (match_operand 1 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 2 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 3 "pmode_register_operand" "=&r"))]
  "TARGET_VECTOR"
  "vmclr.m\t%0"
  [(set_attr "type" "vmask")
@@ -5822,7 +5968,8 @@
        (match_operand 1 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 2 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 3 "pmode_register_operand" "=&r"))]
  "TARGET_VECTOR"
  "vmset.m\t%0"
  [(set_attr "type" "vmask")
@@ -5837,7 +5984,8 @@
        (match_operand 2 "p_reg_or_const_csr_operand"  "rK")
        (match_operand 3 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 4 "pmode_register_operand" "=&r"))]
  "TARGET_VECTOR"
  "vmnot.m\t%0,%1"
  [(set_attr "type" "vmask")
@@ -5845,7 +5993,7 @@
 
 ;; Vector mask population count vpopc
 (define_insn "@vcpop<VB:mode>_<X:mode>_m"
-  [(set (match_operand:X 0 "register_operand"                 "=r,r")
+  [(set (match_operand:X 0 "register_operand"                 "=&r,&r")
     (unspec:X
       [(unspec:VB
          [(match_operand:VB 1 "vector_reg_or_const0_operand"  "vm,J")
@@ -5854,7 +6002,8 @@
        (match_operand 3 "p_reg_or_const_csr_operand"          "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
  "TARGET_VECTOR"
  "@
   vcpop.m\t%0,%2,%1.t
@@ -5864,7 +6013,7 @@
 
 ;; vfirst find-first-set mask bit
 (define_insn "@vfirst<VB:mode>_<X:mode>_m"
-  [(set (match_operand:X 0 "register_operand"               "=r,r")
+  [(set (match_operand:X 0 "register_operand"               "=&r,&r")
     (unspec:X
       [(unspec:VB
         [(match_operand:VB 1 "vector_reg_or_const0_operand" "vm,J")
@@ -5872,7 +6021,8 @@
        (match_operand 3 "p_reg_or_const_csr_operand"        "rK,rK")
        (match_operand 4 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 5 "pmode_register_operand" "=&r,&r"))]
  "TARGET_VECTOR"
  "@
   vfirst.m\t%0,%2,%1.t
@@ -5894,7 +6044,8 @@
        (match_operand 4 "p_reg_or_const_csr_operand"        "rK,rK,rK")
        (match_operand 5 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r"))]
  "TARGET_VECTOR"
  "@
   vm<smb>.m\t%0,%3,%1.t
@@ -5915,7 +6066,8 @@
      (match_operand 4 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
      (match_operand 5 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+     (clobber (match_operand 6 "pmode_register_operand" "=&r,&r,&r,&r"))]
  "TARGET_VECTOR"
  "@
   viota.m\t%0,%3,%1.t
@@ -5936,7 +6088,8 @@
             (match_operand 4 "const_int_operand")] UNSPEC_ID)
          (match_operand:VI 2 "vector_reg_or_const0_operand"   "0,J,0,J")] UNSPEC_SELECT)
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 5 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vid.v\t%0,%1.t
@@ -5989,7 +6142,7 @@
         rtx hi = gen_highpart (Pmode, operands[0]);
         emit_insn (gen_vlshr<mode>_vx (vector,
               const0_rtx, const0_rtx, operands[1],
-              shift, GEN_INT(1), riscv_vector_gen_policy ()));
+              shift, GEN_INT(1), riscv_vector_gen_policy (), gen_reg_rtx (Pmode)));
         emit_insn (gen_vmv<mode>_x_s_lo (lo, operands[1]));
         emit_insn (gen_vmv<mode>_x_s_hi (hi, vector));
         DONE;
@@ -6017,7 +6170,6 @@
       [(vec_select:DI
         (match_operand:V64BITI 1 "register_operand" "vr")
         (parallel [(const_int 0)]))
-       (reg:SI VL_REGNUM)
        (reg:SI VTYPE_REGNUM)] UNSPEC_LO))]
   "TARGET_VECTOR"
   "vmv.x.s\t%0,%1"
@@ -6047,7 +6199,8 @@
      (match_operand 3 "p_reg_or_const_csr_operand"        "rK,rK,rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+     (clobber (match_operand 5 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmv.s.x\t%0,%2
@@ -6069,32 +6222,14 @@
      (match_operand:SI 3 "csr_operand"                          "rK,rK,rK,rK")
      (match_operand:SI 4 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 5 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vmv.s.x\t%0,%2
    vmv.s.x\t%0,zero
    vmv.s.x\t%0,%2
    vmv.s.x\t%0,zero"
-  [(set_attr "type" "vmv_s_x")
-   (set_attr "mode" "<MODE>")])
-
-;; This pattern is used by auto-vectorization to
-;; initiate a vector whose value of element 0 is
-;; zero. We dont't want to use subreg to generate
-;; transformation between floating-point and integer.
-(define_insn "@vmv<mode>_s_x_internal"
-  [(set (match_operand:VF 0 "register_operand"      "=vr")
-  (unspec:VF
-    [(unspec:VF
-      [(const_int 0)
-       (const_int 1)] UNSPEC_VMV_SX)
-     (match_operand 1 "p_reg_or_const_csr_operand"  "rK")
-     (match_operand 2 "const_int_operand")
-     (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
-  "TARGET_VECTOR"
-  "vmv.s.x\t%0,zero"
   [(set_attr "type" "vmv_s_x")
    (set_attr "mode" "<MODE>")])
 
@@ -6112,19 +6247,24 @@
    (set_attr "mode" "<MODE>")])
 
 (define_insn "@vfmv<mode>_s_f"
-  [(set (match_operand:VF 0 "register_operand"            "=vr,vr")
+  [(set (match_operand:VF 0 "register_operand"            "=vr,vr,vr,vr")
   (unspec:VF
     [(unspec:VF
       [(vec_duplicate:VF
-         (match_operand:<VSUB> 2 "register_operand"       "f,f"))
-       (match_operand:VF 1 "vector_reg_or_const0_operand" "0,J")
+         (match_operand:<VSUB> 2 "reg_or_0_operand"       "f,G,f,G"))
+       (match_operand:VF 1 "vector_reg_or_const0_operand" "0,0,J,J")
        (const_int 1)] UNSPEC_VMV_SX)
-     (match_operand 3 "p_reg_or_const_csr_operand"        "rK,rK")
+     (match_operand 3 "p_reg_or_const_csr_operand"        "rK,rK,rK,rK")
      (match_operand 4 "const_int_operand")
      (reg:SI VL_REGNUM)
-     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+     (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 5 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
-  "vfmv.s.f\t%0,%2"
+  "@
+   vfmv.s.f\t%0,%2
+   vmv.s.x\t%0,zero
+   vfmv.s.f\t%0,%2
+   vmv.s.x\t%0,zero"
   [(set_attr "type" "vfmv_s_f")
    (set_attr "mode" "<MODE>")])
 
@@ -6142,7 +6282,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vslide<ud>.vx\t%0,%3,%4,%1.t
@@ -6169,7 +6310,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK,rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vslide<ud>.vx\t%0,%3,%4,%1.t
@@ -6196,7 +6338,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vslide1<ud>.vx\t%0,%3,%4,%1.t
@@ -6222,7 +6365,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vslide1<ud>.vx\t%0,%3,%4,%1.t
@@ -6248,7 +6392,8 @@
       (match_operand:SI 5 "csr_operand"                               "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand:SI 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vslide1<ud>.vx\t%0,%3,%4,%1.t
@@ -6274,7 +6419,8 @@
       (match_operand:SI 5 "csr_operand"                               "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand:SI 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vslide1<ud>.vx\t%0,%3,%4,%1.t
@@ -6301,7 +6447,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfslide1<ud>.vf\t%0,%3,%4,%1.t
@@ -6323,7 +6470,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vfslide1<ud>.vf\t%0,%3,%4,%1.t
@@ -6346,7 +6494,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vrgather.vv\t%0,%3,%4,%1.t
@@ -6369,7 +6518,8 @@
        (match_operand 5 "p_reg_or_const_csr_operand"          "rK,rK,rK,rK")
        (match_operand 6 "const_int_operand")
        (reg:SI VL_REGNUM)
-       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+  (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vrgatherei16.vv\t%0,%3,%4,%1.t
@@ -6392,7 +6542,8 @@
       (match_operand 5 "p_reg_or_const_csr_operand"           "rK,rK,rK,rK,rK,rK,rK,rK")
       (match_operand 6 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+    (clobber (match_operand 7 "pmode_register_operand" "=&r,&r,&r,&r,&r,&r,&r,&r"))]
   "TARGET_VECTOR"
   "@
    vrgather.vx\t%0,%3,%4,%1.t
@@ -6417,7 +6568,8 @@
       (match_operand 4 "p_reg_or_const_csr_operand"         "rK,rK")
       (match_operand 5 "const_int_operand")
       (reg:SI VL_REGNUM)
-      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
+      (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))
+   (clobber (match_operand 6 "pmode_register_operand" "=&r,&r"))]
   "TARGET_VECTOR"
   "vcompress.vm\t%0,%3,%1"
   [(set_attr "type" "vcompress")

@@ -105,9 +105,9 @@ emit_op5 (
   machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
   machine_mode VSUBmode,
   rtx *operands,
-  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx),
   bool (*imm_p) (rtx),
   int i, bool reverse
 );
@@ -117,9 +117,9 @@ emit_op6 (
   machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
   machine_mode VSUBmode,
   rtx *operands,
-  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
   bool (*imm_p) (rtx),
   int i, bool reverse
 );
@@ -129,9 +129,9 @@ emit_op7 (
   machine_mode Vmode, machine_mode VSImode, machine_mode VMSImode,
   machine_mode VSUBmode,
   rtx *operands,
-  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
-  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vx_32bit) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx),
+  rtx (*gen_vv) (rtx, rtx, rtx, rtx, rtx, rtx, rtx, rtx),
   bool (*imm_p) (rtx),
   int i, bool reverse
 );
@@ -155,6 +155,7 @@ extern bool riscv_vector_expand_const_vector (rtx, rtx);
 extern bool riscv_vector_expand_const_mask (rtx, rtx);
 extern void riscv_vector_expand_tuple (machine_mode, rtx *);
 extern void riscv_vector_expand_splat_vector (rtx *);
+extern rtx riscv_vector_gen_clobber_vl (rtx);
 /* Routines implemented in riscv-c.cc.  */
 void riscv_cpu_cpp_builtins (cpp_reader *);
 

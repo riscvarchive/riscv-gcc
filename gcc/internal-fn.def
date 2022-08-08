@@ -169,7 +169,7 @@ DEF_INTERNAL_OPTAB_FN (LEN_MASK_STORE, 0, len_maskstore, len_mask_store)
 DEF_INTERNAL_OPTAB_FN (STORE_LANES, ECF_CONST, vec_store_lanes, store_lanes)
 DEF_INTERNAL_OPTAB_FN (MASK_STORE_LANES, 0,
 		       vec_mask_store_lanes, mask_store_lanes)
-DEF_INTERNAL_OPTAB_FN (LEN_STORE_LANES, 0,
+DEF_INTERNAL_OPTAB_FN (LEN_STORE_LANES, ECF_CONST,
 		       len_vec_store_lanes, store_lanes)
 DEF_INTERNAL_OPTAB_FN (LEN_MASK_STORE_LANES, 0,
 		       len_vec_mask_store_lanes, mask_store_lanes)
