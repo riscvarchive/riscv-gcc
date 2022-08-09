@@ -5020,7 +5020,7 @@
     }
   rtx accum = gen_reg_rtx (<VLMUL1>mode);
   emit_insn (gen_vfmv_s_f (<VLMUL1>mode, accum, 
-             const0_rtx, operands[1], operands[3], 
+             const0_rtx, operands[1], gen_rtx_REG (Pmode, X0_REGNUM), 
              riscv_vector_gen_policy (), riscv_vector_gen_clobber_vl (operands[3])));
   emit_insn (gen_vfredosum<mode>_vs (accum, const0_rtx, accum,
         operands[2], accum, operands[3], riscv_vector_gen_policy (), riscv_vector_gen_clobber_vl (operands[3])));
