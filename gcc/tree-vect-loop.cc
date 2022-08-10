@@ -6349,6 +6349,8 @@ vectorize_fold_left_reduction (loop_vec_info loop_vinfo,
   tree vector_identity = NULL_TREE;
   if (LOOP_VINFO_FULLY_MASKED_P (loop_vinfo))
     vector_identity = build_zero_cst (vectype_out);
+  if (LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo))
+    vector_identity = build_zero_cst (vectype_out);
 
   tree scalar_dest_var = vect_create_destination_var (scalar_dest, NULL);
   int i;
@@ -7525,8 +7527,13 @@ vect_transform_reduction (loop_vec_info loop_vinfo,
     }
 
   internal_fn cond_fn = get_conditional_internal_fn (code);
+  internal_fn length_cond_fn = get_length_conditional_internal_fn (code);
   vec_loop_masks *masks = &LOOP_VINFO_MASKS (loop_vinfo);
+  vec_loop_lens *lens = &LOOP_VINFO_LENS (loop_vinfo);
   bool mask_by_cond_expr = use_mask_by_cond_expr_p (code, cond_fn, vectype_in);
+  bool length_p = cond_fn != IFN_LAST
+		  && direct_internal_fn_supported_p (length_cond_fn, vectype_in,
+						     OPTIMIZE_FOR_SPEED);
 
   /* Transform.  */
   tree new_temp = NULL_TREE;
@@ -7543,6 +7550,7 @@ vect_transform_reduction (loop_vec_info loop_vinfo,
     gcc_assert (ncopies == 1);
 
   bool masked_loop_p = LOOP_VINFO_FULLY_MASKED_P (loop_vinfo);
+  bool length_loop_p = LOOP_VINFO_FULLY_WITH_LENGTH_P (loop_vinfo);
 
   vect_reduction_type reduction_type = STMT_VINFO_REDUC_TYPE (reduc_info);
   if (reduction_type == FOLD_LEFT_REDUCTION)
@@ -7597,6 +7605,27 @@ vect_transform_reduction (loop_vec_info loop_vinfo,
 					  vectype_in, i);
 	  gcall *call = gimple_build_call_internal (cond_fn, 4, mask,
 						    vop[0], vop[1], vop[0]);
+	  new_temp = make_ssa_name (vec_dest, call);
+	  gimple_call_set_lhs (call, new_temp);
+	  gimple_call_set_nothrow (call, true);
+	  vect_finish_stmt_generation (loop_vinfo, stmt_info, call, gsi);
+	  new_stmt = call;
+	}
+      else if (length_loop_p && !length_p)
+	{
+	  /* Make sure that the reduction accumulator is vop[0].  */
+	  if (reduc_index == 1)
+	    {
+	      gcc_assert (commutative_tree_code (code));
+	      std::swap (vop[0], vop[1]);
+	    }
+	  tree mask
+	    = vect_get_loop_mask (gsi, masks, vec_num * ncopies, vectype_in, i);
+	  tree len = vect_get_loop_len (gsi, loop_vinfo, lens,
+					vec_num * ncopies, vectype_in, i);
+	  gcall *call
+	    = gimple_build_call_internal (length_cond_fn, 4, mask, vop[0],
+					  vop[1], vop[0], len);
 	  new_temp = make_ssa_name (vec_dest, call);
 	  gimple_call_set_lhs (call, new_temp);
 	  gimple_call_set_nothrow (call, true);

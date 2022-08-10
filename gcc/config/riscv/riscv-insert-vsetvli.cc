@@ -1355,6 +1355,11 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
 
   gcc_assert (require == compute_info_for_instr (insn, curr_info));
 
+  if (curr_info.valid_p () && require.valid_p () && curr_info.known_p ()
+      && require.known_p () && require.get_avl () == NULL_RTX
+      && curr_info.vtype_equal_p (require))
+    return false;
+
   if (curr_info.compatible_p (insn, require))
     return false;
 

@@ -4465,6 +4465,22 @@ static void (*const internal_fn_expanders[]) (internal_fn, gcall *) = {
   T (RSHIFT_EXPR, IFN_COND_SHR) \
   T (NEGATE_EXPR, IFN_COND_NEG)
 
+#define FOR_EACH_LENGTH_CODE_MAPPING(T) \
+  T (PLUS_EXPR, IFN_LEN_COND_ADD) \
+  T (MINUS_EXPR, IFN_LEN_COND_SUB) \
+  T (MULT_EXPR, IFN_LEN_COND_MUL) \
+  T (TRUNC_DIV_EXPR, IFN_LEN_COND_DIV) \
+  T (TRUNC_MOD_EXPR, IFN_LEN_COND_MOD) \
+  T (RDIV_EXPR, IFN_LEN_COND_RDIV) \
+  T (MIN_EXPR, IFN_LEN_COND_MIN) \
+  T (MAX_EXPR, IFN_LEN_COND_MAX) \
+  T (BIT_AND_EXPR, IFN_LEN_COND_AND) \
+  T (BIT_IOR_EXPR, IFN_LEN_COND_IOR) \
+  T (BIT_XOR_EXPR, IFN_LEN_COND_XOR) \
+  T (LSHIFT_EXPR, IFN_LEN_COND_SHL) \
+  T (RSHIFT_EXPR, IFN_LEN_COND_SHR) \
+  T (NEGATE_EXPR, IFN_LEN_COND_NEG)
+
 /* Return a function that only performs CODE when a certain condition is met
    and that uses a given fallback value otherwise.  For example, if CODE is
    a binary operation associated with conditional function FN:
@@ -4486,6 +4502,19 @@ get_conditional_internal_fn (tree_code code)
     {
 #define CASE(CODE, IFN) case CODE: return IFN;
       FOR_EACH_CODE_MAPPING(CASE)
+#undef CASE
+    default:
+      return IFN_LAST;
+    }
+}
+
+internal_fn
+get_length_conditional_internal_fn (tree_code code)
+{
+  switch (code)
+    {
+#define CASE(CODE, IFN) case CODE: return IFN;
+      FOR_EACH_LENGTH_CODE_MAPPING(CASE)
 #undef CASE
     default:
       return IFN_LAST;

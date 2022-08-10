@@ -2926,6 +2926,340 @@ riscv_vector_expand_vector_handle_dup_and_const (
   return true;
 }
 
+static bool
+riscv_vector_expand_strided_init (rtx target, const rtx_vector_builder &builder,
+				  int nelts_reqd)
+{
+  if (nelts_reqd < 2)
+    return false;
+
+  auto_vec<tree> vars;
+  machine_mode mode = GET_MODE (target);
+  for (int i = 0; i < nelts_reqd; i++)
+    {
+      if (!MEM_P (builder.elt (i)))
+	return false;
+      tree var = REG_EXPR (builder.elt (i));
+      if (!var)
+	return false;
+      if (TREE_CODE (var) != MEM_REF)
+	return false;
+      if (TREE_CODE (TREE_OPERAND (var, 0)) != SSA_NAME)
+	return false;
+      if (!SSA_NAME_DEF_STMT (TREE_OPERAND (var, 0)))
+	return false;
+      vars.safe_push (var);
+    }
+
+  gcc_assert ((int) vars.length () == nelts_reqd);
+  auto_vec<gassign *> stmts;
+  tree offset = NULL_TREE;
+  /*
+      Case 1:
+	_1310 = MEM[(const type *)_1303];
+	ivtmp_1311 = _1303 + _3056;
+	_1312 = MEM[(const type *)ivtmp_1311];
+	ivtmp_1313 = ivtmp_1311 + _3056;
+	_1314 = MEM[(const type *)ivtmp_1313];
+	ivtmp_1315 = ivtmp_1313 + _3056;
+	_1316 = MEM[(const type *)ivtmp_1315];
+	vect_cst__1318 = {_1310, _1312, _1314, _1316};
+      */
+  for (int i = 0; i < nelts_reqd; i++)
+    {
+      if (is_gimple_assign (SSA_NAME_DEF_STMT (TREE_OPERAND (vars[i], 0))))
+	{
+	  if (i == 0)
+	    offset = TREE_OPERAND (vars[i], 1);
+	  else if (offset == NULL_TREE || offset != TREE_OPERAND (vars[i], 1))
+	    return false;
+	  else
+	    {
+	      /* Fallthrough */;
+	    }
+	  gassign *assign
+	    = as_a<gassign *> (SSA_NAME_DEF_STMT (TREE_OPERAND (vars[i], 0)));
+	  stmts.safe_push (assign);
+	}
+    }
+
+  if ((int) stmts.length () == nelts_reqd)
+    {
+      bool all_same_stride_p = true;
+      rtx stride = NULL_RTX;
+      for (int i = 1; i < nelts_reqd; i++)
+	{
+	  gassign *stmt = stmts[i];
+	  if (gimple_assign_rhs_code (stmt) != POINTER_PLUS_EXPR)
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+	  tree rhs1 = gimple_assign_rhs1 (stmt);
+	  tree rhs2 = gimple_assign_rhs2 (stmt);
+	  if (rhs1 != gimple_assign_lhs (stmts[i - 1]))
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+	  if (i != 1 && rhs2 != gimple_assign_rhs2 (stmts[i - 1]))
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+	  if (!stride)
+	    stride = expand_normal (rhs2);
+	}
+      if (all_same_stride_p && stride)
+	{
+	  rtx mem
+	    = gen_rtx_MEM (mode, force_reg (Pmode, XEXP (builder.elt (0), 0)));
+	  rtx pat
+	    = gen_vlse (mode, target, const0_rtx, const0_rtx, XEXP (mem, 0),
+			stride, gen_rtx_REG (Pmode, X0_REGNUM),
+			riscv_vector_gen_policy (), gen_reg_rtx (Pmode));
+	  emit_insn (pat);
+	  return true;
+	}
+    }
+
+  /*
+      Case 2:
+	ivtmp_3820 = (const float &) ivtmp.833_411;
+  ivtmp_3628 = (const float &) ivtmp.830_555;
+  _3632 = MEM[(const type &)ivtmp_3628];
+  _784 = ivtmp.830_555 + _3631;
+  ivtmp_3633 = (const float &) _784;
+  _3634 = MEM[(const type &)ivtmp_3633];
+  _488 = _784 + _3631;
+  ivtmp_3635 = (const float &) _488;
+  _3636 = MEM[(const type &)ivtmp_3635];
+  _486 = _488 + _3631;
+  ivtmp_3637 = (const float &) _486;
+  _3638 = MEM[(const type &)ivtmp_3637];
+  ivtmp_3639 = (const float &) ivtmp.840_146;
+  _3640 = MEM[(const type &)ivtmp_3639];
+  _452 = ivtmp.840_146 + _3631;
+  ivtmp_3641 = (const float &) _452;
+  _3642 = MEM[(const type &)ivtmp_3641];
+  _800 = _452 + _3631;
+  ivtmp_3643 = (const float &) _800;
+  _3644 = MEM[(const type &)ivtmp_3643];
+  _781 = _800 + _3631;
+  ivtmp_3645 = (const float &) _781;
+  _3646 = MEM[(const type &)ivtmp_3645];
+  vect_cst__3648 = {_3632, _3634, _3636, _3638, _3640, _3642, _3644, _3646};
+      */
+  stmts.release ();
+  if (nelts_reqd < 4)
+    return false;
+  tree stride[2] = {NULL_TREE, NULL_TREE};
+  for (int i = 0; i < 2; i++)
+    {
+      int start = i * nelts_reqd / 2;
+      int end = nelts_reqd / (2 - i);
+      tree offset = TREE_OPERAND (vars[start], 1);
+      gassign *assign
+	= as_a<gassign *> (SSA_NAME_DEF_STMT (TREE_OPERAND (vars[start], 0)));
+      if (!assign)
+	break;
+      if (!CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (assign)))
+	break;
+      tree base = gimple_assign_rhs1 (assign);
+      tree step = NULL_TREE;
+      bool all_same_stride_p = true;
+      for (int j = start + 1; j < end; j++)
+	{
+	  if (TREE_OPERAND (vars[j], 1) != offset)
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+	  gassign *assign2
+	    = as_a<gassign *> (SSA_NAME_DEF_STMT (TREE_OPERAND (vars[j], 0)));
+	  if (!assign2)
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+	  if (!CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (assign2)))
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+
+	  gassign *assign3 = as_a<gassign *> (
+	    SSA_NAME_DEF_STMT (gimple_assign_rhs1 (assign2)));
+
+	  if (!assign3)
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+	  if (gimple_assign_rhs_code (assign3) != PLUS_EXPR)
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+
+	  if (gimple_assign_rhs1 (assign3) != base)
+	    {
+	      all_same_stride_p = false;
+	      break;
+	    }
+	  else
+	    base = gimple_assign_lhs (assign3);
+	  if (!step)
+	    step = gimple_assign_rhs2 (assign3);
+	  else
+	    {
+	      if (gimple_assign_rhs2 (assign3) != step)
+		{
+		  all_same_stride_p = false;
+		  break;
+		}
+	    }
+	}
+      if (all_same_stride_p)
+	stride[i] = step;
+    }
+  if (stride[0] && stride[1])
+    {
+      rtx reg = gen_reg_rtx (mode);
+      /* step 1: load the high nelts_reqd / 2 elements. */
+      rtx mem = gen_rtx_MEM (
+	mode, force_reg (Pmode, XEXP (builder.elt (nelts_reqd / 2), 0)));
+      emit_insn (gen_vlse (mode, reg, const0_rtx, const0_rtx, XEXP (mem, 0),
+			   expand_normal (stride[1]),
+			   gen_int_mode (nelts_reqd / 2, Pmode),
+			   riscv_vector::gen_tu_policy (),
+			   gen_reg_rtx (Pmode)));
+
+      /* step 2: slide up nelts_reqd / 2 position. */
+      emit_insn (
+	gen_vslide_vx (UNSPEC_SLIDEUP, mode, target, const0_rtx, const0_rtx,
+		       reg, gen_int_mode (nelts_reqd / 2, Pmode),
+		       gen_rtx_REG (Pmode, X0_REGNUM),
+		       riscv_vector::gen_tu_policy (), gen_reg_rtx (Pmode)));
+
+      /* step 3: load the low nelts_reqd / 2 elements. */
+      mem = gen_rtx_MEM (mode, force_reg (Pmode, XEXP (builder.elt (0), 0)));
+      emit_insn (gen_vlse (mode, target, const0_rtx, target, XEXP (mem, 0),
+			   expand_normal (stride[0]),
+			   gen_int_mode (nelts_reqd / 2, Pmode),
+			   riscv_vector::gen_tu_policy (),
+			   gen_reg_rtx (Pmode)));
+      return true;
+    }
+  return false;
+}
+
+struct vec_init_fields
+{
+  rtx target;
+  auto_vec<rtx> index_vec;
+};
+
+static auto_vec<struct vec_init_fields *> vec_init_info;
+
+static bool
+riscv_vector_expand_indexed_init (rtx target, const rtx_vector_builder &builder,
+				  int nelts_reqd)
+{
+  if (nelts_reqd < 4)
+    return false;
+
+  machine_mode mode = GET_MODE (target);
+  poly_int64 nunits = GET_MODE_NUNITS (mode);
+  machine_mode index_mode;
+  if (!riscv_vector_data_mode (Pmode, nunits).exists (&index_mode))
+    return false;
+
+  for (int i = 0; i < nelts_reqd; i++)
+    {
+      if (!MEM_P (builder.elt (i)))
+	return false;
+      if (i == 0)
+	continue;
+      if (GET_CODE (XEXP (builder.elt (i), 0)) != REG
+	  && GET_CODE (XEXP (builder.elt (i), 0)) != PLUS)
+	return false;
+      if (GET_CODE (XEXP (builder.elt (i), 0))
+	  != GET_CODE (XEXP (builder.elt (i - 1), 0)))
+	return false;
+      if (GET_CODE (XEXP (builder.elt (i), 0)) == PLUS
+	  && XEXP (XEXP (builder.elt (i), 0), 1)
+	       != XEXP (XEXP (builder.elt (i - 1), 0), 1))
+	return false;
+    }
+
+  struct vec_init_fields *vec_init = new vec_init_fields ();
+  rtx index = NULL_RTX;
+  for (int i = 0; i < nelts_reqd; i++)
+    {
+      if (REG_P (XEXP (builder.elt (i), 0)))
+	vec_init->index_vec.safe_push (XEXP (builder.elt (i), 0));
+      else
+	vec_init->index_vec.safe_push (XEXP (XEXP (builder.elt (i), 0), 0));
+    }
+
+  for (unsigned int i = 0; i < vec_init_info.length (); i++)
+    {
+      if (vec_init_info[i]->index_vec.length ()
+	  != vec_init->index_vec.length ())
+	continue;
+      bool all_same_p = true;
+      for (unsigned int j = 0; j < vec_init->index_vec.length (); j++)
+	{
+	  if (vec_init_info[i]->index_vec[j] != vec_init->index_vec[j])
+	    {
+	      all_same_p = false;
+	      break;
+	    }
+	}
+      if (all_same_p)
+	{
+	  index = vec_init_info[i]->target;
+	  break;
+	}
+      else
+	continue;
+    }
+
+  if (!index)
+    {
+      index = gen_reg_rtx (index_mode);
+      emit_clobber (index);
+      for (int i = 0; i < nelts_reqd; i++)
+	emit_slide1down (index, index, vec_init->index_vec[i]);
+      vec_init->target = index;
+      vec_init_info.safe_push (vec_init);
+    }
+
+  if (REG_P (XEXP (builder.elt (0), 0)))
+    {
+      emit_insn (gen_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, mode, index_mode,
+			    target, const0_rtx, const0_rtx,
+			    gen_rtx_REG (Pmode, X0_REGNUM), index,
+			    gen_rtx_REG (Pmode, X0_REGNUM),
+			    riscv_vector_gen_policy (), gen_reg_rtx (Pmode)));
+      return true;
+    }
+
+  if (GET_CODE (XEXP (builder.elt (0), 0)) == PLUS)
+    {
+      emit_insn (
+	gen_vlxei (UNSPEC_UNORDER_INDEXED_LOAD, mode, index_mode, target,
+		   const0_rtx, const0_rtx,
+		   force_reg (Pmode, XEXP (XEXP (builder.elt (0), 0), 1)),
+		   index, gen_rtx_REG (Pmode, X0_REGNUM),
+		   riscv_vector_gen_policy (), gen_reg_rtx (Pmode)));
+      return true;
+    }
+
+  return false;
+}
+
 /* Initialize register TARGET from the elements in PARALLEL rtx VALS.  */
 
 void
@@ -2939,6 +3273,12 @@ riscv_vector_expand_vector_init (rtx target, rtx vals)
     v.quick_push (XVECEXP (vals, 0, i));
   v.finalize ();
 
+  if (riscv_vector_expand_strided_init (target, v, nelts))
+    return;
+
+  if (riscv_vector_expand_indexed_init (target, v, nelts))
+    return;
+    
   if (nelts < 4
       || !riscv_vector_expand_vector_handle_dup_and_const (target, v, nelts))
     riscv_vector_expand_vector_init_insert_leading_elems (target, v, nelts);
