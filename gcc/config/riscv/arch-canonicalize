@@ -134,7 +134,7 @@ def arch_canonicalize(arch, isa_spec):
 
   # Put extensions in canonical order.
   for ext in CANONICAL_ORDER:
-    if ext in std_exts:
+    if ext in std_exts and ext not in new_arch:
       new_arch += ext
 
   # Check every extension is processed.
