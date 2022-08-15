@@ -401,6 +401,35 @@ aggressive_register_coalesce (void)
   return true;
 }
 
+static bool
+legitimate_subreg_byte_p (rtx dest, rtx src)
+{
+  machine_mode dest_mode = GET_MODE (SUBREG_REG (dest));
+  machine_mode src_mode = GET_MODE (SUBREG_REG (src));
+  poly_int64 dest_size = GET_MODE_SIZE (dest_mode);
+  poly_int64 src_size = GET_MODE_SIZE (src_mode);
+
+  if (known_gt (dest_size, src_size))
+    return false;
+
+  unsigned int threshold = exact_div (src_size, dest_size).to_constant ();
+  for (unsigned int i = 0; i < threshold; i++)
+    if (known_eq (SUBREG_BYTE (src) - SUBREG_BYTE (dest), i * dest_size))
+      return true;
+
+  return false;
+}
+
+static poly_uint64
+start_offset (auto_vec<poly_uint64> &worklist)
+{
+  poly_uint64 offset = worklist[0];
+  for (unsigned int i = 0; i < worklist.length (); i++)
+    if (known_lt (worklist[i], offset))
+      offset = worklist[i];
+  return offset;
+}
+
 /* Return true if all subregno-related instructions are legitimate. */
 static bool
 legitimate_subreg_to_subreg_copy_p (rtx_insn *copy)
@@ -423,8 +452,8 @@ legitimate_subreg_to_subreg_copy_p (rtx_insn *copy)
 	{
 	  if (rtx_equal_p (SUBREG_REG (SET_SRC (single_set (insn))), src)
 	      && rtx_equal_p (SUBREG_REG (SET_DEST (single_set (insn))), dest)
-	      && known_eq (SUBREG_BYTE (SET_SRC (single_set (insn))),
-			   SUBREG_BYTE (SET_DEST (single_set (insn)))))
+	      && legitimate_subreg_byte_p (SET_DEST (single_set (insn)),
+					   SET_SRC (single_set (insn))))
 	    worklist.safe_push (SUBREG_BYTE (SET_SRC (single_set (insn))));
 	  else if (rtx_equal_p (SUBREG_REG (SET_SRC (single_set (insn))), src)
 		   || rtx_equal_p (SET_DEST (single_set (insn)), dest)
@@ -474,7 +503,7 @@ legitimate_subreg_to_subreg_copy_p (rtx_insn *copy)
       if (find_regno_note (insn, REG_DEAD, REGNO (src)))
 	{
 	  if (worklist.length ()
-	      == exact_div (GET_MODE_SIZE (GET_MODE (src)),
+	      == exact_div (GET_MODE_SIZE (GET_MODE (dest)),
 			    GET_MODE_SIZE (
 			      GET_MODE (SET_SRC (single_set (copy)))))
 		   .to_constant ())
@@ -508,24 +537,44 @@ legitimate_subreg_to_subreg_copy_p (rtx_insn *copy)
 
   if (last_insn)
     {
+      if (worklist.length () < 2)
+	return false;
+      poly_uint64 offset = start_offset (worklist);
+      unsigned int start
+	= exact_div (offset,
+		     GET_MODE_SIZE (GET_MODE (SET_DEST (single_set (copy)))))
+	    .to_constant ();
+
       auto_vec<bool> offset_p;
       for (unsigned i = 0; i < worklist.length (); i++)
 	offset_p.safe_push (false);
       for (unsigned i = 0; i < worklist.length (); i++)
 	offset_p[exact_div (worklist[i], GET_MODE_SIZE (GET_MODE (
 					   SET_DEST (single_set (copy)))))
-		   .to_constant ()]
+		   .to_constant ()
+		 - start]
 	  = true;
       for (unsigned i = 0; i < worklist.length (); i++)
 	if (!offset_p[i])
 	  return false;
 
+      unsigned int num
+	= exact_div (GET_MODE_SIZE (GET_MODE (src)),
+		     GET_MODE_SIZE (GET_MODE (SET_SRC (single_set (copy)))))
+	    .to_constant ();
+      rtx replace = src;
+      if (worklist.length () < num)
+	replace
+	  = simplify_gen_subreg (GET_MODE (dest), src, GET_MODE (src), offset);
+      if (!replace)
+	return false;
       rtx_insn *next_insn;
       for (next_insn = NEXT_INSN (last_insn);
 	   next_insn != NEXT_INSN (BB_END (BLOCK_FOR_INSN (last_insn)));
 	   next_insn = NEXT_INSN (next_insn))
 	{
-	  if (INSN_P (next_insn) && single_set (next_insn))
+	  if (INSN_P (next_insn) && single_set (next_insn)
+	      && !rtx_equal_p (SET_DEST (single_set (next_insn)), dest))
 	    {
 	      extract_insn (next_insn);
 	      for (int i = 0; i < recog_data.n_operands; i++)
@@ -538,7 +587,7 @@ legitimate_subreg_to_subreg_copy_p (rtx_insn *copy)
 		    {
 		      rtx pat
 			= simplify_replace_rtx (PATTERN (next_insn),
-						recog_data.operand[i], src);
+						recog_data.operand[i], replace);
 		      validate_change (next_insn, &PATTERN (next_insn), pat,
 				       false);
 		      remove_note (next_insn,
@@ -566,8 +615,7 @@ cleanup_subreg_to_subreg (void)
 	  rtx src = SET_SRC (single_set (insn));
 	  rtx dest = SET_DEST (single_set (insn));
 	  if (SUBREG_P (src) && SUBREG_P (dest) && REG_P (SUBREG_REG (src))
-	      && REG_P (SUBREG_REG (dest)) && GET_MODE (dest) == GET_MODE (src)
-	      && GET_MODE (SUBREG_REG (dest)) == GET_MODE (SUBREG_REG (src)))
+	      && REG_P (SUBREG_REG (dest)) && GET_MODE (dest) == GET_MODE (src))
 	    {
 	      bool visited_p = false;
 	      for (unsigned i = 0; i < visitedlist.length (); i++)

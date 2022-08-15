@@ -203,7 +203,7 @@
            (unspec:<VWLMUL1> 
              [(unspec:<VWLMUL1> 
                [(vec_duplicate:<VWLMUL1> 
-                 (match_operand:<VWSUB> 2 "register_operand" "r"))
+                 (match_operand:<VWSUB> 2 "register_operand" "f"))
                 (const_int 0)
                 (const_int 1)] UNSPEC_VMV_SX)
               (reg:P X0_REGNUM)
