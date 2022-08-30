@@ -2065,7 +2065,7 @@
 	      (use (match_operand:SI 3 "const_int_operand"))])]
   ""
 {
-  if (riscv_vector_expand_block_move (operands))
+  if (flag_tree_vectorize && riscv_vector_expand_block_move (operands))
     DONE;
   else if (riscv_expand_block_move (operands[0], operands[1], operands[2]))
     DONE;
