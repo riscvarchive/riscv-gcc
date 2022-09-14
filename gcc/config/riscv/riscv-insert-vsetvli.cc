@@ -258,11 +258,17 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 {
   extract_insn_cached (insn);
   if (replace == REPLACE_VTYPE)
-    validate_change (insn,
-		     recog_data.operand_loc[vl_preserving_config_p (insn)
-					      ? 0
-					      : recog_data.n_operands - 1],
-		     x, false);
+    {
+      rtx pat;
+      if (vl_preserving_config_p (insn))
+	pat = gen_vsetvl_zero_zero (Pmode, x, recog_data.operand[1]);
+      else if (recog_data.n_operands == 2)
+	pat = gen_vsetvl_zero (Pmode, recog_data.operand[0], x);
+      else
+	pat
+	  = gen_vsetvl (Pmode, recog_data.operand[0], recog_data.operand[1], x);
+      validate_change (insn, &PATTERN (insn), pat, false);
+    }
 
   if (replace == REPLACE_VL && use_vl_p (insn))
     {
@@ -343,20 +349,20 @@ update_vl_vtype_p (rtx_insn *insn)
   return false;
 }
 
-static rtx
+static rtx_insn *
 get_avl_source (rtx avl, rtx_insn *rtl)
 {
   if (!rtl || !avl)
-    return NULL_RTX;
+    return NULL;
 
   if (optimize < 2)
-    return NULL_RTX;
+    return NULL;
 
   insn_info *next;
-  rtx avl_source = NULL_RTX;
+  rtx_insn * avl_source = NULL;
 
   if (!REG_P (avl))
-    return NULL_RTX;
+    return NULL;
 
   for (insn_info *insn = crtl->ssa->first_insn (); insn; insn = next)
     {
@@ -368,15 +374,15 @@ get_avl_source (rtx avl, rtx_insn *rtl)
 	  def_info *def = dl.last_def_of_prev_group ();
 
 	  if (!def)
-	    return NULL_RTX;
+	    return NULL;
 
 	  if (!is_a<set_info *> (def))
-	    return NULL_RTX;
+	    return NULL;
 
 	  insn_info *def_insn = def->insn ();
 
 	  if (!def_insn)
-	    return NULL_RTX;
+	    return NULL;
 	  rtx_insn *def_rtl = def_insn->rtl ();
 
 	  if (!def_rtl)
@@ -385,7 +391,7 @@ get_avl_source (rtx avl, rtx_insn *rtl)
 		{
 		  // There is an existing phi.
 		  phi_info *phi = as_a<phi_info *> (def);
-		  avl_source = NULL_RTX;
+		  avl_source = NULL;
 		  for (unsigned int i = 0; i < phi->num_inputs (); i++)
 		    {
 		      def_info *phi_def = phi->input_value (i);
@@ -403,14 +409,15 @@ get_avl_source (rtx avl, rtx_insn *rtl)
 		      if (single_set (phi_def_rtl))
 			{
 			  if (!avl_source)
-			    avl_source = SET_SRC (single_set (phi_def_rtl));
+			    avl_source =  phi_def_rtl;
 			  else
 			    {
-			      if (!rtx_equal_p (avl_source,
+			      if (!rtx_equal_p (SET_SRC (
+						  single_set (avl_source)),
 						SET_SRC (
 						  single_set (phi_def_rtl))))
 				{
-				  avl_source = NULL_RTX;
+				  avl_source = NULL;
 				  break;
 				}
 			    }
@@ -421,12 +428,12 @@ get_avl_source (rtx avl, rtx_insn *rtl)
 		    return avl_source;
 		}
 
-	      return NULL_RTX;
+	      return NULL;
 	    }
 
 	  if (NONDEBUG_INSN_P (def_rtl) && single_set (def_rtl))
 	    {
-	      avl_source = SET_SRC (single_set (def_rtl));
+	      avl_source = def_rtl;
 	      break;
 	    }
 	}
@@ -678,6 +685,34 @@ are_compatible_vtypes (uint64_t vtype1, uint64_t vtype2,
   return true;
 }
 
+static bool
+rtx_replaceable_p (const_rtx x, const_rtx y)
+{
+  enum rtx_code code;
+
+  if (x == y)
+    return 1;
+  if (x == 0 || y == 0)
+    return 0;
+
+  code = GET_CODE (x);
+  /* Rtx's of different codes cannot be equal.  */
+  if (code != GET_CODE (y))
+    return 0;
+
+  /* (MULT:SI x y) and (MULT:HI x y) are NOT equivalent.
+     (REG:SI x) and (REG:HI x) are NOT equivalent.  */
+
+  if (GET_MODE (x) != GET_MODE (y))
+    return 0;
+
+  /* Some RTL can be compared nonrecursively.  */
+  if (code == REG) {
+    return (REGNO (x) == REGNO (y) && ORIGINAL_REGNO (x) == ORIGINAL_REGNO (y));
+  }
+  return rtx_equal_p(x, y);
+}
+
 class vinfo
 {
 private:
@@ -689,15 +724,15 @@ private:
   uint8_t vlmul : 3;
   uint8_t sew_lmul_ratio_only_p : 1;
   rtx avl;
-  rtx avl_source;
   uint8_t vma_mutate_p : 1;
   uint8_t vta_mutate_p : 1;
+  std::vector<rtx> avl_source_insn_ops;
 
 public:
   vinfo ()
     : state (STATE_UNINITIALIZED), vma (false), vta (false), vsew (0),
       vlmul (0), sew_lmul_ratio_only_p (false), avl (NULL_RTX),
-      avl_source (NULL_RTX), vma_mutate_p (false), vta_mutate_p (false)
+      vma_mutate_p (false), vta_mutate_p (false)
   {}
 
   ~vinfo () {}
@@ -721,7 +756,31 @@ public:
     state = STATE_KNOWN;
   }
 
-  void set_avl_source (rtx op) { avl_source = op; }
+  void set_avl_source (rtx_insn* insn)
+  {
+    avl_source_insn_ops.clear();
+    if (insn == NULL) return;
+    gcc_assert (single_set (insn));
+    // the first element of avl_source_insn_ops will always be the SET_SRC
+    avl_source_insn_ops.push_back(SET_SRC (single_set (insn)));
+    extract_insn_cached (insn);
+    for (int i = 0; i < recog_data.n_operands; i++)
+      {
+        avl_source_insn_ops.push_back(recog_data.operand[i]);
+      }
+  }
+
+  bool avl_same_source_p(vinfo other) const
+  {
+    if (avl_source_insn_ops.size() != other.get_avl_source_ops().size())
+      return false;
+    for (unsigned i = 0; i < avl_source_insn_ops.size(); i++)
+      {
+        if (!rtx_replaceable_p (avl_source_insn_ops[i], other.get_avl_source_ops()[i]))
+          return false;
+      }
+    return true;
+  }
 
   bool avl_const_p () const
   {
@@ -749,10 +808,16 @@ public:
     return false;
   }
 
-  rtx get_avl_source () const
+  std::vector<rtx> get_avl_source_ops () const
   {
     gcc_assert (known_p ());
-    return avl_source;
+    return avl_source_insn_ops;
+  }
+
+  rtx get_avl_source_set () const
+  {
+    gcc_assert (known_p ());
+    return avl_source_insn_ops.size() > 0 ? avl_source_insn_ops[0] : NULL_RTX;
   }
 
   unsigned int get_vsew () const { return vsew; }
@@ -800,16 +865,16 @@ public:
 
 	if (REG_P (info.get_avl ()))
 	  {
-	    if (info.get_avl_source ())
+		if (info.get_avl_source_set ())
 	      {
-		if (CONST_SCALAR_INT_P (info.get_avl_source ())
+		if (CONST_SCALAR_INT_P (info.get_avl_source_set ())
 		    && GET_MODE_NUNITS (mode).is_constant ()
-		    && INTVAL (info.get_avl_source ())
+		    && INTVAL (info.get_avl_source_set ())
 			 == GET_MODE_NUNITS (mode).to_constant ())
 		  return true;
-		if (CONST_POLY_INT_P (info.get_avl_source ())
+		if (CONST_POLY_INT_P (info.get_avl_source_set ())
 		    && !GET_MODE_NUNITS (mode).is_constant ()
-		    && known_eq (rtx_to_poly_int64 (info.get_avl_source ()),
+		    && known_eq (rtx_to_poly_int64 (info.get_avl_source_set ()),
 				 GET_MODE_NUNITS (mode)))
 		  return true;
 	      }
@@ -832,20 +897,11 @@ public:
     if (other.compare_vl (*this))
       return true;
 
-    if (rtx_equal_p (get_avl (), other.get_avl ()))
-      return true;
+    if (rtx_replaceable_p (get_avl (), other.get_avl ())) {
+      return avl_same_source_p (other);
+    }
 
-    if (!get_avl_source () && !other.get_avl_source ())
-      return false;
-
-    if (get_avl_source () && rtx_equal_p (get_avl_source (), other.get_avl ()))
-      return true;
-
-    if (other.get_avl_source ()
-	&& rtx_equal_p (other.get_avl_source (), get_avl ()))
-      return true;
-
-    return rtx_equal_p (get_avl_source (), other.get_avl_source ());
+    return false;
   }
 
   void set_vtype (unsigned int vtype)
@@ -1008,17 +1064,7 @@ public:
       return false;
 
     if (get_avl () && other.get_avl ()
-	&& !rtx_equal_p (get_avl (), other.get_avl ()))
-      return false;
-
-    if (get_avl_source () && !other.get_avl_source ())
-      return false;
-
-    if (!get_avl_source () && other.get_avl_source ())
-      return false;
-
-    if (get_avl_source () && other.get_avl_source ()
-	&& !rtx_equal_p (get_avl_source (), other.get_avl_source ()))
+	&& !rtx_replaceable_p (get_avl (), other.get_avl ()))
       return false;
 
     // If only the VLMAX is valid, check that it is the same.
@@ -1044,7 +1090,9 @@ public:
     vlmul = other.vlmul;
     sew_lmul_ratio_only_p = other.sew_lmul_ratio_only_p;
     avl = other.avl;
-    avl_source = other.avl_source;
+    avl_source_insn_ops.clear();
+    for (unsigned i = 0; i < other.avl_source_insn_ops.size(); i++)
+      avl_source_insn_ops.push_back(other.avl_source_insn_ops[i]);
     vma_mutate_p = other.vma_mutate_p;
     vta_mutate_p = other.vta_mutate_p;
     return *this;
@@ -1098,10 +1146,13 @@ public:
       {
 	fprintf (dump_file, "  Avl=");
 	print_rtl_single (dump_file, get_avl ());
-	if (get_avl_source ())
+	if (get_avl_source_ops ().size())
 	  {
 	    fprintf (dump_file, "  Avl Source=");
-	    print_rtl_single (dump_file, get_avl_source ());
+    for (unsigned i = 0; i < get_avl_source_ops ().size(); i++)
+      {
+	    print_rtl_single (dump_file, get_avl_source_ops ()[i]);
+      }
 	  }
 	else
 	  fprintf (dump_file, "  Avl Source=(nil)\n");
@@ -1183,7 +1234,37 @@ fetch_def_insn (rtx_insn *rtl, const vinfo info)
 	  rtx_insn *def_rtl = def_insn->rtl ();
 
 	  if (!def_rtl)
-	    return NULL;
+	    {
+	      if (def_insn->is_phi ())
+		{
+		  // There is an existing phi.
+		  phi_info *phi = as_a<phi_info *> (def);
+		  rtx_insn *vsetvli_insn = NULL;
+		  for (unsigned int i = 0; i < phi->num_inputs (); i++)
+		    {
+		      def_info *phi_def = phi->input_value (i);
+		      if (!phi_def)
+			break;
+		      insn_info *phi_def_insn = phi_def->insn ();
+		      rtx_insn *phi_def_rtl = phi_def_insn->rtl ();
+		      if (!phi_def_rtl)
+			break;
+		      if (!NONDEBUG_INSN_P (phi_def_rtl))
+			break;
+		      if (!vector_config_instr_p (phi_def_rtl))
+			break;
+		      if (!vsetvli_insn)
+			vsetvli_insn = phi_def_rtl;
+		      else if (vsetvli_insn == phi_def_rtl)
+			continue;
+		      else
+			return NULL;
+		    }
+      return vsetvli_insn;
+		}
+	      else
+		return NULL;
+	    }
 	  if (!NONDEBUG_INSN_P (def_rtl))
 	    return NULL;
 
@@ -1384,14 +1465,10 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
 	return false;
     }
 
-  // We didn't find a compatible value. If our AVL is a virtual register,
-  // it might be defined by a VSET(I)VLI. If it has the same VTYPE we need
-  // and the last VL/VTYPE we observed is the same, we don't need a
-  // VSETVLI here.
+  // We didn't find a compatible value. It might be defined by a VSET(I)VLI.
+  // If it has the same VTYPE we need and the last VL/VTYPE we observed is the same,
+  // we don't need a VSETVLI here.
   if (require.avl_reg_p ()
-      && ((!reload_completed
-	   && !HARD_REGISTER_NUM_P (REGNO (require.get_avl ())))
-	  || reload_completed)
       && curr_info.compatible_vtype_p (insn, require))
     {
       rtx_insn *def_rtl = fetch_def_insn (insn, require);
@@ -1553,8 +1630,7 @@ transfer_before (vinfo &info, rtx_insn *insn)
   // replace the AVL operand with the AVL of the defining vsetvli.
   // We avoid general register AVLs to avoid extending live ranges
   // without being sure we can kill the original source reg entirely.
-  if (!info.avl_reg_p ()
-      || (!reload_completed && HARD_REGISTER_NUM_P (REGNO (info.get_avl ()))))
+  if (!info.avl_reg_p ())
     return;
   rtx_insn *def_insn = fetch_def_insn (insn, info);
   if (!def_insn || !vector_config_instr_p (def_insn))
@@ -1911,8 +1987,12 @@ dolocalpostpass (const basic_block bb)
 	used.vl = true;
     }
 
-  for (auto *to_remove : to_delete)
-    remove_insn (to_remove);
+  for (auto *to_remove : to_delete) {
+    if (in_sequence_p ())
+      remove_insn (to_remove);
+    else
+      delete_insn (to_remove);
+  }
 }
 
 /// Return true if the VL value configured must be equal to the requested one.
@@ -1935,7 +2015,18 @@ has_fixed_result (const vinfo &info)
 					 info.get_vlmul ());
 
   if (!BYTES_PER_RISCV_VECTOR.is_constant ())
-    return GET_MODE_BITSIZE (mode).to_constant () >= 128;
+    {
+      if (known_lt (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR))
+	return TARGET_MIN_VLEN
+		 / exact_div (BYTES_PER_RISCV_VECTOR, GET_MODE_SIZE (mode))
+		     .to_constant ()
+	       >= avl_in_bits;
+      else
+	return TARGET_MIN_VLEN
+		 * exact_div (GET_MODE_SIZE (mode), BYTES_PER_RISCV_VECTOR)
+		     .to_constant ()
+	       >= avl_in_bits;
+    }
 
   return GET_MODE_BITSIZE (mode).to_constant () >= avl_in_bits;
 }
@@ -1948,9 +2039,6 @@ has_fixed_result (const vinfo &info)
 static void
 dopre (const basic_block bb)
 {
-  if (reload_completed)
-    return;
-
   if (!bb_vinfo_map[bb->index].pred.unknown_p ())
     return;
 
@@ -2019,6 +2107,8 @@ dopre (const basic_block bb)
 	       bb->index, unavailable_pred->index);
       available_info.print ();
     }
+  if (rtx_equal_p (available_info.get_avl (), gen_rtx_REG (Pmode, X0_REGNUM)))
+    return;
   bb_vinfo_map[unavailable_pred->index].exit = available_info;
   bb_vinfo_map[bb->index].pred = available_info;
 
@@ -2226,9 +2316,6 @@ rest_of_handle_insert_vsetvli (function *fn)
       return 0;
     }
 
-  if (!reload_completed && optimize >= 2)
-    combine_instructions ();
-
   if (dump_file)
     fprintf (dump_file,
 	     "Phase 2 determine the exit VL/VTYPE from each block:\n");
@@ -2279,45 +2366,28 @@ rest_of_handle_insert_vsetvli (function *fn)
     {
       rtx_insn *insn = NULL;
       vinfo curr_info;
-      rtx x = reload_completed ? const0_rtx : gen_reg_rtx (Pmode);
+      rtx x = const0_rtx;
       FOR_BB_INSNS (bb, insn)
 	{
 	  if (vector_config_instr_p (insn))
 	    {
 	      extract_insn_cached (insn);
-	      vinfo new_info = get_info_for_vsetvli (insn);
-	      if (curr_info == new_info && recog_data.n_operands != 3)
+	      if (recog_data.n_operands == 2
+		  && GET_CODE (PATTERN (insn)) == SET)
+		validate_change (insn, recog_data.operand_loc[1],
+				 CONST0_RTX (Pmode), false);
+	      if (recog_data.n_operands == 3
+		  && !rtx_equal_p (recog_data.operand[0],
+				   gen_rtx_REG (Pmode, X0_REGNUM))
+		  && !rtx_equal_p (recog_data.operand[1],
+				   gen_rtx_REG (Pmode, X0_REGNUM))
+		  && find_reg_note (insn, REG_UNUSED, recog_data.operand[0]))
 		{
-		  rtx_insn *next_insn = NEXT_INSN (insn);
-		  remove_insn (insn);
-		  insn = next_insn;
+		  rtx pat = gen_vsetvl_zero (Pmode, recog_data.operand[1],
+					     recog_data.operand[2]);
+		  validate_change (insn, &PATTERN (insn), pat, false);
 		}
-	      else
-		{
-		  curr_info = new_info;
-		  if (reload_completed && recog_data.n_operands == 2
-		      && GET_CODE (PATTERN (insn)) == SET)
-		    validate_change (insn, recog_data.operand_loc[1],
-				     CONST0_RTX (Pmode), false);
-		  if (recog_data.n_operands == 3
-		      && !rtx_equal_p (recog_data.operand[0],
-				       gen_rtx_REG (Pmode, X0_REGNUM))
-		      && !rtx_equal_p (recog_data.operand[1],
-				       gen_rtx_REG (Pmode, X0_REGNUM))
-		      && find_reg_note (insn, REG_UNUSED,
-					recog_data.operand[0]))
-		    {
-		      rtx pat = gen_vsetvl_zero (Pmode, recog_data.operand[1],
-						 recog_data.operand[2]);
-		      validate_change (insn, &PATTERN (insn), pat, false);
-		    }
-		}
-	      continue;
 	    }
-	  // If this is something that updates VL/VTYPE that we don't know
-	  // about, set the state to unknown.
-	  if (update_vl_vtype_p (insn))
-	    curr_info = vinfo::get_unknown ();
 	  if (use_vtype_p (insn))
 	    replace_op (insn, x, REPLACE_VL);
 	}
@@ -2325,6 +2395,55 @@ rest_of_handle_insert_vsetvli (function *fn)
 
   bb_vinfo_map.clear ();
   bb_queue.clear ();
+
+  if (optimize >= 2)
+    {
+      // Finalization.
+      free_dominance_info (CDI_DOMINATORS);
+      if (crtl->ssa->perform_pending_updates ())
+	cleanup_cfg (0);
+
+      delete crtl->ssa;
+      crtl->ssa = nullptr;
+    }
+
+  return 0;
+}
+
+static unsigned int
+rest_of_handle_before_ra (function *fn)
+{
+  basic_block bb;
+
+  if (n_basic_blocks_for_fn (fn) <= 0)
+    return 0;
+
+  if (optimize >= 2)
+    {
+      // Initialization.
+      calculate_dominance_info (CDI_DOMINATORS);
+      df_analyze ();
+      crtl->ssa = new rtl_ssa::function_info (cfun);
+    }
+
+  if (optimize >= 2)
+    combine_instructions ();
+
+  // Once we're fully done rewriting all the instructions, do a final pass
+  // through to check for VSETVLIs which write to an unused destination.
+  // For the non X0, X0 variant, we can replace the destination register
+  // with X0 to reduce register pressure.  This is really a generic
+  // optimization which can be applied to any dead def (TODO: generalize).
+  FOR_ALL_BB_FN (bb, fn)
+    {
+      rtx_insn *insn = NULL;
+      rtx x = gen_reg_rtx (Pmode);
+      FOR_BB_INSNS (bb, insn)
+	{
+	  if (use_vtype_p (insn))
+	    replace_op (insn, x, REPLACE_VL);
+	}
+    }
 
   if (optimize >= 2)
     {
@@ -2363,7 +2482,7 @@ public:
   virtual bool gate (function *) { return TARGET_VECTOR; }
   virtual unsigned int execute (function *fn)
   {
-    return rest_of_handle_insert_vsetvli (fn);
+    return rest_of_handle_before_ra (fn);
   }
 
 }; // class pass_insert_vsetvli
@@ -2394,7 +2513,7 @@ public:
   {}
 
   /* opt_pass methods: */
-  virtual bool gate (function *) { return TARGET_VECTOR && reload_completed; }
+  virtual bool gate (function *) { return TARGET_VECTOR; }
   virtual unsigned int execute (function *fn)
   {
     compute_bb_for_insn ();

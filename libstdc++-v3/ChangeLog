@@ -1,3 +1,571 @@
+2022-08-19  Release Manager
+
+	* GCC 12.2.0 released.
+
+2022-08-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-08-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/string_view (basic_string_view(Range&&)): Add
+	explicit as per P2499R0.
+	* testsuite/21_strings/basic_string_view/cons/char/range_c++20.cc:
+	Adjust implicit conversions. Check implicit conversions fail.
+	* testsuite/21_strings/basic_string_view/cons/wchar_t/range_c++20.cc:
+	Likewise.
+
+2022-08-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-08-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/expected (unexpected::_M_val): Rename to _M_unex.
+	(bad_expected_access::_M_val): Likewise.
+
+2022-08-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-08-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/ios_base.h (__cpp_lib_ios_noreplace): Update
+	value to 202207L.
+	* include/std/version (__cpp_lib_ios_noreplace): Likewise.
+	* testsuite/27_io/basic_ofstream/open/char/noreplace.cc: Check
+	for new value.
+	* testsuite/27_io/basic_ofstream/open/wchar_t/noreplace.cc:
+	Likewise.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* src/c++17/fs_dir.cc (_Dir::dir_and_pathname):: Replace with
+	current() returning _At_path.
+	(_Dir::_Dir, _Dir::open_subdir, _Dir::do_unlink): Adjust.
+	* src/filesystem/dir-common.h (_Dir_base::_At_path): New class.
+	(_Dir_base::_Dir_Base, _Dir_base::openat): Use _At_path.
+	* src/filesystem/dir.cc (_Dir::dir_and_pathname): Replace with
+	current() returning _At_path.
+	(_Dir::_Dir, _Dir::open_subdir): Adjust.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/104443
+	* include/bits/stl_iterator.h (common_iterator::operator->):
+	Change return type to just auto.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-12  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/106248
+	* include/std/istream [C++17] (operator>>(istream&, char*)):
+	Set eofbit if we stopped extracting at EOF.
+	* testsuite/27_io/basic_istream/extractors_character/char/pr106248.cc:
+	New test.
+	* testsuite/27_io/basic_istream/extractors_character/wchar_t/pr106248.cc:
+	New test.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/fs_ops.h: Add nodiscard to all pure functions.
+	* include/experimental/bits/fs_ops.h: Likewise.
+	* testsuite/27_io/filesystem/operations/all.cc: Do not discard
+	results of absolute and canonical.
+	* testsuite/27_io/filesystem/operations/absolute.cc: Cast
+	discarded result to void.
+	* testsuite/27_io/filesystem/operations/canonical.cc: Likewise.
+	* testsuite/27_io/filesystem/operations/exists.cc: Likewise.
+	* testsuite/27_io/filesystem/operations/is_empty.cc: Likewise.
+	* testsuite/27_io/filesystem/operations/read_symlink.cc:
+	Likewise.
+	* testsuite/27_io/filesystem/operations/status.cc: Likewise.
+	* testsuite/27_io/filesystem/operations/symlink_status.cc:
+	Likewise.
+	* testsuite/27_io/filesystem/operations/temp_directory_path.cc:
+	Likewise.
+	* testsuite/experimental/filesystem/operations/canonical.cc:
+	Likewise.
+	* testsuite/experimental/filesystem/operations/exists.cc:
+	Likewise.
+	* testsuite/experimental/filesystem/operations/is_empty.cc:
+	Likewise.
+	* testsuite/experimental/filesystem/operations/read_symlink.cc:
+	Likewise.
+	* testsuite/experimental/filesystem/operations/temp_directory_path.cc:
+	Likewise.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105995
+	* include/bits/basic_string.h (_M_use_local_data): Initialize
+	the entire SSO buffer.
+	* testsuite/21_strings/basic_string/cons/char/105995.cc: New test.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-14  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/new_allocator.h: Fix indentation.
+	* include/ext/malloc_allocator.h: Likewise.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-14  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105957
+	* include/bits/allocator.h (allocator::allocate): Check for
+	overflow in constexpr allocation.
+	* testsuite/20_util/allocator/105975.cc: New test.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105844
+	* include/experimental/numeric (experimental::gcd): Simplify
+	assertions. Use __abs_r instead of __absu.
+	(experimental::lcm): Likewise. Remove use of __detail::__lcm so
+	overflow can be detected.
+	* include/std/numeric (__detail::__absu): Rename to __abs_r and
+	change to allow signed result type, so overflow can be detected.
+	(__detail::__lcm): Remove.
+	(gcd): Simplify assertions. Use __abs_r instead of __absu.
+	(lcm): Likewise. Remove use of __detail::__lcm so overflow can
+	be detected.
+	* testsuite/26_numerics/gcd/gcd_neg.cc: Adjust dg-error lines.
+	* testsuite/26_numerics/lcm/lcm_neg.cc: Likewise.
+	* testsuite/26_numerics/gcd/105844.cc: New test.
+	* testsuite/26_numerics/lcm/105844.cc: New test.
+
+2022-07-26  Thomas Rodgers  <trodgers@redhat.com>
+
+	Backported from master:
+	2022-07-26  Thomas Rodgers  <trodgers@redhat.com>
+
+	* include/bits/atomic_wait.h (__atomic_spin): Merge spin loops.
+
+2022-07-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* src/c++17/fs_dir.cc (_Dir::_Dir) [!_GLIBCXX_HAVE_OPENAT]:
+	Always store pathname if we don't have openat or unlinkat,
+	because the full path is needed to open sub-directories and
+	remove entries.
+
+2022-07-22  Alexandre Oliva  <oliva@adacore.com>
+
+	Backported from master:
+	2022-06-27  Alexandre Oliva  <oliva@adacore.com>
+
+	* src/c++17/fs_dir.cc (dir_and_pathname): Use dirfd if
+	_GLIBCXX_HAVE_OPENAT.
+
+2022-07-22  Alexandre Oliva  <oliva@adacore.com>
+
+	Backported from master:
+	2022-06-24  Alexandre Oliva  <oliva@adacore.com>
+
+	* acinclude.m4 (GLIBCXX_CHECK_FILESYSTEM_DEPS): Check for
+	openat.
+	* configure, config.h.in: Rebuilt.
+	* src/filesystem/dir-common.h (openat): Use ::openat if
+	_GLIBCXX_HAVE_OPENAT.
+	* src/filesystem/dir.cc (dir_and_pathname): Use dirfd if
+	_GLIBCXX_HAVE_OPENAT.
+
+2022-07-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/stacktrace: Do not include <cxxabi.h>.
+	(__cxa_demangle): Declare.
+
+2022-07-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/100823
+	* include/bits/stl_iterator.h (common_iterator): Define move
+	constructor and move assignment operator.
+	(common_iterator::_M_assign): New function implementing
+	assignment.
+	(common_iterator::operator=): Use _M_assign.
+	(common_iterator::_S_valueless): New constant.
+	* testsuite/24_iterators/common_iterator/100823.cc: New test.
+
+2022-07-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/stl_iterator.h (common_iterator): Fix incorrect
+	uses of is_nothrow_assignable_v. Fix inconsistent constraints on
+	friend declaration. Do not move argument in copy constructor.
+	* testsuite/24_iterators/common_iterator/1.cc: Check for
+	noexcept constructibnle/assignable.
+
+2022-07-21  Nathan Sidwell  <nathan@acm.org>
+
+	Backported from master:
+	2022-05-26  Nathan Sidwell  <nathan@acm.org>
+
+	* include/bits/hashtable.h: Include required headers.
+	* include/bits/hashtable_policy.h: Likewise.
+	* include/bits/stl_heap.h: Likewise.
+	* include/bits/stl_iterator_base_funcs.h: Likewise.
+
+2022-07-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-30  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/utility.h: Fix comment typos.
+
+2022-07-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/20_util/from_chars/4.cc: Only use log2 if C99 math
+	functions are available.
+
+2022-07-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/26_numerics/random/random_device/entropy.cc: Use
+	numeric_limits<unsigned>::digits.
+
+2022-07-21  Marco Falke  <falke.marco@gmail.com>
+
+	Backported from master:
+	2022-07-19  Marco Falke  <falke.marco@gmail.com>
+
+	* include/std/charconv (__from_chars_alnum_to_val): Replace
+	implicit conversion from int to unsigned char with explicit
+	cast.
+
+2022-07-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-30  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/88881
+	* src/filesystem/ops.cc (has_trailing_slash): New helper
+	function.
+	(fs::status): Strip trailing slashes.
+	(fs::symlink_status): Likewise.
+	* testsuite/experimental/filesystem/operations/temp_directory_path.cc:
+	Clean the environment before each test and use TMP instead of
+	TMPDIR so the test passes on Windows.
+
+2022-07-21  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105880
+	* libsupc++/eh_globals.cc (eh_globals): Ensure constant init and
+	prevent destruction during termination.
+	(__eh_globals_init::_M_init): Replace with static member _S_init.
+	(__cxxabiv1::__cxa_get_globals_fast): Update.
+	(__cxxabiv1::__cxa_get_globals): Likewise.
+
+2022-07-07  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/106162
+	* include/Makefile.am (largefile-config.h): Add
+	stamp-${host_alias} prerequisite.
+	* include/Makefile.in: Regenerate.
+
+2022-07-07  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/27_io/filesystem/iterators/error_reporting.cc: Use
+	rmdir to remove directories.
+	* testsuite/experimental/filesystem/iterators/error_reporting.cc:
+	Likewise.
+
+2022-06-14  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/atomic (__atomic_val_t): Use __type_identity_t
+	instead of atomic<T>::value_type, as per LWG 3220.
+	* testsuite/29_atomics/atomic/lwg3220.cc: New test.
+
+2022-06-14  Mark Mentovai  <mark@mentovai.com>
+
+	Backported from master:
+	2022-06-13  Mark Mentovai  <mark@mentovai.com>
+
+	* include/experimental/bits/fs_path.h (__detail::__null_terminated):
+	Rename to __nul_terminated to avoid colliding with a macro in
+	Apple's SDK.
+
+2022-06-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105671
+	* include/std/sstream (basic_stringbuf::_M_high_mark): Add
+	always_inline attribute.
+
+2022-06-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105681
+	* include/ext/pb_ds/detail/resize_policy/hash_prime_size_policy_imp.hpp:
+	Limit ga_sizes array to values that fit in size_t.
+	* include/ext/random [__SIZE_WIDTH < 32] (sfmt86243)
+	(sfmt86243_64, sfmt132049, sfmt132049_64, sfmt216091)
+	(sfmt216091_64): Do not declare.
+
+2022-06-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/basic_string.h: Do not include <ext/atomicity.h>
+	here.
+	* include/bits/cow_string.h: Include it here.
+
+2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	* python/libstdcxx/v6/printers.py (StdErrorCodePrinter): Make
+	lookup for ios_errc and future_errc check versioned namespace.
+	(StdAtomicPrinter): Strip versioned namespace from typename.
+
+2022-05-27  François Dumont  <fdumont@gcc.gnu.org>
+
+	Backported from master:
+	2022-05-26  François Dumont  <fdumont@gcc.gnu.org>
+
+	* python/libstdcxx/v6/printers.py (StdSpanPrinter.__init__):
+	Strip typename from version namespace.
+
+2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	* python/libstdcxx/v6/printers.py (SharedPointerPrinter): Strip
+	versioned namespace from the template argument too.
+
+2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/stl_iterator.h (counted_iterator::operator++(int)):
+	Add 'constexpr' as per LWG 3643.
+	* testsuite/24_iterators/counted_iterator/lwg3643.cc: New test.
+
+2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/memory_resource (polymorphic_allocator): Add
+	non-template equality operator, as proposed for LWG 3683.
+	* testsuite/20_util/polymorphic_allocator/lwg3683.cc: New test.
+
+2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/26_numerics/random/bernoulli_distribution/operators/values.cc:
+	Run fewer iterations for simulator targets.
+	* testsuite/26_numerics/random/binomial_distribution/operators/values.cc:
+	Likewise.
+	* testsuite/26_numerics/random/discrete_distribution/operators/values.cc:
+	Likewise.
+	* testsuite/26_numerics/random/geometric_distribution/operators/values.cc:
+	Likewise.
+	* testsuite/26_numerics/random/negative_binomial_distribution/operators/values.cc:
+	Likewise.
+	* testsuite/26_numerics/random/poisson_distribution/operators/values.cc:
+	Likewise.
+	* testsuite/26_numerics/random/uniform_int_distribution/operators/values.cc:
+	Likewise.
+
+2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/20_util/expected/synopsis.cc: Skip for versioned
+	namespace.
+	* testsuite/27_io/headers/iosfwd/synopsis.cc: Likewise.
+
+2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/mofunc_impl.h: Fix doxygen command.
+
+2022-05-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/future (launch): Make operators noexcept.
+
+2022-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/prerequisites.xml: Fix attributes for external
+	hyperlink.
+	* doc/html/manual/setup.html: Regenerate.
+
+2022-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/status_cxx2023.xml: Update with gcc-12 support.
+	* doc/html/*: Regenerate.
+
+2022-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/intro.xml: Include new chapter.
+	* doc/xml/manual/status_cxx2020.xml: Tweak release numbers.
+	* doc/xml/manual/status_cxx2023.xml: New file.
+	* doc/html/*: Regenerate.
+
+2022-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/html/manual/status.html: Regenerate.
+	* doc/xml/manual/status_cxx2020.xml: Fix supported version for
+	C++20 bit operations.
+
+2022-05-13  Alexandre Oliva  <oliva@adacore.com>
+
+	Backported from master:
+	2022-05-06  Alexandre Oliva  <oliva@adacore.com>
+
+	* include/experimental/bits/simd.h [__ALTIVEC__]: Require VSX
+	for double, long long, and 64-bit long intrinsic types.
+	[__ALTIVEC__] (__intrinsic_type): Mention 128-bit in
+	preexisting long double diagnostic, adjust no-VSX double
+	diagnostic to cover 64-bit long double as well.
+
+2022-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105284
+	* include/std/iosfwd: Add declarations for <spanstream> class
+	templates and typedefs.
+	* include/std/spanstream (basic_spanbuf, basic_ispanstream)
+	(basic_ospanstream, basic_spanstream): Remove default template
+	arguments.
+	* testsuite/27_io/headers/iosfwd/synopsis.cc: Add <spanstream>
+	declarations.
+	* testsuite/27_io/headers/iosfwd/types.cc: Check <spanstream>
+	default arguments.
+
+2022-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105284
+	* include/std/iosfwd: Add declarations for <synstream> class
+	templates and typedefs.
+	* include/std/syncstream (basic_syncbuf, basic_osyncstream):
+	Remove default template arguments.
+	* testsuite/27_io/headers/iosfwd/synopsis.cc: New test.
+	* testsuite/27_io/headers/iosfwd/types.cc: New test.
+
+2022-05-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/104731
+	* testsuite/27_io/filesystem/iterators/error_reporting.cc:
+	Use a trailing char array as storage for dirent::d_name.
+
+2022-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-05-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105502
+	* include/bits/random.tcc
+	(operator>>(basic_istream<C,T>&, normal_distribution<R>&)):
+	Update state when __state_avail is false.
+	* testsuite/26_numerics/random/normal_distribution/operators/serialize.cc:
+	Check that deserialized object equals serialized one.
+
+2022-05-06  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2022-05-02  Patrick Palka  <ppalka@redhat.com>
+
+	PR libstdc++/103911
+	* src/c++17/floating_from_chars.cc (find_end_of_float): Accept
+	two delimeters for the exponent part in the form of a possibly
+	NULL string of length two.  Don't use std::tolower.
+	(pattern): Adjust calls to find_end_of_float accordingly.
+
+2022-05-06  Alexandre Oliva  <oliva@adacore.com>
+
+	Backported from master:
+	2022-05-03  Alexandre Oliva  <oliva@adacore.com>
+
+	PR c++/105324
+	* testsuite/20_util/from_chars/pr105324.cc: Guard test body
+	with conditional for floating-point overloads of from_char.
+
+2022-05-06  Release Manager
+
+	* GCC 12.1.0 released.
+
 2022-05-02  Patrick Palka  <ppalka@redhat.com>
 
 	Backported from master:

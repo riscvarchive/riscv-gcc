@@ -2316,6 +2316,37 @@ get_group_load_store_type (vec_info *vinfo, stmt_vec_info stmt_info,
 	      gcc_assert (!loop_vinfo || cmp > 0);
 	      *memory_access_type = VMAT_CONTIGUOUS;
 	    }
+
+	  /* When we have a contiguous access across loop iterations
+	     but the access in the loop doesn't cover the full vector
+	     we can end up with no gap recorded but still excess
+	     elements accessed, see PR103116.  Make sure we peel for
+	     gaps if necessary and sufficient and give up if not.  */
+	  if (loop_vinfo
+	      && *memory_access_type == VMAT_CONTIGUOUS
+	      && SLP_TREE_LOAD_PERMUTATION (slp_node).exists ()
+	      && !multiple_p (group_size * LOOP_VINFO_VECT_FACTOR (loop_vinfo),
+			      nunits))
+	    {
+	      unsigned HOST_WIDE_INT cnunits, cvf;
+	      if (!can_overrun_p
+		  || !nunits.is_constant (&cnunits)
+		  || !LOOP_VINFO_VECT_FACTOR (loop_vinfo).is_constant (&cvf)
+		  /* Peeling for gaps assumes that a single scalar iteration
+		     is enough to make sure the last vector iteration doesn't
+		     access excess elements.
+		     ???  Enhancements include peeling multiple iterations
+		     or using masked loads with a static mask.  */
+		  || (group_size * cvf) % cnunits + group_size < cnunits)
+		{
+		  if (dump_enabled_p ())
+		    dump_printf_loc (MSG_MISSED_OPTIMIZATION, vect_location,
+				     "peeling for gaps insufficient for "
+				     "access\n");
+		  return false;
+		}
+	      overrun_p = true;
+	    }
 	}
     }
   else
@@ -3660,7 +3691,7 @@ vectorizable_call (vec_info *vinfo,
 			    (loop_vinfo, TREE_TYPE (mask), mask,
 			     vargs[mask_opno], gsi);
 			}
-		  
+
 		      gcall *call;
 		      if (ifn != IFN_LAST)
 			call = gimple_build_call_internal_vec (ifn, vargs);
@@ -11036,7 +11067,7 @@ vectorizable_condition (vec_info *vinfo,
       else
         {
           if (len &&
-              get_len_vcond_mask_icode (TYPE_MODE (TREE_TYPE (vec_cond_lhs)),
+              get_len_vcond_mask_icode (TYPE_MODE (TREE_TYPE (vec_dest)),
                                         TYPE_MODE (TREE_TYPE (vec_compare))))
             {
               new_temp = make_ssa_name (vec_dest);

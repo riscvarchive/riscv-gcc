@@ -142,6 +142,9 @@ struct GTY(())  riscv_frame_info {
 
   /* The offset of arg_pointer_rtx from the bottom of the frame.  */
   poly_int64 arg_pointer_offset;
+
+  /* Reset this struct, clean all field to zero.  */
+  void reset(void);
 };
 
 enum riscv_privilege_levels {
@@ -251,6 +254,7 @@ struct riscv_tune_param
   unsigned short issue_rate;
   unsigned short branch_cost;
   unsigned short memory_cost;
+  unsigned short fmv_cost;
   bool slow_unaligned_access;
 };
 
@@ -349,6 +353,7 @@ static const struct riscv_tune_param rocket_tune_info = {
   1,						/* issue_rate */
   3,						/* branch_cost */
   5,						/* memory_cost */
+  8,						/* fmv_cost */
   true,						/* slow_unaligned_access */
 };
 
@@ -362,6 +367,7 @@ static const struct riscv_tune_param sifive_7_tune_info = {
   2,						/* issue_rate */
   4,						/* branch_cost */
   3,						/* memory_cost */
+  8,						/* fmv_cost */
   true,						/* slow_unaligned_access */
 };
 
@@ -375,6 +381,7 @@ static const struct riscv_tune_param thead_c906_tune_info = {
   1,            /* issue_rate */
   3,            /* branch_cost */
   5,            /* memory_cost */
+  8,		/* fmv_cost */
   false,            /* slow_unaligned_access */
 };
 
@@ -388,6 +395,7 @@ static const struct riscv_tune_param optimize_size_tune_info = {
   1,						/* issue_rate */
   1,						/* branch_cost */
   2,						/* memory_cost */
+  8,						/* fmv_cost */
   false,					/* slow_unaligned_access */
 };
 
@@ -436,22 +444,25 @@ static tree riscv_handle_fndecl_attribute (tree *, tree, tree, int, bool *);
 static tree riscv_handle_type_attribute (tree *, tree, tree, int, bool *);
 
 /* Defining target-specific uses of __attribute__.  */
-static const struct attribute_spec riscv_attribute_table[] =
-{
+static const struct attribute_spec riscv_attribute_table[] = {
   /* Syntax: { name, min_len, max_len, decl_required, type_required,
 	       function_type_required, affects_type_identity, handler,
 	       exclude } */
 
   /* The attribute telling no prologue/epilogue.  */
-  { "naked",	0,  0, true, false, false, false,
-    riscv_handle_fndecl_attribute, NULL },
+  {"naked", 0, 0, true, false, false, false, riscv_handle_fndecl_attribute,
+   NULL},
   /* This attribute generates prologue/epilogue for interrupt handlers.  */
-  { "interrupt", 0, 1, false, true, true, false,
-    riscv_handle_type_attribute, NULL },
+  {"interrupt", 0, 1, false, true, true, false, riscv_handle_type_attribute,
+   NULL},
+
+  /* The following two are used for the built-in properties of the Vector type
+     and are not used externally */
+  {"RVV sizeless type", 4, 4, false, true, false, true, NULL, NULL},
+  {"RVV type", 0, 0, false, true, false, true, NULL, NULL},
 
   /* The last attribute spec is set to be NULL.  */
-  { NULL,	0,  0, false, false, false, false, NULL, NULL }
-};
+  {NULL, 0, 0, false, false, false, false, NULL, NULL}};
 
 /* Order for the CLOBBERs/USEs of gpr_save.  */
 static const unsigned gpr_save_reg_order[] = {
@@ -470,6 +481,23 @@ static const struct riscv_tune_info riscv_tune_info_table[] = {
   { "thead-c906", generic, &thead_c906_tune_info,  &generic_rvv_tune_info },
   { "size", generic, &optimize_size_tune_info, &generic_rvv_tune_info },
 };
+
+void riscv_frame_info::reset(void)
+{
+  total_size = 0;
+  mask = 0;
+  fmask = 0;
+  save_libcall_adjustment = 0;
+
+  gp_sp_offset = 0;
+  fp_sp_offset = 0;
+
+  frame_pointer_offset = 0;
+
+  hard_frame_pointer_offset = 0;
+
+  arg_pointer_offset = 0;
+}
 
 /* Implement TARGET_MIN_ARITHMETIC_PRECISION.  */
 
@@ -520,6 +548,15 @@ riscv_build_integer_1 (struct riscv_integer_op codes[RISCV_MAX_INTEGER_OPS],
       /* Simply BSETI.  */
       codes[0].code = UNKNOWN;
       codes[0].value = value;
+
+      /* RISC-V sign-extends all 32bit values that live in a 32bit
+	 register.  To avoid paradoxes, we thus need to use the
+	 sign-extended (negative) representation (-1 << 31) for the
+	 value, if we want to build (1 << 31) in SImode.  This will
+	 then expand to an LUI instruction.  */
+      if (mode == SImode && value == (HOST_WIDE_INT_1U << 31))
+	codes[0].value = (HOST_WIDE_INT_M1U << 31);
+
       return 1;
     }
 
@@ -1830,9 +1867,7 @@ riscv_legitimize_const_move (machine_mode mode, rtx dest, rtx src)
 bool
 riscv_legitimize_move (machine_mode mode, rtx dest, rtx src)
 {
-  scalar_int_mode int_mode;
-  if (CONST_POLY_INT_P (src)
-    && is_a <scalar_int_mode> (mode, &int_mode))
+  if (CONST_POLY_INT_P (src))
     {
       poly_int64 value = rtx_to_poly_int64 (src);
       if (!value.is_constant () && !TARGET_VECTOR)
@@ -4513,7 +4548,7 @@ riscv_compute_frame_info (void)
         interrupt_save_prologue_temp = true;
     }
 
-  memset (frame, 0, sizeof (*frame));
+  frame->reset();
 
   if (!cfun->machine->naked_p)
     {
@@ -5310,6 +5345,10 @@ riscv_register_move_cost (machine_mode mode,
      extension, it require an extra temp GPR to move that.  */
   if (!TARGET_FP16 && mode == HFmode && from == FP_REGS && to == FP_REGS)
     return 6;
+
+  if ((from == FP_REGS && to == GR_REGS) ||
+      (from == GR_REGS && to == FP_REGS))
+    return tune_param->fmv_cost;
 
   return riscv_secondary_memory_needed (mode, from, to) ? 8 : 2;
 }

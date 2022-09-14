@@ -3762,6 +3762,19 @@ mark_label_nuses (rtx x)
     }
 }
 
+rtx_insn *
+get_insn (int uid)
+{
+  rtx_insn *curr = get_insns();
+  while (curr) {
+    if (INSN_UID (curr) == uid) {
+      return curr;
+    }
+    curr = NEXT_INSN (curr);
+  }
+  return (rtx_insn *)0;
+}
+
 
 /* Try splitting insns that can be split for better scheduling.
    PAT is the pattern which might split.

@@ -10198,8 +10198,8 @@ diagnostic to @file{@var{file}.@var{idx}.@var{kind}.epath.txt}.
 @opindex dump-analyzer-feasibility
 Dump internal details about the analyzer's search for feasible paths.
 The details are written in a form suitable for viewing with GraphViz
-to filenames of the form @file{@var{file}.*.fg.dot} and
-@file{@var{file}.*.tg.dot}.
+to filenames of the form @file{@var{file}.*.fg.dot},
+@file{@var{file}.*.tg.dot}, and @file{@var{file}.*.fpath.txt}.
 
 @item -fdump-analyzer-json
 @opindex fdump-analyzer-json
@@ -24527,7 +24527,8 @@ Set the cost of branches to roughly @var{n} instructions.
 @itemx -mno-check-zero-divison
 @opindex -mcheck-zero-division
 Trap (do not trap) on integer division by zero.  The default is
-@option{-mcheck-zero-division}.
+@option{-mcheck-zero-division} for @option{-O0} or @option{-Og}, and
+@option{-mno-check-zero-division} for other optimization levels.
 
 @item -mcond-move-int
 @itemx -mno-cond-move-int

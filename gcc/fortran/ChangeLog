@@ -1,3 +1,102 @@
+2022-08-19  Release Manager
+
+	* GCC 12.2.0 released.
+
+2022-07-26  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-07-26  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/103504
+	* interface.cc (get_sym_storage_size): Array bounds and character
+	length can only be of integer type.
+
+2022-07-20  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-07-20  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/101330
+	* openmp.cc (gfc_match_iterator): Remove left-over code from
+	development that could lead to a crash on invalid input.
+
+2022-07-16  Steve Kargl  <kargl@gcc.gnu.org>
+
+	Backported from master:
+	2022-07-15  Steve Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/104313
+	* trans-decl.cc (gfc_generate_return): Do not generate conflicting
+	fake results for functions with no result variable under -ff2c.
+
+2022-07-03  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-30  Harald Anlauf  <anlauf@gmx.de>
+		    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/103137
+	PR fortran/103138
+	PR fortran/103693
+	PR fortran/105243
+	* decl.cc (gfc_match_data_decl): Reject CLASS entity declaration
+	when it is given the PARAMETER attribute.
+
+2022-07-03  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-29  Harald Anlauf  <anlauf@gmx.de>
+		    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/106121
+	* simplify.cc (gfc_simplify_extends_type_of): Do not attempt to
+	simplify when one of the arguments is a CLASS variable that was
+	not properly declared.
+
+2022-06-30  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-26  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/105954
+	* decl.cc (variable_decl): Adjust upper bounds for explicit-shape
+	specs with constant bound expressions to ensure non-negative
+	extents.
+
+2022-06-30  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-26  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/105691
+	* simplify.cc (gfc_simplify_index): Replace old simplification
+	code by the equivalent of the runtime library implementation.  Use
+	HOST_WIDE_INT instead of int for string index, length variables.
+
+2022-06-30  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-24  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/105813
+	* check.cc (gfc_check_unpack): Try to simplify MASK argument to
+	UNPACK so that checking of the VECTOR argument can work when MASK
+	is a variable.
+
+2022-05-13  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-05-11  Harald Anlauf  <anlauf@gmx.de>
+		    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/105230
+	* expr.cc (find_array_section): Correct logic to avoid NULL
+	pointer dereference on invalid array section.
+
+2022-05-06  Release Manager
+
+	* GCC 12.1.0 released.
+
 2022-05-02  Thomas Koenig  <tkoenig@gcc.gnu.org>
 
 	Backported from master:

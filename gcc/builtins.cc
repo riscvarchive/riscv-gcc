@@ -1360,7 +1360,7 @@ expand_builtin_prefetch (tree exp)
 rtx
 get_memory_rtx (tree exp, tree len)
 {
-  tree orig_exp = exp;
+  tree orig_exp = exp, base;
   rtx addr, mem;
 
   /* When EXP is not resolved SAVE_EXPR, MEM_ATTRS can be still derived
@@ -1391,10 +1391,11 @@ get_memory_rtx (tree exp, tree len)
   if (is_gimple_mem_ref_addr (TREE_OPERAND (exp, 0)))
     set_mem_attributes (mem, exp, 0);
   else if (TREE_CODE (TREE_OPERAND (exp, 0)) == ADDR_EXPR
-	   && (exp = get_base_address (TREE_OPERAND (TREE_OPERAND (exp, 0),
-						     0))))
+	   && (base = get_base_address (TREE_OPERAND (TREE_OPERAND (exp, 0),
+						      0))))
     {
-      exp = build_fold_addr_expr (exp);
+      unsigned int align = get_pointer_alignment (TREE_OPERAND (exp, 0));
+      exp = build_fold_addr_expr (base);
       exp = fold_build2 (MEM_REF,
 			 build_array_type (char_type_node,
 					   build_range_type (sizetype,
@@ -1402,6 +1403,10 @@ get_memory_rtx (tree exp, tree len)
 							     NULL)),
 			 exp, build_int_cst (ptr_type_node, 0));
       set_mem_attributes (mem, exp, 0);
+      /* Since we stripped parts make sure the offset is unknown and the
+	 alignment is computed from the original address.  */
+      clear_mem_offset (mem);
+      set_mem_align (mem, align);
     }
   set_mem_alias_set (mem, 0);
   return mem;
@@ -6224,7 +6229,7 @@ expand_ifn_atomic_bit_test_and (gcall *call)
 
   gcc_assert (flag_inline_atomics);
 
-  if (gimple_call_num_args (call) == 4)
+  if (gimple_call_num_args (call) == 5)
     model = get_memmodel (gimple_call_arg (call, 3));
 
   rtx mem = get_builtin_sync_mem (ptr, mode);
@@ -6250,15 +6255,19 @@ expand_ifn_atomic_bit_test_and (gcall *call)
 
   if (lhs == NULL_TREE)
     {
-      val = expand_simple_binop (mode, ASHIFT, const1_rtx,
-				 val, NULL_RTX, true, OPTAB_DIRECT);
+      rtx val2 = expand_simple_binop (mode, ASHIFT, const1_rtx,
+				      val, NULL_RTX, true, OPTAB_DIRECT);
       if (code == AND)
-	val = expand_simple_unop (mode, NOT, val, NULL_RTX, true);
-      expand_atomic_fetch_op (const0_rtx, mem, val, code, model, false);
-      return;
+	val2 = expand_simple_unop (mode, NOT, val2, NULL_RTX, true);
+      if (expand_atomic_fetch_op (const0_rtx, mem, val2, code, model, false))
+	return;
     }
 
-  rtx target = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
+  rtx target;
+  if (lhs)
+    target = expand_expr (lhs, NULL_RTX, VOIDmode, EXPAND_WRITE);
+  else
+    target = gen_reg_rtx (mode);
   enum insn_code icode = direct_optab_handler (optab, mode);
   gcc_assert (icode != CODE_FOR_nothing);
   create_output_operand (&ops[0], target, mode);
@@ -6277,6 +6286,22 @@ expand_ifn_atomic_bit_test_and (gcall *call)
     val = expand_simple_unop (mode, NOT, val, NULL_RTX, true);
   rtx result = expand_atomic_fetch_op (gen_reg_rtx (mode), mem, val,
 				       code, model, false);
+  if (!result)
+    {
+      bool is_atomic = gimple_call_num_args (call) == 5;
+      tree tcall = gimple_call_arg (call, 3 + is_atomic);
+      tree fndecl = gimple_call_addr_fndecl (tcall);
+      tree type = TREE_TYPE (TREE_TYPE (fndecl));
+      tree exp = build_call_nary (type, tcall, 2 + is_atomic, ptr,
+				  make_tree (type, val),
+				  is_atomic
+				  ? gimple_call_arg (call, 3)
+				  : integer_zero_node);
+      result = expand_builtin (exp, gen_reg_rtx (mode), NULL_RTX,
+			       mode, !lhs);
+    }
+  if (!lhs)
+    return;
   if (integer_onep (flag))
     {
       result = expand_simple_binop (mode, ASHIFTRT, result, bitval,
@@ -6308,7 +6333,7 @@ expand_ifn_atomic_op_fetch_cmp_0 (gcall *call)
 
   gcc_assert (flag_inline_atomics);
 
-  if (gimple_call_num_args (call) == 4)
+  if (gimple_call_num_args (call) == 5)
     model = get_memmodel (gimple_call_arg (call, 3));
 
   rtx mem = get_builtin_sync_mem (ptr, mode);
@@ -6369,6 +6394,21 @@ expand_ifn_atomic_op_fetch_cmp_0 (gcall *call)
 
   rtx result = expand_atomic_fetch_op (gen_reg_rtx (mode), mem, op,
 				       code, model, true);
+  if (!result)
+    {
+      bool is_atomic = gimple_call_num_args (call) == 5;
+      tree tcall = gimple_call_arg (call, 3 + is_atomic);
+      tree fndecl = gimple_call_addr_fndecl (tcall);
+      tree type = TREE_TYPE (TREE_TYPE (fndecl));
+      tree exp = build_call_nary (type, tcall,
+				  2 + is_atomic, ptr, arg,
+				  is_atomic
+				  ? gimple_call_arg (call, 3)
+				  : integer_zero_node);
+      result = expand_builtin (exp, gen_reg_rtx (mode), NULL_RTX,
+			       mode, !lhs);
+    }
+
   if (lhs)
     {
       result = emit_store_flag_force (target, comp, result, const0_rtx, mode,

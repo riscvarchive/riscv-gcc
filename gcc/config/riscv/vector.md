@@ -110,7 +110,7 @@
     /* Need to force register if mem <- !reg.  */
     if (can_create_pseudo_p () && MEM_P (operands[0]) && !REG_P (operands[1]))
       operands[1] = force_reg (<MODE>mode, operands[1]);
-    
+
     if (!can_create_pseudo_p ())
       PUT_MODE (operands[2], Pmode);
     operands[2] = can_create_pseudo_p () ? gen_reg_rtx (Pmode) : operands[2];
@@ -139,8 +139,8 @@
   /* Need to force register if mem <- !reg.  */
   if (MEM_P (operands[0]) && !REG_P (operands[1]))
     operands[1] = force_reg (<MODE>mode, operands[1]);
-  
-  if (GET_CODE (operands[1]) == CONST_VECTOR 
+
+  if (GET_CODE (operands[1]) == CONST_VECTOR
     && riscv_vector_expand_const_mask (operands[0], operands[1]))
     DONE;
 })
@@ -158,7 +158,7 @@
     /* Need to force register if mem <- !reg.  */
     if (can_create_pseudo_p () && MEM_P (operands[0]) && !REG_P (operands[1]))
       operands[1] = force_reg (<MODE>mode, operands[1]);
-    
+
     if (!can_create_pseudo_p ())
       PUT_MODE (operands[2], Pmode);
     operands[2] = can_create_pseudo_p () ? gen_reg_rtx (Pmode) : operands[2];
@@ -204,14 +204,14 @@
     /* Need to force register if mem <- !reg.  */
     if (MEM_P (operands[0]) && !REG_P (operands[1]))
       operands[1] = force_reg (<MODE>mode, operands[1]);
-    
+
     if (GET_CODE (operands[1]) == CONST_VECTOR)
       {
         riscv_vector_expand_tuple (<VTSUB>mode, operands);
         DONE;
       }
-  }) 
-   
+  })
+
 (define_insn_and_split "*mov<mode>"
   [(set (match_operand:VT 0 "reg_or_mem_operand" "=vr,vr, m")
         (match_operand:VT 1 "reg_or_mem_operand"  " vr, m,vr"))
@@ -228,7 +228,7 @@
   }
   [(set_attr "type" "vcopy,vle,vse")
    (set_attr "mode" "<VTSUB>")])
-   
+
 ;; Misalign move patterns for all vector modes.
 (define_expand "movmisalign<mode>"
   [(set (match_operand:V 0 "nonimmediate_operand")
@@ -338,16 +338,18 @@
   [(parallel
     [(set (match_operand:X 0 "register_operand" "=r")
       (unspec:X
-        [(match_operand:X 1 "csr_operand" "rK")] UNSPEC_VSETVLI))
+        [(match_operand:X 1 "csr_operand" "rK")
+         (match_operand 2 "const_int_operand" "i")] UNSPEC_VSETVLI))
      (set (reg:SI VL_REGNUM)
        (unspec:SI
-        [(match_dup 1)] UNSPEC_VSETVLI))
+        [(match_dup 1)
+         (match_dup 2)] UNSPEC_VSETVLI))
      (set (reg:SI VTYPE_REGNUM)
        (unspec:SI
-        [(match_operand 2 "const_int_operand" "i")] UNSPEC_VSETVLI))])]
+        [(match_dup 2)] UNSPEC_VSETVLI))])]
   "TARGET_VECTOR"
   {
-    char buf[64];
+    char buf[64] = {0};
     gcc_assert (CONST_INT_P (operands[2]));
     const char *insn = satisfies_constraint_K (operands[1]) ? "vsetivli\t%0,%1"
         : "vsetvli\t%0,%1";
@@ -376,7 +378,7 @@
        (match_operand:X 1 "csr_operand" "rK")] UNSPEC_VSETVLI))]
   "TARGET_VECTOR"
   {
-    char buf[64];
+    char buf[64] = {0};
     gcc_assert (CONST_INT_P (operands[0]));
     const char *insn = "vsetvli\tzero,zero";
     unsigned int vsew = riscv_parse_vsew_field (INTVAL (operands[0]));
@@ -401,13 +403,14 @@
   [(parallel
     [(set (reg:SI VL_REGNUM)
        (unspec:SI
-        [(match_operand:X 0 "csr_operand" "rK")] UNSPEC_VSETVLI))
+        [(match_operand:X 0 "csr_operand" "rK")
+         (match_operand 1 "const_int_operand" "i")] UNSPEC_VSETVLI))
      (set (reg:SI VTYPE_REGNUM)
        (unspec:SI
-        [(match_operand 1 "const_int_operand" "i")] UNSPEC_VSETVLI))])]
+        [(match_dup 1)] UNSPEC_VSETVLI))])]
   "TARGET_VECTOR"
   {
-    char buf[64];
+    char buf[64] = {0};
     gcc_assert (CONST_INT_P (operands[1]));
     const char *insn = satisfies_constraint_K (operands[0]) ? "vsetivli\tzero,%0"
         : "vsetvli\tzero,%0";
@@ -4135,7 +4138,7 @@
    vsadd.vi\t%0,%3,%V4"
   [(set_attr "type" "vsarith")
    (set_attr "mode" "<MODE>")])
-   
+
 (define_insn "@vussub<mode>_vv"
   [(set (match_operand:VI 0 "register_operand"   "=vd,vd,vr,vr")
   (unspec:VI
@@ -5311,24 +5314,24 @@
   else
     {
       /* It suffices to implement a u>= b as !(a < b) but with the NaNs masked off:
-      
+
         vmfeq.vv    v0, va, va
         vmfeq.vv    v1, vb, vb
         vmand.mm    v0, v0, v1
         vmflt.vv    v0, va, vb, v0.t
         vmnot.m     v0, v0
-        
+
         And, if !HONOR_SNANS, then you can remove the vmand.mm by masking the second vmfeq.vv:
-        
+
         vmfeq.vv    v0, va, va
         vmfeq.vv    v0, vb, vb, v0.t
         vmflt.vv    v0, va, vb, v0.t
         vmnot.m     v0, v0 */
-        
+
       emit_insn (gen_vmf_vv (EQ, <MODE>mode, operands[0],
                  operands[1], operands[2], operands[3], operands[3],
                  operands[5], operands[6], operands[7]));
-      
+
       if (HONOR_SNANS (<MODE>mode))
         {
           emit_insn (gen_vmf_vv (EQ, <MODE>mode, mask,
@@ -5349,9 +5352,9 @@
           else
             {
               enum rtx_code code = strcmp ("<optab>", "unlt") == 0 ? GE :
-                    strcmp ("<optab>", "unle") == 0 ? GT : 
+                    strcmp ("<optab>", "unle") == 0 ? GT :
                     strcmp ("<optab>", "unge") == 0 ? LT :
-                    strcmp ("<optab>", "ungt") == 0 ? LE : NE; 
+                    strcmp ("<optab>", "ungt") == 0 ? LE : NE;
               emit_insn (gen_vmf_vv (code, <MODE>mode, operands[0],
                     operands[0], operands[0], operands[3], operands[4],
                     operands[5], operands[6], operands[7]));

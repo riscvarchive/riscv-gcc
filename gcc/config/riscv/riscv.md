@@ -547,7 +547,7 @@
 		     (ge "") (geu "u")
 		     (lt "") (ltu "u")
 		     (le "") (leu "u")
-         (fix "") (unsigned_fix "u")
+		     (fix "") (unsigned_fix "u")
 		     (float "") (unsigned_float "u")])
 
 ;; <su> is like <u>, but the signed form expands to "s" rather than "".
@@ -601,8 +601,8 @@
 			 (ungt "ungt") 
 			 (uneq "uneq")
 			 (ltgt "ltgt")
-       (sign_extend "extend") 
-       (zero_extend "zero_extend")])
+			 (sign_extend "extend") 
+			 (zero_extend "zero_extend")])
 
 ;; <insn> expands to the name of the insn that implements a particular code.
 (define_code_attr insn [(ashift "sll")
@@ -2088,7 +2088,7 @@
    (match_operand:SI  3 "immediate_operand" "")] ; known alignment
   ""
 {
-  if (riscv_vector_expand_strlen (operands))
+  if (flag_tree_vectorize && riscv_vector_expand_strlen (operands))
     DONE;
   else
     FAIL;
@@ -2100,7 +2100,7 @@
    (match_operand 2 "memory_operand" "")]
   ""
 {
-  if (riscv_vector_expand_strcpy (operands))
+  if (flag_tree_vectorize && riscv_vector_expand_strcpy (operands))
     DONE;
   else
     FAIL;
@@ -2124,7 +2124,7 @@
    (match_operand:SI    3 "immediate_operand")] ;; Known Align
   ""
 {
-  if (riscv_vector_expand_strcmp (operands))
+  if (flag_tree_vectorize && riscv_vector_expand_strcmp (operands))
     DONE;
   else
     FAIL;
@@ -3157,7 +3157,7 @@
 	 UNSPEC_SSP_SET))
    (set (match_scratch:GPR 2 "=&r") (const_int 0))]
   ""
-  "<load>\\t%2, %1\;<store>\\t%2, %0\;li\t%2, 0"
+  "<load>\t%2, %1\;<store>\t%2, %0\;li\t%2, 0"
   [(set_attr "length" "12")])
 
 (define_expand "stack_protect_test"

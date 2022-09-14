@@ -564,6 +564,7 @@ extern tree size_mult_expr (tree, tree);
 extern tree real_part (tree);
 extern tree imaginary_part (tree);
 extern tree complex_expr (tree, tree, tree);
+extern tree underlying_complex_expr (tree, tree);
 extern tree indirect_ref (tree, tree);
 extern tree build_deref (tree);
 extern tree build_array_index (tree, tree);
@@ -659,6 +660,7 @@ extern tree maybe_expand_intrinsic (tree);
 extern void build_module_tree (Module *);
 extern tree d_module_context (void);
 extern void register_module_decl (Declaration *);
+extern void d_defer_declaration (Declaration *);
 extern void d_finish_compilation (tree *, int);
 
 /* In runtime.cc.  */
@@ -671,8 +673,9 @@ extern tree layout_classinfo (ClassDeclaration *);
 extern unsigned base_vtable_offset (ClassDeclaration *, BaseClass *);
 extern tree get_typeinfo_decl (TypeInfoDeclaration *);
 extern tree get_classinfo_decl (ClassDeclaration *);
-extern void check_typeinfo_type (const Loc &, Scope *);
-extern tree build_typeinfo (const Loc &, Type *);
+extern void check_typeinfo_type (const Loc &, Scope *, Expression * = NULL);
+extern tree build_typeinfo (const Loc &, Type *, Expression * = NULL);
+extern tree build_typeinfo (Expression *, Type *);
 extern void create_typeinfo (Type *, Module *);
 extern void create_tinfo_types (Module *);
 extern void layout_cpp_typeinfo (ClassDeclaration *);

@@ -6393,13 +6393,13 @@ count_type_elements (const_tree type, bool for_ctor_p)
     case OFFSET_TYPE:
     case REFERENCE_TYPE:
     case NULLPTR_TYPE:
+    case OPAQUE_TYPE:
       return 1;
 
     case ERROR_MARK:
       return 0;
 
     case VOID_TYPE:
-    case OPAQUE_TYPE:
     case METHOD_TYPE:
     case FUNCTION_TYPE:
     case LANG_TYPE:
@@ -8783,7 +8783,8 @@ expand_cond_expr_using_cmove (tree treeop0 ATTRIBUTE_UNUSED,
   expanding_cond_expr_using_cmove = true;
   start_sequence ();
   expand_operands (treeop1, treeop2,
-		   temp, &op1, &op2, EXPAND_NORMAL);
+		   mode == orig_mode ? temp : NULL_RTX, &op1, &op2,
+		   EXPAND_NORMAL);
 
   if (TREE_CODE (treeop0) == SSA_NAME
       && (srcstmt = get_def_for_expr_class (treeop0, tcc_comparison)))

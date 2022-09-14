@@ -143,11 +143,11 @@ legitimate_subreg_to_reg_copy_p (rtx_insn *copy, auto_vec<rtx> &chainlist)
 		chainlist.safe_push (recog_data.operand[i]);
 		checklist.safe_push (REGNO (recog_data.operand[i]));
 	      }
-	    if (SUBREG_P (recog_data.operand[i])
-		&& REG_P (SUBREG_REG (recog_data.operand[i]))
-		&& REG_ATTRS (SUBREG_REG (recog_data.operand[i])) != NULL
-		&& REG_ATTRS (SUBREG_REG (recog_data.operand[i]))
-		     == REG_ATTRS (dest))
+	    else if (SUBREG_P (recog_data.operand[i])
+		     && REG_P (SUBREG_REG (recog_data.operand[i]))
+		     && REG_ATTRS (SUBREG_REG (recog_data.operand[i])) != NULL
+		     && REG_ATTRS (SUBREG_REG (recog_data.operand[i]))
+			  == REG_ATTRS (dest))
 	      return false;
 	  }
       }
@@ -194,13 +194,6 @@ legitimate_reg_to_reg_copy_p (rtx_insn *copy)
 	      {
 		if (!single_set (insn))
 		  return false;
-		if (SUBREG_P (recog_data.operand[i])
-		    && REG_P (SUBREG_REG (recog_data.operand[i]))
-		    && rtx_equal_p (SUBREG_REG (recog_data.operand[i]), dest)
-		    && !paradoxical_subreg_p (GET_MODE (dest),
-					      GET_MODE (SUBREG_REG (
-						recog_data.operand[i]))))
-		  return false;
 	      }
 	  }
       }
@@ -230,13 +223,24 @@ collect_copys (auto_vec<rtx> &chainlist)
 		  && REGNO (dest) != REGNO (SUBREG_REG (src))
 		  && legitimate_subreg_to_reg_copy_p (insn, chainlist))
 		{
+		  if (dump_file && (dump_flags & TDF_DETAILS))
+		    {
+		      fprintf (dump_file,
+			       "\nCollect subreg to reg copy insn:\n");
+		      print_rtl_single (dump_file, insn);
+		    }
 		  visitedlist.safe_push (insn);
 		  worklist.safe_push (insn);
 		}
-
-	      if (REG_P (dest) && REG_P (src) && REGNO (dest) != REGNO (src)
-		  && legitimate_reg_to_reg_copy_p (insn))
+	      else if (REG_P (dest) && REG_P (src)
+		       && REGNO (dest) != REGNO (src)
+		       && legitimate_reg_to_reg_copy_p (insn))
 		{
+		  if (dump_file && (dump_flags & TDF_DETAILS))
+		    {
+		      fprintf (dump_file, "\nCollect reg to reg copy insn:\n");
+		      print_rtl_single (dump_file, insn);
+		    }
 		  visitedlist.safe_push (insn);
 		  worklist.safe_push (insn);
 		}
@@ -259,11 +263,6 @@ coalesce_subreg (rtx_insn *copy, auto_vec<rtx> &chainlist)
 	  if (insn == copy)
 	    continue;
 	  extract_insn (insn);
-	  if (dump_file)
-	    {
-	      fprintf (dump_file, "Coalesced insn:\n\n");
-	      print_rtl_single (dump_file, insn);
-	    }
 	  for (int i = 0; i < recog_data.n_operands; i++)
 	    {
 	      if (REG_P (recog_data.operand[i])
@@ -275,23 +274,26 @@ coalesce_subreg (rtx_insn *copy, auto_vec<rtx> &chainlist)
 		      && reg_equiv_init (REGNO (recog_data.operand[i]))->insn ()
 			   == insn)
 		    reg_equiv_init (REGNO (recog_data.operand[i])) = NULL;
-		  if (dump_file)
+		  if (dump_file && (dump_flags & TDF_DETAILS))
 		    {
-		      fprintf (dump_file, "Change insn:\n");
+		      fprintf (dump_file,
+			       "\nCoalesce(reg->subreg) insn operand[%d]:\n",
+			       i);
 		      print_rtl_single (dump_file, insn);
 		      fprintf (dump_file, "to:\n");
 		    }
 		  PATTERN (insn)
 		    = replace_rtx (copy_rtx (PATTERN (insn)),
-				   recog_data.operand[i], src, true);
+				   recog_data.operand[i], copy_rtx(src), true);
 		  df_insn_rescan (insn);
-		  if (dump_file)
-		    print_rtl_single (dump_file, PATTERN (insn));
+		  if (dump_file && (dump_flags & TDF_DETAILS))
+		    print_rtl_single (dump_file, insn);
 		  validate_change (insn, &PATTERN (insn), PATTERN (insn),
 				   false);
 		  remove_note (insn,
 			       find_regno_note (insn, REG_DEAD,
 						REGNO (SUBREG_REG (src))));
+		  extract_insn (insn);
 		}
 	    }
 	}
@@ -322,9 +324,10 @@ coalesce_reg (rtx_insn *copy)
 		    reg_equiv_init (REGNO (recog_data.operand[i])) = NULL;
 		  rtx pat = simplify_replace_rtx (PATTERN (insn),
 						  recog_data.operand[i], src);
-		  if (dump_file)
+		  if (dump_file && (dump_flags & TDF_DETAILS))
 		    {
-		      fprintf (dump_file, "Change insn:\n");
+		      fprintf (dump_file,
+			       "\nCoalesce(reg->reg) insn operand[%d]:\n", i);
 		      print_rtl_single (dump_file, insn);
 		      fprintf (dump_file, "to:\n");
 		      print_rtl_single (dump_file, pat);
@@ -332,10 +335,12 @@ coalesce_reg (rtx_insn *copy)
 		  validate_change (insn, &PATTERN (insn), pat, false);
 		  remove_note (insn,
 			       find_regno_note (insn, REG_DEAD, REGNO (src)));
+		  extract_insn (insn);
 		}
-	      if (SUBREG_P (recog_data.operand[i])
-		  && REG_P (SUBREG_REG (recog_data.operand[i]))
-		  && rtx_equal_p (SUBREG_REG (recog_data.operand[i]), dest))
+	      else if (SUBREG_P (recog_data.operand[i])
+		       && REG_P (SUBREG_REG (recog_data.operand[i]))
+		       && rtx_equal_p (SUBREG_REG (recog_data.operand[i]),
+				       dest))
 		{
 		  if (reg_equiv_init (
 			REGNO (SUBREG_REG (recog_data.operand[i])))
@@ -351,9 +356,10 @@ coalesce_reg (rtx_insn *copy)
 					 GET_MODE (
 					   SUBREG_REG (recog_data.operand[i])),
 					 SUBREG_BYTE (recog_data.operand[i])));
-		  if (dump_file)
+		  if (dump_file && (dump_flags & TDF_DETAILS))
 		    {
-		      fprintf (dump_file, "Change insn:\n");
+		      fprintf (dump_file,
+			       "\nCoalesce(reg->reg) insn operand[%d]:\n", i);
 		      print_rtl_single (dump_file, insn);
 		      fprintf (dump_file, "to:\n");
 		      print_rtl_single (dump_file, pat);
@@ -361,6 +367,7 @@ coalesce_reg (rtx_insn *copy)
 		  validate_change (insn, &PATTERN (insn), pat, false);
 		  remove_note (insn,
 			       find_regno_note (insn, REG_DEAD, REGNO (src)));
+		  extract_insn (insn);
 		}
 	    }
 	}
@@ -375,21 +382,21 @@ aggressive_register_coalesce (void)
   if (worklist.is_empty ())
     return false;
 
-  if (dump_file)
-    fprintf (dump_file, "Entering register coalescing:\n\n");
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    fprintf (dump_file, "\nEntering register coalescing:\n");
 
   for (unsigned i = 0; i < worklist.length (); i++)
     {
-      if (dump_file)
+      if (dump_file && (dump_flags & TDF_DETAILS))
 	{
-	  fprintf (dump_file, "Coalescing insn:\n\n");
+	  fprintf (dump_file, "\nTry coalescing with copy insn:\n");
 	  print_rtl_single (dump_file, worklist[i]);
 	}
       if (REG_P (SET_DEST (single_set (worklist[i])))
 	  && SUBREG_P (SET_SRC (single_set (worklist[i]))))
 	coalesce_subreg (worklist[i], chainlist);
-      if (REG_P (SET_DEST (single_set (worklist[i])))
-	  && REG_P (SET_SRC (single_set (worklist[i]))))
+      else if (REG_P (SET_DEST (single_set (worklist[i])))
+	       && REG_P (SET_SRC (single_set (worklist[i]))))
 	coalesce_reg (worklist[i]);
     }
 
@@ -585,14 +592,27 @@ legitimate_subreg_to_subreg_copy_p (rtx_insn *copy)
 		  if (REG_P (recog_data.operand[i])
 		      && rtx_equal_p (recog_data.operand[i], dest))
 		    {
+		      if (dump_file && (dump_flags & TDF_DETAILS))
+			{
+			  fprintf (dump_file,
+				   "\nCoalesce(subreg->subreg) insn:\n");
+			  print_rtl_single (dump_file, next_insn);
+			}
 		      rtx pat
 			= simplify_replace_rtx (PATTERN (next_insn),
 						recog_data.operand[i], replace);
+		      if (dump_file && (dump_flags & TDF_DETAILS))
+			if (dump_file && (dump_flags & TDF_DETAILS))
+			  {
+			    fprintf (dump_file, "to:\n");
+			    print_rtl_single (dump_file, pat);
+			  }
 		      validate_change (next_insn, &PATTERN (next_insn), pat,
 				       false);
 		      remove_note (next_insn,
 				   find_regno_note (next_insn, REG_DEAD,
 						    REGNO (src)));
+                      extract_insn (next_insn);
 		    }
 		}
 	    }
@@ -602,9 +622,8 @@ legitimate_subreg_to_subreg_copy_p (rtx_insn *copy)
   return false;
 }
 
-/* Cleanup subreg to subreg. */
 static void
-cleanup_subreg_to_subreg (void)
+merge_subreg_and_coalesce ()
 {
   basic_block bb;
   rtx_insn *insn;
@@ -633,13 +652,67 @@ cleanup_subreg_to_subreg (void)
 		continue;
 	      visitedlist.safe_push (insn);
 	      if (legitimate_subreg_to_subreg_copy_p (insn))
+		{}
+	    }
+	}
+}
+
+/* Cleanup unused dest which is subreg */
+static bool
+cleaup_unused_subreg_dest (void)
+{
+  basic_block bb;
+  rtx_insn *insn;
+  bool changed = false;
+  FOR_EACH_BB_FN (bb, cfun)
+    FOR_BB_INSNS (bb, insn)
+      if (INSN_P (insn) && single_set (insn))
+	{
+	  for (rtx link = REG_NOTES (insn); link; link = XEXP (link, 1))
+	    {
+	      if (REG_NOTE_KIND (link) == REG_UNUSED)
 		{
-		  if (delete_trivially_dead_insns (get_insns (),
-						   max_reg_num ()))
-		    df_analyze ();
+		  rtx dest = SET_DEST (single_set (insn));
+		  rtx reg = XEXP (link, 0);
+		  if (SUBREG_P (dest) && REG_P (SUBREG_REG (dest))
+		      && REGNO (SUBREG_REG (dest)) == REGNO (reg))
+		    {
+		      if (dump_file && (dump_flags & TDF_DETAILS))
+			{
+			  fprintf (dump_file,
+				   "\nDelete unused subreg dest copy insn:\n");
+			  print_rtl_single (dump_file, insn);
+			}
+		      delete_insn_and_edges (insn);
+		      df_analyze ();
+		      cleaup_unused_subreg_dest ();
+		      changed = true;
+		    }
 		}
 	    }
 	}
+  return changed;
+}
+
+/* Cleanup subreg to subreg. */
+static bool
+cleanup_unused_insn ()
+{
+  df_analyze ();
+  bool changed = false;
+  if (delete_trivially_dead_insns (get_insns (), max_reg_num ()))
+    {
+      df_analyze ();
+      changed = true;
+    }
+
+  if (cleaup_unused_subreg_dest ())
+    {
+      df_analyze ();
+      changed = true;
+    }
+
+  return changed;
 }
 
 /* Do the explicit coalesce in IRA.  */
@@ -648,7 +721,12 @@ ira_explicit_coalesce (void)
 {
   if (optimize <= 2)
     return;
+
   bool coalesce_p = true;
+
+  if (dump_file)
+    fprintf (dump_file, "\n********** Start coalescing: **********\n\n");
+
   while (coalesce_p)
     {
       df_live_add_problem ();
@@ -658,6 +736,16 @@ ira_explicit_coalesce (void)
       ira_destroy ();
     }
   visitedlist.release ();
-  cleanup_subreg_to_subreg ();
+
+  merge_subreg_and_coalesce ();
   visitedlist.release ();
+
+  bool changed = true;
+  while (changed)
+    {
+      changed = cleanup_unused_insn ();
+    }
+
+  if (dump_file)
+    fprintf (dump_file, "\n********** End coalescing. **********\n\n");
 }

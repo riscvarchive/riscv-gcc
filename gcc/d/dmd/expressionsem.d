@@ -2048,7 +2048,8 @@ private bool functionParameters(const ref Loc loc, Scope* sc,
                 if (global.params.useDIP1000 == FeatureState.enabled)
                     err |= checkParamArgumentEscape(sc, fd, p, arg, false, false);
             }
-            else if (!(pStc & STC.return_))
+            else if (!(pStc & STC.return_) &&
+                ((global.params.useDIP1000 == FeatureState.enabled) || !(p.storageClass & STC.scopeinferred)))
             {
                 /* Argument value cannot escape from the called function.
                  */
@@ -2058,13 +2059,14 @@ private bool functionParameters(const ref Loc loc, Scope* sc,
 
                 ArrayLiteralExp ale;
                 if (p.type.toBasetype().ty == Tarray &&
-                    (ale = a.isArrayLiteralExp()) !is null)
+                    (ale = a.isArrayLiteralExp()) !is null && ale.elements && ale.elements.length > 0)
                 {
                     // allocate the array literal as temporary static array on the stack
-                    ale.type = ale.type.nextOf().sarrayOf(ale.elements ? ale.elements.length : 0);
+                    ale.type = ale.type.nextOf().sarrayOf(ale.elements.length);
                     auto tmp = copyToTemp(0, "__arrayliteral_on_stack", ale);
                     auto declareTmp = new DeclarationExp(ale.loc, tmp);
-                    auto castToSlice = new CastExp(ale.loc, new VarExp(ale.loc, tmp), p.type);
+                    auto castToSlice = new CastExp(ale.loc, new VarExp(ale.loc, tmp),
+                        p.type.substWildTo(MODFlags.mutable));
                     arg = CommaExp.combine(declareTmp, castToSlice);
                     arg = arg.expressionSemantic(sc);
                 }
@@ -6625,6 +6627,14 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
 
             exp.type = exp.type.addMod(t1.mod);
 
+            // https://issues.dlang.org/show_bug.cgi?id=23109
+            // Run semantic on the DotVarExp type
+            if (auto handle = exp.type.isClassHandle())
+            {
+                if (handle.semanticRun < PASS.semanticdone && !handle.isBaseInfoComplete())
+                    handle.dsymbolSemantic(null);
+            }
+
             Dsymbol vparent = exp.var.toParent();
             AggregateDeclaration ad = vparent ? vparent.isAggregateDeclaration() : null;
             if (Expression e1x = getRightThis(exp.loc, sc, ad, exp.e1, exp.var, 1))
@@ -8675,7 +8685,9 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
     {
         static if (LOGSEMANTIC)
         {
-            printf("AssignExp::semantic('%s')\n", exp.toChars());
+            if (exp.op == EXP.blit)      printf("BlitExp.toElem('%s')\n", exp.toChars());
+            if (exp.op == EXP.assign)    printf("AssignExp.toElem('%s')\n", exp.toChars());
+            if (exp.op == EXP.construct) printf("ConstructExp.toElem('%s')\n", exp.toChars());
         }
         //printf("exp.e1.op = %d, '%s'\n", exp.e1.op, EXPtoString(exp.e1.op).ptr);
         //printf("exp.e2.op = %d, '%s'\n", exp.e2.op, EXPtoString(exp.e2.op).ptr);
@@ -9425,6 +9437,23 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
             Expression e1x = exp.e1;
             Expression e2x = exp.e2;
 
+            /* C strings come through as static arrays. May need to adjust the size of the
+             * string to match the size of e1.
+             */
+            Type t2 = e2x.type.toBasetype();
+            if (sc.flags & SCOPE.Cfile && e2x.isStringExp() && t2.isTypeSArray())
+            {
+                uinteger_t dim1 = t1.isTypeSArray().dim.toInteger();
+                uinteger_t dim2 = t2.isTypeSArray().dim.toInteger();
+                if (dim1 + 1 == dim2 || dim2 < dim1)
+                {
+                    auto tsa2 = t2.isTypeSArray();
+                    auto newt = tsa2.next.sarrayOf(dim1).immutableOf();
+                    e2x = castTo(e2x, sc, newt);
+                    exp.e2 = e2x;
+                }
+            }
+
             if (e2x.implicitConvTo(e1x.type))
             {
                 if (exp.op != EXP.blit && (e2x.op == EXP.slice && (cast(UnaExp)e2x).e1.isLvalue() || e2x.op == EXP.cast_ && (cast(UnaExp)e2x).e1.isLvalue() || e2x.op != EXP.slice && e2x.isLvalue()))
@@ -9686,13 +9715,14 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
                 tsa2 = cast(TypeSArray)toStaticArrayType(se);
             else
                 tsa2 = t2.isTypeSArray();
+
             if (tsa1 && tsa2)
             {
                 uinteger_t dim1 = tsa1.dim.toInteger();
                 uinteger_t dim2 = tsa2.dim.toInteger();
                 if (dim1 != dim2)
                 {
-                    exp.error("mismatched array lengths, %d and %d", cast(int)dim1, cast(int)dim2);
+                    exp.error("mismatched array lengths %d and %d for assignment `%s`", cast(int)dim1, cast(int)dim2, exp.toChars());
                     return setError();
                 }
             }
@@ -9897,9 +9927,11 @@ private extern (C++) final class ExpressionSemanticVisitor : Visitor
                 ae.e2.type.nextOf &&
                 ae.e1.type.nextOf.mutableOf.equals(ae.e2.type.nextOf.mutableOf);
 
+            /* Unlike isArrayCtor above, lower all Rvalues. If the RHS is a literal,
+             * then we do want to make a temporary for it and call its destructor.
+             */
             const isArraySetCtor =
                 (ae.e1.isSliceExp || ae.e1.type.ty == Tsarray) &&
-                ae.e2.isLvalue &&
                 (ae.e2.type.ty == Tstruct || ae.e2.type.ty == Tsarray) &&
                 ae.e1.type.nextOf &&
                 ae.e1.type.nextOf.equivalent(ae.e2.type);
@@ -12506,7 +12538,7 @@ Expression semanticY(DotIdExp exp, Scope* sc, int flag)
                     e = new CommaExp(exp.loc, eleft, e);
                     e.type = Type.tvoid; // ambiguous type?
                 }
-                return e;
+                return e.expressionSemantic(sc);
             }
             if (auto o = s.isOverloadSet())
             {

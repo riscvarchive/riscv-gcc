@@ -44,28 +44,29 @@ along with GCC; see the file COPYING3.  If not see
 /* Expand all ARRAY_REF(VIEW_CONVERT_EXPR) gimple assignments into calls to
    internal function based on vector type of selected expansion.
    i.e.:
-     VIEW_CONVERT_EXPR<int[4]>(u)[_1] =  = i_4(D);
+     VIEW_CONVERT_EXPR<int[4]>(u)[_1] = i_4(D);
    =>
      _7 = u;
      _8 = .VEC_SET (_7, i_4(D), _1);
      u = _8;  */
 
-static gimple *
+static bool
 gimple_expand_vec_set_expr (struct function *fun, gimple_stmt_iterator *gsi)
 {
   enum tree_code code;
   gcall *new_stmt = NULL;
   gassign *ass_stmt = NULL;
+  bool cfg_changed = false;
 
   /* Only consider code == GIMPLE_ASSIGN.  */
   gassign *stmt = dyn_cast<gassign *> (gsi_stmt (*gsi));
   if (!stmt)
-    return NULL;
+    return false;
 
   tree lhs = gimple_assign_lhs (stmt);
   code = TREE_CODE (lhs);
   if (code != ARRAY_REF)
-    return NULL;
+    return false;
 
   tree val = gimple_assign_rhs1 (stmt);
   tree op0 = TREE_OPERAND (lhs, 0);
@@ -99,12 +100,16 @@ gimple_expand_vec_set_expr (struct function *fun, gimple_stmt_iterator *gsi)
 	  gimple_set_location (ass_stmt, loc);
 	  gsi_insert_before (gsi, ass_stmt, GSI_SAME_STMT);
 
+	  basic_block bb = gimple_bb (stmt);
 	  gimple_move_vops (ass_stmt, stmt);
-	  gsi_remove (gsi, true);
+	  if (gsi_remove (gsi, true)
+	      && gimple_purge_dead_eh_edges (bb))
+	    cfg_changed = true;
+	  *gsi = gsi_for_stmt (ass_stmt);
 	}
     }
 
-  return ass_stmt;
+  return cfg_changed;
 }
 
 /* Subroutine of gimple_gen_vcond_mask, it generate invert mask for op0. */
@@ -532,10 +537,11 @@ gimple_expand_len_vcond_fn (
 	}
 
       gcall *def_stmt = dyn_cast<gcall *> (SSA_NAME_DEF_STMT (op0));
+      if (def_stmt) {
       internal_fn def_fn = gimple_call_internal_p (def_stmt)
 			     ? gimple_call_internal_fn (def_stmt)
 			     : IFN_LAST;
-      if (def_stmt && def_fn != IFN_LAST
+      if (def_fn != IFN_LAST
 	  && (def_fn == IFN_LEN_VEC_CMP_VS || def_fn == IFN_LEN_VEC_CMPU_VS
 	      || def_fn == IFN_LEN_VEC_CMP || def_fn == IFN_LEN_VEC_CMPU))
 	{
@@ -571,6 +577,9 @@ gimple_expand_len_vcond_fn (
 		       != CODE_FOR_nothing))
 	    tcode = TREE_CODE (op0);
 	}
+      else
+	tcode = TREE_CODE (op0);
+      }
       else
 	tcode = TREE_CODE (op0);
     }
@@ -793,6 +802,7 @@ gimple_expand_vec_exprs (struct function *fun)
   basic_block bb;
   hash_map<tree, unsigned int> vec_cond_ssa_name_uses;
   auto_bitmap dce_ssa_names;
+  bool cfg_changed = false;
 
   FOR_EACH_BB_FN (bb, fun)
     {
@@ -832,7 +842,7 @@ gimple_expand_vec_exprs (struct function *fun)
 	      gsi_replace (&gsi, g, false);
 	    }
 
-	  gimple_expand_vec_set_expr (fun, &gsi);
+	  cfg_changed |= gimple_expand_vec_set_expr (fun, &gsi);
 	  if (gsi_end_p (gsi))
 	    break;
 	}
@@ -845,7 +855,7 @@ gimple_expand_vec_exprs (struct function *fun)
 
   simple_dce_from_worklist (dce_ssa_names);
 
-  return 0;
+  return cfg_changed ? TODO_cleanup_cfg : 0;
 }
 
 namespace {

@@ -30,14 +30,18 @@
     [(set (match_operand:X 0 "register_operand" "=r")
       (unspec:X
         [(unspec:X
-          [(match_operand:X 1 "csr_operand" "rK")] UNSPEC_VSETVLI)] UNSPEC_VSETVLI))
+          [(match_operand:X 1 "csr_operand" "rK")
+           (match_operand 2 "const_int_operand" "i")] UNSPEC_VSETVLI)
+         (match_dup 2)] UNSPEC_VSETVLI))
      (set (reg:SI VL_REGNUM)
       (unspec:SI
         [(unspec:SI
-          [(match_dup 1)] UNSPEC_VSETVLI)] UNSPEC_VSETVLI))
+          [(match_dup 1)
+           (match_dup 2)] UNSPEC_VSETVLI)
+         (match_dup 2)] UNSPEC_VSETVLI))
      (set (reg:SI VTYPE_REGNUM)
        (unspec:SI
-        [(match_operand 2 "const_int_operand")] UNSPEC_VSETVLI))])]
+        [(match_dup 2)] UNSPEC_VSETVLI))])]
   "TARGET_VECTOR"
   "#"
   "&& can_create_pseudo_p ()"
@@ -53,14 +57,18 @@
     [(set (match_operand:X 0 "register_operand" "=r")
       (unspec:X
         [(unspec:X
-          [(match_operand:X 1 "csr_operand" "rK")] UNSPEC_VSETVLI)] UNSPEC_VSETVLI))
+          [(match_operand:X 1 "csr_operand" "rK")
+           (match_operand 2 "const_int_operand" "i")] UNSPEC_VSETVLI)
+         (match_dup 2)] UNSPEC_VSETVLI))
      (set (reg:SI VL_REGNUM)
       (unspec:SI
         [(unspec:SI
-          [(match_dup 1)] UNSPEC_VSETVLI)] UNSPEC_VSETVLI))
+          [(match_dup 1)
+           (match_dup 2)] UNSPEC_VSETVLI)
+         (match_dup 2)] UNSPEC_VSETVLI))
      (set (reg:SI VTYPE_REGNUM)
        (unspec:SI
-        [(match_operand 2 "const_int_operand")] UNSPEC_VSETVLI))
+        [(match_dup 2)] UNSPEC_VSETVLI))
      (set (match_operand:X 3 "register_operand" "=r")
        (unspec:X
         [(match_dup 1)] UNSPEC_VSETVLI))])]
@@ -79,13 +87,15 @@
   [(parallel
     [(set (match_operand:X 0 "register_operand" "=&r")
       (unspec:X
-        [(match_operand:X 1 "const_csr_operand" "K")] UNSPEC_VSETVLI))
+        [(match_operand:X 1 "const_csr_operand" "K")
+         (match_operand 2 "const_int_operand" "i")] UNSPEC_VSETVLI))
      (set (reg:SI VL_REGNUM)
       (unspec:SI
-        [(match_dup 1)] UNSPEC_VSETVLI))
+        [(match_dup 1)
+         (match_dup 2)] UNSPEC_VSETVLI))
      (set (reg:SI VTYPE_REGNUM)
        (unspec:SI
-        [(match_operand 2 "const_int_operand")] UNSPEC_VSETVLI))
+        [(match_dup 2)] UNSPEC_VSETVLI))
      (set (match_operand:X 3 "register_operand" "=&r") (match_dup 1))])]
   "TARGET_VECTOR"
   "#"

@@ -1,3 +1,145 @@
+2022-08-19  Release Manager
+
+	* GCC 12.2.0 released.
+
+2022-08-16  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-08-16  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/106638
+	* gdc.texi: Update DIP links to point at upstream dlang/DIPs
+	repository.
+
+2022-08-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-08-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-tree.h (d_defer_declaration): Declare.
+	* decl.cc (function_needs_inline_definition_p): Defer checking
+	DECL_UNINLINABLE and DECL_DECLARED_INLINE_P.
+	(maybe_build_decl_tree): Call d_defer_declaration instead of
+	build_decl_tree.
+	* modules.cc (deferred_inline_declarations): New variable.
+	(build_module_tree): Set deferred_inline_declarations and a handle
+	declarations pushed to it.
+	(d_defer_declaration): New function.
+
+2022-08-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-08-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/106623
+	* d-codegen.cc (underlying_complex_expr): New function.
+	(d_build_call): Handle passing native complex objects as the
+	library-defined equivalent.
+	* d-tree.h (underlying_complex_expr): Declare.
+	* expr.cc (ExprVisitor::visit (DotVarExp *)): Call
+	underlying_complex_expr instead of build_vconvert.
+
+2022-08-09  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-08-09  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/106563
+	* decl.cc (DeclVisitor::visit (FuncDeclaration *)): Set semanticRun
+	before generating its symbol.
+	(function_defined_in_root_p): New function.
+	(function_needs_inline_definition_p): New function.
+	(maybe_build_decl_tree): New function.
+	(get_symbol_decl): Call maybe_build_decl_tree before returning symbol.
+	(start_function): Use function_defined_in_root_p instead of inline
+	test for locally defined symbols.
+	(set_linkage_for_decl): Check for inline functions before private or
+	protected symbols.
+
+2022-08-08  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-08-08  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/106555
+	* d-target.cc (Target::isReturnOnStack): Check for return type size.
+
+2022-07-26  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* dmd/MERGE: Merge upstream dmd 76e3b41375.
+	* dmd/VERSION: Bump version to v2.100.1.
+	* decl.cc (DeclVisitor::visit (VarDeclaration *)): Evaluate RHS
+	  of noreturn declaration expressions first.
+	* expr.cc (ExprVisitor::visit (AssignExp *)): Don't generate
+	  assignment for noreturn types.
+
+2022-07-04  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-06-29  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/106139
+	* d-convert.cc (convert_expr): Handle casting from array to vector.
+	(convert_for_rvalue): Rewrite vector to array casts of the same
+	element type into a constructor.
+	(convert_for_assignment): Return calling convert_for_rvalue.
+	* expr.cc (ExprVisitor::visit (VectorExp *)): Handle generating a
+	vector expression from a static array.
+	* toir.cc (IRVisitor::visit (ReturnStatement *)): Call
+	convert_for_rvalue on return value.
+
+2022-06-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-06-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* typeinfo.cc (make_internal_typeinfo): Set TYPE_ARTIFICIAL.
+
+2022-06-13  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-06-13  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* d-tree.h (check_typeinfo_type): Add Expression* parameter.
+	(build_typeinfo): Likewise.  Declare new override.
+	* expr.cc (ExprVisitor): Call build_typeinfo with Expression*.
+	* typeinfo.cc (check_typeinfo_type): Include expression in the
+	diagnostic message.
+	(build_typeinfo): New override.
+
+2022-05-31  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	Backported from master:
+	2022-05-31  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	PR d/105544
+	* d-lang.cc (d_parse_file): Zero padding past the end of the stdin
+	buffer so the D lexer has a sentinel to stop parsing at.
+
+2022-05-15  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* dmd/MERGE: Merge upstream dmd a53934d18.
+	* dmd/VERSION: Update version to v2.100.0.
+	* d-codegen.cc (d_decl_context): Use resolvedLinkage to get
+	declaration linkage.
+	(build_struct_literal): Track offset in bits.
+	* d-gimplify.cc (d_gimplify_modify_expr): Check both operands for a
+	bit-field reference.
+	* d-lang.cc (d_post_options): Set flag_rtti and flag_exceptions if
+	-fno-druntime was seen on command-line.
+	(d_type_promotes_to): Use resolvedLinkage to get declaration linkage.
+	* decl.cc (make_thunk): Likewise.
+	* types.cc (layout_aggregate_members): Ignore anonymous fields in
+	total count.
+
+2022-05-06  Release Manager
+
+	* GCC 12.1.0 released.
+
+2022-05-05  Iain Buclaw  <ibuclaw@gdcproject.org>
+
+	* dmd/MERGE: Merge upstream dmd 88de5e369.
+
 2022-05-03  Iain Buclaw  <ibuclaw@gdcproject.org>
 
 	* dmd/MERGE: Merge upstream dmd 081d61e15.

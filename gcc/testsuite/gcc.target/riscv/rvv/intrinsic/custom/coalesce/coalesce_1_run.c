@@ -11,7 +11,7 @@
 void __attribute__ ((noinline, noclone))
 subreg_to_reg_1_golden (int32_t *in, int32_t *out, size_t m)
 {
-  vint32m8_t result = vle32_v_i32m8 (in, 4);
+  vint32m8_t result = vle32_v_i32m8 (in, 32);
   vint32m1_t v0 = vget_v_i32m8_i32m1 (result, 0);
   vint32m1_t v1 = vget_v_i32m8_i32m1 (result, 1);
   vint32m1_t v2 = vget_v_i32m8_i32m1 (result, 2);
