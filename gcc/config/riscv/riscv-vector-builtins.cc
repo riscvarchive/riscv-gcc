@@ -750,8 +750,7 @@ expand_builtin (unsigned int code, tree exp, rtx target)
 }
 
 riscv_vector::vector_arg_all_modes &
-get_vector_arg_all_patterns (unsigned int len,
-			     riscv_vector::vector_arg_attr_info attr, ...)
+get_vector_arg_all_patterns (unsigned int len, ...)
 {
   riscv_vector::vector_arg_all_modes &patterns
     = *ggc_alloc<riscv_vector::vector_arg_all_modes> ();
@@ -764,19 +763,15 @@ get_vector_arg_all_patterns (unsigned int len,
 
   unsigned int arg_idx = 0;
   va_list arg_ptr;
-  riscv_vector::vector_arg_attr_info next_attr = attr;
-
-  va_start (arg_ptr, attr);
-
+  va_start (arg_ptr, len);
   while (arg_idx < len)
     {
-      patterns.dt_list[arg_idx] = next_attr.dt;
-      patterns.arg_list[arg_idx] = next_attr.mode_attr_list;
-      patterns.target_op_list[arg_idx] = next_attr.target_op;
-      next_attr = va_arg (arg_ptr, riscv_vector::vector_arg_attr_info);
+      riscv_vector::vector_arg_attr_info attr = va_arg (arg_ptr, riscv_vector::vector_arg_attr_info);
+      patterns.dt_list[arg_idx] = attr.dt;
+      patterns.arg_list[arg_idx] = attr.mode_attr_list;
+      patterns.target_op_list[arg_idx] = attr.target_op;
       arg_idx++;
     }
-
   va_end (arg_ptr);
 
   return patterns;

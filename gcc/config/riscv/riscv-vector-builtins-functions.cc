@@ -5748,7 +5748,7 @@ template <unsigned int NF>
 unsigned int
 vlseg_template<NF>::call_properties () const
 {
-  return CP_READ_MEMORY;
+  return CP_WRITE_MEMORY;
 }
 
 template <unsigned int NF>
@@ -5825,7 +5825,7 @@ template <unsigned int NF>
 unsigned int
 vlsegff_template<NF>::call_properties () const
 {
-  return CP_READ_MEMORY | CP_RAISE_LD_EXCEPTIONS;
+  return CP_WRITE_MEMORY | CP_RAISE_LD_EXCEPTIONS;
 }
 
 template <unsigned int NF>
@@ -5961,7 +5961,7 @@ template <unsigned int NF>
 unsigned int
 vlsseg_template<NF>::call_properties () const
 {
-  return CP_READ_MEMORY;
+  return CP_WRITE_MEMORY;
 }
 
 template <unsigned int NF>
@@ -6098,7 +6098,7 @@ template <unsigned int NF, indexed_mode uo>
 unsigned int
 vlxseg_template<NF, uo>::call_properties () const
 {
-  return CP_READ_MEMORY;
+  return CP_WRITE_MEMORY;
 }
 
 template <unsigned int NF, indexed_mode uo>
