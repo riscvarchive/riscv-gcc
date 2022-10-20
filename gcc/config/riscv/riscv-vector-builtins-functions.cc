@@ -5640,6 +5640,12 @@ fold_non_tuple_segment_load (const function_instance &instance,
 			GSI_SAME_STMT);
     }
 
+  if (ff)
+    {
+      function_builder *builder = rfn_slot->instance.builder ();
+      return builder->fold (rfn_slot->instance, gsi_in, as_a <gcall *> (repl));
+    }
+
   return repl;
 }
 

@@ -6146,8 +6146,8 @@
         emit_insn (gen_vlshr<mode>_vx (vector,
               const0_rtx, const0_rtx, operands[1],
               shift, GEN_INT(1), riscv_vector_gen_policy (), gen_reg_rtx (Pmode)));
-        emit_insn (gen_vmv<mode>_x_s_lo (lo, operands[1]));
-        emit_insn (gen_vmv<mode>_x_s_hi (hi, vector));
+        emit_insn (gen_vmv<mode>_x_s_si_internal (lo, operands[1]));
+        emit_insn (gen_vmv<mode>_x_s_si_internal (hi, vector));
         DONE;
       }
 
@@ -6167,25 +6167,13 @@
   [(set_attr "type" "vmv_x_s")
    (set_attr "mode" "<MODE>")])
 
-(define_insn "vmv<mode>_x_s_lo"
+(define_insn "vmv<mode>_x_s_si_internal"
   [(set (match_operand:SI 0 "register_operand" "=r")
     (unspec:SI
       [(vec_select:DI
         (match_operand:V64BITI 1 "register_operand" "vr")
         (parallel [(const_int 0)]))
-       (reg:SI VTYPE_REGNUM)] UNSPEC_LO))]
-  "TARGET_VECTOR"
-  "vmv.x.s\t%0,%1"
-  [(set_attr "type" "vmv_x_s")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "vmv<mode>_x_s_hi"
-  [(set (match_operand:SI 0 "register_operand" "=r")
-    (unspec:SI
-      [(vec_select:DI
-        (match_operand:V64BITI 1 "register_operand" "vr")
-        (parallel [(const_int 0)]))
-      (reg:SI VTYPE_REGNUM)] UNSPEC_HI))]
+       (reg:SI VTYPE_REGNUM)] UNSPEC_RVV))]
   "TARGET_VECTOR"
   "vmv.x.s\t%0,%1"
   [(set_attr "type" "vmv_x_s")
