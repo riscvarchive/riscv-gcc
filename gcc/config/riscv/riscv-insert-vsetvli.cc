@@ -55,6 +55,7 @@ along with GCC; see the file COPYING3.  If not see
 #include <vector>
 #include <queue>
 #include <set>
+#include <stack>
 #include <tuple>
 
 #include "riscv-protos.h"
@@ -95,6 +96,90 @@ enum replace_enum
 };
 
 /* Helper functions. */
+
+static insn_info *
+find_ssa_insn (rtx_insn *rtl)
+{
+  insn_info *insn = NULL;
+  for (insn_info *item = crtl->ssa->first_insn (); item;
+       item = item->next_any_insn ())
+    {
+      if (item->rtl () == rtl)
+	{
+	  insn = item;
+	  break;
+	}
+    }
+
+  return insn;
+}
+
+static set_info *
+find_def (rtx_insn *rtl, rtx reg)
+{
+  insn_info *insn = find_ssa_insn (rtl);
+
+  gcc_assert (insn && "must find the ssa insn_info");
+
+  /* find the defintion of reg register */
+  use_array uses = insn->uses ();
+  set_info *def = NULL;
+  for (use_info *use : uses)
+    {
+      if (use->regno () == REGNO (reg) && use->mode () == GET_MODE (reg))
+	{
+	  def = use->def ();
+	  break;
+	}
+    }
+  return def;
+}
+
+/* for a phi node, recursively find all defined rtl instructions or artificial
+ * head or end. */
+static const std::set<insn_info *>
+find_all_def_insns (phi_info *phi)
+{
+  std::set<insn_info *> insns;
+  std::stack<phi_info *> work_list;
+  std::set<phi_info *> visited_list;
+  work_list.push (phi);
+  std::set<insn_info *> empty_insns;
+
+  while (!work_list.empty ())
+    {
+      phi_info *phi = work_list.top ();
+      work_list.pop ();
+      visited_list.insert (phi);
+      for (unsigned int i = 0; i < phi->num_inputs (); i++)
+	{
+	  def_info *def = phi->input_value (i);
+	  if (!def)
+	    {
+	      /* if def is null, treat undefined */
+	      return empty_insns;
+	    }
+	  insn_info *def_insn = def->insn ();
+	  gcc_assert (!def_insn->is_debug_insn ());
+
+	  if (def_insn->is_phi ())
+	    {
+	      phi_info *new_phi = as_a<phi_info *> (def);
+	      auto it = visited_list.find (new_phi);
+	      if (it == visited_list.end ())
+		{
+		  /* if this phi node not visited, add it to work_list for next
+		   * iterate */
+		  work_list.push (new_phi);
+		}
+	      continue;
+	    }
+	  insns.insert (def_insn);
+	}
+    }
+
+  return insns;
+}
 
 static unsigned int
 get_policy_offset (rtx_insn *insn)
@@ -267,12 +352,32 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
       else
 	pat
 	  = gen_vsetvl (Pmode, recog_data.operand[0], recog_data.operand[1], x);
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  fprintf (dump_file, "\nChange insn:\n");
+	  print_rtl_single (dump_file, insn);
+	  fprintf (dump_file, "from:\n");
+	  print_rtl_single (dump_file, PATTERN (insn));
+	}
       validate_change (insn, &PATTERN (insn), pat, false);
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  fprintf (dump_file, "to:\n");
+	  print_rtl_single (dump_file, PATTERN (insn));
+	  fprintf (dump_file, "\n");
+	}
     }
 
   if (replace == REPLACE_VL && use_vl_p (insn))
     {
       unsigned int offset = get_vl_offset (insn);
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  fprintf (dump_file, "\nChange insn:\n");
+	  print_rtl_single (dump_file, insn);
+	  fprintf (dump_file, "from:\n");
+	  print_rtl_single (dump_file, PATTERN (insn));
+	}
       if (reload_completed)
 	validate_change (insn,
 			 recog_data.operand_loc[recog_data.n_operands - offset],
@@ -281,6 +386,12 @@ replace_op (rtx_insn *insn, rtx x, unsigned int replace)
 	validate_change (insn,
 			 recog_data.operand_loc[recog_data.n_operands - 1], x,
 			 false);
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  fprintf (dump_file, "to:\n");
+	  print_rtl_single (dump_file, PATTERN (insn));
+	  fprintf (dump_file, "\n");
+	}
     }
 }
 
@@ -358,87 +469,61 @@ get_avl_source (rtx avl, rtx_insn *rtl)
   if (optimize < 2)
     return NULL;
 
-  insn_info *next;
-  rtx_insn * avl_source = NULL;
-
   if (!REG_P (avl))
     return NULL;
 
-  for (insn_info *insn = crtl->ssa->first_insn (); insn; insn = next)
+  set_info *def = find_def (rtl, avl);
+  if (!def)
+    return NULL;
+
+  insn_info *def_insn = def->insn ();
+  /* must be a phi node or real non debug rtl insn */
+  gcc_assert (def_insn->is_artificial ()
+	      || (def_insn->is_real () && !def_insn->is_debug_insn ()));
+
+  if (!def_insn->is_phi ())
     {
-      next = insn->next_any_insn ();
-      if (insn->rtl () == rtl)
+      if (def_insn->is_real ())
 	{
-	  resource_info resource = full_register (REGNO (avl));
-	  def_lookup dl = crtl->ssa->find_def (resource, insn);
-	  def_info *def = dl.last_def_of_prev_group ();
-
-	  if (!def)
-	    return NULL;
-
-	  if (!is_a<set_info *> (def))
-	    return NULL;
-
-	  insn_info *def_insn = def->insn ();
-
-	  if (!def_insn)
-	    return NULL;
 	  rtx_insn *def_rtl = def_insn->rtl ();
-
-	  if (!def_rtl)
+	  if (single_set (def_rtl))
 	    {
-	      if (def_insn->is_phi ())
-		{
-		  // There is an existing phi.
-		  phi_info *phi = as_a<phi_info *> (def);
-		  avl_source = NULL;
-		  for (unsigned int i = 0; i < phi->num_inputs (); i++)
-		    {
-		      def_info *phi_def = phi->input_value (i);
-		      if (!phi_def)
-			break;
-		      insn_info *phi_def_insn = phi_def->insn ();
-		      rtx_insn *phi_def_rtl = phi_def_insn->rtl ();
-		      if (!phi_def_rtl)
-			break;
-		      if (!NONDEBUG_INSN_P (phi_def_rtl))
-			break;
-
-		      // So far we only check single set.
-		      // Maybe optimize in the future ?????
-		      if (single_set (phi_def_rtl))
-			{
-			  if (!avl_source)
-			    avl_source =  phi_def_rtl;
-			  else
-			    {
-			      if (!rtx_equal_p (SET_SRC (
-						  single_set (avl_source)),
-						SET_SRC (
-						  single_set (phi_def_rtl))))
-				{
-				  avl_source = NULL;
-				  break;
-				}
-			    }
-			}
-		    }
-
-		  if (avl_source)
-		    return avl_source;
-		}
-
-	      return NULL;
-	    }
-
-	  if (NONDEBUG_INSN_P (def_rtl) && single_set (def_rtl))
-	    {
-	      avl_source = def_rtl;
-	      break;
+	      return def_rtl;
 	    }
 	}
+      return NULL;
     }
 
+  std::set<insn_info *> insns = find_all_def_insns (as_a<phi_info *> (def));
+
+  if (insns.empty ())
+    return NULL;
+
+  rtx_insn *avl_source = NULL;
+  for (auto def_insn : insns)
+    {
+      if (def_insn->is_artificial ())
+	return NULL;
+
+      rtx_insn *def_rtl = def_insn->rtl ();
+      // So far we only check single set.
+      // Maybe optimize in the future ?????
+      if (single_set (def_rtl))
+	{
+	  if (!avl_source)
+	    avl_source = def_rtl;
+	  else
+	    {
+	      if (!rtx_equal_p (SET_SRC (single_set (avl_source)),
+				SET_SRC (single_set (def_rtl))))
+		{
+		  return NULL;
+		}
+	    }
+	}
+      else
+	return NULL;
+    }
   return avl_source;
 }
 
@@ -707,10 +792,12 @@ rtx_replaceable_p (const_rtx x, const_rtx y)
     return 0;
 
   /* Some RTL can be compared nonrecursively.  */
-  if (code == REG) {
-    return (REGNO (x) == REGNO (y) && ORIGINAL_REGNO (x) == ORIGINAL_REGNO (y));
-  }
-  return rtx_equal_p(x, y);
+  if (code == REG)
+    {
+      return (REGNO (x) == REGNO (y)
+	      && ORIGINAL_REGNO (x) == ORIGINAL_REGNO (y));
+    }
+  return rtx_equal_p (x, y);
 }
 
 class vinfo
@@ -756,28 +843,30 @@ public:
     state = STATE_KNOWN;
   }
 
-  void set_avl_source (rtx_insn* insn)
+  void set_avl_source (rtx_insn *insn)
   {
-    avl_source_insn_ops.clear();
-    if (insn == NULL) return;
+    avl_source_insn_ops.clear ();
+    if (insn == NULL)
+      return;
     gcc_assert (single_set (insn));
     // the first element of avl_source_insn_ops will always be the SET_SRC
-    avl_source_insn_ops.push_back(SET_SRC (single_set (insn)));
+    avl_source_insn_ops.push_back (SET_SRC (single_set (insn)));
     extract_insn_cached (insn);
     for (int i = 0; i < recog_data.n_operands; i++)
       {
-        avl_source_insn_ops.push_back(recog_data.operand[i]);
+	avl_source_insn_ops.push_back (recog_data.operand[i]);
       }
   }
 
-  bool avl_same_source_p(vinfo other) const
+  bool avl_same_source_p (vinfo other) const
   {
-    if (avl_source_insn_ops.size() != other.get_avl_source_ops().size())
+    if (avl_source_insn_ops.size () != other.get_avl_source_ops ().size ())
       return false;
-    for (unsigned i = 0; i < avl_source_insn_ops.size(); i++)
+    for (unsigned i = 0; i < avl_source_insn_ops.size (); i++)
       {
-        if (!rtx_replaceable_p (avl_source_insn_ops[i], other.get_avl_source_ops()[i]))
-          return false;
+	if (!rtx_replaceable_p (avl_source_insn_ops[i],
+				other.get_avl_source_ops ()[i]))
+	  return false;
       }
     return true;
   }
@@ -817,7 +906,7 @@ public:
   rtx get_avl_source_set () const
   {
     gcc_assert (known_p ());
-    return avl_source_insn_ops.size() > 0 ? avl_source_insn_ops[0] : NULL_RTX;
+    return avl_source_insn_ops.size () > 0 ? avl_source_insn_ops[0] : NULL_RTX;
   }
 
   unsigned int get_vsew () const { return vsew; }
@@ -865,7 +954,7 @@ public:
 
 	if (REG_P (info.get_avl ()))
 	  {
-		if (info.get_avl_source_set ())
+	    if (info.get_avl_source_set ())
 	      {
 		if (CONST_SCALAR_INT_P (info.get_avl_source_set ())
 		    && GET_MODE_NUNITS (mode).is_constant ()
@@ -897,9 +986,10 @@ public:
     if (other.compare_vl (*this))
       return true;
 
-    if (rtx_replaceable_p (get_avl (), other.get_avl ())) {
-      return avl_same_source_p (other);
-    }
+    if (rtx_replaceable_p (get_avl (), other.get_avl ()))
+      {
+	return avl_same_source_p (other);
+      }
 
     return false;
   }
@@ -1090,9 +1180,9 @@ public:
     vlmul = other.vlmul;
     sew_lmul_ratio_only_p = other.sew_lmul_ratio_only_p;
     avl = other.avl;
-    avl_source_insn_ops.clear();
-    for (unsigned i = 0; i < other.avl_source_insn_ops.size(); i++)
-      avl_source_insn_ops.push_back(other.avl_source_insn_ops[i]);
+    avl_source_insn_ops.clear ();
+    for (unsigned i = 0; i < other.avl_source_insn_ops.size (); i++)
+      avl_source_insn_ops.push_back (other.avl_source_insn_ops[i]);
     vma_mutate_p = other.vma_mutate_p;
     vta_mutate_p = other.vta_mutate_p;
     return *this;
@@ -1146,13 +1236,13 @@ public:
       {
 	fprintf (dump_file, "  Avl=");
 	print_rtl_single (dump_file, get_avl ());
-	if (get_avl_source_ops ().size())
+	if (get_avl_source_ops ().size ())
 	  {
 	    fprintf (dump_file, "  Avl Source=");
-    for (unsigned i = 0; i < get_avl_source_ops ().size(); i++)
-      {
-	    print_rtl_single (dump_file, get_avl_source_ops ()[i]);
-      }
+	    for (unsigned i = 0; i < get_avl_source_ops ().size (); i++)
+	      {
+		print_rtl_single (dump_file, get_avl_source_ops ()[i]);
+	      }
 	  }
 	else
 	  fprintf (dump_file, "  Avl Source=(nil)\n");
@@ -1214,65 +1304,38 @@ fetch_def_insn (rtx_insn *rtl, const vinfo info)
   if (!REG_P (avl))
     return NULL;
 
-  insn_info *next;
-  for (insn_info *insn = crtl->ssa->first_insn (); insn; insn = next)
+  set_info *def = find_def (rtl, avl);
+  if (!def)
+    return NULL;
+
+  insn_info *def_insn = def->insn ();
+  /* must be a phi node or real non debug rtl insn */
+  gcc_assert (def_insn->is_artificial ()
+	      || (def_insn->is_real () && !def_insn->is_debug_insn ()));
+
+  if (!def_insn->is_phi ())
+    return def_insn->rtl ();
+
+  std::set<insn_info *> insns = find_all_def_insns (as_a<phi_info *> (def));
+
+  if (insns.empty ())
+    return NULL;
+
+  rtx_insn *vsetvli_insn = NULL;
+  for (auto def_insn : insns)
     {
-      next = insn->next_any_insn ();
-      if (insn->rtl () == rtl)
-	{
-	  resource_info resource{GET_MODE (avl), REGNO (avl)};
-	  def_lookup dl = crtl->ssa->find_def (resource, insn);
-	  def_info *def = dl.last_def_of_prev_group ();
+      if (def_insn->is_artificial ())
+	return NULL;
+      rtx_insn *def_rtl = def_insn->rtl ();
 
-	  if (!def)
-	    return NULL;
-
-	  if (!is_a<set_info *> (def))
-	    return NULL;
-
-	  insn_info *def_insn = def->insn ();
-	  rtx_insn *def_rtl = def_insn->rtl ();
-
-	  if (!def_rtl)
-	    {
-	      if (def_insn->is_phi ())
-		{
-		  // There is an existing phi.
-		  phi_info *phi = as_a<phi_info *> (def);
-		  rtx_insn *vsetvli_insn = NULL;
-		  for (unsigned int i = 0; i < phi->num_inputs (); i++)
-		    {
-		      def_info *phi_def = phi->input_value (i);
-		      if (!phi_def)
-			break;
-		      insn_info *phi_def_insn = phi_def->insn ();
-		      rtx_insn *phi_def_rtl = phi_def_insn->rtl ();
-		      if (!phi_def_rtl)
-			break;
-		      if (!NONDEBUG_INSN_P (phi_def_rtl))
-			break;
-		      if (!vector_config_instr_p (phi_def_rtl))
-			break;
-		      if (!vsetvli_insn)
-			vsetvli_insn = phi_def_rtl;
-		      else if (vsetvli_insn == phi_def_rtl)
-			continue;
-		      else
-			return NULL;
-		    }
-      return vsetvli_insn;
-		}
-	      else
-		return NULL;
-	    }
-	  if (!NONDEBUG_INSN_P (def_rtl))
-	    return NULL;
-
-	  return def_rtl;
-	}
+      if (!vector_config_instr_p (def_rtl))
+	return NULL;
+      if (!vsetvli_insn)
+	vsetvli_insn = def_rtl;
+      else if (vsetvli_insn != def_rtl)
+	return NULL;
     }
-
-  return NULL;
+  return vsetvli_insn;
 }
 
 static void
@@ -1337,6 +1400,7 @@ get_info_for_vsetvli (rtx_insn *insn)
   return new_info;
 }
 
+/* get the appropriate vma and vta of insn */
 static unsigned int
 analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
 {
@@ -1384,7 +1448,7 @@ analyze_vma_vta (rtx_insn *insn, vinfo curr_info)
 	vta_p = 1;
     }
 
-  /* Field:      31     |     30      | ......... |   1  |   0  |
+  /* Field:      31           |     30      | ......... |   1  |   0  |
 		 vma_mutate_p | vta_muate_p | ......... |  vma |  vta |
   */
   return (vma_p << 1) | vta_p | mutate_p;
@@ -1466,21 +1530,17 @@ needvsetvli (rtx_insn *insn, const vinfo &require, const vinfo &curr_info)
     }
 
   // We didn't find a compatible value. It might be defined by a VSET(I)VLI.
-  // If it has the same VTYPE we need and the last VL/VTYPE we observed is the same,
-  // we don't need a VSETVLI here.
-  if (require.avl_reg_p ()
-      && curr_info.compatible_vtype_p (insn, require))
+  // If it has the same VTYPE we need and the last VL/VTYPE we observed is the
+  // same, we don't need a VSETVLI here.
+  if (require.avl_reg_p () && curr_info.compatible_vtype_p (insn, require))
     {
       rtx_insn *def_rtl = fetch_def_insn (insn, require);
-      if (def_rtl != NULL)
+      if (def_rtl != NULL && vector_config_instr_p (def_rtl))
 	{
-	  if (vector_config_instr_p (def_rtl))
-	    {
-	      vinfo def_info = get_info_for_vsetvli (def_rtl);
-	      if (def_info.avl_equal_p (curr_info)
-		  && def_info.vlmax_equal_p (curr_info))
-		return false;
-	    }
+	  vinfo def_info = get_info_for_vsetvli (def_rtl);
+	  if (def_info.avl_equal_p (curr_info)
+	      && def_info.vlmax_equal_p (curr_info))
+	    return false;
 	}
     }
 
@@ -1521,68 +1581,105 @@ need_vsetvli_phi (const vinfo &new_info, rtx_insn *rtl)
 
   rtx avl = new_info.get_avl ();
 
-  insn_info *next;
-  /* fetch phi_node.  */
-  for (insn_info *insn = crtl->ssa->first_insn (); insn; insn = next)
+  set_info *def = find_def (rtl, avl);
+
+  if (!def)
     {
-      next = insn->next_any_insn ();
-      if (insn->rtl () == rtl)
+      if (dump_file && (dump_flags & TDF_DETAILS))
 	{
-	  bb_info *bb = insn->bb ();
-	  ebb_info *ebb = bb->ebb ();
-	  resource_info resource{GET_MODE (avl), REGNO (avl)};
-	  insn_info *phi_insn = ebb->phi_insn ();
-	  phi_info *phi;
-	  def_lookup dl = crtl->ssa->find_def (resource, phi_insn);
-	  def_info *set = dl.last_def_of_prev_group ();
+	  fprintf (dump_file, "can not found defintion of insn:\n");
+	  print_rtl_single (dump_file, rtl);
+	  print_rtl_single (dump_file, avl);
+	  pretty_printer pp;
+	  pp.buffer->stream = dump_file;
+	  insn_info *insn = find_ssa_insn (rtl);
+	  insn->print_full (&pp);
+	  pp_printf (&pp, "\n");
+	  pp_flush (&pp);
+	}
+      return true;
+    }
 
-	  if (!set)
-	    return true;
+  /* need insert vsetvl if the defintion is a normal instruction */
+  if (!def->insn ()->is_phi ())
+    {
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  fprintf (dump_file, "def insn is a normal insn:\n");
+	  pretty_printer pp;
+	  pp.buffer->stream = dump_file;
+	  def->insn ()->print_full (&pp);
+	  pp_printf (&pp, "\n");
+	  pp_flush (&pp);
+	}
+      return true;
+    }
 
-	  if (!is_a<phi_info *> (set))
-	    return true;
+  /* find all normal defintion instructions from the phi node chain */
+  std::set<insn_info *> insns = find_all_def_insns (as_a<phi_info *> (def));
 
-	  // There is an existing phi.
-	  phi = as_a<phi_info *> (set);
-	  for (unsigned int i = 0; i < phi->num_inputs (); i++)
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fprintf (dump_file, "find %lu insns from phi node.\n", insns.size ());
+    }
+  /* not found, need insert vsetvl */
+  if (insns.empty ())
+    {
+      return true;
+    }
+
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fprintf (dump_file, "use insn:\n");
+      print_rtl_single (dump_file, rtl);
+      fprintf (dump_file, "def insns:\n");
+    }
+
+  for (auto def_insn : insns)
+    {
+      if (def_insn->is_artificial ())
+	{
+	  if (dump_file && (dump_flags & TDF_DETAILS))
 	    {
-	      def_info *def = phi->input_value (i);
-	      if (!def)
-		return true;
-	      insn_info *def_insn = def->insn ();
-	      rtx_insn *def_rtl = def_insn->rtl ();
-
-	      if (!def_rtl)
-		return true;
-	      if (!NONDEBUG_INSN_P (def_rtl))
-		return true;
-	      extract_insn_cached (def_rtl);
-	      if (recog_data.n_operands > 0
-		  && rtx_equal_p (recog_data.operand[0], avl))
-		{
-		  // We need the PHI input to the be the output of a VSET(I)VLI.
-		  if (get_attr_type (def_rtl)
-		      && get_attr_type (def_rtl) == TYPE_VSETVL)
-		    {
-		      basic_block def_bb = BLOCK_FOR_INSN (def_rtl);
-		      bb_vinfo info = bb_vinfo_map.at (def_bb->index);
-		      // If the exit from the predecessor has the VTYPE we are
-		      // looking for we might be able to avoid a VSETVLI.
-		      if (info.exit.unknown_p ()
-			  || !info.exit.vtype_equal_p (new_info))
-			return true;
-		      // We found a VSET(I)VLI make sure it matches the
-		      // output of the predecessor block.
-		      vinfo curr_info;
-		      vinfo avl_def_info = get_info_for_vsetvli (def_rtl);
-		      if (!avl_def_info.vtype_equal_p (info.exit)
-			  || !avl_def_info.avl_equal_p (info.exit))
-			return true;
-		    }
-		  else
-		    return true;
-		}
+	      fprintf (dump_file, "find a artificial insn:\n");
+	      pretty_printer pp;
+	      pp.buffer->stream = dump_file;
+	      def_insn->print_full (&pp);
+	      pp_printf (&pp, "\n");
+	      pp_flush (&pp);
 	    }
+	  return true;
+	}
+
+      rtx_insn *def_rtl = def_insn->rtl ();
+      if (dump_file && (dump_flags & TDF_DETAILS))
+	{
+	  print_rtl_single (dump_file, def_rtl);
+	}
+      extract_insn_cached (def_rtl);
+      if (recog_data.n_operands > 0 && rtx_equal_p (recog_data.operand[0], avl))
+	{
+	  // We need the PHI input to the be the output of a
+	  // VSET(I)VLI.
+	  if (get_attr_type (def_rtl) && get_attr_type (def_rtl) == TYPE_VSETVL)
+	    {
+	      basic_block def_bb = BLOCK_FOR_INSN (def_rtl);
+	      bb_vinfo info = bb_vinfo_map.at (def_bb->index);
+	      // If the exit from the predecessor has the
+	      // VTYPE we are looking for we might be able
+	      // to avoid a VSETVLI.
+	      if (info.exit.unknown_p () || !info.exit.vtype_equal_p (new_info))
+		return true;
+	      // We found a VSET(I)VLI make sure it matches
+	      // the output of the predecessor block.
+	      vinfo curr_info;
+	      vinfo avl_def_info = get_info_for_vsetvli (def_rtl);
+	      if (!avl_def_info.vtype_equal_p (info.exit)
+		  || !avl_def_info.avl_equal_p (info.exit))
+		return true;
+	    }
+	  else
+	    return true;
 	}
     }
 
@@ -1591,9 +1688,9 @@ need_vsetvli_phi (const vinfo &new_info, rtx_insn *rtl)
   return false;
 }
 
-// Given an incoming state reaching MI, modifies that state so that it is
-// minimally compatible with MI.  The resulting state is guaranteed to be
-// semantically legal for MI, but may not be the state requested by MI.
+// Given an incoming state reaching `insn`, modifies that state so that it is
+// minimally compatible with `insn`.  The resulting state is guaranteed to be
+// semantically legal for `insn`, but may not be the state requested by `insn`.
 void
 transfer_before (vinfo &info, rtx_insn *insn)
 {
@@ -1987,12 +2084,13 @@ dolocalpostpass (const basic_block bb)
 	used.vl = true;
     }
 
-  for (auto *to_remove : to_delete) {
-    if (in_sequence_p ())
-      remove_insn (to_remove);
-    else
-      delete_insn (to_remove);
-  }
+  for (auto *to_remove : to_delete)
+    {
+      if (in_sequence_p ())
+	remove_insn (to_remove);
+      else
+	delete_insn (to_remove);
+    }
 }
 
 /// Return true if the VL value configured must be equal to the requested one.
@@ -2115,6 +2213,8 @@ dopre (const basic_block bb)
   // Note there's an implicit assumption here that terminators never use
   // or modify VL or VTYPE.  Also, fallthrough will return end().
   auto insert_pt = BB_END (unavailable_pred);
+  while (recog_memoized (insert_pt) < 0 || !NONDEBUG_INSN_P (insert_pt))
+    insert_pt = PREV_INSN (insert_pt);
   insert_vsetvli (insert_pt, available_info, old_info);
 }
 
@@ -2210,18 +2310,21 @@ combine_subreg (insn_info *insn)
     return;
 
   insn_change_watermark watermark;
-  if (dump_file)
-    {
-      fprintf (dump_file, "Change\n\n");
-      print_rtl_single (dump_file, PATTERN (rtl));
-    }
   rtx replacement = recog_data.operand[0];
   extract_insn (rtl);
-  validate_change (rtl, recog_data.operand_loc[0], replacement, true);
-  if (dump_file)
+  if (dump_file && (dump_flags & TDF_DETAILS))
     {
-      fprintf (dump_file, "into\n\n");
+      fprintf (dump_file, "\nChange insn(combine subreg):\n");
       print_rtl_single (dump_file, rtl);
+      fprintf (dump_file, "from:\n");
+      print_rtl_single (dump_file, *recog_data.operand_loc[0]);
+    }
+  validate_change (rtl, recog_data.operand_loc[0], replacement, true);
+  if (dump_file && (dump_flags & TDF_DETAILS))
+    {
+      fprintf (dump_file, "to:\n");
+      print_rtl_single (dump_file, replacement);
+      fprintf (dump_file, "\n");
     }
   if (!recog (attempt, change) || !change_is_worthwhile (change))
     return;
