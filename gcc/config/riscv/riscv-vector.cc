@@ -4367,7 +4367,7 @@ riscv_vector_expand_const_vector (rtx target, rtx src)
       rtx pseudo_mask = gen_reg_rtx (pseudo_mask_mode);
       rtx base0 = CONST_VECTOR_ELT (src, 0);
       rtx base1 = CONST_VECTOR_ELT (src, 1);
-      rtx step = CONST_VECTOR_ELT (src, 2);
+      rtx step = GEN_INT(INTVAL(CONST_VECTOR_ELT (src, 4)) - INTVAL(CONST_VECTOR_ELT (src, 2)));
       emit_insn (gen_vid_v (mode, target, const0_rtx, const0_rtx,
 			    gen_rtx_REG (Pmode, X0_REGNUM),
 			    riscv_vector_gen_policy (), gen_reg_rtx (Pmode)));
