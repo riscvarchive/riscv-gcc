@@ -196,9 +196,7 @@
 (define_expand "mov<mode>"
   [(parallel [(set (match_operand:VT 0 "reg_or_mem_operand")
                    (match_operand:VT 1 "vector_move_operand"))
-     (clobber (match_scratch:QI 2))
-     (clobber (match_scratch:QI 3))
-     (clobber (match_scratch:QI 4))])]
+     (clobber (match_scratch:QI 2))])]
   "TARGET_VECTOR"
   {
     /* Need to force register if mem <- !reg.  */
@@ -215,9 +213,7 @@
 (define_insn_and_split "*mov<mode>"
   [(set (match_operand:VT 0 "reg_or_mem_operand" "=vr,vr, m")
         (match_operand:VT 1 "reg_or_mem_operand"  " vr, m,vr"))
-   (clobber (match_scratch:QI 2 "=X,&r,&r"))
-   (clobber (match_scratch:QI 3 "=X,&r,&r"))
-   (clobber (match_scratch:QI 4 "=X,&r,&r"))]
+   (clobber (match_scratch:QI 2 "=X,&r,&r"))]
   "TARGET_VECTOR"
   "#"
   "&& reload_completed"
