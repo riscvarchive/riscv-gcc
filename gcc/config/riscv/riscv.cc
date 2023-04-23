@@ -3732,10 +3732,10 @@ riscv_pass_fpr_pair (machine_mode mode, unsigned regno1,
    intrinsic vector type.  Because we can't get the decl for the params.  */
 
 static bool
-riscv_arg_has_vector_size_attribute(const_tree type)
+riscv_arg_has_vector_size_attribute (const_tree type)
 {
-  tree size = TYPE_SIZE(type);
-  if (size && TREE_CODE(size) == INTEGER_CST)
+  tree size = TYPE_SIZE (type);
+  if (size && TREE_CODE (size) == INTEGER_CST)
     return true;
 
   /* For the data type like vint32m1_t, the size code is POLY_INT_CST.  */
