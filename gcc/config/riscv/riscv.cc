@@ -3728,11 +3728,18 @@ riscv_pass_fpr_pair (machine_mode mode, unsigned regno1,
 				   GEN_INT (offset2))));
 }
 
-static void
-riscv_vector_psabi_warnning ()
+/* Use the TYPE_SIZE to distinguish the type with vector_size attribute and
+   intrinsic vector type.  Because we can't get the decl for the params.  */
+
+static bool
+riscv_arg_has_vector_size_attribute(const_tree type)
 {
-  warning (OPT_Wpsabi, "ABI for the vector type is currently in experimental"
-       "stage and may changes in the upcoming version of GCC.");
+  tree size = TYPE_SIZE(type);
+  if (size && TREE_CODE(size) == INTEGER_CST)
+    return true;
+
+  /* For the data type like vint32m1_t, the size code is POLY_INT_CST.  */
+  return false;
 }
 
 static bool
@@ -3752,8 +3759,9 @@ riscv_arg_has_vector (const_tree type)
 	    if (!TYPE_P (TREE_TYPE (f)))
 	      break;
 
-	    if (VECTOR_TYPE_P (type))
-	      is_vector = true;
+	    /* If there's vector_size attribute, ignore it.  */
+	    if (VECTOR_TYPE_P (TREE_TYPE (f)))
+	      is_vector = !riscv_arg_has_vector_size_attribute (type);
 	    else
 	      is_vector = riscv_arg_has_vector (TREE_TYPE (f));
 	  }
@@ -3761,7 +3769,7 @@ riscv_arg_has_vector (const_tree type)
       break;
 
     case VECTOR_TYPE:
-      is_vector = true;
+      is_vector = !riscv_arg_has_vector_size_attribute (type);
       break;
 
     default:
@@ -3782,7 +3790,8 @@ riscv_pass_in_vector_p (const_tree type)
 
   if (type && riscv_arg_has_vector (type) && !warned)
     {
-      riscv_vector_psabi_warnning ();
+      warning (OPT_Wpsabi, "ABI for the vector type is currently in experimental"
+	       "stage and may changes in the upcoming version of GCC.");
       warned = 1;
     }
 }
