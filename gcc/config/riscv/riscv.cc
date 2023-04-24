@@ -3790,8 +3790,9 @@ riscv_pass_in_vector_p (const_tree type)
 
   if (type && riscv_arg_has_vector (type) && !warned)
     {
-      warning (OPT_Wpsabi, "ABI for the vector type is currently in experimental"
-	       "stage and may changes in the upcoming version of GCC.");
+      warning (OPT_Wpsabi, "ABI for the vector type is currently in "
+	       "experimental stage and may changes in the upcoming version of "
+	       "GCC.");
       warned = 1;
     }
 }
