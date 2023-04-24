@@ -3736,10 +3736,10 @@ riscv_scalable_vector_type_p (const_tree type)
 {
   tree size = TYPE_SIZE (type);
   if (size && TREE_CODE (size) == INTEGER_CST)
-    return true;
+    return false;
 
   /* For the data type like vint32m1_t, the size code is POLY_INT_CST.  */
-  return false;
+  return true;
 }
 
 static bool
@@ -3762,7 +3762,7 @@ riscv_arg_has_vector (const_tree type)
 
 	    /* Ignore it if it's fixed length vector.  */
 	    if (VECTOR_TYPE_P (field_type))
-	      is_vector = !riscv_scalable_vector_type_p (field_type);
+	      is_vector = riscv_scalable_vector_type_p (field_type);
 	    else
 	      is_vector = riscv_arg_has_vector (field_type);
 	  }
@@ -3770,7 +3770,7 @@ riscv_arg_has_vector (const_tree type)
       break;
 
     case VECTOR_TYPE:
-      is_vector = !riscv_scalable_vector_type_p (type);
+      is_vector = riscv_scalable_vector_type_p (type);
       break;
 
     default:
@@ -3791,7 +3791,7 @@ riscv_pass_in_vector_p (const_tree type)
 
   if (type && riscv_arg_has_vector (type) && !warned)
     {
-      warning (OPT_Wpsabi, "ABI for the vector type is currently in "
+      warning (OPT_Wpsabi, "ABI for the scalable vector type is currently in "
 	       "experimental stage and may changes in the upcoming version of "
 	       "GCC.");
       warned = 1;
