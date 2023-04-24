@@ -3732,7 +3732,7 @@ riscv_pass_fpr_pair (machine_mode mode, unsigned regno1,
    intrinsic vector type.  Because we can't get the decl for the params.  */
 
 static bool
-riscv_arg_has_vector_size_attribute (const_tree type)
+riscv_scalable_vector_type_p (const_tree type)
 {
   tree size = TYPE_SIZE (type);
   if (size && TREE_CODE (size) == INTEGER_CST)
@@ -3756,20 +3756,21 @@ riscv_arg_has_vector (const_tree type)
       for (tree f = TYPE_FIELDS (type); f; f = DECL_CHAIN (f))
 	if (TREE_CODE (f) == FIELD_DECL)
 	  {
-	    if (!TYPE_P (TREE_TYPE (f)))
+	    tree field_type = TREE_TYPE (f);
+	    if (!TYPE_P (field_type))
 	      break;
 
-	    /* If there's vector_size attribute, ignore it.  */
-	    if (VECTOR_TYPE_P (TREE_TYPE (f)))
-	      is_vector = !riscv_arg_has_vector_size_attribute (type);
+	    /* Ignore it if it's fixed length vector.  */
+	    if (VECTOR_TYPE_P (field_type))
+	      is_vector = !riscv_scalable_vector_type_p (field_type);
 	    else
-	      is_vector = riscv_arg_has_vector (TREE_TYPE (f));
+	      is_vector = riscv_arg_has_vector (field_type);
 	  }
 
       break;
 
     case VECTOR_TYPE:
-      is_vector = !riscv_arg_has_vector_size_attribute (type);
+      is_vector = !riscv_scalable_vector_type_p (type);
       break;
 
     default:
