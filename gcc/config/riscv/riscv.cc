@@ -3798,6 +3798,28 @@ riscv_pass_in_vector_p (const_tree type)
     }
 }
 
+/* Initialize a variable CUM of type CUMULATIVE_ARGS
+   for a call to a function whose data type is FNTYPE.
+   For a library call, FNTYPE is 0.  */
+
+void
+init_cumulative_args (CUMULATIVE_ARGS *cum,  /* Argument info to initialize */
+		      tree fntype,	/* tree ptr for function decl */
+		      rtx libname,	/* SYMBOL_REF of library name or 0 */
+		      tree fndecl,
+		      int caller)
+{
+  memset (cum, 0, sizeof (*cum));
+
+  if (fndecl)
+    {
+      const tree_function_decl &fn = FUNCTION_DECL_CHECK (fndecl)->function_decl;
+
+      if (fn.built_in_class == NOT_BUILT_IN)
+	  cum->rvv_psabi_warning = 1;
+    }
+}
+
 /* Fill INFO with information about a single argument, and return an
    RTL pattern to pass or return the argument.  CUM is the cumulative
    state for earlier arguments.  MODE is the mode of this argument and
@@ -3882,8 +3904,11 @@ riscv_get_arg_info (struct riscv_arg_info *info, const CUMULATIVE_ARGS *cum,
 	}
     }
 
-  /* Only check existing of vector type.  */
-  riscv_pass_in_vector_p (type);
+  if (cum->rvv_psabi_warning)
+    {
+      /* Only check existing of vector type.  */
+      riscv_pass_in_vector_p (type);
+    }
 
   /* Work out the size of the argument.  */
   num_bytes = type ? int_size_in_bytes (type) : GET_MODE_SIZE (mode).to_constant ();
@@ -3972,7 +3997,18 @@ riscv_function_value (const_tree type, const_tree func, machine_mode mode)
     }
 
   memset (&args, 0, sizeof args);
-  return riscv_get_arg_info (&info, &args, mode, type, true, true);
+
+  const_tree arg_type = type;
+  if (func && DECL_RESULT (func))
+    {
+      const tree_function_decl &fn = FUNCTION_DECL_CHECK(func)->function_decl;
+      if (fn.built_in_class == NOT_BUILT_IN)
+	args.rvv_psabi_warning = 1;
+
+      arg_type = TREE_TYPE (DECL_RESULT (func));
+    }
+
+  return riscv_get_arg_info (&info, &args, mode, arg_type, true, true);
 }
 
 /* Implement TARGET_PASS_BY_REFERENCE. */

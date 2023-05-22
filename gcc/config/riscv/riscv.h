@@ -671,14 +671,18 @@ typedef struct {
 
   /* Number of floating-point registers used so far, likewise.  */
   unsigned int num_fprs;
+
+  bool rvv_psabi_warning;
 } CUMULATIVE_ARGS;
 
 /* Initialize a variable CUM of type CUMULATIVE_ARGS
    for a call to a function whose data type is FNTYPE.
    For a library call, FNTYPE is 0.  */
 
+void init_cumulative_args (CUMULATIVE_ARGS *, tree, rtx, tree, int);
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, INDIRECT, N_NAMED_ARGS) \
-  memset (&(CUM), 0, sizeof (CUM))
+  init_cumulative_args (&(CUM), (FNTYPE), (LIBNAME), (INDIRECT), \
+			(N_NAMED_ARGS) != -1)
 
 #define EPILOGUE_USES(REGNO)	riscv_epilogue_uses (REGNO)
 
